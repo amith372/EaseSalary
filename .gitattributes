@@ -1,0 +1,2 @@
+# The hook is run by sh. Checked out with CRLF it fails as a bad interpreter.
+hooks/** text eol=lf

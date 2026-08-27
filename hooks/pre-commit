@@ -1,0 +1,61 @@
+#!/bin/sh
+# EaseSalary pre-commit gate. Enforces CLAUDE.md rule 6, which a file can only advise.
+# Installed by the `prepare` script in package.json: `git config core.hooksPath hooks`.
+# Never pass --no-verify. If a check fails, fix the cause; a gate skipped once is a gate
+# that was never there.
+
+set -e
+
+fail() { printf '\n\033[31mpre-commit: %s\033[0m\n' "$1" >&2; exit 1; }
+
+# ---------------------------------------------------------------------------
+# 1. Secrets. Cheapest check, and the only failure that cannot be undone later:
+#    a committed key is in every clone for the life of the repository.
+# ---------------------------------------------------------------------------
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+
+for f in $staged; do
+  case "$f" in
+    .env.example|*/.env.example) ;;
+    .env|.env.*|*/.env|*/.env.*)
+      fail "$f is an environment file and must never be committed. The keys belong in Vercel and in an untracked .env.local." ;;
+  esac
+done
+
+# Added lines only: an existing line is not this commit's problem, and reformatting a
+# file should not fail on something already in history.
+added=$(git diff --cached -U0 --diff-filter=ACM -- . ':(exclude)package-lock.json' ':(exclude).env.example' | grep '^+' | grep -v '^+++' || true)
+
+if printf '%s' "$added" | grep -qE -- '-----BEGIN [A-Z ]*PRIVATE KEY-----'; then
+  fail "a private key block is being committed."
+fi
+if printf '%s' "$added" | grep -qE 'eyJhbGciOi[A-Za-z0-9_-]{20,}'; then
+  fail "a JWT is being committed — this is what a Supabase anon or service-role key looks like."
+fi
+if printf '%s' "$added" | grep -qE '(sb_secret_|sbp_)[A-Za-z0-9_-]{16,}'; then
+  fail "a Supabase access token is being committed."
+fi
+if printf '%s' "$added" | grep -qE '(SERVICE_ROLE|ANON_KEY|ENCRYPTION_KEY|SECRET_KEY|_SECRET|API_KEY|PASSWORD)[A-Za-z_]*[[:space:]]*[:=][[:space:]]*.?[A-Za-z0-9/+_-]{16,}'; then
+  fail "a secret looks to be assigned a literal value. Read it from process.env instead. If this key has ever been committed, treat it as compromised and replace it."
+fi
+
+# ---------------------------------------------------------------------------
+# 2. Types. next typegen first, or LayoutProps is undefined and a clean tree fails.
+# ---------------------------------------------------------------------------
+
+printf 'pre-commit: types...\n'
+npx next typegen >/dev/null || fail "next typegen failed."
+npx tsc --noEmit || fail "tsc reported type errors."
+
+# ---------------------------------------------------------------------------
+# 3. Lint, then tests. Both catch what the type check cannot.
+# ---------------------------------------------------------------------------
+
+printf 'pre-commit: lint...\n'
+npm run --silent lint || fail "lint failed. Never switch a rule off without writing the reason beside it."
+
+printf 'pre-commit: tests...\n'
+npm run --silent test || fail "tests failed."
+
+printf 'pre-commit: passed.\n'
