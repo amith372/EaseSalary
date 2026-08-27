@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Design tokens, read from the canvas at
+   https://claude.ai/design/p/b11cf323-ac11-490d-994d-3145e8e07a6b
+   where all eleven artboards share one system. This file is the only place a
+   colour, radius or shadow of the system is written down; nothing else in the
+   app may state a hex value. */
+@theme {
+  /* Text */
+  --color-ink: #33291f;
+  --color-ink-soft: #7b6a59;
+  --color-ink-faint: #9a8874;
+  --color-ink-mute: #8c7a67;
+  --color-ink-warm: #6e5d4d; /* body copy inside sand and inset panels */
+
+  /* Surfaces and rules */
+  --color-surface: #fffdfa;
+  --color-sunken: #fdfaf5;
+  --color-line: #eadcc9;
+  --color-line-soft: #f3eadc;
+  --color-hairline: #f0e6d8;
+  --color-sunken-line: #efe2cf;
+
+  /* Green — brand, buttons, sidebar */
+  --color-forest: #3f6047;
+  --color-forest-deep: #2c4633;
+  --color-bark: #2e4636;
+
+  /* Creams — the sidebar's own text scale, and the warm panel */
+  --color-cream: #ede4d6;
+  --color-cream-hi: #fffbf4;
+  --color-cream-mute: #c7bca9;
+  --color-sand: #fdf3e7;
+  --color-sand-line: #eedcc4;
+  --color-sand-ink: #a9764a;
+  --color-sand-hover: #f5eadb;
+
+  /* Clay — the accent that says "this needs you" */
+  --color-clay: #c9663c;
+  --color-clay-ink: #b0663c;
+  --color-clay-bg: #faecdd;
+  --color-clay-deep: #a65a3a; /* an amount that is a deduction */
+
+  /* Moss — the accent that says "nothing to do here" */
+  --color-moss-ink: #5f7359;
+  --color-moss-soft: #6e7f6b;
+  --color-moss-bg: #eef2ea;
+
+  /* Soft fills — avatars, worker portraits, the "+" tile */
+  --color-shell: #f2e3d2;
+  --color-shell-line: #e7d5be;
+
+  /* The "?" disclosure button */
+  --color-ask-line: #e7d6be;
+  --color-ask-ink: #b49b7a;
+  --color-ask-line-hover: #c08a5e;
+  --color-ask-ink-hover: #8a6a45;
+
+  /* Day marks. `rest` is the legend dot for a Saturday the user marked free;
+     `rest-bg`/`rest-ink` are the ordinary weekly rest day, which is not an
+     entitlement and is a different state (specs.md item 5). */
+  --color-vacation: #5b8aa6;
+  --color-sick: #c1798a;
+  --color-holiday: #c89a4a;
+  --color-rest: #ddd5c7;
+  --color-day: #f9f5ef;
+  --color-day-ink: #4a3d31;
+  --color-day-hover: #f3e7d6;
+  --color-rest-bg: #ede7dc;
+  --color-rest-ink: #8a7c6a;
+
+  /* Radii. The canvas uses 12/13/14/16/20/22/24 and a pill; Tailwind's stock
+     scale is replaced outright rather than sat beside, so `rounded-lg` cannot
+     mean two different things depending on which file you are reading. */
+  --radius-xs: 12px;
+  --radius-sm: 13px;
+  --radius-md: 14px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 22px;
+  --radius-3xl: 24px;
+
+  /* One shadow in the whole system. */
+  --shadow-card: 0 18px 40px -36px rgb(80 52 24 / 0.5);
 }
 
+/* The font stack resolves a variable set by next/font, so it is inlined into
+   the utilities rather than referenced through another var(). */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-assistant), "Segoe UI", system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    background: #ffffff;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Every link in the system is forest, and darkens rather than underlining. */
+  a {
+    color: var(--color-forest);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-forest-deep);
+  }
 }
