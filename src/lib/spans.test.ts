@@ -1,0 +1,197 @@
+import { describe, expect, it } from "vitest";
+import {
+  applyMark,
+  balanceDaysOf,
+  markableDays,
+  spanOverflow,
+} from "@/lib/spans";
+import type { DaySpan } from "@/lib/types";
+
+/**
+ * August 2026 throughout: its 1st falls on a Saturday, so its Saturdays are
+ * 1, 8, 15, 22 and 29 — the month the canvas draws and the case specs.md
+ * Part 5 warns about.
+ */
+
+describe("a vacation span skips its Saturdays", () => {
+  it("draws six days from 16 to 22 August, not seven", () => {
+    const { spans, skipped } = applyMark({
+      kind: "vacation",
+      from: "2026-08-16",
+      to: "2026-08-22",
+    });
+
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      kind: "vacation",
+      from: "2026-08-16",
+      to: "2026-08-21",
+    });
+    expect(balanceDaysOf(spans[0])).toBe(6);
+    expect(skipped).toEqual([{ date: "2026-08-22", reason: "weeklyRest" }]);
+  });
+
+  it("splits into two spans where a Saturday falls inside the range", () => {
+    const { spans, skipped } = applyMark({
+      kind: "vacation",
+      from: "2026-08-14",
+      to: "2026-08-17",
+    });
+
+    expect(spans.map((s) => [s.from, s.to])).toEqual([
+      ["2026-08-14", "2026-08-14"],
+      ["2026-08-16", "2026-08-17"],
+    ]);
+    expect(skipped).toEqual([{ date: "2026-08-15", reason: "weeklyRest" }]);
+    expect(spans.reduce((total, s) => total + balanceDaysOf(s), 0)).toBe(3);
+  });
+});
+
+describe("a sick span keeps its Saturdays", () => {
+  it("stores 16 to 22 August whole and draws all seven days", () => {
+    const { spans, skipped } = applyMark({
+      kind: "sick",
+      from: "2026-08-16",
+      to: "2026-08-22",
+    });
+
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({ from: "2026-08-16", to: "2026-08-22" });
+    expect(balanceDaysOf(spans[0])).toBe(7);
+    expect(skipped).toEqual([]);
+  });
+
+  it("stores a spell running past the end of the month whole", () => {
+    const { spans } = applyMark({
+      kind: "sick",
+      from: "2026-08-30",
+      to: "2026-09-02",
+    });
+
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({ from: "2026-08-30", to: "2026-09-02" });
+    expect(spanOverflow(spans[0], "2026-08-01", "2026-08-31")).toEqual({
+      before: false,
+      after: true,
+    });
+  });
+});
+
+describe("a range is ordered by date, never by the direction it was drawn", () => {
+  it("produces the identical span swept in either direction", () => {
+    const forward = applyMark({
+      kind: "vacation",
+      from: "2026-08-16",
+      to: "2026-08-21",
+    });
+    const backward = applyMark({
+      kind: "vacation",
+      from: "2026-08-21",
+      to: "2026-08-16",
+    });
+
+    expect(backward.spans).toEqual(forward.spans);
+  });
+});
+
+describe("only a Saturday can be marked as the Saturday the worker had off", () => {
+  it("marks the Saturdays of a swept week and refuses the rest", () => {
+    const { spans, skipped } = applyMark({
+      kind: "freeSaturday",
+      from: "2026-08-01",
+      to: "2026-08-08",
+    });
+
+    expect(spans.map((s) => s.from)).toEqual(["2026-08-01", "2026-08-08"]);
+    expect(skipped).toHaveLength(6);
+    expect(skipped.every((s) => s.reason === "notSaturday")).toBe(true);
+  });
+
+  it("draws nothing from a balance, being no entitlement", () => {
+    const { spans } = applyMark({
+      kind: "freeSaturday",
+      from: "2026-08-01",
+      to: "2026-08-01",
+    });
+
+    expect(balanceDaysOf(spans[0])).toBe(0);
+  });
+});
+
+describe("a paid holiday cannot land on a free Saturday", () => {
+  const freeSaturday: DaySpan[] = [
+    { id: "rest", kind: "freeSaturday", from: "2026-08-15", to: "2026-08-15" },
+  ];
+
+  it("refuses the day and says why, marking the days around it", () => {
+    const { spans, skipped } = applyMark(
+      { kind: "holiday", from: "2026-08-14", to: "2026-08-16" },
+      freeSaturday,
+    );
+
+    expect(spans.map((s) => [s.from, s.to])).toEqual([
+      ["2026-08-14", "2026-08-14"],
+      ["2026-08-16", "2026-08-16"],
+    ]);
+    expect(skipped).toEqual([{ date: "2026-08-15", reason: "restDayHoliday" }]);
+  });
+});
+
+describe("a day that already carries a mark refuses another", () => {
+  const existing: DaySpan[] = [
+    { id: "sick", kind: "sick", from: "2026-08-19", to: "2026-08-20" },
+  ];
+
+  it("marks around the existing span and reports the overlap", () => {
+    const { spans, skipped } = applyMark(
+      { kind: "vacation", from: "2026-08-18", to: "2026-08-21" },
+      existing,
+    );
+
+    expect(spans.map((s) => [s.from, s.to])).toEqual([
+      ["2026-08-18", "2026-08-18"],
+      ["2026-08-21", "2026-08-21"],
+    ]);
+    expect(skipped).toEqual([
+      { date: "2026-08-19", reason: "alreadyMarked" },
+      { date: "2026-08-20", reason: "alreadyMarked" },
+    ]);
+  });
+
+  it("refuses the whole range when every day of it is taken", () => {
+    const { spans, skipped } = applyMark(
+      { kind: "vacation", from: "2026-08-19", to: "2026-08-20" },
+      existing,
+    );
+
+    expect(spans).toEqual([]);
+    expect(skipped).toHaveLength(2);
+  });
+});
+
+describe("markableDays", () => {
+  it("reports the surviving days and the refused days separately", () => {
+    const { taken, skipped } = markableDays({
+      kind: "vacation",
+      from: "2026-08-15",
+      to: "2026-08-16",
+    });
+
+    expect(taken).toEqual(["2026-08-16"]);
+    expect(skipped).toEqual([{ date: "2026-08-15", reason: "weeklyRest" }]);
+  });
+});
+
+describe("a part-day is drawn from the balance in its own proportion", () => {
+  it("halves a single day", () => {
+    const half: DaySpan = {
+      id: "half",
+      kind: "vacation",
+      from: "2026-08-17",
+      to: "2026-08-17",
+      fraction: 0.5,
+    };
+
+    expect(balanceDaysOf(half)).toBe(0.5);
+  });
+});

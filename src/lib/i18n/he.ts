@@ -102,6 +102,26 @@ export const he = {
       /** A span running past the month's end is stored whole and shown clipped;
        * the overflow is said in words rather than silently truncated. */
       continuesInto: "נמשך אל תוך החודש הבא",
+      continuesFrom: "נמשך מהחודש הקודם",
+    },
+    /** The mark tool the user picks before drawing on the calendar. Marking
+     * off — the tool chosen again — still clears a day, it just draws none. */
+    tools: {
+      title: "לסמן ימים",
+      hint: "אפשר לסמן יום אחד, או לגרור על כמה ימים ברצף",
+    },
+    /**
+     * A range applies to the days it legally can and says which it skipped and
+     * why, rather than being refused whole over one day the user would then
+     * have to go and find herself.
+     */
+    skipped: {
+      title: "ימים שלא סומנו",
+      weeklyRest: "שבת היא כבר יום המנוחה השבועי, ולכן אינה נגרעת ממכסת החופשה",
+      notSaturday: "רק שבת יכולה להיות מסומנת כשבת חופשית",
+      alreadyMarked: "היום כבר מסומן",
+      restDayHoliday: "שבת שסומנה כחופשית משולמת פעם אחת, ולכן אי אפשר לסמן בה גם חג",
+      dismiss: "להסתיר",
     },
   },
 
