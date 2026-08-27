@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "country_code": "NP",
+  "country_name_he": "נפאל",
+  "year": 2026,
+  "source_url": "https://www.isavta.co.il/en/holidays/NP/2026",
+  "holidays": [
+    {
+      "date": "2026-03-08",
+      "name": "Nari Dibas"
+    },
+    {
+      "date": "2026-04-14",
+      "name": "Nepali New Year"
+    },
+    {
+      "date": "2026-05-01",
+      "name": "Majdoor Divas"
+    },
+    {
+      "date": "2026-05-01",
+      "name": "Buddha Jayanti"
+    },
+    {
+      "date": "2026-05-29",
+      "name": "Ganatantra Diwas (Republic Day)"
+    },
+    {
+      "date": "2026-08-03",
+      "name": "Gai Jatra"
+    },
+    {
+      "date": "2026-08-28",
+      "name": "Janai Purnima"
+    },
+    {
+      "date": "2026-09-19",
+      "name": "Constitution Day"
+    },
+    {
+      "date": "2026-09-25",
+      "name": "Indra Jatra"
+    },
+    {
+      "date": "2026-10-11",
+      "name": "Ghatasthapana"
+    },
+    {
+      "date": "2026-11-15",
+      "name": "Chhat Parwa"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "country_code": "UZ",
+  "country_name_he": "אוזבקיסטן",
+  "year": 2026,
+  "source_url": "https://www.isavta.co.il/he/holidays/UZ/2026",
+  "holidays": [
+    {
+      "date": "2026-01-01",
+      "name": "New Year"
+    },
+    {
+      "date": "2026-01-14",
+      "name": "Defenders of the Motherland Day"
+    },
+    {
+      "date": "2026-02-17",
+      "name": "First Evening of Ramadan"
+    },
+    {
+      "date": "2026-03-08",
+      "name": "International Women's Day"
+    },
+    {
+      "date": "2026-03-20",
+      "name": "Eid al-Fitr"
+    },
+    {
+      "date": "2026-03-20",
+      "name": "Nowruz Holiday"
+    },
+    {
+      "date": "2026-03-21",
+      "name": "Nowruz"
+    },
+    {
+      "date": "2026-05-09",
+      "name": "Remembrance Day"
+    },
+    {
+      "date": "2026-05-27",
+      "name": "Eid al-Adha"
+    },
+    {
+      "date": "2026-05-27",
+      "name": "Kurban Khait"
+    },
+    {
+      "date": "2026-06-01",
+      "name": "Children's Day"
+    },
+    {
+      "date": "2026-06-16",
+      "name": "Islamic New Year"
+    },
+    {
+      "date": "2026-09-01",
+      "name": "Independence Day"
+    },
+    {
+      "date": "2026-09-22",
+      "name": "September Equinox"
+    },
+    {
+      "date": "2026-10-01",
+      "name": "Teachers Day"
+    },
+    {
+      "date": "2026-12-08",
+      "name": "Constitution Day"
+    },
+    {
+      "date": "2026-12-21",
+      "name": "December Solstice"
+    },
+    {
+      "date": "2026-12-31",
+      "name": "New Year's Eve"
+    }
+  ]
+}

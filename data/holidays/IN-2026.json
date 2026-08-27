@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "country_code": "IN",
+  "country_name_he": "הודו",
+  "year": 2026,
+  "source_url": "https://www.isavta.co.il/he/holidays/IN/2026",
+  "holidays": [
+    {
+      "date": "2026-01-01",
+      "name": "New Year's Day"
+    },
+    {
+      "date": "2026-01-13",
+      "name": "Lohri"
+    },
+    {
+      "date": "2026-01-14",
+      "name": "Makar Sankranti"
+    },
+    {
+      "date": "2026-01-19",
+      "name": "Sonam Lhosar"
+    },
+    {
+      "date": "2026-01-26",
+      "name": "Republic Day"
+    },
+    {
+      "date": "2026-02-01",
+      "name": "Bir Chilarai Divas"
+    },
+    {
+      "date": "2026-02-14",
+      "name": "Valentines Day"
+    },
+    {
+      "date": "2026-02-15",
+      "name": "Shivratri"
+    },
+    {
+      "date": "2026-02-15",
+      "name": "Maha Shivaratri"
+    },
+    {
+      "date": "2026-02-26",
+      "name": "Maha Shivaratri/Shivaratri"
+    },
+    {
+      "date": "2026-03-03",
+      "name": "Dolyatra"
+    },
+    {
+      "date": "2026-03-04",
+      "name": "Holi"
+    },
+    {
+      "date": "2026-03-19",
+      "name": "Navratra Gudi Padwa"
+    },
+    {
+      "date": "2026-03-21",
+      "name": "Ramzan Id/Eid-ul-Fitar"
+    },
+    {
+      "date": "2026-03-27",
+      "name": "Ram Navami"
+    },
+    {
+      "date": "2026-03-27",
+      "name": "Rama Navami"
+    },
+    {
+      "date": "2026-03-31",
+      "name": "Mahavir Jayanti"
+    },
+    {
+      "date": "2026-04-03",
+      "name": "Good Friday"
+    },
+    {
+      "date": "2026-04-05",
+      "name": "Easter Sunday"
+    },
+    {
+      "date": "2026-04-05",
+      "name": "Babu Jagjivan Ram Birthday"
+    },
+    {
+      "date": "2026-04-14",
+      "name": "Ambedkar Jayanti"
+    },
+    {
+      "date": "2026-05-01",
+      "name": "Labor Day"
+    },
+    {
+      "date": "2026-05-01",
+      "name": "Buddha Purnima/Vesak"
+    },
+    {
+      "date": "2026-05-27",
+      "name": "Bakr Id/Eid ul-Adha"
+    },
+    {
+      "date": "2026-06-22",
+      "name": "Thomas Jones Day"
+    },
+    {
+      "date": "2026-06-26",
+      "name": "Muharram/Ashura"
+    },
+    {
+      "date": "2026-07-06",
+      "name": "MHIP Day"
+    },
+    {
+      "date": "2026-07-16",
+      "name": "Ratha Yatra"
+    },
+    {
+      "date": "2026-08-12",
+      "name": "Karkidaka Vavu"
+    },
+    {
+      "date": "2026-08-13",
+      "name": "Hartalika Ganesh Chaturthi"
+    },
+    {
+      "date": "2026-08-15",
+      "name": "Independence Day"
+    },
+    {
+      "date": "2026-08-25",
+      "name": "First Onam in Kerala"
+    },
+    {
+      "date": "2026-08-26",
+      "name": "Milad un-Nabi/Id-e-Milad"
+    },
+    {
+      "date": "2026-08-27",
+      "name": "Third Onam"
+    },
+    {
+      "date": "2026-08-28",
+      "name": "Raksha Bandhan"
+    },
+    {
+      "date": "2026-09-04",
+      "name": "Janmashtami Krishna Jayanthi Sri"
+    },
+    {
+      "date": "2026-09-04",
+      "name": "Krishna Ashtami"
+    },
+    {
+      "date": "2026-09-04",
+      "name": "Janmashtami"
+    },
+    {
+      "date": "2026-09-14",
+      "name": "Ganesh Chaturthi"
+    },
+    {
+      "date": "2026-09-21",
+      "name": "Ramdev Jayanti and Teja Dashmi"
+    },
+    {
+      "date": "2026-10-02",
+      "name": "Mahatma Gandhi Jayanti"
+    },
+    {
+      "date": "2026-10-18",
+      "name": "Kati Bihu Lakshmi Puja Maharishi"
+    },
+    {
+      "date": "2026-10-19",
+      "name": "Durga Ashtami"
+    },
+    {
+      "date": "2026-10-30",
+      "name": "Dussehra"
+    },
+    {
+      "date": "2026-11-08",
+      "name": "Diwali/Deepavali"
+    },
+    {
+      "date": "2026-11-14",
+      "name": "Wangala Festival"
+    },
+    {
+      "date": "2026-11-15",
+      "name": "Chhath Puja"
+    },
+    {
+      "date": "2026-11-24",
+      "name": "Guru Nanak Jayanti"
+    },
+    {
+      "date": "2026-12-25",
+      "name": "Christmas"
+    },
+    {
+      "date": "2026-12-31",
+      "name": "New Year's Eve"
+    }
+  ]
+}
