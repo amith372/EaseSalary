@@ -281,6 +281,17 @@ rather than paying both the rest-day rate and the holiday rate for a single day.
 same refusal covers a tenth paid holiday within a year and a count of worked Saturdays
 higher than the number of Saturdays in the month.
 
+The two cases above check the calculation, which is deterministic and fails loudly. The
+fetched pages are neither, so they are checked a third way: by being handed a broken
+answer on purpose. A saved copy of each source page is kept beside the parser as a
+fixture, together with three spoiled versions of it — one whose markup has moved so that
+nothing is found, one that returns an error or an empty body, and one that yields a
+figure outside the plausible range. Each must end with the application saying which of
+the three happened and leaving the user able to continue by hand, and none may end with a
+number that merely looks right. This is what separates a failure from a wrong answer
+presented as a result, and a scraper is only ever checked against a page that has already
+changed once.
+
 ## Part 5 — Known pitfalls
 
 A holiday list for a new year is found by taking the source address already stored with

@@ -163,8 +163,14 @@ the same four totals the engine produced in stage 1.
 - The confirmation questions that open an export, which are what make stage 2's export
   reachable by a user at all.
 
-**Done when** a year with no stored holiday list fills itself, and a failed fetch leaves
-the user able to type the figure and continue.
+- The saved source pages and their three spoiled versions, as Part 4 requires: markup
+  moved, an empty or failing response, and a figure outside the plausible range. They are
+  fixtures in the test suite rather than a live fetch, so the suite neither depends on a
+  site being up nor waits for one.
+
+**Done when** a year with no stored holiday list fills itself, each of the three spoiled
+pages produces a stated failure rather than a number, and a failed fetch leaves the user
+able to type the figure and continue.
 
 ## Stage 6 — The opening screen
 
@@ -200,7 +206,12 @@ answer stays written in exactly one place.
 hand-written matching turns out too rigid once part one has been used. It would read the
 question and the candidate list and never the account; the answer would still be
 assembled locally, so no worker, amount or identity number leaves the application and the
-choice of model stays cheap to change or to reverse. **Whether to build it at all, and
+choice of model stays cheap to change or to reverse. Two conditions come with it if it is
+ever built: the prompts are source files, reviewed and versioned like any other code,
+because the behaviour lives in their wording and an unreviewed edit to a sentence is a
+real fault with no diff anyone reads; and a hard ceiling on calls per question, so a loop
+that goes wrong costs a known amount rather than whatever it manages to spend before
+someone notices. **Whether to build it at all, and
 which model, is a question to put to the user at the very end — not before.**
 
 **Done when** a question reaches the right screen or the right explanation and the answer
