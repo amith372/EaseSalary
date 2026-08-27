@@ -173,8 +173,11 @@ Each of these is true or false at a glance.
 24. Any figure the application worked out can be opened to show how it was reached, in
     words rather than as a formula, so a user who wants to follow the reasoning can,
     while a user who does not never has to read arithmetic to use the application. These
-    explanations, with the reference links beside them, are the whole of the
-    application's help; there is no separate help section to visit.
+    explanations, with the reference links beside them, stay beside the figure they
+    explain and are never restated in a manual. A single help screen may sit alongside
+    them, but it holds no explanation of its own: it points at the explanation, the
+    reference link, or the screen that settles the question, so a given answer is
+    written in exactly one place and a page that moves is fixed there.
 25. Every action that rests on a legal rule carries a link to the page that states it —
     the minimum wage, the rest-day and holiday premium, annual leave, sick pay,
     recuperation, national insurance — so a user who wants to check a figure can read
