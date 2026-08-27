@@ -3,6 +3,55 @@
   "country_code": "UA",
   "country_name_he": "אוקראינה",
   "year": 2026,
-  "source_url": "https://www.isavta.co.il/he/holidays/UK/2026",
-  "holidays": []
+  "source_url": "https://www.isavta.co.il/he/holidays/UA/2026",
+  "holidays": [
+    {
+      "date": "2026-01-01",
+      "name": "New Year's Day"
+    },
+    {
+      "date": "2026-01-07",
+      "name": "Orthodox Christmas Day"
+    },
+    {
+      "date": "2026-03-08",
+      "name": "International Women's Day"
+    },
+    {
+      "date": "2026-04-13",
+      "name": "Orthodox Easter Monda"
+    },
+    {
+      "date": "2026-05-01",
+      "name": "Labor Day"
+    },
+    {
+      "date": "2026-05-09",
+      "name": "Victory Day / Memorial Day"
+    },
+    {
+      "date": "2026-05-31",
+      "name": "Orthodox Pentecost"
+    },
+    {
+      "date": "2026-06-28",
+      "name": "Constitution Day"
+    },
+    {
+      "date": "2026-08-24",
+      "name": "Independence Day"
+    },
+    {
+      "date": "2026-10-01",
+      "name": "Ukraine Defender Day"
+    },
+    {
+      "date": "2026-10-14",
+      "name": "Defenders' Day"
+    },
+    {
+      "date": "2026-12-25",
+      "name": "Catholic Christmas Day"
+    }
+  ]
 }
