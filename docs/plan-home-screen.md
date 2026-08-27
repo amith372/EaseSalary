@@ -30,6 +30,32 @@ that computes nothing — it reads. Every screen that computes (`חישוב הח
 
 ---
 
+## Verifying and pushing
+
+Per CLAUDE.md rule 7, each step below ends with a **You verify** block: what to run,
+what you should see, and what a failure looks like. The agent stops there and waits.
+It commits nothing until you say the check passed, and pushes nothing until you say so
+separately — a commit is local and cheap to undo, a push is not.
+
+Three steps are **push points**, marked below. The steps between them are commits only:
+they leave the tree in a state that builds and tests clean but does not yet show you
+anything you can judge, and pushing a half-built screen buys nothing.
+
+Before any push, all four of these must be clean — the agent runs them and pastes the
+output, you don't need to:
+
+```
+npx next typegen && npx tsc --noEmit    # typegen first, or LayoutProps is undefined
+npm test
+npm run lint
+git status --short                      # empty: nothing stray, nothing forgotten
+```
+
+Failure output goes in the report as-is. A step reported as done with a failing check
+is the one thing this whole arrangement exists to prevent.
+
+---
+
 ## Step 1 — Repo and scaffold
 
 Target: `D:\school\LLM vibe coding\EaseSalary`
@@ -58,9 +84,43 @@ Copy from `Downloads\EaseSalary\` (copy, not move — leave the originals):
 Two data defects to flag in the commit, not silently fix: `UA-2026.json` has an **empty**
 `holidays` array, and its `source_url` points at country code `UK`, not `UA`.
 
+### You verify — Step 1  ·  **push point 1**
+
+```
+npm run dev
+```
+
+- `http://localhost:3000` shows the **stock Next.js starter page**. That is correct
+  here. Nothing of EaseSalary is built yet — if you see anything Hebrew, something
+  ran ahead of the plan.
+
+```
+npm test                 # 1 passed
+git show --stat HEAD | grep xlsx
+```
+
+- The `grep` must print **three** `Bin 0 -> N bytes` lines. **Empty output is the
+  ignore trap** — the templates were silently dropped and Stage 2 breaks on a fresh
+  clone, not here.
+
+```
+git -C "D:\school\LLM vibe coding" status
+```
+
+- Must **not** list `EaseSalary/`. If it does, the parent Price-Comparison repo is
+  about to swallow this one.
+
+Safe to push: the remote is empty, and this establishes it.
+
+---
+
 ## Step 2 — Design tokens, shell, and shared components
 
-Extracted from the canvas (all eleven artboards share one system).
+Extracted from the canvas — https://claude.ai/design/p/b11cf323-ac11-490d-994d-3145e8e07a6b — where all eleven artboards share one system.
+Read it through the `claude_design` MCP; see CLAUDE.md's Design row for the one-time setup.
+The token list below is transcribed here so Step 2 is not *blocked* on canvas access, but
+`Card`, `StatusPill`, `MoneyValue` and `Bidi` are named only — those must be read from the
+canvas, not guessed.
 
 `src/app/globals.css` — Tailwind `@theme` tokens:
 
@@ -98,9 +158,31 @@ Components in `src/components/`:
   **`{ kind, from, to, note }` spans, not per-day marks** — see below.
 - `fixtures/home.ts` — placeholder values matching the canvas (`[סכום]`, `[מספר]`).
 
+### You verify — Step 2  ·  commit only
+
+`AppShell` wraps `src/app/layout.tsx`, so the shell renders around the starter content.
+
+```
+npm run dev
+```
+
+- The sidebar sits on the **right** — dark green, 232px, the `EaseSalary` wordmark,
+  five nav items, the "צריך/ה עזרה?" card at the bottom. **A sidebar on the left means
+  `dir="rtl"` is missing or a physical `left`/`right` slipped into the CSS.**
+- Narrow the window to phone width: **no horizontal scrollbar on the body.**
+- Hebrew text renders in Assistant, not a fallback serif. Check DevTools → Network,
+  filter `font` — you should see the Assistant files load.
+- DevTools → inspect `<html>` → Computed: `--color-forest`, `--color-ink`, `--color-sand`
+  are defined. If they're missing the Tailwind `@theme` block didn't compile and every
+  colour in Step 3 will silently fall back.
+
+Nothing here is judgeable as a *screen* yet, so this is a commit, not a push.
+
+---
+
 ## Step 3 — `src/app/page.tsx` — the home screen
 
-Built as drawn in `EaseSalary - דף הבית v2.dc.html`: worker switcher, the "צריך לטפל"
+Built as drawn in `EaseSalary - דף הבית v2.dc.html` on the canvas (https://claude.ai/design/p/b11cf323-ac11-490d-994d-3145e8e07a6b): worker switcher, the "צריך לטפל"
 hero, the interactive calendar, the "מה שולם החודש" panel with per-line `?` disclosures
 and the export button, the "יתרות" panel, and the "גם מחכה לך" action list.
 
@@ -186,6 +268,47 @@ authored once into CLAUDE.md in Step 5, applied here first:
   `from = min(anchor, cursor)` on the dates themselves; anything keyed off column index
   or `clientX` inverts, and — per the Part 5 warning — looks plausible while being wrong.
 
+### You verify — Step 3  ·  **push point 2**
+
+This is the real one. The home screen renders from fixtures at `/`.
+
+**Layout and RTL**
+- Sunday is the **rightmost** calendar column.
+- August 2026: the 1st falls in the **Saturday** column, and the Saturdays are
+  **1, 8, 15, 22, 29** — five of them. A wrong offset here means the leading blanks
+  were hardcoded rather than derived.
+- Chevrons point the right way; no horizontal body scroll.
+
+**Chrome translate** — the failure this app is most likely to ship with
+- Right-click → *Translate to English*, with the **console open**.
+- Every visible string translates. Anything still in Hebrew is text stranded inside
+  an image.
+- The console must **not** show `NotFoundError: Failed to execute 'removeChild'`.
+  That crash means a bare `{dynamic}` string is sitting as a sibling of other nodes
+  somewhere — the one convention hardest to hold by hand.
+- Toggle back to Hebrew: the layout returns intact, sidebar back on the right.
+
+**Ranges** — sweep with the mouse held down
+- Sweep **16 → 22 August** with חופש selected: one span, one gesture.
+- Sweep the **same days right-to-left**: identical span. **A different result is the
+  RTL inversion trap** — the sweep was keyed off screen position instead of dates.
+- Shift-click an end day: same span again. Arrow keys extend it, Space commits.
+- Click **inside** an existing span: the **whole** span clears, not one day.
+- A **vacation** sweep across a Saturday leaves that Saturday **unmarked**; a
+  **sick** sweep **keeps** it. This asymmetry is deliberate — item 5 vs item 8.
+- Drag a sick span past the 31st: stored whole, the overflow shown as text, not
+  truncated.
+
+**The rest**
+- Each `?` opens its explanation and its kol-zchut link.
+- The worker switcher moves between the two fixtures.
+- The legend shows "שבת" (the default rest day) and "שבת חופשית" (the marked
+  exception) as **two distinct states**, not one grey.
+
+Push once this passes. It is the first commit that is worth someone else pulling.
+
+---
+
 ## Step 4 — `build_plan.md`
 
 `build_plan.md` is *what to build next*. It must not re-describe work Steps 1–3 finish in
@@ -242,6 +365,14 @@ rules (logical properties, `<bdi>`, UTC dates). The Chrome-translate rules from 
 conventions of the same kind and belong there — appended to that section, in one place,
 rather than repeated in build_plan or rediscovered per screen.
 
+Two further edits, from improvement notes 13 and 6:
+- Qualify "calculation code carries tests; interface code need not." A test that checks
+  two things **agree** belongs beside neither of them, and the preview-vs-export test is
+  exactly that shape.
+- The Deploy and Export rows now carry their reasons (the `next typegen` prerequisite, the
+  committed `.xlsx` templates). Keep that habit: a configuration fact that cost something
+  to discover is written down beside the configuration, with what it cost.
+
 ## Step 6 — `specs.md`
 
 Two amendments, both per CLAUDE.md rule 1 (fix the spec before the code) and rule 3
@@ -254,6 +385,28 @@ Two amendments, both per CLAUDE.md rule 1 (fix the spec before the code) and rul
   Item 5 currently says the user "marks on a day"; item 8 and Part 3 already require sick
   spells to be stored as ranges, so this closes a gap between the two rather than adding
   behavior. The Saturday rule below goes in the same sentence, with its reason.
+
+### You verify — Steps 4–6  ·  **push point 3**
+
+Documentation only; nothing runs. Read three diffs:
+
+```
+git diff build_plan.md CLAUDE.md specs.md
+```
+
+- **`build_plan.md`** — Stage 0 is present and marked done, listing outcomes only.
+  Stages 1–6 keep their numbers. It carries **no tokens and no conventions**; if a
+  hex colour or an RTL rule appears in this diff it is in the wrong file.
+- **`specs.md`** — items 26 and 5 are **replaced outright**, not appended to with a
+  contradicting older sentence left above (CLAUDE.md rule 3). Item 5's Saturday rule
+  carries its reason in the same sentence.
+- **`CLAUDE.md`** — the Chrome-translate rules land in "Code conventions" and nowhere
+  else. The file is still short.
+
+The judgement call to make yourself: the **Design ↔ spec reconciliation** list is
+things found and deliberately *not built*. Read both halves. Anything you actually
+want built is a decision only you can make, and it belongs in `specs.md` before it
+becomes code.
 
 ---
 
@@ -308,6 +461,17 @@ Ordered by how expensive they are to discover late.
     per-day marks, and Stage 4's calendar needs range entry — otherwise the sick tiers
     (nothing day 1, half days 2–3, full from day 4) cannot be counted from a spell's own
     first day across a month boundary. Added to Stages 1, 3 and 4.
+13. **Nothing tests that the preview and the export agree.** CLAUDE.md has one engine
+    serving both the on-screen preview and the exported workbook, and Stage 2's "done
+    when" is that the file "can be opened beside the family's own sheet and read as the
+    same document." That agreement is the property that matters — and a test sitting
+    beside only the engine, or only the ExcelJS filler, cannot check it, because each
+    passes happily while wording the month differently from the other. Stage 2 needs a
+    test that drives the preview's lines and the filled cells from the **same** engine
+    output and asserts they say the same thing. CLAUDE.md's "calculation code carries
+    tests; interface code need not" currently points away from ever writing it, so that
+    sentence needs qualifying in Step 5. (Borrowed from the Tribunal repo, where the
+    client's pre-flight mirror is tested from the *server* suite for exactly this reason.)
 
 ---
 

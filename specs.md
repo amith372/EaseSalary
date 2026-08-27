@@ -54,10 +54,14 @@ Each of these is true or false at a glance.
    source and requires the user to confirm it; if the fetch fails, the application says
    so plainly and lets the user enter the figure by hand.
 5. The month is presented as a calendar. Its Fridays and Saturdays are counted from the
-    calendar rather than typed, and the user marks on a day what departed from an
-    ordinary month — a free Saturday, a vacation day, sick days, a holiday worked. The
-    sheet reports two counts. The standard count is the month's days less its Saturdays,
-    and nothing the worker takes reduces it — neither vacation nor sickness. The actual
+    calendar rather than typed, and the user marks a span of days for what departed from
+    an ordinary month — a free Saturday, a vacation day, sick days, a holiday worked —
+    of which a single day is the common case and is simply a span of one. A vacation span
+    skips the Saturdays inside it, because Saturday is already the weekly rest day and
+    stands outside the standard count, so drawing a vacation day for one would charge the
+    worker twice; a sick span keeps its Saturdays, for the reason given in criterion 8.
+    The sheet reports two counts. The standard count is the month's days less its
+    Saturdays, and nothing the worker takes reduces it — neither vacation nor sickness. The actual
     count is that same figure less the days she did not in fact work. The salary is
     calculated from the standard count, so vacation and sickness never shrink the base;
     the actual count is there to be read. A day that is neither vacation nor sickness —
@@ -99,9 +103,14 @@ Each of these is true or false at a glance.
    the tiers give her. Sick days leave the actual count and not the standard one. A spell of sickness is counted from
    its first day through to its last, across a month boundary, rather than restarting
    each month; the Saturdays inside a spell count toward it and are drawn from the
-   balance, but are not paid. Where the Friday supplement is pocket money, a Friday on
-   which sickness was reported is still paid it, unless the whole of that week was lost
-   to sickness, in which case it is not.
+   balance, but are not paid. A span marked over a day that cannot take the mark is
+   applied to the days that can and the rest is reported, which leaves two spells where
+   one was intended — and because the tiers count from each spell's own first day, that
+   break changes what the sickness pays. So the skipped days and the reason for each are
+   shown to the user rather than absorbed silently, and a spell entered as one range is
+   stored as one span wherever it legally can be. Where the Friday supplement is pocket
+   money, a Friday on which sickness was reported is still paid it, unless the whole of
+   that week was lost to sickness, in which case it is not.
 9. A holiday the worker does not work changes nothing: a monthly salary is paid in full
    and no vacation day is drawn. A holiday she works is paid at the rest-day rate, and a
    holiday falling on a Saturday she works is paid once, not twice.
@@ -182,13 +191,16 @@ Each of these is true or false at a glance.
     the minimum wage, the rest-day and holiday premium, annual leave, sick pay,
     recuperation, national insurance — so a user who wants to check a figure can read
     the rule rather than take the application's word for it.
-26. The opening screen carries only things that need the user to do something — a
+26. The opening screen leads with the things that need the user to do something — a
     quarterly national-insurance payment due, a licence or medical insurance about to
     expire, an advance still being repaid, holidays not yet all chosen, recuperation due
     this month, a year passing with no vacation taken, a finished month not yet
     exported, a minimum wage that changed since the last export, and a worker crossing
-    into a new year of seniority. Balances and running figures live on the worker's
-    profile instead, so the opening screen stays worth reading.
+    into a new year of seniority. Beside that list it may also carry the current month's
+    calendar, the month's totals, and the vacation and sick balances, so the month can be
+    marked and read where the application opens rather than one screen further in. What
+    needs doing comes first, and nothing else joins them: a running figure earns its
+    place on this screen only by being one the user came to see.
 
 ## Part 3 — Architectural guidance
 
