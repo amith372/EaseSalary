@@ -63,7 +63,17 @@ Each of these is true or false at a glance.
     worker twice; a sick span keeps its Saturdays, for the reason given in criterion 8.
     The sheet reports two counts. The standard count is the month's days less its
     Saturdays, and nothing the worker takes reduces it — neither vacation nor sickness. The actual
-    count is that same figure less the days she did not in fact work. The salary is
+    count is that same figure less the days she did not in fact work, and it exists to
+    answer the Wage Protection Act's requirement to list the days the worker actually
+    worked. What leaves it: a vacation day, a sick day, a holiday she did not work, and —
+    once it is built — an absence with no entitlement. What does not leave it: a holiday
+    she worked, which is a working day like any other. A day taken in part leaves the
+    actual count in that same proportion, so half a vacation day leaves half a day.
+    Saturdays stand outside both counts from the start, so a free Saturday touches
+    neither. A holiday behaves oppositely in money and in the counts, and that is the
+    check to hold on to: one she worked changes the money and not the count, one she did
+    not work changes the count and not the money, and a holiday that changes both, or
+    neither, is a mistake. The salary is
     calculated from the standard count, so vacation and sickness never shrink the base;
     the actual count is there to be read. An absence with no entitlement behind it — a day
     that is neither vacation nor sickness — is out of scope for the first version along

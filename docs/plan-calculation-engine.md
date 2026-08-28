@@ -356,9 +356,29 @@ Nothing renders and nothing here is judgeable as a screen, so this is a commit, 
 | standard days | days in the month less its Saturdays; **nothing the worker takes reduces it** | Item 5 |
 | actual days | the standard count less the days she did not in fact work | Item 5 |
 | Fridays | the month's Fridays, from the calendar | Item 5 — counted, never typed |
-| Fridays worked | the Fridays less those lost, per item 14's pocket-money flag and item 8's sickness rule | Items 8, 14 |
+| Fridays worked | the Fridays she actually worked | Item 5 |
+| Fridays paid the supplement | the Fridays less those lost, per item 14's pocket-money flag and item 8's sickness rule | Items 8, 14 |
 | Saturdays | the month's Saturdays, from the calendar | Item 5 |
-| Saturdays worked | the Saturdays less those marked `freeSaturday` | Item 5 |
+| Saturdays worked | the Saturdays she worked — less the free one, less any inside a spell of sickness | Items 5, 8 |
+
+**Two rows above were corrected while writing the file, both because the original
+conflated two things.**
+
+*Fridays worked is not the count that earns the supplement.* Where the supplement is
+pocket money, a Friday she did not work is paid it all the same (item 14) — so under that
+setting the two counts differ by every Friday she took off, and a single field would have
+to mean "worked" on one profile and "paid" on another. `MonthCounts` carries both:
+`fridaysWorked` is the day count the payslip reports, `fridaysPaidSupplement` is what
+Step 3 multiplies by the supplement. August 2025 has all five Fridays worked, so the two
+agree there and the split is invisible in the known case — which is the reason to write it
+down here rather than discover it on the first profile that sets the flag.
+
+*Saturdays worked is not simply "less the free one".* Item 8 says the Saturdays inside a
+spell of sickness count toward the spell and are drawn from the balance **but are not
+paid**, so a Saturday spent sick must not reach the rest-day rate; a holiday on a Saturday
+she did not work is the same case. All three fall out of asking "did she work this day"
+once, which is also what item 5 asks for when it says the counts must be written so that
+one more mark kind is enough later.
 
 **There is no mark for an absence with no entitlement**, and item 5 now says so — it is out of
 scope for this version along with the rest of the appendix's partial-month cases. But the counts
@@ -779,6 +799,13 @@ git diff specs.md build_plan.md
   the failure this check exists for.
 - `build_plan.md`'s Stage 1 lists **outcomes**, and this file is the description of how.
 - No rate, no formula and no colour appears in `build_plan.md`. If one does, it is in the wrong file.
+
+**What comes after this stage is not stage 2.** `build_plan.md`'s design pass runs next —
+the four home-screen departures folded into `דף הבית v3`, the artboards still drawing the
+v2 sidebar brought onto the top bar, and the screens with no artboard drawn for the first
+time. It sits here because the engine stages neither need it nor are blocked by it, and
+because the first stage that builds a screen against an artboard that does not exist would
+otherwise have to invent one mid-step.
 
 ---
 
