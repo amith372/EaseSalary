@@ -189,4 +189,102 @@ export const he = {
     holidaysChosen:
       "המכסה היא תשעה ימי חג לשנה מלאה, והימים נבחרים מראש מתוך רשימת החגים של ארץ המוצא.",
   },
+
+  /**
+   * The month sheet's own rows: the label the export writes on each, and the
+   * sentence behind its "?" (specs.md item 24). The sentences say how a figure
+   * was reached in words rather than as a formula — a sentence that reads as
+   * arithmetic has failed at the one job it has.
+   *
+   * Wording that carries a number is a function, so the number is placed inside
+   * a Hebrew sentence here rather than assembled by the engine out of fragments:
+   * a sentence built by concatenation is a sentence no one can correct without
+   * reading code.
+   */
+  sheet: {
+    lines: {
+      base: "שכר החודש",
+      fridaySupplement: "תוספת ימי שישי",
+      restDays: "עבודה בשבת",
+      holidaysWorked: "עבודה בחג",
+      sickDeduction: "ניכוי ימי מחלה",
+      incomeTax: "מס הכנסה",
+      advanceGranted: "מקדמה שניתנה",
+      advanceRepaid: "מקדמה שנפרעת",
+    },
+
+    thirdParty: {
+      medicalInsurance: "ביטוח רפואי",
+      nationalInsurance: "ביטוח לאומי",
+      agencyFee: "דמי טיפול",
+      placementFee: "דמי תיווך",
+      visaFee: "אגרת ויזה",
+      licenceFee: "חידוש רישיון",
+    },
+
+    /** The sheet prints a total per column before the month's own two totals:
+     * criterion 1 checks four figures, not two. */
+    subtotals: {
+      E: "סך שכר החודש",
+      F: "סך שבתות וחגים",
+      G: "סך תשלומים חד־פעמיים",
+      H: "סך תשלומים לגורמים שלישיים",
+    },
+
+    reporting: {
+      standardDays: "ימי תקן",
+      actualDays: "ימים בפועל",
+      daysUsed: "ימים שנוצלו החודש",
+      balanceLeft: "יתרה שנשארה",
+      nationalInsuranceEstimate: "אומדן ביטוח לאומי לחודש",
+    },
+
+    why: {
+      base: (standardDays: number) =>
+        `משכורת חודשית מלאה. היא נשענת על ${standardDays} ימי התקן של החודש — כל ימי החודש חוץ מהשבתות — ולכן חופשה או מחלה אינן מקטינות אותה.`,
+      fridaySupplement: (fridays: number) =>
+        `תוספת קבועה שנקבעה בפרופיל עבור כל יום שישי, והחודש היא משולמת עבור ${fridays} ימי שישי.`,
+      restDays: (saturdays: number) =>
+        `עבודה בשבת משולמת בתעריף המנוחה השבועית: יום עבודה ועוד שעה, בתוספת של חצי. המנוחה השבועית של עובד/ת סיעוד היא 25 שעות ולא 24, ולכן התעריף גבוה מיום וחצי רגיל. החודש נעבדו ${saturdays} שבתות.`,
+      holidaysWorked: (holidays: number) =>
+        `חג שנעבד משולם באותו תעריף כמו שבת. חג שלא נעבד אינו מזכה בתוספת, כי המשכורת החודשית משולמת עליו במלואה. החודש נעבדו ${holidays} ימי חג.`,
+      incomeTax:
+        "היישום אינו מחשב מס הכנסה. השורה מתחילה באפס, והסכום מוזן ידנית על ידך.",
+      advanceGranted: (advanceNumber: number) =>
+        `מקדמה מספר ${advanceNumber} שניתנה החודש ומתווספת לסכום המועבר. היא תיפרע בחודשים הבאים, לפי הסכום שיוזן בכל חודש.`,
+      advanceRepaid: (advanceNumber: number) =>
+        `החזר של מקדמה מספר ${advanceNumber} שניתנה קודם לכן. הסכום נקבע לחודש הזה בלבד ואינו נגזר מלוח תשלומים קבוע.`,
+      extra: "תשלום שהוספת לחודש הזה, עם הסיבה שרשמת לו.",
+      thirdParty:
+        "תשלום שיוצא לגורם שלישי ולא לעובד/ת, ולכן אינו נכלל בסכום שמשולם לה.",
+      gross: "השכר, התוספות והתשלומים החד־פעמיים של החודש, לפני המקדמות והניכויים.",
+      net: "מה שמועבר בפועל: סכום החודש, אחרי המקדמות והניכויים שבתחתית הדף.",
+      subtotal: {
+        E: "סכום שורות השכר של החודש — המשכורת החודשית ותוספת ימי השישי.",
+        F: "סכום התשלומים עבור עבודה בשבת ובחג, שניהם בתעריף המנוחה השבועית.",
+        G: "סכום התשלומים החד־פעמיים של החודש.",
+        H: "סכום מה ששולם לגורמים שלישיים. אינו נכנס לסכום שמשולם לעובד/ת.",
+      },
+      vacationBalance: (seniorityYear: number) =>
+        `ימי החופשה נצברים לפי הוותק. בשנה ה־${seniorityYear} להעסקה הצבירה היא החלק החודשי של המכסה השנתית, והיתרה שלא נוצלה עוברת לחודשים ולשנים הבאות ואינה נמחקת.`,
+      sickBalance:
+        "ימי המחלה נצברים יום וחצי בכל חודש עבודה עד תקרה של תשעים ימים, ומה שלא נוצל נשמר לחודשים הבאים ואינו מתאפס בסוף השנה.",
+      nationalInsuranceEstimate:
+        "אומדן בלבד, לאישור ולא כעובדה: 3.6% מעלות החודש המלאה — השכר, התוספות, השבתות והחגים והתשלומים החד־פעמיים — לפני כל מה שקשור למקדמות. הסכום שנדרש בפועל שונה לעיתים מהאומדן, והתשלום עצמו מופיע רק בחודש שבו שולם.",
+    },
+
+    /** A refusal says why, not only what. The dates it concerns travel beside
+     * it on the refusal itself, so the interface names them isolated rather
+     * than inside a Hebrew sentence (specs.md Part 5). */
+    refusals: {
+      restDayHoliday:
+        "אי אפשר לסמן חג בתאריך שכבר סומן בו שבת חופשית. היום היה משולם פעמיים — גם בתעריף המנוחה השבועית וגם כחג — ולכן צריך לבחור אחד מהשניים.",
+      holidayLimit: (allowed: number) =>
+        `המכסה היא ${allowed} ימי חג בשנה, והרישום הזה חורג ממנה. אפשר להסיר חג אחר שנבחר לשנה הזו במקומו.`,
+      freeSaturdayNotSaturday:
+        "שבת חופשית נרשמה על יום שאינו שבת. יום המנוחה השבועית הוא שבת עבור כל עובד/ת, ולכן הרישום הזה לא יכול להיות נכון.",
+      saturdaysExceedMonth:
+        "מספר השבתות שנעבדו גדול ממספר השבתות שיש בחודש.",
+    },
+  },
 } as const;

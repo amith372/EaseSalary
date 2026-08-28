@@ -112,8 +112,12 @@ const result: MonthResult = {
   standardDays: null,
   actualDays: null,
   lines,
-  totalToWorker: null,
+  subtotals: [],
+  closing: [],
+  gross: null,
+  net: null,
   balances,
+  nationalInsuranceEstimate: null,
 };
 
 const alerts: HomeAlert[] = [

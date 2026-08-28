@@ -451,6 +451,54 @@ note 1): `base`, `fridaySupplement`, `restDays`, `holidaysWorked`, `sickDeductio
 override (item 17) sets `manual: true` and replaces the amount without touching the key, so a
 manual figure is still addressable and still says what it would otherwise have been.
 
+**Three corrections you made after reading the first draft of the snapshot**, all of which
+changed the shape of `MonthResult` rather than a figure:
+
+- **The sheet prints four total lines, not two.** Criterion 1 checks four figures, and the
+  first draft exposed only `gross` and `net` — the two column subtotals existed nowhere but
+  in a test helper. `MonthResult.subtotals` now carries one per column the month has lines
+  in, so August 2025 prints ₪6,747.65 and ₪2,558.10 beside the other two, and an empty
+  column prints nothing rather than a zero.
+- **A line's units are its own, and `units × rate` must give its amount.** The base was
+  drafted at 26 units, which read as 26 days at a monthly price. It is one month at the
+  monthly rate. The standard and actual counts are separate reporting figures and are never
+  a line's units. `MonthLine.rate` is the unit price — column D, which Part 5 already names
+  — carried at full precision, and the invariant is asserted over every line.
+- **The reporting block belongs to this step, not to Step 4.** Criterion 2 requires the
+  payslip to carry the days used, the balances left, and both day counts; build_plan puts
+  the balances in stage 1. So `src/lib/engine/balances.ts` arrives here — accrual by
+  seniority as a fraction, the 1.5-a-month sick accrual with its ninety-day ceiling,
+  carry-forward through `MonthContext.openingBalances`, and days used clipped to the month
+  through `balanceDaysOf`. The national-insurance estimate comes with it, at 3.6% of the
+  gross. **Step 4 is now the refusals and the warnings** — the sick balance as a floor that
+  never goes negative, and the seven-day vacation warning — plus the multi-month
+  carry-forward tests, and its "You verify" block still holds.
+
+**Three placements the step had to settle, none of which the table above fixed.**
+
+*The income-tax row is in the closing block, not column E.* The gross is what she earned;
+tax is withheld from it on the way to what is actually transferred, exactly as the advance
+instalment is — so putting it in E would make ₪9,305.75 mean "earned" on a month with no
+tax and "earned less tax" on one with it. The plan's own key list already mixes column
+lines with closing rows (`advance.<number>.granted` is a closing row), so `incomeTax`
+sitting there breaks nothing. It is always emitted, at zero when nothing was entered,
+because item 17 speaks of *the* income-tax line rather than a line that may be absent.
+August 2025 has no tax, so the ₪7,305.75 is unaffected either way — which is why it needed
+deciding on the argument rather than on the case.
+
+*`sickDeduction` is reserved and not emitted here.* Step 5 owns the statutory tiers, and a
+key placed in this list now is what makes it stable from this commit — the list fixes the
+key set, not which step writes each line. August 2025 has no sickness, so nothing is
+missing from the known case.
+
+*The refusals live in `src/lib/engine/validate.ts`, not inside the engine.* The interface
+wants to show the reasons before anyone presses export, and the engine must refuse whatever
+reaches it — so `validateMonth` is exported for the first and `calculateMonth` throws
+`InvalidMonthError` for the second. A refusal returned rather than thrown would be a
+refusal a caller can ignore and still get a number. The tenth-holiday check needs to see
+past the month it is handed, so it takes an optional `YearContext`: Stage 3's repository
+supplies the days already taken, and a month handed over alone is read as the year's first.
+
 **There is no `vacationDays` line, and that is the point.** Your answer to question 1 is now
 item 7: the sheet carries no vacation payment line at all, because the base is computed from
 the standard count and never shrinks, so a vacation line beside it would pay the day twice.

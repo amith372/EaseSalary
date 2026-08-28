@@ -311,7 +311,7 @@ export default function Home() {
                   {he.home.paid.total}
                 </span>
                 <span className="flex items-center gap-2.25">
-                  <MoneyValue agorot={result.totalToWorker} size="lg" chip="plain" />
+                  <MoneyValue agorot={result.net} size="lg" chip="plain" />
                   <WhyButton
                     controls="why-total"
                     open={openWhy === "total"}

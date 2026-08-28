@@ -85,13 +85,64 @@ export interface MonthLine {
   /** A secondary line under the label: "[מספר] ימים שסומנו". */
   hint?: string;
   amount: number | null;
-  /** The payslip shows every payment as its type, its units and its amount
-   * (specs.md item 2). */
+  /**
+   * The payslip shows every payment as its type, its units and its amount
+   * (specs.md item 2), and `units × rate` must round to `amount` on every line.
+   * That invariant is what keeps the units honest: the base salary is one
+   * month at the monthly rate, not 26 days at it. The standard and actual day
+   * counts are separate reporting figures on `MonthResult` and are never a
+   * line's units.
+   */
   units?: number | null;
+  /**
+   * The unit price — column D of the month tab. Carried at full precision and
+   * never rounded, because it is a rate (specs.md item 3): only the amount it
+   * produces is rounded. Reading it as a charge would invent payments in months
+   * where nothing was paid (Part 5), so it is a price and never a total.
+   */
+  rate?: number | null;
   column: SheetColumn;
   /** An overridden amount is visibly marked as manual and survives every later
    * recalculation of that month (specs.md item 17). */
   manual: boolean;
+  explanation: Explanation;
+}
+
+/**
+ * One row of the block at the foot of the sheet, below the columns.
+ *
+ * The bottom of the month sheet is not a fixed layout: a month that grants an
+ * advance carries a row adding it, a month that repays one carries a row
+ * subtracting the instalment, and a month may carry several of both at once
+ * (specs.md Part 5, item 20). It grows with the advances, so it is generated
+ * rather than chosen from a fixed set of shapes — which is why it is a list of
+ * its own and not a handful of optional fields on `MonthResult`.
+ *
+ * `amount` is signed: a row that adds to the total is positive, one that
+ * subtracts is negative. The sign follows from what the row is, so it can never
+ * disagree with the label beside it.
+ */
+export interface ClosingLine {
+  key: string;
+  label: string;
+  amount: number | null;
+  manual: boolean;
+  explanation: Explanation;
+}
+
+/**
+ * A column's own total, as the month tab prints it.
+ *
+ * The sheet carries four total lines, not two: the monthly salary items come to
+ * ₪6,747.65 and the Saturdays and holidays to ₪2,558.10 before the month's
+ * total and the figure actually paid (specs.md criterion 1, Part 4). A subtotal
+ * is emitted for every column the month has lines in, so a column with nothing
+ * in it prints nothing rather than a zero.
+ */
+export interface ColumnSubtotal {
+  column: SheetColumn;
+  label: string;
+  amount: number | null;
   explanation: Explanation;
 }
 
@@ -130,9 +181,40 @@ export interface MonthResult {
    * from. */
   actualDays: number | null;
   lines: MonthLine[];
-  /** Columns E, F and G alone. Adding H would overpay the worker. */
-  totalToWorker: number | null;
+  /** One per column the month has lines in. Two of the sheet's four total lines
+   * live here; `gross` and `net` are the other two. */
+  subtotals: ColumnSubtotal[];
+  /** The rows below the columns, generated from the month's advances and its
+   * income-tax line. */
+  closing: ClosingLine[];
+  /**
+   * Columns E, F and G alone — "the month's total" of specs.md Part 5, and
+   * ₪9,305.75 in the August 2025 case. Adding H would overpay the worker
+   * (item 16).
+   */
+  gross: number | null;
+  /**
+   * What is actually paid: the gross after the closing block, and ₪7,305.75 in
+   * the August 2025 case. Part 4 names both figures without naming either, so
+   * the two are given names here and the export and the preview use them both
+   * (Part 5).
+   */
+  net: number | null;
+  /**
+   * The vacation and sick days used in the month and the balances left after
+   * them — a Wage Protection Act requirement of the payslip made from this
+   * sheet (specs.md item 2), so they belong to the month's result and not to a
+   * screen that assembles them afterwards.
+   */
   balances: BalanceLine[];
+  /**
+   * This month's national-insurance estimate: 3.6% of the month's full cost,
+   * taken before anything to do with advances (specs.md item 19). It is an
+   * estimate to be confirmed and never a fact, because the sum actually billed
+   * has differed from it — and it is not the money that left the account, which
+   * appears only in the month it was paid, as a column H line of its own.
+   */
+  nationalInsuranceEstimate: number | null;
 }
 
 export interface Worker {
