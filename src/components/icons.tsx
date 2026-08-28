@@ -31,7 +31,7 @@ export function Chevron({
       strokeLinecap="round"
       strokeLinejoin="round"
       className={[
-        "size-[18px]",
+        "size-[15px]",
         towards === "previous" ? "rtl:rotate-180" : "rotate-180 rtl:rotate-0",
         className ?? "",
       ]
@@ -49,17 +49,40 @@ export function SheetBadge({ className }: { className?: string }) {
     <svg
       aria-hidden="true"
       focusable="false"
-      viewBox="0 0 24 24"
+      viewBox="0 0 16 16"
       fill="none"
-      className={["size-5", className ?? ""].filter(Boolean).join(" ")}
+      className={["size-4.25", className ?? ""].filter(Boolean).join(" ")}
     >
-      <rect x="1" y="1" width="22" height="22" rx="6" fill="currentColor" opacity="0.22" />
+      <rect x="1" y="1.5" width="14" height="13" rx="3" className="fill-surface" />
       <path
-        d="M8.5 8 15.5 16M15.5 8 8.5 16"
+        d="M5.4 5.4 10.6 10.6M10.6 5.4 5.4 10.6"
         stroke="currentColor"
-        strokeWidth={2.2}
+        strokeWidth={1.5}
         strokeLinecap="round"
       />
+    </svg>
+  );
+}
+
+/** The sprout beside "צריך לטפל" — the one drawing on the screen, and the
+ * reason that card reads as an invitation rather than as a warning. */
+export function Sprout({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 26 26"
+      fill="none"
+      className={["size-6.5 flex-none", className ?? ""].filter(Boolean).join(" ")}
+    >
+      <path
+        d="M13 21V11.5"
+        className="stroke-leaf"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+      />
+      <path d="M13 12.5C13 8.5 10 5.5 6 5C5.6 9.4 8.6 12.4 13 12.5Z" className="fill-leaf-soft" />
+      <path d="M13 15.5C13 11.5 16 8.5 20 8C20.4 12.4 17.4 15.4 13 15.5Z" className="fill-leaf-mid" />
     </svg>
   );
 }

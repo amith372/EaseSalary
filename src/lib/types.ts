@@ -145,11 +145,14 @@ export interface Worker {
 }
 
 /** A thing on the opening screen that needs the user to do something
- * (specs.md item 26). */
+ * (specs.md item 26). The explanation carries the sentence and the reference
+ * link together, so an alert opens the same "?" a money line does rather than
+ * showing a bare link to the law: the explanation stays beside the thing it
+ * explains, in one idiom (item 24). */
 export interface HomeAlert {
   key: string;
   title: string;
   note: string;
   action: string;
-  link?: LegalLinkKey;
+  explanation: Explanation;
 }

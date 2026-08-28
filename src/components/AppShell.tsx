@@ -4,11 +4,32 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Bidi } from "@/components/Bidi";
+import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
+import { fixtureWorkers } from "@/lib/fixtures/home";
 import { he } from "@/lib/i18n/he";
 
 /**
- * The frame every artboard on the canvas draws verbatim: a 232px dark-green
- * sidebar on the inline start, and a header above the page's own content.
+ * The frame every route gets: a single 62px white bar across the top, as
+ * `EaseSalary - דף הבית v3 לוח במרכז` draws it. The 232px green sidebar of v2 is
+ * gone from the application and not only from the home screen, so this is
+ * rebuilt rather than forked — a sidebar surviving on one route would be a
+ * second shell to keep in step with the first.
+ *
+ * Help is the circular "?" in the bar rather than a card at the foot of the
+ * sidebar: it is then in view on every screen by construction, which is the
+ * whole of what pinning the card was trying to buy.
+ *
+ * The greeting and the worker switcher sit here too, where v3 draws them as a
+ * row of their own at the top of the home screen. That row cost about seventy
+ * pixels and was what pushed the screen past the fold; both belong to the whole
+ * screen rather than to any one card, so the bar is where they go and the home
+ * screen opens straight onto the calendar. This is the one deliberate departure
+ * from the artboard, and the artboard is otherwise followed as drawn.
+ *
+ * The ten other artboards still draw the sidebar. They now disagree with this
+ * shell and each is rebuilt when its own stage arrives; the disagreement is
+ * written down here so a later session does not read one of them as current and
+ * put the sidebar back.
  *
  * It is a client component only because the active nav item is decided by the
  * current route, which a layout cannot know on the server.
@@ -33,41 +54,34 @@ interface AppShellProps {
    * an account behind it. */
   userName?: string;
   alertCount?: string;
-  todayLabel?: string;
 }
 
 export function AppShell({
   children,
   userName = he.header.yourName,
   alertCount = he.placeholder.count,
-  todayLabel = he.header.today,
 }: AppShellProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-ink md:flex-row">
-      {/*
-        The sidebar is a column beside the content at desktop width and a strip
-        above it below `md`. The canvas has no narrow artboard; folding the same
-        pieces into a strip keeps the design rather than inventing a second one,
-        and keeps the body from scrolling sideways at phone width.
-      */}
-      <aside
-        aria-label={he.nav.landmark}
-        className="flex w-full flex-none flex-col justify-between bg-bark px-4.5 pt-7.5 pb-4 text-cream md:min-h-screen md:w-58 md:pb-6.5"
-      >
-        <div className="flex flex-col gap-6 md:gap-11.5">
-          <div className="flex items-center gap-2.5 ps-2.5">
-            <span
-              translate="no"
-              className="text-[21px] font-bold tracking-[-0.02em] text-cream-hi"
-            >
+    /*
+      One desktop screen that does not scroll: the page is locked to the
+      viewport and the content area takes what the bar leaves. Below `md` the
+      lock is released and the page stacks and scrolls, because a phone has no
+      screen to fit (v3, and there is no narrow artboard).
+    */
+    <WorkerScopeProvider workers={fixtureWorkers}>
+    <div className="flex min-h-screen flex-col bg-ground text-ink md:h-screen md:min-h-0 md:overflow-hidden">
+      <header className="flex h-15.5 flex-none items-center justify-between gap-6 border-b border-line bg-surface px-4 md:px-7">
+        <div className="flex min-w-0 flex-auto items-center gap-6">
+          <Link href="/" className="flex flex-none items-center gap-2.25 text-ink hover:text-ink">
+            <span translate="no" className="text-[19px] font-bold tracking-[-0.02em]">
               {he.app.name}
             </span>
-            <span aria-hidden="true" className="size-5.5 flex-none rounded-lg bg-clay" />
-          </div>
+            <span aria-hidden="true" className="size-4.75 flex-none rounded-mark bg-clay" />
+          </Link>
 
-          <nav className="-mx-1 flex flex-row gap-0.5 overflow-x-auto px-1 md:mx-0 md:flex-col md:overflow-visible md:px-0">
+          <nav aria-label={he.nav.landmark} className="flex min-w-0 items-center gap-1 overflow-x-auto">
             {navItems.map((item) => {
               const active =
                 item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -77,19 +91,12 @@ export function AppShell({
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "flex flex-none items-center gap-3 rounded-xs px-3.5 py-3.25 text-[17px] whitespace-nowrap transition-colors",
+                    "flex-none rounded-tab px-3.5 py-2 text-[16px] whitespace-nowrap transition-colors",
                     active
-                      ? "bg-cream-hi/13 font-semibold text-cream-hi"
-                      : "font-normal text-cream-mute hover:bg-cream-hi/10 hover:text-cream-hi",
+                      ? "bg-chip font-semibold text-ink"
+                      : "font-normal text-ink-mute hover:bg-hover hover:text-ink",
                   ].join(" ")}
                 >
-                  <span
-                    aria-hidden="true"
-                    className={[
-                      "size-[7px] flex-none rounded-full",
-                      active ? "bg-clay" : "bg-cream/35",
-                    ].join(" ")}
-                  />
                   <span dir="auto">{item.label}</span>
                 </Link>
               );
@@ -97,60 +104,50 @@ export function AppShell({
           </nav>
         </div>
 
-        {/*
-          The help screen holds no explanation of its own: it points at the
-          explanation beside the figure, at the reference link, or at the screen
-          that settles the question (specs.md item 24). Built in stage 7; until
-          then this link has nowhere to land, like the nav items above it.
-        */}
-        <Link
-          href="/help"
-          className="mt-6 hidden flex-col gap-2.5 rounded-lg bg-cream-hi/8 p-4.5 text-cream transition-colors hover:bg-cream-hi/14 hover:text-cream-hi md:flex"
-        >
-          <span dir="auto" className="text-[16px] font-semibold text-cream-hi">
-            {he.nav.help.title}
-          </span>
-          <span dir="auto" className="text-[14px] font-light text-cream-mute text-pretty">
-            {he.nav.help.body}
-          </span>
-        </Link>
-      </aside>
+        <div className="flex flex-none items-center gap-3.5 ps-2">
+          <WorkerSwitcher className="hidden sm:flex" />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline px-5 py-4.5 md:px-10">
-          <div className="flex items-center gap-3">
-            <span
-              aria-hidden="true"
-              className="size-9 flex-none rounded-full border border-shell-line bg-shell"
-            />
-            <span className="text-[17px] text-ink-soft">
+          <Link
+            href="/help"
+            aria-label={he.nav.help.title}
+            className="flex size-8 flex-none items-center justify-center rounded-full border border-line text-[15px] font-semibold text-ink-quiet transition-colors hover:border-ask-line-hover hover:text-forest"
+          >
+            {/* Not translatable text: a question mark is a question mark. */}
+            <span aria-hidden="true" translate="no">
+              ?
+            </span>
+          </Link>
+
+          <Link
+            href="/alerts"
+            className="flex items-center gap-2 rounded-full border border-line px-3.25 py-1.75 text-[15px] text-ink-soft transition-colors hover:border-line-hover hover:text-ink"
+          >
+            <span aria-hidden="true" className="size-1.75 flex-none rounded-full bg-clay" />
+            <span dir="auto" className="hidden sm:inline">
+              {he.header.alerts}
+            </span>
+            <span className="font-semibold text-clay-ink">
+              <Bidi noTranslate>{alertCount}</Bidi>
+            </span>
+          </Link>
+
+          <Link href="/settings" className="flex items-center gap-2.5 text-ink hover:text-forest">
+            <span className="hidden text-[15px] font-medium whitespace-nowrap lg:inline">
               <span dir="auto">{he.header.greeting} </span>
               <Bidi>{userName}</Bidi>
             </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-[15px] font-light text-ink-faint">
-              <Bidi>{todayLabel}</Bidi>
-            </span>
-            <Link
-              href="/alerts"
-              className="flex items-center gap-2 rounded-full border border-sunken-line bg-surface px-3.25 py-1.75 text-[15px] text-ink-soft transition-colors hover:border-line hover:text-ink"
-            >
-              <span aria-hidden="true" className="size-[7px] rounded-full bg-clay" />
-              <span dir="auto">{he.header.alerts}</span>
-              <span className="font-semibold text-clay-ink">
-                <Bidi>{alertCount}</Bidi>
-              </span>
-            </Link>
-          </div>
-        </header>
+            <span
+              aria-hidden="true"
+              className="size-8.5 flex-none rounded-full border border-shell-line bg-shell"
+            />
+          </Link>
+        </div>
+      </header>
 
-        <main className="flex min-w-0 flex-1 justify-center px-5 pt-11 pb-25 md:px-10">
-          <div className="flex w-full max-w-[1040px] min-w-0 flex-col gap-8.5">
-            {children}
-          </div>
-        </main>
-      </div>
+      <main className="flex min-h-0 flex-1 justify-center overflow-auto px-4 pt-3 pb-3 md:px-7">
+        <div className="flex w-full max-w-[1320px] min-w-0 flex-col gap-2.5">{children}</div>
+      </main>
     </div>
+    </WorkerScopeProvider>
   );
 }

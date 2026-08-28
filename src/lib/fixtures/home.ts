@@ -2,6 +2,7 @@ import { he } from "@/lib/i18n/he";
 import type {
   BalanceLine,
   DaySpan,
+  HolidaySpan,
   HomeAlert,
   MonthLine,
   MonthResult,
@@ -25,27 +26,39 @@ export const fixtureMonth: YearMonth = { year: 2026, month: 8 };
  * render and server and browser agree. */
 export const fixtureToday = "2026-08-27";
 
-const workers: Worker[] = [
+/** The account's workers, handed to the shell's worker scope. Until Stage 3
+ * these are the placeholders; from Stage 3 they are the account's own, and only
+ * the source changes. */
+export const fixtureWorkers: Worker[] = [
   { id: "worker-1", name: he.placeholder.workerName, firstName: he.placeholder.name },
   { id: "worker-2", name: "[שם העובד/ת השני/ה]", firstName: he.placeholder.name },
 ];
 
 /**
- * The marks the canvas shows, with one change. The canvas marks the 15th as a
- * vacation day, and the 15th is a Saturday; a vacation span skips its Saturdays
- * because Saturday is already the weekly rest day and drawing a balance day for
- * it would charge the worker twice (specs.md item 5). The fixture puts that
- * vacation day on the 17th instead rather than shipping a state the rules
- * refuse.
+ * The four marks v3 draws: one free Saturday on the 8th, a vacation day on the
+ * 19th, a holiday on the 20th and a sick day on the 26th. The rest of the
+ * month's Saturdays carry no mark, because a free Saturday is the exception
+ * the user recorded and not the default (specs.md item 5).
+ *
+ * The holiday is one she worked. A holiday she did not work is drawn as an
+ * outline rather than a fill, and v3 draws neither that state nor a sixth
+ * legend chip for it: the outline, the chip and the toggle arrive with the
+ * month screen, together with the yearly picker that supplies the dates
+ * (specs.md item 9).
  */
+const workedHoliday: HolidaySpan = {
+  id: "span-holiday",
+  kind: "holiday",
+  from: "2026-08-20",
+  to: "2026-08-20",
+  worked: true,
+};
+
 const spans: DaySpan[] = [
-  { id: "span-vacation", kind: "vacation", from: "2026-08-17", to: "2026-08-17" },
-  { id: "span-holiday", kind: "holiday", from: "2026-08-19", to: "2026-08-19" },
-  { id: "span-sick", kind: "sick", from: "2026-08-20", to: "2026-08-20" },
-  { id: "span-rest-1", kind: "freeSaturday", from: "2026-08-01", to: "2026-08-01" },
-  { id: "span-rest-2", kind: "freeSaturday", from: "2026-08-08", to: "2026-08-08" },
-  { id: "span-rest-3", kind: "freeSaturday", from: "2026-08-22", to: "2026-08-22" },
-  { id: "span-rest-4", kind: "freeSaturday", from: "2026-08-29", to: "2026-08-29" },
+  { id: "span-rest", kind: "freeSaturday", from: "2026-08-08", to: "2026-08-08" },
+  { id: "span-vacation", kind: "vacation", from: "2026-08-19", to: "2026-08-19" },
+  workedHoliday,
+  { id: "span-sick", kind: "sick", from: "2026-08-26", to: "2026-08-26" },
 ];
 
 const lines: MonthLine[] = [
@@ -109,21 +122,21 @@ const alerts: HomeAlert[] = [
     title: "ביטוח לאומי לרבעון",
     note: `התשלום על הרבעון שהסתיים ממתין. סכום מוערך: ${he.placeholder.amount}`,
     action: "לסמן כשולם",
-    link: "nationalInsurance",
+    explanation: { text: he.explanations.nationalInsurance, link: "nationalInsurance" },
   },
   {
     key: "medical-insurance",
     title: "הביטוח הרפואי עומד לפוג",
     note: `הפוליסה בתוקף עד ${he.placeholder.date}`,
     action: "לפרטים",
-    link: "medicalInsurance",
+    explanation: { text: he.explanations.medicalInsurance, link: "medicalInsurance" },
   },
   {
     key: "holidays",
     title: `חגים לשנת ${he.placeholder.year} טרם נבחרו`,
     note: `נבחרו ${he.placeholder.count} מתוך תשעה ימי חג`,
     action: "לבחור חגים",
-    link: "holidayWork",
+    explanation: { text: he.explanations.holidaysChosen, link: "holidayWork" },
   },
 ];
 
@@ -137,7 +150,7 @@ export interface HomeFixture {
 
 /** Two, because the canvas's worker switcher moves between two and an account
  * holds no more than two (specs.md item 11). */
-export const homeFixtures: HomeFixture[] = workers.map((worker) => ({
+export const homeFixtures: HomeFixture[] = fixtureWorkers.map((worker) => ({
   worker,
   month: fixtureMonth,
   spans,

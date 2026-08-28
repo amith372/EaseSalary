@@ -1,17 +1,15 @@
 import { Bidi } from "@/components/Bidi";
+import { chipClass, type ChipTone } from "@/components/ValueChip";
 import { he } from "@/lib/i18n/he";
 import { formatAgorot } from "@/lib/money";
 
-/** The sizes the canvas actually uses for an amount, smallest first: a balance
- * or summary line, a salary line, a card total, the month's headline figure. */
-type MoneySize = "sm" | "md" | "lg" | "xl" | "hero";
+/** The sizes v3 uses for an amount: a line of the summary, and the month's
+ * total under it. */
+type MoneySize = "md" | "lg";
 
 const sizeClass: Record<MoneySize, string> = {
-  sm: "text-[17px] font-semibold",
-  md: "text-[18px] font-semibold",
-  lg: "text-[20px] font-semibold",
-  xl: "text-[26px] font-bold tracking-[-0.02em]",
-  hero: "text-[42px] font-bold tracking-[-0.03em] leading-[1.1]",
+  md: "text-[16px] font-semibold",
+  lg: "text-[18px] font-bold",
 };
 
 interface MoneyValueProps {
@@ -22,6 +20,8 @@ interface MoneyValueProps {
    */
   agorot: number | null;
   size?: MoneySize;
+  /** The pill the amount sits in. Omitted, the amount is bare text. */
+  chip?: ChipTone;
   /** Marks the amount as one the user set by hand, which survives every later
    * recalculation of the month (specs.md item 17). */
   manual?: boolean;
@@ -33,7 +33,7 @@ interface MoneyValueProps {
  * than announced in words, because the leading minus already says it and the
  * colour is what the eye finds when scanning a column.
  */
-export function MoneyValue({ agorot, size = "md", manual, className }: MoneyValueProps) {
+export function MoneyValue({ agorot, size = "md", chip, manual, className }: MoneyValueProps) {
   const negative = agorot !== null && agorot < 0;
   const text = agorot === null ? he.placeholder.amount : formatAgorot(agorot);
 
@@ -42,6 +42,7 @@ export function MoneyValue({ agorot, size = "md", manual, className }: MoneyValu
       <Bidi
         noTranslate
         className={[
+          chip ? chipClass[chip] : "",
           sizeClass[size],
           negative ? "text-clay-deep" : "text-ink",
           className ?? "",
@@ -52,7 +53,7 @@ export function MoneyValue({ agorot, size = "md", manual, className }: MoneyValu
         {text}
       </Bidi>
       {manual ? (
-        <span className="rounded-full bg-sand-hover px-2 py-0.5 text-[12px] font-medium text-ink-mute">
+        <span className="rounded-full bg-hover px-2 py-0.5 text-[12px] font-medium text-ink-mute">
           {he.money.manual}
         </span>
       ) : null}

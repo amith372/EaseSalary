@@ -20,20 +20,29 @@ export const he = {
     payments: "תשלומים",
     settings: "הגדרות",
     reports: "דוחות",
-    /** Read by a screen reader in place of the sidebar itself. */
+    /** Read by a screen reader in place of the nav itself. */
     landmark: "ניווט ראשי",
     help: {
+      /** The circular "?" in the top bar shows no text, so this is its whole
+       * meaning to a screen reader. */
       title: "צריך/ה עזרה?",
-      body: "נסביר כל שלב בשפה פשוטה",
     },
   },
 
   header: {
-    greeting: "שלום,",
+    /** The bar carries the greeting, so the home screen needs no heading row of
+     * its own — the row it saves is the one that made the page scroll. */
+    greeting: "בוקר טוב,",
     yourName: "[השם שלך]",
-    today: "[יום בשבוע], [תאריך]",
     alerts: "התראות",
     avatarAlt: "התמונה שלך",
+    /** Which worker every screen is about. The caption labels the group rather
+     * than sitting above the name: a 62px bar has room for one line. */
+    workerSwitcher: {
+      showing: "מוצג/ת כרגע",
+      previous: "לעובד/ת הקודם/ת",
+      next: "לעובד/ת הבא/ה",
+    },
   },
 
   placeholder: {
@@ -65,7 +74,7 @@ export const he = {
   },
 
   calendar: {
-    hint: "לחיצה על יום מסמנת חופשה, מחלה או חג",
+    hint: "לחיצה על יום, ואז על יום נוסף, מסמנת טווח",
     today: "היום",
     previousMonth: "לחודש הקודם",
     nextMonth: "לחודש הבא",
@@ -86,29 +95,33 @@ export const he = {
       "דצמבר",
     ],
     marks: {
-      vacation: "יום חופש",
-      sick: "יום מחלה",
+      vacation: "חופשה",
+      sick: "מחלה",
       holiday: "חג",
-      /** The Saturday the user marked free — an exception she recorded. */
+      /** The Saturday the worker had off — an exception the user recorded. */
       freeSaturday: "שבת חופשית",
-      /** The ordinary weekly rest day, which every worker has and which is not
-       * an entitlement. A different state from the one above. */
-      restDay: "שבת",
+      /** A day she worked, which is every day carrying no mark at all — an
+       * unmarked Saturday included. It labels the legend and marks nothing. */
+      workDay: "יום עבודה",
     },
     selection: {
-      /** "‎[מ] – ‎[עד] · ‎[מספר] ימים" while sweeping. */
+      /** "‎16–20 באוגוסט": the day numbers, then the month with its prefix. */
       separator: "–",
+      inMonth: "ב",
       dayCount: "ימים",
+      oneDay: "יום אחד",
       /** A span running past the month's end is stored whole and shown clipped;
        * the overflow is said in words rather than silently truncated. */
       continuesInto: "נמשך אל תוך החודש הבא",
       continuesFrom: "נמשך מהחודש הקודם",
     },
-    /** The mark tool the user picks before drawing on the calendar. Marking
-     * off — the tool chosen again — still clears a day, it just draws none. */
-    tools: {
-      title: "לסמן ימים",
-      hint: "אפשר לסמן יום אחד, או לגרור על כמה ימים ברצף",
+    /** The panel that opens once a range has been drawn and asks what the range
+     * means. The kind is chosen after the days rather than before them. */
+    picker: {
+      title: "איך לסמן?",
+      clear: "לנקות סימון",
+      cancel: "ביטול",
+      cancelLabel: "לבטל בחירה",
     },
     /**
      * A range applies to the days it legally can and says which it skipped and
@@ -131,13 +144,6 @@ export const he = {
   },
 
   home: {
-    greeting: "בוקר טוב,",
-    monthOf: "החודש של",
-    workerSwitcher: {
-      showing: "מוצג/ת כרגע",
-      previous: "לעובד/ת הקודם/ת",
-      next: "לעובד/ת הבא/ה",
-    },
     hero: {
       readyToCalculate: "מוכן לחישוב",
       body: "נעבור יחד על הימים, החגים והמקדמה — ואז נפיק את דף המשכורת.",
@@ -148,7 +154,7 @@ export const he = {
       total: "לתשלום לעובד/ת",
       totalExplanation: "השכר של החודש והתוספות עליו, פחות המקדמה שנפרעת החודש.",
       exportToExcel: "לייצא לאקסל",
-      fullSheet: "לדף המשכורת המלא",
+      fullSheet: "לצפייה בדף המשכורת המלא",
     },
     balances: {
       title: "יתרות",
@@ -157,6 +163,9 @@ export const he = {
     },
     alerts: {
       title: "גם מחכה לך",
+      /** The "?" at the end of an alert row shows no text, so this is its whole
+       * meaning to a screen reader. The link it opens sits inside the panel,
+       * beside the sentence, rather than on the row. */
       whatTheLawSays: "מה אומר החוק",
     },
   },
@@ -168,15 +177,16 @@ export const he = {
   },
 
   explanations: {
-    baseSalary:
-      "משכורת מלאה, כי לקיחת יום חופשה לא מקטינה את המשכורת החודשית.",
-    supplements:
-      "עבודה בשישי, בשבת או בחג משולמת בתוספת מעל השכר הרגיל.",
-    advanceRepaid:
-      "זה החלק מהמקדמה שניתנה מראש ומנוכה החודש, לפי מה שהוסכם.",
-    vacationBalance:
-      "מכסת החופשה השנתית, פחות הימים שסומנו בלוח השנה עד היום.",
-    sickBalance:
-      "ימי המחלה נצברים בכל חודש עבודה, ומה שלא נוצל נשמר לחודשים הבאים.",
+    baseSalary: "משכורת מלאה, כי לקיחת יום חופשה לא מקטינה את המשכורת החודשית.",
+    supplements: "עבודה בשישי, בשבת או בחג משולמת בתוספת מעל השכר הרגיל.",
+    advanceRepaid: "זה החלק מהמקדמה שניתנה מראש ומנוכה החודש, לפי מה שהוסכם.",
+    vacationBalance: "מכסת החופשה השנתית, פחות הימים שסומנו בלוח השנה עד היום.",
+    sickBalance: "ימי המחלה נצברים בכל חודש עבודה, ומה שלא נוצל נשמר לחודשים הבאים.",
+    nationalInsurance:
+      "ההפרשה לביטוח לאומי מחושבת מעלות החודש המלאה, ומשולמת אחת לרבעון בדיעבד.",
+    medicalInsurance:
+      "מעסיק/ה של עובד/ת סיעוד חייב/ת לבטח אותו/ה בביטוח רפואי, והפוליסה מתחדשת מדי שנה.",
+    holidaysChosen:
+      "המכסה היא תשעה ימי חג לשנה מלאה, והימים נבחרים מראש מתוך רשימת החגים של ארץ המוצא.",
   },
 } as const;

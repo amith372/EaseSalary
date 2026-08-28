@@ -2,86 +2,91 @@
 
 /* Design tokens, read from the canvas at
    https://claude.ai/design/p/b11cf323-ac11-490d-994d-3145e8e07a6b
-   where all eleven artboards share one system. This file is the only place a
-   colour, radius or shadow of the system is written down; nothing else in the
-   app may state a hex value. */
+   where `EaseSalary - דף הבית v3 לוח במרכז` is the canonical artboard. This file
+   is the only place a colour, a radius or a shadow of the system is written
+   down; nothing else in the app may state a hex value.
+
+   v3 inverts the surfaces: the page is the warm off-white and every card is
+   plain white, where v2 had it the other way round. That is a change to these
+   two tokens and not to each component in turn — doing it per component is how
+   a screen ends up half-converted. */
 @theme {
   /* Text */
-  --color-ink: #33291f;
-  --color-ink-soft: #7b6a59;
-  --color-ink-faint: #9a8874;
-  --color-ink-mute: #8c7a67;
-  --color-ink-warm: #6e5d4d; /* body copy inside sand and inset panels */
+  --color-ink: #33291f; /* headings, and a day number on a light mark */
+  --color-ink-soft: #7b6a59; /* the alerts pill in the top bar */
+  --color-ink-faint: #9a8874; /* the line under the greeting */
+  --color-ink-mute: #8c7a67; /* the legend, an alert's note, an inactive tab */
+  --color-ink-warm: #6e5d4d; /* body copy in a panel, and a summary label */
+  --color-ink-quiet: #a2907c; /* eyebrows, chevrons, day names, hints */
+  --color-day-ink: #4a3d31; /* a day number, and the mark's name inside it */
 
   /* Surfaces and rules */
-  --color-surface: #fffdfa;
-  --color-sunken: #fdfaf5;
-  --color-line: #eadcc9;
-  --color-line-soft: #f3eadc;
-  --color-hairline: #f0e6d8;
-  --color-sunken-line: #efe2cf;
+  --color-ground: #fbf8f4; /* the page, and a panel inset into a card */
+  --color-surface: #ffffff; /* every card */
+  --color-tint: #f8f3ec; /* the block carrying the month's total */
+  --color-chip: #f4efe7; /* the pill an amount or a count sits in */
+  --color-hover: #f6efe6; /* a tab or a bare button under the cursor */
+  --color-line: #efe6da;
+  --color-line-strong: #e3d6c2; /* the mark picker, one step firmer */
+  --color-line-hover: #dcc7a9; /* the outline a day takes under the cursor */
 
-  /* Green — brand, buttons, sidebar */
+  /* Green — links, and the two actions */
   --color-forest: #3f6047;
   --color-forest-deep: #2c4633;
-  --color-bark: #2e4636;
+  --color-sage: #dee8da;
+  --color-sage-hover: #cedcc9;
+  --color-sage-soft: #e7efe4; /* the second action, quieter than the first */
+  --color-sage-soft-hover: #d7e4d2;
+  --color-sage-ink: #33513b;
+  --color-sage-ink-hover: #24402c;
 
-  /* Creams — the sidebar's own text scale, and the warm panel */
-  --color-cream: #ede4d6;
-  --color-cream-hi: #fffbf4;
-  --color-cream-mute: #c7bca9;
-  --color-sand: #fdf3e7;
-  --color-sand-line: #eedcc4;
-  --color-sand-ink: #a9764a;
-  --color-sand-hover: #f5eadb;
+  /* The sprout drawn beside "צריך לטפל" */
+  --color-leaf: #8fa98b;
+  --color-leaf-mid: #c9d9c3;
+  --color-leaf-soft: #dde7d8;
 
   /* Clay — the accent that says "this needs you" */
-  --color-clay: #c9663c;
-  --color-clay-ink: #b0663c;
-  --color-clay-bg: #faecdd;
-  --color-clay-deep: #a65a3a; /* an amount that is a deduction */
+  --color-clay: #c9663c; /* the wordmark's square, and the alerts dot */
+  --color-clay-ink: #b0663c; /* the alert count */
+  --color-clay-soft: #d19a6a; /* the dot on an alert card */
+  --color-clay-deep: #a65a3a; /* a deduction, and clearing a mark */
 
-  /* Moss — the accent that says "nothing to do here" */
-  --color-moss-ink: #5f7359;
-  --color-moss-soft: #6e7f6b;
-  --color-moss-bg: #eef2ea;
-
-  /* Soft fills — avatars, worker portraits, the "+" tile */
+  /* Avatars */
   --color-shell: #f2e3d2;
   --color-shell-line: #e7d5be;
 
   /* The "?" disclosure button */
-  --color-ask-line: #e7d6be;
+  --color-ask-line: #eae0d2;
   --color-ask-ink: #b49b7a;
   --color-ask-line-hover: #c08a5e;
   --color-ask-ink-hover: #8a6a45;
 
-  /* Day marks. `rest` is the legend dot for a Saturday the user marked free;
-     `rest-bg`/`rest-ink` are the ordinary weekly rest day, which is not an
-     entitlement and is a different state (specs.md item 5). */
-  --color-vacation: #5b8aa6;
-  --color-sick: #c1798a;
-  --color-holiday: #c89a4a;
-  --color-rest: #ddd5c7;
-  --color-day: #f9f5ef;
-  --color-day-ink: #4a3d31;
-  --color-day-hover: #f3e7d6;
-  --color-rest-bg: #ede7dc;
-  --color-rest-ink: #8a7c6a;
+  /* Day marks. A marked day is filled solid and carries the mark's name; an
+     unmarked Saturday is drawn exactly like an unmarked weekday, because
+     "יום עבודה" names a day she worked and an unmarked Saturday is one of them
+     (specs.md item 5). `*-dot` is the saturated value the balance row's dot
+     uses — only the two kinds that carry a balance need one, and the fill and
+     the dot are deliberately two values. */
+  --color-day: #f7f3ed;
+  --color-workday-dot: #f0eae1;
+  --color-vacation: #f7d08a;
+  --color-vacation-dot: #d9a441;
+  --color-sick: #c6cfe8;
+  --color-sick-dot: #8394c4;
+  --color-holiday: #efc0c2;
+  --color-rest: #dcd3c4;
 
-  /* Radii. The canvas uses 12/13/14/16/20/22/24 and a pill; Tailwind's stock
-     scale is replaced outright rather than sat beside, so `rounded-lg` cannot
-     mean two different things depending on which file you are reading. */
-  --radius-xs: 12px;
-  --radius-sm: 13px;
-  --radius-md: 14px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 22px;
-  --radius-3xl: 24px;
-
-  /* One shadow in the whole system. */
-  --shadow-card: 0 18px 40px -36px rgb(80 52 24 / 0.5);
+  /* Radii, named for what they belong to rather than by size: the artboard
+     uses eight, and a scale of xs/sm/md/lg would say nothing about which. */
+  --radius-mark: 7px; /* the square beside the wordmark */
+  --radius-chip: 9px;
+  --radius-tab: 11px;
+  --radius-panel: 12px;
+  --radius-day: 13px;
+  --radius-tint: 14px;
+  --radius-card-sm: 16px;
+  --radius-card: 20px;
+  --radius-calendar: 24px;
 }
 
 /* The font stack resolves a variable set by next/font, so it is inlined into
@@ -96,7 +101,7 @@
   }
 
   body {
-    background: #ffffff;
+    background: var(--color-ground);
     color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;

@@ -1,31 +1,38 @@
 import type { ElementType, ReactNode } from "react";
 
 /**
- * The four panel tones the canvas uses, and nothing else:
+ * The three panel tones v3 uses, and nothing else:
  *
- * - `surface` — the ordinary panel on the page's white ground.
- * - `sand` — the warm panel that carries money ("מה שולם החודש").
- * - `inset` — a panel sitting inside a `surface` panel, one step darker.
- * - `insetOnSand` — the same idea inside a `sand` panel, where one step darker
- *   would disappear, so it goes one step lighter instead.
+ * - `surface` — the white card on the page's warm ground, which is every card
+ *   on the screen.
+ * - `inset` — a panel sitting inside a white card, which takes the page's own
+ *   ground so it reads as a step back rather than a step darker.
+ * - `tint` — the warm block that carries the month's total, and the only panel
+ *   with no rule around it.
  */
-export type CardTone = "surface" | "sand" | "inset" | "insetOnSand";
+export type CardTone = "surface" | "inset" | "tint";
 
 const toneClass: Record<CardTone, string> = {
-  surface: "bg-surface border-line",
-  sand: "bg-sand border-sand-line",
-  inset: "bg-sunken border-sunken-line",
-  insetOnSand: "bg-surface border-sand-line",
+  surface: "border border-line bg-surface",
+  inset: "border border-line bg-ground",
+  tint: "bg-tint",
+};
+
+/** The radii the artboard gives a panel, named for what carries them. */
+export type CardRadius = "panel" | "tint" | "sm" | "md" | "lg";
+
+const radiusClass: Record<CardRadius, string> = {
+  panel: "rounded-panel",
+  tint: "rounded-tint",
+  sm: "rounded-card-sm",
+  md: "rounded-card",
+  lg: "rounded-calendar",
 };
 
 interface CardProps {
   children: ReactNode;
   tone?: CardTone;
-  /** The one shadow in the system. Reserved for a panel that should read as
-   * lifted off the page — the hero, a worker's card. */
-  elevated?: boolean;
-  /** A short tracked label above the card's content: "מה שולם החודש". */
-  eyebrow?: ReactNode;
+  radius?: CardRadius;
   as?: ElementType;
   id?: string;
   className?: string;
@@ -34,8 +41,7 @@ interface CardProps {
 export function Card({
   children,
   tone = "surface",
-  elevated,
-  eyebrow,
+  radius = "md",
   as: Tag = "div",
   id,
   className,
@@ -43,26 +49,10 @@ export function Card({
   return (
     <Tag
       id={id}
-      className={[
-        "rounded-2xl border",
-        toneClass[tone],
-        elevated ? "shadow-card" : "",
-        className ?? "",
-      ]
+      className={[radiusClass[radius], toneClass[tone], className ?? ""]
         .filter(Boolean)
         .join(" ")}
     >
-      {eyebrow ? (
-        <span
-          dir="auto"
-          className={[
-            "mb-4 block text-[14px] font-semibold tracking-[0.06em]",
-            tone === "sand" ? "text-sand-ink" : "text-ink-faint",
-          ].join(" ")}
-        >
-          {eyebrow}
-        </span>
-      ) : null}
       {children}
     </Tag>
   );
