@@ -103,13 +103,21 @@ Each of these is true or false at a glance.
    taken as part of a day and is drawn from the balance in that proportion. Vacation
    accrues by seniority — fourteen days a year through year four, sixteen in year five,
    eighteen in year six, twenty-one in year seven, and one more each year to a ceiling of
-   twenty-eight. A month accrues at the seniority year in force on its first day, so a
-   month that crosses an employment anniversary accrues at the year it opened in and the
-   step happens at a month boundary rather than inside one. An unused balance carries into the following years rather than being
-   paid out at the end of December, and the application warns when a year passed with
-   fewer than seven vacation days taken, noting plainly that the law asks for at least
-   seven days a year, without pressing the point further. The application never deletes
-   accrued days on its own. The sick balance accrues at 1.5 days a month, stops at ninety
+   twenty-eight. The year that counts here is the **calendar** year, because that is how
+   the Annual Leave Act measures one: it turns over on the 1st of January, and a worker
+   who started in the middle of a year completes her first working year on the 31st of
+   December of that same year even though she did not work twelve months of it. So a
+   worker employed from 1.4.2024 is in her first year through 2024, her second through
+   2025, her fifth through 2028, and steps to sixteen days on 1.1.2028. A partial
+   calendar year counts as a whole year on that ladder; what it reduces is the
+   entitlement earned inside it, and that reduction happens on its own, because a year
+   she was employed for nine months of accrues nine monthly twelfths — 10.5 days at the
+   first-year rate — without anything prorating it by hand. An unused balance carries
+   into the following years rather than being paid out at the end of December, and the
+   application warns when a calendar year passed with fewer than seven vacation days
+   taken in it, said in the December that closes that year, noting plainly that the law
+   asks for at least seven days a year and without pressing the point further. The
+   application never deletes accrued days on its own. The sick balance accrues at 1.5 days a month, stops at ninety
    days, and never resets at a year boundary.
 8. Sick days accrue at 1.5 a month to a ceiling of ninety, and the payment follows the
    statutory tiers from what was reported: nothing for the first day, half for the
@@ -181,7 +189,12 @@ Each of these is true or false at a glance.
     seniority and offered as a suggestion the user can change before approving, and the
     month it is paid in is set on the worker's profile when the worker is created.
     Nothing is due until a full working year has been completed, and each payment covers
-    the year running from one employment anniversary to the next. The recuperation day
+    the year running from one employment anniversary to the next. Recuperation keeps its
+    own clock, and deliberately: it is measured from the employment anniversary while
+    vacation is measured by the calendar year (item 7), because the two entitlements are
+    governed by different rules and each follows its own. The disagreement is the correct
+    behaviour, not an oversight in one of them, and it is written down here so that a
+    later reader does not "fix" either one into agreement with the other. The recuperation day
     rate is not derived from the monthly salary — nothing in that salary implies it — so
     it is confirmed by the user the way the minimum wage is and stored with the month it
     was used for, which is also what lets a past month be reproduced at its own rate.

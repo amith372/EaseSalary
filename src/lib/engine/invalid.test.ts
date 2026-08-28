@@ -64,7 +64,7 @@ describe("a paid holiday on a free Saturday (specs.md Part 4)", () => {
   it("states a reason, and names the date it is about", () => {
     // Refused with a reason and not silently dropped: the sentence has to say
     // why the day cannot be both.
-    const [refusal, ...rest] = validateMonth(clashing);
+    const [refusal, ...rest] = validateMonth(clashing, terms);
     expect(rest).toHaveLength(0);
     expect(refusal.code).toBe("restDayHoliday");
     expect(refusal.message.length).toBeGreaterThan(0);
@@ -88,7 +88,7 @@ describe("a paid holiday on a free Saturday (specs.md Part 4)", () => {
     const justTheFreeSaturday = facts([
       { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
     ]);
-    expect(validateMonth(justTheFreeSaturday)).toEqual([]);
+    expect(validateMonth(justTheFreeSaturday, terms)).toEqual([]);
     expect(calculateMonth(justTheFreeSaturday, terms).gross).toBe(674765 + 170540);
   });
 });
@@ -99,12 +99,12 @@ describe("a tenth paid holiday within a year (specs.md item 10, Part 4)", () => 
   );
 
   it("accepts the ninth", () => {
-    expect(validateMonth(facts(nine))).toEqual([]);
+    expect(validateMonth(facts(nine), terms)).toEqual([]);
   });
 
   it("refuses the tenth with a reason", () => {
     const ten = [...nine, holiday("2025-08-13")];
-    const [refusal] = validateMonth(facts(ten));
+    const [refusal] = validateMonth(facts(ten), terms);
     expect(refusal.code).toBe("holidayLimit");
     expect(refusal.message.length).toBeGreaterThan(0);
     expect(() => calculateMonth(facts(ten), terms)).toThrow(InvalidMonthError);
@@ -115,9 +115,9 @@ describe("a tenth paid holiday within a year (specs.md item 10, Part 4)", () => 
     // Eight earlier plus two here is ten.
     const two = [holiday("2025-08-13"), holiday("2025-08-14")];
     expect(
-      validateMonth(facts(two), { holidayDaysEarlierInYear: 8 }),
+      validateMonth(facts(two), terms, { holidayDaysEarlierInYear: 8 }),
     ).toHaveLength(1);
-    expect(validateMonth(facts(two), { holidayDaysEarlierInYear: 7 })).toEqual([]);
+    expect(validateMonth(facts(two), terms, { holidayDaysEarlierInYear: 7 })).toEqual([]);
   });
 
   it("draws a part day from the entitlement in its own proportion", () => {
@@ -125,18 +125,18 @@ describe("a tenth paid holiday within a year (specs.md item 10, Part 4)", () => 
     // proportion, so half a day does not consume a whole one.
     const halfDay: MonthSpan = { ...holiday("2025-08-13"), fraction: 0.5 };
     expect(
-      validateMonth(facts([halfDay]), { holidayDaysEarlierInYear: 8.5 }),
+      validateMonth(facts([halfDay]), terms, { holidayDaysEarlierInYear: 8.5 }),
     ).toEqual([]);
     expect(
-      validateMonth(facts([halfDay]), { holidayDaysEarlierInYear: 9 }),
+      validateMonth(facts([halfDay]), terms, { holidayDaysEarlierInYear: 9 }),
     ).toHaveLength(1);
   });
 
   it("reduces the entitlement for a year only partly worked", () => {
     // Item 10: nine days for a full year, reduced in proportion otherwise.
     const five = nine.slice(0, 5);
-    expect(validateMonth(facts(five), { holidayAllowance: 4.5 })).toHaveLength(1);
-    expect(validateMonth(facts(five), { holidayAllowance: 5 })).toEqual([]);
+    expect(validateMonth(facts(five), terms, { holidayAllowance: 4.5 })).toHaveLength(1);
+    expect(validateMonth(facts(five), terms, { holidayAllowance: 5 })).toEqual([]);
   });
 });
 
@@ -149,6 +149,7 @@ describe("the Saturday counts cannot exceed the month (specs.md Part 4)", () => 
       facts([
         { id: "free-18", kind: "freeSaturday", from: "2025-08-18", to: "2025-08-18" },
       ]),
+      terms,
     );
     expect(refusal.code).toBe("freeSaturdayNotSaturday");
     expect(refusal.dates).toEqual(["2025-08-18"]);

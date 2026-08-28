@@ -165,6 +165,26 @@ export interface BalanceLine {
 }
 
 /**
+ * Something the user should know about a month that is nonetheless correct.
+ *
+ * A warning is the opposite of a `Refusal`: a refusal stops the calculation,
+ * because a month that cannot be calculated correctly must never be calculated
+ * wrongly in silence; a warning changes no figure and blocks nothing. The
+ * seven-day vacation warning is the first of them, and it is worded as the law
+ * asking for at least seven days a year rather than as the user having done
+ * something wrong — item 7 says in so many words that the point is not pressed
+ * further.
+ */
+export interface Warning {
+  key: string;
+  /** Hebrew. Any figure inside it is written by `formatDays`, so the sentence
+   * the interface isolates is the sentence the engine produced. */
+  message: string;
+  /** The rule it rests on, resolved through `src/lib/links.ts`. */
+  link?: LegalLinkKey;
+}
+
+/**
  * What the engine returns for one month. One calculation path serves both the
  * on-screen preview and the export, so this is the shape the .xlsx filler reads
  * as well (specs.md Part 3).
@@ -207,6 +227,12 @@ export interface MonthResult {
    * screen that assembles them afterwards.
    */
   balances: BalanceLine[];
+  /**
+   * Things the user should know that change no figure and stop nothing. Empty
+   * on almost every month, which is the point: a warning that appears on every
+   * month is one nobody reads.
+   */
+  warnings: Warning[];
   /**
    * This month's national-insurance estimate: 3.6% of the month's full cost,
    * taken before anything to do with advances (specs.md item 19). It is an

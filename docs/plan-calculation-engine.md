@@ -607,8 +607,13 @@ Two further rules, both now answered and in `specs.md`:
   no day ever taken, so this guard will not fire; it is a fence around a gap, not a case being
   handled. If it ever does fire, that is the signal to build the unpaid absence as a feature — not
   to route around the refusal.
-- **A month accrues at the seniority year in force on its first day** (item 7), so the step happens
-  at a month boundary and never inside one.
+- **The seniority year is the calendar year** (item 7, rewritten in this step after your answer).
+  It turns over on the 1st of January, and a worker who started mid-year completes her first
+  working year on the 31st of December of that year. A partial calendar year still counts as a
+  whole year on the ladder; what it reduces is what is earned inside it, and that happens on its
+  own out of the monthly twelfths. The old wording — the year in force on the month's first day,
+  stepping at an employment anniversary — is gone, not qualified. Recuperation is the one
+  entitlement that stays on the anniversary, and item 15 now says why in so many words.
 
 **Tests:** the ninety-day ceiling holds across a year boundary. Twelve months of accrual at
 fourteen twelfths comes to exactly fourteen — the assertion that catches the `1.17` drift, and the
@@ -621,11 +626,20 @@ boundary named in item 7.
 npx vitest run src/lib/engine/balances.test.ts --reporter=verbose
 ```
 
-- Twelve months of accrual comes to **exactly 14**, not 14.04 and not 13.99. Anything else means a
-  monthly figure was rounded, which is Part 5's warning arriving.
+- Twelve months of accrual comes to **14**, not 14.04 and not 13.99. Anything else means a
+  monthly figure was rounded, which is Part 5's warning arriving. The test asserts it to a
+  ten-billionth of a day rather than as an exact equality, and says why beside the assertion: a
+  twelfth has no exact form in binary floating point, so twelve carried-forward months land 2e-15
+  short of fourteen — thirteen orders of magnitude below the hundredth of a day Part 5 warns
+  about, where a 1.17 a month would miss by a hundred million times more. Snapping the balance each
+  month would remove the residue and bias the carry-forward upward instead, so it is left alone.
 - The sick balance stops at **90** and does not reset in January.
-- The seniority tiers step at years five, six and seven and stop at 28, and a month crossing an
-  anniversary accrues at the year it **opened** in.
+- The seniority tiers step at years five, six and seven and stop at 28, and they step on the
+  **1st of January** — a worker employed from 1.4.2024 accrues at fourteen through 2027 and at
+  sixteen from 1.1.2028, and no month inside a year accrues at a different rate from its
+  neighbours.
+- A calendar year passing with **fewer than seven vacation days** taken in it is reported as a
+  warning on that December, in the law's own terms and not pressed further.
 - A five-day spell against a two-day balance is **refused with a reason**. A balance that comes back
   as `-3`, or a spell that quietly pays three unfunded days, is the fence in the previous section
   having been built as an arithmetic case instead of a refusal.
@@ -823,8 +837,8 @@ the work proved ambiguous replaced outright rather than appended to.
 All nine answers are in `specs.md` now: item 3 (no vacation-day rate, and the daily rate named as
 the monthly salary over twenty-five), item 5 (no unpaid-absence mark in this version, and the
 counts written so one mark kind is enough later), item 7 (no vacation payment line at all, the
-"reduced base plus a cancelling vacation line" sentence removed outright, and a month accruing at
-the seniority year in force on its first day), item 8 (the sick deduction's column, "the whole of
+"reduced base plus a cancelling vacation line" sentence removed outright, and the seniority year
+as the calendar year), item 8 (the sick deduction's column, "the whole of
 that week" as Sunday through Friday, and the balance as a floor that never goes negative), item 15
 (the recuperation day rate confirmed rather than derived), item 19 (the monthly estimate and the
 quarterly payment as two figures in two columns), Part 5's column paragraph and its stale-numbers
@@ -872,7 +886,8 @@ which criterion each one landed in, so a reader of this plan can find the wordin
 | יתרת מחלה שנגמרה | היתרה לעולם לא יורדת למינוס. הרישום נחסם ונאמר בקול, לא משולם ולא מנוכה בשקט | סעיף 8 |
 | ביטוח לאומי בדף החודשי | שניהם, בשתי עמודות: אומדן חודשי בכל חודש, והכסף ששולם רק בחודש ששולם בו | סעיף 19 |
 | היעדרות בלי זכאות | לא נבנה בגרסה הראשונה; הספירות נכתבות כך שסוג סימון אחד יספיק בהמשך | סעיף 5 |
-| שנת ותק בחודש שחוצה יום שנה | לפי השנה שבתוקף ב־1 בחודש | סעיף 7 |
+| שנת הוותק לחופשה | שנה קלנדרית, מתהפכת ב־1 בינואר; שנה חלקית נספרת כשנה מלאה בסולם | סעיף 7 |
+| מתי נדלקת אזהרת שבעת הימים | לפי שנה קלנדרית, בדצמבר שסוגר אותה | סעיף 7 |
 | תעריף דמי הבראה | מספר מאושר על `MonthFacts`, כמו שכר המינימום, ולא נגזר מהשכר | סעיף 15 |
 
 **One note on where an answer landed.** The recuperation rate was directed to criterion 13; 13 is

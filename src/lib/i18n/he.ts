@@ -1,3 +1,5 @@
+import { formatDays } from "@/lib/money";
+
 /**
  * Every user-facing string in the application, in one file (CLAUDE.md). Code,
  * comments and identifiers stay English; nothing here is a rule, only wording.
@@ -285,6 +287,15 @@ export const he = {
         "שבת חופשית נרשמה על יום שאינו שבת. יום המנוחה השבועית הוא שבת עבור כל עובד/ת, ולכן הרישום הזה לא יכול להיות נכון.",
       saturdaysExceedMonth:
         "מספר השבתות שנעבדו גדול ממספר השבתות שיש בחודש.",
+      sickBalanceExhausted: (available: number, requested: number) =>
+        `נרשמו ${formatDays(requested)} ימי מחלה, ובמאזן יש ${formatDays(available)} בלבד. יתרת המחלה אינה יורדת מתחת לאפס, ולכן אי אפשר לרשום מעבר לה. ימים מעבר ליתרה הם היעדרות ללא זכאות, וזה מצב שהיישום עדיין אינו יודע לחשב — עדיף לומר זאת מאשר לשלם או לנכות עליהם בשקט.`,
+    },
+
+    /** A warning changes no figure and stops nothing. It is worded as what the
+     * law asks rather than as what the user did wrong (specs.md item 7). */
+    warnings: {
+      vacationUnderSeven: (year: number, days: number) =>
+        `בשנת ${year} נוצלו ${formatDays(days)} ימי חופשה. החוק מבקש לפחות שבעה ימי חופשה בשנה. היתרה עצמה נשמרת ואינה נמחקת.`,
     },
   },
 } as const;

@@ -1,12 +1,12 @@
-import { buildBalances } from "@/lib/engine/balances";
+import { buildBalances, buildWarnings } from "@/lib/engine/balances";
 import { countMonth, type MonthCounts } from "@/lib/engine/counts";
 import { deriveRates } from "@/lib/engine/rates";
-import type { MonthFacts, WorkerTerms } from "@/lib/engine/types";
-import {
-  InvalidMonthError,
-  validateMonth,
-  type MonthContext,
-} from "@/lib/engine/validate";
+import type {
+  MonthContext,
+  MonthFacts,
+  WorkerTerms,
+} from "@/lib/engine/types";
+import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 import { he } from "@/lib/i18n/he";
 import type {
   ClosingLine,
@@ -279,7 +279,7 @@ export function calculateMonth(
   terms: WorkerTerms,
   context: MonthContext = {},
 ): MonthResult {
-  const refusals = validateMonth(facts, context);
+  const refusals = validateMonth(facts, terms, context);
   if (refusals.length > 0) throw new InvalidMonthError(refusals);
 
   const counts = countMonth(facts, terms);
@@ -305,6 +305,7 @@ export function calculateMonth(
     gross,
     net,
     balances: buildBalances(facts, terms, context.openingBalances),
+    warnings: buildWarnings(facts, context),
     // An estimate to be confirmed, never a fact (item 19), and never the money
     // that actually left the account — that appears once, in the month it was
     // paid, as a column H line of its own.

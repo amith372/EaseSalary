@@ -1,8 +1,19 @@
 import { daysInMonth, fromIsoDate, isoOf } from "@/lib/dates";
-import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import type {
+  MonthContext,
+  MonthFacts,
+  MonthSpan,
+  WorkerTerms,
+} from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { balanceDaysOf } from "@/lib/spans";
-import type { BalanceLine, DaySpan, IsoDate, YearMonth } from "@/lib/types";
+import type {
+  BalanceLine,
+  DaySpan,
+  IsoDate,
+  Warning,
+  YearMonth,
+} from "@/lib/types";
 
 /**
  * The vacation and sick balances of one month: what it opened with, what it
@@ -18,6 +29,16 @@ import type { BalanceLine, DaySpan, IsoDate, YearMonth } from "@/lib/types";
  * balance from drifting a hundredth of a day a year until the figures stop
  * tying out for reasons no one can find later (Part 5). Nothing here rounds:
  * days are carried at full precision and rounded only for display.
+ *
+ * A twelfth has no exact form in binary floating point, so twelve carried-
+ * forward months of fourteen twelfths land 2e-15 short of fourteen. That
+ * residue is representation and not rounding — it is thirteen orders of
+ * magnitude below the hundredth of a day Part 5 is about, and `formatDays`
+ * cannot show it — so it is left alone rather than snapped away: snapping a
+ * balance each month would bias the carry-forward in one direction and rebuild
+ * the very drift this file exists to avoid. `balances.test.ts` asserts the
+ * twelve-month figure to a ten-billionth of a day for that reason, and asserts
+ * separately that the monthly figure is `14 / 12` and not the workbook's 1.17.
  */
 
 /** The sick balance accrues 1.5 days a month, stops at ninety, and never resets
@@ -40,30 +61,39 @@ export function vacationDaysPerYear(seniorityYear: number): number {
 }
 
 /**
- * The seniority year in force on a given day, counting the first year as 1.
+ * The seniority year a calendar year is, counting the first as 1.
  *
- * A month accrues at the year in force on its **first day**, so the step
- * happens at a month boundary and never inside one (specs.md item 7).
+ * **The year here is the calendar year, not the employment year.** That is how
+ * the Annual Leave Act measures one: it turns over on the 1st of January, and a
+ * worker who started mid-year completes her first working year on the 31st of
+ * December of that same year even though she did not work twelve months of it
+ * (specs.md item 7). A worker employed from 1.4.2024 is therefore in her first
+ * year through 2024 and her fifth through 2028, and steps to sixteen days on
+ * 1.1.2028 — not on an anniversary in April.
+ *
+ * A partial calendar year still counts as a whole year on the ladder. What it
+ * reduces is the entitlement earned *inside* it, and that needs no proration of
+ * its own: nine months of employment accrue nine monthly twelfths.
+ *
+ * Recuperation is the one entitlement that stays on the employment anniversary
+ * (item 15), and it says so there. The two disagreeing is correct, not an
+ * oversight in either.
  */
-export function seniorityYearOn(employedSince: IsoDate, on: IsoDate): number {
-  const start = fromIsoDate(employedSince);
-  const day = fromIsoDate(on);
-  let years = day.getUTCFullYear() - start.getUTCFullYear();
-  const beforeAnniversary =
-    day.getUTCMonth() < start.getUTCMonth() ||
-    (day.getUTCMonth() === start.getUTCMonth() &&
-      day.getUTCDate() < start.getUTCDate());
-  if (beforeAnniversary) years -= 1;
-  return years + 1;
+export function seniorityYearOfCalendarYear(
+  employedSince: IsoDate,
+  calendarYear: number,
+): number {
+  return calendarYear - fromIsoDate(employedSince).getUTCFullYear() + 1;
 }
 
 /** The month's vacation accrual, as a fraction of the year's entitlement and
- * never as a decimal (Part 5). */
+ * never as a decimal (Part 5). Every month of a calendar year accrues at the
+ * same rate, because the ladder steps on the 1st of January and nowhere else. */
 export function monthlyVacationAccrual(
   employedSince: IsoDate,
   month: YearMonth,
 ): number {
-  const year = seniorityYearOn(employedSince, isoOf(month, 1));
+  const year = seniorityYearOfCalendarYear(employedSince, month.year);
   return vacationDaysPerYear(year) / MONTHS_PER_YEAR;
 }
 
@@ -107,28 +137,69 @@ export interface OpeningBalances {
   sickDays: number;
 }
 
+/**
+ * What this month opens with: the previous month's closing figures, or — for
+ * the worker's first month — the opening position given once (specs.md items 6
+ * and 7). Resolved in one place so the balance lines and the refusal that
+ * guards the sick floor can never disagree about where a month starts.
+ */
+export function openingBalancesOf(
+  terms: WorkerTerms,
+  opening?: OpeningBalances,
+): OpeningBalances {
+  return (
+    opening ?? {
+      vacationDays: terms.openingPosition.vacationDays,
+      sickDays: terms.openingPosition.sickDays,
+    }
+  );
+}
+
+/**
+ * The month's sick accrual.
+ *
+ * The ceiling applies to what the balance may **reach**, so it is imposed on the
+ * accrual rather than after the month's use is taken off: a balance already at
+ * ninety accrues nothing, and the days used still come off it (specs.md
+ * items 7, 8).
+ */
+export function monthlySickAccrual(openingSickDays: number): number {
+  return Math.max(
+    0,
+    Math.min(openingSickDays + SICK_DAYS_PER_MONTH, SICK_DAY_CEILING) -
+      openingSickDays,
+  );
+}
+
+/**
+ * The most sick days this month can draw: what it opened with plus what it
+ * accrued in it. The month's own accrual is earned in the month and is
+ * therefore available to it, which is what makes this the same figure the
+ * balance line prints as `opening + accrued`.
+ *
+ * The sick balance is a floor and never falls below zero (specs.md item 8), so
+ * this is the figure `validateMonth` refuses against.
+ */
+export function sickDaysAvailable(
+  terms: WorkerTerms,
+  opening?: OpeningBalances,
+): number {
+  const start = openingBalancesOf(terms, opening);
+  return start.sickDays + monthlySickAccrual(start.sickDays);
+}
+
 export function buildBalances(
   facts: MonthFacts,
   terms: WorkerTerms,
   opening?: OpeningBalances,
 ): BalanceLine[] {
-  const start = opening ?? {
-    vacationDays: terms.openingPosition.vacationDays,
-    sickDays: terms.openingPosition.sickDays,
-  };
+  const start = openingBalancesOf(terms, opening);
 
   const vacationAccrued = monthlyVacationAccrual(terms.employedSince, facts.month);
   const vacationUsed = daysUsedIn(facts.spans, facts.month, "vacation");
 
   const sickUsed = daysUsedIn(facts.spans, facts.month, "sick");
-  // The ceiling applies to what the balance may reach, so it is imposed on the
-  // accrual rather than after the month's use is taken off: a balance already at
-  // ninety accrues nothing, and the days used still come off it.
-  const sickAccrued = Math.max(
-    0,
-    Math.min(start.sickDays + SICK_DAYS_PER_MONTH, SICK_DAY_CEILING) -
-      start.sickDays,
-  );
+  const sickAccrued = monthlySickAccrual(start.sickDays);
 
   return [
     {
@@ -139,7 +210,7 @@ export function buildBalances(
       closing: start.vacationDays + vacationAccrued - vacationUsed,
       explanation: {
         text: he.sheet.why.vacationBalance(
-          seniorityYearOn(terms.employedSince, isoOf(facts.month, 1)),
+          seniorityYearOfCalendarYear(terms.employedSince, facts.month.year),
         ),
         link: "annualLeave",
       },
@@ -153,4 +224,53 @@ export function buildBalances(
       explanation: { text: he.sheet.why.sickBalance, link: "sickPay" },
     },
   ];
+}
+
+/** The Annual Leave Act asks for at least seven vacation days in a year
+ * (specs.md item 7). */
+const VACATION_DAYS_A_YEAR_THE_LAW_ASKS_FOR = 7;
+
+const DECEMBER = 12;
+
+/**
+ * The seven-day warning: a calendar year that passed with fewer than seven
+ * vacation days taken in it (specs.md item 7).
+ *
+ * It is said in the December that closes the year, because that is the month in
+ * which the year has *passed* — a warning raised in March would be about a year
+ * still running, and item 7 is explicit that the point is not pressed further.
+ * It changes no figure and blocks no export.
+ *
+ * One month cannot see the rest of its own year, so what was drawn earlier in
+ * the calendar year is handed in through `MonthContext`; a month standing alone
+ * is read as the year's only month.
+ */
+export function vacationYearWarning(
+  facts: MonthFacts,
+  context: MonthContext = {},
+): Warning | null {
+  if (facts.month.month !== DECEMBER) return null;
+  const daysThisYear =
+    (context.vacationDaysEarlierInYear ?? 0) +
+    daysUsedIn(facts.spans, facts.month, "vacation");
+  if (daysThisYear >= VACATION_DAYS_A_YEAR_THE_LAW_ASKS_FOR) return null;
+  return {
+    key: "vacationUnderSeven",
+    message: he.sheet.warnings.vacationUnderSeven(
+      facts.month.year,
+      daysThisYear,
+    ),
+    link: "annualLeave",
+  };
+}
+
+/** Every warning the month raises. A list from the first commit, because a
+ * second warning arriving later must not change the shape the screen reads. */
+export function buildWarnings(
+  facts: MonthFacts,
+  context: MonthContext = {},
+): Warning[] {
+  return [vacationYearWarning(facts, context)].filter(
+    (warning): warning is Warning => warning !== null,
+  );
 }

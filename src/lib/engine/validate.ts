@@ -1,5 +1,11 @@
 import { isSaturday, orderDates, compareIsoDate } from "@/lib/dates";
-import type { MonthFacts, MonthSpan } from "@/lib/engine/types";
+import { daysUsedIn, sickDaysAvailable } from "@/lib/engine/balances";
+import type {
+  MonthContext,
+  MonthFacts,
+  MonthSpan,
+  WorkerTerms,
+} from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import type { IsoDate } from "@/lib/types";
 
@@ -23,7 +29,10 @@ export type RefusalCode =
   /** A free Saturday recorded on a day that is not a Saturday (item 5). */
   | "freeSaturdayNotSaturday"
   /** More Saturdays worked than the month holds (Part 4). */
-  | "saturdaysExceedMonth";
+  | "saturdaysExceedMonth"
+  /** More sick days recorded in the month than the balance can fund. The sick
+   * balance is a floor and never falls below zero (specs.md item 8). */
+  | "sickBalanceExhausted";
 
 export interface Refusal {
   code: RefusalCode;
@@ -40,29 +49,6 @@ export interface Refusal {
  * passed in rather than read from here. */
 export const HOLIDAYS_PER_YEAR = 9;
 
-/**
- * What the engine needs to know that one month's facts cannot say. Stage 3's
- * repository supplies it; a month handed over on its own is treated as the
- * worker's and the year's first, so the entitlement check fires only on a month
- * carrying more than the whole year's allowance by itself, and the balances
- * open from the opening position.
- */
-export interface MonthContext {
-  /** Holiday days already recorded earlier in the same year, counted the way
-   * this month counts its own — a part day as its fraction (item 10). */
-  holidayDaysEarlierInYear?: number;
-  /** The entitlement for this worker's year, reduced in proportion for a year
-   * only partly worked (item 10). Whole years use the statutory nine. */
-  holidayAllowance?: number;
-  /**
-   * The balances this month opens with — the previous month's closing figures.
-   * Month N+1 opens with the previous balance plus the accrual less what was
-   * used in month N (item 7). Absent for the worker's first month, which opens
-   * from the opening position given once (item 6).
-   */
-  openingBalances?: { vacationDays: number; sickDays: number };
-}
-
 function coversDate(span: MonthSpan, date: IsoDate): boolean {
   const { from, to } = orderDates(span.from, span.to);
   return compareIsoDate(date, from) >= 0 && compareIsoDate(date, to) <= 0;
@@ -77,8 +63,14 @@ export function holidayDaysOf(spans: MonthSpan[]): number {
     .reduce((days, span) => days + (span.fraction ?? 1), 0);
 }
 
+/**
+ * `terms` is here for the sick balance alone: what a month may draw depends on
+ * the opening position, which is a standing fact about the worker and not a
+ * fact about the month (specs.md items 6, 8).
+ */
 export function validateMonth(
   facts: MonthFacts,
+  terms: WorkerTerms,
   context: MonthContext = {},
 ): Refusal[] {
   const refusals: Refusal[] = [];
@@ -128,6 +120,26 @@ export function validateMonth(
       code: "holidayLimit",
       message: he.sheet.refusals.holidayLimit(allowance),
       dates: spans.filter((span) => span.kind === "holiday").map((s) => s.from),
+    });
+  }
+
+  // Sick days beyond what the balance can fund. The sick balance is a floor and
+  // never falls below zero (item 8): the entry is refused and said out loud,
+  // rather than the extra days being paid or deducted for in silence. Days past
+  // an exhausted balance are an absence with no entitlement behind them, which
+  // item 5 puts out of scope for this version — so the refusal is what keeps
+  // this version from depending on a calculation it deliberately does not have.
+  // If it ever fires in earnest, that is the signal to build the unpaid absence
+  // as a feature, never to route around the refusal with arithmetic.
+  const sickUsed = daysUsedIn(facts.spans, facts.month, "sick");
+  const sickAvailable = sickDaysAvailable(terms, context.openingBalances);
+  if (sickUsed > sickAvailable) {
+    refusals.push({
+      code: "sickBalanceExhausted",
+      message: he.sheet.refusals.sickBalanceExhausted(sickAvailable, sickUsed),
+      dates: facts.spans
+        .filter((span) => span.kind === "sick")
+        .map((span) => span.from),
     });
   }
 

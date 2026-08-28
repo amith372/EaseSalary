@@ -210,3 +210,39 @@ export interface MonthFacts {
    * (specs.md items 17, 24). */
   overrides: Record<string, LineOverride>;
 }
+
+/**
+ * What the engine needs to know that one month's facts cannot say.
+ *
+ * Stage 3's repository supplies it; a month handed over on its own is treated
+ * as the worker's and the year's first, so the entitlement check fires only on
+ * a month carrying more than the whole year's allowance by itself, the balances
+ * open from the opening position, and the seven-day warning sees only this
+ * month's vacation.
+ *
+ * It lives here beside `MonthFacts` rather than in `validate.ts`, because it is
+ * an input to the calculation as a whole: the balances read it, the refusals
+ * read it, and neither module should have to import the other to see it.
+ */
+export interface MonthContext {
+  /** Holiday days already recorded earlier in the same year, counted the way
+   * this month counts its own — a part day as its fraction (specs.md item 10). */
+  holidayDaysEarlierInYear?: number;
+  /** The entitlement for this worker's year, reduced in proportion for a year
+   * only partly worked (item 10). Whole years use the statutory nine. */
+  holidayAllowance?: number;
+  /**
+   * The balances this month opens with — the previous month's closing figures.
+   * Month N+1 opens with the previous balance plus the accrual less what was
+   * used in month N (item 7). Absent for the worker's first month, which opens
+   * from the opening position given once (item 6).
+   */
+  openingBalances?: { vacationDays: number; sickDays: number };
+  /**
+   * Vacation days drawn from the balance earlier in the same **calendar** year,
+   * counted the way this month counts its own. The seven-day warning is a
+   * statement about a whole year and one month cannot see the rest of its own,
+   * so the figure is handed in (item 7).
+   */
+  vacationDaysEarlierInYear?: number;
+}

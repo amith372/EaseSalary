@@ -117,6 +117,8 @@ const result: MonthResult = {
   gross: null,
   net: null,
   balances,
+  // No warning fires on a fixture month: a warning is a fact about a real year.
+  warnings: [],
   nationalInsuranceEstimate: null,
 };
 
