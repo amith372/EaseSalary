@@ -246,10 +246,16 @@ enforced in the database rather than only in the interface, so a user reaches th
 workers and nothing else even when a request is crafted by hand.
 
 One calculation path serves both the on-screen preview and the export, so the numbers a
-user sees before exporting are the numbers in the file. Each month record stores the
-minimum wage confirmed for it along with the rates derived from it, so re-exporting a
-past month years later reproduces that month rather than recalculating it at today's
-rates.
+user sees before exporting are the numbers in the file. Each month record stores two wage
+figures: the minimum wage confirmed for it, and the base monthly salary the rates are
+derived from, copied off the profile at the moment the month was confirmed. They are
+usually the same number and are not the same field — the salary may sit above the minimum
+wage and never below it (criterion 3), so rates that followed the minimum wage would be
+wrong for every family paying more than it. Storing the salary with the month is what lets
+re-exporting a past month years later reproduce that month rather than recalculate it at
+today's rates; the rates themselves are re-derived from that stored salary rather than
+stored beside it, since a stored result is a second calculation path and would drift from
+the first the day the engine is corrected.
 
 The export is produced by filling a stored .xlsx template modelled on the 2026 workbook,
 which is the canonical reference for layout and wording; earlier years are historical

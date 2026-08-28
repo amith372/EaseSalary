@@ -268,15 +268,35 @@ shape it already has; it is what the screen reads and it does not move.
 
 | Type | Holds | Why here |
 |---|---|---|
-| `WorkerTerms` | `employedSince`, `fridaySupplementAgorot`, `fridayIsPocketMoney`, `recuperationMonth`, `country`, `openingPosition` | Item 14 sets the supplement per worker; item 6 gives the opening balances once |
+| `WorkerTerms` | `employedSince`, `baseMonthlySalaryAgorot`, `fridaySupplementAgorot`, `fridayIsPocketMoney`, `recuperationMonth`, `country`, `openingPosition` | Item 14 sets the supplement per worker; item 6 gives the opening balances once; item 3 puts the salary **on the profile** — "the salary on the profile sits below it" — so it is a standing term and not a monthly fact |
 | `OpeningPosition` | `vacationDays`, `sickDays`, advances already part-repaid | Item 6 — neither figure originates inside the application |
 | `MonthFacts` | `month`, `confirmedWage`, `spans`, `advances`, `thirdPartyPayments`, `extraPayments`, `incomeTaxAgorot`, `overrides` | One month, and everything that changes it |
-| `ConfirmedWage` | `agorot`, `effectiveFrom` | Part 3 stores the wage confirmed **for that month** with the rates derived from it, so re-exporting a past month years later reproduces that month rather than recalculating it at today's rates |
+| `ConfirmedWage` | `baseAgorot`, `minimumAgorot`, `effectiveFrom` | Part 3 stores the wage confirmed **for that month** with the rates derived from it, so re-exporting a past month years later reproduces that month rather than recalculating it at today's rates |
+
+**`ConfirmedWage` carries two figures and not one, because item 3 describes two.** This row
+was written as a single `agorot` and that turned out to be a compression of Part 3's own
+sentence, which names "the minimum wage confirmed for it" while item 3 derives the rates
+from "the worker's base monthly salary", a profile figure that *defaults* to the minimum
+wage and may sit above it but never below. One field cannot be both: the rates would follow
+the minimum wage rather than the salary the moment a family paid above it. So the month
+stores `baseAgorot` — what the rates derive from, copied off the profile when the month was
+confirmed, which is what keeps a past month reproducible after the profile has moved on —
+beside `minimumAgorot` and its `effectiveFrom`, which are what item 4's confirmation and item
+3's "may not be set below it" check against. For August 2025 the two are equal, which is
+exactly why a single field would have passed Step 3 and failed silently on the first month a
+worker was paid more than the minimum.
 | `Advance` | `number`, `kind: "granted" \| "repaid"`, `agorot`, `note` | Item 20 — numbered, several at once, the repaid amount entered per month rather than fixed by a schedule |
 
 Spans arriving in `MonthFacts.spans` may **start before the month and end inside it, or start
 inside it and end after it** — a sick spell is stored as the dates it ran between (Part 3,
 item 8), and the engine reads it whole and clips it to the month itself.
+
+`spans` is typed as a `MonthSpan` union rather than as `DaySpan[]`, so a holiday span that does
+not say whether she worked it is a **compile** error. Part 5 requires that "holiday" is never
+recorded without saying, and item 9 explains what the alternative costs: a holiday nobody has
+answered for, read as one she did not work, is a silent default that quietly underpays her.
+The pre-export questions (item 18) catch it at the interface; this catches it a layer lower,
+where a repository in Stage 3 is the other caller.
 
 **`src/lib/engine/rates.ts`** — `deriveRates(baseMonthlySalaryAgorot)`:
 
@@ -290,7 +310,10 @@ There is **no vacation-day rate**, because there is no vacation payment — your
 item 3 and item 7. The `25` divisor exists for the sick-day value alone. `deriveRates` returns
 two rates and not three, and a third appearing later is a bug rather than a feature: the
 appendix records that a balance settled at the end of an employment uses the same divisor, so
-even the future case adds no new rate.
+even the future case adds no new rate. The hourly figure in the table above is **not** one of
+the two: nothing in this application is paid by the hour, and it exists only as the named half
+of the rest-day formula, so it is an exported function beside `deriveRates` rather than a field
+on `Rates` — which is also what lets the test assert it against Part 5's own quotient.
 
 **The precision rule, written down because it is where a systematic error hides.** CLAUDE.md
 holds money as integer agorot; item 3 requires full precision carried through and rounding only
