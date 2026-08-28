@@ -12,9 +12,13 @@ built on top of it inherits the error.
 
 ## The design
 
-Eleven artboards sharing one design system, on the Claude Design canvas — project
+Thirteen artboards sharing one design system, on the Claude Design canvas — project
 `b11cf323-ac11-490d-994d-3145e8e07a6b`:
 https://claude.ai/design/p/b11cf323-ac11-490d-994d-3145e8e07a6b
+
+Three of the thirteen are home-screen variants. `דף הבית v3 לוח במרכז` is canonical;
+`v2` and `v2 layout A` are superseded and kept on purpose, so the layouts that were
+weighed against each other can be looked at rather than described.
 
 The canvas is the source for how a screen looks; this table says only which stage
 consumes which artboard. Nothing of the design is copied here — the tokens live in
@@ -23,7 +27,7 @@ that appears in this file is in the wrong one.
 
 | Artboard | Consumed by |
 |---|---|
-| `דף הבית v2` | Stage 6 — built in stage 0 against fixtures |
+| `דף הבית v3 לוח במרכז` | Stage 6 — built in stage 0 against fixtures |
 | `חישוב החודש`, `החודשים` | Stage 4 |
 | `דף המשכורת` | Stages 2 + 4 |
 | `העובדות`, `דף העובד`, `הוספת עובד` | Stage 3 |
@@ -36,6 +40,43 @@ application is expected to be read through Chrome's translation and both failure
 silent: the screen holds no meaningful text inside an image, and translating it to
 English throws no `NotFoundError` on `removeChild` and leaves the layout intact when
 translated back.
+
+### The design pass — once, after stage 1 and before stage 3
+
+Every screen stage from 3 onward builds against an artboard. Three of those artboards do
+not yet exist, and most of the rest disagree with the shell — so the pass that fixes both
+happens **once, in its own right**, rather than inside the first stage that trips over it.
+Designing and implementing in the same step is exactly what rule 7's check cannot catch:
+the agent would be verifying a screen against a drawing it had just made up itself.
+
+It goes after stage 1 because nothing before stage 3 renders anything, and the engine
+stages neither need it nor are blocked by it.
+
+Three jobs, in order of how much design they actually involve:
+
+1. **Fold the home screen's four departures into `דף הבית v3`.** They are recorded in
+   `CLAUDE.md` and in `docs/plan-calculation-engine.md` Step 0 (f) and (g), and they were
+   settled by measuring the built screen — but while they live only in prose, every future
+   screen session has to be told, and any session that is not told will faithfully undo
+   them. Transcription, not design.
+2. **Bring the artboards that still draw the v2 green sidebar onto the top bar.** They
+   disagree with `AppShell` on every route. Also transcription.
+3. **Draw the screens that have no artboard at all.** This is the real design work, and
+   the `frontend-design` skill belongs here and nowhere else in this plan. The
+   reconciliation list at the foot of this file says what they are — the holiday picker
+   first, since no artboard exists for it and stage 5 needs it, then the part-day, the
+   manual-override state, the third-party payments group, the two day counts, the
+   pre-export questions, a future month filled but not exportable, and a sick spell
+   crossing a month boundary.
+
+Anything in job 3 that *ought to exist* is a `specs.md` decision before it is a drawing —
+the reconciliation list is recorded, not approved.
+
+The canvas is edited in its own editor. An agent can read the artboards but does not write
+them, so jobs 1 and 2 are handed over as a list of changes rather than made directly.
+
+**Done when** every screen stages 3 to 6 will build has an artboard that agrees with the
+shell, and nothing those stages need is still missing from the canvas.
 
 ## Stage 0 — Repo, scaffold, design system · **done**
 

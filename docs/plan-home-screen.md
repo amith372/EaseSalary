@@ -1,5 +1,12 @@
 # EaseSalary — scaffold the repo and implement `דף הבית v2`
 
+> **Superseded in part, and kept as the record of stage 0.** The home screen was rebuilt
+> against `דף הבית v3 לוח במרכז` in `docs/plan-calculation-engine.md` Step 0, which is
+> where the current screen is described; v3 is canonical and v2 is a superseded variant.
+> The artboard names, the artboard count and the artboard-to-stage table below are as they
+> stood when this was written and are **not** current — `build_plan.md` holds those now.
+> Everything else here still describes how the scaffold and the design system were built.
+
 ## Context
 
 EaseSalary is specified but not started. `specs.md`, `build_plan.md`, `CLAUDE.md`, three
