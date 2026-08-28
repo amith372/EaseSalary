@@ -41,9 +41,10 @@ Each of these is true or false at a glance.
    also carries what the Wage Protection Act requires of the payslip made from it: both
    day counts, the vacation and sick days used in the month and the balances left after
    them, and every payment shown as its type, its number of units, and its amount.
-3. Every derived rate — the daily rate, the rest-day and holiday rate, and the
-   vacation-day rate — is computed from the worker's base monthly salary rather than
-   stored as a constant, so changing that salary changes all three. Rates and totals are
+3. Every derived rate — the daily rate, which is the monthly salary over twenty-five, and
+   the rest-day and holiday rate — is computed from the worker's base monthly salary
+   rather than stored as a constant, so changing that salary changes both. There is no
+   vacation-day rate, because there is no vacation payment at all; see item 7. Rates and totals are
    carried at full precision through the calculation and rounded to two decimals only at
    the end, never between steps.
    The base monthly salary defaults to the confirmed minimum wage. It does not follow a
@@ -64,10 +65,13 @@ Each of these is true or false at a glance.
     Saturdays, and nothing the worker takes reduces it — neither vacation nor sickness. The actual
     count is that same figure less the days she did not in fact work. The salary is
     calculated from the standard count, so vacation and sickness never shrink the base;
-    the actual count is there to be read. A day that is neither vacation nor sickness —
-    an absence with no entitlement behind it — leaves both counts and with them the base
-    salary, and if it falls on a Friday it also leaves the Friday supplement, and if on a
-    Saturday the Saturday pay. A free Saturday is not an entitlement and a month without
+    the actual count is there to be read. An absence with no entitlement behind it — a day
+    that is neither vacation nor sickness — is out of scope for the first version along
+    with the rest of the partial-month cases in the appendix, and there is no mark for it.
+    Both counts are nonetheless computed so that adding a single mark kind is enough to
+    support it later: such a day would leave both counts and with them the base salary,
+    and if it fell on a Friday the Friday supplement, and if on a Saturday the Saturday
+    pay. A free Saturday is not an entitlement and a month without
     one is unremarkable.
     Beside the calendar sit three groups: additional payments (advances given and
     repaid, the income-tax line, manual overrides), payments to third parties (national
@@ -81,13 +85,17 @@ Each of these is true or false at a glance.
 7. Balances carry forward: month N+1 opens with the previous balance plus the monthly
    accrual minus what was used in month N. A vacation day never changes the month's
    total: a monthly salary is paid in full for a month in which vacation was taken, and
-   the day is drawn from the balance alone. The workbook presents this as a reduced base
-   plus a separate vacation line, which comes to the same figure, so where the sheet
-   shows it that way the two must cancel exactly. A vacation day, like a holiday, may be
+   the day is drawn from the balance alone. The sheet carries no vacation payment line at
+   all: the base is computed from the standard count and never shrinks, so a vacation line
+   beside it would pay the day a second time. Vacation reaches the sheet only as two
+   figures in the reporting block — the days used in the month, and the balance left after
+   them. A vacation day, like a holiday, may be
    taken as part of a day and is drawn from the balance in that proportion. Vacation
    accrues by seniority — fourteen days a year through year four, sixteen in year five,
    eighteen in year six, twenty-one in year seven, and one more each year to a ceiling of
-   twenty-eight. An unused balance carries into the following years rather than being
+   twenty-eight. A month accrues at the seniority year in force on its first day, so a
+   month that crosses an employment anniversary accrues at the year it opened in and the
+   step happens at a month boundary rather than inside one. An unused balance carries into the following years rather than being
    paid out at the end of December, and the application warns when a year passed with
    fewer than seven vacation days taken, noting plainly that the law asks for at least
    seven days a year, without pressing the point further. The application never deletes
@@ -100,7 +108,16 @@ Each of these is true or false at a glance.
    count, sickness never reduces the base; it appears instead as a deduction covering the
    unpaid part of the sick days — a whole day for the first, half a day for the second
    and third, nothing from the fourth onward — so the worker is left with exactly what
-   the tiers give her. Sick days leave the actual count and not the standard one. A spell of sickness is counted from
+   the tiers give her. That deduction is written as a negative amount on the
+   sickness-absence row of the salary column, inside the same subtotal as the base and the
+   Friday supplement, and never among the one-off payments: a deduction is not a payment.
+   Sick days leave the actual count and not the standard one. The sick balance is a floor
+   and never falls below zero: sick days cannot be recorded beyond what is left in it, and
+   the application says so and refuses the entry rather than paying the extra days or
+   deducting for them in silence. Days past an exhausted balance would be an absence with
+   no entitlement behind it, which item 5 puts out of scope for the first version, so the
+   refusal is what keeps this version from depending on a calculation it deliberately does
+   not have. A spell of sickness is counted from
    its first day through to its last, across a month boundary, rather than restarting
    each month; the Saturdays inside a spell count toward it and are drawn from the
    balance, but are not paid. A span marked over a day that cannot take the mark is
@@ -110,10 +127,22 @@ Each of these is true or false at a glance.
    shown to the user rather than absorbed silently, and a spell entered as one range is
    stored as one span wherever it legally can be. Where the Friday supplement is pocket
    money, a Friday on which sickness was reported is still paid it, unless the whole of
-   that week was lost to sickness, in which case it is not.
+   that week was lost to sickness, in which case it is not. "The whole of that week" means
+   every working day of it, Sunday through Friday; Saturday is the weekly rest day and is
+   not counted. One day worked in that week is enough for the supplement to be paid.
 9. A holiday the worker does not work changes nothing: a monthly salary is paid in full
    and no vacation day is drawn. A holiday she works is paid at the rest-day rate, and a
    holiday falling on a Saturday she works is paid once, not twice.
+   The user never marks a day as a holiday on the month's calendar. The year's holidays
+   are chosen in advance from the country's candidate list (item 10), so the dates arrive
+   on the calendar already drawn, and the only thing the month records about one is
+   whether she worked it. That single fact is shown as one colour in two weights: a
+   holiday she did not work is an outline, and one she worked is filled, so the state that
+   costs money is the louder of the two. Both appear in the calendar's legend, because a
+   month read back later has to be tellable apart at a glance. A holiday nobody has
+   answered for yet is caught by the pre-export questions (item 18) rather than counted as
+   one she did not work, which is what keeps a silent default from quietly underpaying
+   her.
 10. The worker's holidays for the year are shown in advance as her country of origin's
    full candidate list, with another country's list selectable instead, of which the
    user marks the paid ones. The yearly entitlement is nine days for a full year and is
@@ -142,7 +171,10 @@ Each of these is true or false at a glance.
     seniority and offered as a suggestion the user can change before approving, and the
     month it is paid in is set on the worker's profile when the worker is created.
     Nothing is due until a full working year has been completed, and each payment covers
-    the year running from one employment anniversary to the next.
+    the year running from one employment anniversary to the next. The recuperation day
+    rate is not derived from the monthly salary — nothing in that salary implies it — so
+    it is confirmed by the user the way the minimum wage is and stored with the month it
+    was used for, which is also what lets a past month be reproduced at its own rate.
 16. Payments that go to third parties rather than to the worker — the medical insurance
     premium, the national-insurance contribution, the agency and placement fees, the
     visa and licence fees — are recorded in their own column and are never added into
@@ -159,7 +191,11 @@ Each of these is true or false at a glance.
     the Friday supplement, the Saturday and holiday pay, and the one-off payments such
     as recuperation — taken before anything to do with advances. It is shown as an
     estimate to be confirmed rather than as a fact, because the sum actually billed has
-    differed from it. It is paid once a quarter and in arrears: the reminder
+    differed from it. Every month carries its own estimate, and the money actually paid
+    appears only in the month it was paid, together with the months it covers. These are
+    two different figures in two different columns and not one figure written twice: the
+    first is what the month accrued, the second is what left the account.
+    It is paid once a quarter and in arrears: the reminder
     appears on the opening screen in the month after the last covered month has ended,
     and stays there until the user ticks the payment as made. The export carries the
     amount that was due, that tick, and the months the payment covers. The licence
@@ -333,8 +369,9 @@ until a month with an absence in it.
 
 The month sheet's columns are not interchangeable, and only three of them reach the
 worker. Column E carries the monthly salary items, F the pay for Saturdays and holidays,
-and G the one-off payments such as recuperation, vacation days taken, and hospital
-overtime; the month's total is the sum of those three alone. Column H holds money paid
+and G the one-off payments such as recuperation and hospital overtime — not vacation,
+which is never paid as a line at all (item 7); the month's total is the sum of those three
+alone. Column H holds money paid
 to third parties — the medical insurance premium, the national-insurance contribution
 paid quarterly, the agency and placement fees, the visa and licence fees — and is
 deliberately excluded from that total. Reading H as salary would overpay the worker, and
@@ -352,8 +389,9 @@ by her ordinary salary and earns nothing extra, so the interface must never let
 "holiday" be recorded without saying whether she worked it.
 
 Do not copy numbers out of the source workbooks. Several are stale: the vacation-day
-rate stayed at the 2024 figure through 2025 and 2026, and the national-insurance line
-stayed at 2% of the 2024 wage after the rate rose to 3.6%. Derive every rate instead.
+rate stayed at the 2024 figure through 2025 and 2026 — and is not carried forward at all,
+since the sheet has no vacation line (item 7) — and the national-insurance line stayed at
+2% of the 2024 wage after the rate rose to 3.6%. Derive every rate instead.
 For the same reason, an exported figure may differ by an agora from the historical
 sheet; reproduce history as history and never silently rewrite a past month.
 
@@ -381,7 +419,9 @@ as bugs:
 - Partial months: a worker starting or leaving mid-month, and unpaid leave. The first
   version assumes whole months only.
 - End of employment: settling the vacation balance, prorating recuperation, and closing
-  an advance that has not finished being repaid.
+  an advance that has not finished being repaid. A settled balance day is valued at the
+  same monthly salary over twenty-five that values a sick day, recorded here so the
+  divisor is not decided a second time when it is built.
 - History: keeping past exported files and a log of edits, so a corrected month can be
   compared against what was originally produced.
 
