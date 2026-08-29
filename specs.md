@@ -137,13 +137,26 @@ Each of these is true or false at a glance.
    refusal is what keeps this version from depending on a calculation it deliberately does
    not have. A spell of sickness is counted from
    its first day through to its last, across a month boundary, rather than restarting
-   each month; the Saturdays inside a spell count toward it and are drawn from the
-   balance, but are not paid. A span marked over a day that cannot take the mark is
+   each month. A Saturday inside a spell does four separate things and they must not be
+   collapsed into one: it is not paid; nothing is deducted from the money for it, because
+   the standard count leaves Saturdays out, so the salary never paid for that day, there
+   is nothing to take back, and a deduction would charge her for a day she was not paid;
+   it is nonetheless drawn from the sick balance, which is a count of days and not a sum
+   of money; and it advances the position in the spell, so the day after it stands one
+   tier further on. A span marked over a day that cannot take the mark is
    applied to the days that can and the rest is reported, which leaves two spells where
    one was intended — and because the tiers count from each spell's own first day, that
    break changes what the sickness pays. So the skipped days and the reason for each are
    shown to the user rather than absorbed silently, and a spell entered as one range is
-   stored as one span wherever it legally can be. Where the Friday supplement is pocket
+   stored as one span wherever it legally can be. A spell ends on the first day no
+   sickness was reported, and days that touch are therefore one spell however many spans
+   they were entered as, since it is the unreported day and not the second entry that
+   breaks a spell in two. That is how the law measures a period of illness: an unbroken
+   run from its first day, the rest days inside it counted, regardless of how many
+   medical certificates were written over it. Where two genuinely separate illnesses do
+   run into each other the effect is to read them as one, so the fourth day is paid in
+   full rather than starting again at nothing — which leans in the worker's favour, and
+   is settled by the manual override of item 17 rather than by a mechanism built for it. Where the Friday supplement is pocket
    money, a Friday on which sickness was reported is still paid it, unless the whole of
    that week was lost to sickness, in which case it is not. "The whole of that week" means
    every working day of it, Sunday through Friday; Saturday is the weekly rest day and is

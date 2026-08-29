@@ -1,6 +1,7 @@
 import { buildBalances, buildWarnings } from "@/lib/engine/balances";
 import { countMonth, type MonthCounts } from "@/lib/engine/counts";
 import { deriveRates } from "@/lib/engine/rates";
+import { sickDeductionDays } from "@/lib/engine/sick";
 import type {
   MonthContext,
   MonthFacts,
@@ -42,9 +43,9 @@ import type {
  * amount and sets `manual` without touching the key, so a manual figure is
  * still addressable and still says what it would otherwise have been (item 17).
  *
- * `sickDeduction` is reserved here and emitted in Step 5, which owns the
- * statutory tiers: it belongs to this list because the key set is fixed now,
- * not because this file writes the line.
+ * `sickDeduction` is emitted below, and `src/lib/engine/sick.ts` owns the
+ * statutory tiers behind it: this file asks that module how many days the month
+ * deducts and prices them, and restates none of the rule.
  */
 export const lineKeys = {
   base: "base",
@@ -123,6 +124,33 @@ function buildLines(
       explanation: {
         text: he.sheet.why.fridaySupplement(counts.fridaysPaidSupplement),
         link: "caregiverWage",
+      },
+    });
+  }
+
+  // The sickness deduction. It sits in column E and inside the same subtotal as
+  // the base and the Friday supplement, and never among the one-off payments: a
+  // deduction is not a payment (specs.md item 8). It is written here rather than
+  // as a reduced base, because the base is computed from the standard count and
+  // never shrinks — the deduction is what carries the statutory tiers onto a
+  // sheet that has already paid the day in full.
+  //
+  // The days are negative and the rate is not. The rate is what a sick day is
+  // worth — the same monthly salary over twenty-five the tiers themselves are
+  // measured in (item 8) — and the sign belongs to the quantity, because what
+  // this row records is days taken back off the month. A negative unit price in
+  // column D is the reading Part 5 warns about in the other direction.
+  const sickDays = sickDeductionDays(facts.spans, facts.month);
+  if (sickDays > 0) {
+    drafts.push({
+      key: lineKeys.sickDeduction,
+      label: he.sheet.lines.sickDeduction,
+      units: -sickDays,
+      rate: rates.daily,
+      column: "E",
+      explanation: {
+        text: he.sheet.why.sickDeduction(sickDays),
+        link: "sickPay",
       },
     });
   }
