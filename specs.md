@@ -178,7 +178,17 @@ Each of these is true or false at a glance.
    full candidate list, with another country's list selectable instead, of which the
    user marks the paid ones. The yearly entitlement is nine days for a full year and is
    reduced in proportion for a year only partly worked, and the remainder is displayed
-   even when it is not a whole number. A holiday can be taken as part of a day, paid in
+   even when it is not a whole number. The year here is the calendar year, as the
+   vacation year is (item 7), and as the holiday lists themselves assume — they are
+   published and stored per country and per calendar year. The reduction is measured in
+   **months employed in that calendar year**: nine days times those months over twelve,
+   with the month employment began counted as a whole month. So a worker employed from
+   1.4.2024 has 6.75 days for 2024 and nine from 2025 onward. That is the calculation the
+   family's workbook writes out, in the notes column of its 12.24 month tab, and
+   criterion 1 is agreement with the workbook: a day-by-day proration is arithmetically
+   finer and gives 6.76, but it is not the figure the family uses. It is also the measure
+   item 7 applies to vacation, so the two entitlements are reduced the same way rather
+   than by two rules that disagree for no reason. A holiday can be taken as part of a day, paid in
    the same proportion and drawn from the entitlement in the same proportion. A date can
    be edited, a day beyond the entitlement is refused, and an incomplete selection is
    visible at a glance.

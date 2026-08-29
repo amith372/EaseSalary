@@ -228,8 +228,14 @@ export interface MonthContext {
   /** Holiday days already recorded earlier in the same year, counted the way
    * this month counts its own — a part day as its fraction (specs.md item 10). */
   holidayDaysEarlierInYear?: number;
-  /** The entitlement for this worker's year, reduced in proportion for a year
-   * only partly worked (item 10). Whole years use the statutory nine. */
+  /**
+   * The entitlement for this calendar year, if something outside the engine has
+   * settled it. Left out, it is **derived** by `holidayAllowanceFor` from the
+   * worker's own terms — nine days for a full year, reduced by the months
+   * employed in a year only partly worked (item 10) — so a month standing alone
+   * is still refused against the entitlement she actually has rather than
+   * against a flat nine.
+   */
   holidayAllowance?: number;
   /**
    * The balances this month opens with — the previous month's closing figures.

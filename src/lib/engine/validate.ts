@@ -1,5 +1,6 @@
 import { isSaturday, orderDates, compareIsoDate } from "@/lib/dates";
 import { daysUsedIn, sickDaysAvailable } from "@/lib/engine/balances";
+import { holidayAllowanceFor, holidayDaysOf } from "@/lib/engine/leave";
 import type {
   MonthContext,
   MonthFacts,
@@ -44,23 +45,9 @@ export interface Refusal {
   dates: IsoDate[];
 }
 
-/** The yearly entitlement is nine days for a full year (specs.md item 10). It
- * is prorated for a year only partly worked, which is why the allowance is
- * passed in rather than read from here. */
-export const HOLIDAYS_PER_YEAR = 9;
-
 function coversDate(span: MonthSpan, date: IsoDate): boolean {
   const { from, to } = orderDates(span.from, span.to);
   return compareIsoDate(date, from) >= 0 && compareIsoDate(date, to) <= 0;
-}
-
-/** A holiday may be taken as part of a day and is drawn from the entitlement in
- * that same proportion (specs.md item 10), so the entitlement counts days and
- * not spans. */
-export function holidayDaysOf(spans: MonthSpan[]): number {
-  return spans
-    .filter((span) => span.kind === "holiday")
-    .reduce((days, span) => days + (span.fraction ?? 1), 0);
 }
 
 /**
@@ -112,7 +99,14 @@ export function validateMonth(
 
   // A tenth paid holiday within a year. The entitlement is nine for a full year
   // and is reduced in proportion for a year only partly worked (item 10).
-  const allowance = context.holidayAllowance ?? HOLIDAYS_PER_YEAR;
+  // Nine days for a full year, reduced in proportion for a year only partly
+  // worked (item 10). Derived from the worker's own terms rather than defaulted
+  // to nine, so a month standing alone in her first calendar year is refused
+  // against the entitlement she actually has. The context may still hand one
+  // in, which is what lets a figure settled elsewhere win over the derivation.
+  const allowance =
+    context.holidayAllowance ??
+    holidayAllowanceFor(terms.employedSince, facts.month.year);
   const holidayDays =
     holidayDaysOf(spans) + (context.holidayDaysEarlierInYear ?? 0);
   if (holidayDays > allowance) {

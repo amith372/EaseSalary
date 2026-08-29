@@ -1,5 +1,9 @@
 import { buildBalances, buildWarnings } from "@/lib/engine/balances";
 import { countMonth, type MonthCounts } from "@/lib/engine/counts";
+import {
+  holidayDaysWorked,
+  restDayUnitsOf,
+} from "@/lib/engine/leave";
 import { deriveRates } from "@/lib/engine/rates";
 import { sickDeductionDays } from "@/lib/engine/sick";
 import type {
@@ -155,16 +159,22 @@ function buildLines(
     });
   }
 
-  // Column F — the pay for Saturdays and holidays, both at the rest-day rate.
-  if (counts.saturdaysWorked > 0) {
+  // Column F — the pay for Saturdays and holidays, both at the rest-day rate,
+  // and each day paid once between the two lines. `leave.ts` owns that
+  // division: a Saturday she worked which is also a holiday she worked is left
+  // with the holiday line and taken out of the Saturdays here, because both
+  // lines pay the same rate off the same date and item 9 says the day is paid
+  // once. `counts.saturdaysWorked` stays the true count of Saturdays attended.
+  const restDayUnits = restDayUnitsOf(facts.spans, counts.saturdaysWorked);
+  if (restDayUnits > 0) {
     drafts.push({
       key: lineKeys.restDays,
       label: he.sheet.lines.restDays,
-      units: counts.saturdaysWorked,
+      units: restDayUnits,
       rate: rates.restDay,
       column: "F",
       explanation: {
-        text: he.sheet.why.restDays(counts.saturdaysWorked),
+        text: he.sheet.why.restDays(restDayUnits),
         link: "restDayWork",
       },
     });
@@ -172,11 +182,9 @@ function buildLines(
 
   // A holiday she works is paid at the rest-day rate; one she does not work
   // earns nothing extra, because the monthly salary is paid on it in full
-  // (item 9). A holiday on a Saturday she works is paid once, not twice — it is
-  // one span, and it is counted here and not again above.
-  const holidaysWorked = facts.spans.filter(
-    (span) => span.kind === "holiday" && span.worked,
-  ).length;
+  // (item 9). Counted in days and not in spans, and a part day is paid in its
+  // own proportion (item 10).
+  const holidaysWorked = holidayDaysWorked(facts.spans);
   if (holidaysWorked > 0) {
     drafts.push({
       key: lineKeys.holidaysWorked,
