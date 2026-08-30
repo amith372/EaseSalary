@@ -1,4 +1,9 @@
-import { isSaturday, orderDates, compareIsoDate } from "@/lib/dates";
+import {
+  compareIsoDate,
+  eachDate,
+  isSaturday,
+  orderDates,
+} from "@/lib/dates";
 import { daysUsedIn, sickDaysAvailable } from "@/lib/engine/balances";
 import { holidayAllowanceFor, holidayDaysOf } from "@/lib/engine/leave";
 import {
@@ -13,7 +18,7 @@ import type {
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import type { LegalLinkKey } from "@/lib/links";
-import type { IsoDate } from "@/lib/types";
+import type { IsoDate, MarkKind } from "@/lib/types";
 
 /**
  * The facts the engine refuses, with the reason each was refused.
@@ -34,8 +39,20 @@ export type RefusalCode =
   | "holidayLimit"
   /** A free Saturday recorded on a day that is not a Saturday (item 5). */
   | "freeSaturdayNotSaturday"
-  /** More Saturdays worked than the month holds (Part 4). */
-  | "saturdaysExceedMonth"
+  /**
+   * One date carrying more than one entry — a day recorded as both sick and
+   * worked as a holiday, or recorded twice over (Part 4).
+   *
+   * There is no `saturdaysExceedMonth` beside it, and its absence is the
+   * decision rather than an omission. A count of worked Saturdays higher than
+   * the month holds cannot arise: `countMonth` filters the calendar's own
+   * Saturdays rather than reading a number, so no stored data produces one. The
+   * failure mode came from the family's workbook, where that figure is typed —
+   * G2 of `שכר_חודשי_להאנה2025.xlsx` -> `חודש  8.25` — and deriving it moved
+   * the danger rather than removing it: the holiday count is the one the
+   * calendar does not bound, so this is where the refusal sits now.
+   */
+  | "dayRecordedTwice"
   /**
    * Two payments of one kind in a single month (specs.md item 16). The sheet
    * holds one row per kind, and two lines under one explanation key can be
@@ -74,26 +91,78 @@ export interface Refusal {
  * the user was doing was marking a holiday.
  */
 const LINK_FOR: Record<
-  Exclude<RefusalCode, "thirdPartyPaidTwice">,
+  Exclude<RefusalCode, "dayRecordedTwice" | "thirdPartyPaidTwice">,
   LegalLinkKey
 > = {
   restDayHoliday: "holidayWork",
   holidayLimit: "holidayWork",
   freeSaturdayNotSaturday: "restDayWork",
-  saturdaysExceedMonth: "restDayWork",
   sickBalanceExhausted: "sickPay",
 };
 
 /**
- * `thirdPartyPaidTwice` is the one refusal whose rule depends on what was being
- * recorded rather than on the check, so it resolves through
+ * `dayRecordedTwice` and `thirdPartyPaidTwice` are the two refusals whose rule
+ * depends on what was being recorded rather than on the check. The first
+ * resolves through the mark's own kind, below; the second through
  * `LINK_FOR_THIRD_PARTY`, which `thirdParty.ts` already holds for the lines
- * themselves — a payment's rule is named in one place (specs.md item 25).
+ * themselves, so a payment's rule is named in one place (specs.md item 25).
  */
+const LINK_FOR_KIND: Record<MarkKind, LegalLinkKey> = {
+  vacation: "annualLeave",
+  sick: "sickPay",
+  holiday: "holidayWork",
+  freeSaturday: "restDayWork",
+};
 
 function coversDate(span: MonthSpan, date: IsoDate): boolean {
   const { from, to } = orderDates(span.from, span.to);
   return compareIsoDate(date, from) >= 0 && compareIsoDate(date, to) <= 0;
+}
+
+/**
+ * Every date each span covers, whichever month it falls in. A spell of sickness
+ * is stored as the dates it ran between and may begin before the month or end
+ * after it (specs.md Part 3), so the span is read whole: an overlap that
+ * straddles the boundary is still an overlap.
+ */
+function datesOf(span: MonthSpan): IsoDate[] {
+  const { from, to } = orderDates(span.from, span.to);
+  return eachDate(from, to);
+}
+
+/**
+ * Dates carrying more than one entry, with the kind of the mark that collided.
+ *
+ * **Why this is refused rather than resolved.** A day recorded as both a sick
+ * day and a holiday she worked is a contradiction in the facts, and the engine
+ * has no way to know which of the two happened — she cannot have been absent
+ * ill and at work on the same day. Resolving it by a rule would mean choosing
+ * silently, and the figure that came out would look entirely ordinary. Two
+ * entries of the same kind on one date are the same problem in its plainest
+ * form: the day is paid twice and drawn twice from its entitlement.
+ *
+ * The cost of not refusing is not theoretical. A sick spell covering a Saturday
+ * that is also marked as a holiday she worked leaves `restDayUnitsOf`
+ * subtracting a Saturday that sickness had already taken out, so the sheet
+ * reports three Saturdays worked where she worked four. The month's total can
+ * still come out plausible, which is exactly what makes it dangerous: item 2
+ * requires every payment to carry its type, its number of units and its amount,
+ * and the units are what is wrong.
+ *
+ * `src/lib/spans.ts` already refuses both at mark time, as `alreadyMarked` and
+ * `restDayHoliday`. This is the same rule enforced where it cannot be skipped:
+ * the calendar is one caller, and the repository and the export are others.
+ */
+function datesRecordedTwice(spans: MonthSpan[]): Map<IsoDate, MarkKind> {
+  const seen = new Map<IsoDate, MarkKind>();
+  const twice = new Map<IsoDate, MarkKind>();
+  for (const span of spans) {
+    for (const date of datesOf(span)) {
+      if (seen.has(date)) twice.set(date, span.kind);
+      else seen.set(date, span.kind);
+    }
+  }
+  return twice;
 }
 
 /**
@@ -127,6 +196,25 @@ export function validateMonth(
       link: LINK_FOR.restDayHoliday,
       message: he.sheet.refusals.restDayHoliday,
       dates: [...new Set(clashes)],
+    });
+  }
+
+  // A date carrying more than one entry. Reported after `restDayHoliday` and
+  // with its dates removed, so the holiday-on-a-free-Saturday pair gets the
+  // reason Part 4 names for it rather than two refusals for one mistake: a
+  // specific reason is worth more to the user than a general one.
+  const alreadyRefused = new Set(clashes);
+  const twice = [...datesRecordedTwice(spans)].filter(
+    ([date]) => !alreadyRefused.has(date),
+  );
+  if (twice.length > 0) {
+    refusals.push({
+      code: "dayRecordedTwice",
+      message: he.sheet.refusals.dayRecordedTwice,
+      dates: twice.map(([date]) => date).sort(compareIsoDate),
+      // The rule of the mark that collided — what the user was doing when the
+      // entry was refused (item 25).
+      link: LINK_FOR_KIND[twice[0][1]],
     });
   }
 

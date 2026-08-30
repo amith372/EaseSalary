@@ -425,8 +425,29 @@ The deliberately invalid case is a paid holiday landing on a free Saturday: the 
 records the 16th as a Saturday the worker had off, then tries to mark the same date as
 one of her paid holidays. The application must refuse the second entry and explain why,
 rather than paying both the rest-day rate and the holiday rate for a single day. The
-same refusal covers a tenth paid holiday within a year and a count of worked Saturdays
-higher than the number of Saturdays in the month.
+same refusal covers a tenth paid holiday within a year, and a date carrying more than
+one entry at all — a day recorded as both sick and worked as a holiday, or recorded
+twice over. The second of those is a contradiction the application cannot resolve: she
+cannot have been absent ill and at work on the same day, and choosing one reading
+silently would produce a figure that looks entirely ordinary. Left unrefused it costs a
+rest day — a spell of sickness covering a Saturday that is also marked as a holiday
+worked makes the sheet report three Saturdays where she worked four, because the
+holiday is subtracted from a count sickness had already reduced.
+
+A count of worked Saturdays higher than the number of Saturdays in the month is **not**
+among the refusals, and its absence is a decision rather than an omission. That count is
+filtered from the calendar's own Saturdays rather than read from a number, so no stored
+data can produce one: the guarantee holds by construction and a check for it would be
+unreachable code pretending to be a safeguard. The failure mode is real in the family's
+workbook, where the figure is typed — G2 of `שכר_חודשי_להאנה2025.xlsx` → `חודש  8.25` —
+and deriving it moved the danger rather than removing it, because the holiday count is
+the one the calendar does not bound. That is where the refusal above now sits.
+
+Every refusal is made in the calculation engine and not only on the screen that draws
+the calendar, and `calculateMonth` throws rather than returning them, so a caller that
+ignores the refusals cannot receive a number instead. The calendar is one caller; the
+repository and the export are others, and a rule enforced only where the user happens to
+be looking is a rule the stored data can walk around.
 
 The two cases above check the calculation, which is deterministic and fails loudly. The
 fetched pages are neither, so they are checked a third way: by being handed a broken

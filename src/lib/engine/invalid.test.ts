@@ -234,3 +234,92 @@ describe("every refusal carries the rule it rests on (specs.md item 25)", () => 
   });
 });
 
+describe("a date carrying more than one entry (specs.md Part 4)", () => {
+  /**
+   * A sick balance to draw on, so these months are refused for the overlap and
+   * not for an exhausted balance (item 8): what is under test here is the
+   * contradiction, not the balance.
+   */
+  const stocked: WorkerTerms = {
+    ...terms,
+    openingPosition: { vacationDays: 20, sickDays: 43.5, advances: [] },
+  };
+
+  /** Part 4's rest-day rate, ₪426.35 — what each of these mistakes was worth. */
+  const REST_DAY_RATE = 42635;
+
+  it("refuses a day recorded as both sick and worked as a holiday", () => {
+    // The 16th of August 2025 is a Saturday inside a spell running 14-17, and
+    // is also marked as a holiday she worked. She cannot have been absent ill
+    // and at work on the same day, and the engine has no way to know which
+    // happened.
+    const spans: MonthSpan[] = [
+      { id: "sick", kind: "sick", from: "2025-08-14", to: "2025-08-17" },
+      holiday("2025-08-16"),
+    ];
+    const refusal = validateMonth(facts(spans), stocked).find(
+      (r) => r.code === "dayRecordedTwice",
+    );
+    expect(refusal).toBeDefined();
+    expect(refusal?.dates).toEqual(["2025-08-16"]);
+    expect(refusal?.link).toBe("holidayWork");
+  });
+
+  it("refuses at the engine and not only at the calendar", () => {
+    // `calculateMonth` throws rather than returning the refusals, so a caller
+    // that ignores them cannot receive a number instead. The calendar is one
+    // caller; the repository and the export are others.
+    const spans: MonthSpan[] = [
+      { id: "sick", kind: "sick", from: "2025-08-14", to: "2025-08-17" },
+      holiday("2025-08-16"),
+    ];
+    expect(() => calculateMonth(facts(spans), stocked)).toThrow(InvalidMonthError);
+  });
+
+  it("refuses one date entered twice, rather than paying it twice", () => {
+    // Two holiday spans over the 13th of August would be paid 2 × ₪426.35 for
+    // one calendar day, and would draw two days off the nine of item 10.
+    const spans: MonthSpan[] = [
+      { id: "a", kind: "holiday", from: "2025-08-13", to: "2025-08-13", worked: true },
+      { id: "b", kind: "holiday", from: "2025-08-13", to: "2025-08-13", worked: true },
+    ];
+    const refusal = validateMonth(facts(spans), stocked).find(
+      (r) => r.code === "dayRecordedTwice",
+    );
+    expect(refusal).toBeDefined();
+    expect(refusal?.dates).toEqual(["2025-08-13"]);
+    // What the refusal is worth: 2 × ₪426.35 = ₪852.70 for a single day.
+    expect(2 * REST_DAY_RATE).toBe(85270);
+  });
+
+  it("leaves touching spans alone — they are one spell, not an overlap", () => {
+    // A spell ends on the first day no sickness was reported, so 14-17 and
+    // 18-20 are the one illness they are, however many ranges they were entered
+    // as (item 8). Touching is not overlapping, and refusing it here would
+    // break the rule sick.ts exists to keep.
+    const spans: MonthSpan[] = [
+      { id: "a", kind: "sick", from: "2025-08-14", to: "2025-08-17" },
+      { id: "b", kind: "sick", from: "2025-08-18", to: "2025-08-20" },
+    ];
+    expect(
+      validateMonth(facts(spans), stocked).some(
+        (r) => r.code === "dayRecordedTwice",
+      ),
+    ).toBe(false);
+  });
+
+  it("gives the holiday-on-a-free-Saturday pair its own reason, not two", () => {
+    // Part 4 names that case, and a specific reason is worth more to the user
+    // than a general one — so the date is left to `restDayHoliday` and is not
+    // reported a second time as an overlap.
+    const codes = validateMonth(
+      facts([
+        { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+        holiday("2025-08-16"),
+      ]),
+      stocked,
+    ).map((r) => r.code);
+    expect(codes).toContain("restDayHoliday");
+    expect(codes).not.toContain("dayRecordedTwice");
+  });
+});
