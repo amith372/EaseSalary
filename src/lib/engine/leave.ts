@@ -124,11 +124,13 @@ const MONTHS_PER_YEAR = 12;
  * and item 12 speaks of fetching "that country's list for that year".
  *
  * A year only partly worked is reduced **in proportion to the months employed
- * in it**, and the month employment began counts as a whole month. That is the
- * calculation the family's own workbook writes out, in the notes column of the
- * 12.24 month tab, and criterion 1 is agreement with the workbook: a
- * day-by-day proration is arithmetically finer and gives 6.76 rather than 6.75,
- * but it is not the figure the family uses. It is also the measure item 7
+ * in it**, and the month employment began counts as a whole month. The family's
+ * own workbook both states and pays it: `שכר_חודשי_להאנה2024.xlsx` ->
+ * `חודש  12.24` -> C9 holds 6.75 days and F9 pays 6.75 x 401.25, with the note
+ * in I9 giving the reasoning, "(9*9)/12 = 6.75" for the nine months 4-12/24.
+ * The figure comes from the cells and the reasoning from the note, which is the
+ * order Part 5 requires. Criterion 1 is agreement with the workbook: a day-by-day proration is arithmetically finer
+ * and gives 6.76 rather than 6.75, but it is not the figure the family uses. It is also the measure item 7
  * already applies to vacation — a year employed for nine months of accrues nine
  * monthly twelfths — so the two entitlements are reduced the same way rather
  * than by two different rules.

@@ -1,0 +1,400 @@
+import { describe, expect, it } from "vitest";
+import { calculateMonth } from "@/lib/engine/month";
+import {
+  NATIONAL_INSURANCE_RATE,
+  nationalInsuranceEstimateOf,
+  thirdPartyLineKey,
+} from "@/lib/engine/thirdParty";
+import type {
+  MonthFacts,
+  MonthSpan,
+  ThirdPartyKind,
+  ThirdPartyPayment,
+  WorkerTerms,
+} from "@/lib/engine/types";
+import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
+import { he } from "@/lib/i18n/he";
+import type { MonthResult, YearMonth } from "@/lib/types";
+
+/**
+ * Column H, and the national-insurance estimate that sits beside it without
+ * being it.
+ *
+ * **Where each expected figure comes from.** Not one is read back from what the
+ * engine returned.
+ *
+ *   the gross of August 2025      ₪9,305.75   specs.md Part 4
+ *   after the ₪2,000 instalment   ₪7,305.75   specs.md Part 4
+ *   the national-insurance rate   3.6%        specs.md item 19
+ *   this month's estimate         ₪335.01     those two multiplied, in the
+ *                                             open: 930,575 × 0.036 =
+ *                                             33,500.7 agorot, rounded once
+ *   the workbook's own line       ₪117.60     שכר_חודשי_להאנה2025.xlsx ->
+ *                                             חודש  8.25 -> D21. Stale, and
+ *                                             therefore the figure the engine
+ *                                             must **not** produce
+ *   why it is stale               ₪5,880.02   שכר_חודשי_להאנה2024.xlsx ->
+ *                                             חודש  12.24 -> D7, the 2024
+ *                                             monthly minimum wage. 2% of it
+ *                                             is 117.60, which is what the
+ *                                             cell still holds after the rate
+ *                                             rose to 3.6% (Part 5)
+ *   a quarter actually paid       ₪936        שכר_חודשי_להאנה2025.xlsx ->
+ *                                             חודש  7.25 -> H21, for 4-6/25,
+ *                                             named in B21 and I21
+ *   a month that settled none     D21 present and H21 empty, H25 = 0:
+ *                                 שכר_חודשי_להאנה2026.xlsx -> חודש  2.26
+ *
+ * The facts below are August 2025's, because August is the month whose gross
+ * Part 4 fixes — so the estimate standing beside a payment is sourced too. The
+ * quarter it settles is the one the workbook records in 7.25; which month a
+ * quarter is settled in is a fact about the family's calendar and not a
+ * property this file is testing.
+ */
+
+const SALARY = 624765; // Part 4: ₪6,247.65
+const FRIDAY_SUPPLEMENT = 10000; // Part 4: ₪500 across five Fridays (item 14)
+const INSTALMENT = 200000; // Part 4: ₪2,000 a month
+
+const GROSS = 930575; // Part 4: ₪9,305.75
+const NET = 730575; // Part 4: ₪7,305.75
+
+/** 930,575 × 0.036 = 33,500.7, rounded once (item 3). */
+const ESTIMATE = 33501;
+
+/** ₪117.60 — D21, and 2% of the ₪5,880.02 of 2024. Never a figure to produce. */
+const STALE_WORKBOOK_LINE = 11760;
+
+/** ₪936 — H21 of חודש  7.25, the quarter 4-6/25. */
+const QUARTER_PAID = 93600;
+
+const QUARTER_COVERED: YearMonth[] = [
+  { year: 2025, month: 4 },
+  { year: 2025, month: 5 },
+  { year: 2025, month: 6 },
+];
+
+const spans: MonthSpan[] = [
+  { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+  { id: "hol-19", kind: "holiday", from: "2025-08-19", to: "2025-08-19", worked: true },
+  { id: "hol-21", kind: "holiday", from: "2025-08-21", to: "2025-08-21", worked: true },
+];
+
+const terms: WorkerTerms = {
+  employedSince: "2024-04-01",
+  baseMonthlySalaryAgorot: SALARY,
+  fridaySupplementAgorot: FRIDAY_SUPPLEMENT,
+  fridayIsPocketMoney: false,
+  recuperationMonth: 7,
+  country: "PH",
+  openingPosition: {
+    vacationDays: 0,
+    sickDays: 0,
+    advances: [{ number: 1, principalAgorot: 1000000, repaidAgorot: 0 }],
+  },
+};
+
+function facts(payments: ThirdPartyPayment[] = []): MonthFacts {
+  return {
+    month: { year: 2025, month: 8 },
+    confirmedWage: {
+      baseAgorot: SALARY,
+      minimumAgorot: SALARY,
+      effectiveFrom: "2025-04-01",
+    },
+    spans,
+    advances: [{ number: 1, kind: "repaid", agorot: INSTALMENT }],
+    thirdPartyPayments: payments,
+    extraPayments: [],
+    incomeTaxAgorot: 0,
+    overrides: {},
+  };
+}
+
+function columnTotal(result: MonthResult, column: string): number {
+  return result.lines
+    .filter((line) => line.column === column)
+    .reduce((total, line) => total + (line.amount ?? 0), 0);
+}
+
+const ALL_KINDS: ThirdPartyKind[] = [
+  "medicalInsurance",
+  "nationalInsurance",
+  "agencyFee",
+  "placementFee",
+  "visaFee",
+  "licenceFee",
+];
+
+describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
+  const bare = calculateMonth(facts(), terms);
+
+  it("leaves the gross and the net exactly where they were", () => {
+    // Reading H as salary would overpay her. ₪500 of medical insurance must
+    // move neither of Part 4's two totals.
+    const withPremium = calculateMonth(
+      facts([{ kind: "medicalInsurance", agorot: 50000 }]),
+      terms,
+    );
+    expect(withPremium.gross).toBe(GROSS); // Part 4: ₪9,305.75
+    expect(withPremium.net).toBe(NET); // Part 4: ₪7,305.75
+    expect(columnTotal(withPremium, "H")).toBe(50000);
+  });
+
+  it("does that for every kind of third-party payment there is", () => {
+    // The workbook totals the month as E23+F24+G25 and leaves H25 standing
+    // apart (שכר_חודשי_להאנה2025.xlsx -> חודש  7.25 -> E26, H25), so no kind
+    // is an exception.
+    for (const kind of ALL_KINDS) {
+      const result = calculateMonth(facts([{ kind, agorot: 100000 }]), terms);
+      expect(result.gross).toBe(GROSS);
+      expect(result.net).toBe(NET);
+      expect(columnTotal(result, "H")).toBe(100000);
+      const line = result.lines.find((l) => l.key === thirdPartyLineKey(kind));
+      expect(line?.column).toBe("H");
+    }
+  });
+
+  it("prints an H subtotal that no other total contains", () => {
+    const result = calculateMonth(
+      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID }]),
+      terms,
+    );
+    const h = result.subtotals.find((s) => s.column === "H");
+    expect(h?.amount).toBe(QUARTER_PAID); // H25 = 936 in חודש  7.25
+    const reachesWorker = result.subtotals
+      .filter((s) => s.column !== "H")
+      .reduce((total, s) => total + (s.amount ?? 0), 0);
+    expect(reachesWorker).toBe(GROSS); // E26 = E23+F24+G25, H excluded
+  });
+
+  it("keeps units × rate equal to the amount on an H line too", () => {
+    // Every payment is shown as its type, its units and its amount (item 2).
+    // A fee has no meaningful unit price: the ₪936 quarter is one payment, not
+    // three months at ₪312, and inventing a per-month price would put a charge
+    // in column D that Part 5 warns is read as a payment.
+    const result = calculateMonth(
+      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID }]),
+      terms,
+    );
+    const line = result.lines.find(
+      (l) => l.key === thirdPartyLineKey("nationalInsurance"),
+    );
+    expect(line?.units).toBe(1);
+    expect(line?.rate).toBe(QUARTER_PAID);
+    expect(line?.amount).toBe(QUARTER_PAID);
+  });
+
+  it("emits no H line at all in a month that paid nobody", () => {
+    // A month with nothing paid prints nothing rather than a zero, exactly as
+    // an empty column G does (criterion 1).
+    expect(bare.lines.some((line) => line.column === "H")).toBe(false);
+    expect(bare.subtotals.some((s) => s.column === "H")).toBe(false);
+  });
+});
+
+describe("the national-insurance estimate (specs.md item 19)", () => {
+  it("is 3.6% of the month's full cost, taken before the advances", () => {
+    // 3.6% of Part 4's ₪9,305.75 — the salary, the Friday supplement and the
+    // Saturday and holiday pay — and not of the ₪7,305.75 that follows the
+    // instalment: the contribution cannot depend on whether the family happened
+    // to lend her money.
+    const result = calculateMonth(facts(), terms);
+    expect(NATIONAL_INSURANCE_RATE).toBe(0.036);
+    expect(result.nationalInsuranceEstimate).toBe(ESTIMATE); // ₪335.01
+    expect(nationalInsuranceEstimateOf(GROSS)).toBe(ESTIMATE);
+    expect(result.nationalInsuranceEstimate).not.toBe(
+      nationalInsuranceEstimateOf(NET),
+    );
+  });
+
+  it("is derived and is never the workbook's stale line", () => {
+    // D21 of every 2025 and 2026 month tab still reads ₪117.60, which is 2% of
+    // the ₪5,880.02 that שכר_חודשי_להאנה2024.xlsx -> חודש  12.24 -> D7 pays
+    // the 2024 salary at. The rate rose to 3.6% in January 2025 and the cell
+    // never followed. Derive, never copy (Part 5).
+    const result = calculateMonth(facts(), terms);
+    expect(Math.round(588002 * 0.02)).toBe(STALE_WORKBOOK_LINE);
+    expect(result.nationalInsuranceEstimate).not.toBe(STALE_WORKBOOK_LINE);
+  });
+
+  it("moves neither of the totals paid to the worker", () => {
+    // An estimate is not a payment: it is a figure to confirm, and it enters no
+    // subtotal — nothing in the sheet sums column D.
+    const result = calculateMonth(facts(), terms);
+    expect(result.gross).toBe(GROSS);
+    expect(result.net).toBe(NET);
+    expect(result.subtotals.some((s) => s.amount === ESTIMATE)).toBe(false);
+  });
+
+  it("takes no notice of what column H paid", () => {
+    // The base is E + F + G. A ₪936 quarter leaving the account this month is
+    // not part of the cost this month accrued.
+    const result = calculateMonth(
+      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID }]),
+      terms,
+    );
+    expect(result.nationalInsuranceEstimate).toBe(ESTIMATE);
+  });
+});
+
+describe("the estimate and the payment are two figures, never one (item 19)", () => {
+  it("shows the estimate and no payment in a month that settled no quarter", () => {
+    // חודש  2.26: D21 holds the per-month figure, H21 is empty, H25 is 0.
+    const result = calculateMonth(facts(), terms);
+    expect(result.nationalInsuranceEstimate).toBe(ESTIMATE);
+    expect(
+      result.lines.find((l) => l.key === thirdPartyLineKey("nationalInsurance")),
+    ).toBeUndefined();
+  });
+
+  it("shows both in the month the quarter is settled, and they differ", () => {
+    // חודש  7.25: D21 carries the month's own figure and H21 the ₪936 that
+    // left the account on 20.7.25. One line carrying both is the two numbers
+    // collapsed back into one.
+    const result = calculateMonth(
+      facts([
+        {
+          kind: "nationalInsurance",
+          agorot: QUARTER_PAID,
+          coversMonths: QUARTER_COVERED,
+        },
+      ]),
+      terms,
+    );
+    const paid = result.lines.find(
+      (l) => l.key === thirdPartyLineKey("nationalInsurance"),
+    );
+    expect(paid?.amount).toBe(QUARTER_PAID); // ₪936
+    expect(result.nationalInsuranceEstimate).toBe(ESTIMATE); // ₪335.01
+    expect(paid?.amount).not.toBe(result.nationalInsuranceEstimate);
+  });
+
+  it("has the payment name the months it covers", () => {
+    // B21 of חודש  7.25 writes "הפרשות בגין חודשים 4-6/25" into the row itself,
+    // and the export carries the amount that was due together with the months
+    // it covers. They travel beside the sentence, not inside it (Part 5).
+    const result = calculateMonth(
+      facts([
+        {
+          kind: "nationalInsurance",
+          agorot: QUARTER_PAID,
+          coversMonths: QUARTER_COVERED,
+        },
+      ]),
+      terms,
+    );
+    const paid = result.lines.find(
+      (l) => l.key === thirdPartyLineKey("nationalInsurance"),
+    );
+    expect(paid?.coversMonths).toEqual(QUARTER_COVERED);
+  });
+
+  it("leaves a payment that covers only its own month without the field", () => {
+    // A premium paid for the month it appears in has nothing to say about other
+    // months, so it carries no list rather than a list repeating itself.
+    const result = calculateMonth(
+      facts([{ kind: "medicalInsurance", agorot: 32559 }]),
+      terms,
+    );
+    const paid = result.lines.find(
+      (l) => l.key === thirdPartyLineKey("medicalInsurance"),
+    );
+    expect(paid?.coversMonths).toBeUndefined();
+  });
+
+  it("keeps the estimate when the payment is taken away", () => {
+    // Which is what makes it derived: every month carries its own estimate,
+    // whether or not a quarter was settled in it.
+    const withPayment = calculateMonth(
+      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID }]),
+      terms,
+    );
+    const without = calculateMonth(facts(), terms);
+    expect(withPayment.nationalInsuranceEstimate).toBe(
+      without.nationalInsuranceEstimate,
+    );
+    expect(without.nationalInsuranceEstimate).toBe(ESTIMATE);
+  });
+});
+
+describe("one row per kind, and a month with two is refused (item 16)", () => {
+  it("refuses two payments of the same kind, naming the type", () => {
+    // The sheet holds one row per kind — rows 10 and 12 to 16 and 21 of a month
+    // tab — so two would share the explanation key `thirdParty.medicalInsurance`
+    // and an override could not reach one without reaching the other.
+    const refusals = validateMonth(
+      facts([
+        { kind: "medicalInsurance", agorot: 32559 },
+        { kind: "medicalInsurance", agorot: 34816 },
+      ]),
+      terms,
+    );
+    const refusal = refusals.find((r) => r.code === "thirdPartyPaidTwice");
+    expect(refusal).toBeDefined();
+    expect(refusal?.message).toContain(he.sheet.thirdParty.medicalInsurance);
+    // The rule the payment rests on, the same one its line carries (item 25).
+    expect(refusal?.link).toBe("medicalInsurance");
+    // A payment carries no date of its own: what it concerns is a kind.
+    expect(refusal?.dates).toEqual([]);
+  });
+
+  it("refuses at the engine, so no caller can have a number instead", () => {
+    expect(() =>
+      calculateMonth(
+        facts([
+          { kind: "visaFee", agorot: 19500 },
+          { kind: "visaFee", agorot: 21000 },
+        ]),
+        terms,
+      ),
+    ).toThrow(InvalidMonthError);
+  });
+
+  it("allows two payments of different kinds in one month", () => {
+    // A month may settle a quarter and renew a policy at once — חודש  4.25 has
+    // both — so this refusal must not stand in the way of an ordinary month.
+    const result = calculateMonth(
+      facts([
+        { kind: "nationalInsurance", agorot: QUARTER_PAID },
+        { kind: "medicalInsurance", agorot: 32559 },
+      ]),
+      terms,
+    );
+    expect(columnTotal(result, "H")).toBe(QUARTER_PAID + 32559);
+    expect(result.gross).toBe(GROSS);
+  });
+
+  it("keeps every kind addressable under its own key", () => {
+    // Which is the whole point of the refusal: one key, one line, one override.
+    const result = calculateMonth(
+      facts(ALL_KINDS.map((kind) => ({ kind, agorot: 10000 }))),
+      terms,
+    );
+    const keys = result.lines
+      .filter((line) => line.column === "H")
+      .map((line) => line.key);
+    expect(new Set(keys).size).toBe(ALL_KINDS.length);
+  });
+});
+
+describe("an H line can be overridden like any other (specs.md item 17)", () => {
+  it("replaces the amount, marks it manual, and still moves no total", () => {
+    const result = calculateMonth(
+      {
+        ...facts([{ kind: "medicalInsurance", agorot: 50000 }]),
+        overrides: { [thirdPartyLineKey("medicalInsurance")]: { agorot: 34816 } },
+      },
+      terms,
+    );
+    const line = result.lines.find(
+      (l) => l.key === thirdPartyLineKey("medicalInsurance"),
+    );
+    expect(line?.amount).toBe(34816);
+    expect(line?.manual).toBe(true);
+    // Still addressable under the same key, and column H still reaches neither
+    // total (item 16).
+    expect(result.gross).toBe(GROSS);
+    expect(result.net).toBe(NET);
+  });
+});

@@ -4,8 +4,13 @@ import {
   holidayDaysWorked,
   restDayUnitsOf,
 } from "@/lib/engine/leave";
+import { type LineDraft, toLine } from "@/lib/engine/lines";
 import { deriveRates } from "@/lib/engine/rates";
 import { sickDeductionDays } from "@/lib/engine/sick";
+import {
+  nationalInsuranceEstimateOf,
+  thirdPartyLines,
+} from "@/lib/engine/thirdParty";
 import type {
   MonthContext,
   MonthFacts,
@@ -26,10 +31,9 @@ import type {
  * path serves both the on-screen preview and the export, so this is the shape
  * the .xlsx filler reads as well (specs.md Part 3).
  *
- * **The precision rule.** A rate carries its fraction and is never rounded; a
- * line amount is integer agorot, rounded exactly once with `Math.round` at the
- * moment it becomes a `MonthLine.amount`. Nothing rounds between the two
- * (item 3). The totals are then sums of already-rounded line amounts, which is
+ * **The precision rule lives in `lines.ts`**, which is where a rate becomes an
+ * amount and the only place the calculation rounds (specs.md item 3). The
+ * totals below are therefore sums of already-rounded line amounts, which is
  * what makes the sheet add up by eye — a total rounded independently of its
  * lines can differ from them by an agora and look like a mistake.
  *
@@ -60,45 +64,13 @@ export const lineKeys = {
   incomeTax: "incomeTax",
 } as const;
 
-/**
- * A line before it is rounded. `units * rate` is the amount, always: the base
- * salary is one month at the monthly rate, never 26 days at it. Writing a draft
- * this way is what keeps the invariant true by construction rather than by
- * everyone remembering it.
- */
-interface Draft {
-  key: string;
-  label: string;
-  units: number;
-  /** The unit price — column D. Full precision, never rounded here. */
-  rate: number;
-  column: SheetColumn;
-  explanation: MonthLine["explanation"];
-}
-
-function toLine(draft: Draft, facts: MonthFacts): MonthLine {
-  const override = facts.overrides[draft.key];
-  return {
-    key: draft.key,
-    label: draft.label,
-    units: draft.units,
-    rate: draft.rate,
-    column: draft.column,
-    // The one rounding in the whole calculation: a rate carries its fraction up
-    // to here and the amount is integer agorot from here on (item 3).
-    amount: override ? override.agorot : Math.round(draft.units * draft.rate),
-    manual: override !== undefined,
-    explanation: draft.explanation,
-  };
-}
-
 function buildLines(
   facts: MonthFacts,
   terms: WorkerTerms,
   counts: MonthCounts,
 ): MonthLine[] {
   const rates = deriveRates(facts.confirmedWage.baseAgorot);
-  const drafts: Draft[] = [];
+  const drafts: LineDraft[] = [];
 
   // Column E — the monthly salary items. The Friday supplement sits here and
   // not in F: Part 4 groups it with the base, and Part 5 gives F as "the pay
@@ -211,20 +183,14 @@ function buildLines(
     });
   }
 
-  // Column H — money paid to third parties. Built here and excluded from the
-  // total: reading H as salary would overpay the worker (item 16, Part 5).
-  for (const payment of facts.thirdPartyPayments) {
-    drafts.push({
-      key: `thirdParty.${payment.kind}`,
-      label: he.sheet.thirdParty[payment.kind],
-      units: 1,
-      rate: payment.agorot,
-      column: "H",
-      explanation: { text: he.sheet.why.thirdParty },
-    });
-  }
-
-  return drafts.map((draft) => toLine(draft, facts));
+  // Column H — money paid to third parties, and excluded from the total:
+  // reading H as salary would overpay the worker (item 16, Part 5).
+  // `thirdParty.ts` owns those lines and the national-insurance estimate
+  // beside them, and this file restates neither.
+  return [
+    ...drafts.map((draft) => toLine(draft, facts.overrides)),
+    ...thirdPartyLines(facts.thirdPartyPayments, facts.overrides),
+  ];
 }
 
 /**
@@ -250,7 +216,9 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
     // `Object.is` — and so `toBe` — reports as different from 0.
     amount: -Math.abs(Math.round(tax)) || 0,
     manual: taxOverride !== undefined || facts.incomeTaxAgorot !== 0,
-    explanation: { text: he.sheet.why.incomeTax },
+    // The application never calculates the tax, so the link is the whole of what
+    // it can give the user before she types a figure (specs.md items 17, 26).
+    explanation: { text: he.sheet.why.incomeTax, link: "incomeTax" },
   });
 
   for (const advance of facts.advances) {
@@ -280,17 +248,6 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
 const COLUMNS_THAT_REACH_THE_WORKER: SheetColumn[] = ["E", "F", "G"];
 
 const ALL_COLUMNS: SheetColumn[] = ["E", "F", "G", "H"];
-
-/**
- * The national-insurance contribution is 3.6% of the month's full cost — the
- * salary, the Friday supplement, the Saturday and holiday pay, and the one-off
- * payments — taken **before anything to do with advances** (specs.md item 19).
- * That base is the gross, which is why it is applied to it and not to the net.
- *
- * Part 5 warns that the workbook's own line is stale at 2% of the 2024 wage:
- * derive, never copy.
- */
-const NATIONAL_INSURANCE_RATE = 0.036;
 
 /**
  * One subtotal per column the month has lines in, so a column with nothing in
@@ -344,7 +301,7 @@ export function calculateMonth(
     warnings: buildWarnings(facts, context),
     // An estimate to be confirmed, never a fact (item 19), and never the money
     // that actually left the account — that appears once, in the month it was
-    // paid, as a column H line of its own.
-    nationalInsuranceEstimate: Math.round(gross * NATIONAL_INSURANCE_RATE),
+    // paid, as a column H line of its own. `thirdParty.ts` holds both.
+    nationalInsuranceEstimate: nationalInsuranceEstimateOf(gross),
   };
 }

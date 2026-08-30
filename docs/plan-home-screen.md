@@ -30,8 +30,8 @@ that computes nothing — it reads. Every screen that computes (`חישוב הח
 `דף המשכורת`) waits for the engine, so build_plan's engine-first principle stands.
 
 **Decisions taken** (from the user, this session):
-- Home screen: **the design wins** over `specs.md` item 26. Build v2 as drawn, calendar
-  included; amend item 26 to match, per CLAUDE.md rule 1 (fix the spec before the code).
+- Home screen: **the design wins** over `specs.md` item 27. Build v2 as drawn, calendar
+  included; amend item 27 to match, per CLAUDE.md rule 1 (fix the spec before the code).
 - Other design/spec drift: **document, don't build.**
 - Git: init and commit locally, **do not push**.
 
@@ -157,7 +157,7 @@ Components in `src/components/`:
 
 `src/lib/`:
 - `i18n/he.ts` — every Hebrew string, one file (CLAUDE.md convention).
-- `links.ts` — the central kol-zchut reference list (`specs.md` item 25; see note 7).
+- `links.ts` — the central kol-zchut reference list (`specs.md` item 26; see note 7).
 - `dates.ts` — **UTC-only** month arithmetic. `Date.UTC`, never a local-time constructor;
   Saturday is `6`. Both traps are called out in `specs.md` Part 5.
 - `types.ts` — the engine's output shape: month components, balances, and an
@@ -350,7 +350,7 @@ method and "mark as paid" for the salary itself · notification toggles in `הג
 "להוריד את כל הנתונים" · **editable "ימי חופשה בשנה" / "ימי מחלה בשנה"** (items 7–8 derive
 both; CLAUDE.md: the user never enters a rate) · **configurable weekly rest day** (item 5
 fixes it at Saturday for every worker) · "היתר העסקה" number · a separate `התראות` page and
-bell (item 26 puts the actions on the opening screen) · "לסיים העסקה" (appendix: out of
+bell (item 27 puts the actions on the opening screen) · "לסיים העסקה" (appendix: out of
 scope for v1).
 
 *In the spec, missing from the canvas:* the **two day counts**, standard and actual

@@ -23,11 +23,11 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  *   the rest-day rate = ₪426.35            Part 4, and Part 5's formula:
  *                                          (S/25 + S/182) × 1.5 = 42,635.06…
  *   nine days a year                       item 10
- *   9 × 9/12 = 6.75 for 2024               item 10's proportional reduction,
- *                                          measured in months employed — the
- *                                          calculation the family's workbook
- *                                          writes out in the notes column of
- *                                          its 12.24 month tab
+ *   9 × 9/12 = 6.75 for 2024               item 10, measured in months employed
+ *                                          and written out in the workbook:
+ *                                          שכר_חודשי_להאנה2024.xlsx ->
+ *                                          חודש  12.24 -> C9 = 6.75 days,
+ *                                          F9 = 6.75 x 401.25 (I9 has the why)
  *
  * Not one figure is read back from what the engine returned.
  */
@@ -217,8 +217,8 @@ describe("the yearly entitlement (specs.md item 10)", () => {
 
   it("is 6.75 for a worker employed from 1 April, in that calendar year", () => {
     // Nine months of 2024 — April counted whole — so 9 × 9/12 = 6.75. This is
-    // the workbook's own calculation, written out in the notes column of its
-    // 12.24 month tab, and not a day-by-day proration, which would give 6.76.
+    // the workbook's own figure — C9 of חודש  12.24 in שכר_חודשי_להאנה2024.xlsx,
+    // paid at F9 — and not a day-by-day proration, which would give 6.76.
     expect(holidayAllowanceFor("2024-04-01", 2024)).toBe(6.75);
     expect(holidayAllowanceFor("2024-04-01", 2024)).not.toBe(6.76);
   });

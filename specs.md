@@ -41,6 +41,17 @@ Each of these is true or false at a glance.
    also carries what the Wage Protection Act requires of the payslip made from it: both
    day counts, the vacation and sick days used in the month and the balances left after
    them, and every payment shown as its type, its number of units, and its amount.
+   It is offered in two versions which differ in one thing only: whether the workbook's
+   helper column of notes is shown. The notes the user wrote on the month's actions
+   (item 5) are written into that column in both, and the plain version leaves it hidden,
+   which is what the workbook itself instructs — cell I2 of a month tab says the column
+   is for the person preparing the salary alone and is to be hidden before printing. It
+   carries those notes and not the application's own explanations: an explanation stays
+   beside the figure it explains and is never restated elsewhere (item 24). The two
+   versions are one file with one flag changed and never two files, so the figures in
+   them cannot disagree. Hidden is not removed, and the plain version is not a
+   redaction: anyone who opens it can unhide the column and read every note, so a note
+   that must not travel is a note that is not written.
 3. Every derived rate — the daily rate, which is the monthly salary over twenty-five, and
    the rest-day and holiday rate — is computed from the worker's base monthly salary
    rather than stored as a constant, so changing that salary changes both. There is no
@@ -184,9 +195,13 @@ Each of these is true or false at a glance.
    **months employed in that calendar year**: nine days times those months over twelve,
    with the month employment began counted as a whole month. So a worker employed from
    1.4.2024 has 6.75 days for 2024 and nine from 2025 onward. That is the calculation the
-   family's workbook writes out, in the notes column of its 12.24 month tab, and
-   criterion 1 is agreement with the workbook: a day-by-day proration is arithmetically
-   finer and gives 6.76, but it is not the figure the family uses. It is also the measure
+   family's workbook both states and pays. `שכר_חודשי_להאנה2024.xlsx` → `חודש  12.24`
+   → C9 holds 6.75 days and F9 pays 6.75 × 401.25, and the note in I9 gives the reasoning
+   behind them: "בגין חודשים 4-12/24 (9 חודשים) זכאית ל (9*9)/12 = 6.75 ימי חג". The
+   figure comes from the cells and the reasoning from the note, which is the order Part 5
+   requires. Criterion 1 is agreement with the workbook: a
+   day-by-day proration is arithmetically finer and gives 6.76, but it is not the figure
+   the family uses. It is also the measure
    item 7 applies to vacation, so the two entitlements are reduced the same way rather
    than by two rules that disagree for no reason. A holiday can be taken as part of a day, paid in
    the same proportion and drawn from the entitlement in the same proportion. A date can
@@ -224,23 +239,58 @@ Each of these is true or false at a glance.
 16. Payments that go to third parties rather than to the worker — the medical insurance
     premium, the national-insurance contribution, the agency and placement fees, the
     visa and licence fees — are recorded in their own column and are never added into
-    the worker's monthly salary total.
+    the worker's monthly salary total. Neither are any of them taken *out* of it. The
+    law permits an employer to deduct part of some of these from the wage — up to half
+    the cost of the medical insurance and no more than ₪154.29 a month, and sums for
+    lodging and food — and this application deducts none of them, which is what the
+    family's own workbook does: the base line of every month tab is labelled
+    "משכורת בסיסית ללא הורדות (לינה ,מזון, שתיה,ביטוח רפואי )". A deduction the user
+    did not ask for would quietly reduce the wage, and there is no way for her to
+    notice a figure that was never shown.
+    The sheet holds one row per kind of payment, and a month recording two of the same
+    kind is refused rather than merged: two rows under one name can be neither
+    overridden nor explained apart (items 17, 24), and merging them would lose the
+    months each covers. Two payments of one kind are entered as one summed payment,
+    which is what the workbook itself writes.
 17. Any amount the application worked out for a month can be overridden by the user from
     that month's actions, and the income-tax line is editable in the same way while
     defaulting to zero. An overridden amount is visibly marked as manual and survives
     every later recalculation of that month.
+    Income tax is never calculated and the intention is that it never will be. What the
+    user needs before typing a figure is therefore the rule and not an arithmetic: the
+    employer deducts income tax on the basis of the wage and of the credits the worker
+    is entitled to, and a foreign caregiver in home care receives 2.25 credit points —
+    more than a foreign worker in another sector. Someone who does not know that
+    deducts too much, so the line's own explanation says it and links the rule beside
+    it (items 25, 26). It is said there and enters no calculation.
 18. Exporting begins with a short set of confirmation questions covering everything that
     changes the month — whether an advance was given, whether an instalment is being
     repaid, whether a Saturday was free, which holidays were worked, whether there were
     sick days — so nothing is left out by silence.
-19. The national-insurance contribution is 3.6% of the month's full cost — the salary,
-    the Friday supplement, the Saturday and holiday pay, and the one-off payments such
-    as recuperation — taken before anything to do with advances. It is shown as an
+19. The national-insurance contribution is 3.6% of the month's full cost, taken before
+    anything to do with advances. Kol Zchut settles what that cost is, so it is no
+    longer inferred from the workbook: the base is the gross wage including sick pay,
+    vacation pay, holiday pay, recuperation, travel reimbursement and the premium for
+    work in the weekly rest. In this application that is columns E, F and G together
+    and nothing else. Three of those six are already inside the monthly salary rather
+    than beside it — the base is computed from the standard count and never shrinks, so
+    a day of vacation, of sickness or of holiday not worked is paid within it (items 5,
+    7, 8) — which is why the sheet carries no vacation line at all and still bases the
+    contribution correctly. What is missing from the base is what the worker was not
+    paid: the third-party column, which is money to somebody else (item 16), and the
+    advances, which are the same money moved in time. It is shown as an
     estimate to be confirmed rather than as a fact, because the sum actually billed has
     differed from it. Every month carries its own estimate, and the money actually paid
     appears only in the month it was paid, together with the months it covers. These are
     two different figures in two different columns and not one figure written twice: the
-    first is what the month accrued, the second is what left the account.
+    first is what the month accrued, the second is what left the account. The family's
+    workbook keeps them in two cells and the export follows it: in
+    `שכר_חודשי_להאנה2025.xlsx` → `חודש  8.25` the estimate is D21 and H21 is empty,
+    because August settled no quarter, while in `חודש  7.25` D21 carries the same
+    monthly figure and H21 the ₪936 paid on 20.7.25 for 4-6/25, with B21 naming those
+    months. So the estimate is a reported figure in the unit-price column and never a
+    payment line — nothing in the sheet sums column D — and only what left the account
+    is added into the third-party total.
     It is paid once a quarter and in arrears: the reminder
     appears on the opening screen in the month after the last covered month has ended,
     and stays there until the user ticks the payment as made. The export carries the
@@ -269,11 +319,20 @@ Each of these is true or false at a glance.
     them, but it holds no explanation of its own: it points at the explanation, the
     reference link, or the screen that settles the question, so a given answer is
     written in exactly one place and a page that moves is fixed there.
-25. Every action that rests on a legal rule carries a link to the page that states it —
+25. A refusal carries the same link as the action it refused. A user who has been
+    stopped is exactly the user who wants to know why, and a refusal is the moment the
+    application can least afford to be taken on its word: it has just told her she may
+    not do something. The reference therefore belongs to the refusal itself rather than
+    to a screen that assembles one beside it, for item 24's reason — a thing is
+    explained where it happens — and every refusal the engine can produce resolves to
+    one of the pages of item 26: a holiday refused points at the holiday rule, a free
+    Saturday refused at the weekly rest, sick days beyond the balance at the sick-pay
+    rule. A refusal with no link is a refusal the user can only argue with.
+26. Every action that rests on a legal rule carries a link to the page that states it —
     the minimum wage, the rest-day and holiday premium, annual leave, sick pay,
     recuperation, national insurance — so a user who wants to check a figure can read
     the rule rather than take the application's word for it.
-26. The opening screen leads with the things that need the user to do something — a
+27. The opening screen leads with the things that need the user to do something — a
     quarterly national-insurance payment due, a licence or medical insurance about to
     expire, an advance still being repaid, holidays not yet all chosen, recuperation due
     this month, a year passing with no vacation taken, a finished month not yet
@@ -390,10 +449,20 @@ exactly like a country that publishes no holidays at all. The failure would surf
 year later, the first time someone adds a worker from that country.
 
 The balances tab rounds inconsistently and should not be copied. In
-שכר_חודשי_להאנה2026 → חישוב ימי מחלה וחופשה the monthly vacation accrual is written as
+`שכר_חודשי_להאנה2026.xlsx` → `חישוב ימי מחלה וחופשה` the monthly vacation accrual is written as
 1.17 in January to March and as fourteen twelfths from April onward, in the same column.
 Use the fraction throughout, or a balance drifts by a hundredth of a day a year and the
 figures stop tying out against the workbook for reasons no one can find later.
+
+The helper column of notes is not a source for figures either, and the same workbook
+shows why. Cell I9 of `שכר_חודשי_להאנה2024.xlsx` → `חודש  12.24` works the holiday
+entitlement out correctly — "בגין חודשים 4-12/24 (9 חודשים) זכאית ל (9*9)/12 = 6.75 ימי
+חג" — and then, in the same sentence, says the payment is for 9.75 days. The note
+contradicts itself; the sheet paid 6.75, at 6.75 × 401.25 in F9. **Where a note and an
+amount disagree, the amount is what happened.** Those notes were written by hand and were
+never checked against the formulas beside them, so they are a good source for intent —
+why a figure was chosen, which rule it rests on, what was agreed — and a poor one for the
+figure itself. Read them for the reasoning and take the numbers from the cells.
 
 Right-to-left is not only a matter of alignment, and its failures are quiet. A browser
 reorders mixed runs of Hebrew and Latin text, so a month range, a passport number, or a
@@ -454,7 +523,8 @@ block grows with the advances, so it has to be generated rather than chosen from
 fixed set of shapes.
 
 The helper column of notes exists for the person preparing the sheet and is hidden
-before printing, and some of its cells reference other months. Anything carried into the
+before printing — which is where the user's own notes on the month's actions are written
+(item 2) — and some of its cells reference other months. Anything carried into the
 template must be treated as text, not as live formulas, or the export will arrive with
 broken references.
 

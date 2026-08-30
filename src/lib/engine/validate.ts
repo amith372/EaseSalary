@@ -1,6 +1,10 @@
 import { isSaturday, orderDates, compareIsoDate } from "@/lib/dates";
 import { daysUsedIn, sickDaysAvailable } from "@/lib/engine/balances";
 import { holidayAllowanceFor, holidayDaysOf } from "@/lib/engine/leave";
+import {
+  duplicateThirdPartyKinds,
+  LINK_FOR_THIRD_PARTY,
+} from "@/lib/engine/thirdParty";
 import type {
   MonthContext,
   MonthFacts,
@@ -8,6 +12,7 @@ import type {
   WorkerTerms,
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
+import type { LegalLinkKey } from "@/lib/links";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -31,6 +36,12 @@ export type RefusalCode =
   | "freeSaturdayNotSaturday"
   /** More Saturdays worked than the month holds (Part 4). */
   | "saturdaysExceedMonth"
+  /**
+   * Two payments of one kind in a single month (specs.md item 16). The sheet
+   * holds one row per kind, and two lines under one explanation key can be
+   * neither overridden nor explained apart (items 17, 24).
+   */
+  | "thirdPartyPaidTwice"
   /** More sick days recorded in the month than the balance can fund. The sick
    * balance is a floor and never falls below zero (specs.md item 8). */
   | "sickBalanceExhausted";
@@ -43,7 +54,42 @@ export interface Refusal {
    * inside it, so the interface can isolate them: a date written into a Hebrew
    * paragraph is a mixed run a browser may reorder (specs.md Part 5). */
   dates: IsoDate[];
+  /**
+   * The rule the refused action rests on — the same link that action carries
+   * when it succeeds (specs.md item 25).
+   *
+   * A user who has been stopped is exactly the user who wants to know why, and
+   * a refusal is the moment the application can least afford to be taken on its
+   * word. It is not optional the way `Explanation.link` is: every refusal the
+   * engine can produce has a rule behind it, and one that did not would be the
+   * application refusing on its own authority.
+   */
+  link: LegalLinkKey;
 }
+
+/**
+ * The rule behind each refusal: the link of the action that was refused, not of
+ * the check that refused it (specs.md item 25). A tenth holiday points at the
+ * holiday rule and not at an article about entitlement ceilings, because what
+ * the user was doing was marking a holiday.
+ */
+const LINK_FOR: Record<
+  Exclude<RefusalCode, "thirdPartyPaidTwice">,
+  LegalLinkKey
+> = {
+  restDayHoliday: "holidayWork",
+  holidayLimit: "holidayWork",
+  freeSaturdayNotSaturday: "restDayWork",
+  saturdaysExceedMonth: "restDayWork",
+  sickBalanceExhausted: "sickPay",
+};
+
+/**
+ * `thirdPartyPaidTwice` is the one refusal whose rule depends on what was being
+ * recorded rather than on the check, so it resolves through
+ * `LINK_FOR_THIRD_PARTY`, which `thirdParty.ts` already holds for the lines
+ * themselves — a payment's rule is named in one place (specs.md item 25).
+ */
 
 function coversDate(span: MonthSpan, date: IsoDate): boolean {
   const { from, to } = orderDates(span.from, span.to);
@@ -78,6 +124,7 @@ export function validateMonth(
   if (clashes.length > 0) {
     refusals.push({
       code: "restDayHoliday",
+      link: LINK_FOR.restDayHoliday,
       message: he.sheet.refusals.restDayHoliday,
       dates: [...new Set(clashes)],
     });
@@ -92,6 +139,7 @@ export function validateMonth(
   if (notSaturdays.length > 0) {
     refusals.push({
       code: "freeSaturdayNotSaturday",
+      link: LINK_FOR.freeSaturdayNotSaturday,
       message: he.sheet.refusals.freeSaturdayNotSaturday,
       dates: notSaturdays,
     });
@@ -112,8 +160,25 @@ export function validateMonth(
   if (holidayDays > allowance) {
     refusals.push({
       code: "holidayLimit",
+      link: LINK_FOR.holidayLimit,
       message: he.sheet.refusals.holidayLimit(allowance),
       dates: spans.filter((span) => span.kind === "holiday").map((s) => s.from),
+    });
+  }
+
+  // Two payments of one kind in a single month. The lines would share an
+  // explanation key, so an override could not reach one of them without
+  // reaching the other (items 17, 24). Refused rather than silently merged: the
+  // two may cover different months, and folding them would lose that.
+  for (const kind of duplicateThirdPartyKinds(facts.thirdPartyPayments)) {
+    refusals.push({
+      code: "thirdPartyPaidTwice",
+      // The payment type is Hebrew, so it sits inside the sentence rather than
+      // beside it — unlike a date, which is a mixed run (specs.md Part 5).
+      message: he.sheet.refusals.thirdPartyPaidTwice(he.sheet.thirdParty[kind]),
+      // A payment carries no date of its own; what it concerns is a kind.
+      dates: [],
+      link: LINK_FOR_THIRD_PARTY[kind],
     });
   }
 
@@ -130,6 +195,7 @@ export function validateMonth(
   if (sickUsed > sickAvailable) {
     refusals.push({
       code: "sickBalanceExhausted",
+      link: LINK_FOR.sickBalanceExhausted,
       message: he.sheet.refusals.sickBalanceExhausted(sickAvailable, sickUsed),
       dates: facts.spans
         .filter((span) => span.kind === "sick")

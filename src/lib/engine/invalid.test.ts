@@ -167,3 +167,70 @@ describe("the Saturday counts cannot exceed the month (specs.md Part 4)", () => 
     }
   });
 });
+
+describe("every refusal carries the rule it rests on (specs.md item 25)", () => {
+  /**
+   * A refusal points at the link of the **action that was refused**, not of the
+   * check that refused it: a tenth holiday points at the holiday rule, because
+   * what the user was doing was marking a holiday. `Refusal.link` is required
+   * rather than optional, which is what makes "every" testable at all — a
+   * refusal with no rule behind it would be the application refusing on its own
+   * authority.
+   */
+  const cases: { spans: MonthSpan[]; code: string; link: string }[] = [
+    {
+      spans: [
+        { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+        holiday("2025-08-16"),
+      ],
+      code: "restDayHoliday",
+      link: "holidayWork",
+    },
+    {
+      spans: [
+        { id: "free-18", kind: "freeSaturday", from: "2025-08-18", to: "2025-08-18" },
+      ],
+      code: "freeSaturdayNotSaturday",
+      link: "restDayWork",
+    },
+    {
+      // Ten holidays against an allowance of nine (item 10).
+      spans: Array.from({ length: 10 }, (_, i) =>
+        holiday(`2025-08-${String(i + 1).padStart(2, "0")}`, false),
+      ),
+      code: "holidayLimit",
+      link: "holidayWork",
+    },
+    {
+      // The opening position holds no sick days, so the balance is the month's
+      // own accrual of 1.5 and two days are more than it can fund (item 8).
+      spans: [{ id: "sick", kind: "sick", from: "2025-08-04", to: "2025-08-05" }],
+      code: "sickBalanceExhausted",
+      link: "sickPay",
+    },
+  ];
+
+  for (const { spans, code, link } of cases) {
+    it(`points ${code} at ${link}`, () => {
+      const refusal = validateMonth(facts(spans), terms).find(
+        (r) => r.code === code,
+      );
+      expect(refusal).toBeDefined();
+      expect(refusal?.link).toBe(link);
+    });
+  }
+
+  it("gives every refusal a link, whichever ones a month produces", () => {
+    const refusals = validateMonth(
+      facts([
+        { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+        holiday("2025-08-16"),
+        { id: "sick", kind: "sick", from: "2025-08-04", to: "2025-08-05" },
+      ]),
+      terms,
+    );
+    expect(refusals.length).toBeGreaterThan(1);
+    for (const refusal of refusals) expect(refusal.link).toBeTruthy();
+  });
+});
+

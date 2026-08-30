@@ -102,6 +102,18 @@ export interface MonthLine {
    */
   rate?: number | null;
   column: SheetColumn;
+  /**
+   * The months this line's money is for, where that is not the month the line
+   * appears in. A national-insurance payment is made once a quarter and in
+   * arrears, and the export carries the amount that was due together with the
+   * months it covers (specs.md item 19); the family's workbook writes them into
+   * the row's own label, in B21 of `שכר_חודשי_להאנה2025.xlsx` → `חודש  7.25`.
+   *
+   * Held beside the sentence rather than inside it, for the same reason
+   * `Refusal.dates` are: a date written into a Hebrew paragraph is a mixed run
+   * a browser may reorder, so the interface isolates it (specs.md Part 5).
+   */
+  coversMonths?: YearMonth[];
   /** An overridden amount is visibly marked as manual and survives every later
    * recalculation of that month (specs.md item 17). */
   manual: boolean;
@@ -253,7 +265,7 @@ export interface Worker {
 }
 
 /** A thing on the opening screen that needs the user to do something
- * (specs.md item 26). The explanation carries the sentence and the reference
+ * (specs.md item 27). The explanation carries the sentence and the reference
  * link together, so an alert opens the same "?" a money line does rather than
  * showing a bare link to the law: the explanation stays beside the thing it
  * explains, in one idiom (item 24). */

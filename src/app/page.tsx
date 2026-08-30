@@ -21,7 +21,7 @@ import type { SpanIntent } from "@/components/MonthCalendar";
 /**
  * The opening screen, built as `EaseSalary - דף הבית v3 לוח במרכז` draws it: the
  * calendar takes the middle of the screen and the month is marked where the
- * application opens, rather than one screen further in (specs.md item 26).
+ * application opens, rather than one screen further in (specs.md item 27).
  *
  * It is the one screen that computes nothing: every amount and count arrives in
  * the calculation engine's own types with a fixture standing in, so the contract

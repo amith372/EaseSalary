@@ -86,7 +86,7 @@ Outcomes only. `docs/plan-home-screen.md` is the description of how it was done.
   templates and the six holiday lists committed under `data/`.
 - Design tokens, the application shell and the shared components in `src/`.
 - `src/lib/i18n/he.ts`, every Hebrew string in one file, and `src/lib/links.ts`, the
-  single central list of kol-zchut references (item 25). It is referenced by nearly every
+  single central list of kol-zchut references (item 26). It is referenced by nearly every
   screen, so it belongs beside the translations rather than scattered through them.
 - `src/lib/dates.ts`, UTC-only month arithmetic, and `src/lib/spans.ts`, the entitlement
   rules for a swept range — both under test.
@@ -127,6 +127,10 @@ ExcelJS in a server route. One month template and one balances template.
   `template_month_advance_given.xlsx` is kept as a reference sample of the shape and not
   as a second template to branch on.
 - Placeholder tokens for identity and month fields.
+- The two versions of the month export, differing only in whether the helper column of
+  notes is shown (item 2). One file and one flag, not two files: a test asserts the two
+  carry identical figures, since the whole reason for one file is that they cannot
+  drift apart.
 - The yearly balances export as its own file.
 - A test that drives the preview's lines and the filled cells from the **same** engine
   output and asserts they say the same thing. That agreement is the property that
@@ -222,7 +226,7 @@ fixtures with what the earlier stages produce and adds nothing to the layout.
   an advance still being repaid, holidays not all chosen, recuperation due, a year with
   no vacation taken, a finished month not exported, a wage that changed, a worker
   crossing into a new seniority year.
-- The current month's calendar, its totals and the balances beside that list (item 26).
+- The current month's calendar, its totals and the balances beside that list (item 27).
 - The national-insurance tick, with the months it covers.
 
 **Done when** an account with nothing outstanding shows an opening screen whose action
@@ -270,7 +274,7 @@ a payment date, a payment method and "mark as paid" for the salary itself · not
 toggles in `הגדרות` · "להוריד את כל הנתונים" · editable "ימי חופשה בשנה" and
 "ימי מחלה בשנה" (items 7–8 derive both, and the user never enters a rate) · a
 configurable weekly rest day (item 5 fixes it at Saturday for every worker) · a
-"היתר העסקה" number · a separate `התראות` page and bell (item 26 puts the actions on the
+"היתר העסקה" number · a separate `התראות` page and bell (item 27 puts the actions on the
 opening screen) · "לסיים העסקה" (the appendix puts ending an employment out of scope for
 v1).
 
