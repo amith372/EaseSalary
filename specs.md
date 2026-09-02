@@ -392,11 +392,23 @@ Each of these is true or false at a glance.
     the month has.
 
     **This is what a family uses instead of bending another line into a shape it is not.**
-    Pocket money paid every month is a standing addition with its own name and its own
-    note — not a setting on the rest-eve supplement, which is a different agreement about
-    a different day (item 14). A standing deduction is recorded the same way. Every one of
-    these carries a free-text note, because the reason is the part the application cannot
-    derive and the part a later reader needs.
+    Pocket money is recorded here, with its own name and its own note, rather than as a
+    setting on the rest-eve supplement — which is a different agreement about a different
+    day (item 14).
+
+    **Which direction pocket money takes is not obvious, and the default is the one that
+    surprises people.** Kol Zchut's caregiver-terms page says that where pocket money is
+    paid it "מהווים חלק מהשכר החודשי של העובד, מעין מקדמה שהמעסיק משלם לעובד על חשבון
+    השכר החודשי" — part of the monthly salary, an advance against it, and not something
+    on top of it. Cash handed over weekly is therefore money the month has **already
+    paid**, so it is a standing *deduction*: the gross already contains it and the
+    transfer at month end is what shrinks. Recording it as an addition pays it twice, once
+    inside the salary and once beside it. A family that genuinely agreed a payment *on top
+    of* the salary records that as a standing addition — the mechanism serves both, and it
+    is the family's agreement rather than the word "pocket money" that decides which.
+
+    Every one of these carries a free-text note, because the reason is the part the
+    application cannot derive and the part a later reader needs.
 
     Advances are numbered and tracked one by one, and stay their own mechanism rather than
     becoming standing deductions: a month may both grant one advance and repay another,

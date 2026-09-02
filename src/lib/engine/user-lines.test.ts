@@ -64,17 +64,29 @@ function facts(w: WorkerTerms, userLines: UserLine[] = []): MonthFacts {
   };
 }
 
-const pocketMoney: UserLine = {
+/**
+ * A payment the family agreed **on top of** the salary. Written this way on
+ * purpose rather than called pocket money: Kol Zchut says money handed over as
+ * pocket money is part of the monthly salary and an advance against it, so
+ * recording *that* as an addition would pay it twice (specs.md item 20). What
+ * this case exercises is the addition, not the name.
+ */
+const agreedExtra: UserLine = {
   id: "pocket",
-  label: "דמי כיס",
+  label: "תוספת שסוכמה מעבר לשכר",
   direction: "addition",
   agorot: 50000,
   note: "סוכם עם המשפחה",
 };
 
+/**
+ * Pocket money as the law characterises it: cash handed over during the month,
+ * which the salary already contains, so what shrinks is the transfer at month
+ * end and never the gross (specs.md item 20).
+ */
 const standingDeduction: UserLine = {
   id: "phone",
-  label: "השתתפות בטלפון",
+  label: "דמי כיס ששולמו במזומן",
   direction: "deduction",
   agorot: 20000,
 };
@@ -109,13 +121,14 @@ describe("the month with no lines of the user's own", () => {
   });
 });
 
-describe("a standing addition — pocket money (specs.md items 14, 20)", () => {
-  const w = worker([pocketMoney]);
+describe("a standing addition — a payment agreed on top (specs.md item 20)", () => {
+  const w = worker([agreedExtra]);
   const result = calculateMonth(facts(w), w);
 
   it("sits in column E, because she earns it every month", () => {
-    // 674,765 + 50,000. This is what a family uses instead of bending the
-    // rest-eve supplement into a second agreement about a different day.
+    // 674,765 + 50,000. What a family uses instead of bending the rest-eve
+    // supplement into a second agreement about a different day. Pocket money
+    // proper is the deduction case below, for the reason item 20 gives.
     expect(column(result, "E")).toBe(724765);
     expect(result.gross).toBe(937940);
     expect(result.net).toBe(937940);
@@ -123,7 +136,7 @@ describe("a standing addition — pocket money (specs.md items 14, 20)", () => {
 
   it("keeps the user's own words as the label and its own key", () => {
     const line = result.lines.find((l) => l.key === "standing.pocket");
-    expect(line?.label).toBe("דמי כיס");
+    expect(line?.label).toBe("תוספת שסוכמה מעבר לשכר");
     expect(line?.column).toBe("E");
     expect(line?.amount).toBe(50000);
   });
@@ -175,7 +188,7 @@ describe("a deduction is withheld, never un-earned (specs.md item 20)", () => {
     );
     expect(standingDeduction.agorot).toBeGreaterThan(0);
     expect(row?.amount).toBe(-20000);
-    expect(row?.label).toBe("השתתפות בטלפון");
+    expect(row?.label).toBe("דמי כיס ששולמו במזומן");
   });
 });
 
@@ -183,7 +196,7 @@ describe("all four at once", () => {
   it("adds and withholds each exactly once", () => {
     // E 674,765 + 50,000 = 724,765; G 30,000; gross 967,940; then 20,000 and
     // 15,000 withheld, so 932,940 transferred.
-    const w = worker([pocketMoney, standingDeduction]);
+    const w = worker([agreedExtra, standingDeduction]);
     const result = calculateMonth(
       facts(w, [oneOffAddition, oneOffDeduction]),
       w,
@@ -198,10 +211,10 @@ describe("all four at once", () => {
 describe("a standing line is a term, so stopping it does not restate the past", () => {
   it("keeps paying the month that was calculated with it", () => {
     // Criterion 13's safety, applied to item 20: the month holds the terms it
-    // was confirmed with (Part 3), so the family stopping pocket money today
+    // was confirmed with (Part 3), so the family stopping a standing line today
     // leaves August exactly where it was. The month is calculated against its
     // own snapshot and never against the profile.
-    const before = worker([pocketMoney]);
+    const before = worker([agreedExtra]);
     const august = facts(before);
 
     const after = worker([]);
@@ -215,16 +228,16 @@ describe("a standing line is a term, so stopping it does not restate the past", 
 
   it("does not pay a month confirmed before the line existed", () => {
     // The other direction, and the one that would be a silent restatement:
-    // adding pocket money today must not reach back into a month that never
+    // adding a standing line today must not reach back into a month that never
     // had it.
     const w = worker([]);
-    expect(calculateMonth(facts(w), worker([pocketMoney])).gross).toBe(887940);
+    expect(calculateMonth(facts(w), worker([agreedExtra])).gross).toBe(887940);
   });
 });
 
 describe("an override reaches a user line by its own key (specs.md item 17)", () => {
   it("replaces the amount and marks it manual", () => {
-    const w = worker([pocketMoney]);
+    const w = worker([agreedExtra]);
     const result = calculateMonth(
       { ...facts(w), overrides: { "standing.pocket": { agorot: 60000 } } },
       w,
