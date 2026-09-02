@@ -195,13 +195,33 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
     });
   }
 
-  // Column G — the one-off payments, each with the reason the user gave it.
-  for (const extra of facts.extraPayments) {
+  // The lines the user added, in the direction and the lifetime they were given
+  // (specs.md item 20). **Only the additions are here**: a deduction is withheld
+  // on the way from the month's total to what is actually transferred, so it
+  // belongs to the block below the columns beside the income tax and the advance
+  // instalment, and `buildClosing` emits it.
+  //
+  // A standing addition sits in column E, because it is part of what she earns
+  // every month; a one-off sits in G, which is what that column is for.
+  for (const line of facts.terms.standingLines) {
+    if (line.direction !== "addition") continue;
     drafts.push({
-      key: `extra.${extra.id}`,
-      label: extra.label,
+      key: `standing.${line.id}`,
+      label: line.label,
       units: 1,
-      rate: extra.agorot,
+      rate: line.agorot,
+      column: "E",
+      explanation: { text: he.sheet.why.standingAddition },
+    });
+  }
+
+  for (const line of facts.userLines) {
+    if (line.direction !== "addition") continue;
+    drafts.push({
+      key: `extra.${line.id}`,
+      label: line.label,
+      units: 1,
+      rate: line.agorot,
       column: "G",
       explanation: { text: he.sheet.why.extra },
     });
@@ -244,6 +264,29 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
     // it can give the user before she types a figure (specs.md items 17, 26).
     explanation: { text: he.sheet.why.incomeTax, link: "incomeTax" },
   });
+
+  // The user's own deductions, standing first and then this month's, before the
+  // advances: everything here is withheld from the month's total, and the sign
+  // comes from `direction` rather than from a figure the user could type
+  // negative (item 20).
+  for (const [prefix, lines, why] of [
+    ["standing", facts.terms.standingLines, he.sheet.why.standingDeduction],
+    ["extra", facts.userLines, he.sheet.why.userDeduction],
+  ] as const) {
+    for (const line of lines) {
+      if (line.direction !== "deduction") continue;
+      const key = `${prefix}.${line.id}`;
+      const override = facts.overrides[key];
+      const agorot = override ? override.agorot : Math.abs(line.agorot);
+      rows.push({
+        key,
+        label: line.label,
+        amount: -Math.round(agorot) || 0,
+        manual: override !== undefined,
+        explanation: { text: why },
+      });
+    }
+  }
 
   for (const advance of facts.advances) {
     const granted = advance.kind === "granted";

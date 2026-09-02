@@ -143,6 +143,9 @@ export interface WorkerTerms {
   /** 1-12. The month the recuperation payment falls in, set on the profile when
    * the worker is created (specs.md item 15). */
   recuperationMonth: number;
+  /** Lines the user set once and that appear in every month afterwards, at the
+   * same amount, until they are changed or stopped (specs.md item 20). */
+  standingLines: UserLine[];
   /**
    * The country whose holiday list the worker's year is drawn from (specs.md
    * item 10). It identifies the stored list and nothing else: a list for a new
@@ -192,6 +195,15 @@ export interface MonthTerms {
   restEveSupplementAgorot: number;
   /** 1-12. The month the recuperation payment falls in (specs.md item 15). */
   recuperationMonth: number;
+  /**
+   * The standing lines this month was calculated with (specs.md item 20).
+   *
+   * A standing line is a term of the employment like the supplement and the
+   * rest day, so it is snapshotted here and read from here: stopping one in June
+   * leaves every earlier month exactly as it was, which is the same argument
+   * Part 3 makes for the rest of the terms.
+   */
+  standingLines: UserLine[];
 }
 
 /**
@@ -204,6 +216,7 @@ export function snapshotTerms(worker: WorkerTerms): MonthTerms {
     restDay: worker.restDay,
     restEveSupplementAgorot: worker.restEveSupplementAgorot,
     recuperationMonth: worker.recuperationMonth,
+    standingLines: worker.standingLines,
   };
 }
 
@@ -254,16 +267,42 @@ export interface Advance {
 }
 
 /**
- * A payment the user added to the month with a reason of their own, which is
- * how a shortfall from an earlier month is settled later (specs.md item 20).
- * It reaches the worker, in column G.
+ * Which way a line the user added moves the month's money (specs.md item 20).
+ *
+ * The user picks the kind and never types a minus: the sign follows from what
+ * the line is, so it can never disagree with the label beside it — the same
+ * argument `ClosingLine.amount` already makes for the advances.
  */
-export interface ExtraPayment {
-  /** Stable, because the line's explanation key is `extra.<id>`. */
+export type UserLineDirection = "addition" | "deduction";
+
+/**
+ * A line the user added with a reason of their own (specs.md item 20) — how a
+ * shortfall from an earlier month is settled later, and how a family records
+ * pocket money without bending the rest-eve supplement into something it is
+ * not (item 14).
+ *
+ * The same shape serves both lifetimes. A **one-off** line lives on the month,
+ * in `MonthFacts.userLines`; a **standing** one lives on the profile and is
+ * snapshotted onto the month with the other terms, in `MonthTerms`. What
+ * differs between them is where they are stored and how long they last, not
+ * what they are, so one type describes both and the field it sits in says which
+ * it is. Two near-identical interfaces would be two places to add a field to.
+ */
+export interface UserLine {
+  /** Stable, because the line's explanation key is built from it — `extra.<id>`
+   * for a one-off and `standing.<id>` for a standing one. The two prefixes are
+   * what keep the ids in separate spaces, so a standing line and a one-off line
+   * may share an id without colliding on an override (item 17). */
   id: string;
-  /** The user's own words, shown as the line's label. */
+  /** The user's own words, shown as the line's label. Never translated by the
+   * application: it is the user's sentence, not the application's. */
   label: string;
+  direction: UserLineDirection;
+  /** Always positive. Whether the month adds or withholds it follows from
+   * `direction`. */
   agorot: number;
+  /** The reason, which is the part the application cannot derive and the part a
+   * later reader needs (item 20). */
   note?: string;
 }
 
@@ -327,7 +366,11 @@ export interface MonthFacts {
   advances: Advance[];
   /** What was actually paid to a third party in this month. */
   thirdPartyPayments: ThirdPartyPayment[];
-  extraPayments: ExtraPayment[];
+  /**
+   * Lines the user added to this month alone (specs.md item 20). The standing
+   * ones are not here — they are terms, and live on `terms.standingLines`.
+   */
+  userLines: UserLine[];
   /** Income tax is never calculated: the line defaults to zero and is the
    * user's to edit (specs.md item 17, Part 1). */
   incomeTaxAgorot: number;

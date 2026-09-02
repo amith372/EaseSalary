@@ -368,11 +368,41 @@ Each of these is true or false at a glance.
     amount that was due, that tick, and the months the payment covers. The licence
     renewal that falls once every four years is recorded the same way, and the
     application warns before either runs out.
-20. The user can add an extra payment to a month with a reason of their own, and it
+20. The user can add lines of their own to a month, with a reason of their own, and each
     appears as its own line in the export — which is how a shortfall from an earlier
-    month is settled later. Advances are numbered and tracked one by one: a month may
-    both grant one advance and repay another, each on its own line, and the amount
-    repaid is entered for the month rather than fixed by a schedule.
+    month is settled later. A line the user adds has **two independent choices** and the
+    four combinations are all meant:
+
+    - **Which way it moves.** An *addition* is money that reaches the worker; a
+      *deduction* is money withheld from what is transferred to her. The sign follows
+      from what the line is, so it can never disagree with the label beside it, and the
+      user picks the kind rather than typing a minus.
+    - **How long it lasts.** A *one-off* line belongs to one month. A *standing* line is
+      set once on the profile and appears in every month afterwards, at the same amount,
+      until the user changes it or stops it. A standing line is a term of the employment
+      and is snapshotted onto the month like every other term (Part 3), so stopping it in
+      June leaves the earlier months exactly as they were.
+
+    **Where each lands on the sheet.** A standing addition is part of what she earns every
+    month, so it sits in column E beside the salary and the rest-eve supplement; a one-off
+    addition sits in column G, which is what that column is for. Deductions of both kinds
+    go to the block below the columns, beside the income tax and the advance instalment —
+    that block is where everything withheld on the way from the month's total to the
+    figure actually transferred already lives, and it already grows with however many rows
+    the month has.
+
+    **This is what a family uses instead of bending another line into a shape it is not.**
+    Pocket money paid every month is a standing addition with its own name and its own
+    note — not a setting on the rest-eve supplement, which is a different agreement about
+    a different day (item 14). A standing deduction is recorded the same way. Every one of
+    these carries a free-text note, because the reason is the part the application cannot
+    derive and the part a later reader needs.
+
+    Advances are numbered and tracked one by one, and stay their own mechanism rather than
+    becoming standing deductions: a month may both grant one advance and repay another,
+    each on its own line, the amount repaid is entered for the month rather than fixed by
+    a schedule, and what is still owed is carried from the opening position (item 6). A
+    repayment that varies month by month is exactly what a standing line cannot express.
 21. A future month can be filled in ahead of time through the calendar, but it can only
     be exported once it has ended.
 22. Reading the identifying columns straight out of the database shows unreadable values;

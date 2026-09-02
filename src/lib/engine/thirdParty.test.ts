@@ -88,6 +88,7 @@ const terms: WorkerTerms = {
   restDay: SATURDAY,
   restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
   recuperationMonth: 7,
+  standingLines: [],
   country: "PH",
   openingPosition: {
     vacationDays: 0,
@@ -108,7 +109,7 @@ function facts(payments: ThirdPartyPayment[] = []): ClosedMonthFacts {
     spans,
     advances: [{ number: 1, kind: "repaid", agorot: INSTALMENT }],
     thirdPartyPayments: payments,
-    extraPayments: [],
+    userLines: [],
     incomeTaxAgorot: 0,
     overrides: {},
   };

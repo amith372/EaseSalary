@@ -68,6 +68,7 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     recuperationMonth: 7,
+    standingLines: [],
     country: "PH",
     openingPosition: {
       vacationDays: 0,
@@ -94,7 +95,7 @@ function facts(
     spans,
     advances: [],
     thirdPartyPayments: [],
-    extraPayments: [],
+    userLines: [],
     incomeTaxAgorot: 0,
     overrides: {},
   };

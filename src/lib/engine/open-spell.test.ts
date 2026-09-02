@@ -68,6 +68,7 @@ const worker: WorkerTerms = {
   restDay: SATURDAY,
   restEveSupplementAgorot: 10000,
   recuperationMonth: 7,
+  standingLines: [],
   country: "PH",
   // The spell draws four days from the balance — rest days included, since a
   // rest day inside a spell is drawn from it though it is not paid (item 8) —
@@ -88,7 +89,7 @@ function facts(spans: MonthSpan[]): MonthFacts {
     spans,
     advances: [],
     thirdPartyPayments: [],
-    extraPayments: [],
+    userLines: [],
     incomeTaxAgorot: 0,
     overrides: {},
   };

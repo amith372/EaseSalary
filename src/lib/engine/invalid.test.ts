@@ -22,6 +22,7 @@ const terms: WorkerTerms = {
   restDay: SATURDAY,
   restEveSupplementAgorot: 10000,
   recuperationMonth: 7,
+  standingLines: [],
   country: "PH",
   openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
 };
@@ -38,7 +39,7 @@ function facts(spans: ClosedSpan[]): ClosedMonthFacts {
     spans,
     advances: [],
     thirdPartyPayments: [],
-    extraPayments: [],
+    userLines: [],
     incomeTaxAgorot: 0,
     overrides: {},
   };

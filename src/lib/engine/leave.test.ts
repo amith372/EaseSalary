@@ -69,6 +69,7 @@ function terms(employedSince = "2024-04-01"): WorkerTerms {
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     recuperationMonth: 7,
+    standingLines: [],
     country: "PH",
     openingPosition: { vacationDays: 20, sickDays: 43.5, advances: [] },
   };
@@ -86,7 +87,7 @@ function facts(spans: ClosedSpan[], month: YearMonth = AUGUST_2025): ClosedMonth
     spans,
     advances: [],
     thirdPartyPayments: [],
-    extraPayments: [],
+    userLines: [],
     incomeTaxAgorot: 0,
     overrides: {},
   };

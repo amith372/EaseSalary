@@ -47,6 +47,7 @@ function terms(
     restDay: SATURDAY,
     restEveSupplementAgorot: 10000,
     recuperationMonth: 7,
+    standingLines: [],
     country: "PH",
     openingPosition: { ...opening, advances: [] },
   };
@@ -64,7 +65,7 @@ function facts(month: YearMonth, spans: ClosedSpan[] = []): ClosedMonthFacts {
     spans,
     advances: [],
     thirdPartyPayments: [],
-    extraPayments: [],
+    userLines: [],
     incomeTaxAgorot: 0,
     overrides: {},
   };

@@ -48,6 +48,7 @@ const facts: ClosedMonthFacts = {
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     recuperationMonth: 7,
+    standingLines: [],
   },
   confirmedWage: {
     baseAgorot: AUGUST_2025_SALARY,
@@ -60,7 +61,7 @@ const facts: ClosedMonthFacts = {
   // originate inside the application (item 6).
   advances: [{ number: 1, kind: "repaid", agorot: INSTALMENT }],
   thirdPartyPayments: [],
-  extraPayments: [],
+  userLines: [],
   incomeTaxAgorot: 0,
   overrides: {},
 };
@@ -72,6 +73,7 @@ const terms: WorkerTerms = {
   restDay: SATURDAY,
   restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
   recuperationMonth: 7,
+  standingLines: [],
   country: "PH",
   openingPosition: {
     // Zero on purpose, and confirmed as such. Part 4 gives no opening balance
