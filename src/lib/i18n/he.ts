@@ -190,7 +190,10 @@ export const he = {
 
   calendar: {
     hint: "לחיצה על יום, ואז על יום נוסף, מסמנת טווח",
-    today: "היום",
+    /** The third of the navigation trio, and it moves the calendar by a month
+     * like the other two: it jumps to the month containing today, never to a
+     * day. It read "היום" until someone pressed it. */
+    thisMonth: "החודש",
     previousMonth: "לחודש הקודם",
     nextMonth: "לחודש הבא",
     /** Sunday first — the week begins on Sunday and Sunday sits on the right. */

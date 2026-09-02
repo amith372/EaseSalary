@@ -283,7 +283,7 @@ export function MonthCalendar({
               onClick={() => onMonthChange?.(monthOf(today))}
               className="rounded-tab border border-line px-3.5 py-1.5 text-[15px] font-medium text-ink-warm transition-colors hover:bg-hover hover:text-ink"
             >
-              <span dir="auto">{he.calendar.today}</span>
+              <span dir="auto">{he.calendar.thisMonth}</span>
             </button>
           ) : null}
           <button
