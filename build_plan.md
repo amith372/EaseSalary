@@ -240,11 +240,15 @@ refusal becomes per-worker.
 **The snapshot check does not cover this step, and saying so is the point of splitting.**
 Hanna rests on Saturday, which is the default, so every non-Saturday path is unreachable
 from `august-2025.snap.md` by construction: it proves the rename left the common case
-alone and proves nothing whatever about the generalisation. Concretely,
-`counts.ts:115` computes the sick week as `addDays(friday, -5)` and its own comment says
-the week "is Sunday-anchored and runs Sunday through Friday" — the arrangement item 8 now
-says would give a Friday-resting worker a week with a hole in the middle. That rewrite is
-invisible to the snapshot.
+alone and proves nothing whatever about the generalisation.
+
+This paragraph used to name `counts.ts`'s sick week as the rewrite the snapshot could not
+see, on the strength of its own comment calling the week "Sunday-anchored". **The comment
+was wrong and the arithmetic was already right**: it computed the six days ending at the
+*rest-eve*, which is item 8's window for all three rest days once the rest-eve is hers, so
+generalising `isRestEve` was the whole of the change. The claim is corrected here rather
+than deleted, because the reason it was believed still holds — a Saturday-only suite could
+not have told the two apart either way, and a comment is not a test.
 
 So this step carries **new cases for a Friday-resting and a Sunday-resting worker**, and
 their expected figures are **derived on paper from items 5, 8 and 14** before the code is

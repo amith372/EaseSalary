@@ -1,4 +1,117 @@
+import { restEveOf, SATURDAY, SUNDAY, THURSDAY, FRIDAY } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
 import { formatDays } from "@/lib/money";
+
+/**
+ * **The weekly rest day is a term of the employment, so the words for it are
+ * not fixed either** (specs.md item 5). A Saturday-resting worker reads
+ * "שבת חופשית"; a Friday-resting worker must not. The sentences below
+ * are therefore written once and inflected, rather than kept three times over —
+ * the same argument Part 3 makes for having one export template and not one per
+ * rest day: three copies of a wording that must not diverge is three places to
+ * change it.
+ *
+ * Only four weekdays can ever appear. The three the law allows as the rest day
+ * are Friday, Saturday and Sunday, and each of those has one rest-eve — the
+ * working day before it — so Thursday joins them and nothing else can.
+ *
+ * **Gender is the trap, and it is why this is a table and not a concatenation.**
+ * שבת is feminine and יום שישי and יום ראשון are masculine, so a sentence
+ * that reads correctly for Hanna reads as broken Hebrew for exactly the workers
+ * this generalisation exists to serve. The inflected words are written out per
+ * gender rather than derived, because Hebrew agreement is not a rule a format
+ * string can carry.
+ *
+ * The one-letter prefixes do compose, so they are not stored: ב + שבת is בשבת
+ * and ב + יום שישי is ביום שישי.
+ */
+interface DayWords {
+  /** "שבת", "יום שישי" — the day as a bare noun phrase. */
+  bare: string;
+  /** "שבתות", "ימי שישי" — what follows a number. */
+  plural: string;
+  /** "השבתות", "ימי השישי" — the definite plural. */
+  pluralDefinite: string;
+  /** שבת alone is feminine; the two יום forms are masculine. */
+  feminine: boolean;
+}
+
+const DAY_WORDS: Record<number, DayWords> = {
+  [SUNDAY]: {
+    bare: "יום ראשון",
+    plural: "ימי ראשון",
+    pluralDefinite: "ימי הראשון",
+    feminine: false,
+  },
+  [THURSDAY]: {
+    bare: "יום חמישי",
+    plural: "ימי חמישי",
+    pluralDefinite: "ימי החמישי",
+    feminine: false,
+  },
+  [FRIDAY]: {
+    bare: "יום שישי",
+    plural: "ימי שישי",
+    pluralDefinite: "ימי השישי",
+    feminine: false,
+  },
+  [SATURDAY]: {
+    bare: "שבת",
+    plural: "שבתות",
+    pluralDefinite: "השבתות",
+    feminine: true,
+  },
+};
+
+/** The words that agree with the day rather than describing it. */
+const AGREEMENT = {
+  feminine: {
+    free: "חופשית",
+    pronoun: "היא",
+    can: "יכולה",
+    marked: "מסומנת",
+    wasMarked: "שסומנה",
+    wasRecorded: "נרשמה",
+    paid: "משולמת",
+    inIt: "בה",
+    isntSubtracted: "אינה נגרעת",
+    counted: "נספרות",
+    andSubtracted: "ונגרעות",
+    arentPaid: "אינן משולמות",
+    andArentDeducted: "ואינן מנוכות",
+    them: "אותן",
+  },
+  masculine: {
+    free: "חופשי",
+    pronoun: "הוא",
+    can: "יכול",
+    marked: "מסומן",
+    wasMarked: "שסומן",
+    wasRecorded: "נרשם",
+    paid: "משולם",
+    inIt: "בו",
+    isntSubtracted: "אינו נגרע",
+    counted: "נספרים",
+    andSubtracted: "ונגרעים",
+    arentPaid: "אינם משולמים",
+    andArentDeducted: "ואינם מנוכים",
+    them: "אותם",
+  },
+} as const;
+
+/** Her rest day, as words. */
+function day(restDay: RestDay): DayWords {
+  return DAY_WORDS[restDay];
+}
+
+/** Her rest-eve, as words: the working day before her rest day (item 14). */
+function eve(restDay: RestDay): DayWords {
+  return DAY_WORDS[restEveOf(restDay)];
+}
+
+function agrees(words: DayWords) {
+  return words.feminine ? AGREEMENT.feminine : AGREEMENT.masculine;
+}
 
 /**
  * Every user-facing string in the application, in one file (CLAUDE.md). Code,
@@ -96,22 +209,20 @@ export const he = {
       "נובמבר",
       "דצמבר",
     ],
-    marks: {
+    /** A function of her rest day, because one of the four names it: a
+     * Saturday-resting worker reads "שבת חופשית" and a Friday-resting one
+     * "יום שישי חופשי" (specs.md item 5). */
+    marks: (restDay: RestDay) => ({
       vacation: "חופשה",
       sick: "מחלה",
       holiday: "חג",
-      /**
-       * The weekly rest day the worker had off — an exception the user
-       * recorded. The Hebrew still says "שבת" because the wording is derived
-       * from the worker's own rest day only from step 7c onward; a
-       * Saturday-resting worker reads "שבת חופשית" either way (specs.md
-       * item 5).
-       */
-      freeRestDay: "שבת חופשית",
+      /** The weekly rest day the worker had off — an exception the user
+       * recorded, not an entitlement. */
+      freeRestDay: `${day(restDay).bare} ${agrees(day(restDay)).free}`,
       /** A day she worked, which is every day carrying no mark at all — an
        * unmarked rest day included. It labels the legend and marks nothing. */
       workDay: "יום עבודה",
-    },
+    }),
     selection: {
       /** "‎16–20 באוגוסט": the day numbers, then the month with its prefix. */
       separator: "–",
@@ -136,14 +247,14 @@ export const he = {
      * why, rather than being refused whole over one day the user would then
      * have to go and find herself.
      */
-    skipped: {
+    skipped: (restDay: RestDay) => ({
       title: "ימים שלא סומנו",
-      weeklyRest: "שבת היא כבר יום המנוחה השבועי, ולכן אינה נגרעת ממכסת החופשה",
-      notRestDay: "רק שבת יכולה להיות מסומנת כשבת חופשית",
+      weeklyRest: `${day(restDay).bare} ${agrees(day(restDay)).pronoun} כבר יום המנוחה השבועי, ולכן ${agrees(day(restDay)).isntSubtracted} ממכסת החופשה`,
+      notRestDay: `רק ${day(restDay).bare} ${agrees(day(restDay)).can} להיות ${agrees(day(restDay)).marked} כ${day(restDay).bare} ${agrees(day(restDay)).free}`,
       alreadyMarked: "היום כבר מסומן",
-      restDayHoliday: "שבת שסומנה כחופשית משולמת פעם אחת, ולכן אי אפשר לסמן בה גם חג",
+      restDayHoliday: `${day(restDay).bare} ${agrees(day(restDay)).wasMarked} כחופשית ${agrees(day(restDay)).paid} פעם אחת, ולכן אי אפשר לסמן ${agrees(day(restDay)).inIt} גם חג`,
       dismiss: "להסתיר",
-    },
+    }),
   },
 
   status: {
@@ -213,18 +324,15 @@ export const he = {
     lines: {
       base: "שכר החודש",
       /**
-       * **The label and the key are a pair, and only the key was renamed.** The
-       * key is `lineKeys.restEveSupplement`, which addresses a stored override
-       * (item 17), while the Hebrew still names Friday and Saturday because
-       * that is where a Saturday-resting worker's rest-eve and rest day fall.
-       * Both sentences become the worker's own day in step 7c of
-       * `build_plan.md`, alongside the nine template labels Part 3 lists. Until
-       * then the wording is what keeps `august-2025.snap.md` byte-identical
-       * through the rename, which is the check that proves the rename moved no
-       * figure.
+       * **The label is a function of her rest day; the key never is.** The key
+       * is `lineKeys.restEveSupplement`, which addresses a stored override
+       * (item 17) and must not move, while the label names the day the money is
+       * actually for: "תוספת ימי שישי" for Hanna and "תוספת ימי חמישי"
+       * for a Friday-resting worker, whose rest-eve is Thursday (item 14).
        */
-      restEveSupplement: "תוספת ימי שישי",
-      restDays: "עבודה בשבת",
+      restEveSupplement: (restDay: RestDay) =>
+        `תוספת ${eve(restDay).plural}`,
+      restDays: (restDay: RestDay) => `עבודה ב${day(restDay).bare}`,
       holidaysWorked: "עבודה בחג",
       sickDeduction: "ניכוי ימי מחלה",
       incomeTax: "מס הכנסה",
@@ -243,12 +351,12 @@ export const he = {
 
     /** The sheet prints a total per column before the month's own two totals:
      * criterion 1 checks four figures, not two. */
-    subtotals: {
+    subtotals: (restDay: RestDay) => ({
       E: "סך שכר החודש",
-      F: "סך שבתות וחגים",
+      F: `סך ${day(restDay).plural} וחגים`,
       G: "סך תשלומים חד־פעמיים",
       H: "סך תשלומים לגורמים שלישיים",
-    },
+    }),
 
     reporting: {
       standardDays: "ימי תקן",
@@ -262,18 +370,16 @@ export const he = {
     },
 
     why: {
-      base: (standardDays: number) =>
-        `משכורת חודשית מלאה. היא נשענת על ${standardDays} ימי התקן של החודש — כל ימי החודש חוץ מהשבתות — ולכן חופשה או מחלה אינן מקטינות אותה.`,
-      /** Names Friday in words, for the reason given at `lines.restEveSupplement`
-       * above: the key moved in this step and the sentence moves in 7c. */
-      restEveSupplement: (restEves: number) =>
-        `תוספת קבועה שנקבעה בפרופיל עבור כל יום שישי, והחודש היא משולמת עבור ${restEves} ימי שישי.`,
-      restDays: (restDays: number) =>
-        `עבודה בשבת משולמת בתעריף המנוחה השבועית: יום עבודה ועוד שעה, בתוספת של חצי. המנוחה השבועית של עובד/ת סיעוד היא 25 שעות ולא 24, ולכן התעריף גבוה מיום וחצי רגיל. החודש נעבדו ${restDays} שבתות.`,
-      holidaysWorked: (holidays: number) =>
-        `חג שנעבד משולם באותו תעריף כמו שבת. חג שלא נעבד אינו מזכה בתוספת, כי המשכורת החודשית משולמת עליו במלואה. החודש נעבדו ${holidays} ימי חג.`,
-      sickDeduction: (days: number) =>
-        `המשכורת החודשית משולמת במלואה גם בחודש שהיו בו ימי מחלה, ולכן השורה הזו מחזירה את החלק שדמי המחלה אינם מכסים: על היום הראשון של כל מחלה לא משולמים דמי מחלה, על השני והשלישי משולם חצי יום, ומהיום הרביעי ואילך המחלה משולמת במלואה. כך נשאר בדיוק מה שהחוק מזכה בו. החודש הניכוי הוא על ${formatDays(days)} ימים, בערך של יום מחלה. שבתות שבתוך תקופת המחלה נספרות לתקופה ונגרעות מהמאזן, אך אינן משולמות ואינן מנוכות — המשכורת ממילא אינה כוללת אותן.`,
+      base: (standardDays: number, restDay: RestDay) =>
+        `משכורת חודשית מלאה. היא נשענת על ${standardDays} ימי התקן של החודש — כל ימי החודש חוץ מ${day(restDay).pluralDefinite} — ולכן חופשה או מחלה אינן מקטינות אותה.`,
+      restEveSupplement: (restEves: number, restDay: RestDay) =>
+        `תוספת קבועה שנקבעה בפרופיל עבור כל ${eve(restDay).bare}, והחודש היא משולמת עבור ${restEves} ${eve(restDay).plural}.`,
+      restDays: (worked: number, restDay: RestDay) =>
+        `עבודה ב${day(restDay).bare} משולמת בתעריף המנוחה השבועית: יום עבודה ועוד שעה, בתוספת של חצי. המנוחה השבועית של עובד/ת סיעוד היא 25 שעות ולא 24, ולכן התעריף גבוה מיום וחצי רגיל. החודש נעבדו ${worked} ${day(restDay).plural}.`,
+      holidaysWorked: (holidays: number, restDay: RestDay) =>
+        `חג שנעבד משולם באותו תעריף כמו ${day(restDay).bare}. חג שלא נעבד אינו מזכה בתוספת, כי המשכורת החודשית משולמת עליו במלואה. החודש נעבדו ${holidays} ימי חג.`,
+      sickDeduction: (days: number, restDay: RestDay) =>
+        `המשכורת החודשית משולמת במלואה גם בחודש שהיו בו ימי מחלה, ולכן השורה הזו מחזירה את החלק שדמי המחלה אינם מכסים: על היום הראשון של כל מחלה לא משולמים דמי מחלה, על השני והשלישי משולם חצי יום, ומהיום הרביעי ואילך המחלה משולמת במלואה. כך נשאר בדיוק מה שהחוק מזכה בו. החודש הניכוי הוא על ${formatDays(days)} ימים, בערך של יום מחלה. ${day(restDay).plural} שבתוך תקופת המחלה ${agrees(day(restDay)).counted} לתקופה ${agrees(day(restDay)).andSubtracted} מהמאזן, אך ${agrees(day(restDay)).arentPaid} ${agrees(day(restDay)).andArentDeducted} — המשכורת ממילא אינה כוללת ${agrees(day(restDay)).them}.`,
       incomeTax:
         "היישום אינו מחשב מס הכנסה. השורה מתחילה באפס, והסכום מוזן ידנית על ידך. הכלל הוא שהמעסיק מנכה מס לפי גובה השכר ולפי הזיכויים שהעובד/ת זכאי/ת להם, ועובד/ת זר/ה בסיעוד מקבל/ת 2.25 נקודות זיכוי — יותר מעובד/ת זר/ה בענף אחר. מי שאינו יודע זאת מנכה יותר מדי, ולכן כדאי לקרוא את הכלל לפני הזנת הסכום.",
       advanceGranted: (advanceNumber: number) =>
@@ -287,12 +393,12 @@ export const he = {
         "הכסף שיצא בפועל לביטוח לאומי. התשלום נעשה אחת לרבעון ובדיעבד, ולכן הוא מופיע רק בחודש שבו שולם, יחד עם החודשים שהוא מכסה. זה אינו אומדן החודש: האומדן הוא מה שהחודש צבר, וזה מה שיצא מהחשבון.",
       gross: "השכר, התוספות והתשלומים החד־פעמיים של החודש, לפני המקדמות והניכויים.",
       net: "מה שמועבר בפועל: סכום החודש, אחרי המקדמות והניכויים שבתחתית הדף.",
-      subtotal: {
-        E: "סכום שורות השכר של החודש — המשכורת החודשית ותוספת ימי השישי.",
-        F: "סכום התשלומים עבור עבודה בשבת ובחג, שניהם בתעריף המנוחה השבועית.",
+      subtotal: (restDay: RestDay) => ({
+        E: `סכום שורות השכר של החודש — המשכורת החודשית ותוספת ${eve(restDay).pluralDefinite}.`,
+        F: `סכום התשלומים עבור עבודה ב${day(restDay).bare} ובחג, שניהם בתעריף המנוחה השבועית.`,
         G: "סכום התשלומים החד־פעמיים של החודש.",
         H: "סכום מה ששולם לגורמים שלישיים. אינו נכנס לסכום שמשולם לעובד/ת.",
-      },
+      }),
       vacationBalance: (seniorityYear: number) =>
         `ימי החופשה נצברים לפי הוותק. בשנה ה־${seniorityYear} להעסקה הצבירה היא החלק החודשי של המכסה השנתית, והיתרה שלא נוצלה עוברת לחודשים ולשנים הבאות ואינה נמחקת.`,
       sickBalance:
@@ -305,16 +411,15 @@ export const he = {
      * it on the refusal itself, so the interface names them isolated rather
      * than inside a Hebrew sentence (specs.md Part 5). */
     refusals: {
-      restDayHoliday:
-        "אי אפשר לסמן חג בתאריך שכבר סומן בו שבת חופשית. היום היה משולם פעמיים — גם בתעריף המנוחה השבועית וגם כחג — ולכן צריך לבחור אחד מהשניים.",
+      restDayHoliday: (restDay: RestDay) =>
+        `אי אפשר לסמן חג בתאריך שכבר סומן בו ${day(restDay).bare} ${agrees(day(restDay)).free}. היום היה משולם פעמיים — גם בתעריף המנוחה השבועית וגם כחג — ולכן צריך לבחור אחד מהשניים.`,
       holidayLimit: (allowed: number) =>
         `המכסה היא ${allowed} ימי חג בשנה, והרישום הזה חורג ממנה. אפשר להסיר חג אחר שנבחר לשנה הזו במקומו.`,
-      /** Says the rest day is Saturday for every worker, which item 5 no longer
-       * says and `validate.ts` still does. The refusal and its wording become
-       * per-worker together in step 7c; wording the sentence for a rule the code
-       * does not yet enforce would be the worse of the two lies. */
-      freeRestDayNotRestDay:
-        "שבת חופשית נרשמה על יום שאינו שבת. יום המנוחה השבועית הוא שבת עבור כל עובד/ת, ולכן הרישום הזה לא יכול להיות נכון.",
+      /** Her own day, not everyone's: item 5 says the rest day is a term of
+       * the employment, so the sentence names the day this employment holds
+       * rather than telling a Friday-resting worker that Saturday is hers. */
+      freeRestDayNotRestDay: (restDay: RestDay) =>
+        `${day(restDay).bare} ${agrees(day(restDay)).free} ${agrees(day(restDay)).wasRecorded} על יום שאינו ${day(restDay).bare}. יום המנוחה השבועית של העובד/ת הוא ${day(restDay).bare}, ולכן הרישום הזה לא יכול להיות נכון.`,
       dayRecordedTwice:
         "בתאריך הזה נרשמו שני סימונים. יום אחד לא יכול להיות גם יום שנעבד וגם יום שלא נעבד, ואי אפשר לספור אותו פעמיים. היישום אינו יודע מה מבין השניים קרה, ולכן הוא עוצר ומבקש שתחליט/י — במקום לבחור לבד ולהראות סכום שנראה רגיל לגמרי.",
       thirdPartyPaidTwice: (paymentType: string) =>

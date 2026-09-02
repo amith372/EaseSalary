@@ -1,4 +1,5 @@
 import { daysInMonth, fromIsoDate, isoOf } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
 import type {
   MonthContext,
   MonthFacts,
@@ -122,12 +123,13 @@ export function daysUsedIn(
   spans: MonthSpan[],
   month: YearMonth,
   kind: "vacation" | "sick",
+  restDay: RestDay,
 ): number {
   return spans
     .filter((span) => span.kind === kind)
     .map((span) => clipToMonth(span, month))
     .filter((span): span is DaySpan => span !== null)
-    .reduce((days, span) => days + balanceDaysOf(span), 0);
+    .reduce((days, span) => days + balanceDaysOf(span, restDay), 0);
 }
 
 /** What the month opens with. Absent for the worker's first month, which opens
@@ -196,9 +198,19 @@ export function buildBalances(
   const start = openingBalancesOf(employment, opening);
 
   const vacationAccrued = monthlyVacationAccrual(employment.employedSince, facts.month);
-  const vacationUsed = daysUsedIn(facts.spans, facts.month, "vacation");
+  const vacationUsed = daysUsedIn(
+    facts.spans,
+    facts.month,
+    "vacation",
+    facts.terms.restDay,
+  );
 
-  const sickUsed = daysUsedIn(facts.spans, facts.month, "sick");
+  const sickUsed = daysUsedIn(
+    facts.spans,
+    facts.month,
+    "sick",
+    facts.terms.restDay,
+  );
   const sickAccrued = monthlySickAccrual(start.sickDays);
 
   return [
@@ -252,7 +264,7 @@ export function vacationYearWarning(
   if (facts.month.month !== DECEMBER) return null;
   const daysThisYear =
     (context.vacationDaysEarlierInYear ?? 0) +
-    daysUsedIn(facts.spans, facts.month, "vacation");
+    daysUsedIn(facts.spans, facts.month, "vacation", facts.terms.restDay);
   if (daysThisYear >= VACATION_DAYS_A_YEAR_THE_LAW_ASKS_FOR) return null;
   return {
     key: "vacationUnderSeven",

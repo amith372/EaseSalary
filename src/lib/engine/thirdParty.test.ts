@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
 import {
   NATIONAL_INSURANCE_RATE,
@@ -84,6 +85,7 @@ const spans: MonthSpan[] = [
 const terms: WorkerTerms = {
   employedSince: "2024-04-01",
   baseMonthlySalaryAgorot: SALARY,
+  restDay: SATURDAY,
   restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
   restEveIsPocketMoney: false,
   recuperationMonth: 7,

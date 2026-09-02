@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SATURDAY } from "@/lib/dates";
 import { calculateMonth, lineKeys } from "@/lib/engine/month";
 import {
   paidFractionOfSpellDay,
@@ -64,6 +65,7 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   return {
     employedSince: "2024-04-01",
     baseMonthlySalaryAgorot: SALARY,
+    restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     restEveIsPocketMoney: false,
     recuperationMonth: 7,
@@ -160,11 +162,11 @@ describe("a spell across a month boundary is one spell (specs.md item 8)", () =>
   const spans = [sick("2025-08-29", "2025-09-03")];
 
   it("puts tier days one to three in August and four to six in September", () => {
-    expect(sickDaysIn(spans, AUGUST_2025).map((day) => day.dayOfSpell)).toEqual([
+    expect(sickDaysIn(spans, AUGUST_2025, SATURDAY).map((day) => day.dayOfSpell)).toEqual([
       1, 2, 3,
     ]);
     expect(
-      sickDaysIn(spans, SEPTEMBER_2025).map((day) => day.dayOfSpell),
+      sickDaysIn(spans, SEPTEMBER_2025, SATURDAY).map((day) => day.dayOfSpell),
     ).toEqual([4, 5, 6]);
   });
 
@@ -185,7 +187,7 @@ describe("a spell across a month boundary is one spell (specs.md item 8)", () =>
     // twice over for one illness.
     const september = calculateMonth(facts(SEPTEMBER_2025, spans), terms());
     expect(deductionLine(september)).toBeUndefined();
-    expect(sickDeductionDays(spans, SEPTEMBER_2025)).toBe(0);
+    expect(sickDeductionDays(spans, SEPTEMBER_2025, SATURDAY)).toBe(0);
   });
 
   it("draws the days from the balance in the month each day fell in", () => {
@@ -211,7 +213,7 @@ describe("the four things a Saturday inside a spell does (specs.md item 8)", () 
   it("advances the tier, and comes off the balance even so", () => {
     const result = calculateMonth(facts(AUGUST_2025, spans), terms());
     expect(result.balances.find((line) => line.kind === "sick")?.used).toBe(4);
-    expect(sickDaysIn(spans, AUGUST_2025).map((day) => day.dayOfSpell)).toEqual([
+    expect(sickDaysIn(spans, AUGUST_2025, SATURDAY).map((day) => day.dayOfSpell)).toEqual([
       1, 2, 3, 4,
     ]);
   });
@@ -226,7 +228,7 @@ describe("the four things a Saturday inside a spell does (specs.md item 8)", () 
     // Sunday 10 is tier day 3  -> 0.5
     // Monday 11 is tier day 4  -> 0
     // 1.5 × 24,990.6 = 37,485.9 -> 37,486 agorot.
-    expect(sickDeductionDays(spans, AUGUST_2025)).toBe(1.5);
+    expect(sickDeductionDays(spans, AUGUST_2025, SATURDAY)).toBe(1.5);
     expect(deduct(AUGUST_2025, spans)?.amount).toBe(-37486);
   });
 
@@ -345,7 +347,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
     ];
     expect(spellsOf(spans)).toEqual([{ from: "2025-08-03", to: "2025-08-07" }]);
     // Tier days 1 to 5 -> 1 + 0.5 + 0.5 = 2 days, the three-day figure again.
-    expect(sickDeductionDays(spans, AUGUST_2025)).toBe(2);
+    expect(sickDeductionDays(spans, AUGUST_2025, SATURDAY)).toBe(2);
     expect(deduct(AUGUST_2025, spans)?.amount).toBe(-49981);
   });
 
@@ -363,7 +365,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
       sick("2025-08-07", "2025-08-09"),
     ];
     expect(spellsOf(spans)).toHaveLength(2);
-    expect(sickDeductionDays(spans, AUGUST_2025)).toBe(3.5);
+    expect(sickDeductionDays(spans, AUGUST_2025, SATURDAY)).toBe(3.5);
     expect(deduct(AUGUST_2025, spans)?.amount).toBe(-87467);
   });
 
@@ -379,7 +381,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
     expect(spellsOf([reversed])).toEqual([
       { from: "2025-08-03", to: "2025-08-05" },
     ]);
-    expect(sickDeductionDays([reversed], AUGUST_2025)).toBe(2);
+    expect(sickDeductionDays([reversed], AUGUST_2025, SATURDAY)).toBe(2);
   });
 });
 

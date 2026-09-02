@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
 import { snapshotTerms } from "@/lib/engine/types";
 import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
@@ -18,6 +19,7 @@ import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 const terms: WorkerTerms = {
   employedSince: "2024-04-01",
   baseMonthlySalaryAgorot: 624765,
+  restDay: SATURDAY,
   restEveSupplementAgorot: 10000,
   restEveIsPocketMoney: false,
   recuperationMonth: 7,
@@ -147,11 +149,11 @@ describe("the rest-day counts cannot exceed the month (specs.md Part 4)", () => 
     // This is how the rest-day counts actually go wrong in stored data. The
     // 18th of August 2025 is a Monday, and this worker rests on Saturday.
     //
-    // The refusal is still Saturday-only for everyone, which item 5 no longer
-    // says: it becomes per-worker in step 7c, and the case that would catch the
-    // difference — a Friday-resting worker's genuine free Friday — is one that
-    // step derives on paper. This one holds either way, because a Monday is
-    // nobody's rest day.
+    // The refusal reads her own rest day off the month, so the case that tells
+    // one worker from another — a Friday-resting worker's genuine free Friday,
+    // refused for Hanna and recorded for her — lives in `rest-day.test.ts`.
+    // This one holds for all three workers, because a Monday is nobody's rest
+    // day.
     const [refusal] = validateMonth(
       facts([
         { id: "free-18", kind: "freeRestDay", from: "2025-08-18", to: "2025-08-18" },

@@ -16,6 +16,7 @@ import {
   sameMonth,
   WEEK_LENGTH,
 } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
 import { he } from "@/lib/i18n/he";
 import type { DaySpan, IsoDate, MarkKind, YearMonth } from "@/lib/types";
 
@@ -41,6 +42,14 @@ export interface SpanIntent {
 interface MonthCalendarProps {
   month: YearMonth;
   spans: DaySpan[];
+  /**
+   * Her weekly rest day, which is a term of the employment and not a constant
+   * (specs.md item 5). The calendar needs it for the words alone — a
+   * Saturday-resting worker reads שבת חופשית and a Friday-resting one
+   * יום שישי חופשי — since what a swept range *means* is decided by
+   * `spans.ts`, which the caller reaches through `onSelectRange`.
+   */
+  restDay: RestDay;
   /**
    * Today, passed in rather than read from the clock, so the component renders
    * the same on the server as in the browser. Without it the "היום" button is
@@ -78,14 +87,20 @@ const dotClass: Record<MarkKind, string> = {
  * every unmarked day including an unmarked rest day — so there is no sixth
  * entry for the weekly rest day and no separate fill for it. The legend says
  * what the colours mean and marks nothing: marking is the picker's job.
+ *
+ * Built per render rather than held as a module constant, because the last
+ * entry names her own rest day (item 5).
  */
-const legend: { label: string; swatch: string }[] = [
-  { label: he.calendar.marks.workDay, swatch: "bg-workday-dot" },
-  { label: he.calendar.marks.vacation, swatch: "bg-vacation" },
-  { label: he.calendar.marks.sick, swatch: "bg-sick" },
-  { label: he.calendar.marks.holiday, swatch: "bg-holiday" },
-  { label: he.calendar.marks.freeRestDay, swatch: "bg-rest" },
-];
+function legendFor(restDay: RestDay): { label: string; swatch: string }[] {
+  const marks = he.calendar.marks(restDay);
+  return [
+    { label: marks.workDay, swatch: "bg-workday-dot" },
+    { label: marks.vacation, swatch: "bg-vacation" },
+    { label: marks.sick, swatch: "bg-sick" },
+    { label: marks.holiday, swatch: "bg-holiday" },
+    { label: marks.freeRestDay, swatch: "bg-rest" },
+  ];
+}
 
 function monthLabel(ym: YearMonth): string {
   return `${he.calendar.monthNames[ym.month - 1]} ${ym.year}`;
@@ -106,12 +121,14 @@ function rangeLabel(from: IsoDate, to: IsoDate): string {
 export function MonthCalendar({
   month,
   spans,
+  restDay,
   today,
   onMonthChange,
   onSelectRange,
   onClearRange,
   className,
 }: MonthCalendarProps) {
+  const marks = he.calendar.marks(restDay);
   const cells = useMemo(() => monthGrid(month), [month]);
   const firstDay = isoOf(month, 1);
 
@@ -307,7 +324,7 @@ export function MonthCalendar({
               data-date={date}
               tabIndex={date === focused ? 0 : -1}
               aria-label={`${dayNumber} ${monthLabel(month)}${
-                span ? `, ${he.calendar.marks[span.kind]}` : ""
+                span ? `, ${marks[span.kind]}` : ""
               }`}
               aria-pressed={span !== undefined}
               onClick={() => pressDay(date)}
@@ -327,7 +344,7 @@ export function MonthCalendar({
               </Bidi>
               {span ? (
                 <span dir="auto" className="text-[10px] leading-[1.1] font-semibold opacity-75">
-                  {he.calendar.marks[span.kind]}
+                  {marks[span.kind]}
                 </span>
               ) : null}
             </button>
@@ -366,7 +383,7 @@ export function MonthCalendar({
                   aria-hidden="true"
                   className={`size-2.75 flex-none rounded-full ${dotClass[kind]}`}
                 />
-                <span dir="auto">{he.calendar.marks[kind]}</span>
+                <span dir="auto">{marks[kind]}</span>
               </button>
             ))}
             <button
@@ -389,7 +406,7 @@ export function MonthCalendar({
       ) : null}
 
       <div className="flex flex-none flex-wrap items-center gap-4">
-        {legend.map((entry) => (
+        {legendFor(restDay).map((entry) => (
           <span
             key={entry.label}
             className="flex items-center gap-2.25 text-[15px] font-light text-ink-mute"

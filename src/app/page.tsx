@@ -78,7 +78,11 @@ export default function Home() {
     setOpenWhy((current) => (current === key ? null : key));
 
   function handleSelectRange(intent: SpanIntent) {
-    const { spans: added, skipped: refused } = applyMark(intent, spans);
+    const { spans: added, skipped: refused } = applyMark(
+      intent,
+      fixture.restDay,
+      spans,
+    );
     setSpansByWorker((current) => ({
       ...current,
       [worker.id]: [...current[worker.id], ...added],
@@ -131,6 +135,7 @@ export default function Home() {
           <MonthCalendar
             month={month}
             spans={spans}
+            restDay={fixture.restDay}
             today={fixtureToday}
             onMonthChange={setMonth}
             onSelectRange={handleSelectRange}
@@ -145,7 +150,7 @@ export default function Home() {
             <ul className="mt-2.5 flex flex-none flex-col gap-1">
               {overflowing.map(({ span, before }) => (
                 <li key={span.id} className="text-[14px] font-light text-ink-mute">
-                  <span>{he.calendar.marks[span.kind]}</span>
+                  <span>{he.calendar.marks(fixture.restDay)[span.kind]}</span>
                   <span> · </span>
                   <Bidi>{dayLabel(span.from)}</Bidi>
                   <span> </span>
@@ -167,14 +172,16 @@ export default function Home() {
             <Card tone="inset" radius="panel" className="mt-2.5 flex flex-none flex-col gap-1.5 px-3.5 py-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span dir="auto" className="text-[14px] font-semibold text-ink-warm">
-                  {he.calendar.skipped.title}
+                  {he.calendar.skipped(fixture.restDay).title}
                 </span>
                 <button
                   type="button"
                   onClick={() => setSkipped(null)}
                   className="text-[13px] font-medium text-ink-quiet transition-colors hover:text-ink"
                 >
-                  <span dir="auto">{he.calendar.skipped.dismiss}</span>
+                  <span dir="auto">
+                    {he.calendar.skipped(fixture.restDay).dismiss}
+                  </span>
                 </button>
               </div>
               <ul aria-live="polite" className="flex flex-col gap-1">
@@ -190,7 +197,7 @@ export default function Home() {
                       </span>
                     ))}
                     <span> — </span>
-                    <span>{he.calendar.skipped[reason]}</span>
+                    <span>{he.calendar.skipped(fixture.restDay)[reason]}</span>
                   </li>
                 ))}
               </ul>

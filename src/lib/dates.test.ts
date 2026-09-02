@@ -28,9 +28,9 @@ describe("the weekday numbering", () => {
   });
 
   it("separates Friday from Saturday", () => {
-    expect(isRestEve("2026-08-07")).toBe(true);
-    expect(isRestDay("2026-08-07")).toBe(false);
-    expect(isRestDay("2026-08-08")).toBe(true);
+    expect(isRestEve("2026-08-07", SATURDAY)).toBe(true);
+    expect(isRestDay("2026-08-07", SATURDAY)).toBe(false);
+    expect(isRestDay("2026-08-08", SATURDAY)).toBe(true);
   });
 });
 
@@ -44,7 +44,7 @@ describe("August 2026", () => {
 
   it("has 31 days and five rest days", () => {
     expect(daysInMonth(august2026)).toBe(31);
-    expect(restDaysOf(august2026)).toEqual([
+    expect(restDaysOf(august2026, SATURDAY)).toEqual([
       "2026-08-01",
       "2026-08-08",
       "2026-08-15",
@@ -68,8 +68,8 @@ describe("the leading blanks are derived, never assumed", () => {
     const march2026: YearMonth = { year: 2026, month: 3 };
     expect(weekdayOfFirst(march2026)).toBe(0);
     expect(monthGrid(march2026)[0]).toBe("2026-03-01");
-    expect(restDaysOf(march2026)).toHaveLength(4);
-    expect(restDaysOf(august2026)).toHaveLength(5);
+    expect(restDaysOf(march2026, SATURDAY)).toHaveLength(4);
+    expect(restDaysOf(august2026, SATURDAY)).toHaveLength(5);
   });
 });
 
@@ -80,8 +80,8 @@ describe("dates are built outside any local time zone", () => {
     // rest-day count of the month without announcing itself.
     for (const month of [3, 10]) {
       const ym: YearMonth = { year: 2026, month };
-      const restDays = restDaysOf(ym);
-      expect(restDays.every(isRestDay)).toBe(true);
+      const restDays = restDaysOf(ym, SATURDAY);
+      expect(restDays.every((d) => isRestDay(d, SATURDAY))).toBe(true);
       expect(restDays).toHaveLength(month === 3 ? 4 : 5);
     }
   });

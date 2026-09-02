@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
 import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
@@ -22,7 +23,7 @@ import type { MonthResult } from "@/lib/types";
  * Hanna rests on Saturday, which is the default, so her rest-eve is Friday and
  * every weekday named below is hers rather than the rule. That is exactly why
  * this case cannot check the rest day's generalisation and why `build_plan.md`
- * gives 7c its own derived cases.
+ * `rest-day.test.ts` exists, with figures derived on paper.
  */
 
 const AUGUST_2025_SALARY = 624765;
@@ -44,6 +45,7 @@ const facts: MonthFacts = {
   // in July. Written out rather than snapshotted off `terms` below, because
   // that const is declared after this one.
   terms: {
+    restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     restEveIsPocketMoney: false,
     recuperationMonth: 7,
@@ -68,6 +70,7 @@ const terms: WorkerTerms = {
   // Part 4: "employed since 1.4.2024".
   employedSince: "2024-04-01",
   baseMonthlySalaryAgorot: AUGUST_2025_SALARY,
+  restDay: SATURDAY,
   restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
   restEveIsPocketMoney: false,
   recuperationMonth: 7,

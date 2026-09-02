@@ -14,11 +14,12 @@ import type { IsoDate, YearMonth } from "@/lib/types";
 /**
  * In JavaScript `getUTCDay()` counts Sunday as 0, so Saturday is 6.
  *
- * These three are also the only days the law allows as the weekly rest day
- * (specs.md item 5), which is why Friday and Sunday are named here beside the
- * Saturday the grid needs.
+ * Three of these are the only days the law allows as the weekly rest day
+ * (specs.md item 5), and Thursday is here because it is the rest-eve of one of
+ * them — those four are every weekday the application ever has to name.
  */
 export const SUNDAY = 0;
+export const THURSDAY = 4;
 export const FRIDAY = 5;
 export const SATURDAY = 6;
 
@@ -71,22 +72,41 @@ export function weekdayOfFirst(ym: YearMonth): number {
 }
 
 /**
- * The worker's weekly rest day, and the working day immediately before it.
+ * The weekly rest day of one employment.
  *
- * **Both still answer for Saturday alone**, which item 5 no longer says: the
- * rest day is a term of the employment and may be Friday, Saturday or Sunday.
- * The name is the concept and the body is the state of the code, and they are
- * deliberately allowed to disagree for the length of one step — this is the
- * rename, and step 7c of `build_plan.md` is where the day arrives from the
- * month's own terms and the two agree again. Nothing outside this file assumes
- * Saturday any more, which is the whole point of landing the rename first.
+ * The law allows only these three, whichever the worker holds as her own — a
+ * Catholic Filipina worker may ask for Sunday and a Muslim worker for Friday,
+ * and it is her right, while for a Jewish worker it is always Saturday
+ * (specs.md item 5). Written as a union of the three rather than as a number,
+ * so a fourth day cannot be stored: item 5 says the profile refuses any other
+ * day, and a type that cannot hold one is the cheapest way to keep that true.
  */
-export function isRestDay(iso: IsoDate): boolean {
-  return weekdayOf(iso) === SATURDAY;
+export type RestDay = typeof SUNDAY | typeof FRIDAY | typeof SATURDAY;
+
+/** Saturday, which is the common choice rather than the legal one (item 5).
+ * The default lives with the profile that applies it, not in the engine, which
+ * always reads the day off the month. */
+export const DEFAULT_REST_DAY: RestDay = SATURDAY;
+
+/**
+ * The working day immediately before the weekly rest day — where the rest-eve
+ * supplement falls (specs.md item 14).
+ *
+ * Friday for the Saturday rest day of the common case, Saturday for a
+ * Sunday-resting worker and Thursday for a Friday-resting one. It is called the
+ * rest-eve and not the Friday because Friday is only where it lands for most
+ * workers and not what it is.
+ */
+export function restEveOf(restDay: RestDay): number {
+  return (restDay + WEEK_LENGTH - 1) % WEEK_LENGTH;
 }
 
-export function isRestEve(iso: IsoDate): boolean {
-  return weekdayOf(iso) === FRIDAY;
+export function isRestDay(iso: IsoDate, restDay: RestDay): boolean {
+  return weekdayOf(iso) === restDay;
+}
+
+export function isRestEve(iso: IsoDate, restDay: RestDay): boolean {
+  return weekdayOf(iso) === restEveOf(restDay);
 }
 
 export function addDays(iso: IsoDate, days: number): IsoDate {
@@ -129,8 +149,8 @@ export function everyDayOf(ym: YearMonth): IsoDate[] {
   return eachDate(isoOf(ym, 1), isoOf(ym, daysInMonth(ym)));
 }
 
-export function restDaysOf(ym: YearMonth): IsoDate[] {
-  return everyDayOf(ym).filter(isRestDay);
+export function restDaysOf(ym: YearMonth, restDay: RestDay): IsoDate[] {
+  return everyDayOf(ym).filter((date) => isRestDay(date, restDay));
 }
 
 /**

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SATURDAY } from "@/lib/dates";
 import {
   buildBalances,
   monthlySickAccrual,
@@ -43,6 +44,7 @@ function terms(
   return {
     employedSince,
     baseMonthlySalaryAgorot: 624765,
+    restDay: SATURDAY,
     restEveSupplementAgorot: 10000,
     restEveIsPocketMoney: false,
     recuperationMonth: 7,

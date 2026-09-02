@@ -5,6 +5,7 @@ import {
   isRestDay,
   orderDates,
 } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
 import type { DaySpan, IsoDate, MarkKind } from "@/lib/types";
 
 /**
@@ -57,19 +58,16 @@ export interface MarkResult {
   skipped: SkippedDay[];
 }
 
-/**
- * Which day a rest-day rule refuses, before any conflict with an existing span
+/** Which day a rest-day rule refuses, before any conflict with an existing span
  * is considered: the entitlement rule is the more informative answer, and it
- * holds whether or not the day is already marked.
- *
- * `isRestDay` still answers Saturday for every worker until step 7c, so both
- * refusals below are still the Saturday rule wearing the rest day's name. The
- * day arrives from the month's own terms in that step, and nothing here changes
- * when it does.
- */
-function refusedByKind(kind: MarkKind, date: IsoDate): SkipReason | null {
-  if (kind === "vacation" && isRestDay(date)) return "weeklyRest";
-  if (kind === "freeRestDay" && !isRestDay(date)) return "notRestDay";
+ * holds whether or not the day is already marked. */
+function refusedByKind(
+  kind: MarkKind,
+  date: IsoDate,
+  restDay: RestDay,
+): SkipReason | null {
+  if (kind === "vacation" && isRestDay(date, restDay)) return "weeklyRest";
+  if (kind === "freeRestDay" && !isRestDay(date, restDay)) return "notRestDay";
   return null;
 }
 
@@ -86,13 +84,17 @@ function coveringSpan(spans: DaySpan[], date: IsoDate): DaySpan | undefined {
  * in a right-to-left calendar a leftward drag moves forward in time, so a range
  * that trusted the order it arrived in would invert (specs.md Part 5).
  */
-export function markableDays(intent: MarkIntent, existing: DaySpan[] = []) {
+export function markableDays(
+  intent: MarkIntent,
+  restDay: RestDay,
+  existing: DaySpan[] = [],
+) {
   const { from, to } = orderDates(intent.from, intent.to);
   const taken: IsoDate[] = [];
   const skipped: SkippedDay[] = [];
 
   for (const date of eachDate(from, to)) {
-    const refused = refusedByKind(intent.kind, date);
+    const refused = refusedByKind(intent.kind, date, restDay);
     if (refused) {
       skipped.push({ date, reason: refused });
       continue;
@@ -139,9 +141,10 @@ function runsOf(dates: IsoDate[]): { from: IsoDate; to: IsoDate }[] {
  */
 export function applyMark(
   intent: MarkIntent,
+  restDay: RestDay,
   existing: DaySpan[] = [],
 ): MarkResult {
-  const { taken, skipped } = markableDays(intent, existing);
+  const { taken, skipped } = markableDays(intent, restDay, existing);
   const spans = runsOf(taken).map<DaySpan>((run) => ({
     id: `${intent.kind}-${run.from}-${run.to}`,
     kind: intent.kind,
@@ -160,12 +163,14 @@ export function applyMark(
  * entitlement (item 5). A part-day is a single-day span and is drawn in its own
  * proportion (items 7, 10).
  */
-export function balanceDaysOf(span: DaySpan): number {
+export function balanceDaysOf(span: DaySpan, restDay: RestDay): number {
   if (span.kind === "freeRestDay") return 0;
   const { from, to } = orderDates(span.from, span.to);
   const days = eachDate(from, to);
   const counted =
-    span.kind === "vacation" ? days.filter((d) => !isRestDay(d)) : days;
+    span.kind === "vacation"
+      ? days.filter((d) => !isRestDay(d, restDay))
+      : days;
   return counted.length * (span.fraction ?? 1);
 }
 

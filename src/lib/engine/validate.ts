@@ -195,7 +195,7 @@ export function validateMonth(
     refusals.push({
       code: "restDayHoliday",
       link: LINK_FOR.restDayHoliday,
-      message: he.sheet.refusals.restDayHoliday,
+      message: he.sheet.refusals.restDayHoliday(facts.terms.restDay),
       dates: [...new Set(clashes)],
     });
   }
@@ -222,20 +222,22 @@ export function validateMonth(
   // A free rest day on a day that is not one. This is how the rest-day counts
   // go wrong in stored data even though the calendar refuses it at mark time.
   //
-  // `isRestDay` still answers Saturday for every worker, which item 5 no longer
-  // says: the rest day is a term of the employment and the refusal has to read
-  // it off the month. Step 7c of `build_plan.md` is where it does, and this is
-  // the refusal that step names. Until then a Friday-resting worker's genuine
-  // free Friday is refused here — a refusal that is wrong rather than a figure
-  // that is wrong, which is the direction to be wrong in for one step.
+  // The day is read off the month's own terms and never off the profile
+  // (Part 3), so the refusal is this worker's rather than everyone's: a
+  // Friday-resting worker's free Friday is recorded and her free Saturday is
+  // refused, which is the reverse of Hanna's and the reason the check cannot
+  // be a constant.
   const notRestDays = spans
-    .filter((span) => span.kind === "freeRestDay" && !isRestDay(span.from))
+    .filter(
+      (span) =>
+        span.kind === "freeRestDay" && !isRestDay(span.from, facts.terms.restDay),
+    )
     .map((span) => span.from);
   if (notRestDays.length > 0) {
     refusals.push({
       code: "freeRestDayNotRestDay",
       link: LINK_FOR.freeRestDayNotRestDay,
-      message: he.sheet.refusals.freeRestDayNotRestDay,
+      message: he.sheet.refusals.freeRestDayNotRestDay(facts.terms.restDay),
       dates: notRestDays,
     });
   }
@@ -285,7 +287,12 @@ export function validateMonth(
   // this version from depending on a calculation it deliberately does not have.
   // If it ever fires in earnest, that is the signal to build the unpaid absence
   // as a feature, never to route around the refusal with arithmetic.
-  const sickUsed = daysUsedIn(facts.spans, facts.month, "sick");
+  const sickUsed = daysUsedIn(
+    facts.spans,
+    facts.month,
+    "sick",
+    facts.terms.restDay,
+  );
   const sickAvailable = sickDaysAvailable(employment, context.openingBalances);
   if (sickUsed > sickAvailable) {
     refusals.push({

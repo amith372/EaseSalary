@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SATURDAY } from "@/lib/dates";
 import {
   HOLIDAYS_PER_YEAR,
   holidayAllowanceFor,
@@ -65,6 +66,7 @@ function terms(employedSince = "2024-04-01"): WorkerTerms {
   return {
     employedSince,
     baseMonthlySalaryAgorot: SALARY,
+    restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     restEveIsPocketMoney: false,
     recuperationMonth: 7,
@@ -155,8 +157,8 @@ describe("a holiday on a Saturday she works is paid once (specs.md item 9)", () 
   it("still reports all five rest days as worked, because she worked them", () => {
     // The count is a fact about the month and stays true; only what is paid on
     // which line moves.
-    expect(restDayUnitsOf(spans, 5)).toBe(4);
-    expect(restDayUnitsOf([], 5)).toBe(5);
+    expect(restDayUnitsOf(spans, 5, SATURDAY)).toBe(4);
+    expect(restDayUnitsOf([], 5, SATURDAY)).toBe(5);
   });
 
   it("comes to the same column F as the same holiday on a weekday would not", () => {

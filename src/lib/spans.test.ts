@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SATURDAY } from "@/lib/dates";
 import {
   applyMark,
   balanceDaysOf,
@@ -19,7 +20,7 @@ describe("a vacation span skips its rest days", () => {
       kind: "vacation",
       from: "2026-08-16",
       to: "2026-08-22",
-    });
+    }, SATURDAY);
 
     expect(spans).toHaveLength(1);
     expect(spans[0]).toMatchObject({
@@ -27,7 +28,7 @@ describe("a vacation span skips its rest days", () => {
       from: "2026-08-16",
       to: "2026-08-21",
     });
-    expect(balanceDaysOf(spans[0])).toBe(6);
+    expect(balanceDaysOf(spans[0], SATURDAY)).toBe(6);
     expect(skipped).toEqual([{ date: "2026-08-22", reason: "weeklyRest" }]);
   });
 
@@ -36,14 +37,14 @@ describe("a vacation span skips its rest days", () => {
       kind: "vacation",
       from: "2026-08-14",
       to: "2026-08-17",
-    });
+    }, SATURDAY);
 
     expect(spans.map((s) => [s.from, s.to])).toEqual([
       ["2026-08-14", "2026-08-14"],
       ["2026-08-16", "2026-08-17"],
     ]);
     expect(skipped).toEqual([{ date: "2026-08-15", reason: "weeklyRest" }]);
-    expect(spans.reduce((total, s) => total + balanceDaysOf(s), 0)).toBe(3);
+    expect(spans.reduce((total, s) => total + balanceDaysOf(s, SATURDAY), 0)).toBe(3);
   });
 });
 
@@ -53,11 +54,11 @@ describe("a sick span keeps its rest days", () => {
       kind: "sick",
       from: "2026-08-16",
       to: "2026-08-22",
-    });
+    }, SATURDAY);
 
     expect(spans).toHaveLength(1);
     expect(spans[0]).toMatchObject({ from: "2026-08-16", to: "2026-08-22" });
-    expect(balanceDaysOf(spans[0])).toBe(7);
+    expect(balanceDaysOf(spans[0], SATURDAY)).toBe(7);
     expect(skipped).toEqual([]);
   });
 
@@ -66,7 +67,7 @@ describe("a sick span keeps its rest days", () => {
       kind: "sick",
       from: "2026-08-30",
       to: "2026-09-02",
-    });
+    }, SATURDAY);
 
     expect(spans).toHaveLength(1);
     expect(spans[0]).toMatchObject({ from: "2026-08-30", to: "2026-09-02" });
@@ -83,12 +84,12 @@ describe("a range is ordered by date, never by the direction it was drawn", () =
       kind: "vacation",
       from: "2026-08-16",
       to: "2026-08-21",
-    });
+    }, SATURDAY);
     const backward = applyMark({
       kind: "vacation",
       from: "2026-08-21",
       to: "2026-08-16",
-    });
+    }, SATURDAY);
 
     expect(backward.spans).toEqual(forward.spans);
   });
@@ -100,7 +101,7 @@ describe("only a rest day can be marked as the rest day the worker had off", () 
       kind: "freeRestDay",
       from: "2026-08-01",
       to: "2026-08-08",
-    });
+    }, SATURDAY);
 
     expect(spans.map((s) => s.from)).toEqual(["2026-08-01", "2026-08-08"]);
     expect(skipped).toHaveLength(6);
@@ -112,9 +113,9 @@ describe("only a rest day can be marked as the rest day the worker had off", () 
       kind: "freeRestDay",
       from: "2026-08-01",
       to: "2026-08-01",
-    });
+    }, SATURDAY);
 
-    expect(balanceDaysOf(spans[0])).toBe(0);
+    expect(balanceDaysOf(spans[0], SATURDAY)).toBe(0);
   });
 });
 
@@ -126,6 +127,7 @@ describe("a paid holiday cannot land on a free rest day", () => {
   it("refuses the day and says why, marking the days around it", () => {
     const { spans, skipped } = applyMark(
       { kind: "holiday", from: "2026-08-14", to: "2026-08-16" },
+      SATURDAY,
       freeRestDay,
     );
 
@@ -145,6 +147,7 @@ describe("a day that already carries a mark refuses another", () => {
   it("marks around the existing span and reports the overlap", () => {
     const { spans, skipped } = applyMark(
       { kind: "vacation", from: "2026-08-18", to: "2026-08-21" },
+      SATURDAY,
       existing,
     );
 
@@ -161,6 +164,7 @@ describe("a day that already carries a mark refuses another", () => {
   it("refuses the whole range when every day of it is taken", () => {
     const { spans, skipped } = applyMark(
       { kind: "vacation", from: "2026-08-19", to: "2026-08-20" },
+      SATURDAY,
       existing,
     );
 
@@ -175,7 +179,7 @@ describe("markableDays", () => {
       kind: "vacation",
       from: "2026-08-15",
       to: "2026-08-16",
-    });
+    }, SATURDAY);
 
     expect(taken).toEqual(["2026-08-16"]);
     expect(skipped).toEqual([{ date: "2026-08-15", reason: "weeklyRest" }]);
@@ -192,6 +196,6 @@ describe("a part-day is drawn from the balance in its own proportion", () => {
       fraction: 0.5,
     };
 
-    expect(balanceDaysOf(half)).toBe(0.5);
+    expect(balanceDaysOf(half, SATURDAY)).toBe(0.5);
   });
 });

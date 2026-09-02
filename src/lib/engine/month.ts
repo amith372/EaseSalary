@@ -1,3 +1,4 @@
+import type { RestDay } from "@/lib/dates";
 import { buildBalances, buildWarnings } from "@/lib/engine/balances";
 import { countMonth, type MonthCounts } from "@/lib/engine/counts";
 import {
@@ -78,6 +79,9 @@ export const lineKeys = {
 
 function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
   const rates = deriveRates(facts.confirmedWage.baseAgorot);
+  // Every label and every explanation that names a day names *her* day
+  // (specs.md item 5), and it is read off the month like every other term.
+  const { restDay } = facts.terms;
   const drafts: LineDraft[] = [];
 
   // Column E — the monthly salary items. The rest-eve supplement sits here and
@@ -93,7 +97,7 @@ function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
     rate: facts.confirmedWage.baseAgorot,
     column: "E",
     explanation: {
-      text: he.sheet.why.base(counts.standardDays),
+      text: he.sheet.why.base(counts.standardDays, restDay),
       link: "caregiverWage",
     },
   });
@@ -101,12 +105,15 @@ function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
   if (counts.restEvesPaidSupplement > 0 && facts.terms.restEveSupplementAgorot > 0) {
     drafts.push({
       key: lineKeys.restEveSupplement,
-      label: he.sheet.lines.restEveSupplement,
+      label: he.sheet.lines.restEveSupplement(restDay),
       units: counts.restEvesPaidSupplement,
       rate: facts.terms.restEveSupplementAgorot,
       column: "E",
       explanation: {
-        text: he.sheet.why.restEveSupplement(counts.restEvesPaidSupplement),
+        text: he.sheet.why.restEveSupplement(
+          counts.restEvesPaidSupplement,
+          restDay,
+        ),
         link: "caregiverWage",
       },
     });
@@ -124,7 +131,11 @@ function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
   // measured in (item 8) — and the sign belongs to the quantity, because what
   // this row records is days taken back off the month. A negative unit price in
   // column D is the reading Part 5 warns about in the other direction.
-  const sickDays = sickDeductionDays(facts.spans, facts.month);
+  const sickDays = sickDeductionDays(
+    facts.spans,
+    facts.month,
+    facts.terms.restDay,
+  );
   if (sickDays > 0) {
     drafts.push({
       key: lineKeys.sickDeduction,
@@ -133,7 +144,7 @@ function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
       rate: rates.daily,
       column: "E",
       explanation: {
-        text: he.sheet.why.sickDeduction(sickDays),
+        text: he.sheet.why.sickDeduction(sickDays, restDay),
         link: "sickPay",
       },
     });
@@ -145,16 +156,20 @@ function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
   // with the holiday line and taken out of the rest days here, because both
   // lines pay the same rate off the same date and item 9 says the day is paid
   // once. `counts.restDaysWorked` stays the true count of rest days attended.
-  const restDayUnits = restDayUnitsOf(facts.spans, counts.restDaysWorked);
+  const restDayUnits = restDayUnitsOf(
+    facts.spans,
+    counts.restDaysWorked,
+    facts.terms.restDay,
+  );
   if (restDayUnits > 0) {
     drafts.push({
       key: lineKeys.restDays,
-      label: he.sheet.lines.restDays,
+      label: he.sheet.lines.restDays(restDay),
       units: restDayUnits,
       rate: rates.restDay,
       column: "F",
       explanation: {
-        text: he.sheet.why.restDays(restDayUnits),
+        text: he.sheet.why.restDays(restDayUnits, restDay),
         link: "restDayWork",
       },
     });
@@ -173,7 +188,7 @@ function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
       rate: rates.restDay,
       column: "F",
       explanation: {
-        text: he.sheet.why.holidaysWorked(holidaysWorked),
+        text: he.sheet.why.holidaysWorked(holidaysWorked, restDay),
         link: "holidayWork",
       },
     });
@@ -262,16 +277,21 @@ const ALL_COLUMNS: SheetColumn[] = ["E", "F", "G", "H"];
  * it prints nothing rather than a zero. Two of the sheet's four total lines are
  * here; `gross` and `net` are the other two (criterion 1).
  */
-function buildSubtotals(lines: MonthLine[]): ColumnSubtotal[] {
+function buildSubtotals(
+  lines: MonthLine[],
+  restDay: RestDay,
+): ColumnSubtotal[] {
+  const labels = he.sheet.subtotals(restDay);
+  const why = he.sheet.why.subtotal(restDay);
   return ALL_COLUMNS.filter((column) =>
     lines.some((line) => line.column === column),
   ).map((column) => ({
     column,
-    label: he.sheet.subtotals[column],
+    label: labels[column],
     amount: lines
       .filter((line) => line.column === column)
       .reduce((total, line) => total + (line.amount ?? 0), 0),
-    explanation: { text: he.sheet.why.subtotal[column] },
+    explanation: { text: why[column] },
   }));
 }
 
@@ -301,7 +321,7 @@ export function calculateMonth(
     standardDays: counts.standardDays,
     actualDays: counts.actualDays,
     lines,
-    subtotals: buildSubtotals(lines),
+    subtotals: buildSubtotals(lines, facts.terms.restDay),
     closing,
     gross,
     net,

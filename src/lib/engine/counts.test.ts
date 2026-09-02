@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SATURDAY } from "@/lib/dates";
 import { countMonth } from "@/lib/engine/counts";
 import { snapshotTerms } from "@/lib/engine/types";
 import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
@@ -14,8 +15,8 @@ import type { YearMonth } from "@/lib/types";
  * **Every worker in this file rests on Saturday**, which is the default and
  * Hanna's own, so the counts here say nothing about a Friday- or Sunday-resting
  * worker — the weekday names below are that one worker's calendar and not the
- * rule. Step 7c of `build_plan.md` carries the cases that do, derived on paper
- * from items 5, 8 and 14 rather than from anything this suite already returns.
+ * rule. `rest-day.test.ts` carries the cases that do, derived on paper from
+ * items 5, 8 and 14 rather than from anything this suite already returns.
  */
 
 function facts(
@@ -44,6 +45,7 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   return {
     employedSince: "2024-04-01",
     baseMonthlySalaryAgorot: 624765,
+    restDay: SATURDAY,
     restEveSupplementAgorot: 10000,
     restEveIsPocketMoney: false,
     recuperationMonth: 7,
@@ -267,7 +269,8 @@ describe("the rest-eve supplement and the week lost to sickness (specs.md items 
     // Sunday the 17th through Friday the 22nd is the whole week even though
     // Saturday the 23rd was worked: the rest day is not counted (item 8). The
     // week happens to be Sunday-anchored here only because this worker rests on
-    // Saturday; item 8 anchors it to her own rest day, which is 7c's case.
+    // Saturday; item 8 anchors it to her own rest day, and a Friday-resting
+    // worker's week runs Saturday through Thursday — `rest-day.test.ts`.
     const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-17", "2025-08-22")], pocketMoney));
     expect(counts.restDaysWorked).toBe(5);
     expect(counts.restEvesPaidSupplement).toBe(4);

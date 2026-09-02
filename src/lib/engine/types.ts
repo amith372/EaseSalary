@@ -1,3 +1,4 @@
+import type { RestDay } from "@/lib/dates";
 import type {
   DaySpan,
   HolidaySpan,
@@ -70,6 +71,12 @@ export interface WorkerTerms {
    */
   baseMonthlySalaryAgorot: number;
   /**
+   * The weekly rest day, which is a term of the employment and not a constant
+   * (specs.md item 5). Friday, Saturday or Sunday, whichever the worker holds
+   * as her own; the profile defaults it to Saturday and refuses any other day.
+   */
+  restDay: RestDay;
+  /**
    * The supplement for one rest-eve, which is also one week's, since a week
    * holds one rest-eve (specs.md item 14). It is a fact about this employment
    * and not a derived rate, which is why it is stored rather than computed from
@@ -120,6 +127,16 @@ export interface WorkerTerms {
  */
 export interface MonthTerms {
   /**
+   * The weekly rest day this month was calculated against (specs.md item 5).
+   *
+   * Snapshotted like every other term, and it is the one that makes the
+   * snapshot matter: a family that moves the rest day from Saturday to Sunday
+   * in June must not thereby turn every earlier month's Saturdays into Sundays
+   * (Part 3). Every count, every refusal and every label in the month reads it
+   * from here.
+   */
+  restDay: RestDay;
+  /**
    * The supplement for one rest-eve, which is also one week's, since a week
    * holds one rest-eve (specs.md item 14). Nothing in law requires it: it is
    * paid because the family agreed to pay it, which is why it is a stored fact
@@ -141,6 +158,7 @@ export interface MonthTerms {
  */
 export function snapshotTerms(worker: WorkerTerms): MonthTerms {
   return {
+    restDay: worker.restDay,
     restEveSupplementAgorot: worker.restEveSupplementAgorot,
     restEveIsPocketMoney: worker.restEveIsPocketMoney,
     recuperationMonth: worker.recuperationMonth,

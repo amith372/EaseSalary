@@ -7,6 +7,7 @@ import {
   orderDates,
   sameMonth,
 } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
 import type { MonthSpan } from "@/lib/engine/types";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
@@ -131,19 +132,27 @@ export interface SickDay {
 /** Every day of every spell, with its tier position. The whole spell is walked
  * even where most of it falls outside the month, because the position of a day
  * inside this month depends on how many days of the spell came before it. */
-export function sickDaysOf(spans: MonthSpan[]): SickDay[] {
+export function sickDaysOf(spans: MonthSpan[], restDay: RestDay): SickDay[] {
   return spellsOf(spans).flatMap((spell) =>
     eachDate(spell.from, spell.to).map((date, index) => ({
       date,
       dayOfSpell: index + 1,
-      unpaidDays: isRestDay(date) ? 0 : unpaidFractionOfSpellDay(index + 1),
+      unpaidDays: isRestDay(date, restDay)
+        ? 0
+        : unpaidFractionOfSpellDay(index + 1),
     })),
   );
 }
 
 /** The days of the spells that fall inside this month, tiers and all. */
-export function sickDaysIn(spans: MonthSpan[], month: YearMonth): SickDay[] {
-  return sickDaysOf(spans).filter((day) => sameMonth(monthOf(day.date), month));
+export function sickDaysIn(
+  spans: MonthSpan[],
+  month: YearMonth,
+  restDay: RestDay,
+): SickDay[] {
+  return sickDaysOf(spans, restDay).filter((day) =>
+    sameMonth(monthOf(day.date), month),
+  );
 }
 
 /**
@@ -154,6 +163,10 @@ export function sickDaysIn(spans: MonthSpan[], month: YearMonth): SickDay[] {
 export function sickDeductionDays(
   spans: MonthSpan[],
   month: YearMonth,
+  restDay: RestDay,
 ): number {
-  return sickDaysIn(spans, month).reduce((days, day) => days + day.unpaidDays, 0);
+  return sickDaysIn(spans, month, restDay).reduce(
+    (days, day) => days + day.unpaidDays,
+    0,
+  );
 }

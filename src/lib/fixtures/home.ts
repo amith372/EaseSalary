@@ -1,3 +1,5 @@
+import { SATURDAY } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
 import { he } from "@/lib/i18n/he";
 import type {
   BalanceLine,
@@ -150,6 +152,11 @@ const alerts: HomeAlert[] = [
 export interface HomeFixture {
   worker: Worker;
   month: YearMonth;
+  /** Her weekly rest day, which the calendar needs to decide what a swept range
+   * means: a vacation span skips it and a free-rest-day mark may fall on
+   * nothing else (specs.md items 5, 8). Saturday here, which is the default and
+   * Hanna's own. */
+  restDay: RestDay;
   spans: DaySpan[];
   result: MonthResult;
   alerts: HomeAlert[];
@@ -160,6 +167,7 @@ export interface HomeFixture {
 export const homeFixtures: HomeFixture[] = fixtureWorkers.map((worker) => ({
   worker,
   month: fixtureMonth,
+  restDay: SATURDAY,
   spans,
   result,
   alerts,

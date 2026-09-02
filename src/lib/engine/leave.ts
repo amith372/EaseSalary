@@ -1,4 +1,5 @@
 import { eachDate, fromIsoDate, isRestDay, orderDates } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
 import type { MonthSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
 
@@ -87,9 +88,12 @@ export function holidayDaysWorked(spans: MonthSpan[]): number {
  * so the fact that makes the day special is the one that should carry it — and
  * `restDayUnitsOf` takes it back out of the rest days.
  */
-export function holidayRestDaysWorked(spans: MonthSpan[]): number {
+export function holidayRestDaysWorked(
+  spans: MonthSpan[],
+  restDay: RestDay,
+): number {
   return totalFraction(
-    holidayDaysIn(spans, true).filter((day) => isRestDay(day.date)),
+    holidayDaysIn(spans, true).filter((day) => isRestDay(day.date, restDay)),
   );
 }
 
@@ -106,8 +110,9 @@ export function holidayRestDaysWorked(spans: MonthSpan[]): number {
 export function restDayUnitsOf(
   spans: MonthSpan[],
   restDaysWorked: number,
+  restDay: RestDay,
 ): number {
-  return Math.max(0, restDaysWorked - holidayRestDaysWorked(spans));
+  return Math.max(0, restDaysWorked - holidayRestDaysWorked(spans, restDay));
 }
 
 /** Nine days for a full year (specs.md item 10). */

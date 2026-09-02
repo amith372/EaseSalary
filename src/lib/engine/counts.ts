@@ -107,14 +107,21 @@ function notWorked(spans: MonthSpan[], date: IsoDate): boolean {
  * is not counted, and one day worked in that week is enough for the supplement
  * to be paid (specs.md item 8).
  *
- * **The six days are still measured backwards from a Friday**, because that is
- * where `isRestEve` puts every worker's rest-eve until step 7c. Item 8 now
- * anchors the week to the worker's own rest day — a Friday-resting worker's
- * week runs Saturday through Thursday — and the arithmetic below happens to
- * agree with that only for the Saturday-resting case. It is left alone here on
- * purpose: this step renames and does not re-anchor, and the August 2025
- * snapshot cannot tell the two apart, which is why `build_plan.md` gives 7c its
- * own test-first cases rather than trusting the snapshot to catch it.
+ * **Anchored to her rest-eve, which is what makes it her week.** Item 8 anchors
+ * the week to the worker's own rest day and the rest-eve is the day before it,
+ * so the six days ending at the rest-eve are exactly the six ending at the rest
+ * day with the rest day itself left out: Sunday through Friday for a
+ * Saturday-resting worker, Saturday through Thursday for a Friday-resting one,
+ * Monday through Saturday for a Sunday-resting one. The six are always
+ * adjacent, which is the whole reason item 8 anchors rather than fixing the
+ * week to Sunday — a fixed Sunday anchor would give a Friday-resting worker a
+ * week with a hole in the middle of it.
+ *
+ * The arithmetic below is therefore unchanged from when the rest day was a
+ * constant, and that is worth saying rather than leaving to be rediscovered:
+ * it was already written against the rest-eve, so generalising `isRestEve` was
+ * the whole of the change. What was wrong was the comment, which called the
+ * week Sunday-anchored — true only of the one worker it was written for.
  *
  * The week's first day may fall in the previous month. A spell of sickness is
  * stored as the dates it ran between rather than as marks belonging to a month
@@ -131,9 +138,10 @@ export function countMonth(facts: MonthFacts): MonthCounts {
   const days = everyDayOf(facts.month);
   const { spans } = facts;
 
-  const restDays = days.filter(isRestDay);
-  const restEves = days.filter(isRestEve);
-  const standardDaysList = days.filter((date) => !isRestDay(date));
+  const { restDay } = facts.terms;
+  const restDays = days.filter((date) => isRestDay(date, restDay));
+  const restEves = days.filter((date) => isRestEve(date, restDay));
+  const standardDaysList = days.filter((date) => !isRestDay(date, restDay));
 
   return {
     standardDays: standardDaysList.length,
