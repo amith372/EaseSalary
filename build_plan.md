@@ -306,6 +306,20 @@ ExcelJS in a server route. One month template and one balances template.
   however many advances the month has, "rather than from a fixed set of variants", so
   `template_month_advance_given.xlsx` is kept as a reference sample of the shape and not
   as a second template to branch on.
+- **Insert rows for the lines the user added, and grow the sums over them.** The closing
+  block is no longer the only region that varies: item 20's lines are rows the template
+  does not hold in advance, in column E, column G or the block below. Part 3 requires the
+  sheet's own totals to stay live formulas whose ranges expand to cover what was inserted
+  — the family's workbook is a live spreadsheet today and a dead one would be a step back
+  — so this is `insertRow`/`duplicateRow` against a row the template already designed,
+  plus a rewrite of the `SUM` ranges beneath it.
+  **The trap is that a range one row short prints a total wrong by exactly one line and
+  looks entirely ordinary**, which no eye catches on a sheet of plausible numbers. The
+  agreement test below is what catches it, extended one layer: assert the engine's figure
+  equals what the spreadsheet's own formula evaluates to, on a month with added lines and
+  a month without. Evaluating the formula means either reading it back through a
+  calculating reader or asserting the range covers exactly the rows written — decide which
+  when the shape of the template is in front of you, and say which was chosen and why.
 - Placeholder tokens for identity and month fields.
 - The two versions of the month export, differing only in whether the helper column of
   notes is shown (item 2). One file and one flag, not two files: a test asserts the two

@@ -391,21 +391,12 @@ Each of these is true or false at a glance.
     figure actually transferred already lives, and it already grows with however many rows
     the month has.
 
-    **This is what a family uses instead of bending another line into a shape it is not.**
-    Pocket money is recorded here, with its own name and its own note, rather than as a
-    setting on the rest-eve supplement — which is a different agreement about a different
-    day (item 14).
-
-    **Which direction pocket money takes is not obvious, and the default is the one that
-    surprises people.** Kol Zchut's caregiver-terms page says that where pocket money is
-    paid it "מהווים חלק מהשכר החודשי של העובד, מעין מקדמה שהמעסיק משלם לעובד על חשבון
-    השכר החודשי" — part of the monthly salary, an advance against it, and not something
-    on top of it. Cash handed over weekly is therefore money the month has **already
-    paid**, so it is a standing *deduction*: the gross already contains it and the
-    transfer at month end is what shrinks. Recording it as an addition pays it twice, once
-    inside the salary and once beside it. A family that genuinely agreed a payment *on top
-    of* the salary records that as a standing addition — the mechanism serves both, and it
-    is the family's agreement rather than the word "pocket money" that decides which.
+    **This is what a family uses instead of bending another line into a shape it is not**,
+    and the direction follows from the agreement rather than from what the money is
+    called. Money handed over during the month that the salary already contains is a
+    deduction — the gross holds it and the transfer at month end is what shrinks — while a
+    payment the family agreed *on top of* the salary is an addition. Reading the first as
+    the second pays it twice, once inside the salary and once beside it.
 
     Every one of these carries a free-text note, because the reason is the part the
     application cannot derive and the part a later reader needs.
@@ -561,8 +552,31 @@ for word. There is **one** template and not one per rest day: three templates wo
 three copies of a layout that must not diverge, and the rule below that a layout change is
 a template change would then mean making it three times. The closing block is built from however many advance lines the month has — one for
 each advance granted and each instalment repaid, numbered as in the workbook — rather
-than from a fixed set of variants. A layout change is a template change and not a code
-change. The employer
+than from a fixed set of variants.
+
+**The sheet grows with the month, and its own sums grow with it.** The closing block is
+not the only region that varies: a month may carry any number of lines the user added
+(item 20), and each one is a row the template does not hold in advance. The export
+therefore inserts the rows it needs, in the column or the block the line belongs to, and
+**the totals stay live formulas whose ranges expand to cover what was inserted**. A sheet
+whose figures are right only because the engine wrote them is a sheet that becomes wrong
+the moment somebody edits a cell — and the family's own workbook is a live spreadsheet
+today, so handing them a dead one would be a step back from what they already have. Both
+column subtotals, the month's total and the figure actually paid are formulas over ranges,
+not written numbers.
+
+That makes the engine and the sheet two ways of reaching the same figure, so **the test is
+that they agree**: the amount the engine computed and the amount the spreadsheet's own
+formula produces must be equal, for a month with lines added and for one without. It is
+the same argument that already binds the preview to the export, applied one layer further
+down, and it is the only check that catches a range that failed to grow — a `SUM` one row
+short prints a total that is wrong by exactly one line and looks entirely ordinary.
+
+A layout change is a template change and not a code change, and inserting a row is not a
+layout change: the template still owns what a row **looks like**, and the code decides
+only **how many** there are. A row the code inserts is a copy of a row the template
+already designed. If a row has to look like nothing already in the workbook, that is a
+template change and belongs in the .xlsx. The employer
 of record is the person being cared for; whoever actually transfers the money is not a
 field of its own and can be written in the note attached to the relevant action. The
 template and the per-country

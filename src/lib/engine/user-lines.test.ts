@@ -64,13 +64,7 @@ function facts(w: WorkerTerms, userLines: UserLine[] = []): MonthFacts {
   };
 }
 
-/**
- * A payment the family agreed **on top of** the salary. Written this way on
- * purpose rather than called pocket money: Kol Zchut says money handed over as
- * pocket money is part of the monthly salary and an advance against it, so
- * recording *that* as an addition would pay it twice (specs.md item 20). What
- * this case exercises is the addition, not the name.
- */
+/** A payment the family agreed **on top of** the salary (specs.md item 20). */
 const agreedExtra: UserLine = {
   id: "pocket",
   label: "תוספת שסוכמה מעבר לשכר",
@@ -79,14 +73,11 @@ const agreedExtra: UserLine = {
   note: "סוכם עם המשפחה",
 };
 
-/**
- * Pocket money as the law characterises it: cash handed over during the month,
- * which the salary already contains, so what shrinks is the transfer at month
- * end and never the gross (specs.md item 20).
- */
+/** Money handed over during the month that the salary already contains, so what
+ * shrinks is the transfer at month end and never the gross (specs.md item 20). */
 const standingDeduction: UserLine = {
   id: "phone",
-  label: "דמי כיס ששולמו במזומן",
+  label: "מקדמה ששולמה במזומן",
   direction: "deduction",
   agorot: 20000,
 };
@@ -127,8 +118,7 @@ describe("a standing addition — a payment agreed on top (specs.md item 20)", (
 
   it("sits in column E, because she earns it every month", () => {
     // 674,765 + 50,000. What a family uses instead of bending the rest-eve
-    // supplement into a second agreement about a different day. Pocket money
-    // proper is the deduction case below, for the reason item 20 gives.
+    // supplement into a second agreement about a different day.
     expect(column(result, "E")).toBe(724765);
     expect(result.gross).toBe(937940);
     expect(result.net).toBe(937940);
@@ -188,7 +178,7 @@ describe("a deduction is withheld, never un-earned (specs.md item 20)", () => {
     );
     expect(standingDeduction.agorot).toBeGreaterThan(0);
     expect(row?.amount).toBe(-20000);
-    expect(row?.label).toBe("דמי כיס ששולמו במזומן");
+    expect(row?.label).toBe("מקדמה ששולמה במזומן");
   });
 });
 
