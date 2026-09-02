@@ -56,6 +56,24 @@ Duplicated here on purpose, so they still hold in a session that never opens `sp
 | the look of a screen — layout, palette, type, spacing, components | the design canvas, thirteen artboards, the home screen in `EaseSalary - דף הבית v3 לוח במרכז.dc.html`: https://claude.ai/design/p/b11cf323-ac11-490d-994d-3145e8e07a6b — then Part 1 |
 | what to build next, in what order, with what | `build_plan.md` |
 
+## Agent skills
+Installed skills written for other repos assume files this repo does not have. The mapping below
+is the whole of it; nothing here creates a new file.
+
+### Domain docs
+There is no `CONTEXT.md`, no `CONTEXT-MAP.md` and no `docs/adr/`, and none is to be created —
+`specs.md` is this repo's glossary and domain model, and a second one would be a second truth.
+Where a skill says *read `CONTEXT.md` before exploring*, read `specs.md` — Part 1 for the concepts
+and the scope, Part 5 for the terms whose meaning is counter-intuitive. Where a skill says *update
+`CONTEXT.md`* or *record an ADR*, working rule 3 already says where the decision goes: `specs.md`
+for what the app does, `CLAUDE.md` for how it is built, `docs/plan-*.md` for a decision that binds
+one stage only. A skill that contradicts a standing decision surfaces the contradiction rather than
+overriding it, exactly as it would for an ADR.
+
+### Issue tracker
+None. `build_plan.md` is the work list and the stage order; a skill that would open, read or label
+an issue reads `build_plan.md` and asks before writing to it.
+
 ## Code conventions
 - Code, comments, commit messages, and identifiers in English; every user-facing string Hebrew, in one translations file.
 - Money is held as integer agorot and converted only for display and export. Never floating-point shekels. Carry full precision through a calculation and round only at the end, never between steps.
