@@ -17,6 +17,7 @@ import {
   WEEK_LENGTH,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import { monthLabel, rangeLabel } from "@/lib/dateLabels";
 import { clipEndOf } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { endOf } from "@/lib/spans";
@@ -102,22 +103,6 @@ function legendFor(restDay: RestDay): { label: string; swatch: string }[] {
     { label: marks.holiday, swatch: "bg-holiday" },
     { label: marks.freeRestDay, swatch: "bg-rest" },
   ];
-}
-
-function monthLabel(ym: YearMonth): string {
-  return `${he.calendar.monthNames[ym.month - 1]} ${ym.year}`;
-}
-
-/** "20 באוגוסט" for a day, "16–20 באוגוסט" for a range. */
-function rangeLabel(from: IsoDate, to: IsoDate): string {
-  const first = fromIsoDate(from);
-  const last = fromIsoDate(to);
-  const days =
-    from === to
-      ? String(first.getUTCDate())
-      : `${first.getUTCDate()}${he.calendar.selection.separator}${last.getUTCDate()}`;
-  const month = he.calendar.monthNames[last.getUTCMonth()];
-  return `${days} ${he.calendar.selection.inMonth}${month}`;
 }
 
 export function MonthCalendar({

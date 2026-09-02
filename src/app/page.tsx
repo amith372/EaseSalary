@@ -10,8 +10,9 @@ import { MoneyValue } from "@/components/MoneyValue";
 import { ValueChip } from "@/components/ValueChip";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { WhyButton, WhyPanel } from "@/components/WhyDisclosure";
-import { compareIsoDate, daysInMonth, fromIsoDate, isoOf, orderDates } from "@/lib/dates";
+import { compareIsoDate, daysInMonth, isoOf, orderDates } from "@/lib/dates";
 import { fixtureMonth, fixtureToday, homeFixtures } from "@/lib/fixtures/home";
+import { dayLabel } from "@/lib/dateLabels";
 import { he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
 import { applyMark, spanOverflow, type SkippedDay, type SkipReason, endOf } from "@/lib/spans";
@@ -41,11 +42,6 @@ import type { SpanIntent } from "@/components/MonthCalendar";
 
 function monthLabel(ym: YearMonth): string {
   return `${he.calendar.monthNames[ym.month - 1]} ${ym.year}`;
-}
-
-function dayLabel(iso: IsoDate): string {
-  const date = fromIsoDate(iso);
-  return `${date.getUTCDate()} ${he.calendar.monthNames[date.getUTCMonth()]}`;
 }
 
 function overlapsMonth(span: DaySpan, monthStart: IsoDate, monthEnd: IsoDate): boolean {
