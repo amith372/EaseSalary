@@ -332,9 +332,33 @@ returns nothing.
 **The user's own check is owed again, and this is the fifth step running.** Nothing in the
 application yet sets a rest day, opens a sick spell, adds a user line or moves between two
 months, so the only check available here is the suite — the agent verifying its own work,
-which is the half already known. The debt now covers steps 7a through 8 in full. Stage 4's
+which is the half already known. The debt now covers steps 7a through 9 in full. Stage 4's
 month screen is the first thing that pays any of it and stage 5 the rest; **neither should
 close without someone having clicked the cases these steps were written for.**
+
+#### Step 9 — a spell ends on the first *working* day
+
+Unplanned, and found by the user asking how a spell is opened at all. The answer exposed a
+worse gap than the missing gesture: **the natural way to record an illness is to mark the
+days she was absent from work**, and the engine broke a spell on any unmarked day, so
+marking Friday and Sunday and leaving the Saturday alone restarted the tiers and paid the
+Sunday nothing. The month came out plausible and wrong, which is the class of failure
+`specs.md` Part 5 exists for.
+
+The rule now follows the source rather than the calendar: for a worker on a monthly salary
+the period of illness is counted in calendar days, so a day she owed no attendance sits
+inside it — the weekly rest day, said in so many words by Kol Zchut's *חישוב דמי מחלה
+לעובד במשכורת חודשית* citing ד"מ 48713-10-17, and an unworked holiday, carried by the same
+holding's reasoning and marked in `specs.md` as the extension it is. **Those days are drawn
+from the sick balance too**, so the balance follows the spell and not the marks. A holiday
+inside a spell is a sick day and is not drawn from the yearly entitlement; the family moves
+the holiday, which is the one of the two that can be moved.
+
+A vacation day between two reported days is left breaking the spell and is recorded in the
+appendix as unsettled — the narrower answer, and the one that changes nothing already built.
+
+**Check:** `august-2025.snap.md` byte-identical, which it is by construction: the known
+month carries no sickness at all and both its holidays were worked.
 
 ## Stage 2 — The export
 

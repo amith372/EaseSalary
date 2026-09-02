@@ -6,6 +6,7 @@ import type {
   MonthContext,
   Employment,
 } from "@/lib/engine/types";
+import { sickDaysIn } from "@/lib/engine/sick";
 import { he } from "@/lib/i18n/he";
 import { balanceDaysOf } from "@/lib/spans";
 import type {
@@ -118,6 +119,17 @@ function clipToMonth(span: ClosedSpan, month: YearMonth): ClosedDaySpan | null {
  * this one: the spell is stored whole because its statutory tiers are counted
  * from its own first day (item 8), but the balance it draws belongs to the
  * month each day fell in.
+ *
+ * **The two kinds are counted from different things, and that is the rule
+ * rather than an implementation detail.** Vacation is counted from the spans
+ * the user marked, because a vacation day is a day she asked for. Sickness is
+ * counted from the **spell**, because for a worker on a monthly salary the
+ * period of illness runs over calendar days and the days inside it are deducted
+ * from the accrued quota whether or not anybody marked them (item 8). So a
+ * family that marks Friday and Sunday and leaves the Saturday between them alone
+ * draws three days and not two — the same three a single swept range would have
+ * drawn, which is the point: what she drew stops depending on how the days were
+ * entered.
  */
 export function daysUsedIn(
   spans: ClosedSpan[],
@@ -125,6 +137,9 @@ export function daysUsedIn(
   kind: "vacation" | "sick",
   restDay: RestDay,
 ): number {
+  // Every day of every spell that falls in this month, tiers and all — the one
+  // place that knows what a spell is, asked rather than restated.
+  if (kind === "sick") return sickDaysIn(spans, month, restDay).length;
   return spans
     .filter((span) => span.kind === kind)
     .map((span) => clipToMonth(span, month))

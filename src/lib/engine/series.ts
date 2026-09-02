@@ -130,7 +130,10 @@ export function calculateSeries(
     // rule: a part day draws its own proportion (item 10). `closeMonth` is pure
     // and idempotent, so making the resolution twice costs a map and cannot
     // disagree with the one `calculateMonth` made.
-    holidayDaysEarlierInYear += holidayDaysOf(closeMonth(facts, today).spans);
+    holidayDaysEarlierInYear += holidayDaysOf(
+      closeMonth(facts, today).spans,
+      facts.terms.restDay,
+    );
 
     return { facts, result };
   });

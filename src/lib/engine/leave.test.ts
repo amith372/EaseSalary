@@ -183,8 +183,8 @@ describe("part days are paid and drawn in their own proportion (items 7, 10)", (
   });
 
   it("draws half a day from the entitlement for half a holiday", () => {
-    expect(holidayDaysOf([holiday("2025-08-13", false, 0.5)])).toBe(0.5);
-    expect(holidayDaysOf([holiday("2025-08-13", false)])).toBe(1);
+    expect(holidayDaysOf([holiday("2025-08-13", false, 0.5)], SATURDAY)).toBe(0.5);
+    expect(holidayDaysOf([holiday("2025-08-13", false)], SATURDAY)).toBe(1);
   });
 
   it("counts a multi-day holiday span in days and not as one span", () => {
@@ -197,7 +197,7 @@ describe("part days are paid and drawn in their own proportion (items 7, 10)", (
       to: "2025-08-13",
       worked: true,
     };
-    expect(holidayDaysOf([threeDays])).toBe(3);
+    expect(holidayDaysOf([threeDays], SATURDAY)).toBe(3);
     expect(holidayDaysWorked([threeDays])).toBe(3);
   });
 

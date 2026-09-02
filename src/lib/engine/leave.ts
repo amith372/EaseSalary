@@ -1,5 +1,12 @@
-import { eachDate, fromIsoDate, isRestDay, orderDates } from "@/lib/dates";
+import {
+  compareIsoDate,
+  eachDate,
+  fromIsoDate,
+  isRestDay,
+  orderDates,
+} from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import { spellsOf } from "@/lib/engine/sick";
 import type { ClosedSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
 
@@ -62,9 +69,35 @@ function totalFraction(days: HolidayDay[]): number {
  * Holiday days the month records, worked or not — what the yearly entitlement
  * is drawn against (specs.md item 10). A part day draws its own proportion, so
  * this is not always a whole number and the remainder is displayed as it falls.
+ *
+ * **A holiday falling inside a spell of sickness is a sick day and is not drawn
+ * from here** (item 10). A day cannot be both taken as a holiday and spent ill,
+ * and drawing it from both quotas would charge her twice for one day. The
+ * entitlement is not lost by it: the year's holidays are chosen in advance and a
+ * date can be edited, so the holiday moves and the day is kept — which is why
+ * this resolves in favour of the sick balance and not the other way round. The
+ * holiday is the one of the two that can be moved.
+ *
+ * Only an unworked holiday can be inside a spell at all: a holiday she worked is
+ * a day of attendance and ends the spell (item 8). The filter is written over
+ * every holiday day rather than over the unworked ones, because the rule is
+ * "inside a spell" and stating it that way keeps it true if the other ever
+ * changes.
  */
-export function holidayDaysOf(spans: ClosedSpan[]): number {
-  return totalFraction(holidayDaysIn(spans, false));
+export function holidayDaysOf(
+  spans: ClosedSpan[],
+  restDay: RestDay,
+): number {
+  const spells = spellsOf(spans, restDay);
+  const insideASpell = (date: IsoDate) =>
+    spells.some(
+      (spell) =>
+        compareIsoDate(date, spell.from) >= 0 &&
+        compareIsoDate(date, spell.to) <= 0,
+    );
+  return totalFraction(
+    holidayDaysIn(spans, false).filter((day) => !insideASpell(day.date)),
+  );
 }
 
 /**

@@ -54,7 +54,14 @@ Each of these is true or false at a glance.
    that must not travel is a note that is not written.
 3. Every derived rate — the daily rate, which is the monthly salary over twenty-five, and
    the rest-day and holiday rate — is computed from the worker's base monthly salary
-   rather than stored as a constant, so changing that salary changes both. There is no
+   rather than stored as a constant, so changing that salary changes both. **The
+   twenty-five is not only the workbook's.** Kol Zchut's *חישוב דמי מחלה לעובד במשכורת
+   חודשית* records two readings of what a monthly salary is divided by to value one day —
+   thirty, or the working days of the week, "21.67" for a five-day week and "25" for a
+   six-day week — and this worker's week is six days, one weekly rest day. So the divisor
+   the family's own sheet uses is the second reading applied to her week, which is worth
+   writing down: it was chosen because the workbook uses it, and it turns out also to be
+   defensible from the source rather than only from precedent. There is no
    vacation-day rate, because there is no vacation payment at all; see item 7. Rates and totals are
    carried at full precision through the calculation and rounded to two decimals only at
    the end, never between steps.
@@ -179,10 +186,35 @@ Each of these is true or false at a glance.
    one was intended — and because the tiers count from each spell's own first day, that
    break changes what the sickness pays. So the skipped days and the reason for each are
    shown to the user rather than absorbed silently, and a spell entered as one range is
-   stored as one span wherever it legally can be. A spell ends on the first day no
-   sickness was reported, and days that touch are therefore one spell however many spans
-   they were entered as, since it is the unreported day and not the second entry that
-   breaks a spell in two. That is how the law measures a period of illness: an unbroken
+   stored as one span wherever it legally can be. **A spell ends on the first *working*
+   day no sickness was reported.** Days that touch are one spell however many spans they
+   were entered as, and so are days separated only by a day she owed no attendance: for a
+   worker paid a monthly salary the period of illness is counted in calendar days, so the
+   weekly rest day between two reported days sits inside the period rather than breaking
+   it. Kol Zchut's *חישוב דמי מחלה לעובד במשכורת חודשית* states it plainly — "עובד
+   במשכורת חודשית תקופת מחלתו הינה כל ימי מחלתו, לרבות ימי מנוחה שבועית" — citing
+   ד"מ 48713-10-17, where counting "ימי המחלה הקלנדריים" rather than only the days
+   actually worked was held to be no defect. **Those days are drawn from the sick balance
+   like every other day of the spell**, because the same source says they are deducted
+   from the accrued quota: the balance follows the spell and not the marks. This is not a
+   corner case but the ordinary one, because the natural way to record an illness is to
+   mark the days she was absent from work — a family that marks Friday and Sunday and
+   leaves Saturday alone means one illness, and reading it as two restarts the tiers and
+   pays the Sunday nothing. A day she *was* expected at work and no sickness was reported
+   for does break the spell, which is what keeps the rule from swallowing an interval of
+   any length.
+
+   **A day she owed no attendance is the weekly rest day and a holiday she did not
+   work.** The rest day is what the source says in so many words; the holiday is carried
+   by the same holding rather than by a second authority, because what was held is that
+   the count runs over calendar days and not over "ימי עבודה בפועל", and a holiday she did
+   not work is precisely a day not worked in fact. That the extension is an extension is
+   written here rather than left to be discovered: the page speaks of the weekly rest day
+   alone, and the weekly rest day is simply the day that happened to be before the court.
+   A holiday she **did** work breaks the spell like any other day of attendance, because
+   she was at work. A **vacation** day between two reported days is not settled and is
+   left breaking the spell — see the appendix. That is how the law measures a period of
+   illness: an unbroken
    run from its first day, the rest days inside it counted, regardless of how many
    medical certificates were written over it. Where two genuinely separate illnesses do
    run into each other the effect is to read them as one, so the fourth day is paid in
@@ -244,6 +276,16 @@ Each of these is true or false at a glance.
    the same proportion and drawn from the entitlement in the same proportion. A date can
    be edited, a day beyond the entitlement is refused, and an incomplete selection is
    visible at a glance.
+
+   **A holiday that falls inside a spell of sickness is a sick day and not a holiday.**
+   It is drawn from the sick balance with the rest of the spell and is **not** drawn from
+   the yearly entitlement, because a day cannot be both taken as a holiday and spent ill,
+   and drawing it twice would charge the worker for one day out of two separate quotas.
+   The entitlement is not lost by it: the year's holidays are chosen in advance and a date
+   can be edited (above), so a family whose holiday fell in the middle of an illness moves
+   it to another date and keeps the day. That is the reason this resolves in favour of the
+   sick balance rather than the other way round — the holiday is the one of the two that
+   can be moved.
 11. A worker belongs to a household, never to a person. An account is a person who signs
     in; a household is the group of people who look after the same workers, and it holds
     no more than two workers. Every member of a household sees the same workers, the same
@@ -850,3 +892,13 @@ Settling it needs a source that speaks to this employment specifically — the c
 terms page does not — or an accountant's reading. Whoever settles it should also say
 whether the same answer governs the vacation-day valuation the appendix already ties to
 the same divisor.
+
+**Does a vacation day between two reported sick days break the spell?** Item 8 counts a
+period of illness in calendar days and lets the weekly rest day and an unworked holiday
+sit inside it, on the strength of ד"מ 48713-10-17. A vacation day is a third kind of
+day and the source says nothing about it: it is a day she owed no attendance, which
+argues for bridging, but it is also a day she chose to take and one that is drawn from a
+different quota, which argues the other way. The law has a rule for falling ill *during*
+a vacation that is not the same question and has not been read here. It is left breaking
+the spell, which is the narrower answer and the one that changes nothing already built;
+settling it needs a source on this specific case.

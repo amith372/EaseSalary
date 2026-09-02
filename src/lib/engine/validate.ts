@@ -259,7 +259,8 @@ export function validateMonth(
     context.holidayAllowance ??
     holidayAllowanceFor(employment.employedSince, facts.month.year);
   const holidayDays =
-    holidayDaysOf(spans) + (context.holidayDaysEarlierInYear ?? 0);
+    holidayDaysOf(spans, facts.terms.restDay) +
+    (context.holidayDaysEarlierInYear ?? 0);
   if (holidayDays > allowance) {
     refusals.push({
       code: "holidayLimit",

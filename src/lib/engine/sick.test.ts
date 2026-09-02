@@ -306,15 +306,16 @@ describe("what counts as one spell (specs.md item 8)", () => {
       sick("2025-08-03", "2025-08-05"),
       sick("2025-08-06", "2025-08-07"),
     ];
-    expect(spellsOf(spans)).toEqual([{ from: "2025-08-03", to: "2025-08-07" }]);
+    expect(spellsOf(spans, SATURDAY)).toEqual([{ from: "2025-08-03", to: "2025-08-07" }]);
     // Tier days 1 to 5 -> 1 + 0.5 + 0.5 = 2 days, the three-day figure again.
     expect(sickDeductionDays(spans, AUGUST_2025, SATURDAY)).toBe(2);
     expect(deduct(AUGUST_2025, spans)?.amount).toBe(-49981);
   });
 
-  it("ends a spell on the first day no sickness was reported", () => {
-    // 3-5 August and 7-9 August, with the 6th not marked. The unreported 6th is
-    // what ends the first spell, so the tiers restart on the 7th. Two spells:
+  it("ends a spell on the first working day no sickness was reported", () => {
+    // 3-5 August and 7-9 August, with the 6th not marked. Wednesday the 6th is
+    // an ordinary working day she owed attendance on, so it is what ends the
+    // first spell and the tiers restart on the 7th. Two spells:
     //   Sun 3, Mon 4, Tue 5  -> 1 + 0.5 + 0.5           = 2
     //   Thu 7, Fri 8, Sat 9  -> 1 + 0.5 + 0 (Saturday)  = 1.5
     // 3.5 × 24,990.6 = 87,467.1 -> 87,467 agorot, against 49,981 had the six
@@ -325,7 +326,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
       sick("2025-08-03", "2025-08-05"),
       sick("2025-08-07", "2025-08-09"),
     ];
-    expect(spellsOf(spans)).toHaveLength(2);
+    expect(spellsOf(spans, SATURDAY)).toHaveLength(2);
     expect(sickDeductionDays(spans, AUGUST_2025, SATURDAY)).toBe(3.5);
     expect(deduct(AUGUST_2025, spans)?.amount).toBe(-87467);
   });
@@ -339,7 +340,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
       from: "2025-08-05",
       to: "2025-08-03",
     };
-    expect(spellsOf([reversed])).toEqual([
+    expect(spellsOf([reversed], SATURDAY)).toEqual([
       { from: "2025-08-03", to: "2025-08-05" },
     ]);
     expect(sickDeductionDays([reversed], AUGUST_2025, SATURDAY)).toBe(2);
