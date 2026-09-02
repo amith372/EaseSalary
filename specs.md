@@ -275,7 +275,13 @@ Each of these is true or false at a glance.
     than a statutory one so a later reader does not go looking for the law behind it. The
     profile also decides whether it counts as pocket money: when it does, a rest-eve the
     worker did not work is paid the supplement all the same; when it does not, the
-    supplement follows the day like every other figure. Either way it may carry a note,
+    supplement follows the day like every other figure. **Following the day is
+    all-or-nothing and is never prorated by the sick-pay tiers of item 8.** A rest-eve she
+    did not attend at all earns no supplement; one she attended for part of the day earns
+    it in full, because a day worked in part is a day she attended. The tiers price the
+    sickness and never the supplement, and reading a rest-eve at the second day's half rate
+    is the mistake this sentence exists to stop — the supplement is an agreed term of the
+    employment, not a statutory one, so nothing in the sick-pay law reaches it. Either way it may carry a note,
     which is where a family that treats it as pocket money says so.
 15. Recurring yearly items — the visa fee, the licence renewal, the agency fee, and the
     recuperation payment — are shown as due in the month they fall, without the user
