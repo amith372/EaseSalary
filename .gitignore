@@ -44,3 +44,6 @@ next-env.d.ts
 # data/templates/*.xlsx are load-bearing: the .xlsx export is generated from them.
 # (The parent directory's repo ignores *.xlsx; this repo must not inherit that.)
 !*.xlsx
+
+# agent skill scratch output — throwaway ticket files, never load-bearing
+/.scratch/

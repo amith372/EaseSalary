@@ -844,10 +844,9 @@ that week" as Sunday through Friday, and the balance as a floor that never goes 
 quarterly payment as two figures in two columns), Part 5's column paragraph and its stale-numbers
 paragraph, and the appendix (a settled balance day uses the same divisor). One is still owed:
 
-- **The `gross` / `net` distinction** from Step 3. Part 5 says "the month's total is the sum of those
-  three alone" and Part 4 names both ₪9,305.75 and ₪7,305.75 without giving either a name. The names
-  the engine settled on go into Part 5 beside the column list, so Stage 2's export and Stage 4's
-  preview use one vocabulary.
+- ~~The `gross` / `net` distinction from Step 3.~~ **Landed.** Part 5's column paragraph now names
+  both, with the reason: the export and the preview are two views of one calculation and must call
+  the same figure by the same word.
 
 ### You verify — Step 9 · commit only
 
@@ -861,6 +860,13 @@ git diff specs.md build_plan.md
   the failure this check exists for.
 - `build_plan.md`'s Stage 1 lists **outcomes**, and this file is the description of how.
 - No rate, no formula and no colour appears in `build_plan.md`. If one does, it is in the wrong file.
+
+> **This file is stale from Step 8 onward.** `build_plan.md` now carries Stage 1 as steps
+> **7a–7d** — the month's term snapshot, the rest-day rename and its three persisted values,
+> the rest-day generalisation, and the open sick spell — none of which existed when this file
+> was written, and all of which come before Step 8. Read `build_plan.md` for the stage's
+> shape and this file for how steps 0–7 were done. Where the two disagree, `build_plan.md`
+> wins, and this file is corrected rather than followed.
 
 **What comes after this stage is not stage 2.** `build_plan.md`'s design pass runs next —
 the four home-screen departures folded into `דף הבית v3`, the artboards still drawing the

@@ -11,7 +11,7 @@
 
 EaseSalary is a Hebrew web application in which a family employing a live-in foreign
 caregiver keeps a profile per worker (up to two workers per account), records the
-handful of things that change in a given month — Fridays worked, Saturdays worked,
+handful of things that change in a given month — rest-eves worked, rest days worked,
 holiday days used, sick days, vacation days taken, advances given and deducted, and
 one-off fees — and at the end of the month exports a single monthly salary sheet with
 the same structure as the family's existing Excel workbook, with vacation and sick-day
@@ -65,22 +65,22 @@ Each of these is true or false at a glance.
 4. Before every export the application shows the minimum wage it fetched from its
    source and requires the user to confirm it; if the fetch fails, the application says
    so plainly and lets the user enter the figure by hand.
-5. The month is presented as a calendar. Its Fridays and Saturdays are counted from the
+5. The month is presented as a calendar. Its rest days and rest-eves are counted from the
     calendar rather than typed, and the user marks a span of days for what departed from
-    an ordinary month — a free Saturday, a vacation day, sick days, a holiday worked —
+    an ordinary month — a free rest day, a vacation day, sick days, a holiday worked —
     of which a single day is the common case and is simply a span of one. A vacation span
-    skips the Saturdays inside it, because Saturday is already the weekly rest day and
-    stands outside the standard count, so drawing a vacation day for one would charge the
-    worker twice; a sick span keeps its Saturdays, for the reason given in criterion 8.
+    skips the rest days inside it, because the rest day already stands outside the
+    standard count, so drawing a vacation day for one would charge the worker twice; a
+    sick span keeps its rest days, for the reason given in criterion 8.
     The sheet reports two counts. The standard count is the month's days less its
-    Saturdays, and nothing the worker takes reduces it — neither vacation nor sickness. The actual
+    rest days, and nothing the worker takes reduces it — neither vacation nor sickness. The actual
     count is that same figure less the days she did not in fact work, and it exists to
     answer the Wage Protection Act's requirement to list the days the worker actually
     worked. What leaves it: a vacation day, a sick day, a holiday she did not work, and —
     once it is built — an absence with no entitlement. What does not leave it: a holiday
     she worked, which is a working day like any other. A day taken in part leaves the
     actual count in that same proportion, so half a vacation day leaves half a day.
-    Saturdays stand outside both counts from the start, so a free Saturday touches
+    Rest days stand outside both counts from the start, so a free rest day touches
     neither. A holiday behaves oppositely in money and in the counts, and that is the
     check to hold on to: one she worked changes the money and not the count, one she did
     not work changes the count and not the money, and a holiday that changes both, or
@@ -91,14 +91,25 @@ Each of these is true or false at a glance.
     with the rest of the partial-month cases in the appendix, and there is no mark for it.
     Both counts are nonetheless computed so that adding a single mark kind is enough to
     support it later: such a day would leave both counts and with them the base salary,
-    and if it fell on a Friday the Friday supplement, and if on a Saturday the Saturday
-    pay. A free Saturday is not an entitlement and a month without
+    and if it fell on a rest-eve the supplement, and if on a rest day the rest-day
+    pay. A free rest day is not an entitlement and a month without
     one is unremarkable.
     Beside the calendar sit three groups: additional payments (advances given and
     repaid, the income-tax line, manual overrides), payments to third parties (national
     insurance, medical insurance, fees), and yearly settings (the nine holidays, the
-    recuperation month). Every action can carry a free-text note. The weekly rest day is
-    Saturday for every worker, and no action asks the user for a rate or a formula.
+    recuperation month). Every action can carry a free-text note.
+    **The weekly rest day is a term of the employment, not a constant.** The law allows
+    only Friday, Saturday or Sunday, whichever the worker holds as her own — a Catholic
+    Filipina worker may ask for Sunday and a Muslim worker for Friday, and it is her right
+    — while for a Jewish worker it is always Saturday. The profile therefore holds one of
+    those three and refuses any other day; it defaults to Saturday, which is the common
+    choice rather than the legal one. Everything that counted Saturdays counts rest days
+    instead — the standard count, a rest day taken free, a rest day inside a spell of
+    sickness, a holiday falling on a rest day, and column F — and the exported sheet names
+    the worker's own day in its labels rather than saying Saturday to everyone. In the
+    Hebrew interface a Saturday-resting worker still reads "שבת חופשית"; the term is
+    derived from her rest day and is no longer fixed in the wording. No action asks the
+    user for a rate or a formula.
 6. A worker created in the middle of an employment starts from an opening position given
    once: the vacation and sick balances already accrued, and any advance still being
    repaid together with what has been repaid of it so far. From then on the application
@@ -130,6 +141,15 @@ Each of these is true or false at a glance.
    asks for at least seven days a year and without pressing the point further. The
    application never deletes accrued days on its own. The sick balance accrues at 1.5 days a month, stops at ninety
    days, and never resets at a year boundary.
+   Neither yearly entitlement is ever entered by the user. The vacation days the ladder
+   above gives and the eighteen sick days a year the 1.5 monthly accrual comes to are
+   **derived and not editable** — the canvas draws them as fields and they are not built
+   as fields. An editable entitlement would be a figure the user has to know, which is
+   what item 3 forbids, and because balances carry forward it would also raise the
+   question of which past months an edit reaches back into: a question with no answer the
+   user could be expected to hold. A family paying more than the statute obliges records
+   the difference where every other agreed extra is recorded, as an additional payment
+   with a note (item 20), where it does not silently rewrite an accrual.
 8. Sick days accrue at 1.5 a month to a ceiling of ninety, and the payment follows the
    statutory tiers from what was reported: nothing for the first day, half for the
    second and third, and the full day from the fourth onward. A sick day is worth the
@@ -139,7 +159,7 @@ Each of these is true or false at a glance.
    and third, nothing from the fourth onward — so the worker is left with exactly what
    the tiers give her. That deduction is written as a negative amount on the
    sickness-absence row of the salary column, inside the same subtotal as the base and the
-   Friday supplement, and never among the one-off payments: a deduction is not a payment.
+   rest-eve supplement, and never among the one-off payments: a deduction is not a payment.
    Sick days leave the actual count and not the standard one. The sick balance is a floor
    and never falls below zero: sick days cannot be recorded beyond what is left in it, and
    the application says so and refuses the entry rather than paying the extra days or
@@ -148,9 +168,9 @@ Each of these is true or false at a glance.
    refusal is what keeps this version from depending on a calculation it deliberately does
    not have. A spell of sickness is counted from
    its first day through to its last, across a month boundary, rather than restarting
-   each month. A Saturday inside a spell does four separate things and they must not be
+   each month. A rest day inside a spell does four separate things and they must not be
    collapsed into one: it is not paid; nothing is deducted from the money for it, because
-   the standard count leaves Saturdays out, so the salary never paid for that day, there
+   the standard count leaves rest days out, so the salary never paid for that day, there
    is nothing to take back, and a deduction would charge her for a day she was not paid;
    it is nonetheless drawn from the sick balance, which is a count of days and not a sum
    of money; and it advances the position in the spell, so the day after it stands one
@@ -167,14 +187,34 @@ Each of these is true or false at a glance.
    medical certificates were written over it. Where two genuinely separate illnesses do
    run into each other the effect is to read them as one, so the fourth day is paid in
    full rather than starting again at nothing — which leans in the worker's favour, and
-   is settled by the manual override of item 17 rather than by a mechanism built for it. Where the Friday supplement is pocket
-   money, a Friday on which sickness was reported is still paid it, unless the whole of
+   is settled by the manual override of item 17 rather than by a mechanism built for it. Where the rest-eve supplement is pocket
+   money, a rest-eve on which sickness was reported is still paid it, unless the whole of
    that week was lost to sickness, in which case it is not. "The whole of that week" means
-   every working day of it, Sunday through Friday; Saturday is the weekly rest day and is
-   not counted. One day worked in that week is enough for the supplement to be paid.
+   every working day of it — the six days that end at the weekly rest day, which for the
+   Saturday rest day of the common case is Sunday through Friday. The rest day itself is
+   not counted, and the week moves with it: a worker whose rest day is Sunday has a week
+   of Monday through Saturday, and one whose rest day is Friday has Saturday through
+   Thursday. The six days are always adjacent, which is why the week is anchored to the
+   rest day rather than fixed to Sunday — a fixed Sunday anchor would give a
+   Friday-resting worker a week with a hole in the middle of it. One day worked in that week is enough for the supplement to be paid.
+   **A spell may be left open, and that is how one is normally recorded.** On the day a
+   worker falls ill nobody knows the day she will return, so the application does not ask
+   for one: the spell runs from its first day and is closed when she comes back. This is
+   why a spell crossing the end of a month needs no gesture of its own — an open spell is
+   never *crossed*, it simply has not ended, and it stays one spell with one first day,
+   which is what the tiers are counted from. An open spell is counted in a month by
+   clipping it at **that month's own last day**, which is a fact about the month and not
+   about the present, so a finished month's figure is settled once the month has ended and
+   never moves because of when it is looked at; only the current month's live preview
+   clips at today. The hazard of an open spell is the opposite one — a worker who returned
+   and whose spell nobody closed — so the export asks before it runs (item 18), and the
+   opening screen carries an open spell as a warning rather than a blockage, by the test in
+   item 27: the figure computes, it may simply be stale. Closing a spell later than the
+   return corrects the months it touched and carries their balances forward, which is
+   criterion 13 and needs nothing built for it here.
 9. A holiday the worker does not work changes nothing: a monthly salary is paid in full
    and no vacation day is drawn. A holiday she works is paid at the rest-day rate, and a
-   holiday falling on a Saturday she works is paid once, not twice.
+   holiday falling on a rest day she works is paid once, not twice.
    The user never marks a day as a holiday on the month's calendar. The year's holidays
    are chosen in advance from the country's candidate list (item 10), so the dates arrive
    on the calendar already drawn, and the only thing the month records about one is
@@ -207,20 +247,36 @@ Each of these is true or false at a glance.
    the same proportion and drawn from the entitlement in the same proportion. A date can
    be edited, a day beyond the entitlement is refused, and an incomplete selection is
    visible at a glance.
-11. An account can see only its own workers and can create no more than two. A worker can
-   additionally be shared with a second account by an invitation the other person
-   accepts, and a worker received this way does not count against that person's limit of
-   two; both then see the same months and balances.
+11. A worker belongs to a household, never to a person. An account is a person who signs
+    in; a household is the group of people who look after the same workers, and it holds
+    no more than two workers. Every member of a household sees the same workers, the same
+    months and the same balances, and reaches nothing outside the households it belongs
+    to. A second person joins by an invitation they accept, which makes them a member
+    rather than handing them a copy of a worker — so there is no owner whose leaving
+    strands a worker, and no second limit to count a shared worker against. One person
+    may belong to more than one household, which is what lets someone keep their own
+    caregiver and help with a parent's without either household's limit of two counting
+    the other's workers.
 12. When a worker's year has no holiday list yet, the application fetches that country's
     list for that year on its own; if the page cannot be reached or publishes nothing,
     it says so and lets the user enter the dates by hand. Nothing about this is tied to
     2026.
 13. A month can be corrected after it was exported, and every later month's balances
     follow the correction rather than keeping the old figures.
-14. The weekly Friday supplement is set per worker and can be changed at any time. The
-    profile also decides whether it counts as pocket money: when it does, a Friday the
+14. The weekly **rest-eve supplement** is set per worker and can be changed at any time.
+    It falls on the working day immediately before the weekly rest day — Friday for the
+    Saturday rest day of the common case, and Saturday or Thursday for the other two — and
+    it is called the rest-eve supplement rather than the Friday supplement because Friday
+    is only where it lands for most workers and not what it is. **Nothing in law requires
+    it.** Kol Zchut's caregiver-terms page describes no supplement for the day or the
+    evening before the weekly rest, and says of the nearest thing to it that pocket money
+    is owed only where the employment contract agreed it. The supplement is therefore paid
+    because the family agreed to pay it, and that is recorded here as an agreed term rather
+    than a statutory one so a later reader does not go looking for the law behind it. The
+    profile also decides whether it counts as pocket money: when it does, a rest-eve the
     worker did not work is paid the supplement all the same; when it does not, the
-    supplement follows the day like every other figure.
+    supplement follows the day like every other figure. Either way it may carry a note,
+    which is where a family that treats it as pocket money says so.
 15. Recurring yearly items — the visa fee, the licence renewal, the agency fee, and the
     recuperation payment — are shown as due in the month they fall, without the user
     tracking the dates. The recuperation entitlement is worked out from the worker's
@@ -265,8 +321,11 @@ Each of these is true or false at a glance.
     it (items 25, 26). It is said there and enters no calculation.
 18. Exporting begins with a short set of confirmation questions covering everything that
     changes the month — whether an advance was given, whether an instalment is being
-    repaid, whether a Saturday was free, which holidays were worked, whether there were
-    sick days — so nothing is left out by silence.
+    repaid, whether a rest day was free, which holidays were worked, whether there were
+    sick days — so nothing is left out by silence. Where the month holds a spell of
+    sickness still open (item 8), the question is the specific one: has she returned, and
+    on what day. A month is not exported over an unanswered open spell, because the one
+    thing an open spell can get wrong is counting days for a worker who was already back.
 19. The national-insurance contribution is 3.6% of the month's full cost, taken before
     anything to do with advances. Kol Zchut settles what that cost is, so it is no
     longer inferred from the workbook: the base is the gross wage including sick pay,
@@ -304,9 +363,11 @@ Each of these is true or false at a glance.
     repaid is entered for the month rather than fixed by a schedule.
 21. A future month can be filled in ahead of time through the calendar, but it can only
     be exported once it has ended.
-22. Reading the passport and bank account columns straight out of the database shows
-    unreadable values; the real numbers appear only on the worker's own screen and in
-    the export.
+22. Reading the identifying columns straight out of the database shows unreadable values;
+    the real numbers appear only on the worker's own screen and in the export. The
+    columns are the passport number, the bank account number, and the numbers of the
+    three documents of criterion 28 — five in all. The expiry dates beside those document
+    numbers are deliberately **not** among them, for the reason criterion 28 gives.
 23. The balances can be exported on their own as a yearly table — a row per month with
     the accrual, what was used, and the closing balance, kept separate for vacation and
     for sick days — so whoever turns the sheet into a payslip can check the figures. It
@@ -326,15 +387,15 @@ Each of these is true or false at a glance.
     to a screen that assembles one beside it, for item 24's reason — a thing is
     explained where it happens — and every refusal the engine can produce resolves to
     one of the pages of item 26: a holiday refused points at the holiday rule, a free
-    Saturday refused at the weekly rest, sick days beyond the balance at the sick-pay
+    rest day refused at the weekly rest, sick days beyond the balance at the sick-pay
     rule. A refusal with no link is a refusal the user can only argue with.
 26. Every action that rests on a legal rule carries a link to the page that states it —
     the minimum wage, the rest-day and holiday premium, annual leave, sick pay,
     recuperation, national insurance — so a user who wants to check a figure can read
     the rule rather than take the application's word for it.
 27. The opening screen leads with the things that need the user to do something — a
-    quarterly national-insurance payment due, a licence or medical insurance about to
-    expire, an advance still being repaid, holidays not yet all chosen, recuperation due
+    quarterly national-insurance payment due, one of the three documents of item 28 or
+    the medical insurance about to expire, an advance still being repaid, holidays not yet all chosen, recuperation due
     this month, a year passing with no vacation taken, a finished month not yet
     exported, a minimum wage that changed since the last export, and a worker crossing
     into a new year of seniority. Beside that list it may also carry the current month's
@@ -342,13 +403,59 @@ Each of these is true or false at a glance.
     marked and read where the application opens rather than one screen further in. What
     needs doing comes first, and nothing else joins them: a running figure earns its
     place on this screen only by being one the user came to see.
+    Two lists, not one, and the split is by urgency rather than by kind. The **bell**
+    carries what is *about to* lapse and still has time in it — a document nearing its
+    expiry, a recuperation month approaching, a seniority year about to turn. The list on
+    the opening screen itself carries what has **already** lapsed or what the application
+    needs from the user before it can calculate a full salary at all — an expired
+    document, holidays not yet chosen, a minimum wage awaiting confirmation, a month whose
+    facts are incomplete. The test that decides which list an item belongs to is whether
+    the salary can be produced correctly today without it: if it can, the item is a
+    warning and belongs in the bell; if it cannot, it is a blockage and belongs on the
+    screen. Neither list is a notification that leaves the application: nothing is sent by
+    mail or by push in this version.
+28. A worker's employment rests on **three separate documents with three separate
+    expiry dates**, and the application holds each with its own number and its own date.
+    They are not one thing under different names, and the law makes both of the first two
+    conditions at once: employing a foreign worker without an **employment permit**
+    (היתר העסקה), which belongs to the *employer* — the person being cared for — and is
+    renewed by the employer's own online application to the Population and Immigration
+    Authority, is forbidden; and so is employing one without a **work visa** (אשרת עבודה,
+    B/1), which belongs to the *worker* and is issued and renewed through the private
+    agency against a fee. The third is the **passport**, which the employer is obliged to
+    check stays valid, and for which the threshold is not expiry but **eighteen months
+    remaining** — so the application warns when fewer than eighteen months are left on it,
+    not when it lapses. Each of the two renewal fees is recorded as an ordinary payment to
+    a third party (item 16), and they are two fees and not one: the family's workbook has
+    carried them as separate lines all along — `template_month` cell **B14** is the visa
+    extension fee, belonging to the worker's visa, and cell **B16** is the licence fee,
+    belonging to the employer's permit. The sheet always knew the distinction; it simply
+    never wrote it down. Because the permit belongs to the employer and the visa to the
+    worker, a household with two workers holds one permit position and two visas. The
+    three **numbers** are encrypted at rest with the passport and bank account numbers
+    (item 22); the three **expiry dates are not**. A date identifies nobody, and the
+    warnings of item 27 have to find what is coming due — an encrypted date cannot be
+    queried or indexed, so the bell would have to decrypt every worker's three dates on
+    every load to discover it has nothing to say.
+
+29. The user can download a salary summary for one worker and one year — that year's
+    months with their totals — so a family keeps a copy of what the application holds
+    without depending on it staying available. It is downloaded a year at a time and never
+    every year at once, so the file stays one a person can read. It carries no passport
+    number and no bank account number: those are shown on the screen that needs them and
+    are not written into a file that leaves the application (item 22).
 
 ## Part 3 — Architectural guidance
 
 The application separates browser, server, and database. All salary logic runs on the
-server; the browser only collects facts and displays results. Account isolation is
-enforced in the database rather than only in the interface, so a user reaches their own
-workers and nothing else even when a request is crafted by hand.
+server; the browser only collects facts and displays results. Isolation is enforced in the
+database rather than only in the interface, so a user reaches their own workers and nothing
+else even when a request is crafted by hand. The unit of isolation is the **household** and
+not the account (criterion 11): a worker belongs to a household, a person may belong to
+more than one, and every rule in the database is written against the households a person
+belongs to rather than against the person. Writing it against the account instead is the
+mistake that makes a shared worker either invisible to the second member or visible to
+everyone.
 
 One calculation path serves both the on-screen preview and the export, so the numbers a
 user sees before exporting are the numbers in the file. Each month record stores two wage
@@ -362,11 +469,43 @@ today's rates; the rates themselves are re-derived from that stored salary rathe
 stored beside it, since a stored result is a second calculation path and would drift from
 the first the day the engine is corrected.
 
+**Balances are derived the same way and for the same reason: by replaying the worker's
+months from the opening position, never by storing a running total.** The database holds a
+worker's facts and no balance of any kind. This is what makes criterion 13 hold without a
+mechanism of its own — a month corrected years later moves every later month's balances
+because those balances were never anything but a replay, so there is no stored figure to
+find and invalidate. The cost is honest and small: replaying twenty years of a worker's
+months takes tens of milliseconds, less than the single round trip that fetches them, and a
+live-in employment rarely reaches half that. Should a cache ever be wanted it belongs in
+front of the replay and not instead of it, because a cache that can be deleted without
+consequence is safe and a stored balance that is the only copy is not.
+
+**The same reasoning governs every other term of the employment, so the month stores all
+of them and not the wage alone.** The weekly rest day, the rest-eve supplement, the
+recuperation month, and any entitlement the user edited are copied onto the month when it
+is confirmed, exactly as the salary is. Terms are read off the month and never off the
+profile, so re-exporting August two years later reproduces August: a family that moves the
+rest day from Saturday to Sunday in June does not thereby turn every earlier month's
+Saturdays into Sundays. This is what makes criterion 13 safe rather than dangerous — a
+corrected month is replayed against **its own** stored terms, so the correction moves the
+figures the correction touched and nothing else. Terms are not stored per month as an
+alternative to freezing the month: the month is never frozen, because criterion 13 requires
+it to stay correctable.
+
 The export is produced by filling a stored .xlsx template modelled on the 2026 workbook,
 which is the canonical reference for layout and wording; earlier years are historical
 only. No worker's name or details survive anywhere in a template, including inside a
 sentence: every such place is a placeholder the export fills, so a template can never
-carry one family's data into another's sheet. The closing block is built from however many advance lines the month has — one for
+carry one family's data into another's sheet. **The weekly rest day is one of those
+details, and the month template names it in nine of its own labels** — `E1` and the two
+day counts `B33` and `B34` all say "not including Saturdays"; `G1`, `B9`, `B24` and the
+total sentence in `A26` all say "Saturdays"; `F5` says "a holiday or a Saturday"; and `B7`
+names Fridays for the weekly supplement. Every one of those becomes a placeholder filled
+from the month's stored rest day, so a worker whose rest day is Friday receives a sheet
+that says Friday throughout and counts her Fridays, and Hanna's sheet is unchanged word
+for word. There is **one** template and not one per rest day: three templates would be
+three copies of a layout that must not diverge, and the rule below that a layout change is
+a template change would then mean making it three times. The closing block is built from however many advance lines the month has — one for
 each advance granted and each instalment repaid, numbered as in the workbook — rather
 than from a fixed set of variants. A layout change is a template change and not a code
 change. The employer
@@ -402,7 +541,13 @@ figure and the date it takes effect, so a month is always valued at the rate in 
 during it. The same source supplies the reference links shown beside the actions, kept
 in one list rather than scattered through the interface, so a page that moves is fixed
 in a single place. The cached figure is shown first and a fetch runs behind it, so a slow
-or broken source never delays a screen. Anything scraped is checked for plausibility
+or broken source never delays a screen. **The text of a fetched page is kept beside the
+figure taken from it rather than thrown away**, and it is kept **segmented by the page's own
+headings** rather than as one block. The help screen answers out of that text, and a corpus
+discarded here would have to be scraped a second time to get it back; segmenting it at the
+moment of the fetch is what lets a question, a reference link and a stored section resolve
+to the same unit, since the reference links already point at sections of a page rather than
+at whole pages. Anything scraped is checked for plausibility
 before it is offered to the
 user — a wage far outside the range of recent years, or a holiday list of implausible
 length, is treated as a failed fetch rather than a new fact. A failed fetch degrades to
@@ -510,10 +655,16 @@ four and twenty-seven; both still pay a whole salary, so the mistake stays invis
 until a month with an absence in it.
 
 The month sheet's columns are not interchangeable, and only three of them reach the
-worker. Column E carries the monthly salary items, F the pay for Saturdays and holidays,
+worker. Column E carries the monthly salary items, F the pay for rest days and holidays,
 and G the one-off payments such as recuperation and hospital overtime — not vacation,
 which is never paid as a line at all (item 7); the month's total is the sum of those three
-alone. Column H holds money paid
+alone. **That total is named the `gross`, and what is left after the closing block is the
+`net`** — the two figures Part 4 gives for August 2025 as ₪9,305.75 and ₪7,305.75 without
+naming either. They are written down here because the export and the on-screen preview are
+two views of one calculation and must call the same figure by the same word; two names for
+one number is how the sheet and the screen begin to disagree while both are right. The
+income-tax line sits in the closing block and not in column E, so it reduces the net and
+never the gross: the gross is what she earned, the net is what she is handed. Column H holds money paid
 to third parties — the medical insurance premium, the national-insurance contribution
 paid quarterly, the agency and placement fees, the visa and licence fees — and is
 deliberately excluded from that total. Reading H as salary would overpay the worker, and
@@ -524,7 +675,7 @@ The rest day of a live-in caregiver is twenty-five hours, not twenty-four, so th
 rest-day and holiday rate is one day plus one hour at 150%, which is the base monthly
 salary divided by 25 plus the same salary divided by 182, multiplied by 1.5. A plain
 150% of the daily rate is short by roughly fifty shekels a day and will quietly
-underpay every Saturday of the year.
+underpay every rest day of the year.
 
 The premium is owed for a holiday the worker works. A holiday she takes off is covered
 by her ordinary salary and earns nothing extra, so the interface must never let
@@ -554,6 +705,18 @@ rather than as date values. Preserve the sheet's direction, column order, and th
 each field is written, because the family compares the export against last month's page
 by eye.
 
+**A month has four states, and they are the vocabulary four other things share.** A month
+is *draft* while it only holds facts; *confirmed* when the user has confirmed the minimum
+wage against it, which is the moment the base monthly salary is copied off the profile
+onto the month (Part 3) and the moment its figures stop moving with the profile;
+*exported* once a file has been produced from it; and a confirmed or exported month whose
+facts are then edited is *corrected*, which sends it back through confirmed and moves
+every later month's balances with it (criterion 13). Exported is therefore not the end of
+the line, and any code that treats it as final breaks criterion 13. A month whose calendar
+month has not finished yet may sit in draft and refuse to leave it (criterion 21); that is
+a separate axis from the four states and not a fifth state — a future month is a draft that
+cannot be confirmed, not a state of its own.
+
 ## Appendix — future features
 
 Deliberately out of scope for the first version, recorded so they are not rediscovered
@@ -565,6 +728,11 @@ as bugs:
   an advance that has not finished being repaid. A settled balance day is valued at the
   same monthly salary over twenty-five that values a sick day, recorded here so the
   divisor is not decided a second time when it is built.
+- Accrued severance shown on the worker's screen. The canvas draws such a card and the
+  first version does not build it: severance accrual turns on continuity rules, partial
+  years and end-of-employment prorating, all of which are deferred with the item above,
+  and a figure about a real liability is read as authoritative whether or not it is right.
+  It arrives with end of employment or not at all.
 - History: keeping past exported files and a log of edits, so a corrected month can be
   compared against what was originally produced.
 

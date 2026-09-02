@@ -5,10 +5,68 @@ The order in which the application is built, and what each stage is made of.
 > **This file = *what to build next*.** It decides nothing about behavior — `specs.md`
 > does that. If a stage and the spec disagree, the spec wins and this file is corrected.
 
-The ordering principle: **reach a correct number as early as possible.** The August 2025
-case can be checked by hand at the end of stage 2, before a database, a screen, or a
-login exists. If the engine is right, the rest is assembly; if it is wrong, everything
-built on top of it inherits the error.
+The ordering principle has two clauses, and the second was added after the first had
+already shaped the stages: **reach a correct number as early as possible, and then make it
+touchable as early as possible.** The August 2025 case can be checked by hand at the end of
+stage 2, before a database, a screen, or a login exists — if the engine is right the rest is
+assembly, and if it is wrong everything built on top inherits the error. But an engine that
+is right and cannot be clicked is still unverifiable by the only person whose verification
+counts (working rule 7), so the stages are ordered to reach a **usable vertical slice**
+before they reach completeness in any one layer.
+
+## The vertical slice — the order the stages are actually built in
+
+The slice is not a new architecture and nothing is built twice for it. Step 8's repository
+interface exists precisely to permit it: with a month's facts moving through an interface
+that names no Supabase, stage 4's screen runs on an in-memory store and stage 3 lands
+*beside* it rather than in front of it.
+
+| # | Piece | Stage | Blocked by | Preferred after |
+|---|---|---|---|---|
+| 1 | The month's term snapshot | 1 · step 7a | — | — |
+| 2 | The rest-day rename and its three persisted values | 1 · step 7b | 1 | — |
+| 3 | The rest-day generalisation — Friday and Sunday workers | 1 · step 7c | 2 | — |
+| 4 | The open sick spell | 1 · step 7d | 3 | — |
+| 5 | The repository interface and its in-memory implementation | 1 · step 8 | 1, 3, 4 | — |
+| 6 | Two artboards reconciled with the shell — `חישוב החודש`, `דף המשכורת` | design pass, jobs 1–2 only | — | — |
+| 7 | The month screen: calendar, marks, live preview | 4 | 5, 6 | — |
+| 8 | The export, reachable by a user | 2 | 3 | 7 |
+| 9 | Everything else | 3, 5, 6, 7 | 8 | — |
+
+**"Blocked by" and "preferred after" are different things and the table keeps them apart
+on purpose.** A blocking edge is a fact — the work cannot start. A preference is this
+plan's chosen order and an agent may break it. Row 7 is the case: the export consumes the
+engine's output, which has existed since stage 1, so it is genuinely blocked only on step
+7c, which gives it the nine rest-day placeholders. It is *preferred* after the month screen
+because "touchable as early as possible" wants the screen first and because the agreement
+test needs a preview to compare against. Writing that preference as a blocking edge would
+say the template fill cannot begin until the whole screen is done, which is false, and a
+table whose edges are partly preferences cannot be used to decide what may be picked up.
+
+**What the slice does not need:** a login, Postgres, row-level security, or a live
+minimum-wage fetch. Stage 3 later swaps the repository implementation underneath a screen
+that already works, and stage 5 replaces manual wage entry with the fetch on a confirmation
+screen that already exists.
+
+**How it gets past item 4's export gate without stage 5.** It does not evade the gate; it
+takes the branch the spec already requires. Part 3: *a failed fetch degrades to the last
+confirmed figure plus manual entry, and never blocks an export.* The slice has no fetch
+yet, so it always takes that branch. This is a specified path built early rather than a
+stub, which is why stage 5 can add scraping to it without rewriting it.
+
+**What the slice is seeded with, and why it is not August 2025.** The dev store opens on
+months of **2026** — the year whose workbook is the canonical layout reference — and the
+user can move between them, which is also what exercises the balance chain that criterion
+13 and the term snapshot both rest on. August 2025 stays where it belongs: it is the
+**agent's** fixture, the only month whose four totals come from the family's own sheet and
+therefore the only one that can prove the engine (`CLAUDE.md`, on where a test's expected
+figure comes from). A seed month is for clicking; it proves nothing and must never be
+mistaken for a case.
+
+**The slice is production code, not a prototype.** Every part of it survives into the
+finished application; only the repository implementation is replaced, and that is the one
+thing already designed to be replaceable. A throwaway would answer a design question that
+is not open — the screens are on the canvas.
 
 ## The design
 
@@ -41,16 +99,24 @@ silent: the screen holds no meaningful text inside an image, and translating it 
 English throws no `NotFoundError` on `removeChild` and leaves the layout intact when
 translated back.
 
-### The design pass — once, after stage 1 and before stage 3
+### The design pass — split by kind, not run as one block
 
-Every screen stage from 3 onward builds against an artboard. Three of those artboards do
-not yet exist, and most of the rest disagree with the shell — so the pass that fixes both
-happens **once, in its own right**, rather than inside the first stage that trips over it.
-Designing and implementing in the same step is exactly what rule 7's check cannot catch:
-the agent would be verifying a screen against a drawing it had just made up itself.
+Every screen stage builds against an artboard. Three of those artboards do not yet exist,
+and most of the rest disagree with the shell. The pass that fixes both happens **in its own
+right** rather than inside the first stage that trips over it: designing and implementing in
+the same step is exactly what rule 7's check cannot catch, since the agent would be
+verifying a screen against a drawing it had just made up itself.
 
-It goes after stage 1 because nothing before stage 3 renders anything, and the engine
-stages neither need it nor are blocked by it.
+It was once planned to run once, after stage 1 and before stage 3. It no longer does,
+because jobs 1 and 2 are transcription while job 3 is design, and the vertical slice needs
+only the transcription:
+
+- **Jobs 1 and 2 run for `חישוב החודש` and `דף המשכורת` before stage 4.** Those are the two
+  artboards the slice builds against and both still draw the v2 green sidebar. The rest are
+  transcribed when their own stage arrives.
+- **Job 3 waits for the decisions it rests on.** The reconciliation table at the foot of
+  this file now records all eleven as settled, so job 3 is no longer blocked on the user —
+  but it is still design work and it is still not folded into a stage that consumes it.
 
 Three jobs, in order of how much design they actually involve:
 
@@ -67,16 +133,21 @@ Three jobs, in order of how much design they actually involve:
    first, since no artboard exists for it and stage 5 needs it, then the part-day, the
    manual-override state, the third-party payments group, the two day counts, the
    pre-export questions, a future month filled but not exportable, and a sick spell
-   crossing a month boundary.
+   crossing a month boundary. Three more join them from the settled canvas list: the
+   worker's three documents and their expiry dates (item 28), the bell and its split from
+   the opening screen's own list (item 27), and the per-year salary summary download
+   (item 29).
 
-Anything in job 3 that *ought to exist* is a `specs.md` decision before it is a drawing —
-the reconciliation list is recorded, not approved.
+Anything in job 3 that *ought to exist* was a `specs.md` decision before it became a
+drawing. Those decisions have now been taken and the table below records them, so job 3
+draws what the spec says and nothing it invents.
 
 The canvas is edited in its own editor. An agent can read the artboards but does not write
 them, so jobs 1 and 2 are handed over as a list of changes rather than made directly.
 
-**Done when** every screen stages 3 to 6 will build has an artboard that agrees with the
-shell, and nothing those stages need is still missing from the canvas.
+**Done when** every screen the stage about to run will build has an artboard that agrees
+with the shell, and nothing that stage needs is still missing from the canvas. For the
+slice that means exactly two artboards; for the later stages it means the rest.
 
 ## Stage 0 — Repo, scaffold, design system · **done**
 
@@ -114,14 +185,111 @@ Plain TypeScript, no framework, no I/O. Vitest.
   beside it rather than gating it.
 - The August 2025 test, matching four totals to the agora.
 
+### Steps 7a–7d — the weekly rest day, reopened, and the open spell
+
+Stage 1 met its "done when" and is reopened on purpose, because the rest day turned out to
+be a term of the employment rather than the constant the engine was built on (item 5).
+
+This was first written as one step. It is three, because it is three different kinds of
+change and only the first is checked by the compiler. **Expand–contract is deliberately
+not used**: it earns its place when batches cannot land green together, and here one
+`tsc --noEmit` pass finds every site in a single-package repo of roughly 6,700 lines. A
+parallel rest-day form beside the Saturday form would mean two sources of truth for the
+same fact coexisting across counting, refusals and span rules — more dangerous than the
+rename, not less. One landing per step.
+
+#### Step 7a — the month's term snapshot
+
+The prefactor, and it comes first because `specs.md` Part 3 now says terms are read off the
+month and **never off the profile**. `MonthFacts` gains the terms the month was confirmed
+with, joining the `ConfirmedWage` that already lives there, and `calculateMonth` stops
+taking a separate `WorkerTerms` argument off the profile. The profile still holds the
+worker's *current* terms; the month holds the ones it was calculated with.
+
+Doing it before the rename is what makes the rename easy: the rest day then arrives as one
+more field on a concept that already exists, rather than as a new concept introduced in the
+middle of a wide rename. Landing it after step 7c instead would reshape step 8's repository
+interface twice, and landing it after stage 3 makes it a migration — which is the same
+argument this plan already uses to justify reopening stage 1 at all.
+
+**Check:** `august-2025.snap.md` byte-identical.
+
+#### Step 7b — the rename, and three persisted values
+
+Mechanical and compiler-checked: `saturdays`, `saturdaysWorked`, `isSaturday`,
+`saturdaysOf` and their kin become rest-day equivalents across eight modules in
+`src/lib/engine/` — `balances`, `counts`, `leave`, `month`, `rates`, `sick`, `thirdParty`,
+`validate` — plus `dates.ts`, `spans.ts`, `types.ts`, `MonthCalendar.tsx`, `i18n/he.ts` and
+`fixtures/home.ts`.
+
+**Three of the names are stored values rather than identifiers, and they are the ones a
+compiler cannot help with:** `MarkKind` at `src/lib/types.ts:24` is a string-literal union
+whose `"freeSaturday"` member is persisted span data; `lineKeys.fridaySupplement` at
+`src/lib/engine/month.ts:60` is a *stable* key by design, since a screen shows one figure's
+reasoning by it; and the same key reaches the explanation text in `i18n/he.ts`. Renaming
+each needs a migration story, not just an edit.
+
+**Check:** `august-2025.snap.md` byte-identical.
+
+#### Step 7c — the generalisation, and the check the snapshot cannot give
+
+The semantic third: item 8's week re-anchors to the six days ending at the rest day, the
+rest-eve supplement moves off Friday (item 14), and `validate`'s "must fall on a Saturday"
+refusal becomes per-worker.
+
+**The snapshot check does not cover this step, and saying so is the point of splitting.**
+Hanna rests on Saturday, which is the default, so every non-Saturday path is unreachable
+from `august-2025.snap.md` by construction: it proves the rename left the common case
+alone and proves nothing whatever about the generalisation. Concretely,
+`counts.ts:115` computes the sick week as `addDays(friday, -5)` and its own comment says
+the week "is Sunday-anchored and runs Sunday through Friday" — the arrangement item 8 now
+says would give a Friday-resting worker a week with a hole in the middle. That rewrite is
+invisible to the snapshot.
+
+So this step carries **new cases for a Friday-resting and a Sunday-resting worker**, and
+their expected figures are **derived on paper from items 5, 8 and 14** before the code is
+written. No workbook covers them, which is exactly the condition under which `CLAUDE.md`
+forbids reading an expected figure back out of the engine.
+
+**Use the `mattpocock-skills:tdd` skill for this step, and for no other in this stage.**
+Test-first is not a preference here but the only thing standing between the suite and an
+engine that agrees with itself: 7a, 7b and 7d each have a byte-identical snapshot doing
+that job, and 7c is the one step whose new behaviour no existing figure covers.
+
+**Check:** `august-2025.snap.md` still byte-identical, *and* the two new workers' figures
+match the paper derivation.
+
 **Done when** the known case passes and the invalid case is refused, with no database and
 no interface in existence.
+
+#### Step 7d — the open sick spell
+
+A spell with no end yet (item 8). `DaySpan`'s `to` becomes nullable, which is a change to a
+**persisted shape** and so joins step 7b's three stored values as something the compiler
+alone will not carry. The counting clips an open spell at the month's own last day; the
+tiers are untouched, since an open spell is still one spell with one first day, which is
+the whole reason the shape was chosen.
+
+It is engine work and belongs here rather than in stage 4, though stage 4 is where the user
+first meets it: the alternative is a screen that can draw a state the engine cannot count.
+**Nothing in this step reads a clock** — a finished month clips at its own end, and the
+current month's preview receives `today` as a prop from its caller (`CLAUDE.md`).
+
+**Tests:** an open spell running past a month's end pays that month the same as the closed
+spell of the same days; the clip is stable whatever `today` is; and a spell closed after the
+fact moves the earlier month's figure, which is criterion 13 exercised at its smallest.
 
 ## Stage 2 — The export
 
 ExcelJS in a server route. One month template and one balances template.
 
-- Load a template and fill it from the engine's output.
+- Load a template and fill it from the engine's output. **The filler owns the map** from
+  the engine's stable line keys to the template's cells, and there is no sheet model in
+  between: a third representation would be a third thing to keep in step, and the property
+  that matters — the preview and the file saying the same thing — is already carried by
+  their sharing one engine result, which the agreement test below asserts directly. A
+  sheet model would earn its place only if a second output format existed, and the PDF the
+  canvas drew is not being built.
 - Generate the closing block from the month's advance lines. Part 3 builds it from
   however many advances the month has, "rather than from a fixed set of variants", so
   `template_month_advance_given.xlsx` is kept as a reference sample of the shape and not
@@ -152,9 +320,22 @@ Supabase: Postgres, Auth, row-level security.
 - Schema: account, worker, month, **day spans**, advances, third-party payments,
   overrides, confirmed wages, cached holiday lists. Spans rather than per-day rows, and a
   sick span may run past the end of the month it started in.
-- How item 13's cascade is served — a month corrected after export moves every later
-  month's balances — is decided here: balances derived on read, or stored with an
-  invalidation. Discovered in stage 6 it is a migration.
+- **Item 13's cascade is no longer an open question here.** It was written as a choice
+  between balances derived on read and balances stored with an invalidation; it is now
+  decided the first way, in stage 1 rather than in this schema. The engine replays a
+  worker's months from the opening position, so a corrected month moves every later
+  month's balances by construction and there is nothing to invalidate. Replaying twenty
+  years measured at 37ms, which is less than the round trip that fetches it. What this
+  stage stores is therefore **facts only, never balances**; if a cache is ever wanted it
+  goes in front of the replay, where deleting it is safe.
+- **The month's term snapshot is a schema requirement, not an engine detail.** Part 3 has
+  the month storing the terms it was confirmed with — rest day, rest-eve supplement,
+  recuperation month — beside the confirmed wage it already stored. Step 7a builds the
+  shape; this stage persists it. Discovered in stage 6 it is a migration.
+- Roughly five tickets' worth, and the largest stage in the plan: nine entities, the
+  household model of item 11 with its many-to-many membership and a two-worker limit that
+  must not count a shared worker, row-level security whose "done when" is an adversarial
+  property, and encryption across five fields.
 - The month's state carries item 21: a future month may be filled in but not exported
   until it has ended.
 - The worker's opening position: balances already accrued and an advance part repaid.
@@ -165,7 +346,12 @@ Supabase: Postgres, Auth, row-level security.
   context is assembled from the engine's output rather than from the worker row, so an
   identity number cannot reach it.
 
-**Done when** a second account cannot reach the first account's worker by any crafted
+**Run `/security-review` before this stage is committed**, and nowhere earlier — it is the
+only stage that introduces an authorisation boundary, encryption at rest, and data reachable
+by a request the user did not make. The stage's own "done when" is an adversarial property,
+and the agent that wrote the policies is the worst placed to attack them.
+
+**Done when** a second household cannot reach the first household's worker by any crafted
 request, and the identity columns are unreadable in the database.
 
 ## Stage 4 — The month screen
@@ -176,12 +362,16 @@ Next.js App Router, Tailwind right-to-left, Hebrew strings in one translations f
 - **Range entry.** A week's vacation is one gesture, not seven clicks, and the stored
   shape is a span either way. The entitlement rules for a swept range are already written
   and tested in `src/lib/spans.ts`; this stage puts the calendar's gesture on top of them.
-- **A sick span crossing a month boundary cannot yet be created by gesture.** Such a span
-  is stored whole, drawn clipped, and covered by tests, but `MonthCalendar` stops a sweep
-  at the month edge — so the only way to enter one today is as two spans, which the
-  statutory tiers then count from two first days and which therefore pays differently.
-  This stage closes the gap: either a sweep that reaches the edge carries on into the next
-  month, or the span takes an end date the user can set past it.
+- **A sick spell is entered open, which is what closes the month-boundary gap.** The two
+  shapes this stage once weighed — a sweep that carries past the month edge, or an end date
+  the user sets past it — are both rejected, and neither is built. Each asks the user to
+  express "she is still ill" as a range they do not have, and the first inverts under
+  right-to-left, where a leftward drag moves *forward* in time. Instead the spell has no end
+  until she returns (item 8): `to` is null, the calendar draws it as running, and the
+  boundary is never crossed by a gesture because there is no gesture that crosses it. The
+  span's counting is clipped at the month's last day, which keeps the clock out of every
+  finished month; only the live preview of the current month clips at the `today` prop.
+  Closing a spell late is a correction and rides on criterion 13, already built in stage 1.
 - The three groups beside it: additional payments, third-party payments, yearly settings.
 - A free-text note on every action; manual override of any computed amount, shown as
   manual.
@@ -202,7 +392,13 @@ the same four totals the engine produced in stage 1.
   that mistake looks like from the inside.
 - The fetched page text is cached beside the figure extracted from it rather than
   discarded. Stage 7 answers out of that text, and a corpus thrown away here has to be
-  scraped a second time.
+  scraped a second time. It is cached **segmented by heading**, not as one blob per URL.
+  Item 26's links already point at *sections* of the caregiver-terms page — `src/lib/links.ts`
+  says so outright, and several of its keys share that one page on purpose — so a question,
+  a legal link and a cached section all resolve to the same unit and Stage 7's matching has
+  something to match on. Segmenting in Stage 7 instead means inventing it against text
+  scraped two stages earlier, which is the scrape-it-twice outcome this bullet exists to
+  avoid.
 - The holiday picker: the candidate list, the entitlement, part days, the remainder.
 - The recuperation month and entitlement from seniority.
 - The confirmation questions that open an export, which are what make stage 2's export
@@ -212,6 +408,10 @@ the same four totals the engine produced in stage 1.
   moved, an empty or failing response, and a figure outside the plausible range. They are
   fixtures in the test suite rather than a live fetch, so the suite neither depends on a
   site being up nor waits for one.
+
+Roughly four tickets' worth: the wage scrape, the holiday scrape, the heading-segmented
+cache, the holiday picker — which has no artboard at all — recuperation, and the pre-export
+questions.
 
 **Done when** a year with no stored holiday list fills itself, each of the three spoiled
 pages produces a stated failure rather than a number, and a failed fetch leaves the user
@@ -264,19 +464,28 @@ names its source, and part two can be dropped entirely without part one changing
 
 ## Design ↔ spec reconciliation
 
-Where the canvas and `specs.md` disagree, found while building stage 0. All of it is
-recorded and **none of it is built**: anything below that ought to exist is a decision
-only the user can take, and it goes into `specs.md` before it becomes code.
+Where the canvas and `specs.md` disagreed, found while building stage 0. Every item is now
+**settled**: each was a decision only the user could take, each was taken, and each went
+into `specs.md` before becoming code. The table is kept rather than deleted so that a
+contradiction already resolved is not rediscovered and re-argued — and so that the six
+marked *drop* are known to be deliberate absences rather than things nobody got to.
 
-**In the canvas, not in the spec.** An accrued-severance card on `דף העובד` (Part 1 puts
-severance out of scope) · a PDF export on `דף המשכורת` (the spec exports `.xlsx` only) ·
-a payment date, a payment method and "mark as paid" for the salary itself · notification
-toggles in `הגדרות` · "להוריד את כל הנתונים" · editable "ימי חופשה בשנה" and
-"ימי מחלה בשנה" (items 7–8 derive both, and the user never enters a rate) · a
-configurable weekly rest day (item 5 fixes it at Saturday for every worker) · a
-"היתר העסקה" number · a separate `התראות` page and bell (item 27 puts the actions on the
-opening screen) · "לסיים העסקה" (the appendix puts ending an employment out of scope for
-v1).
+**In the canvas, not in the spec — all eleven now settled**, and each resolution is written
+where it belongs rather than here. The canvas is what changes for the six marked *drop*.
+
+| Drawn on the canvas | Verdict | Where it now stands |
+|---|---|---|
+| Accrued-severance card on `דף העובד` | drop | `specs.md` future-features appendix — it arrives with end of employment or not at all |
+| PDF export on `דף המשכורת` | drop | The spec exports `.xlsx` only |
+| Payment date, payment method, "mark as paid" | drop | Bookkeeping about the family's bank, unverifiable, and it drives nothing |
+| Notification toggles in `הגדרות` | drop | Item 27 — nothing leaves the application, so there is nothing to toggle |
+| Separate `התראות` page | drop | Item 27 — one screen, two lists |
+| The bell | **keep** | Item 27 — the bell is what is *about to* lapse; the screen's own list is what has lapsed or blocks a calculation |
+| "להוריד את כל הנתונים" | **keep, reshaped** | Item 29 — one worker, one year, no identity numbers; not every year at once |
+| Editable "ימי חופשה בשנה" / "ימי מחלה בשנה" | drop | Item 7 — derived and not editable: an editable entitlement is a figure the user must know, and under carried-forward balances it raises "which past months does the edit reach into", which has no answer a user could hold. An agreed extra is recorded as an additional payment (item 20) |
+| Configurable weekly rest day | **keep** | Item 5 — Friday, Saturday or Sunday as the law allows ("לפי המקובל על העובד"), defaulting to Saturday. The largest of the eleven: it reopens Stage 1, renames the Friday supplement, moves the sick week, and turns nine template labels into placeholders |
+| "היתר העסקה" number | **keep, and it was under-drawn** | Item 28 — three documents, three expiry dates, not one |
+| "לסיים העסקה" | drop | The appendix keeps ending an employment out of v1 |
 
 **In the spec, missing from the canvas.** The two day counts, standard and actual (items
 2 and 5, a Wage Protection Act requirement) · minimum-wage confirmation before every
