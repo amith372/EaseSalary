@@ -53,9 +53,16 @@ describe("the labels the rest of the screen uses", () => {
   });
 
   it("writes a single day for the overflow list", () => {
-    // Bare, without the preposition `rangeLabel` uses. That is the wording the
-    // list has always shown and it is left alone here on purpose; the
-    // difference is recorded in `dateLabels.ts`.
-    expect(dayLabel("2026-08-26")).toBe("26 אוגוסט");
+    // With the preposition, which is the correct Hebrew and the wording
+    // `rangeLabel` already used. The bare "26 אוגוסט" stood here until the user
+    // settled it.
+    expect(dayLabel("2026-08-26")).toBe("26 באוגוסט");
+  });
+
+  it("words one day exactly as a range of that one day", () => {
+    // The two functions are why this was worth changing: the overflow list and
+    // the selection summary sit on the same screen, and a day worded one way in
+    // one and another way in the other is a difference with no reason behind it.
+    expect(dayLabel("2026-08-26")).toBe(rangeLabel("2026-08-26", "2026-08-26"));
   });
 });

@@ -16,10 +16,11 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * rendered inside a `<Bidi>` isolate by its caller (`CLAUDE.md`). Nothing here
  * reads a clock.
  *
- * **`dayLabel` writes "26 אוגוסט" and `rangeLabel` writes "26 באוגוסט".** The
- * preposition is right and the bare form is not, but the bare form is what the
- * overflow list has always shown; it is recorded here rather than changed
- * quietly, because it is a visible string and changing it is the user's call.
+ * **One day and a range of days are worded the same way**, "26 באוגוסט" and
+ * "16–20 באוגוסט", from one string in the translations file. `dayLabel` wrote
+ * the bare "26 אוגוסט" until the user settled it: the preposition is correct
+ * Hebrew and the bare form was not, and a single day carrying different wording
+ * from a range of one day is the kind of difference nobody can explain later.
  */
 
 /** "אוגוסט 2026" — the calendar's own heading. */
@@ -27,10 +28,12 @@ export function monthLabel(ym: YearMonth): string {
   return `${he.calendar.monthNames[ym.month - 1]} ${ym.year}`;
 }
 
-/** "26 אוגוסט". */
+/** "26 באוגוסט" — the same wording `rangeLabel` gives a range of one day. */
 export function dayLabel(iso: IsoDate): string {
   const date = fromIsoDate(iso);
-  return `${date.getUTCDate()} ${he.calendar.monthNames[date.getUTCMonth()]}`;
+  return `${date.getUTCDate()} ${he.calendar.selection.inMonth}${
+    he.calendar.monthNames[date.getUTCMonth()]
+  }`;
 }
 
 /** "20 באוגוסט" for one day, "16–20 באוגוסט" inside a month. */
