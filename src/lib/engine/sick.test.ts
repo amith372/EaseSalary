@@ -6,6 +6,7 @@ import {
   sickDeductionDays,
   spellsOf,
 } from "@/lib/engine/sick";
+import { snapshotTerms } from "@/lib/engine/types";
 import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
 import type { MonthResult, YearMonth } from "@/lib/types";
 
@@ -76,9 +77,14 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   };
 }
 
-function facts(month: YearMonth, spans: MonthSpan[]): MonthFacts {
+function facts(
+  month: YearMonth,
+  spans: MonthSpan[],
+  worker: WorkerTerms = terms(),
+): MonthFacts {
   return {
     month,
+    terms: snapshotTerms(worker),
     confirmedWage: {
       baseAgorot: SALARY,
       minimumAgorot: SALARY,
@@ -290,7 +296,10 @@ describe("the Friday supplement and the week lost to sickness (items 8, 14)", ()
   const pocketMoney = terms({ fridayIsPocketMoney: true });
 
   function supplement(spans: MonthSpan[]) {
-    const result = calculateMonth(facts(AUGUST_2025, spans), pocketMoney);
+    const result = calculateMonth(
+      facts(AUGUST_2025, spans, pocketMoney),
+      pocketMoney,
+    );
     return result.lines.find((line) => line.key === lineKeys.fridaySupplement);
   }
 

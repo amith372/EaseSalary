@@ -5,6 +5,7 @@ import {
   nationalInsuranceEstimateOf,
   thirdPartyLineKey,
 } from "@/lib/engine/thirdParty";
+import { snapshotTerms } from "@/lib/engine/types";
 import type {
   MonthFacts,
   MonthSpan,
@@ -96,6 +97,7 @@ const terms: WorkerTerms = {
 
 function facts(payments: ThirdPartyPayment[] = []): MonthFacts {
   return {
+    terms: snapshotTerms(terms),
     month: { year: 2025, month: 8 },
     confirmedWage: {
       baseAgorot: SALARY,

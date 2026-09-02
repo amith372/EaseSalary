@@ -97,6 +97,63 @@ export interface WorkerTerms {
 }
 
 /**
+ * The terms of the employment as they stood when one month was confirmed,
+ * stored **on the month** and never read from the profile (specs.md Part 3).
+ *
+ * The profile keeps the worker's current terms; a month keeps the ones it was
+ * calculated with. This is the same argument `ConfirmedWage` already makes for
+ * the salary, applied to the rest of what can change: a family that moves the
+ * rest day or the supplement in June must not thereby restate every earlier
+ * month, and re-exporting August two years later must reproduce August.
+ *
+ * It is what changes over an employment, not everything about it. When the
+ * employment *began* and what it *opened with* are facts about the employment
+ * as a whole rather than terms of one month — they belong to `Employment`, and
+ * correcting one of them is meant to move every month, which is exactly what
+ * snapshotting them per month would prevent.
+ */
+export interface MonthTerms {
+  /**
+   * The supplement for one Friday, which is also one week's, since a week holds
+   * one Friday (specs.md item 14). Nothing in law requires it: it is paid
+   * because the family agreed to pay it, which is why it is a stored fact about
+   * this employment and not a rate derived from the salary.
+   */
+  fridaySupplementAgorot: number;
+  /** When the supplement counts as pocket money, a Friday the worker did not
+   * work is paid it all the same (specs.md item 14) - subject to the sickness
+   * rule in item 8. */
+  fridayIsPocketMoney: boolean;
+  /** 1-12. The month the recuperation payment falls in (specs.md item 15). */
+  recuperationMonth: number;
+}
+
+/**
+ * Copy the profile's current terms onto a month. Called at the moment a month
+ * is confirmed (specs.md Part 5, the month's four states) and never afterwards
+ * - a confirmed month's terms are then its own.
+ */
+export function snapshotTerms(worker: WorkerTerms): MonthTerms {
+  return {
+    fridaySupplementAgorot: worker.fridaySupplementAgorot,
+    fridayIsPocketMoney: worker.fridayIsPocketMoney,
+    recuperationMonth: worker.recuperationMonth,
+  };
+}
+
+/**
+ * The employment itself, as against the terms of one month.
+ *
+ * The engine takes this rather than the whole of `WorkerTerms` on purpose: it
+ * is a structural subset, so a caller still passes its profile object and
+ * nothing at the call sites changes, but inside the engine the changeable terms
+ * are simply not reachable from it. That is the guard that keeps Part 3's rule
+ * - terms are read off the month, never off the profile - true by construction
+ * rather than by everyone remembering it.
+ */
+export type Employment = Pick<WorkerTerms, "employedSince" | "openingPosition">;
+
+/**
  * The wage position confirmed for one month, stored with the month rather than
  * read from the profile at export time. Re-exporting a past month years later
  * reproduces that month rather than recalculating it at today's rates (specs.md
@@ -197,6 +254,9 @@ export interface LineOverride {
 export interface MonthFacts {
   month: YearMonth;
   confirmedWage: ConfirmedWage;
+  /** The employment's terms as they stood when this month was confirmed
+   * (specs.md Part 3). Read from here and never from the profile. */
+  terms: MonthTerms;
   spans: MonthSpan[];
   advances: Advance[];
   /** What was actually paid to a third party in this month. */

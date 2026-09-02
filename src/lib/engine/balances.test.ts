@@ -9,6 +9,7 @@ import {
   vacationYearWarning,
 } from "@/lib/engine/balances";
 import { calculateMonth } from "@/lib/engine/month";
+import { snapshotTerms } from "@/lib/engine/types";
 import type {
   MonthContext,
   MonthFacts,
@@ -53,6 +54,7 @@ function terms(
 function facts(month: YearMonth, spans: MonthSpan[] = []): MonthFacts {
   return {
     month,
+    terms: snapshotTerms(terms()),
     confirmedWage: {
       baseAgorot: 624765,
       minimumAgorot: 624765,

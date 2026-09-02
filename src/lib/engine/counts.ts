@@ -7,7 +7,7 @@ import {
   isSaturday,
   orderDates,
 } from "@/lib/dates";
-import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import type { MonthFacts, MonthSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -118,7 +118,7 @@ function weekLostToSickness(spans: MonthSpan[], friday: IsoDate): boolean {
   );
 }
 
-export function countMonth(facts: MonthFacts, terms: WorkerTerms): MonthCounts {
+export function countMonth(facts: MonthFacts): MonthCounts {
   const days = everyDayOf(facts.month);
   const { spans } = facts;
 
@@ -136,7 +136,7 @@ export function countMonth(facts: MonthFacts, terms: WorkerTerms): MonthCounts {
     fridays: fridays.length,
     fridaysWorked: fridays.filter((date) => !notWorked(spans, date)).length,
     fridaysPaidSupplement: fridays.filter((friday) =>
-      terms.fridayIsPocketMoney
+      facts.terms.fridayIsPocketMoney
         ? !weekLostToSickness(spans, friday)
         : !notWorked(spans, friday),
     ).length,

@@ -34,6 +34,15 @@ const spans: MonthSpan[] = [
 
 const facts: MonthFacts = {
   month: { year: 2025, month: 8 },
+  // The terms the month was confirmed with (specs.md Part 3), which for August
+  // 2025 are the profile's own: ₪100 a Friday, not pocket money, recuperation
+  // in July. Written out rather than snapshotted off `terms` below, because
+  // that const is declared after this one.
+  terms: {
+    fridaySupplementAgorot: FRIDAY_SUPPLEMENT,
+    fridayIsPocketMoney: false,
+    recuperationMonth: 7,
+  },
   confirmedWage: {
     baseAgorot: AUGUST_2025_SALARY,
     minimumAgorot: AUGUST_2025_SALARY,

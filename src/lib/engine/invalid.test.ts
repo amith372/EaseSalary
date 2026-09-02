@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { calculateMonth } from "@/lib/engine/month";
+import { snapshotTerms } from "@/lib/engine/types";
 import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 
@@ -26,6 +27,7 @@ const terms: WorkerTerms = {
 
 function facts(spans: MonthSpan[]): MonthFacts {
   return {
+    terms: snapshotTerms(terms),
     month: { year: 2025, month: 8 },
     confirmedWage: {
       baseAgorot: 624765,

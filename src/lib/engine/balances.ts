@@ -3,7 +3,7 @@ import type {
   MonthContext,
   MonthFacts,
   MonthSpan,
-  WorkerTerms,
+  Employment,
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { balanceDaysOf } from "@/lib/spans";
@@ -144,13 +144,13 @@ export interface OpeningBalances {
  * guards the sick floor can never disagree about where a month starts.
  */
 export function openingBalancesOf(
-  terms: WorkerTerms,
+  employment: Employment,
   opening?: OpeningBalances,
 ): OpeningBalances {
   return (
     opening ?? {
-      vacationDays: terms.openingPosition.vacationDays,
-      sickDays: terms.openingPosition.sickDays,
+      vacationDays: employment.openingPosition.vacationDays,
+      sickDays: employment.openingPosition.sickDays,
     }
   );
 }
@@ -181,21 +181,21 @@ export function monthlySickAccrual(openingSickDays: number): number {
  * this is the figure `validateMonth` refuses against.
  */
 export function sickDaysAvailable(
-  terms: WorkerTerms,
+  employment: Employment,
   opening?: OpeningBalances,
 ): number {
-  const start = openingBalancesOf(terms, opening);
+  const start = openingBalancesOf(employment, opening);
   return start.sickDays + monthlySickAccrual(start.sickDays);
 }
 
 export function buildBalances(
   facts: MonthFacts,
-  terms: WorkerTerms,
+  employment: Employment,
   opening?: OpeningBalances,
 ): BalanceLine[] {
-  const start = openingBalancesOf(terms, opening);
+  const start = openingBalancesOf(employment, opening);
 
-  const vacationAccrued = monthlyVacationAccrual(terms.employedSince, facts.month);
+  const vacationAccrued = monthlyVacationAccrual(employment.employedSince, facts.month);
   const vacationUsed = daysUsedIn(facts.spans, facts.month, "vacation");
 
   const sickUsed = daysUsedIn(facts.spans, facts.month, "sick");
@@ -210,7 +210,7 @@ export function buildBalances(
       closing: start.vacationDays + vacationAccrued - vacationUsed,
       explanation: {
         text: he.sheet.why.vacationBalance(
-          seniorityYearOfCalendarYear(terms.employedSince, facts.month.year),
+          seniorityYearOfCalendarYear(employment.employedSince, facts.month.year),
         ),
         link: "annualLeave",
       },

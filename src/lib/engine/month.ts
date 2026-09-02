@@ -14,7 +14,7 @@ import {
 import type {
   MonthContext,
   MonthFacts,
-  WorkerTerms,
+  Employment,
 } from "@/lib/engine/types";
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 import { he } from "@/lib/i18n/he";
@@ -64,11 +64,7 @@ export const lineKeys = {
   incomeTax: "incomeTax",
 } as const;
 
-function buildLines(
-  facts: MonthFacts,
-  terms: WorkerTerms,
-  counts: MonthCounts,
-): MonthLine[] {
+function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
   const rates = deriveRates(facts.confirmedWage.baseAgorot);
   const drafts: LineDraft[] = [];
 
@@ -90,12 +86,12 @@ function buildLines(
     },
   });
 
-  if (counts.fridaysPaidSupplement > 0 && terms.fridaySupplementAgorot > 0) {
+  if (counts.fridaysPaidSupplement > 0 && facts.terms.fridaySupplementAgorot > 0) {
     drafts.push({
       key: lineKeys.fridaySupplement,
       label: he.sheet.lines.fridaySupplement,
       units: counts.fridaysPaidSupplement,
-      rate: terms.fridaySupplementAgorot,
+      rate: facts.terms.fridaySupplementAgorot,
       column: "E",
       explanation: {
         text: he.sheet.why.fridaySupplement(counts.fridaysPaidSupplement),
@@ -269,14 +265,14 @@ function buildSubtotals(lines: MonthLine[]): ColumnSubtotal[] {
 
 export function calculateMonth(
   facts: MonthFacts,
-  terms: WorkerTerms,
+  employment: Employment,
   context: MonthContext = {},
 ): MonthResult {
-  const refusals = validateMonth(facts, terms, context);
+  const refusals = validateMonth(facts, employment, context);
   if (refusals.length > 0) throw new InvalidMonthError(refusals);
 
-  const counts = countMonth(facts, terms);
-  const lines = buildLines(facts, terms, counts);
+  const counts = countMonth(facts);
+  const lines = buildLines(facts, counts);
   const closing = buildClosing(facts);
 
   const gross = lines
@@ -297,7 +293,7 @@ export function calculateMonth(
     closing,
     gross,
     net,
-    balances: buildBalances(facts, terms, context.openingBalances),
+    balances: buildBalances(facts, employment, context.openingBalances),
     warnings: buildWarnings(facts, context),
     // An estimate to be confirmed, never a fact (item 19), and never the money
     // that actually left the account — that appears once, in the month it was

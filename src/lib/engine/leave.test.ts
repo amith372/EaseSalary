@@ -8,6 +8,7 @@ import {
   restDayUnitsOf,
 } from "@/lib/engine/leave";
 import { calculateMonth, lineKeys } from "@/lib/engine/month";
+import { snapshotTerms } from "@/lib/engine/types";
 import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
 import { validateMonth } from "@/lib/engine/validate";
 import type { MonthResult, YearMonth } from "@/lib/types";
@@ -74,6 +75,7 @@ function terms(employedSince = "2024-04-01"): WorkerTerms {
 
 function facts(spans: MonthSpan[], month: YearMonth = AUGUST_2025): MonthFacts {
   return {
+    terms: snapshotTerms(terms()),
     month,
     confirmedWage: {
       baseAgorot: SALARY,

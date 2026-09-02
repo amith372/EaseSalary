@@ -14,7 +14,7 @@ import type {
   MonthContext,
   MonthFacts,
   MonthSpan,
-  WorkerTerms,
+  Employment,
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import type { LegalLinkKey } from "@/lib/links";
@@ -172,7 +172,7 @@ function datesRecordedTwice(spans: MonthSpan[]): Map<IsoDate, MarkKind> {
  */
 export function validateMonth(
   facts: MonthFacts,
-  terms: WorkerTerms,
+  employment: Employment,
   context: MonthContext = {},
 ): Refusal[] {
   const refusals: Refusal[] = [];
@@ -242,7 +242,7 @@ export function validateMonth(
   // in, which is what lets a figure settled elsewhere win over the derivation.
   const allowance =
     context.holidayAllowance ??
-    holidayAllowanceFor(terms.employedSince, facts.month.year);
+    holidayAllowanceFor(employment.employedSince, facts.month.year);
   const holidayDays =
     holidayDaysOf(spans) + (context.holidayDaysEarlierInYear ?? 0);
   if (holidayDays > allowance) {
@@ -279,7 +279,7 @@ export function validateMonth(
   // If it ever fires in earnest, that is the signal to build the unpaid absence
   // as a feature, never to route around the refusal with arithmetic.
   const sickUsed = daysUsedIn(facts.spans, facts.month, "sick");
-  const sickAvailable = sickDaysAvailable(terms, context.openingBalances);
+  const sickAvailable = sickDaysAvailable(employment, context.openingBalances);
   if (sickUsed > sickAvailable) {
     refusals.push({
       code: "sickBalanceExhausted",
