@@ -806,4 +806,21 @@ as bugs:
 
 ## Appendix — open questions
 
-None outstanding.
+**Does the rest-eve supplement belong inside the base a sick day is priced from?** Item 8
+values a sick day at the monthly salary over twenty-five and does not add the supplement
+into it. The statute pays sickness as a share of "שכר העבודה הרגיל שהיה זכאי לו אילו
+המשיך לעבוד" — the regular wage she would have earned had she kept working — and a
+supplement paid week in and week out is ordinarily read as part of a regular wage rather
+than as something outside it.
+
+Nothing is changed on the strength of that reading. The family's own workbook prices a
+sick day from the salary alone and the workbook is the anchor the whole engine is checked
+against, so moving the base would break the one case that is known to be right in order to
+satisfy an argument nobody has tested. It is recorded here rather than acted on because
+the difference is real money: if the supplement does belong in the base, every sick day is
+priced slightly under.
+
+Settling it needs a source that speaks to this employment specifically — the caregiver
+terms page does not — or an accountant's reading. Whoever settles it should also say
+whether the same answer governs the vacation-day valuation the appendix already ties to
+the same divisor.
