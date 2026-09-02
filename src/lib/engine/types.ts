@@ -1,3 +1,4 @@
+import { compareIsoDate, daysInMonth, isoOf } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import type {
   DaySpan,
@@ -24,10 +25,60 @@ import type {
  * nothing extra, so "holiday" is never recorded without saying (specs.md
  * Part 5, item 9). Writing the union this way makes a holiday span without
  * `worked` a compile error rather than a silent default that underpays her.
+ *
+ * The union does the same job for the open end. `DaySpan.to` is nullable
+ * because storage has to hold a spell that has not finished, but **only
+ * sickness may be open** (item 8): a vacation with no end is not a thing the
+ * user can mean, and narrowing it here is what stops the engine having to
+ * decide what one would be worth.
  */
 export type MonthSpan =
-  | (DaySpan & { kind: Exclude<MarkKind, "holiday"> })
+  | (DaySpan & { kind: "sick" })
+  | (DaySpan & { kind: Exclude<MarkKind, "holiday" | "sick">; to: IsoDate })
   | HolidaySpan;
+
+/**
+ * A span whose end is settled — an open spell resolved to the last day the
+ * month counts it to. **Everything inside the engine works on these**, so no
+ * counting rule, tier or balance has to carry the open case: the resolution
+ * happens once, at `calculateMonth`, and the interior cannot tell an open spell
+ * from a closed one of the same days. That is the property the first of item
+ * 8's tests asserts directly.
+ */
+export type ClosedSpan = MonthSpan & { to: IsoDate };
+
+/**
+ * The last day a month counts an open spell to.
+ *
+ * **A fact about the month and not about the present** (specs.md item 8): a
+ * finished month's figure is settled once the month has ended and never moves
+ * because of when it is looked at. Only the current month's live preview clips
+ * at `today`, and `today` reaches the engine as a value its caller passed
+ * (`CLAUDE.md`) — nothing here reads a clock.
+ */
+export function clipEndOf(month: YearMonth, today?: IsoDate): IsoDate {
+  const monthEnd = isoOf(month, daysInMonth(month));
+  if (today === undefined) return monthEnd;
+  return compareIsoDate(today, monthEnd) < 0 ? today : monthEnd;
+}
+
+/**
+ * Every span with its end resolved, so the engine's interior never meets an
+ * open one.
+ *
+ * A spell that has not reached `clipAt` yet closes at its own first day rather
+ * than before it. That cannot arise from a spell a worker actually took — she
+ * cannot fall ill after the month being calculated — but a caller asking for a
+ * future month would otherwise hand the counting an inverted range, and a range
+ * that runs backwards is the kind of thing that produces a plausible number.
+ */
+export function closeSpans(spans: MonthSpan[], clipAt: IsoDate): ClosedSpan[] {
+  return spans.map((span) =>
+    span.to === null
+      ? { ...span, to: compareIsoDate(clipAt, span.from) < 0 ? span.from : clipAt }
+      : (span as ClosedSpan),
+  );
+}
 
 /**
  * What a worker created in the middle of an employment starts from, given once
@@ -296,6 +347,32 @@ export interface MonthFacts {
 }
 
 /**
+ * A month whose spans all have an end, which is what the engine works on.
+ *
+ * `closeMonth` is the only place an open spell is resolved, so no counting
+ * rule, tier or balance below it has to carry the open case — and the property
+ * item 8's first test asserts, that an open spell pays a month exactly what the
+ * closed spell of the same days pays it, holds by construction rather than by
+ * every rule agreeing to it separately.
+ */
+export type ClosedMonthFacts = Omit<MonthFacts, "spans"> & {
+  spans: ClosedSpan[];
+};
+
+/** Resolve the month's open spells. Pure, idempotent, and reads no clock:
+ * `today` arrives from the caller and only where the current month's live
+ * preview is being asked for (specs.md item 8). */
+export function closeMonth(
+  facts: MonthFacts,
+  today?: IsoDate,
+): ClosedMonthFacts {
+  return {
+    ...facts,
+    spans: closeSpans(facts.spans, clipEndOf(facts.month, today)),
+  };
+}
+
+/**
  * What the engine needs to know that one month's facts cannot say.
  *
  * Stage 3's repository supplies it; a month handed over on its own is treated
@@ -309,6 +386,14 @@ export interface MonthFacts {
  * read it, and neither module should have to import the other to see it.
  */
 export interface MonthContext {
+  /**
+   * Today, where the caller is asking for the **current** month's live preview
+   * (specs.md item 8). Left out, an open spell is counted to the month's own
+   * last day, which is what every finished month wants: passing a clock in from
+   * outside is how the engine stays free of one, so this is a value and never a
+   * default (`CLAUDE.md`).
+   */
+  today?: IsoDate;
   /** Holiday days already recorded earlier in the same year, counted the way
    * this month counts its own — a part day as its fraction (specs.md item 10). */
   holidayDaysEarlierInYear?: number;

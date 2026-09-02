@@ -13,8 +13,8 @@ import { calculateMonth } from "@/lib/engine/month";
 import { snapshotTerms } from "@/lib/engine/types";
 import type {
   MonthContext,
-  MonthFacts,
-  MonthSpan,
+  ClosedMonthFacts,
+  ClosedSpan,
   WorkerTerms,
 } from "@/lib/engine/types";
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
@@ -53,7 +53,7 @@ function terms(
   };
 }
 
-function facts(month: YearMonth, spans: MonthSpan[] = []): MonthFacts {
+function facts(month: YearMonth, spans: ClosedSpan[] = []): ClosedMonthFacts {
   return {
     month,
     terms: snapshotTerms(terms()),
@@ -75,11 +75,11 @@ const span = (
   kind: "vacation" | "sick",
   from: string,
   to: string,
-): MonthSpan => ({ id: `${kind}-${from}`, kind, from, to });
+): ClosedSpan => ({ id: `${kind}-${from}`, kind, from, to });
 
 function balance(
   kind: BalanceKind,
-  monthFacts: MonthFacts,
+  monthFacts: ClosedMonthFacts,
   workerTerms: WorkerTerms,
   opening?: { vacationDays: number; sickDays: number },
 ) {

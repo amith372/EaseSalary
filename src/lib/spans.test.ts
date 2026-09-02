@@ -6,7 +6,7 @@ import {
   markableDays,
   spanOverflow,
 } from "@/lib/spans";
-import type { DaySpan } from "@/lib/types";
+import type { ClosedDaySpan, DaySpan } from "@/lib/types";
 
 /**
  * August 2026 throughout: its 1st falls on a Saturday, so its Saturdays are
@@ -188,7 +188,7 @@ describe("markableDays", () => {
 
 describe("a part-day is drawn from the balance in its own proportion", () => {
   it("halves a single day", () => {
-    const half: DaySpan = {
+    const half: ClosedDaySpan = {
       id: "half",
       kind: "vacation",
       from: "2026-08-17",
@@ -197,5 +197,38 @@ describe("a part-day is drawn from the balance in its own proportion", () => {
     };
 
     expect(balanceDaysOf(half, SATURDAY)).toBe(0.5);
+  });
+});
+
+describe("an open sick spell covers every day from its first onward (item 8)", () => {
+  const openSpell: DaySpan[] = [
+    { id: "sick-open", kind: "sick", from: "2026-08-20", to: null },
+  ];
+
+  it("refuses a mark on a day the spell has already reached", () => {
+    const { spans, skipped } = applyMark(
+      { kind: "vacation", from: "2026-08-24", to: "2026-08-24" },
+      SATURDAY,
+      openSpell,
+    );
+    expect(spans).toEqual([]);
+    expect(skipped).toEqual([{ date: "2026-08-24", reason: "alreadyMarked" }]);
+  });
+
+  it("leaves a day before the spell began alone", () => {
+    // The day is not covered, and saying so needs care: an open spell has no
+    // end, so asking "does it reach the 10th?" against a window that closes on
+    // the 10th produces the range 20th–10th, which `orderDates` puts the right
+    // way round into 10th–20th — and the 10th is then inside it. The answer
+    // comes back wrong and entirely plausible.
+    const { spans, skipped } = applyMark(
+      { kind: "vacation", from: "2026-08-10", to: "2026-08-10" },
+      SATURDAY,
+      openSpell,
+    );
+    expect(skipped).toEqual([]);
+    expect(spans.map((s) => [s.from, s.to])).toEqual([
+      ["2026-08-10", "2026-08-10"],
+    ]);
   });
 });

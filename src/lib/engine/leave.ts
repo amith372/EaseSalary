@@ -1,6 +1,6 @@
 import { eachDate, fromIsoDate, isRestDay, orderDates } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import type { MonthSpan } from "@/lib/engine/types";
+import type { ClosedSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -42,7 +42,7 @@ interface HolidayDay {
  * for three must not weigh the same against that allowance, and counting spans
  * is the arrangement in which they do.
  */
-function holidayDaysIn(spans: MonthSpan[], onlyWorked: boolean): HolidayDay[] {
+function holidayDaysIn(spans: ClosedSpan[], onlyWorked: boolean): HolidayDay[] {
   return spans
     .filter((span) => span.kind === "holiday" && (!onlyWorked || span.worked))
     .flatMap((span) => {
@@ -63,7 +63,7 @@ function totalFraction(days: HolidayDay[]): number {
  * is drawn against (specs.md item 10). A part day draws its own proportion, so
  * this is not always a whole number and the remainder is displayed as it falls.
  */
-export function holidayDaysOf(spans: MonthSpan[]): number {
+export function holidayDaysOf(spans: ClosedSpan[]): number {
   return totalFraction(holidayDaysIn(spans, false));
 }
 
@@ -73,7 +73,7 @@ export function holidayDaysOf(spans: MonthSpan[]): number {
  * salary is paid in full on it and no vacation day is drawn, so it produces no
  * line at all rather than a line worth nothing.
  */
-export function holidayDaysWorked(spans: MonthSpan[]): number {
+export function holidayDaysWorked(spans: ClosedSpan[]): number {
   return totalFraction(holidayDaysIn(spans, true));
 }
 
@@ -89,7 +89,7 @@ export function holidayDaysWorked(spans: MonthSpan[]): number {
  * `restDayUnitsOf` takes it back out of the rest days.
  */
 export function holidayRestDaysWorked(
-  spans: MonthSpan[],
+  spans: ClosedSpan[],
   restDay: RestDay,
 ): number {
   return totalFraction(
@@ -108,7 +108,7 @@ export function holidayRestDaysWorked(
  * day on the holiday line, which is one day paid once between them.
  */
 export function restDayUnitsOf(
-  spans: MonthSpan[],
+  spans: ClosedSpan[],
   restDaysWorked: number,
   restDay: RestDay,
 ): number {

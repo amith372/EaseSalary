@@ -232,6 +232,10 @@ export const he = {
       /** A span running past the month's end is stored whole and shown clipped;
        * the overflow is said in words rather than silently truncated. */
       continuesInto: "נמשך אל תוך החודש הבא",
+      /** An open spell of sickness, which is how one is normally recorded: on
+       * the day she falls ill nobody knows the day she will return, so the
+       * application does not ask for one (specs.md item 8). */
+      stillOpen: "טרם הסתיימה",
       continuesFrom: "נמשך מהחודש הקודם",
     },
     /** The panel that opens once a range has been drawn and asks what the range

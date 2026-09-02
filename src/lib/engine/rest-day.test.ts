@@ -4,7 +4,7 @@ import { countMonth } from "@/lib/engine/counts";
 import { calculateMonth } from "@/lib/engine/month";
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 import { snapshotTerms } from "@/lib/engine/types";
-import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import type { MonthResult, YearMonth } from "@/lib/types";
 
 /**
@@ -98,8 +98,8 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
 function facts(
   worker: WorkerTerms,
   month: YearMonth,
-  spans: MonthSpan[] = [],
-): MonthFacts {
+  spans: ClosedSpan[] = [],
+): ClosedMonthFacts {
   return {
     month,
     terms: snapshotTerms(worker),
@@ -227,7 +227,7 @@ describe("the sick week anchors to her rest day (specs.md item 8)", () => {
     openingPosition: { vacationDays: 0, sickDays: 30, advances: [] },
   });
 
-  const sick = (from: string, to: string): MonthSpan => ({
+  const sick = (from: string, to: string): ClosedSpan => ({
     id: `sick-${from}-${to}`,
     kind: "sick",
     from,
@@ -282,7 +282,7 @@ describe("the sick week anchors to her rest day (specs.md item 8)", () => {
  *   Saturday-resting  2.0 × 24,990.6 = 49,981.2   →  −₪499.81
  */
 describe("a rest day inside a spell is not deducted for (specs.md item 8)", () => {
-  const spell: MonthSpan[] = [
+  const spell: ClosedSpan[] = [
     { id: "sick-13-17", kind: "sick", from: "2025-08-13", to: "2025-08-17" },
   ];
   const opening = { vacationDays: 0, sickDays: 30, advances: [] };
@@ -314,7 +314,7 @@ describe("a rest day inside a spell is not deducted for (specs.md item 8)", () =
  * worker and an impossible one for the next.
  */
 describe("a free rest day is refused per worker (specs.md item 5)", () => {
-  const free = (date: string): MonthSpan => ({
+  const free = (date: string): ClosedSpan => ({
     id: `free-${date}`,
     kind: "freeRestDay",
     from: date,
@@ -427,7 +427,7 @@ describe("the sheet names her own rest day (specs.md item 5)", () => {
     // נרשם for a masculine day and נרשמה for שבת. A refusal is the one sentence
     // a user meets at her least forgiving moment, and it is assembled from more
     // inflected words than any other.
-    const free = (date: string): MonthSpan => ({
+    const free = (date: string): ClosedSpan => ({
       id: `free-${date}`,
       kind: "freeRestDay",
       from: date,

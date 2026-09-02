@@ -47,7 +47,30 @@ export interface DaySpan {
   id: string;
   kind: MarkKind;
   from: IsoDate;
-  to: IsoDate;
+  /**
+   * `null` while the spell is still running.
+   *
+   * **A spell may be left open, and that is how one is normally recorded**
+   * (specs.md item 8): on the day a worker falls ill nobody knows the day she
+   * will return, so the application does not ask for one. An open spell is
+   * never *crossed* by a month boundary — it simply has not ended — and it
+   * stays one spell with one first day, which is what the tiers are counted
+   * from. That is the whole reason the storage shape is a span and not a set of
+   * per-day marks.
+   *
+   * Only sickness may be open. `MonthSpan` in `src/lib/engine/types.ts` is what
+   * enforces it, narrowing this field back to a date for every other kind, the
+   * same way it already makes a holiday without `worked` a compile error.
+   *
+   * **This is a change to a stored shape, so no compiler carries it** — it
+   * joins `MarkKind` and the line keys above. The story is theirs: stage 3 is
+   * what first writes a span to Postgres, so today the column is created
+   * nullable and after stage 3 it would be an `alter column ... drop not null`
+   * against every deployed database, with a reader that tolerates both until
+   * the last row is migrated. Nothing has been stored yet, which is why the
+   * shape settles here rather than later.
+   */
+  to: IsoDate | null;
   /** Every action can carry a free-text note (specs.md item 5). */
   note?: string;
   /**
@@ -58,10 +81,22 @@ export interface DaySpan {
   fraction?: number;
 }
 
+/**
+ * A span whose end is settled — every kind but an unfinished sick spell, and an
+ * open spell once a month has resolved it to the last day it counts to.
+ *
+ * It is the shape almost everything works on: only storage, and the calendar
+ * that draws straight from storage, ever meet an open one.
+ */
+export type ClosedDaySpan = DaySpan & { to: IsoDate };
+
 /** Whether the worker worked a marked holiday decides whether it is paid a
  * premium, so "holiday" is never recorded without saying (specs.md Part 5). */
 export interface HolidaySpan extends DaySpan {
   kind: "holiday";
+  /** A holiday is one day or a run of them and is never open: the dates arrive
+   * from the year's chosen list (specs.md item 9), so its end is always known. */
+  to: IsoDate;
   worked: boolean;
 }
 

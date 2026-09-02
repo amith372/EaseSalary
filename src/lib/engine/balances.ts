@@ -1,16 +1,16 @@
 import { daysInMonth, fromIsoDate, isoOf } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import type {
+  ClosedMonthFacts,
+  ClosedSpan,
   MonthContext,
-  MonthFacts,
-  MonthSpan,
   Employment,
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { balanceDaysOf } from "@/lib/spans";
 import type {
   BalanceLine,
-  DaySpan,
+  ClosedDaySpan,
   IsoDate,
   Warning,
   YearMonth,
@@ -102,7 +102,7 @@ export function monthlyVacationAccrual(
  * clipped span is handed back to `balanceDaysOf`, so the entitlement rules — a
  * vacation span counts its non-rest-days, a sick spell counts every day it ran
  * across — are applied by the module that already owns and tests them. */
-function clipToMonth(span: MonthSpan, month: YearMonth): DaySpan | null {
+function clipToMonth(span: ClosedSpan, month: YearMonth): ClosedDaySpan | null {
   const monthStart = isoOf(month, 1);
   const monthEnd = isoOf(month, daysInMonth(month));
   const from = span.from < monthStart ? monthStart : span.from;
@@ -120,7 +120,7 @@ function clipToMonth(span: MonthSpan, month: YearMonth): DaySpan | null {
  * month each day fell in.
  */
 export function daysUsedIn(
-  spans: MonthSpan[],
+  spans: ClosedSpan[],
   month: YearMonth,
   kind: "vacation" | "sick",
   restDay: RestDay,
@@ -128,7 +128,7 @@ export function daysUsedIn(
   return spans
     .filter((span) => span.kind === kind)
     .map((span) => clipToMonth(span, month))
-    .filter((span): span is DaySpan => span !== null)
+    .filter((span): span is ClosedDaySpan => span !== null)
     .reduce((days, span) => days + balanceDaysOf(span, restDay), 0);
 }
 
@@ -191,7 +191,7 @@ export function sickDaysAvailable(
 }
 
 export function buildBalances(
-  facts: MonthFacts,
+  facts: ClosedMonthFacts,
   employment: Employment,
   opening?: OpeningBalances,
 ): BalanceLine[] {
@@ -258,7 +258,7 @@ const DECEMBER = 12;
  * is read as the year's only month.
  */
 export function vacationYearWarning(
-  facts: MonthFacts,
+  facts: ClosedMonthFacts,
   context: MonthContext = {},
 ): Warning | null {
   if (facts.month.month !== DECEMBER) return null;
@@ -279,7 +279,7 @@ export function vacationYearWarning(
 /** Every warning the month raises. A list from the first commit, because a
  * second warning arriving later must not change the shape the screen reads. */
 export function buildWarnings(
-  facts: MonthFacts,
+  facts: ClosedMonthFacts,
   context: MonthContext = {},
 ): Warning[] {
   return [vacationYearWarning(facts, context)].filter(

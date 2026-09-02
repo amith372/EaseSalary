@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
-import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { formatAgorot, formatDays } from "@/lib/money";
 import type { MonthResult } from "@/lib/types";
@@ -30,7 +30,7 @@ const AUGUST_2025_SALARY = 624765;
 const REST_EVE_SUPPLEMENT = 10000;
 const INSTALMENT = 200000;
 
-const spans: MonthSpan[] = [
+const spans: ClosedSpan[] = [
   // Part 4: "one free Saturday on the 16th".
   { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
   // Part 4: "two paid holidays on the 19th and the 21st", both worked.
@@ -38,7 +38,7 @@ const spans: MonthSpan[] = [
   { id: "hol-21", kind: "holiday", from: "2025-08-21", to: "2025-08-21", worked: true },
 ];
 
-const facts: MonthFacts = {
+const facts: ClosedMonthFacts = {
   month: { year: 2025, month: 8 },
   // The terms the month was confirmed with (specs.md Part 3), which for August
   // 2025 are the profile's own: ₪100 a rest-eve, not pocket money, recuperation

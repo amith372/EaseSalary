@@ -12,7 +12,9 @@ import {
   nationalInsuranceEstimateOf,
   thirdPartyLines,
 } from "@/lib/engine/thirdParty";
+import { closeMonth } from "@/lib/engine/types";
 import type {
+  ClosedMonthFacts,
   MonthContext,
   MonthFacts,
   Employment,
@@ -77,7 +79,7 @@ export const lineKeys = {
   incomeTax: "incomeTax",
 } as const;
 
-function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
+function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
   const rates = deriveRates(facts.confirmedWage.baseAgorot);
   // Every label and every explanation that names a day names *her* day
   // (specs.md item 5), and it is read off the month like every other term.
@@ -303,9 +305,15 @@ export function calculateMonth(
   const refusals = validateMonth(facts, employment, context);
   if (refusals.length > 0) throw new InvalidMonthError(refusals);
 
-  const counts = countMonth(facts);
-  const lines = buildLines(facts, counts);
-  const closing = buildClosing(facts);
+  // An open spell is resolved once, here, and every rule below works on a span
+  // that has an end (specs.md item 8). Left out, `today` clips at the month's
+  // own last day, which is what a finished month wants: the figure is settled
+  // when the month ends and never moves because of when it is looked at.
+  const month = closeMonth(facts, context.today);
+
+  const counts = countMonth(month);
+  const lines = buildLines(month, counts);
+  const closing = buildClosing(month);
 
   const gross = lines
     .filter((line) => COLUMNS_THAT_REACH_THE_WORKER.includes(line.column))
@@ -325,8 +333,8 @@ export function calculateMonth(
     closing,
     gross,
     net,
-    balances: buildBalances(facts, employment, context.openingBalances),
-    warnings: buildWarnings(facts, context),
+    balances: buildBalances(month, employment, context.openingBalances),
+    warnings: buildWarnings(month, context),
     // An estimate to be confirmed, never a fact (item 19), and never the money
     // that actually left the account — that appears once, in the month it was
     // paid, as a column H line of its own. `thirdParty.ts` holds both.

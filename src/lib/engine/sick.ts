@@ -8,7 +8,7 @@ import {
   sameMonth,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import type { MonthSpan } from "@/lib/engine/types";
+import type { ClosedSpan } from "@/lib/engine/types";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
@@ -86,7 +86,7 @@ export interface SickSpell {
  * with a mechanism built for it: an entry split in two would be a way for the
  * *tiers* to be restarted by hand, which is the one thing they must not be.
  */
-export function spellsOf(spans: MonthSpan[]): SickSpell[] {
+export function spellsOf(spans: ClosedSpan[]): SickSpell[] {
   const ordered = spans
     .filter((span) => span.kind === "sick")
     .map((span) => orderDates(span.from, span.to))
@@ -132,7 +132,7 @@ export interface SickDay {
 /** Every day of every spell, with its tier position. The whole spell is walked
  * even where most of it falls outside the month, because the position of a day
  * inside this month depends on how many days of the spell came before it. */
-export function sickDaysOf(spans: MonthSpan[], restDay: RestDay): SickDay[] {
+export function sickDaysOf(spans: ClosedSpan[], restDay: RestDay): SickDay[] {
   return spellsOf(spans).flatMap((spell) =>
     eachDate(spell.from, spell.to).map((date, index) => ({
       date,
@@ -146,7 +146,7 @@ export function sickDaysOf(spans: MonthSpan[], restDay: RestDay): SickDay[] {
 
 /** The days of the spells that fall inside this month, tiers and all. */
 export function sickDaysIn(
-  spans: MonthSpan[],
+  spans: ClosedSpan[],
   month: YearMonth,
   restDay: RestDay,
 ): SickDay[] {
@@ -161,7 +161,7 @@ export function sickDaysIn(
  * (specs.md item 3).
  */
 export function sickDeductionDays(
-  spans: MonthSpan[],
+  spans: ClosedSpan[],
   month: YearMonth,
   restDay: RestDay,
 ): number {

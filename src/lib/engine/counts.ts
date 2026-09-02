@@ -7,7 +7,7 @@ import {
   isRestDay,
   orderDates,
 } from "@/lib/dates";
-import type { MonthFacts, MonthSpan } from "@/lib/engine/types";
+import type { ClosedMonthFacts, ClosedSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -53,12 +53,12 @@ export interface MonthCounts {
   restDaysWorked: number;
 }
 
-function covers(span: MonthSpan, date: IsoDate): boolean {
+function covers(span: ClosedSpan, date: IsoDate): boolean {
   const { from, to } = orderDates(span.from, span.to);
   return compareIsoDate(date, from) >= 0 && compareIsoDate(date, to) <= 0;
 }
 
-function spansCovering(spans: MonthSpan[], date: IsoDate): MonthSpan[] {
+function spansCovering(spans: ClosedSpan[], date: IsoDate): ClosedSpan[] {
   return spans.filter((span) => covers(span, date));
 }
 
@@ -80,7 +80,7 @@ function spansCovering(spans: MonthSpan[], date: IsoDate): MonthSpan[] {
  * she did not work changes the count and not the money, and a holiday that
  * changes both, or neither, is a mistake (item 5).
  */
-function notWorkedFraction(spans: MonthSpan[], date: IsoDate): number {
+function notWorkedFraction(spans: ClosedSpan[], date: IsoDate): number {
   let lost = 0;
   for (const span of spansCovering(spans, date)) {
     // A holiday she worked is a working day like any other.
@@ -96,7 +96,7 @@ function notWorkedFraction(spans: MonthSpan[], date: IsoDate): number {
 /** A whole day not worked. A day worked in part is a day she attended, so it
  * counts as a rest-eve or a rest day worked even though it leaves a fraction of
  * the actual count. */
-function notWorked(spans: MonthSpan[], date: IsoDate): boolean {
+function notWorked(spans: ClosedSpan[], date: IsoDate): boolean {
   return notWorkedFraction(spans, date) >= 1;
 }
 
@@ -127,14 +127,14 @@ function notWorked(spans: MonthSpan[], date: IsoDate): boolean {
  * stored as the dates it ran between rather than as marks belonging to a month
  * (Part 3), so the span reaching back over the boundary is read whole here.
  */
-function weekLostToSickness(spans: MonthSpan[], restEve: IsoDate): boolean {
+function weekLostToSickness(spans: ClosedSpan[], restEve: IsoDate): boolean {
   const weekStart = addDays(restEve, -5);
   return eachDate(weekStart, restEve).every((date) =>
     spansCovering(spans, date).some((span) => span.kind === "sick"),
   );
 }
 
-export function countMonth(facts: MonthFacts): MonthCounts {
+export function countMonth(facts: ClosedMonthFacts): MonthCounts {
   const days = everyDayOf(facts.month);
   const { spans } = facts;
 

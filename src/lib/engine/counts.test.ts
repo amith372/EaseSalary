@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { countMonth } from "@/lib/engine/counts";
 import { snapshotTerms } from "@/lib/engine/types";
-import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import type { YearMonth } from "@/lib/types";
 
 /**
@@ -21,9 +21,9 @@ import type { YearMonth } from "@/lib/types";
 
 function facts(
   month: YearMonth,
-  spans: MonthSpan[] = [],
+  spans: ClosedSpan[] = [],
   worker: WorkerTerms = terms(),
-): MonthFacts {
+): ClosedMonthFacts {
   return {
     month,
     terms: snapshotTerms(worker),
@@ -55,28 +55,28 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   };
 }
 
-const sick = (from: string, to: string): MonthSpan => ({
+const sick = (from: string, to: string): ClosedSpan => ({
   id: `sick-${from}-${to}`,
   kind: "sick",
   from,
   to,
 });
 
-const vacation = (from: string, to: string): MonthSpan => ({
+const vacation = (from: string, to: string): ClosedSpan => ({
   id: `vac-${from}-${to}`,
   kind: "vacation",
   from,
   to,
 });
 
-const freeRestDay = (date: string): MonthSpan => ({
+const freeRestDay = (date: string): ClosedSpan => ({
   id: `free-${date}`,
   kind: "freeRestDay",
   from: date,
   to: date,
 });
 
-const holiday = (date: string, worked: boolean): MonthSpan => ({
+const holiday = (date: string, worked: boolean): ClosedSpan => ({
   id: `hol-${date}`,
   kind: "holiday",
   from: date,
@@ -87,7 +87,7 @@ const holiday = (date: string, worked: boolean): MonthSpan => ({
 /** Part 4's known case: 31 days, a free Saturday on the 16th, paid holidays on
  * the 19th and the 21st both worked. */
 const AUGUST_2025: YearMonth = { year: 2025, month: 8 };
-const august2025Spans: MonthSpan[] = [
+const august2025Spans: ClosedSpan[] = [
   freeRestDay("2025-08-16"),
   holiday("2025-08-19", true),
   holiday("2025-08-21", true),

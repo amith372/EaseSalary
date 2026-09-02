@@ -10,7 +10,7 @@ import {
 } from "@/lib/engine/leave";
 import { calculateMonth, lineKeys } from "@/lib/engine/month";
 import { snapshotTerms } from "@/lib/engine/types";
-import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import { validateMonth } from "@/lib/engine/validate";
 import type { MonthResult, YearMonth } from "@/lib/types";
 
@@ -45,7 +45,7 @@ const AUGUST_2025: YearMonth = { year: 2025, month: 8 };
  * Fridays, so 26 standard days, which is Part 4's "31-day month with 26
  * working days". The 13th and the 14th are a Wednesday and a Thursday.
  */
-const holiday = (date: string, worked: boolean, fraction?: number): MonthSpan => ({
+const holiday = (date: string, worked: boolean, fraction?: number): ClosedSpan => ({
   id: `hol-${date}`,
   kind: "holiday",
   from: date,
@@ -54,7 +54,7 @@ const holiday = (date: string, worked: boolean, fraction?: number): MonthSpan =>
   ...(fraction === undefined ? {} : { fraction }),
 });
 
-const vacation = (from: string, to: string, fraction?: number): MonthSpan => ({
+const vacation = (from: string, to: string, fraction?: number): ClosedSpan => ({
   id: `vac-${from}`,
   kind: "vacation",
   from,
@@ -75,7 +75,7 @@ function terms(employedSince = "2024-04-01"): WorkerTerms {
   };
 }
 
-function facts(spans: MonthSpan[], month: YearMonth = AUGUST_2025): MonthFacts {
+function facts(spans: ClosedSpan[], month: YearMonth = AUGUST_2025): ClosedMonthFacts {
   return {
     terms: snapshotTerms(terms()),
     month,
@@ -190,7 +190,7 @@ describe("part days are paid and drawn in their own proportion (items 7, 10)", (
   it("counts a multi-day holiday span in days and not as one span", () => {
     // The entitlement counts days: nine for a full year. A span of three must
     // not weigh the same against it as a span of one.
-    const threeDays: MonthSpan = {
+    const threeDays: ClosedSpan = {
       id: "hol-run",
       kind: "holiday",
       from: "2025-08-11",

@@ -6,7 +6,7 @@ import {
   orderDates,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import type { DaySpan, IsoDate, MarkKind } from "@/lib/types";
+import type { ClosedDaySpan, DaySpan, IsoDate, MarkKind } from "@/lib/types";
 
 /**
  * Which days inside a swept range actually take the mark.
@@ -52,9 +52,15 @@ export interface SkippedDay {
 }
 
 export interface MarkResult {
-  /** The spans to add. A range broken by a skipped day yields one span per
-   * surviving run, so what is stored is exactly what is marked. */
-  spans: DaySpan[];
+  /**
+   * The spans to add. A range broken by a skipped day yields one span per
+   * surviving run, so what is stored is exactly what is marked.
+   *
+   * Always closed: a swept range has both ends by definition. An open spell is
+   * recorded by a different gesture — "she fell ill today", with no return date
+   * asked for (specs.md item 8) — which the month screen builds in stage 4.
+   */
+  spans: ClosedDaySpan[];
   skipped: SkippedDay[];
 }
 
@@ -71,9 +77,32 @@ function refusedByKind(
   return null;
 }
 
-function coveringSpan(spans: DaySpan[], date: IsoDate): DaySpan | undefined {
+/**
+ * The last day a span covers where it is being read.
+ *
+ * An open sick spell has not ended, so on screen it runs to the end of whatever
+ * window is being drawn and in a calculation to the last day that month counts
+ * it to (specs.md item 8). The window is the caller's to name, which is what
+ * keeps this free of a clock.
+ */
+export function endOf(span: DaySpan, openEnd: IsoDate): IsoDate {
+  if (span.to !== null) return span.to;
+  // **Never backwards.** A window that ends before the spell began contains
+  // none of it, and returning that window's end would hand `orderDates` an
+  // inverted range — which it silently puts the right way round, so a spell
+  // starting on the 20th would come back covering the 10th. The failure is
+  // invisible at the call site and entirely plausible in the output, which is
+  // why it is closed here rather than at each of the four callers.
+  return compareIsoDate(openEnd, span.from) < 0 ? span.from : openEnd;
+}
+
+function coveringSpan(
+  spans: DaySpan[],
+  date: IsoDate,
+  openEnd: IsoDate,
+): DaySpan | undefined {
   return spans.find((span) => {
-    const { from, to } = orderDates(span.from, span.to);
+    const { from, to } = orderDates(span.from, endOf(span, openEnd));
     return compareIsoDate(date, from) >= 0 && compareIsoDate(date, to) <= 0;
   });
 }
@@ -99,7 +128,9 @@ export function markableDays(
       skipped.push({ date, reason: refused });
       continue;
     }
-    const covering = coveringSpan(existing, date);
+    // An open spell already covers this day if it began before it, so a mark
+    // swept over one is refused as `alreadyMarked` rather than layered on top.
+    const covering = coveringSpan(existing, date, date);
     if (covering) {
       skipped.push({
         date,
@@ -145,7 +176,7 @@ export function applyMark(
   existing: DaySpan[] = [],
 ): MarkResult {
   const { taken, skipped } = markableDays(intent, restDay, existing);
-  const spans = runsOf(taken).map<DaySpan>((run) => ({
+  const spans = runsOf(taken).map<ClosedDaySpan>((run) => ({
     id: `${intent.kind}-${run.from}-${run.to}`,
     kind: intent.kind,
     from: run.from,
@@ -163,7 +194,7 @@ export function applyMark(
  * entitlement (item 5). A part-day is a single-day span and is drawn in its own
  * proportion (items 7, 10).
  */
-export function balanceDaysOf(span: DaySpan, restDay: RestDay): number {
+export function balanceDaysOf(span: ClosedDaySpan, restDay: RestDay): number {
   if (span.kind === "freeRestDay") return 0;
   const { from, to } = orderDates(span.from, span.to);
   const days = eachDate(from, to);
@@ -182,9 +213,11 @@ export function spanOverflow(
   monthStart: IsoDate,
   monthEnd: IsoDate,
 ) {
-  const { from, to } = orderDates(span.from, span.to);
+  const { from, to } = orderDates(span.from, endOf(span, monthEnd));
   return {
     before: compareIsoDate(from, monthStart) < 0,
-    after: compareIsoDate(to, monthEnd) > 0,
+    // An open spell has not ended, so it always runs past the month on screen —
+    // there is no last day for it to stop at (item 8).
+    after: span.to === null || compareIsoDate(to, monthEnd) > 0,
   };
 }

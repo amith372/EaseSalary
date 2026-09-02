@@ -266,6 +266,14 @@ match the paper derivation.
 **Done when** the known case passes and the invalid case is refused, with no database and
 no interface in existence.
 
+**The user's own check is owed and cannot be paid here** (working rule 7). Nothing in the
+application sets a worker's rest day — the home fixture is Saturday and there is no profile
+to change it on — so the only check available for this step is the suite, which is the
+agent verifying its own work and is the half already known. The debt is recorded rather
+than waved through: the first screen that can set the rest day, in stage 5, is where the
+Friday- and Sunday-resting cases become checkable by hand, and that stage should not close
+without someone having done it.
+
 #### Step 7d — the open sick spell
 
 A spell with no end yet (item 8). `DaySpan`'s `to` becomes nullable, which is a change to a

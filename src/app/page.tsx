@@ -14,7 +14,7 @@ import { compareIsoDate, daysInMonth, fromIsoDate, isoOf, orderDates } from "@/l
 import { fixtureMonth, fixtureToday, homeFixtures } from "@/lib/fixtures/home";
 import { he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
-import { applyMark, spanOverflow, type SkippedDay, type SkipReason } from "@/lib/spans";
+import { applyMark, spanOverflow, type SkippedDay, type SkipReason, endOf } from "@/lib/spans";
 import type { DaySpan, IsoDate, YearMonth } from "@/lib/types";
 import type { SpanIntent } from "@/components/MonthCalendar";
 
@@ -49,12 +49,14 @@ function dayLabel(iso: IsoDate): string {
 }
 
 function overlapsMonth(span: DaySpan, monthStart: IsoDate, monthEnd: IsoDate): boolean {
-  const { from, to } = orderDates(span.from, span.to);
+  // An open spell has not ended, so it reaches the end of any month that starts
+  // after it began (specs.md item 8).
+  const { from, to } = orderDates(span.from, endOf(span, monthEnd));
   return compareIsoDate(from, monthEnd) <= 0 && compareIsoDate(to, monthStart) >= 0;
 }
 
 function overlapsRange(span: DaySpan, from: IsoDate, to: IsoDate): boolean {
-  const ordered = orderDates(span.from, span.to);
+  const ordered = orderDates(span.from, endOf(span, to));
   return compareIsoDate(ordered.from, to) <= 0 && compareIsoDate(ordered.to, from) >= 0;
 }
 
@@ -156,7 +158,14 @@ export default function Home() {
                   <span> </span>
                   <span>{he.calendar.selection.separator}</span>
                   <span> </span>
-                  <Bidi>{dayLabel(span.to)}</Bidi>
+                  {/* An open spell has no last day to print, and printing the
+                      day it was clipped at would read as the day she returned
+                      (specs.md item 8). */}
+                  {span.to === null ? (
+                    <span>{he.calendar.selection.stillOpen}</span>
+                  ) : (
+                    <Bidi>{dayLabel(span.to)}</Bidi>
+                  )}
                   <span> · </span>
                   <span>
                     {before

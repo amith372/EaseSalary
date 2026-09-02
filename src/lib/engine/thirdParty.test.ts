@@ -8,8 +8,8 @@ import {
 } from "@/lib/engine/thirdParty";
 import { snapshotTerms } from "@/lib/engine/types";
 import type {
-  MonthFacts,
-  MonthSpan,
+  ClosedMonthFacts,
+  ClosedSpan,
   ThirdPartyKind,
   ThirdPartyPayment,
   WorkerTerms,
@@ -76,7 +76,7 @@ const QUARTER_COVERED: YearMonth[] = [
   { year: 2025, month: 6 },
 ];
 
-const spans: MonthSpan[] = [
+const spans: ClosedSpan[] = [
   { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
   { id: "hol-19", kind: "holiday", from: "2025-08-19", to: "2025-08-19", worked: true },
   { id: "hol-21", kind: "holiday", from: "2025-08-21", to: "2025-08-21", worked: true },
@@ -97,7 +97,7 @@ const terms: WorkerTerms = {
   },
 };
 
-function facts(payments: ThirdPartyPayment[] = []): MonthFacts {
+function facts(payments: ThirdPartyPayment[] = []): ClosedMonthFacts {
   return {
     terms: snapshotTerms(terms),
     month: { year: 2025, month: 8 },

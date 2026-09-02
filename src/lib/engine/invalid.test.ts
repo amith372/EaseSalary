@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
 import { snapshotTerms } from "@/lib/engine/types";
-import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 
 /**
@@ -27,7 +27,7 @@ const terms: WorkerTerms = {
   openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
 };
 
-function facts(spans: MonthSpan[]): MonthFacts {
+function facts(spans: ClosedSpan[]): ClosedMonthFacts {
   return {
     terms: snapshotTerms(terms),
     month: { year: 2025, month: 8 },
@@ -45,7 +45,7 @@ function facts(spans: MonthSpan[]): MonthFacts {
   };
 }
 
-const holiday = (date: string, worked = true): MonthSpan => ({
+const holiday = (date: string, worked = true): ClosedSpan => ({
   id: `hol-${date}`,
   kind: "holiday",
   from: date,
@@ -127,7 +127,7 @@ describe("a tenth paid holiday within a year (specs.md item 10, Part 4)", () => 
   it("draws a part day from the entitlement in its own proportion", () => {
     // Item 10: a holiday taken as part of a day is drawn in the same
     // proportion, so half a day does not consume a whole one.
-    const halfDay: MonthSpan = { ...holiday("2025-08-13"), fraction: 0.5 };
+    const halfDay: ClosedSpan = { ...holiday("2025-08-13"), fraction: 0.5 };
     expect(
       validateMonth(facts([halfDay]), terms, { holidayDaysEarlierInYear: 8.5 }),
     ).toEqual([]);
@@ -186,7 +186,7 @@ describe("every refusal carries the rule it rests on (specs.md item 25)", () => 
    * refusal with no rule behind it would be the application refusing on its own
    * authority.
    */
-  const cases: { spans: MonthSpan[]; code: string; link: string }[] = [
+  const cases: { spans: ClosedSpan[]; code: string; link: string }[] = [
     {
       spans: [
         { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
@@ -262,7 +262,7 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
     // is also marked as a holiday she worked. She cannot have been absent ill
     // and at work on the same day, and the engine has no way to know which
     // happened.
-    const spans: MonthSpan[] = [
+    const spans: ClosedSpan[] = [
       { id: "sick", kind: "sick", from: "2025-08-14", to: "2025-08-17" },
       holiday("2025-08-16"),
     ];
@@ -278,7 +278,7 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
     // `calculateMonth` throws rather than returning the refusals, so a caller
     // that ignores them cannot receive a number instead. The calendar is one
     // caller; the repository and the export are others.
-    const spans: MonthSpan[] = [
+    const spans: ClosedSpan[] = [
       { id: "sick", kind: "sick", from: "2025-08-14", to: "2025-08-17" },
       holiday("2025-08-16"),
     ];
@@ -288,7 +288,7 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
   it("refuses one date entered twice, rather than paying it twice", () => {
     // Two holiday spans over the 13th of August would be paid 2 × ₪426.35 for
     // one calendar day, and would draw two days off the nine of item 10.
-    const spans: MonthSpan[] = [
+    const spans: ClosedSpan[] = [
       { id: "a", kind: "holiday", from: "2025-08-13", to: "2025-08-13", worked: true },
       { id: "b", kind: "holiday", from: "2025-08-13", to: "2025-08-13", worked: true },
     ];
@@ -306,7 +306,7 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
     // 18-20 are the one illness they are, however many ranges they were entered
     // as (item 8). Touching is not overlapping, and refusing it here would
     // break the rule sick.ts exists to keep.
-    const spans: MonthSpan[] = [
+    const spans: ClosedSpan[] = [
       { id: "a", kind: "sick", from: "2025-08-14", to: "2025-08-17" },
       { id: "b", kind: "sick", from: "2025-08-18", to: "2025-08-20" },
     ];

@@ -10,10 +10,11 @@ import {
   duplicateThirdPartyKinds,
   LINK_FOR_THIRD_PARTY,
 } from "@/lib/engine/thirdParty";
+import { closeMonth } from "@/lib/engine/types";
 import type {
+  ClosedSpan,
   MonthContext,
   MonthFacts,
-  MonthSpan,
   Employment,
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
@@ -115,7 +116,7 @@ const LINK_FOR_KIND: Record<MarkKind, LegalLinkKey> = {
   freeRestDay: "restDayWork",
 };
 
-function coversDate(span: MonthSpan, date: IsoDate): boolean {
+function coversDate(span: ClosedSpan, date: IsoDate): boolean {
   const { from, to } = orderDates(span.from, span.to);
   return compareIsoDate(date, from) >= 0 && compareIsoDate(date, to) <= 0;
 }
@@ -126,7 +127,7 @@ function coversDate(span: MonthSpan, date: IsoDate): boolean {
  * after it (specs.md Part 3), so the span is read whole: an overlap that
  * straddles the boundary is still an overlap.
  */
-function datesOf(span: MonthSpan): IsoDate[] {
+function datesOf(span: ClosedSpan): IsoDate[] {
   const { from, to } = orderDates(span.from, span.to);
   return eachDate(from, to);
 }
@@ -154,7 +155,7 @@ function datesOf(span: MonthSpan): IsoDate[] {
  * `restDayHoliday`. This is the same rule enforced where it cannot be skipped:
  * the calendar is one caller, and the repository and the export are others.
  */
-function datesRecordedTwice(spans: MonthSpan[]): Map<IsoDate, MarkKind> {
+function datesRecordedTwice(spans: ClosedSpan[]): Map<IsoDate, MarkKind> {
   const seen = new Map<IsoDate, MarkKind>();
   const twice = new Map<IsoDate, MarkKind>();
   for (const span of spans) {
@@ -177,7 +178,12 @@ export function validateMonth(
   context: MonthContext = {},
 ): Refusal[] {
   const refusals: Refusal[] = [];
-  const { spans } = facts;
+  // The same resolution `calculateMonth` makes, and it has to happen here too:
+  // an overlap or a double entry that an open spell reaches into is one the
+  // month has to refuse, and a span with no end cannot be compared against one
+  // that has. `closeMonth` is pure, so making it twice costs a map and cannot
+  // disagree with itself (specs.md item 8).
+  const { spans } = closeMonth(facts, context.today);
 
   // A paid holiday landing on a free rest day: the deliberately invalid case of
   // Part 4. Refused rather than paid at both rates.
@@ -288,7 +294,7 @@ export function validateMonth(
   // If it ever fires in earnest, that is the signal to build the unpaid absence
   // as a feature, never to route around the refusal with arithmetic.
   const sickUsed = daysUsedIn(
-    facts.spans,
+    spans,
     facts.month,
     "sick",
     facts.terms.restDay,

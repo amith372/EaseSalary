@@ -17,7 +17,9 @@ import {
   WEEK_LENGTH,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import { clipEndOf } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
+import { endOf } from "@/lib/spans";
 import type { DaySpan, IsoDate, MarkKind, YearMonth } from "@/lib/types";
 
 /**
@@ -138,15 +140,20 @@ export function MonthCalendar({
    * engine makes (specs.md Part 4), not a drawing order.
    */
   const coverage = useMemo(() => {
+    // An open sick spell is drawn to the same day the engine counts it to —
+    // the month's last day, or today where today falls inside the month
+    // (specs.md item 8). Both read it from `clipEndOf`, which is what keeps the
+    // calendar from colouring a day the sheet did not pay for.
+    const openEnd = clipEndOf(month, today);
     const byDate = new Map<IsoDate, DaySpan>();
     for (const span of spans) {
-      const { from, to } = orderDates(span.from, span.to);
+      const { from, to } = orderDates(span.from, endOf(span, openEnd));
       for (let d = from; compareIsoDate(d, to) <= 0; d = addDays(d, 1)) {
         if (!byDate.has(d)) byDate.set(d, span);
       }
     }
     return byDate;
-  }, [spans]);
+  }, [spans, month, today]);
 
   const [focusedDay, setFocused] = useState<IsoDate>(firstDay);
   const [anchor, setAnchor] = useState<IsoDate | null>(null);

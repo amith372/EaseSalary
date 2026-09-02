@@ -8,7 +8,7 @@ import {
   spellsOf,
 } from "@/lib/engine/sick";
 import { snapshotTerms } from "@/lib/engine/types";
-import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import type { MonthResult, YearMonth } from "@/lib/types";
 
 /**
@@ -45,7 +45,7 @@ const SEPTEMBER_2025: YearMonth = { year: 2025, month: 9 };
  * Five Fridays — 1, 8, 15, 22, 29 — and five Saturdays, so 26 standard days,
  * which is Part 4's "a 31-day month with 26 working days".
  */
-const sick = (from: string, to: string): MonthSpan => ({
+const sick = (from: string, to: string): ClosedSpan => ({
   id: `sick-${from}-${to}`,
   kind: "sick",
   from,
@@ -81,9 +81,9 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
 
 function facts(
   month: YearMonth,
-  spans: MonthSpan[],
+  spans: ClosedSpan[],
   worker: WorkerTerms = terms(),
-): MonthFacts {
+): ClosedMonthFacts {
   return {
     month,
     terms: snapshotTerms(worker),
@@ -105,7 +105,7 @@ function deductionLine(result: MonthResult) {
   return result.lines.find((line) => line.key === lineKeys.sickDeduction);
 }
 
-function deduct(month: YearMonth, spans: MonthSpan[], workerTerms = terms()) {
+function deduct(month: YearMonth, spans: ClosedSpan[], workerTerms = terms()) {
   return deductionLine(calculateMonth(facts(month, spans), workerTerms));
 }
 
@@ -297,7 +297,7 @@ describe("the rest-eve supplement and the week lost to sickness (items 8, 14)", 
   // not counted.
   const pocketMoney = terms({ restEveIsPocketMoney: true });
 
-  function supplement(spans: MonthSpan[]) {
+  function supplement(spans: ClosedSpan[]) {
     const result = calculateMonth(
       facts(AUGUST_2025, spans, pocketMoney),
       pocketMoney,
@@ -372,7 +372,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
   it("orders a span by date before reading it, never by how it was entered", () => {
     // A leftward drag in a right-to-left calendar moves forward in time
     // (Part 5), so a span may arrive with its two ends the other way round.
-    const reversed: MonthSpan = {
+    const reversed: ClosedSpan = {
       id: "sick-reversed",
       kind: "sick",
       from: "2025-08-05",
