@@ -155,23 +155,29 @@ export default function Home() {
                   <span>{he.calendar.marks(fixture.restDay)[span.kind]}</span>
                   <span> · </span>
                   <Bidi>{dayLabel(span.from)}</Bidi>
-                  <span> </span>
-                  <span>{he.calendar.selection.separator}</span>
-                  <span> </span>
-                  {/* An open spell has no last day to print, and printing the
-                      day it was clipped at would read as the day she returned
-                      (specs.md item 8). */}
+                  {/* An open spell has no last day to print, and it has not
+                      "continued into next month" either — it may end tomorrow.
+                      What is true of it is only that it has not ended, so that
+                      is the whole of what is said (specs.md item 8). */}
                   {span.to === null ? (
-                    <span>{he.calendar.selection.stillOpen}</span>
+                    <>
+                      <span> · </span>
+                      <span>{he.calendar.selection.stillOpen}</span>
+                    </>
                   ) : (
-                    <Bidi>{dayLabel(span.to)}</Bidi>
+                    <>
+                      <span> </span>
+                      <span>{he.calendar.selection.separator}</span>
+                      <span> </span>
+                      <Bidi>{dayLabel(span.to)}</Bidi>
+                      <span> · </span>
+                      <span>
+                        {before
+                          ? he.calendar.selection.continuesFrom
+                          : he.calendar.selection.continuesInto}
+                      </span>
+                    </>
                   )}
-                  <span> · </span>
-                  <span>
-                    {before
-                      ? he.calendar.selection.continuesFrom
-                      : he.calendar.selection.continuesInto}
-                  </span>
                 </li>
               ))}
             </ul>

@@ -1,4 +1,4 @@
-import { SATURDAY } from "@/lib/dates";
+import { FRIDAY, SATURDAY } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { he } from "@/lib/i18n/he";
 import type {
@@ -162,13 +162,57 @@ export interface HomeFixture {
   alerts: HomeAlert[];
 }
 
+/**
+ * The second worker's month, and she is deliberately not a copy of the first.
+ *
+ * **The two workers exist so the account's two states can be seen side by
+ * side** (specs.md item 11), and until a profile screen can set a rest day this
+ * switcher is the only place the two shapes the engine now supports are
+ * visible at all — a worker who does not rest on Saturday (item 5), and a spell
+ * of sickness that has not ended (item 8). Without her the calendar can draw
+ * only the common case, and the rest of the engine is checkable by nobody but
+ * the suite.
+ *
+ * She rests on **Friday**, so her free rest day falls on Friday the 7th and the
+ * legend beside her calendar reads "יום שישי חופשי" rather than "שבת חופשית" —
+ * the term is derived from her own rest day and is not fixed in the wording.
+ * Her sickness is recorded the way item 8 says one normally is: from the day
+ * she fell ill, with no return date, so it is drawn from the 26th to
+ * `fixtureToday` and no further.
+ */
+const otherSpans: DaySpan[] = [
+  // Friday the 7th of August 2026 — her rest day, and a Saturday for the first
+  // worker, which is what makes the pair worth switching between.
+  { id: "other-rest", kind: "freeRestDay", from: "2026-08-07", to: "2026-08-07" },
+  { id: "other-vacation", kind: "vacation", from: "2026-08-19", to: "2026-08-19" },
+  {
+    id: "other-holiday",
+    kind: "holiday",
+    from: "2026-08-20",
+    to: "2026-08-20",
+    worked: true,
+  } as HolidaySpan,
+  // Still running: `to` is null, not a date in the future (item 8).
+  { id: "other-sick", kind: "sick", from: "2026-08-26", to: null },
+];
+
 /** Two, because the canvas's worker switcher moves between two and an account
  * holds no more than two (specs.md item 11). */
-export const homeFixtures: HomeFixture[] = fixtureWorkers.map((worker) => ({
-  worker,
-  month: fixtureMonth,
-  restDay: SATURDAY,
-  spans,
-  result,
-  alerts,
-}));
+export const homeFixtures: HomeFixture[] = [
+  {
+    worker: fixtureWorkers[0],
+    month: fixtureMonth,
+    restDay: SATURDAY,
+    spans,
+    result,
+    alerts,
+  },
+  {
+    worker: fixtureWorkers[1],
+    month: fixtureMonth,
+    restDay: FRIDAY,
+    spans: otherSpans,
+    result,
+    alerts,
+  },
+];
