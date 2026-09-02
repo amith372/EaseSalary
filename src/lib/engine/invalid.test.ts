@@ -7,7 +7,7 @@ import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 /**
  * The deliberately invalid case (specs.md Part 4), and the two refusals it says
  * are the same refusal: a tenth paid holiday within a year, and a count of
- * worked Saturdays higher than the number of Saturdays in the month.
+ * worked rest days higher than the number of rest days in the month.
  *
  * `src/lib/spans.ts` already stops the first at the calendar and is tested
  * there. What is tested here is the engine refusing the facts if such a pair
@@ -18,8 +18,8 @@ import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 const terms: WorkerTerms = {
   employedSince: "2024-04-01",
   baseMonthlySalaryAgorot: 624765,
-  fridaySupplementAgorot: 10000,
-  fridayIsPocketMoney: false,
+  restEveSupplementAgorot: 10000,
+  restEveIsPocketMoney: false,
   recuperationMonth: 7,
   country: "PH",
   openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
@@ -51,11 +51,11 @@ const holiday = (date: string, worked = true): MonthSpan => ({
   worked,
 });
 
-describe("a paid holiday on a free Saturday (specs.md Part 4)", () => {
+describe("a paid holiday on a free rest day (specs.md Part 4)", () => {
   // The 16th of August 2025 is a Saturday, recorded as one the worker had off,
   // and then claimed as a paid holiday.
   const clashing = facts([
-    { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+    { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
     holiday("2025-08-16"),
   ]);
 
@@ -87,11 +87,11 @@ describe("a paid holiday on a free Saturday (specs.md Part 4)", () => {
 
   it("calculates the same month once the clash is removed", () => {
     // The refusal is about the pair, not about either mark on its own.
-    const justTheFreeSaturday = facts([
-      { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+    const justTheFreeRestDay = facts([
+      { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
     ]);
-    expect(validateMonth(justTheFreeSaturday, terms)).toEqual([]);
-    expect(calculateMonth(justTheFreeSaturday, terms).gross).toBe(674765 + 170540);
+    expect(validateMonth(justTheFreeRestDay, terms)).toEqual([]);
+    expect(calculateMonth(justTheFreeRestDay, terms).gross).toBe(674765 + 170540);
   });
 });
 
@@ -142,27 +142,32 @@ describe("a tenth paid holiday within a year (specs.md item 10, Part 4)", () => 
   });
 });
 
-describe("the Saturday counts cannot exceed the month (specs.md Part 4)", () => {
-  it("refuses a free Saturday recorded on a day that is not a Saturday", () => {
-    // This is how the Saturday counts actually go wrong in stored data. The
-    // 18th of August 2025 is a Monday, and the weekly rest day is Saturday for
-    // every worker (item 5).
+describe("the rest-day counts cannot exceed the month (specs.md Part 4)", () => {
+  it("refuses a free rest day recorded on a day that is not one", () => {
+    // This is how the rest-day counts actually go wrong in stored data. The
+    // 18th of August 2025 is a Monday, and this worker rests on Saturday.
+    //
+    // The refusal is still Saturday-only for everyone, which item 5 no longer
+    // says: it becomes per-worker in step 7c, and the case that would catch the
+    // difference — a Friday-resting worker's genuine free Friday — is one that
+    // step derives on paper. This one holds either way, because a Monday is
+    // nobody's rest day.
     const [refusal] = validateMonth(
       facts([
-        { id: "free-18", kind: "freeSaturday", from: "2025-08-18", to: "2025-08-18" },
+        { id: "free-18", kind: "freeRestDay", from: "2025-08-18", to: "2025-08-18" },
       ]),
       terms,
     );
-    expect(refusal.code).toBe("freeSaturdayNotSaturday");
+    expect(refusal.code).toBe("freeRestDayNotRestDay");
     expect(refusal.dates).toEqual(["2025-08-18"]);
   });
 
-  it("never reports more Saturdays worked than the month holds", () => {
+  it("never reports more rest days worked than the month holds", () => {
     // The count is derived from the calendar rather than typed, which is the
-    // guarantee Part 4 is asking for: a month cannot claim a sixth Saturday
-    // because there is no sixth Saturday to derive. Asserted across a month
-    // with a free Saturday and one without.
-    for (const spans of [[], [{ id: "f", kind: "freeSaturday" as const, from: "2025-08-16", to: "2025-08-16" }]]) {
+    // guarantee Part 4 is asking for: a month cannot claim a sixth rest day
+    // because there is no sixth rest day to derive. Asserted across a month
+    // with a free rest day and one without.
+    for (const spans of [[], [{ id: "f", kind: "freeRestDay" as const, from: "2025-08-16", to: "2025-08-16" }]]) {
       const result = calculateMonth(facts(spans), terms);
       const restDays = result.lines.find((line) => line.key === "restDays");
       expect(restDays?.units ?? 0).toBeLessThanOrEqual(5);
@@ -182,7 +187,7 @@ describe("every refusal carries the rule it rests on (specs.md item 25)", () => 
   const cases: { spans: MonthSpan[]; code: string; link: string }[] = [
     {
       spans: [
-        { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+        { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
         holiday("2025-08-16"),
       ],
       code: "restDayHoliday",
@@ -190,9 +195,9 @@ describe("every refusal carries the rule it rests on (specs.md item 25)", () => 
     },
     {
       spans: [
-        { id: "free-18", kind: "freeSaturday", from: "2025-08-18", to: "2025-08-18" },
+        { id: "free-18", kind: "freeRestDay", from: "2025-08-18", to: "2025-08-18" },
       ],
-      code: "freeSaturdayNotSaturday",
+      code: "freeRestDayNotRestDay",
       link: "restDayWork",
     },
     {
@@ -225,7 +230,7 @@ describe("every refusal carries the rule it rests on (specs.md item 25)", () => 
   it("gives every refusal a link, whichever ones a month produces", () => {
     const refusals = validateMonth(
       facts([
-        { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+        { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
         holiday("2025-08-16"),
         { id: "sick", kind: "sick", from: "2025-08-04", to: "2025-08-05" },
       ]),
@@ -310,13 +315,13 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
     ).toBe(false);
   });
 
-  it("gives the holiday-on-a-free-Saturday pair its own reason, not two", () => {
+  it("gives the holiday-on-a-free-rest-day pair its own reason, not two", () => {
     // Part 4 names that case, and a specific reason is worth more to the user
     // than a general one — so the date is left to `restDayHoliday` and is not
     // reported a second time as an overlap.
     const codes = validateMonth(
       facts([
-        { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+        { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
         holiday("2025-08-16"),
       ]),
       stocked,

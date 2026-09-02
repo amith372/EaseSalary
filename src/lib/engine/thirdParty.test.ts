@@ -54,7 +54,7 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  */
 
 const SALARY = 624765; // Part 4: ₪6,247.65
-const FRIDAY_SUPPLEMENT = 10000; // Part 4: ₪500 across five Fridays (item 14)
+const REST_EVE_SUPPLEMENT = 10000; // Part 4: ₪500 across five Fridays (item 14)
 const INSTALMENT = 200000; // Part 4: ₪2,000 a month
 
 const GROSS = 930575; // Part 4: ₪9,305.75
@@ -76,7 +76,7 @@ const QUARTER_COVERED: YearMonth[] = [
 ];
 
 const spans: MonthSpan[] = [
-  { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+  { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
   { id: "hol-19", kind: "holiday", from: "2025-08-19", to: "2025-08-19", worked: true },
   { id: "hol-21", kind: "holiday", from: "2025-08-21", to: "2025-08-21", worked: true },
 ];
@@ -84,8 +84,8 @@ const spans: MonthSpan[] = [
 const terms: WorkerTerms = {
   employedSince: "2024-04-01",
   baseMonthlySalaryAgorot: SALARY,
-  fridaySupplementAgorot: FRIDAY_SUPPLEMENT,
-  fridayIsPocketMoney: false,
+  restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
+  restEveIsPocketMoney: false,
   recuperationMonth: 7,
   country: "PH",
   openingPosition: {
@@ -197,7 +197,7 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
 
 describe("the national-insurance estimate (specs.md item 19)", () => {
   it("is 3.6% of the month's full cost, taken before the advances", () => {
-    // 3.6% of Part 4's ₪9,305.75 — the salary, the Friday supplement and the
+    // 3.6% of Part 4's ₪9,305.75 — the salary, the rest-eve supplement and the
     // Saturday and holiday pay — and not of the ₪7,305.75 that follows the
     // instalment: the contribution cannot depend on whether the family happened
     // to lend her money.

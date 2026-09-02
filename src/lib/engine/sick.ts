@@ -2,7 +2,7 @@ import {
   addDays,
   compareIsoDate,
   eachDate,
-  isSaturday,
+  isRestDay,
   monthOf,
   orderDates,
   sameMonth,
@@ -20,7 +20,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * nothing for the first day of a spell, half for the second and third, the
  * whole day from the fourth onward (item 8). What reaches the sheet is the
  * difference — a negative amount on the sickness-absence row of column E,
- * inside the same subtotal as the base and the Friday supplement — so the
+ * inside the same subtotal as the base and the rest-eve supplement — so the
  * worker is left with exactly what the tiers give her. A payment line beside a
  * base that already contains the day would pay it twice, which is the same
  * mistake the sheet deliberately avoids for vacation (item 7).
@@ -108,16 +108,16 @@ export function spellsOf(spans: MonthSpan[]): SickSpell[] {
 /** One day of a spell, with the position that decides what it is worth. */
 export interface SickDay {
   date: IsoDate;
-  /** Counting from 1 at the spell's own first day, Saturdays included: a
-   * Saturday inside a spell advances the position even though no money moves
-   * for it (specs.md item 8). */
+  /** Counting from 1 at the spell's own first day, rest days included: a rest
+   * day inside a spell advances the position even though no money moves for it
+   * (specs.md item 8). */
   dayOfSpell: number;
   /**
    * The part of a day's value the deduction takes back for this day.
    *
-   * **Zero on a Saturday, and that is one of four separate things a Saturday
+   * **Zero on a rest day, and that is one of four separate things a rest day
    * inside a spell does** (specs.md item 8). It is not paid; nothing is
-   * deducted from the money for it, which is this field — a Saturday stands
+   * deducted from the money for it, which is this field — a rest day stands
    * outside the standard count, so the base never paid for it, there is nothing
    * to take back, and a deduction would charge her for a day she was not paid;
    * it is nonetheless drawn from the sick balance, which is a count of days and
@@ -136,7 +136,7 @@ export function sickDaysOf(spans: MonthSpan[]): SickDay[] {
     eachDate(spell.from, spell.to).map((date, index) => ({
       date,
       dayOfSpell: index + 1,
-      unpaidDays: isSaturday(date) ? 0 : unpaidFractionOfSpellDay(index + 1),
+      unpaidDays: isRestDay(date) ? 0 : unpaidFractionOfSpellDay(index + 1),
     })),
   );
 }

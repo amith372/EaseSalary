@@ -1,4 +1,4 @@
-import { eachDate, fromIsoDate, isSaturday, orderDates } from "@/lib/dates";
+import { eachDate, fromIsoDate, isRestDay, orderDates } from "@/lib/dates";
 import type { MonthSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
 
@@ -77,37 +77,37 @@ export function holidayDaysWorked(spans: MonthSpan[]): number {
 }
 
 /**
- * The worked-holiday days that fall on a Saturday.
+ * The worked-holiday days that fall on a weekly rest day.
  *
- * A holiday on a Saturday she works is **paid once, not twice** (specs.md
+ * A holiday on a rest day she works is **paid once, not twice** (specs.md
  * item 9), and both would otherwise be paid at the same rest-day rate off the
- * same date: `countMonth` sees a Saturday carrying no absence and counts it as
- * a Saturday worked, while the holiday line counts it again. The day is left
+ * same date: `countMonth` sees a rest day carrying no absence and counts it as
+ * a rest day worked, while the holiday line counts it again. The day is left
  * with the holiday line — a holiday is also what draws the yearly entitlement,
  * so the fact that makes the day special is the one that should carry it — and
- * `restDayUnitsOf` takes it back out of the Saturdays.
+ * `restDayUnitsOf` takes it back out of the rest days.
  */
-export function holidaySaturdaysWorked(spans: MonthSpan[]): number {
+export function holidayRestDaysWorked(spans: MonthSpan[]): number {
   return totalFraction(
-    holidayDaysIn(spans, true).filter((day) => isSaturday(day.date)),
+    holidayDaysIn(spans, true).filter((day) => isRestDay(day.date)),
   );
 }
 
 /**
- * The Saturdays paid on the rest-day line: the Saturdays she worked, less the
+ * The rest days paid on the rest-day line: the rest days she worked, less the
  * part of them a worked holiday is already paying for.
  *
- * `saturdaysWorked` stays the true count of Saturdays she attended — it is a
+ * `restDaysWorked` stays the true count of rest days she attended — it is a
  * fact about the month and is reported as one — and the subtraction happens
  * here, where the question is what to pay rather than what happened. A half-day
- * holiday worked on a Saturday leaves half a Saturday on this line and half a
+ * holiday worked on a rest day leaves half a rest day on this line and half a
  * day on the holiday line, which is one day paid once between them.
  */
 export function restDayUnitsOf(
   spans: MonthSpan[],
-  saturdaysWorked: number,
+  restDaysWorked: number,
 ): number {
-  return Math.max(0, saturdaysWorked - holidaySaturdaysWorked(spans));
+  return Math.max(0, restDaysWorked - holidayRestDaysWorked(spans));
 }
 
 /** Nine days for a full year (specs.md item 10). */

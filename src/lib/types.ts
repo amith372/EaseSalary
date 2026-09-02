@@ -5,7 +5,7 @@ import type { LegalLinkKey } from "@/lib/links";
  * application holds dates this way and converts to a Date only through
  * `src/lib/dates.ts`, which builds in UTC: a date constructed in local time can
  * shift by a day across a daylight-saving boundary and silently change how many
- * Saturdays a month has (specs.md Part 5).
+ * rest days a month has (specs.md Part 5).
  */
 export type IsoDate = string;
 
@@ -16,12 +16,25 @@ export interface YearMonth {
 }
 
 /**
- * What the user can mark on a day. `freeSaturday` is the Saturday the worker
- * had off — not an entitlement, and a month without one is unremarkable
+ * What the user can mark on a day. `freeRestDay` is the weekly rest day the
+ * worker had off — not an entitlement, and a month without one is unremarkable
  * (specs.md item 5), which is why it is a mark of its own rather than the
  * absence of one.
+ *
+ * **These four strings are stored span data, not identifiers, so no compiler
+ * checks them.** `freeRestDay` was `freeSaturday` until the rest-day rename,
+ * and the rename is landed here rather than deferred because there is no
+ * database yet: stage 3 is what first writes a span to Postgres, so today the
+ * change costs an edit and after stage 3 it costs a migration — an `update
+ * spans set kind = 'freeRestDay' where kind = 'freeSaturday'` run against every
+ * deployed database, ordered against the check constraint that names the
+ * allowed kinds, with a reader that still understands the old value until the
+ * last row is converted. That is the story, and the reason it is written down
+ * rather than performed: **this is the last commit in which renaming a member
+ * of this union is free.** Anything added to it after stage 3 is named once and
+ * kept.
  */
-export type MarkKind = "vacation" | "sick" | "holiday" | "freeSaturday";
+export type MarkKind = "vacation" | "sick" | "holiday" | "freeRestDay";
 
 /**
  * A run of days carrying one mark. A single marked day is a span whose `from`
@@ -68,7 +81,7 @@ export interface Explanation {
 /**
  * Which column of the month tab the amount belongs in. The columns are not
  * interchangeable and only three of them reach the worker: E the monthly salary
- * items, F the pay for Saturdays and holidays, G the one-off payments. H holds
+ * items, F the pay for rest days and holidays, G the one-off payments. H holds
  * money paid to third parties and is deliberately excluded from the month's
  * total (specs.md Part 5, item 16).
  */
@@ -146,7 +159,7 @@ export interface ClosingLine {
  * A column's own total, as the month tab prints it.
  *
  * The sheet carries four total lines, not two: the monthly salary items come to
- * ₪6,747.65 and the Saturdays and holidays to ₪2,558.10 before the month's
+ * ₪6,747.65 and the rest days and holidays to ₪2,558.10 before the month's
  * total and the figure actually paid (specs.md criterion 1, Part 4). A subtotal
  * is emitted for every column the month has lines in, so a column with nothing
  * in it prints nothing rather than a zero.
@@ -204,7 +217,7 @@ export interface Warning {
 export interface MonthResult {
   month: YearMonth;
   /**
-   * The month's days less its Saturdays. Nothing the worker takes reduces it —
+   * The month's days less its rest days. Nothing the worker takes reduces it —
    * neither vacation nor sickness — and the salary is calculated from it
    * (specs.md item 5).
    */

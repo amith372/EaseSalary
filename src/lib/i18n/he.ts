@@ -100,10 +100,16 @@ export const he = {
       vacation: "חופשה",
       sick: "מחלה",
       holiday: "חג",
-      /** The Saturday the worker had off — an exception the user recorded. */
-      freeSaturday: "שבת חופשית",
+      /**
+       * The weekly rest day the worker had off — an exception the user
+       * recorded. The Hebrew still says "שבת" because the wording is derived
+       * from the worker's own rest day only from step 7c onward; a
+       * Saturday-resting worker reads "שבת חופשית" either way (specs.md
+       * item 5).
+       */
+      freeRestDay: "שבת חופשית",
       /** A day she worked, which is every day carrying no mark at all — an
-       * unmarked Saturday included. It labels the legend and marks nothing. */
+       * unmarked rest day included. It labels the legend and marks nothing. */
       workDay: "יום עבודה",
     },
     selection: {
@@ -133,7 +139,7 @@ export const he = {
     skipped: {
       title: "ימים שלא סומנו",
       weeklyRest: "שבת היא כבר יום המנוחה השבועי, ולכן אינה נגרעת ממכסת החופשה",
-      notSaturday: "רק שבת יכולה להיות מסומנת כשבת חופשית",
+      notRestDay: "רק שבת יכולה להיות מסומנת כשבת חופשית",
       alreadyMarked: "היום כבר מסומן",
       restDayHoliday: "שבת שסומנה כחופשית משולמת פעם אחת, ולכן אי אפשר לסמן בה גם חג",
       dismiss: "להסתיר",
@@ -206,7 +212,18 @@ export const he = {
   sheet: {
     lines: {
       base: "שכר החודש",
-      fridaySupplement: "תוספת ימי שישי",
+      /**
+       * **The label and the key are a pair, and only the key was renamed.** The
+       * key is `lineKeys.restEveSupplement`, which addresses a stored override
+       * (item 17), while the Hebrew still names Friday and Saturday because
+       * that is where a Saturday-resting worker's rest-eve and rest day fall.
+       * Both sentences become the worker's own day in step 7c of
+       * `build_plan.md`, alongside the nine template labels Part 3 lists. Until
+       * then the wording is what keeps `august-2025.snap.md` byte-identical
+       * through the rename, which is the check that proves the rename moved no
+       * figure.
+       */
+      restEveSupplement: "תוספת ימי שישי",
       restDays: "עבודה בשבת",
       holidaysWorked: "עבודה בחג",
       sickDeduction: "ניכוי ימי מחלה",
@@ -247,10 +264,12 @@ export const he = {
     why: {
       base: (standardDays: number) =>
         `משכורת חודשית מלאה. היא נשענת על ${standardDays} ימי התקן של החודש — כל ימי החודש חוץ מהשבתות — ולכן חופשה או מחלה אינן מקטינות אותה.`,
-      fridaySupplement: (fridays: number) =>
-        `תוספת קבועה שנקבעה בפרופיל עבור כל יום שישי, והחודש היא משולמת עבור ${fridays} ימי שישי.`,
-      restDays: (saturdays: number) =>
-        `עבודה בשבת משולמת בתעריף המנוחה השבועית: יום עבודה ועוד שעה, בתוספת של חצי. המנוחה השבועית של עובד/ת סיעוד היא 25 שעות ולא 24, ולכן התעריף גבוה מיום וחצי רגיל. החודש נעבדו ${saturdays} שבתות.`,
+      /** Names Friday in words, for the reason given at `lines.restEveSupplement`
+       * above: the key moved in this step and the sentence moves in 7c. */
+      restEveSupplement: (restEves: number) =>
+        `תוספת קבועה שנקבעה בפרופיל עבור כל יום שישי, והחודש היא משולמת עבור ${restEves} ימי שישי.`,
+      restDays: (restDays: number) =>
+        `עבודה בשבת משולמת בתעריף המנוחה השבועית: יום עבודה ועוד שעה, בתוספת של חצי. המנוחה השבועית של עובד/ת סיעוד היא 25 שעות ולא 24, ולכן התעריף גבוה מיום וחצי רגיל. החודש נעבדו ${restDays} שבתות.`,
       holidaysWorked: (holidays: number) =>
         `חג שנעבד משולם באותו תעריף כמו שבת. חג שלא נעבד אינו מזכה בתוספת, כי המשכורת החודשית משולמת עליו במלואה. החודש נעבדו ${holidays} ימי חג.`,
       sickDeduction: (days: number) =>
@@ -290,7 +309,11 @@ export const he = {
         "אי אפשר לסמן חג בתאריך שכבר סומן בו שבת חופשית. היום היה משולם פעמיים — גם בתעריף המנוחה השבועית וגם כחג — ולכן צריך לבחור אחד מהשניים.",
       holidayLimit: (allowed: number) =>
         `המכסה היא ${allowed} ימי חג בשנה, והרישום הזה חורג ממנה. אפשר להסיר חג אחר שנבחר לשנה הזו במקומו.`,
-      freeSaturdayNotSaturday:
+      /** Says the rest day is Saturday for every worker, which item 5 no longer
+       * says and `validate.ts` still does. The refusal and its wording become
+       * per-worker together in step 7c; wording the sentence for a rule the code
+       * does not yet enforce would be the worse of the two lies. */
+      freeRestDayNotRestDay:
         "שבת חופשית נרשמה על יום שאינו שבת. יום המנוחה השבועית הוא שבת עבור כל עובד/ת, ולכן הרישום הזה לא יכול להיות נכון.",
       dayRecordedTwice:
         "בתאריך הזה נרשמו שני סימונים. יום אחד לא יכול להיות גם יום שנעבד וגם יום שלא נעבד, ואי אפשר לספור אותו פעמיים. היישום אינו יודע מה מבין השניים קרה, ולכן הוא עוצר ומבקש שתחליט/י — במקום לבחור לבד ולהראות סכום שנראה רגיל לגמרי.",

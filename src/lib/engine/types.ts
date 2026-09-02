@@ -70,16 +70,22 @@ export interface WorkerTerms {
    */
   baseMonthlySalaryAgorot: number;
   /**
-   * The supplement for one Friday, which is also one week's, since a week holds
-   * one Friday (specs.md item 14). It is a fact about this employment and not a
-   * derived rate, which is why it is stored rather than computed from the
-   * salary, and it can be changed at any time.
+   * The supplement for one rest-eve, which is also one week's, since a week
+   * holds one rest-eve (specs.md item 14). It is a fact about this employment
+   * and not a derived rate, which is why it is stored rather than computed from
+   * the salary, and it can be changed at any time.
+   *
+   * It is the rest-eve supplement and not the Friday supplement because Friday
+   * is only where it lands for a Saturday-resting worker: the day it falls on
+   * is the working day immediately before the weekly rest day, so a
+   * Sunday-resting worker earns it on Saturday and a Friday-resting worker on
+   * Thursday (item 14).
    */
-  fridaySupplementAgorot: number;
-  /** When the supplement counts as pocket money, a Friday the worker did not
+  restEveSupplementAgorot: number;
+  /** When the supplement counts as pocket money, a rest-eve the worker did not
    * work is paid it all the same (specs.md item 14) — subject to the sickness
    * rule in item 8, which Step 5 applies. */
-  fridayIsPocketMoney: boolean;
+  restEveIsPocketMoney: boolean;
   /** 1-12. The month the recuperation payment falls in, set on the profile when
    * the worker is created (specs.md item 15). */
   recuperationMonth: number;
@@ -114,16 +120,16 @@ export interface WorkerTerms {
  */
 export interface MonthTerms {
   /**
-   * The supplement for one Friday, which is also one week's, since a week holds
-   * one Friday (specs.md item 14). Nothing in law requires it: it is paid
-   * because the family agreed to pay it, which is why it is a stored fact about
-   * this employment and not a rate derived from the salary.
+   * The supplement for one rest-eve, which is also one week's, since a week
+   * holds one rest-eve (specs.md item 14). Nothing in law requires it: it is
+   * paid because the family agreed to pay it, which is why it is a stored fact
+   * about this employment and not a rate derived from the salary.
    */
-  fridaySupplementAgorot: number;
-  /** When the supplement counts as pocket money, a Friday the worker did not
+  restEveSupplementAgorot: number;
+  /** When the supplement counts as pocket money, a rest-eve the worker did not
    * work is paid it all the same (specs.md item 14) - subject to the sickness
    * rule in item 8. */
-  fridayIsPocketMoney: boolean;
+  restEveIsPocketMoney: boolean;
   /** 1-12. The month the recuperation payment falls in (specs.md item 15). */
   recuperationMonth: number;
 }
@@ -135,8 +141,8 @@ export interface MonthTerms {
  */
 export function snapshotTerms(worker: WorkerTerms): MonthTerms {
   return {
-    fridaySupplementAgorot: worker.fridaySupplementAgorot,
-    fridayIsPocketMoney: worker.fridayIsPocketMoney,
+    restEveSupplementAgorot: worker.restEveSupplementAgorot,
+    restEveIsPocketMoney: worker.restEveIsPocketMoney,
     recuperationMonth: worker.recuperationMonth,
   };
 }

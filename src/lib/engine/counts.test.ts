@@ -10,6 +10,12 @@ import type { YearMonth } from "@/lib/types";
  * Fridays and its four worked Saturdays outright; Part 5 states both halves of
  * the Saturday-start / Sunday-start pair, again as figures rather than as a
  * rule to apply. The remaining assertions are items 5 and 8 in words.
+ *
+ * **Every worker in this file rests on Saturday**, which is the default and
+ * Hanna's own, so the counts here say nothing about a Friday- or Sunday-resting
+ * worker — the weekday names below are that one worker's calendar and not the
+ * rule. Step 7c of `build_plan.md` carries the cases that do, derived on paper
+ * from items 5, 8 and 14 rather than from anything this suite already returns.
  */
 
 function facts(
@@ -38,8 +44,8 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   return {
     employedSince: "2024-04-01",
     baseMonthlySalaryAgorot: 624765,
-    fridaySupplementAgorot: 10000,
-    fridayIsPocketMoney: false,
+    restEveSupplementAgorot: 10000,
+    restEveIsPocketMoney: false,
     recuperationMonth: 7,
     country: "PH",
     openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
@@ -61,9 +67,9 @@ const vacation = (from: string, to: string): MonthSpan => ({
   to,
 });
 
-const freeSaturday = (date: string): MonthSpan => ({
+const freeRestDay = (date: string): MonthSpan => ({
   id: `free-${date}`,
-  kind: "freeSaturday",
+  kind: "freeRestDay",
   from: date,
   to: date,
 });
@@ -80,7 +86,7 @@ const holiday = (date: string, worked: boolean): MonthSpan => ({
  * the 19th and the 21st both worked. */
 const AUGUST_2025: YearMonth = { year: 2025, month: 8 };
 const august2025Spans: MonthSpan[] = [
-  freeSaturday("2025-08-16"),
+  freeRestDay("2025-08-16"),
   holiday("2025-08-19", true),
   holiday("2025-08-21", true),
 ];
@@ -91,21 +97,21 @@ describe("August 2025, the known case (specs.md Part 4)", () => {
     // salary is wrong before a single rate is applied to it.
     const counts = countMonth(facts(AUGUST_2025, august2025Spans));
     expect(counts.standardDays).toBe(26);
-    expect(counts.saturdays).toBe(5);
+    expect(counts.restDays).toBe(5);
   });
 
-  it("gives five Fridays, all worked", () => {
-    // Part 4: "five Fridays worked".
+  it("gives five rest-eves, all worked", () => {
+    // Part 4: "five Fridays worked", and Friday is this worker's rest-eve.
     const counts = countMonth(facts(AUGUST_2025, august2025Spans));
-    expect(counts.fridays).toBe(5);
-    expect(counts.fridaysWorked).toBe(5);
-    expect(counts.fridaysPaidSupplement).toBe(5);
+    expect(counts.restEves).toBe(5);
+    expect(counts.restEvesWorked).toBe(5);
+    expect(counts.restEvesPaidSupplement).toBe(5);
   });
 
-  it("gives four Saturdays worked after the free one on the 16th", () => {
+  it("gives four rest days worked after the free one on the 16th", () => {
     // Part 4: "four Saturdays worked, one free Saturday on the 16th".
     const counts = countMonth(facts(AUGUST_2025, august2025Spans));
-    expect(counts.saturdaysWorked).toBe(4);
+    expect(counts.restDaysWorked).toBe(4);
   });
 
   it("counts two worked holidays as days worked", () => {
@@ -116,21 +122,21 @@ describe("August 2025, the known case (specs.md Part 4)", () => {
   });
 });
 
-describe("a free Saturday changes neither day count (specs.md item 5)", () => {
+describe("a free rest day changes neither day count (specs.md item 5)", () => {
   it("leaves the standard and actual counts exactly as they were", () => {
-    // Saturdays sit outside the standard count already, so marking one free
+    // Rest days sit outside the standard count already, so marking one free
     // must move neither figure. This is the mistake that would silently shrink
     // the base salary.
     const without = countMonth(facts(AUGUST_2025, []));
-    const withFree = countMonth(facts(AUGUST_2025, [freeSaturday("2025-08-16")]));
+    const withFree = countMonth(facts(AUGUST_2025, [freeRestDay("2025-08-16")]));
 
     expect(withFree.standardDays).toBe(without.standardDays);
     expect(withFree.actualDays).toBe(without.actualDays);
     expect(withFree.standardDays).toBe(26);
     expect(withFree.actualDays).toBe(26);
     // It moves only the count it should.
-    expect(without.saturdaysWorked).toBe(5);
-    expect(withFree.saturdaysWorked).toBe(4);
+    expect(without.restDaysWorked).toBe(5);
+    expect(withFree.restDaysWorked).toBe(4);
   });
 });
 
@@ -143,13 +149,13 @@ describe("the Saturday-start and Sunday-start pair (specs.md Part 5)", () => {
 
   it("gives five Saturdays and 26 working days when the 1st is a Saturday", () => {
     const counts = countMonth(facts(augustSaturdayStart));
-    expect(counts.saturdays).toBe(5);
+    expect(counts.restDays).toBe(5);
     expect(counts.standardDays).toBe(26);
   });
 
   it("gives four Saturdays and 27 working days when the 1st is a Sunday", () => {
     const counts = countMonth(facts(marchSundayStart));
-    expect(counts.saturdays).toBe(4);
+    expect(counts.restDays).toBe(4);
     expect(counts.standardDays).toBe(27);
   });
 
@@ -158,7 +164,7 @@ describe("the Saturday-start and Sunday-start pair (specs.md Part 5)", () => {
     // about, and it would stay invisible until a month with an absence in it.
     const saturdayStart = countMonth(facts(augustSaturdayStart));
     const sundayStart = countMonth(facts(marchSundayStart));
-    expect(saturdayStart.saturdays).not.toBe(sundayStart.saturdays);
+    expect(saturdayStart.restDays).not.toBe(sundayStart.restDays);
     expect(saturdayStart.standardDays).not.toBe(sundayStart.standardDays);
   });
 });
@@ -189,11 +195,11 @@ describe("what leaves the actual count and what does not (specs.md items 5, 8)",
   });
 
   it("does not pay a Saturday inside a sick spell as a Saturday worked", () => {
-    // Item 8: the Saturdays inside a spell count toward it and are drawn from
+    // Item 8: the rest days inside a spell count toward it and are drawn from
     // the balance, but are not paid. Paying one would be a Saturday she spent
     // sick charged at the rest-day rate.
     const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-15", "2025-08-17")]));
-    expect(counts.saturdaysWorked).toBe(4);
+    expect(counts.restDaysWorked).toBe(4);
   });
 
   it("counts a holiday she did not work as a day not worked (specs.md item 5)", () => {
@@ -235,46 +241,47 @@ describe("a holiday moves the count or the money, never both (specs.md item 5)",
   });
 });
 
-describe("the Friday supplement and the week lost to sickness (specs.md items 8, 14)", () => {
+describe("the rest-eve supplement and the week lost to sickness (specs.md items 8, 14)", () => {
   // August 2025's Fridays are the 1st, 8th, 15th, 22nd and 29th. The week of
   // Friday the 22nd runs Sunday the 17th through Friday the 22nd.
-  const pocketMoney = terms({ fridayIsPocketMoney: true });
+  const pocketMoney = terms({ restEveIsPocketMoney: true });
 
   it("pays the supplement when sickness ran Sunday to Thursday and the Friday was worked", () => {
     // Item 8: one day worked in that week is enough for the supplement to be
     // paid. This is the case that fails if "the week" is computed as the seven
     // days before the Friday.
     const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-17", "2025-08-21")], pocketMoney));
-    expect(counts.fridaysPaidSupplement).toBe(5);
-    expect(counts.fridaysWorked).toBe(5);
+    expect(counts.restEvesPaidSupplement).toBe(5);
+    expect(counts.restEvesWorked).toBe(5);
   });
 
   it("does not pay it when sickness ran Sunday through Friday", () => {
     // The whole of that week was lost, so that one Friday drops out and the
     // other four stand.
     const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-17", "2025-08-22")], pocketMoney));
-    expect(counts.fridaysPaidSupplement).toBe(4);
-    expect(counts.fridaysWorked).toBe(4);
+    expect(counts.restEvesPaidSupplement).toBe(4);
+    expect(counts.restEvesWorked).toBe(4);
   });
 
-  it("does not count Saturday as a working day of that week", () => {
+  it("does not count the rest day as a working day of that week", () => {
     // Sunday the 17th through Friday the 22nd is the whole week even though
-    // Saturday the 23rd was worked: Saturday is the weekly rest day and is not
-    // counted (item 8).
+    // Saturday the 23rd was worked: the rest day is not counted (item 8). The
+    // week happens to be Sunday-anchored here only because this worker rests on
+    // Saturday; item 8 anchors it to her own rest day, which is 7c's case.
     const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-17", "2025-08-22")], pocketMoney));
-    expect(counts.saturdaysWorked).toBe(5);
-    expect(counts.fridaysPaidSupplement).toBe(4);
+    expect(counts.restDaysWorked).toBe(5);
+    expect(counts.restEvesPaidSupplement).toBe(4);
   });
 
-  it("pays a Friday not worked only where the supplement is pocket money (specs.md item 14)", () => {
-    // The same vacation Friday, read under both settings: pocket money pays it
+  it("pays a rest-eve not worked only where the supplement is pocket money (specs.md item 14)", () => {
+    // The same vacation rest-eve, read under both settings: pocket money pays it
     // all the same, and the supplement that follows the day does not.
     const onVacation = [vacation("2025-08-22", "2025-08-22")];
     expect(
-      countMonth(facts(AUGUST_2025, onVacation, pocketMoney)).fridaysPaidSupplement,
+      countMonth(facts(AUGUST_2025, onVacation, pocketMoney)).restEvesPaidSupplement,
     ).toBe(5);
     expect(
-      countMonth(facts(AUGUST_2025, onVacation)).fridaysPaidSupplement,
+      countMonth(facts(AUGUST_2025, onVacation)).restEvesPaidSupplement,
     ).toBe(4);
   });
 });

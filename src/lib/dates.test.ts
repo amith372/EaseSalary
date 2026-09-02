@@ -6,12 +6,12 @@ import {
   daysBetween,
   daysInMonth,
   eachDate,
-  isFriday,
-  isSaturday,
+  isRestEve,
+  isRestDay,
   monthGrid,
   orderDates,
   SATURDAY,
-  saturdaysOf,
+  restDaysOf,
   toIsoDate,
   utcDate,
   weekdayOfFirst,
@@ -28,9 +28,9 @@ describe("the weekday numbering", () => {
   });
 
   it("separates Friday from Saturday", () => {
-    expect(isFriday("2026-08-07")).toBe(true);
-    expect(isSaturday("2026-08-07")).toBe(false);
-    expect(isSaturday("2026-08-08")).toBe(true);
+    expect(isRestEve("2026-08-07")).toBe(true);
+    expect(isRestDay("2026-08-07")).toBe(false);
+    expect(isRestDay("2026-08-08")).toBe(true);
   });
 });
 
@@ -42,9 +42,9 @@ describe("August 2026", () => {
     expect(cells[6]).toBe("2026-08-01");
   });
 
-  it("has 31 days and five Saturdays", () => {
+  it("has 31 days and five rest days", () => {
     expect(daysInMonth(august2026)).toBe(31);
-    expect(saturdaysOf(august2026)).toEqual([
+    expect(restDaysOf(august2026)).toEqual([
       "2026-08-01",
       "2026-08-08",
       "2026-08-15",
@@ -68,21 +68,21 @@ describe("the leading blanks are derived, never assumed", () => {
     const march2026: YearMonth = { year: 2026, month: 3 };
     expect(weekdayOfFirst(march2026)).toBe(0);
     expect(monthGrid(march2026)[0]).toBe("2026-03-01");
-    expect(saturdaysOf(march2026)).toHaveLength(4);
-    expect(saturdaysOf(august2026)).toHaveLength(5);
+    expect(restDaysOf(march2026)).toHaveLength(4);
+    expect(restDaysOf(august2026)).toHaveLength(5);
   });
 });
 
 describe("dates are built outside any local time zone", () => {
-  it("counts the same Saturdays across a daylight-saving boundary", () => {
+  it("counts the same rest days across a daylight-saving boundary", () => {
     // Israel moves its clocks in late March and late October. A date built in
     // local time can shift by a whole day across either, which would change the
-    // Saturday count of the month without announcing itself.
+    // rest-day count of the month without announcing itself.
     for (const month of [3, 10]) {
       const ym: YearMonth = { year: 2026, month };
-      const saturdays = saturdaysOf(ym);
-      expect(saturdays.every(isSaturday)).toBe(true);
-      expect(saturdays).toHaveLength(month === 3 ? 4 : 5);
+      const restDays = restDaysOf(ym);
+      expect(restDays.every(isRestDay)).toBe(true);
+      expect(restDays).toHaveLength(month === 3 ? 4 : 5);
     }
   });
 

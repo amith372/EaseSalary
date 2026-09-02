@@ -30,7 +30,7 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  */
 
 const SALARY = 624765;
-const FRIDAY_SUPPLEMENT = 10000;
+const REST_EVE_SUPPLEMENT = 10000;
 
 const AUGUST_2025: YearMonth = { year: 2025, month: 8 };
 const SEPTEMBER_2025: YearMonth = { year: 2025, month: 9 };
@@ -64,8 +64,8 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   return {
     employedSince: "2024-04-01",
     baseMonthlySalaryAgorot: SALARY,
-    fridaySupplementAgorot: FRIDAY_SUPPLEMENT,
-    fridayIsPocketMoney: false,
+    restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
+    restEveIsPocketMoney: false,
     recuperationMonth: 7,
     country: "PH",
     openingPosition: {
@@ -219,7 +219,7 @@ describe("the four things a Saturday inside a spell does (specs.md item 8)", () 
   it("does not deduct for them, because they were never paid for", () => {
     // Friday 8 is tier day 1   -> 1
     // Saturday 9 is tier day 2 -> 0. A Saturday stands outside the standard
-    //   count, so the base never paid for it, and item 8 says the Saturdays in
+    //   count, so the base never paid for it, and item 8 says the rest days in
     //   a spell are not paid. Taking money back for one would charge her for a
     //   day she was not paid. It still advances the tier, which is what makes
     //   the Sunday the third day and not the second.
@@ -253,7 +253,7 @@ describe("where the deduction sits on the sheet (specs.md item 8, Part 5)", () =
   const spans = [sick("2025-08-03", "2025-08-05")];
 
   it("sits in column E, inside the same subtotal as the base and the supplement", () => {
-    // Item 8: "inside the same subtotal as the base and the Friday supplement,
+    // Item 8: "inside the same subtotal as the base and the rest-eve supplement,
     // and never among the one-off payments: a deduction is not a payment."
     const result = calculateMonth(facts(AUGUST_2025, spans), terms());
     expect(deductionLine(result)?.column).toBe("E");
@@ -288,19 +288,19 @@ describe("where the deduction sits on the sheet (specs.md item 8, Part 5)", () =
   });
 });
 
-describe("the Friday supplement and the week lost to sickness (items 8, 14)", () => {
+describe("the rest-eve supplement and the week lost to sickness (items 8, 14)", () => {
   // The pair that fails the moment "the week" is computed as the seven days
   // before the Friday rather than from the calendar. The week of Friday 8
   // August runs Sunday 3 to Friday 8; Saturday is the weekly rest day and is
   // not counted.
-  const pocketMoney = terms({ fridayIsPocketMoney: true });
+  const pocketMoney = terms({ restEveIsPocketMoney: true });
 
   function supplement(spans: MonthSpan[]) {
     const result = calculateMonth(
       facts(AUGUST_2025, spans, pocketMoney),
       pocketMoney,
     );
-    return result.lines.find((line) => line.key === lineKeys.fridaySupplement);
+    return result.lines.find((line) => line.key === lineKeys.restEveSupplement);
   }
 
   it("pays it when sickness ran Sunday to Thursday and the Friday was worked", () => {

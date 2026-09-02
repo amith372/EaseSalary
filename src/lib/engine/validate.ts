@@ -1,7 +1,7 @@
 import {
   compareIsoDate,
   eachDate,
-  isSaturday,
+  isRestDay,
   orderDates,
 } from "@/lib/dates";
 import { daysUsedIn, sickDaysAvailable } from "@/lib/engine/balances";
@@ -24,7 +24,7 @@ import type { IsoDate, MarkKind } from "@/lib/types";
  * The facts the engine refuses, with the reason each was refused.
  *
  * `src/lib/spans.ts` already stops these at the calendar: a holiday swept over
- * a free Saturday comes back as a `restDayHoliday` skip rather than a mark. But
+ * a free rest day comes back as a `restDayHoliday` skip rather than a mark. But
  * the calendar is one caller and the repository in Stage 3 is another, so the
  * engine refuses the facts if such a pair reaches it anyway (specs.md Part 4).
  * A month that cannot be calculated correctly is refused with a reason and
@@ -32,21 +32,22 @@ import type { IsoDate, MarkKind } from "@/lib/types";
  */
 
 export type RefusalCode =
-  /** A paid holiday on a date already recorded as a free Saturday. The day
+  /** A paid holiday on a date already recorded as a free rest day. The day
    * would be paid at both the rest-day rate and the holiday rate (Part 4). */
   | "restDayHoliday"
   /** More paid holidays in the year than the entitlement allows (item 10). */
   | "holidayLimit"
-  /** A free Saturday recorded on a day that is not a Saturday (item 5). */
-  | "freeSaturdayNotSaturday"
+  /** A free rest day recorded on a day that is not the worker's rest day
+   * (item 5). */
+  | "freeRestDayNotRestDay"
   /**
    * One date carrying more than one entry — a day recorded as both sick and
    * worked as a holiday, or recorded twice over (Part 4).
    *
    * There is no `saturdaysExceedMonth` beside it, and its absence is the
-   * decision rather than an omission. A count of worked Saturdays higher than
-   * the month holds cannot arise: `countMonth` filters the calendar's own
-   * Saturdays rather than reading a number, so no stored data produces one. The
+   * decision rather than an omission. A count of worked rest days higher than
+   * the month holds cannot arise: `countMonth` filters the calendar's own rest
+   * days rather than reading a number, so no stored data produces one. The
    * failure mode came from the family's workbook, where that figure is typed —
    * G2 of `שכר_חודשי_להאנה2025.xlsx` -> `חודש  8.25` — and deriving it moved
    * the danger rather than removing it: the holiday count is the one the
@@ -96,7 +97,7 @@ const LINK_FOR: Record<
 > = {
   restDayHoliday: "holidayWork",
   holidayLimit: "holidayWork",
-  freeSaturdayNotSaturday: "restDayWork",
+  freeRestDayNotRestDay: "restDayWork",
   sickBalanceExhausted: "sickPay",
 };
 
@@ -111,7 +112,7 @@ const LINK_FOR_KIND: Record<MarkKind, LegalLinkKey> = {
   vacation: "annualLeave",
   sick: "sickPay",
   holiday: "holidayWork",
-  freeSaturday: "restDayWork",
+  freeRestDay: "restDayWork",
 };
 
 function coversDate(span: MonthSpan, date: IsoDate): boolean {
@@ -141,10 +142,10 @@ function datesOf(span: MonthSpan): IsoDate[] {
  * entries of the same kind on one date are the same problem in its plainest
  * form: the day is paid twice and drawn twice from its entitlement.
  *
- * The cost of not refusing is not theoretical. A sick spell covering a Saturday
+ * The cost of not refusing is not theoretical. A sick spell covering a rest day
  * that is also marked as a holiday she worked leaves `restDayUnitsOf`
- * subtracting a Saturday that sickness had already taken out, so the sheet
- * reports three Saturdays worked where she worked four. The month's total can
+ * subtracting a rest day that sickness had already taken out, so the sheet
+ * reports three rest days worked where she worked four. The month's total can
  * still come out plausible, which is exactly what makes it dangerous: item 2
  * requires every payment to carry its type, its number of units and its amount,
  * and the units are what is wrong.
@@ -178,7 +179,7 @@ export function validateMonth(
   const refusals: Refusal[] = [];
   const { spans } = facts;
 
-  // A paid holiday landing on a free Saturday: the deliberately invalid case of
+  // A paid holiday landing on a free rest day: the deliberately invalid case of
   // Part 4. Refused rather than paid at both rates.
   const clashes = spans
     .filter((span) => span.kind === "holiday")
@@ -186,7 +187,7 @@ export function validateMonth(
       spans
         .filter(
           (other) =>
-            other.kind === "freeSaturday" && coversDate(other, holiday.from),
+            other.kind === "freeRestDay" && coversDate(other, holiday.from),
         )
         .map(() => holiday.from),
     );
@@ -200,7 +201,7 @@ export function validateMonth(
   }
 
   // A date carrying more than one entry. Reported after `restDayHoliday` and
-  // with its dates removed, so the holiday-on-a-free-Saturday pair gets the
+  // with its dates removed, so the holiday-on-a-free-rest-day pair gets the
   // reason Part 4 names for it rather than two refusals for one mistake: a
   // specific reason is worth more to the user than a general one.
   const alreadyRefused = new Set(clashes);
@@ -218,18 +219,24 @@ export function validateMonth(
     });
   }
 
-  // A free Saturday on a day that is not a Saturday. The weekly rest day is
-  // Saturday for every worker (item 5), so this is how the Saturday counts go
-  // wrong in stored data even though the calendar refuses it at mark time.
-  const notSaturdays = spans
-    .filter((span) => span.kind === "freeSaturday" && !isSaturday(span.from))
+  // A free rest day on a day that is not one. This is how the rest-day counts
+  // go wrong in stored data even though the calendar refuses it at mark time.
+  //
+  // `isRestDay` still answers Saturday for every worker, which item 5 no longer
+  // says: the rest day is a term of the employment and the refusal has to read
+  // it off the month. Step 7c of `build_plan.md` is where it does, and this is
+  // the refusal that step names. Until then a Friday-resting worker's genuine
+  // free Friday is refused here — a refusal that is wrong rather than a figure
+  // that is wrong, which is the direction to be wrong in for one step.
+  const notRestDays = spans
+    .filter((span) => span.kind === "freeRestDay" && !isRestDay(span.from))
     .map((span) => span.from);
-  if (notSaturdays.length > 0) {
+  if (notRestDays.length > 0) {
     refusals.push({
-      code: "freeSaturdayNotSaturday",
-      link: LINK_FOR.freeSaturdayNotSaturday,
-      message: he.sheet.refusals.freeSaturdayNotSaturday,
-      dates: notSaturdays,
+      code: "freeRestDayNotRestDay",
+      link: LINK_FOR.freeRestDayNotRestDay,
+      message: he.sheet.refusals.freeRestDayNotRestDay,
+      dates: notRestDays,
     });
   }
 

@@ -13,7 +13,7 @@ import type { DaySpan } from "@/lib/types";
  * Part 5 warns about.
  */
 
-describe("a vacation span skips its Saturdays", () => {
+describe("a vacation span skips its rest days", () => {
   it("draws six days from 16 to 22 August, not seven", () => {
     const { spans, skipped } = applyMark({
       kind: "vacation",
@@ -31,7 +31,7 @@ describe("a vacation span skips its Saturdays", () => {
     expect(skipped).toEqual([{ date: "2026-08-22", reason: "weeklyRest" }]);
   });
 
-  it("splits into two spans where a Saturday falls inside the range", () => {
+  it("splits into two spans where a rest day falls inside the range", () => {
     const { spans, skipped } = applyMark({
       kind: "vacation",
       from: "2026-08-14",
@@ -47,7 +47,7 @@ describe("a vacation span skips its Saturdays", () => {
   });
 });
 
-describe("a sick span keeps its Saturdays", () => {
+describe("a sick span keeps its rest days", () => {
   it("stores 16 to 22 August whole and draws all seven days", () => {
     const { spans, skipped } = applyMark({
       kind: "sick",
@@ -94,22 +94,22 @@ describe("a range is ordered by date, never by the direction it was drawn", () =
   });
 });
 
-describe("only a Saturday can be marked as the Saturday the worker had off", () => {
-  it("marks the Saturdays of a swept week and refuses the rest", () => {
+describe("only a rest day can be marked as the rest day the worker had off", () => {
+  it("marks the rest days of a swept week and refuses the rest", () => {
     const { spans, skipped } = applyMark({
-      kind: "freeSaturday",
+      kind: "freeRestDay",
       from: "2026-08-01",
       to: "2026-08-08",
     });
 
     expect(spans.map((s) => s.from)).toEqual(["2026-08-01", "2026-08-08"]);
     expect(skipped).toHaveLength(6);
-    expect(skipped.every((s) => s.reason === "notSaturday")).toBe(true);
+    expect(skipped.every((s) => s.reason === "notRestDay")).toBe(true);
   });
 
   it("draws nothing from a balance, being no entitlement", () => {
     const { spans } = applyMark({
-      kind: "freeSaturday",
+      kind: "freeRestDay",
       from: "2026-08-01",
       to: "2026-08-01",
     });
@@ -118,15 +118,15 @@ describe("only a Saturday can be marked as the Saturday the worker had off", () 
   });
 });
 
-describe("a paid holiday cannot land on a free Saturday", () => {
-  const freeSaturday: DaySpan[] = [
-    { id: "rest", kind: "freeSaturday", from: "2026-08-15", to: "2026-08-15" },
+describe("a paid holiday cannot land on a free rest day", () => {
+  const freeRestDay: DaySpan[] = [
+    { id: "rest", kind: "freeRestDay", from: "2026-08-15", to: "2026-08-15" },
   ];
 
   it("refuses the day and says why, marking the days around it", () => {
     const { spans, skipped } = applyMark(
       { kind: "holiday", from: "2026-08-14", to: "2026-08-16" },
-      freeSaturday,
+      freeRestDay,
     );
 
     expect(spans.map((s) => [s.from, s.to])).toEqual([

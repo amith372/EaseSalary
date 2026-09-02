@@ -99,7 +99,7 @@ export function monthlyVacationAccrual(
 
 /** The part of a span that falls inside the month, or `null` if none does. The
  * clipped span is handed back to `balanceDaysOf`, so the entitlement rules — a
- * vacation span counts its non-Saturdays, a sick spell counts every day it ran
+ * vacation span counts its non-rest-days, a sick spell counts every day it ran
  * across — are applied by the module that already owns and tests them. */
 function clipToMonth(span: MonthSpan, month: YearMonth): DaySpan | null {
   const monthStart = isoOf(month, 1);

@@ -28,7 +28,7 @@ import type { DaySpan, IsoDate, MarkKind, YearMonth } from "@/lib/types";
  *
  * What the calendar hands up is the range and the kind, and it decides nothing
  * else: which days inside a range actually take the mark — a vacation span
- * skips its Saturdays, a sick span keeps them (specs.md items 5, 8) — is
+ * skips its rest days, a sick span keeps them (specs.md items 5, 8) — is
  * calculation and lives in `src/lib/spans.ts`.
  */
 
@@ -56,26 +56,26 @@ interface MonthCalendarProps {
 }
 
 /** The four kinds a range can be marked as, in the artboard's order. */
-const pickerKinds: MarkKind[] = ["vacation", "sick", "holiday", "freeSaturday"];
+const pickerKinds: MarkKind[] = ["vacation", "sick", "holiday", "freeRestDay"];
 
 /** The fill a marked day takes, and the ink that stays legible on it. */
 const markClass: Record<MarkKind, string> = {
   vacation: "bg-vacation text-day-ink",
   sick: "bg-sick text-ink",
   holiday: "bg-holiday text-ink",
-  freeSaturday: "bg-rest text-day-ink",
+  freeRestDay: "bg-rest text-day-ink",
 };
 
 const dotClass: Record<MarkKind, string> = {
   vacation: "bg-vacation",
   sick: "bg-sick",
   holiday: "bg-holiday",
-  freeSaturday: "bg-rest",
+  freeRestDay: "bg-rest",
 };
 
 /**
  * Five entries, as v3 draws them. "יום עבודה" is a day she worked, which is
- * every unmarked day including an unmarked Saturday — so there is no sixth
+ * every unmarked day including an unmarked rest day — so there is no sixth
  * entry for the weekly rest day and no separate fill for it. The legend says
  * what the colours mean and marks nothing: marking is the picker's job.
  */
@@ -84,7 +84,7 @@ const legend: { label: string; swatch: string }[] = [
   { label: he.calendar.marks.vacation, swatch: "bg-vacation" },
   { label: he.calendar.marks.sick, swatch: "bg-sick" },
   { label: he.calendar.marks.holiday, swatch: "bg-holiday" },
-  { label: he.calendar.marks.freeSaturday, swatch: "bg-rest" },
+  { label: he.calendar.marks.freeRestDay, swatch: "bg-rest" },
 ];
 
 function monthLabel(ym: YearMonth): string {
@@ -117,7 +117,7 @@ export function MonthCalendar({
 
   /**
    * Which span covers each day. Where two spans cover the same day the first
-   * wins here; refusing a paid holiday on a free Saturday is a decision the
+   * wins here; refusing a paid holiday on a free rest day is a decision the
    * engine makes (specs.md Part 4), not a drawing order.
    */
   const coverage = useMemo(() => {

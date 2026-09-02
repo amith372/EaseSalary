@@ -18,8 +18,9 @@ import type {
  * the point — Stage 1 fills it in without the screen changing.
  */
 
-/** The month the canvas draws. Its 1st falls on a Saturday, so it has five
- * Saturdays and 26 working days — the case specs.md Part 5 warns about. */
+/** The month the canvas draws. Its 1st falls on a Saturday, which is Hanna's
+ * rest day, so it has five rest days and 26 working days — the case specs.md
+ * Part 5 warns about. */
 export const fixtureMonth: YearMonth = { year: 2026, month: 8 };
 
 /** The day the fixtures treat as today, so nothing reads the clock during a
@@ -35,9 +36,9 @@ export const fixtureWorkers: Worker[] = [
 ];
 
 /**
- * The four marks v3 draws: one free Saturday on the 8th, a vacation day on the
+ * The four marks v3 draws: one free rest day on the 8th, a vacation day on the
  * 19th, a holiday on the 20th and a sick day on the 26th. The rest of the
- * month's Saturdays carry no mark, because a free Saturday is the exception
+ * month's rest days carry no mark, because a free rest day is the exception
  * the user recorded and not the default (specs.md item 5).
  *
  * The holiday is one she worked. A holiday she did not work is drawn as an
@@ -55,7 +56,7 @@ const workedHoliday: HolidaySpan = {
 };
 
 const spans: DaySpan[] = [
-  { id: "span-rest", kind: "freeSaturday", from: "2026-08-08", to: "2026-08-08" },
+  { id: "span-rest", kind: "freeRestDay", from: "2026-08-08", to: "2026-08-08" },
   { id: "span-vacation", kind: "vacation", from: "2026-08-19", to: "2026-08-19" },
   workedHoliday,
   { id: "span-sick", kind: "sick", from: "2026-08-26", to: "2026-08-26" },

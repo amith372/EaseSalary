@@ -9,24 +9,29 @@ import type { MonthResult } from "@/lib/types";
  * The known case (specs.md Part 4). Every expected figure below is quoted from
  * Part 4 and none is read back from the engine:
  *
- *   base ₪6,247.65 + Friday supplement ₪500        = ₪6,747.65   column E
- *   two holidays and four Saturdays at ₪426.35     = ₪2,558.10   column F
+ *   base ₪6,247.65 + rest-eve supplement ₪500      = ₪6,747.65   column E
+ *   two holidays and four rest days at ₪426.35     = ₪2,558.10   column F
  *   the month's total                              = ₪9,305.75   E + F + G
  *   after the ₪2,000 instalment                    = ₪7,305.75   net
  *
- * The Friday supplement is ₪100 per Friday. That is not a constant taken from
- * anywhere: Part 4 gives ₪500 across five Fridays worked and item 14 calls the
- * supplement weekly, so the per-Friday figure is those two statements divided,
- * shown here in the open.
+ * The rest-eve supplement is ₪100 per rest-eve. That is not a constant taken
+ * from anywhere: Part 4 gives ₪500 across five Fridays worked and item 14 calls
+ * the supplement weekly, so the per-rest-eve figure is those two statements
+ * divided, shown here in the open.
+ *
+ * Hanna rests on Saturday, which is the default, so her rest-eve is Friday and
+ * every weekday named below is hers rather than the rule. That is exactly why
+ * this case cannot check the rest day's generalisation and why `build_plan.md`
+ * gives 7c its own derived cases.
  */
 
 const AUGUST_2025_SALARY = 624765;
-const FRIDAY_SUPPLEMENT = 10000;
+const REST_EVE_SUPPLEMENT = 10000;
 const INSTALMENT = 200000;
 
 const spans: MonthSpan[] = [
   // Part 4: "one free Saturday on the 16th".
-  { id: "free-16", kind: "freeSaturday", from: "2025-08-16", to: "2025-08-16" },
+  { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
   // Part 4: "two paid holidays on the 19th and the 21st", both worked.
   { id: "hol-19", kind: "holiday", from: "2025-08-19", to: "2025-08-19", worked: true },
   { id: "hol-21", kind: "holiday", from: "2025-08-21", to: "2025-08-21", worked: true },
@@ -35,12 +40,12 @@ const spans: MonthSpan[] = [
 const facts: MonthFacts = {
   month: { year: 2025, month: 8 },
   // The terms the month was confirmed with (specs.md Part 3), which for August
-  // 2025 are the profile's own: ₪100 a Friday, not pocket money, recuperation
+  // 2025 are the profile's own: ₪100 a rest-eve, not pocket money, recuperation
   // in July. Written out rather than snapshotted off `terms` below, because
   // that const is declared after this one.
   terms: {
-    fridaySupplementAgorot: FRIDAY_SUPPLEMENT,
-    fridayIsPocketMoney: false,
+    restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
+    restEveIsPocketMoney: false,
     recuperationMonth: 7,
   },
   confirmedWage: {
@@ -63,8 +68,8 @@ const terms: WorkerTerms = {
   // Part 4: "employed since 1.4.2024".
   employedSince: "2024-04-01",
   baseMonthlySalaryAgorot: AUGUST_2025_SALARY,
-  fridaySupplementAgorot: FRIDAY_SUPPLEMENT,
-  fridayIsPocketMoney: false,
+  restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
+  restEveIsPocketMoney: false,
   recuperationMonth: 7,
   country: "PH",
   openingPosition: {
@@ -89,11 +94,11 @@ function columnTotal(result: MonthResult, column: string): number {
 describe("August 2025, to the agora and with no tolerance (specs.md Part 4)", () => {
   const result = calculateMonth(facts, terms);
 
-  it("pays ₪6,747.65 in column E — the base plus the Friday supplement", () => {
+  it("pays ₪6,747.65 in column E — the base plus the rest-eve supplement", () => {
     expect(columnTotal(result, "E")).toBe(674765); // Part 4: ₪6,747.65
   });
 
-  it("pays ₪2,558.10 in column F — four Saturdays and two holidays", () => {
+  it("pays ₪2,558.10 in column F — four rest days and two holidays", () => {
     expect(columnTotal(result, "F")).toBe(255810); // Part 4: ₪2,558.10
   });
 
@@ -139,7 +144,7 @@ describe("August 2025, to the agora and with no tolerance (specs.md Part 4)", ()
     // The two halves of Part 4's own sentence, asserted separately so a failure
     // says which one moved.
     const base = result.lines.find((line) => line.key === "base");
-    const supplement = result.lines.find((line) => line.key === "fridaySupplement");
+    const supplement = result.lines.find((line) => line.key === "restEveSupplement");
     expect(base?.amount).toBe(624765);
     expect(supplement?.amount).toBe(50000);
     expect(supplement?.units).toBe(5); // Part 4: five Fridays worked

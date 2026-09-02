@@ -43,8 +43,8 @@ function terms(
   return {
     employedSince,
     baseMonthlySalaryAgorot: 624765,
-    fridaySupplementAgorot: 10000,
-    fridayIsPocketMoney: false,
+    restEveSupplementAgorot: 10000,
+    restEveIsPocketMoney: false,
     recuperationMonth: 7,
     country: "PH",
     openingPosition: { ...opening, advances: [] },
@@ -219,7 +219,7 @@ describe("balances carry forward (specs.md item 7)", () => {
     // Item 8: a spell is stored whole because its tiers count from its own
     // first day, but the balance it draws belongs to the month each day fell
     // in. The 28th of July to the 3rd of August 2025 is four days in July and
-    // three in August, and sickness keeps its Saturdays (item 8) — there is
+    // three in August, and sickness keeps its rest days (item 8) — there is
     // none inside this spell in either month.
     const spell = [span("sick", "2025-07-28", "2025-08-03")];
     const worker = terms();

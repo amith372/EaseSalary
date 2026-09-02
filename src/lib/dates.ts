@@ -6,12 +6,18 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * Two traps from specs.md Part 5 are why this file exists rather than the code
  * calling `new Date(...)` where it needs one. A date constructed in local time
  * can shift by a whole day across a daylight-saving boundary and silently
- * change how many Saturdays a month has; and in JavaScript Saturday is six, not
+ * change how many rest days a month has; and in JavaScript Saturday is six, not
  * five, so being one off there corrupts every month of the year rather than
  * announcing itself.
  */
 
-/** In JavaScript `getUTCDay()` counts Sunday as 0, so Saturday is 6. */
+/**
+ * In JavaScript `getUTCDay()` counts Sunday as 0, so Saturday is 6.
+ *
+ * These three are also the only days the law allows as the weekly rest day
+ * (specs.md item 5), which is why Friday and Sunday are named here beside the
+ * Saturday the grid needs.
+ */
 export const SUNDAY = 0;
 export const FRIDAY = 5;
 export const SATURDAY = 6;
@@ -64,11 +70,22 @@ export function weekdayOfFirst(ym: YearMonth): number {
   return utcDate(ym.year, ym.month, 1).getUTCDay();
 }
 
-export function isSaturday(iso: IsoDate): boolean {
+/**
+ * The worker's weekly rest day, and the working day immediately before it.
+ *
+ * **Both still answer for Saturday alone**, which item 5 no longer says: the
+ * rest day is a term of the employment and may be Friday, Saturday or Sunday.
+ * The name is the concept and the body is the state of the code, and they are
+ * deliberately allowed to disagree for the length of one step — this is the
+ * rename, and step 7c of `build_plan.md` is where the day arrives from the
+ * month's own terms and the two agree again. Nothing outside this file assumes
+ * Saturday any more, which is the whole point of landing the rename first.
+ */
+export function isRestDay(iso: IsoDate): boolean {
   return weekdayOf(iso) === SATURDAY;
 }
 
-export function isFriday(iso: IsoDate): boolean {
+export function isRestEve(iso: IsoDate): boolean {
   return weekdayOf(iso) === FRIDAY;
 }
 
@@ -112,8 +129,8 @@ export function everyDayOf(ym: YearMonth): IsoDate[] {
   return eachDate(isoOf(ym, 1), isoOf(ym, daysInMonth(ym)));
 }
 
-export function saturdaysOf(ym: YearMonth): IsoDate[] {
-  return everyDayOf(ym).filter(isSaturday);
+export function restDaysOf(ym: YearMonth): IsoDate[] {
+  return everyDayOf(ym).filter(isRestDay);
 }
 
 /**
@@ -121,7 +138,8 @@ export function saturdaysOf(ym: YearMonth): IsoDate[] {
  * before the 1st and after the last day. The leading blanks are derived from
  * the weekday of the 1st and are never a constant: a 31-day month beginning on
  * a Saturday holds five Saturdays and 26 working days, while the same length
- * beginning on a Sunday holds four and 27 (specs.md Part 5).
+ * beginning on a Sunday holds four and 27 (specs.md Part 5). The same is true
+ * of any other rest day; Saturday is only the case Part 5 writes out.
  */
 export function monthGrid(ym: YearMonth): (IsoDate | null)[] {
   const leading = weekdayOfFirst(ym);

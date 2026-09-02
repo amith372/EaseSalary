@@ -2,7 +2,7 @@ import {
   addDays,
   compareIsoDate,
   eachDate,
-  isSaturday,
+  isRestDay,
   orderDates,
 } from "@/lib/dates";
 import type { DaySpan, IsoDate, MarkKind } from "@/lib/types";
@@ -12,7 +12,7 @@ import type { DaySpan, IsoDate, MarkKind } from "@/lib/types";
  *
  * The calendar hands up the range the user drew and decides nothing about it:
  * what a range means depends on the entitlement behind the mark, and that is
- * calculation rather than interaction. A vacation span skips its Saturdays and
+ * calculation rather than interaction. A vacation span skips its rest days and
  * a sick span keeps them (specs.md items 5 and 8) — the asymmetry is the reason
  * this module exists and the reason it is tested.
  *
@@ -33,15 +33,15 @@ export interface MarkIntent {
  * in words, so a refusal explains itself where it happened.
  */
 export type SkipReason =
-  /** Saturday is already the weekly rest day, so a vacation day drawn for it
+  /** The day is already the weekly rest day, so a vacation day drawn for it
    * would charge the worker twice (specs.md item 5). */
   | "weeklyRest"
-  /** Only a Saturday can be the Saturday the worker had off. */
-  | "notSaturday"
+  /** Only the worker's own rest day can be the rest day she had off. */
+  | "notRestDay"
   /** The day already carries a mark, and a span is replaced rather than
    * layered. */
   | "alreadyMarked"
-  /** A paid holiday landing on a free Saturday: the day is paid once, not at
+  /** A paid holiday landing on a free rest day: the day is paid once, not at
    * both the rest-day rate and the holiday rate (specs.md Part 4). */
   | "restDayHoliday";
 
@@ -57,12 +57,19 @@ export interface MarkResult {
   skipped: SkippedDay[];
 }
 
-/** Which day a Saturday rule refuses, before any conflict with an existing
- * span is considered: the entitlement rule is the more informative answer, and
- * it holds whether or not the day is already marked. */
+/**
+ * Which day a rest-day rule refuses, before any conflict with an existing span
+ * is considered: the entitlement rule is the more informative answer, and it
+ * holds whether or not the day is already marked.
+ *
+ * `isRestDay` still answers Saturday for every worker until step 7c, so both
+ * refusals below are still the Saturday rule wearing the rest day's name. The
+ * day arrives from the month's own terms in that step, and nothing here changes
+ * when it does.
+ */
 function refusedByKind(kind: MarkKind, date: IsoDate): SkipReason | null {
-  if (kind === "vacation" && isSaturday(date)) return "weeklyRest";
-  if (kind === "freeSaturday" && !isSaturday(date)) return "notSaturday";
+  if (kind === "vacation" && isRestDay(date)) return "weeklyRest";
+  if (kind === "freeRestDay" && !isRestDay(date)) return "notRestDay";
   return null;
 }
 
@@ -95,7 +102,7 @@ export function markableDays(intent: MarkIntent, existing: DaySpan[] = []) {
       skipped.push({
         date,
         reason:
-          intent.kind === "holiday" && covering.kind === "freeSaturday"
+          intent.kind === "holiday" && covering.kind === "freeRestDay"
             ? "restDayHoliday"
             : "alreadyMarked",
       });
@@ -147,18 +154,18 @@ export function applyMark(
 /**
  * How many days a span draws from its balance.
  *
- * Vacation counts its non-Saturdays, sickness counts every day it ran across —
- * the Saturdays inside a spell are drawn from the balance though they are not
- * paid (specs.md item 8). A free Saturday draws nothing: it is not an
+ * Vacation counts its non-rest-days, sickness counts every day it ran across —
+ * the rest days inside a spell are drawn from the balance though they are not
+ * paid (specs.md item 8). A free rest day draws nothing: it is not an
  * entitlement (item 5). A part-day is a single-day span and is drawn in its own
  * proportion (items 7, 10).
  */
 export function balanceDaysOf(span: DaySpan): number {
-  if (span.kind === "freeSaturday") return 0;
+  if (span.kind === "freeRestDay") return 0;
   const { from, to } = orderDates(span.from, span.to);
   const days = eachDate(from, to);
   const counted =
-    span.kind === "vacation" ? days.filter((d) => !isSaturday(d)) : days;
+    span.kind === "vacation" ? days.filter((d) => !isRestDay(d)) : days;
   return counted.length * (span.fraction ?? 1);
 }
 

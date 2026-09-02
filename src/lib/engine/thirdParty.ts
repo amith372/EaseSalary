@@ -61,10 +61,10 @@ export const THIRD_PARTY_COLUMN: SheetColumn = "H";
 export const NATIONAL_INSURANCE_RATE = 0.036;
 
 /**
- * This month's estimate: 3.6% of the month's full cost — the salary, the Friday
- * supplement, the Saturday and holiday pay, and the one-off payments such as
- * recuperation — taken **before anything to do with advances** (specs.md
- * item 19).
+ * This month's estimate: 3.6% of the month's full cost — the salary, the
+ * rest-eve supplement, the rest-day and holiday pay, and the one-off payments
+ * such as recuperation — taken **before anything to do with advances**
+ * (specs.md item 19).
  *
  * That base is columns E, F and G, which is the gross, so the gross is what
  * this takes. Applying it to the net would make the contribution depend on

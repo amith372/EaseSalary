@@ -54,10 +54,22 @@ import type {
  * `sickDeduction` is emitted below, and `src/lib/engine/sick.ts` owns the
  * statutory tiers behind it: this file asks that module how many days the month
  * deducts and prices them, and restates none of the rule.
+ *
+ * **These are stored values as well as identifiers, and the string is the part
+ * that is stored.** `MonthFacts.overrides` is keyed by them (item 17), so a key
+ * that moves orphans the amount a user typed by hand and the line silently
+ * reverts to the calculated figure — the one failure in this file that looks
+ * like nothing went wrong. `restEveSupplement` was `fridaySupplement` until the
+ * rest-day rename, and the rename is landed here rather than deferred for the
+ * same reason `MarkKind`'s is: no override has ever been stored, because stage
+ * 3 is what first writes one. After stage 3 the same change would mean reading
+ * the old key alongside the new one and rewriting the stored `overrides` map on
+ * the way past, keyed month by month. **This is the last commit in which a line
+ * key is free to move**, which is what "stable by design" is asking for.
  */
 export const lineKeys = {
   base: "base",
-  fridaySupplement: "fridaySupplement",
+  restEveSupplement: "restEveSupplement",
   restDays: "restDays",
   holidaysWorked: "holidaysWorked",
   sickDeduction: "sickDeduction",
@@ -68,9 +80,9 @@ function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
   const rates = deriveRates(facts.confirmedWage.baseAgorot);
   const drafts: LineDraft[] = [];
 
-  // Column E — the monthly salary items. The Friday supplement sits here and
+  // Column E — the monthly salary items. The rest-eve supplement sits here and
   // not in F: Part 4 groups it with the base, and Part 5 gives F as "the pay
-  // for Saturdays and holidays".
+  // for rest days and holidays".
   drafts.push({
     key: lineKeys.base,
     label: he.sheet.lines.base,
@@ -86,22 +98,22 @@ function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
     },
   });
 
-  if (counts.fridaysPaidSupplement > 0 && facts.terms.fridaySupplementAgorot > 0) {
+  if (counts.restEvesPaidSupplement > 0 && facts.terms.restEveSupplementAgorot > 0) {
     drafts.push({
-      key: lineKeys.fridaySupplement,
-      label: he.sheet.lines.fridaySupplement,
-      units: counts.fridaysPaidSupplement,
-      rate: facts.terms.fridaySupplementAgorot,
+      key: lineKeys.restEveSupplement,
+      label: he.sheet.lines.restEveSupplement,
+      units: counts.restEvesPaidSupplement,
+      rate: facts.terms.restEveSupplementAgorot,
       column: "E",
       explanation: {
-        text: he.sheet.why.fridaySupplement(counts.fridaysPaidSupplement),
+        text: he.sheet.why.restEveSupplement(counts.restEvesPaidSupplement),
         link: "caregiverWage",
       },
     });
   }
 
   // The sickness deduction. It sits in column E and inside the same subtotal as
-  // the base and the Friday supplement, and never among the one-off payments: a
+  // the base and the rest-eve supplement, and never among the one-off payments: a
   // deduction is not a payment (specs.md item 8). It is written here rather than
   // as a reduced base, because the base is computed from the standard count and
   // never shrinks — the deduction is what carries the statutory tiers onto a
@@ -127,13 +139,13 @@ function buildLines(facts: MonthFacts, counts: MonthCounts): MonthLine[] {
     });
   }
 
-  // Column F — the pay for Saturdays and holidays, both at the rest-day rate,
+  // Column F — the pay for rest days and holidays, both at the rest-day rate,
   // and each day paid once between the two lines. `leave.ts` owns that
-  // division: a Saturday she worked which is also a holiday she worked is left
-  // with the holiday line and taken out of the Saturdays here, because both
+  // division: a rest day she worked which is also a holiday she worked is left
+  // with the holiday line and taken out of the rest days here, because both
   // lines pay the same rate off the same date and item 9 says the day is paid
-  // once. `counts.saturdaysWorked` stays the true count of Saturdays attended.
-  const restDayUnits = restDayUnitsOf(facts.spans, counts.saturdaysWorked);
+  // once. `counts.restDaysWorked` stays the true count of rest days attended.
+  const restDayUnits = restDayUnitsOf(facts.spans, counts.restDaysWorked);
   if (restDayUnits > 0) {
     drafts.push({
       key: lineKeys.restDays,

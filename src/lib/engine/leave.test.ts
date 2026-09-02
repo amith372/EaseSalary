@@ -35,7 +35,7 @@ import type { MonthResult, YearMonth } from "@/lib/types";
 
 const SALARY = 624765;
 const REST_DAY_RATE = 42635; // ₪426.35, Part 4
-const FRIDAY_SUPPLEMENT = 10000;
+const REST_EVE_SUPPLEMENT = 10000;
 
 const AUGUST_2025: YearMonth = { year: 2025, month: 8 };
 
@@ -65,8 +65,8 @@ function terms(employedSince = "2024-04-01"): WorkerTerms {
   return {
     employedSince,
     baseMonthlySalaryAgorot: SALARY,
-    fridaySupplementAgorot: FRIDAY_SUPPLEMENT,
-    fridayIsPocketMoney: false,
+    restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
+    restEveIsPocketMoney: false,
     recuperationMonth: 7,
     country: "PH",
     openingPosition: { vacationDays: 20, sickDays: 43.5, advances: [] },
@@ -102,7 +102,7 @@ function columnTotal(result: MonthResult, column: string): number {
 }
 
 describe("a holiday changes the money or the count, never both (item 9)", () => {
-  // An ordinary August: nothing marked, all five Saturdays worked.
+  // An ordinary August: nothing marked, all five rest days worked.
   const bare = calculateMonth(facts([]), terms());
 
   it("adds one rest-day rate for a holiday she worked", () => {
@@ -147,12 +147,12 @@ describe("a holiday on a Saturday she works is paid once (specs.md item 9)", () 
     expect(columnTotal(result, "F")).not.toBe(6 * REST_DAY_RATE);
   });
 
-  it("leaves the day on the holiday line and takes it out of the Saturdays", () => {
+  it("leaves the day on the holiday line and takes it out of the rest days", () => {
     expect(unitsOf(result, lineKeys.holidaysWorked)).toBe(1);
     expect(unitsOf(result, lineKeys.restDays)).toBe(4);
   });
 
-  it("still reports all five Saturdays as worked, because she worked them", () => {
+  it("still reports all five rest days as worked, because she worked them", () => {
     // The count is a fact about the month and stays true; only what is paid on
     // which line moves.
     expect(restDayUnitsOf(spans, 5)).toBe(4);
@@ -329,7 +329,7 @@ describe("vacation costs nothing, structurally (specs.md item 7)", () => {
     // no rest-day premium (item 5): -₪426.35. Neither is a price on the
     // vacation, and the base is untouched above.
     expect((without.net ?? 0) - (week.net ?? 0)).toBe(
-      FRIDAY_SUPPLEMENT + REST_DAY_RATE,
+      REST_EVE_SUPPLEMENT + REST_DAY_RATE,
     );
   });
 });

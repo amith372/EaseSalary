@@ -31,7 +31,7 @@
 const KOL_ZCHUT = "https://www.kolzchut.org.il/he";
 
 /**
- * The one page that carries most of this employment: the wage, the Friday
+ * The one page that carries most of this employment: the wage, the rest-eve
  * supplement, the weekly rest, the sick accrual and the recuperation ladder are
  * all sections of it. Several keys below point at it on purpose — the key names
  * the *action* the user was taking, which is what item 26 asks for, so two
