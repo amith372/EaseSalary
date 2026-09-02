@@ -1,7 +1,5 @@
 import {
-  addDays,
   compareIsoDate,
-  eachDate,
   everyDayOf,
   isRestEve,
   isRestDay,
@@ -40,13 +38,6 @@ export interface MonthCounts {
   restEves: number;
   /** The rest-eves she actually worked. */
   restEvesWorked: number;
-  /**
-   * The rest-eves that earn the supplement, which is not the same count: where
-   * the supplement is pocket money a rest-eve she did not work is paid it all
-   * the same (item 14), unless the whole of that week was lost to sickness
-   * (item 8).
-   */
-  restEvesPaidSupplement: number;
   /** The month's weekly rest days, counted from the calendar. */
   restDays: number;
   /** The rest days she worked, which are the ones paid at the rest-day rate. */
@@ -100,40 +91,6 @@ function notWorked(spans: ClosedSpan[], date: IsoDate): boolean {
   return notWorkedFraction(spans, date) >= 1;
 }
 
-/**
- * Whether every working day of the rest-eve's own week was lost to sickness.
- *
- * The week is the six working days ending at the rest-eve; the rest day itself
- * is not counted, and one day worked in that week is enough for the supplement
- * to be paid (specs.md item 8).
- *
- * **Anchored to her rest-eve, which is what makes it her week.** Item 8 anchors
- * the week to the worker's own rest day and the rest-eve is the day before it,
- * so the six days ending at the rest-eve are exactly the six ending at the rest
- * day with the rest day itself left out: Sunday through Friday for a
- * Saturday-resting worker, Saturday through Thursday for a Friday-resting one,
- * Monday through Saturday for a Sunday-resting one. The six are always
- * adjacent, which is the whole reason item 8 anchors rather than fixing the
- * week to Sunday — a fixed Sunday anchor would give a Friday-resting worker a
- * week with a hole in the middle of it.
- *
- * The arithmetic below is therefore unchanged from when the rest day was a
- * constant, and that is worth saying rather than leaving to be rediscovered:
- * it was already written against the rest-eve, so generalising `isRestEve` was
- * the whole of the change. What was wrong was the comment, which called the
- * week Sunday-anchored — true only of the one worker it was written for.
- *
- * The week's first day may fall in the previous month. A spell of sickness is
- * stored as the dates it ran between rather than as marks belonging to a month
- * (Part 3), so the span reaching back over the boundary is read whole here.
- */
-function weekLostToSickness(spans: ClosedSpan[], restEve: IsoDate): boolean {
-  const weekStart = addDays(restEve, -5);
-  return eachDate(weekStart, restEve).every((date) =>
-    spansCovering(spans, date).some((span) => span.kind === "sick"),
-  );
-}
-
 export function countMonth(facts: ClosedMonthFacts): MonthCounts {
   const days = everyDayOf(facts.month);
   const { spans } = facts;
@@ -150,13 +107,13 @@ export function countMonth(facts: ClosedMonthFacts): MonthCounts {
       standardDaysList.length,
     ),
 
+    // Every rest-eve of the month earns the supplement, worked or not: it is an
+    // agreed term and nothing conditions it (item 14). `restEves` is therefore
+    // what the money is priced from, and `restEvesWorked` is reporting beside
+    // it — the two used to be three counts, and the third existed only for a
+    // setting item 14 no longer has.
     restEves: restEves.length,
     restEvesWorked: restEves.filter((date) => !notWorked(spans, date)).length,
-    restEvesPaidSupplement: restEves.filter((restEve) =>
-      facts.terms.restEveIsPocketMoney
-        ? !weekLostToSickness(spans, restEve)
-        : !notWorked(spans, restEve),
-    ).length,
 
     restDays: restDays.length,
     // A free rest day is not worked (item 5), and neither is a rest day inside

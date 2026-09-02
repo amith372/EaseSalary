@@ -87,7 +87,6 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
     restEveSupplementAgorot: SUPPLEMENT,
-    restEveIsPocketMoney: false,
     recuperationMonth: 7,
     country: "PH",
     openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
@@ -138,7 +137,6 @@ describe("a Friday-resting worker, August 2025 (specs.md items 5, 14)", () => {
     expect(counts.standardDays).toBe(26);
     expect(counts.restEves).toBe(4);
     expect(counts.restEvesWorked).toBe(4);
-    expect(counts.restEvesPaidSupplement).toBe(4);
   });
 
   it("pays ₪6,647.65 in column E — the base plus four rest-eves", () => {
@@ -202,62 +200,6 @@ describe("a Sunday-resting worker, March 2026 (specs.md items 5, 14)", () => {
   });
 });
 
-/**
- * The week the supplement is measured over moves with the rest day (item 8).
- *
- * "The whole of that week" is every working day of it — the six days that end
- * at the weekly rest day. For Hanna that is Sunday through Friday; for a
- * Friday-resting worker it is **Saturday through Thursday**, and the six days
- * are always adjacent, which is why item 8 anchors the week to the rest day
- * rather than fixing it to Sunday: a fixed Sunday anchor would give her a week
- * with a hole in the middle of it.
- *
- * August 2025's Thursdays are her rest-eves. The week of Thursday the 21st runs
- * Saturday the 16th through Thursday the 21st, and the pair below is what
- * proves her Saturday is inside it: the same five sick days pay the supplement
- * or not depending only on whether Saturday the 16th is one of them.
- */
-describe("the sick week anchors to her rest day (specs.md item 8)", () => {
-  const worker = terms({
-    restDay: FRIDAY,
-    restEveIsPocketMoney: true,
-    // Six sick days have to come from somewhere: the balance is a floor and
-    // never falls below zero (item 8), so a month drawing more than it holds is
-    // refused rather than calculated.
-    openingPosition: { vacationDays: 0, sickDays: 30, advances: [] },
-  });
-
-  const sick = (from: string, to: string): ClosedSpan => ({
-    id: `sick-${from}-${to}`,
-    kind: "sick",
-    from,
-    to,
-  });
-
-  it("drops the supplement when Saturday to Thursday was wholly lost", () => {
-    // Her whole week — 16, 17, 18, 19, 20, 21 — so Thursday the 21st earns
-    // nothing and the other three Thursdays stand: 3 of 4.
-    const counts = countMonth(
-      facts(worker, AUGUST_2025, [sick("2025-08-16", "2025-08-21")]),
-    );
-    expect(counts.restEvesPaidSupplement).toBe(3);
-  });
-
-  it("keeps it when she worked the Saturday that opens that week", () => {
-    // The same week less its first day. One day worked in the week is enough
-    // for the supplement to be paid (item 8), and Saturday the 16th is that
-    // day — for her, and for nobody who rests on Saturday. **This is the
-    // assertion the whole re-anchoring rests on**: it answers 4 only if her
-    // week reaches back to Saturday, and 3 if the week were fixed to Sunday.
-    const counts = countMonth(
-      facts(worker, AUGUST_2025, [sick("2025-08-17", "2025-08-21")]),
-    );
-    expect(counts.restEvesPaidSupplement).toBe(4);
-    // She did not work Thursday the 21st: pocket money pays it all the same,
-    // which is what makes the two counts disagree here (item 14).
-    expect(counts.restEvesWorked).toBe(3);
-  });
-});
 
 /**
  * A rest day inside a spell of sickness advances the tier without being paid

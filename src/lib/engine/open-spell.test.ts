@@ -40,21 +40,23 @@ import type { MonthResult } from "@/lib/types";
  * the salary never paid for it (item 8). The deduction is 1.5 days at the
  * ₪6,247.65 ÷ 25 sick-day value of 24,990.6 agorot, so 37,485.9 → −₪374.86.
  *
- *   column E   624,765 + 4 × 10,000 − 37,486         = 627,279   ₪6,272.79
+ *   column E   624,765 + 5 × 10,000 − 37,486         = 637,279   ₪6,372.79
  *   column F   4 × 42,635.062087912… = 170,540.24…   = 170,540   ₪1,705.40
- *   gross                                             = 797,819   ₪7,978.19
+ *   gross                                             = 807,819   ₪8,078.19
  *
  * Four rest days and not five, because the 30th falls inside the spell and is
- * not worked; four rest-eves and not five, because the 29th does too and the
- * supplement is not pocket money here.
+ * not worked. **Five rest-eves and not four**, though the 29th falls inside it
+ * too: the supplement is paid for every rest-eve of the month whether she
+ * worked it or not (item 14). Sickness prices itself through the deduction and
+ * never through that line.
  *
  * **The same spell, closed on Friday the 29th** — she came back on the 30th.
  * The deduction does not move: days three and four were already costing
  * nothing. What moves is the rest day. The 30th was worked after all:
  *
- *   column E   unchanged                             = 627,279   ₪6,272.79
+ *   column E   unchanged                             = 637,279   ₪6,372.79
  *   column F   5 × 42,635.062087912… = 213,175.31…   = 213,175   ₪2,131.75
- *   gross                                             = 840,454   ₪8,404.54
+ *   gross                                             = 850,454   ₪8,504.54
  */
 
 const AUGUST_2025 = { year: 2025, month: 8 } as const;
@@ -65,7 +67,6 @@ const worker: WorkerTerms = {
   baseMonthlySalaryAgorot: SALARY,
   restDay: SATURDAY,
   restEveSupplementAgorot: 10000,
-  restEveIsPocketMoney: false,
   recuperationMonth: 7,
   country: "PH",
   // The spell draws four days from the balance — rest days included, since a
@@ -128,13 +129,13 @@ describe("an open spell is counted to the month's own last day (item 8)", () => 
     );
   });
 
-  it("comes to ₪7,978.19, the figure derived on paper", () => {
+  it("comes to ₪8,078.19, the figure derived on paper", () => {
     // The relation above would hold just as well if both were wrong, so the
     // figure is pinned once, from the derivation in this file's header.
     expect(figures(calculateMonth(facts(open), worker))).toEqual({
-      e: 627279,
+      e: 637279,
       f: 170540,
-      gross: 797819,
+      gross: 807819,
       // 26 standard days less the 28th, 29th and 31st. The 30th is her rest
       // day and stood outside the count from the start.
       actualDays: 23,
@@ -186,7 +187,7 @@ describe("the clip is a fact about the month, not about the present (item 8)", (
     const preview = calculateMonth(facts(open), worker, {
       today: "2025-08-29",
     });
-    expect(figures(preview).gross).toBe(840454);
+    expect(figures(preview).gross).toBe(850454);
   });
 });
 
@@ -204,9 +205,9 @@ describe("closing a spell after the fact moves the month (criterion 13)", () => 
     // five at ₪426.35 instead of four. Column E does not move, because days
     // three and four of the spell were already costing nothing.
     expect(figures(calculateMonth(facts(closedOn29), worker))).toEqual({
-      e: 627279,
+      e: 637279,
       f: 213175,
-      gross: 840454,
+      gross: 850454,
       actualDays: 24,
       sickUsed: 2,
     });
@@ -214,11 +215,11 @@ describe("closing a spell after the fact moves the month (criterion 13)", () => 
 
   it("moves the month's total and nothing else has to be told", () => {
     // The correction is the whole mechanism: the same facts with an end date
-    // added, replayed. ₪7,978.19 becomes ₪8,404.54.
+    // added, replayed. ₪8,078.19 becomes ₪8,504.54.
     const before = calculateMonth(facts(open), worker).gross;
     const after = calculateMonth(facts(closedOn29), worker).gross;
-    expect(before).toBe(797819);
-    expect(after).toBe(840454);
+    expect(before).toBe(807819);
+    expect(after).toBe(850454);
   });
 });
 

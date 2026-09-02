@@ -140,10 +140,6 @@ export interface WorkerTerms {
    * Thursday (item 14).
    */
   restEveSupplementAgorot: number;
-  /** When the supplement counts as pocket money, a rest-eve the worker did not
-   * work is paid it all the same (specs.md item 14) — subject to the sickness
-   * rule in item 8, which Step 5 applies. */
-  restEveIsPocketMoney: boolean;
   /** 1-12. The month the recuperation payment falls in, set on the profile when
    * the worker is created (specs.md item 15). */
   recuperationMonth: number;
@@ -194,10 +190,6 @@ export interface MonthTerms {
    * about this employment and not a rate derived from the salary.
    */
   restEveSupplementAgorot: number;
-  /** When the supplement counts as pocket money, a rest-eve the worker did not
-   * work is paid it all the same (specs.md item 14) - subject to the sickness
-   * rule in item 8. */
-  restEveIsPocketMoney: boolean;
   /** 1-12. The month the recuperation payment falls in (specs.md item 15). */
   recuperationMonth: number;
 }
@@ -211,7 +203,6 @@ export function snapshotTerms(worker: WorkerTerms): MonthTerms {
   return {
     restDay: worker.restDay,
     restEveSupplementAgorot: worker.restEveSupplementAgorot,
-    restEveIsPocketMoney: worker.restEveIsPocketMoney,
     recuperationMonth: worker.recuperationMonth,
   };
 }

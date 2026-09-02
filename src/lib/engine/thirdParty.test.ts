@@ -87,7 +87,6 @@ const terms: WorkerTerms = {
   baseMonthlySalaryAgorot: SALARY,
   restDay: SATURDAY,
   restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
-  restEveIsPocketMoney: false,
   recuperationMonth: 7,
   country: "PH",
   openingPosition: {

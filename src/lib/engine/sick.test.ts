@@ -67,7 +67,6 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
-    restEveIsPocketMoney: false,
     recuperationMonth: 7,
     country: "PH",
     openingPosition: {
@@ -290,45 +289,6 @@ describe("where the deduction sits on the sheet (specs.md item 8, Part 5)", () =
   });
 });
 
-describe("the rest-eve supplement and the week lost to sickness (items 8, 14)", () => {
-  // The pair that fails the moment "the week" is computed as the seven days
-  // before the Friday rather than from the calendar. The week of Friday 8
-  // August runs Sunday 3 to Friday 8; Saturday is the weekly rest day and is
-  // not counted.
-  const pocketMoney = terms({ restEveIsPocketMoney: true });
-
-  function supplement(spans: ClosedSpan[]) {
-    const result = calculateMonth(
-      facts(AUGUST_2025, spans, pocketMoney),
-      pocketMoney,
-    );
-    return result.lines.find((line) => line.key === lineKeys.restEveSupplement);
-  }
-
-  it("pays it when sickness ran Sunday to Thursday and the Friday was worked", () => {
-    // One day worked in that week is enough. All five of August's Fridays are
-    // paid: 5 × ₪100 = ₪500.
-    const line = supplement([sick("2025-08-03", "2025-08-07")]);
-    expect(line?.units).toBe(5);
-    expect(line?.amount).toBe(50000);
-  });
-
-  it("does not pay it when sickness ran Sunday through Friday", () => {
-    // Every working day of that week was lost, so Friday 8 falls out and four
-    // Fridays remain: 4 × ₪100 = ₪400.
-    const line = supplement([sick("2025-08-03", "2025-08-08")]);
-    expect(line?.units).toBe(4);
-    expect(line?.amount).toBe(40000);
-  });
-
-  it("does not treat the Saturday as a working day of that week", () => {
-    // Sunday 3 to Saturday 9 is the same week plus its rest day. The supplement
-    // is withheld for the one reason above and for no additional one, so the
-    // count matches the Sunday-to-Friday case exactly.
-    const line = supplement([sick("2025-08-03", "2025-08-09")]);
-    expect(line?.units).toBe(4);
-  });
-});
 
 describe("what counts as one spell (specs.md item 8)", () => {
   it("reads two spans meeting end to end as the one illness they are", () => {

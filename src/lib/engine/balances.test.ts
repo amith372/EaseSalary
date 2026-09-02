@@ -46,7 +46,6 @@ function terms(
     baseMonthlySalaryAgorot: 624765,
     restDay: SATURDAY,
     restEveSupplementAgorot: 10000,
-    restEveIsPocketMoney: false,
     recuperationMonth: 7,
     country: "PH",
     openingPosition: { ...opening, advances: [] },

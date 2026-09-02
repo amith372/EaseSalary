@@ -187,16 +187,13 @@ Each of these is true or false at a glance.
    medical certificates were written over it. Where two genuinely separate illnesses do
    run into each other the effect is to read them as one, so the fourth day is paid in
    full rather than starting again at nothing — which leans in the worker's favour, and
-   is settled by the manual override of item 17 rather than by a mechanism built for it. Where the rest-eve supplement is pocket
-   money, a rest-eve on which sickness was reported is still paid it, unless the whole of
-   that week was lost to sickness, in which case it is not. "The whole of that week" means
-   every working day of it — the six days that end at the weekly rest day, which for the
-   Saturday rest day of the common case is Sunday through Friday. The rest day itself is
-   not counted, and the week moves with it: a worker whose rest day is Sunday has a week
-   of Monday through Saturday, and one whose rest day is Friday has Saturday through
-   Thursday. The six days are always adjacent, which is why the week is anchored to the
-   rest day rather than fixed to Sunday — a fixed Sunday anchor would give a
-   Friday-resting worker a week with a hole in the middle of it. One day worked in that week is enough for the supplement to be paid.
+   is settled by the manual override of item 17 rather than by a mechanism built for it. **Sickness does not
+   reach the rest-eve supplement at all**, and there is no rule here about weeks. The
+   supplement is paid for every rest-eve of the month whichever days the illness covered
+   (item 14), so nothing in this criterion has to define what losing a week would mean.
+   An earlier version of this criterion did define one — the six days ending at the rest
+   day — and it existed only to qualify a "pocket money" setting that item 14 no longer
+   has. It is gone rather than kept for a caller that no longer exists.
    **A spell may be left open, and that is how one is normally recorded.** On the day a
    worker falls ill nobody knows the day she will return, so the application does not ask
    for one: the spell runs from its first day and is closed when she comes back. This is
@@ -272,17 +269,26 @@ Each of these is true or false at a glance.
     evening before the weekly rest, and says of the nearest thing to it that pocket money
     is owed only where the employment contract agreed it. The supplement is therefore paid
     because the family agreed to pay it, and that is recorded here as an agreed term rather
-    than a statutory one so a later reader does not go looking for the law behind it. The
-    profile also decides whether it counts as pocket money: when it does, a rest-eve the
-    worker did not work is paid the supplement all the same; when it does not, the
-    supplement follows the day like every other figure. **Following the day is
-    all-or-nothing and is never prorated by the sick-pay tiers of item 8.** A rest-eve she
-    did not attend at all earns no supplement; one she attended for part of the day earns
-    it in full, because a day worked in part is a day she attended. The tiers price the
-    sickness and never the supplement, and reading a rest-eve at the second day's half rate
-    is the mistake this sentence exists to stop — the supplement is an agreed term of the
-    employment, not a statutory one, so nothing in the sick-pay law reaches it. Either way it may carry a note,
-    which is where a family that treats it as pocket money says so.
+    than a statutory one so a later reader does not go looking for the law behind it.
+
+    **It is paid for every rest-eve of the month, whether she worked that day or not**,
+    and it is not conditional on anything: not on attendance, not on sickness, and not on
+    a setting. A family that agreed to pay a weekly supplement pays it, and the profile
+    changes the amount or stops it altogether when the agreement changes. Nothing in the
+    sick-pay tiers of item 8 reaches it, and reading a rest-eve inside a spell of sickness
+    at that spell's half rate is the mistake this sentence exists to stop: the tiers price
+    the sickness, and the supplement is an agreed term of the employment rather than a
+    statutory one.
+
+    **There is deliberately no "is it pocket money?" setting.** There was one, and it
+    branched the behaviour: under it a rest-eve she did not work was paid all the same,
+    and it dragged criterion 8 into defining a working week so that a week wholly lost to
+    sickness could be excepted. It was never a definition — whether a family calls the
+    money pocket money is a remark about the money and not a fact that changes what is
+    owed. A family that wants a second standing payment adds one of its own under
+    item 20, with its own name and its own note, instead of bending this line into
+    something it is not. The line may carry a note, which is where a family that thinks of
+    it as pocket money writes that down — as the remark it is.
 15. Recurring yearly items — the visa fee, the licence renewal, the agency fee, and the
     recuperation payment — are shown as due in the month they fall, without the user
     tracking the dates. The recuperation entitlement is worked out from the worker's

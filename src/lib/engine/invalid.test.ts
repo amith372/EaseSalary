@@ -21,7 +21,6 @@ const terms: WorkerTerms = {
   baseMonthlySalaryAgorot: 624765,
   restDay: SATURDAY,
   restEveSupplementAgorot: 10000,
-  restEveIsPocketMoney: false,
   recuperationMonth: 7,
   country: "PH",
   openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },

@@ -47,7 +47,6 @@ const facts: ClosedMonthFacts = {
   terms: {
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
-    restEveIsPocketMoney: false,
     recuperationMonth: 7,
   },
   confirmedWage: {
@@ -72,7 +71,6 @@ const terms: WorkerTerms = {
   baseMonthlySalaryAgorot: AUGUST_2025_SALARY,
   restDay: SATURDAY,
   restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
-  restEveIsPocketMoney: false,
   recuperationMonth: 7,
   country: "PH",
   openingPosition: {

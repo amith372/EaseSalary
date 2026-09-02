@@ -104,18 +104,17 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
     },
   });
 
-  if (counts.restEvesPaidSupplement > 0 && facts.terms.restEveSupplementAgorot > 0) {
+  // Priced from every rest-eve the month holds, because the supplement is not
+  // conditional on attendance, on sickness, or on a setting (item 14).
+  if (counts.restEves > 0 && facts.terms.restEveSupplementAgorot > 0) {
     drafts.push({
       key: lineKeys.restEveSupplement,
       label: he.sheet.lines.restEveSupplement(restDay),
-      units: counts.restEvesPaidSupplement,
+      units: counts.restEves,
       rate: facts.terms.restEveSupplementAgorot,
       column: "E",
       explanation: {
-        text: he.sheet.why.restEveSupplement(
-          counts.restEvesPaidSupplement,
-          restDay,
-        ),
+        text: he.sheet.why.restEveSupplement(counts.restEves, restDay),
         link: "caregiverWage",
       },
     });

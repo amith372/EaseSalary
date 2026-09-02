@@ -47,7 +47,6 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
     baseMonthlySalaryAgorot: 624765,
     restDay: SATURDAY,
     restEveSupplementAgorot: 10000,
-    restEveIsPocketMoney: false,
     recuperationMonth: 7,
     country: "PH",
     openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
@@ -107,7 +106,6 @@ describe("August 2025, the known case (specs.md Part 4)", () => {
     const counts = countMonth(facts(AUGUST_2025, august2025Spans));
     expect(counts.restEves).toBe(5);
     expect(counts.restEvesWorked).toBe(5);
-    expect(counts.restEvesPaidSupplement).toBe(5);
   });
 
   it("gives four rest days worked after the free one on the 16th", () => {
@@ -243,48 +241,27 @@ describe("a holiday moves the count or the money, never both (specs.md item 5)",
   });
 });
 
-describe("the rest-eve supplement and the week lost to sickness (specs.md items 8, 14)", () => {
-  // August 2025's Fridays are the 1st, 8th, 15th, 22nd and 29th. The week of
-  // Friday the 22nd runs Sunday the 17th through Friday the 22nd.
-  const pocketMoney = terms({ restEveIsPocketMoney: true });
-
-  it("pays the supplement when sickness ran Sunday to Thursday and the Friday was worked", () => {
-    // Item 8: one day worked in that week is enough for the supplement to be
-    // paid. This is the case that fails if "the week" is computed as the seven
-    // days before the Friday.
-    const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-17", "2025-08-21")], pocketMoney));
-    expect(counts.restEvesPaidSupplement).toBe(5);
-    expect(counts.restEvesWorked).toBe(5);
-  });
-
-  it("does not pay it when sickness ran Sunday through Friday", () => {
-    // The whole of that week was lost, so that one Friday drops out and the
-    // other four stand.
-    const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-17", "2025-08-22")], pocketMoney));
-    expect(counts.restEvesPaidSupplement).toBe(4);
+describe("the rest-eve supplement is unconditional (specs.md item 14)", () => {
+  // August 2025 holds five Fridays — 1, 8, 15, 22, 29 — which are this worker's
+  // rest-eves. **Nothing reduces the count**: not sickness, not vacation, not a
+  // setting. The supplement is an agreed term of the employment, and the
+  // sick-pay tiers price the sickness and never it.
+  it("pays every rest-eve even when the whole week was lost to sickness", () => {
+    // The case that used to answer four: sickness running Sunday the 17th
+    // through Friday the 22nd took that Friday's supplement away under the old
+    // pocket-money branch. It does not any more, and there is no week to
+    // compute in order to know that.
+    const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-17", "2025-08-22")]));
+    expect(counts.restEves).toBe(5);
     expect(counts.restEvesWorked).toBe(4);
   });
 
-  it("does not count the rest day as a working day of that week", () => {
-    // Sunday the 17th through Friday the 22nd is the whole week even though
-    // Saturday the 23rd was worked: the rest day is not counted (item 8). The
-    // week happens to be Sunday-anchored here only because this worker rests on
-    // Saturday; item 8 anchors it to her own rest day, and a Friday-resting
-    // worker's week runs Saturday through Thursday — `rest-day.test.ts`.
-    const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-17", "2025-08-22")], pocketMoney));
-    expect(counts.restDaysWorked).toBe(5);
-    expect(counts.restEvesPaidSupplement).toBe(4);
-  });
-
-  it("pays a rest-eve not worked only where the supplement is pocket money (specs.md item 14)", () => {
-    // The same vacation rest-eve, read under both settings: pocket money pays it
-    // all the same, and the supplement that follows the day does not.
-    const onVacation = [vacation("2025-08-22", "2025-08-22")];
-    expect(
-      countMonth(facts(AUGUST_2025, onVacation, pocketMoney)).restEvesPaidSupplement,
-    ).toBe(5);
-    expect(
-      countMonth(facts(AUGUST_2025, onVacation)).restEvesPaidSupplement,
-    ).toBe(4);
+  it("pays every rest-eve when one of them was taken as vacation", () => {
+    // Friday the 22nd on vacation. The count she is paid for stays five while
+    // the count she attended drops to four, which is the whole difference
+    // between the two fields.
+    const counts = countMonth(facts(AUGUST_2025, [vacation("2025-08-22", "2025-08-22")]));
+    expect(counts.restEves).toBe(5);
+    expect(counts.restEvesWorked).toBe(4);
   });
 });

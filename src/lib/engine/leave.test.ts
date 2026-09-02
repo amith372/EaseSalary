@@ -68,7 +68,6 @@ function terms(employedSince = "2024-04-01"): WorkerTerms {
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
-    restEveIsPocketMoney: false,
     recuperationMonth: 7,
     country: "PH",
     openingPosition: { vacationDays: 20, sickDays: 43.5, advances: [] },
@@ -326,12 +325,12 @@ describe("vacation costs nothing, structurally (specs.md item 7)", () => {
 
   it("moves money only through the days she was away, never through the vacation", () => {
     // The week takes Friday 15 and Saturday 16 out of the days she attended,
-    // and each has a rule of its own. The supplement follows the day where it
-    // is not pocket money (item 14): -₪100. A Saturday she did not work earns
-    // no rest-day premium (item 5): -₪426.35. Neither is a price on the
-    // vacation, and the base is untouched above.
-    expect((without.net ?? 0) - (week.net ?? 0)).toBe(
-      REST_EVE_SUPPLEMENT + REST_DAY_RATE,
-    );
+    // and only one of them costs anything. A Saturday she did not work earns no
+    // rest-day premium (item 5): −₪426.35. **The Friday costs nothing**, because
+    // the rest-eve supplement is paid for every rest-eve of the month whether
+    // she worked it or not (item 14) — it is an agreed term and attendance is
+    // not a condition on it. Neither figure is a price on the vacation, and the
+    // base is untouched above.
+    expect((without.net ?? 0) - (week.net ?? 0)).toBe(REST_DAY_RATE);
   });
 });
