@@ -525,6 +525,18 @@ live-in employment rarely reaches half that. Should a cache ever be wanted it be
 front of the replay and not instead of it, because a cache that can be deleted without
 consequence is safe and a stored balance that is the only copy is not.
 
+**The replay belongs to the calculation and not to the store.** The store hands over the
+worker's months in date order and knows nothing of what they add up to; one pure function
+walks them, opening each month with the closing figures of the month before it and carrying
+into it what the calendar year has already spent — the vacation days the seven-day question
+is asked of, and the holiday days the yearly entitlement is drawn against. Both of those
+reset at January and neither is visible to a month looking only at itself, which is the
+whole reason the walk exists. It walks the months the store holds and invents none: a month
+that was never recorded accrued nothing, because the accrual is a fact about a month that
+happened and not about a gap in a list. A month asked for on its own is still calculable
+and is read as the worker's and the year's first, which is what keeps a single month's
+preview honest before any history exists.
+
 **The same reasoning governs every other term of the employment, so the month stores all
 of them and not the wage alone.** The weekly rest day, the rest-eve supplement, the
 recuperation month, and any entitlement the user edited are copied onto the month when it
@@ -602,6 +614,16 @@ fixed in the template, so a sheet never calls a man a woman.
 A spell of sickness is stored as the dates it ran between, not as marks belonging to a
 month, because its tiers are counted from its own first day and a spell that begins in
 one month and ends in the next must be read as one thing.
+
+**Every span belongs to the worker rather than to a month, and a month's facts are
+assembled from the spans that overlap it.** A spell crossing a boundary reaches both
+months whole — which is what lets each of them place a day at its right tier — and each
+month draws from the balance only the days that fell inside it. Storing a copy of the
+spell against each month would say the same thing twice, and closing it would then have to
+find every copy. An open spell overlaps every month from the one it began in onward, so a
+spell nobody closed goes on drawing sick days month after month: that is what an unclosed
+spell means and the application says so rather than quietly deciding she recovered, since
+the only thing that ends a spell is the worker coming back.
 
 External data is never load-bearing. The minimum wage is read from the Kol Zchut
 minimum-wage page (https://www.kolzchut.org.il/he/שכר_מינימום), which publishes both the
