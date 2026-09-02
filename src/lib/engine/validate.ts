@@ -19,7 +19,7 @@ import type {
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import type { LegalLinkKey } from "@/lib/links";
-import type { IsoDate, MarkKind } from "@/lib/types";
+import type { IsoDate, MarkKind, YearMonth } from "@/lib/types";
 
 /**
  * The facts the engine refuses, with the reason each was refused.
@@ -321,10 +321,21 @@ export function validateMonth(
  */
 export class InvalidMonthError extends Error {
   readonly refusals: Refusal[];
+  /**
+   * The month that was refused.
+   *
+   * Carried because a refusal is no longer always raised by a caller that knew
+   * which month it asked for: `calculateSeries` replays a worker's whole
+   * history, and one refused month stops the replay. Without the month on the
+   * error the screen catching it can say what is wrong but not where, which for
+   * twenty years of months is the same as saying nothing.
+   */
+  readonly month: YearMonth;
 
-  constructor(refusals: Refusal[]) {
+  constructor(refusals: Refusal[], month: YearMonth) {
     super(refusals.map((refusal) => refusal.message).join(" "));
     this.name = "InvalidMonthError";
     this.refusals = refusals;
+    this.month = month;
   }
 }

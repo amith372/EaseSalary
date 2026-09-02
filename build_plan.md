@@ -291,6 +291,51 @@ current month's preview receives `today` as a prop from its caller (`CLAUDE.md`)
 spell of the same days; the clip is stable whatever `today` is; and a spell closed after the
 fact moves the earlier month's figure, which is criterion 13 exercised at its smallest.
 
+#### Step 8 — the repository interface, and the replay it makes possible
+
+Two landings, because they are two different things and only the first is what the slice
+was waiting for.
+
+`src/lib/engine/repository.ts` is the store: a month's facts in and out, a worker's terms
+and opening position, and **no database client anywhere in the signature** — which is what
+lets stage 4's screen run on the in-memory implementation and stage 3 land its Postgres one
+beside rather than in front of it.
+
+**A month is stored without its spans, and that is the shape rather than an economy.**
+Spans belong to the worker (`specs.md` Part 3): a spell crossing a boundary is stored once
+and handed whole to every month it overlaps, so each month can place a day at its right
+tier, and each draws from the balance only the days that fell in it. `MonthRecord` is
+`MonthFacts` minus its spans, so the compiler refuses to write a span through the month and
+nobody has to remember not to.
+
+`src/lib/engine/series.ts` is the replay, and it is what makes `CLAUDE.md`'s "a series, not
+a single month" true rather than merely claimed. Three things carry: the balances, without
+limit and across the new year; the vacation days spent and the holiday days spent, which
+reset at January because item 7's seven-day question and item 10's nine-day entitlement are
+both asked of a calendar year. It walks the months the store holds and invents none, and a
+refused month stops it with the month named on the error.
+
+**Criterion 13 had never been tested across a month boundary** — the existing case compares
+two calculations of the same August — so this step is where it is: correct January, and
+March's closing balance moves by exactly the day, with nothing invalidated because there was
+never a stored balance to invalidate.
+
+**Tests:** facts written and read back identical; a month reproducible from its facts alone;
+a crossing spell drawing three days from January and three from February; the year totals
+carrying and resetting; the tenth holiday of a year refused in the month that reaches it.
+Every expected figure is derived from items 7, 8 and 10 on paper — no workbook covers a
+chain of months, which is exactly the condition `CLAUDE.md` names.
+
+**Check:** `august-2025.snap.md` byte-identical, and `grep -ri supabase src/lib/engine`
+returns nothing.
+
+**The user's own check is owed again, and this is the fifth step running.** Nothing in the
+application yet sets a rest day, opens a sick spell, adds a user line or moves between two
+months, so the only check available here is the suite — the agent verifying its own work,
+which is the half already known. The debt now covers steps 7a through 8 in full. Stage 4's
+month screen is the first thing that pays any of it and stage 5 the rest; **neither should
+close without someone having clicked the cases these steps were written for.**
+
 ## Stage 2 — The export
 
 ExcelJS in a server route. One month template and one balances template.

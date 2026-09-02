@@ -345,7 +345,7 @@ export function calculateMonth(
   context: MonthContext = {},
 ): MonthResult {
   const refusals = validateMonth(facts, employment, context);
-  if (refusals.length > 0) throw new InvalidMonthError(refusals);
+  if (refusals.length > 0) throw new InvalidMonthError(refusals, facts.month);
 
   // An open spell is resolved once, here, and every rule below works on a span
   // that has an end (specs.md item 8). Left out, `today` clips at the month's

@@ -623,7 +623,11 @@ spell against each month would say the same thing twice, and closing it would th
 find every copy. An open spell overlaps every month from the one it began in onward, so a
 spell nobody closed goes on drawing sick days month after month: that is what an unclosed
 spell means and the application says so rather than quietly deciding she recovered, since
-the only thing that ends a spell is the worker coming back.
+the only thing that ends a spell is the worker coming back. It does not run away
+unnoticed, because it runs into the floor — once the days it draws pass the sick balance
+the month is refused with its reason rather than over-drawn (item 8), so a spell left open
+by mistake announces itself as a month that will not calculate instead of as a salary
+quietly short.
 
 External data is never load-bearing. The minimum wage is read from the Kol Zchut
 minimum-wage page (https://www.kolzchut.org.il/he/שכר_מינימום), which publishes both the
