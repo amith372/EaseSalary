@@ -112,8 +112,12 @@ because jobs 1 and 2 are transcription while job 3 is design, and the vertical s
 only the transcription:
 
 - **Jobs 1 and 2 run for `חישוב החודש` and `דף המשכורת` before stage 4.** Those are the two
-  artboards the slice builds against and both still draw the v2 green sidebar. The rest are
-  transcribed when their own stage arrives.
+  artboards the slice builds against. **The green sidebar is already gone from both**, which
+  this file asserted for months and nobody had opened the canvas to check: read on 2026-09-02,
+  each carries the 62px top bar as `AppShell` builds it, and so does `החודשים` from the older
+  of the two edit batches. The ten unread artboards are therefore unknown rather than known to
+  be stale. What the two do still lack is the worker switcher, and each marks `דף הבית` as the
+  active tab on a route that is not home. The rest are transcribed when their own stage arrives.
 - **Job 3 waits for the decisions it rests on.** The reconciliation table at the foot of
   this file now records all eleven as settled, so job 3 is no longer blocked on the user —
   but it is still design work and it is still not folded into a stage that consumes it.
@@ -144,6 +148,18 @@ draws what the spec says and nothing it invents.
 
 The canvas is edited in its own editor. An agent can read the artboards but does not write
 them, so jobs 1 and 2 are handed over as a list of changes rather than made directly.
+**That list is `docs/design-pass-jobs-1-2.md`**, written on 2026-09-03 against the three
+artboards it names by etag. It is a work order and not a decision: what it asks for is
+already settled in `specs.md` or in the built system, and each item says which. It also
+ends with what stage 4 needs that jobs 1 and 2 cannot supply.
+
+Writing it turned up one disagreement that was not recorded anywhere: **the canvas and the
+code both let the user mark a day `חג`, and criterion 9 says the user never does.** Settled
+on 2026-09-03 — the spec leads, and it needed no amendment, since the need behind the drift
+(a family moving which date her holiday falls on) is criterion 10's editable date in the
+yearly picker. The canvas half is in the hand-over; the code half is stage 4's, because
+`MonthCalendar`'s picker and the yearly picker that replaces it have to be swapped in one
+step or a holiday becomes impossible to record in between.
 
 **Done when** every screen the stage about to run will build has an artboard that agrees
 with the shell, and nothing that stage needs is still missing from the canvas. For the
@@ -453,7 +469,19 @@ request, and the identity columns are unreadable in the database.
 
 Next.js App Router, Tailwind right-to-left, Hebrew strings in one translations file.
 
-- The calendar: Fridays and Saturdays derived, days marked for what departed.
+- The calendar: her rest days and rest-eves derived from her own rest day, not from
+  Saturday, and days marked for what departed.
+- **The holiday stops being a mark and becomes a state.** Criterion 9: the user never marks
+  a day as a holiday — the year's dates are chosen in advance and arrive on the calendar
+  already drawn, and the month records only whether she worked one, in two weights, an
+  outline for a holiday she did not work and a fill for one she did. `MonthCalendar`'s
+  picker currently offers `חג` and `MarkKind` cannot say whether a holiday was worked, so
+  this is a change to the model and not only to the calendar. The picker that *chooses* the
+  dates is stage 5's, so in this stage the year's chosen dates come from the repository as
+  seeded data and the calendar only draws them and records the one fact about each. That
+  keeps the swap in one step — the mark goes and the drawn state arrives together — without
+  waiting on a screen two stages away, and stage 5 then puts a picker in front of the same
+  stored dates rather than introducing them.
 - **Range entry.** A week's vacation is one gesture, not seven clicks, and the stored
   shape is a span either way. The entitlement rules for a swept range are already written
   and tested in `src/lib/spans.ts`; this stage puts the calendar's gesture on top of them.
@@ -583,7 +611,9 @@ where it belongs rather than here. The canvas is what changes for the six marked
 | "לסיים העסקה" | drop | The appendix keeps ending an employment out of v1 |
 
 **In the spec, missing from the canvas.** The two day counts, standard and actual (items
-2 and 5, a Wage Protection Act requirement) · minimum-wage confirmation before every
+2 and 5, a Wage Protection Act requirement) — half-corrected on 2026-09-02: `חישוב החודש`
+now carries the pair on its confirm step as ימי עבודה (בפועל / תקני), while `דף המשכורת`,
+which is the sheet the Act actually governs, still shows one count · minimum-wage confirmation before every
 export (item 4) · the pre-export confirmation questions (item 18 — the wizard's third
 step is a read-only summary, not questions) · part-days for vacation and holiday (items 7
 and 10 — the calendar mark is binary) · the third-party payments group (items 5 and 16 —
