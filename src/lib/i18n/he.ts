@@ -296,15 +296,39 @@ export const he = {
     },
   },
 
+  /**
+   * The home screen's coarse summary of a month, which folds several of the
+   * sheet's own rows into one line each. The sheet's full row set is `sheet.lines`
+   * below; these three are what a screen that is not the sheet shows.
+   */
   lines: {
     baseSalary: "שכר החודש",
-    supplements: "תוספות (שישי, שבת, חג)",
+    /**
+     * Three of the sheet's rows folded into one — the rest-eve supplement, the
+     * rest-day work and the worked holiday. **It names her own two days**, so a
+     * worker who rests on Friday reads "תוספות (יום חמישי, יום שישי, חג)" and
+     * not Hanna's Friday and Saturday (specs.md items 5 and 14). It was a
+     * constant until the switcher made the second worker visible, which is
+     * exactly what the second fixture worker exists to expose.
+     */
+    supplements: (restDay: RestDay) =>
+      `תוספות (${eve(restDay).bare}, ${day(restDay).bare}, חג)`,
     advanceRepaid: "מקדמה שנפרעת",
   },
 
   explanations: {
     baseSalary: "משכורת מלאה, כי לקיחת יום חופשה לא מקטינה את המשכורת החודשית.",
-    supplements: "עבודה בשישי, בשבת או בחג משולמת בתוספת מעל השכר הרגיל.",
+    /**
+     * The folded line covers two different kinds of money and the sentence has
+     * to say so: the rest-eve supplement is a standing amount paid for every
+     * rest-eve of the month whether she worked it or not (item 14, and item 8 —
+     * sickness does not reach it at all), while the rest day and the holiday are
+     * paid at the weekly-rest rate for having been worked (item 9). The earlier
+     * wording described all three as a premium for working, which was wrong
+     * about the first of them, so this is a correction and not only a rename.
+     */
+    supplements: (restDay: RestDay) =>
+      `תוספת קבועה עבור כל ${eve(restDay).bare} של החודש, ועבודה ב${day(restDay).bare} או בחג המשולמת בתעריף המנוחה השבועית.`,
     advanceRepaid: "זה החלק מהמקדמה שניתנה מראש ומנוכה החודש, לפי מה שהוסכם.",
     vacationBalance: "מכסת החופשה השנתית, פחות הימים שסומנו בלוח השנה עד היום.",
     sickBalance: "ימי המחלה נצברים בכל חודש עבודה, ומה שלא נוצל נשמר לחודשים הבאים.",

@@ -64,7 +64,16 @@ const spans: DaySpan[] = [
   { id: "span-sick", kind: "sick", from: "2026-08-26", to: "2026-08-26" },
 ];
 
-const lines: MonthLine[] = [
+/**
+ * A function of her rest day rather than a constant, because one of the three
+ * lines names two weekdays and neither of them is fixed: the supplement is for
+ * her rest-eve and the premium for her rest day (specs.md items 5 and 14). This
+ * was a shared constant, and the Friday-resting worker below was reading Hanna's
+ * Friday and Saturday off it — the one bug the switcher was built to make
+ * visible, and it took until the switcher existed to see it.
+ */
+function linesFor(restDay: RestDay): MonthLine[] {
+  return [
   {
     key: "base",
     label: he.lines.baseSalary,
@@ -75,11 +84,11 @@ const lines: MonthLine[] = [
   },
   {
     key: "supplements",
-    label: he.lines.supplements,
+    label: he.lines.supplements(restDay),
     amount: null,
     column: "F",
     manual: false,
-    explanation: { text: he.explanations.supplements, link: "restDayWork" },
+    explanation: { text: he.explanations.supplements(restDay), link: "restDayWork" },
   },
   {
     key: "advance",
@@ -89,7 +98,8 @@ const lines: MonthLine[] = [
     manual: false,
     explanation: { text: he.explanations.advanceRepaid },
   },
-];
+  ];
+}
 
 const balances: BalanceLine[] = [
   {
@@ -110,11 +120,14 @@ const balances: BalanceLine[] = [
   },
 ];
 
-const result: MonthResult = {
+/** Everything but the lines is the same for both workers; the lines are not,
+ * because two of them name her own days. */
+function resultFor(restDay: RestDay): MonthResult {
+  return {
   month: fixtureMonth,
   standardDays: null,
   actualDays: null,
-  lines,
+  lines: linesFor(restDay),
   subtotals: [],
   closing: [],
   gross: null,
@@ -123,7 +136,8 @@ const result: MonthResult = {
   // No warning fires on a fixture month: a warning is a fact about a real year.
   warnings: [],
   nationalInsuranceEstimate: null,
-};
+  };
+}
 
 const alerts: HomeAlert[] = [
   {
@@ -204,7 +218,7 @@ export const homeFixtures: HomeFixture[] = [
     month: fixtureMonth,
     restDay: SATURDAY,
     spans,
-    result,
+    result: resultFor(SATURDAY),
     alerts,
   },
   {
@@ -212,7 +226,7 @@ export const homeFixtures: HomeFixture[] = [
     month: fixtureMonth,
     restDay: FRIDAY,
     spans: otherSpans,
-    result,
+    result: resultFor(FRIDAY),
     alerts,
   },
 ];
