@@ -1,12 +1,20 @@
 import {
   addDays,
   compareIsoDate,
+  daysInMonth,
   eachDate,
+  isoOf,
   isRestDay,
   orderDates,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import type { ClosedDaySpan, DaySpan, IsoDate, MarkKind } from "@/lib/types";
+import type {
+  ClosedDaySpan,
+  DaySpan,
+  IsoDate,
+  MarkKind,
+  YearMonth,
+} from "@/lib/types";
 
 /**
  * Which days inside a swept range actually take the mark.
@@ -203,6 +211,31 @@ export function balanceDaysOf(span: ClosedDaySpan, restDay: RestDay): number {
       ? days.filter((d) => !isRestDay(d, restDay))
       : days;
   return counted.length * (span.fraction ?? 1);
+}
+
+/**
+ * Whether a span has any day inside the month.
+ *
+ * An open spell has no last day, so it overlaps every month from the one it
+ * began in onward: a spell nobody closed goes on drawing sick days month after
+ * month, which is what an unclosed spell means (`specs.md` item 8). The closed
+ * case is ordered before it is compared, because a range that arrived backwards
+ * would otherwise overlap nothing at all and simply vanish from the month — a
+ * mark the user made and cannot see (Part 5).
+ *
+ * It lives here rather than in the repository, which was where it began: the
+ * store is one caller of it and the two screens that draw a calendar are the
+ * others, and a client component reaching into the repository for it would pull
+ * a store into the browser to answer a question about dates.
+ */
+export function overlapsMonth(span: DaySpan, month: YearMonth): boolean {
+  const monthStart = isoOf(month, 1);
+  const monthEnd = isoOf(month, daysInMonth(month));
+  if (span.to === null) return compareIsoDate(span.from, monthEnd) <= 0;
+  const { from, to } = orderDates(span.from, span.to);
+  return (
+    compareIsoDate(from, monthEnd) <= 0 && compareIsoDate(to, monthStart) >= 0
+  );
 }
 
 /** Whether a span runs past the month on screen, in either direction. The

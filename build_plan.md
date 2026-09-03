@@ -165,6 +165,17 @@ step or a holiday becomes impossible to record in between.
 with the shell, and nothing that stage needs is still missing from the canvas. For the
 slice that means exactly two artboards; for the later stages it means the rest.
 
+**As of 2026-09-03 that is not met, and stage 4 started anyway.** The hand-over is written
+and the canvas has not been changed, so the two slice artboards still carry the three bar
+items, the pre-v3 mark colours, the tool-palette gesture and the folded `תוספות ומקדמות`
+row. Stage 4 therefore builds against `docs/design-pass-jobs-1-2.md` — the description
+rather than the drawing — which is the weaker of the two and is written down here so that
+nobody later reads the built screens as having been checked against a canvas they were
+not. It is the weaker of the two and not a licence: every item of the hand-over is
+something already settled in `specs.md` or in the built system, which is why the
+description can stand in for the drawing at all. When the canvas catches up, the artboards
+become the reference again.
+
 ## Stage 0 — Repo, scaffold, design system · **done**
 
 Outcomes only. `docs/plan-home-screen.md` is the description of how it was done.
@@ -503,6 +514,103 @@ Next.js App Router, Tailwind right-to-left, Hebrew strings in one translations f
 
 **Done when** the August 2025 facts can be entered by marking days, and the preview shows
 the same four totals the engine produced in stage 1.
+
+**It is built against `docs/design-pass-jobs-1-2.md` and not against the canvas.** The
+hand-over was written on 2026-09-03 and has not been applied: the two slice artboards still
+carry the three bar items, the pre-v3 mark colours, the tool-palette gesture and the folded
+`תוספות ומקדמות` row. So the description is what this stage follows, item by item, and the
+etags in the hand-over are what says whether that is still true. When the canvas catches up,
+the artboards become the reference again and the hand-over becomes a record of what changed.
+
+### Step 1 — the month screen exists, on the store, and draws · **done**
+
+The first thing in this application anybody can check without reading a test. `/month` was a
+404 the home screen linked to; it is now a route that reads the household out of the
+repository, replays each worker's months, and draws one of them.
+
+- `src/lib/dev/seed.ts` — the seeded household: two workers, January to September 2026, and
+  the days that departed from an ordinary month in each. It is **for clicking and proves
+  nothing**: the one month whose figures are known to be right is August 2025, which comes
+  from the family's own sheet and stays in the suite. Two figures in it are *given* rather
+  than invented — the opening position is a fact item 6 says the family states once — and
+  the salary is the last minimum wage this repository has a source for, ₪6,247.65 from
+  1.4.2025, rather than a 2026 figure nobody has fetched.
+- `src/lib/dev/store.ts` — `getRepository()`, the only line in the application that names an
+  implementation, and the one stage 3 substitutes. A module singleton hung off `globalThis`,
+  so an edit under `next dev` does not silently reset the store mid-check.
+- `src/app/month/page.tsx` — a **server** component. Part 3 says all salary logic runs on the
+  server and the browser only collects facts and displays results, so the engine runs here
+  and the browser receives calculated months. `connection()` keeps it out of the prerender.
+- `src/components/MonthScreen.tsx` — the client half: it picks the worker off the shell's
+  scope and the month off its own state, and draws. It holds no arithmetic.
+- `src/lib/today.ts` — the one place in the application that reads a clock, on the server,
+  in `Asia/Jerusalem`. "Today" is a local fact: a container running in UTC reads the 1st for
+  three hours after Israel has reached the 2nd, which would move an open spell's last
+  counted day.
+- `overlapsMonth` moved from the repository to `src/lib/spans.ts`, and the home screen's
+  span-overflow block became `src/components/SpanOverflow.tsx`. Both are span geometry with
+  three callers, and a client component reaching into the repository for the first would
+  pull a store into the browser to answer a question about dates.
+
+**Three decisions taken here, none of them reopenable without a reason:**
+
+1. **The whole household is calculated, not the worker on screen.** The switcher is in the
+   shell and its choice is client state, so a page that calculated only "the current worker"
+   would have to learn who that is before it could render. An account holds two workers
+   (item 11) and a replay is tens of milliseconds.
+2. **The month is client state and not a URL parameter.** Moving between months then costs
+   no round trip, and the switcher stays exactly as built. The cost is that a month cannot
+   be linked to, which nothing yet needs; when something does, `searchParams` on the server
+   component is where it goes.
+3. **The full-width row under the bar is dropped, not rehoused** — the hand-over's job 2a
+   item 4 left the choice open. `› חזרה לדף הבית` is what the nav's own `דף הבית` tab already
+   is, and `נשמר אוטומטית` describes a save that has not been built and will be immediate
+   when it is.
+
+**The calendar draws and does not mark, and that is a step boundary rather than a gap.**
+Marking writes through the store, and the store cannot take a holiday span until the holiday
+stops being a mark and becomes a state — the swap that has to happen in one step, since
+dropping `חג` from the picker before the drawn state exists leaves a holiday impossible to
+record at all. So a day here is not a button: a control that answers a click with silence
+reads as a broken screen, and `MonthCalendar` gained a `readOnly` that turns marking off and
+leaves the month buttons alone, because moving between months is reading.
+
+**Check — the first one in seven steps that is not the suite.** With `npm run dev` running,
+open http://localhost:3000/month.
+
+- It opens on **ספטמבר 2026** and reads `26 / 26` work days, `₪6,247.65` base, `4 × ₪100.00`
+  supplement, `₪8,353.05` as both `סך הכול החודש` and `לתשלום לעובד/ת`, and balances of
+  15.50 vacation and 33.50 sick days. September 2026 has four Saturdays, so 30 − 4 = 26 —
+  the standard count, and the actual count equals it because she took nothing.
+- Press `‹` back to **מרץ** and then `›` to **אפריל**. `ניכוי ימי מחלה` reads **−₪374.86** in
+  March and **−₪124.95** in April. That is the whole of what the crossing spell means: one
+  spell of four days from 30.3 to 2.4, stored once, whose first day pays nothing, second and
+  third pay half and fourth pays in full — so March deducts 1.5 days and April 0.5. **If
+  April also read −₪374.86 the spell had been read as two, and the tiers restarted.**
+- April also carries `ביטוח לאומי ₪1,000.00` in a card of its own under the total, with
+  `בגין החודשים ינואר 2026, פברואר 2026, מרץ 2026`. It must **not** be inside `סך הכול החודש`
+  (₪8,654.45) — that money went to the institute and never to her (item 16).
+- Now press the **left** arrow of the worker switcher in the top bar and go to **מאי**.
+  Every label that names a day has changed: `תוספת ימי חמישי` at `4 × ₪80.00`,
+  `עבודה ביום שישי` at `3 × ₪426.35`, and the column's own subtotal reading
+  `סך ימי שישי וחגים`. Her free rest day has moved from Saturday the 16th, where the first
+  worker's is and where it reads `שבת חופשית`, to Friday the 15th, where it reads
+  `יום שישי חופשי`.
+- That May subtotal is ₪1,705.40 — **four** days' worth from a line of three plus a
+  holiday, because the holiday she worked on Friday the 1st fell on her own rest day and is
+  paid once and not twice (item 9). Five would be the double payment.
+
+**What a failure looks like:** the same figure in March and April; a label naming Saturday
+for the Friday-resting worker; the national-insurance ₪1,000 folded into the month's total;
+or a day that highlights on hover as though it could be clicked.
+
+**The rest-day column is not shaded, and that is on purpose.** The artboard shades it and
+the hand-over's job 2a item 8 asks for the shading to follow her own day rather than
+Saturday — but `src/app/globals.css` already records the decision the built system took:
+an unmarked rest day is drawn exactly like an unmarked weekday, because `יום עבודה` names a
+day she worked and an unmarked rest day is one of them (item 5). So the switch is read off
+the labels and the free-rest-day mark, both of which move. Do not add the shading back
+without reopening that decision first.
 
 ## Stage 5 — External data and yearly settings
 

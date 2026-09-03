@@ -296,6 +296,30 @@ export const he = {
     },
   },
 
+  /** The month screen: the calendar, and the preview of what the month comes
+   * to. The preview and the export are one engine's output shown twice, so
+   * nothing here names a figure — only the rows it is shown in. */
+  month: {
+    /** A month the store has no record of. It is not an error and not an empty
+     * result — nothing has been entered yet, which for a month ahead of the
+     * present is the ordinary state (specs.md item 21). */
+    empty: {
+      title: "החודש הזה עדיין ריק",
+      body: "לא נרשם בו דבר, ולכן אין עדיין מה לחשב.",
+    },
+    preview: {
+      title: "החישוב של החודש",
+      /** The month's own total, before the closing block — ₪9,305.75 in the
+       * August 2025 case, and the third of criterion 1's four figures. */
+      gross: "סך הכול החודש",
+      /** What is actually handed over, after the advances and the deductions. */
+      net: "לתשלום לעובד/ת",
+      thirdParty: "תשלומים לגורמים שלישיים",
+      balances: "יתרות אחרי החודש הזה",
+      warnings: "כדאי לדעת",
+    },
+  },
+
   /**
    * The home screen's coarse summary of a month, which folds several of the
    * sheet's own rows into one line each. The sheet's full row set is `sheet.lines`
@@ -392,6 +416,10 @@ export const he = {
     reporting: {
       standardDays: "ימי תקן",
       actualDays: "ימים בפועל",
+      /** The two counts as one row, which is how the sheet asks for them: the
+       * Wage Protection Act wants both on the payslip, and a screen showing one
+       * of them has answered half the requirement (specs.md items 2, 5). */
+      workDays: "ימי עבודה (בפועל / תקני)",
       daysUsed: "ימים שנוצלו החודש",
       balanceLeft: "יתרה שנשארה",
       nationalInsuranceEstimate: "אומדן ביטוח לאומי לחודש",
@@ -401,6 +429,13 @@ export const he = {
     },
 
     why: {
+      /** Item 5's own asymmetry, said in the order a reader meets it: what the
+       * standard count is and what it pays, then what leaves the actual count
+       * and what does not. The worked holiday is named on both sides, because
+       * a holiday behaving oppositely in money and in the counts is the check
+       * item 5 says to hold on to. */
+      workDays: (restDay: RestDay) =>
+        `ימי התקן הם כל ימי החודש חוץ מ${day(restDay).pluralDefinite}, והמשכורת מחושבת מהם — חופשה או מחלה אינן מקטינות אותם. הימים בפועל הם אותם ימים פחות הימים שלא נעבדו: יום חופשה, יום מחלה, וחג שלא נעבד. חג שנעבד הוא יום עבודה ככל יום אחר ואינו יורד מהם. חוק הגנת השכר מחייב לציין בתלוש את שני המספרים.`,
       base: (standardDays: number, restDay: RestDay) =>
         `משכורת חודשית מלאה. היא נשענת על ${standardDays} ימי התקן של החודש — כל ימי החודש חוץ מ${day(restDay).pluralDefinite} — ולכן חופשה או מחלה אינן מקטינות אותה.`,
       restEveSupplement: (restEves: number, restDay: RestDay) =>

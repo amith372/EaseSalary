@@ -1,5 +1,5 @@
-import { FRIDAY, SATURDAY } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import { devWorkers } from "@/lib/dev/seed";
 import { he } from "@/lib/i18n/he";
 import type {
   BalanceLine,
@@ -29,13 +29,20 @@ export const fixtureMonth: YearMonth = { year: 2026, month: 8 };
  * render and server and browser agree. */
 export const fixtureToday = "2026-08-27";
 
-/** The account's workers, handed to the shell's worker scope. Until Stage 3
- * these are the placeholders; from Stage 3 they are the account's own, and only
- * the source changes. */
-export const fixtureWorkers: Worker[] = [
-  { id: "worker-1", name: he.placeholder.workerName, firstName: he.placeholder.name },
-  { id: "worker-2", name: "[שם העובד/ת השני/ה]", firstName: he.placeholder.name },
-];
+/**
+ * The account's workers, handed to the shell's worker scope. Until Stage 3
+ * these are the store's seeded household; from Stage 3 they are the account's
+ * own, and only the source changes.
+ *
+ * **They are read off the store rather than written again here**, and the rest
+ * day below with them. Two lists of the same two workers is how a screen ends
+ * up drawing one worker's month under the other's name — and it is how the home
+ * screen once read Hanna's Friday and Saturday for a worker who rests on
+ * Friday, which is the bug the switcher was built to expose.
+ */
+export const fixtureWorkers: Worker[] = devWorkers.map(
+  ({ id, name, firstName }) => ({ id, name, firstName }),
+);
 
 /**
  * The four marks v3 draws: one free rest day on the 8th, a vacation day on the
@@ -216,17 +223,17 @@ export const homeFixtures: HomeFixture[] = [
   {
     worker: fixtureWorkers[0],
     month: fixtureMonth,
-    restDay: SATURDAY,
+    restDay: devWorkers[0].restDay,
     spans,
-    result: resultFor(SATURDAY),
+    result: resultFor(devWorkers[0].restDay),
     alerts,
   },
   {
     worker: fixtureWorkers[1],
     month: fixtureMonth,
-    restDay: FRIDAY,
+    restDay: devWorkers[1].restDay,
     spans: otherSpans,
-    result: resultFor(FRIDAY),
+    result: resultFor(devWorkers[1].restDay),
     alerts,
   },
 ];

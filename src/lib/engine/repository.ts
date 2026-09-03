@@ -1,5 +1,5 @@
-import { compareIsoDate, daysInMonth, isoOf, orderDates } from "@/lib/dates";
 import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import { overlapsMonth } from "@/lib/spans";
 import type { Worker, YearMonth } from "@/lib/types";
 
 /**
@@ -88,26 +88,6 @@ export interface SalaryRepository {
    * replays them in. */
   listMonths(workerId: string): Promise<MonthFacts[]>;
   saveMonth(workerId: string, record: MonthRecord): Promise<void>;
-}
-
-/**
- * Whether a span has any day inside the month.
- *
- * An open spell has no last day, so it overlaps every month from the one it
- * began in onward: a spell nobody closed goes on drawing sick days month after
- * month, which is what an unclosed spell means (`specs.md` item 8, Part 3). The
- * closed case is ordered before it is compared, because a range that arrived
- * backwards would otherwise overlap nothing at all and simply vanish from the
- * month — a mark the user made and cannot see (Part 5).
- */
-export function overlapsMonth(span: MonthSpan, month: YearMonth): boolean {
-  const monthStart = isoOf(month, 1);
-  const monthEnd = isoOf(month, daysInMonth(month));
-  if (span.to === null) return compareIsoDate(span.from, monthEnd) <= 0;
-  const { from, to } = orderDates(span.from, span.to);
-  return (
-    compareIsoDate(from, monthEnd) <= 0 && compareIsoDate(to, monthStart) >= 0
-  );
 }
 
 /** The month's own spans, in the order they were recorded. Exported because

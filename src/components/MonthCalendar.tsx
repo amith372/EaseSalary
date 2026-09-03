@@ -64,6 +64,16 @@ interface MonthCalendarProps {
   /** Clearing takes a range the way marking does, and the caller decides what a
    * span lying half inside it means. */
   onClearRange?: (from: IsoDate, to: IsoDate) => void;
+  /**
+   * Draw the month without offering to mark it. **Marking only** — the month
+   * buttons still work, because moving between months is reading and not
+   * writing.
+   *
+   * A day is then not a button at all rather than a button that does nothing:
+   * a control that answers a click with silence reads as a broken screen, and
+   * the hint line that tells the user to click one goes with it.
+   */
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -113,6 +123,7 @@ export function MonthCalendar({
   onMonthChange,
   onSelectRange,
   onClearRange,
+  readOnly = false,
   className,
 }: MonthCalendarProps) {
   const marks = he.calendar.marks(restDay);
@@ -249,9 +260,11 @@ export function MonthCalendar({
           <span className="text-[24px] font-bold tracking-[-0.02em]">
             <Bidi>{monthLabel(month)}</Bidi>
           </span>
-          <span dir="auto" className="text-[15px] font-light text-ink-quiet">
-            {he.calendar.hint}
-          </span>
+          {readOnly ? null : (
+            <span dir="auto" className="text-[15px] font-light text-ink-quiet">
+              {he.calendar.hint}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -308,29 +321,15 @@ export function MonthCalendar({
             compareIsoDate(date, selection.from) >= 0 &&
             compareIsoDate(date, selection.to) <= 0;
           const dayNumber = fromIsoDate(date).getUTCDate();
-
-          return (
-            <button
-              key={date}
-              type="button"
-              data-date={date}
-              tabIndex={date === focused ? 0 : -1}
-              aria-label={`${dayNumber} ${monthLabel(month)}${
-                span ? `, ${marks[span.kind]}` : ""
-              }`}
-              aria-pressed={span !== undefined}
-              onClick={() => pressDay(date)}
-              onMouseEnter={() => previewTo(date)}
-              onFocus={() => setFocused(date)}
-              className={[
-                "flex flex-col items-center justify-center gap-px rounded-day text-[17px] transition-colors",
-                span ? `font-semibold ${markClass[span.kind]}` : "bg-day font-normal text-day-ink",
-                inSelection
-                  ? "outline-2 -outline-offset-2 outline-forest"
-                  : "hover:outline hover:-outline-offset-1 hover:outline-line-hover",
-                "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-forest",
-              ].join(" ")}
-            >
+          const label = `${dayNumber} ${monthLabel(month)}${
+            span ? `, ${marks[span.kind]}` : ""
+          }`;
+          const face = [
+            "flex flex-col items-center justify-center gap-px rounded-day text-[17px] transition-colors",
+            span ? `font-semibold ${markClass[span.kind]}` : "bg-day font-normal text-day-ink",
+          ];
+          const content = (
+            <>
               <Bidi noTranslate className="leading-[1.1]">
                 {String(dayNumber)}
               </Bidi>
@@ -339,6 +338,40 @@ export function MonthCalendar({
                   {marks[span.kind]}
                 </span>
               ) : null}
+            </>
+          );
+
+          // Drawn rather than offered: no tab stop, no hover outline and no
+          // pressed state, because none of the three is true of a day that
+          // cannot be marked.
+          if (readOnly) {
+            return (
+              <div key={date} data-date={date} aria-label={label} className={face.join(" ")}>
+                {content}
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={date}
+              type="button"
+              data-date={date}
+              tabIndex={date === focused ? 0 : -1}
+              aria-label={label}
+              aria-pressed={span !== undefined}
+              onClick={() => pressDay(date)}
+              onMouseEnter={() => previewTo(date)}
+              onFocus={() => setFocused(date)}
+              className={[
+                ...face,
+                inSelection
+                  ? "outline-2 -outline-offset-2 outline-forest"
+                  : "hover:outline hover:-outline-offset-1 hover:outline-line-hover",
+                "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-forest",
+              ].join(" ")}
+            >
+              {content}
             </button>
           );
         })}
