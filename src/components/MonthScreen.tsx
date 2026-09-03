@@ -12,7 +12,9 @@ import { WhyButton, WhyPanel } from "@/components/WhyDisclosure";
 import { monthOf, sameMonth } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
+import { isUserLineKey, lineKeys } from "@/lib/engine/month";
 import type { MonthInSeries } from "@/lib/engine/series";
+import type { UserLinePlacement } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { formatAgorot, formatDays } from "@/lib/money";
 import type {
@@ -21,7 +23,6 @@ import type {
   IsoDate,
   MonthLine,
   MonthResult,
-  SheetColumn,
   Worker,
   YearMonth,
 } from "@/lib/types";
@@ -86,10 +87,6 @@ function openingMonth(household: WorkerMonths[], today: IsoDate): YearMonth {
       : latest,
   );
 }
-
-/** Columns E, F and G reach the worker; H is money that went elsewhere and is
- * drawn outside her total (specs.md item 16). */
-const WORKER_COLUMNS: SheetColumn[] = ["E", "F", "G"];
 
 export function MonthScreen({ household, today }: MonthScreenProps) {
   const { worker } = useWorkerScope();
@@ -261,6 +258,28 @@ function coversHint(line: MonthLine): ReactNode {
   );
 }
 
+/**
+ * The two groups the preview reads the month's lines into. **The preview groups
+ * by kind and the sheet groups by column** — specs.md item 5 says why, and says
+ * it once.
+ */
+const SALARY_KEYS: string[] = [lineKeys.base, lineKeys.sickDeduction];
+
+const DAY_KEYS: string[] = [
+  lineKeys.restEveSupplement,
+  lineKeys.restDays,
+  lineKeys.holidaysWorked,
+];
+
+/** Enough of a line to summarise it: what it came to, and whether the user set
+ * it by hand. Both `MonthLine` and `ClosingLine` satisfy it, which is the point
+ * — the two summary rows are built from one of each. */
+type SummarisableLine = Pick<MonthLine, "amount" | "manual">;
+
+function sumOf(rows: Pick<MonthLine, "amount">[]): number {
+  return rows.reduce((total, row) => total + (row.amount ?? 0), 0);
+}
+
 function MonthPreview({
   result,
   restDay,
@@ -276,6 +295,46 @@ function MonthPreview({
   const thirdPartyLines = result.lines.filter((line) => line.column === "H");
   const thirdPartySubtotal = result.subtotals.find(
     (subtotal) => subtotal.column === "H",
+  );
+
+  const salaryLines = result.lines.filter((line) => SALARY_KEYS.includes(line.key));
+  const dayLines = result.lines.filter((line) => DAY_KEYS.includes(line.key));
+  // However many lines the user added, the month screen shows one row for the
+  // ones placed before the total and one for the ones placed after it (item
+  // 20). The itemisation is the payments screen's and the export's.
+  const userBefore = result.lines.filter((line) => isUserLineKey(line.key));
+  const userAfter = result.closing.filter((row) => isUserLineKey(row.key));
+  const closingRows = result.closing.filter((row) => !isUserLineKey(row.key));
+  // **Everything the engine emitted that the three groups above did not claim.**
+  // The groups are keyed whitelists, so a line the engine grows later — the
+  // recuperation payment is the next one (item 15) — would otherwise count in
+  // the month's total and appear nowhere, which is a figure gone missing with
+  // nothing on screen to say so. This is the catch-all that makes the grouping
+  // exhaustive by construction rather than by whoever adds the next line
+  // remembering to come here.
+  const claimed = new Set(
+    [...salaryLines, ...dayLines, ...userBefore].map((line) => line.key),
+  );
+  const otherLines = result.lines.filter(
+    (line) => line.column !== "H" && !claimed.has(line.key),
+  );
+  const workerSubtotals = result.subtotals.filter(
+    (subtotal) => subtotal.column !== "H",
+  );
+
+  const userLineRow = (rows: SummarisableLine[], placement: UserLinePlacement) => (
+    <Row
+      {...why}
+      label={he.month.preview.userLines}
+      whyKey={`userLines-${placement}`}
+      explanation={{ text: he.month.preview.userLinesWhy }}
+      value={
+        <MoneyValue
+          agorot={sumOf(rows)}
+          manual={rows.some((row) => row.manual)}
+        />
+      }
+    />
   );
 
   return (
@@ -301,43 +360,55 @@ function MonthPreview({
           }
         />
 
-        {WORKER_COLUMNS.map((column) => {
-          const lines = result.lines.filter((line) => line.column === column);
-          if (lines.length === 0) return null;
-          const subtotal = result.subtotals.find(
-            (candidate) => candidate.column === column,
-          );
-          return (
-            <div
-              key={column}
-              className="flex flex-col gap-2 border-t border-line pt-2.5"
+        <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+          {salaryLines.map((line) => (
+            <Row
+              {...why}
+              key={line.key}
+              label={line.label}
+              whyKey={line.key}
+              explanation={line.explanation}
+              hint={unitsHint(line)}
+              value={<MoneyValue agorot={line.amount} manual={line.manual} />}
+            />
+          ))}
+        </div>
+
+        {dayLines.length > 0 ? (
+          <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+            <h3
+              dir="auto"
+              className="text-[13px] font-semibold tracking-[0.06em] text-ink-quiet"
             >
-              {lines.map((line) => (
-                <Row
-                  {...why}
-                  key={line.key}
-                  label={line.label}
-                  whyKey={line.key}
-                  explanation={line.explanation}
-                  hint={unitsHint(line)}
-                  value={<MoneyValue agorot={line.amount} manual={line.manual} />}
-                />
-              ))}
-              {subtotal ? (
-                <Row
-                  {...why}
-                  label={subtotal.label}
-                  whyKey={`subtotal-${column}`}
-                  explanation={subtotal.explanation}
-                  value={<MoneyValue agorot={subtotal.amount} chip="warm" />}
-                  strong
-                />
-              ) : null}
-            </div>
-          );
-        })}
+              {he.month.preview.dayAdditions(restDay)}
+            </h3>
+            {dayLines.map((line) => (
+              <Row
+                {...why}
+                key={line.key}
+                label={line.label}
+                whyKey={line.key}
+                explanation={line.explanation}
+                hint={unitsHint(line)}
+                value={<MoneyValue agorot={line.amount} manual={line.manual} />}
+              />
+            ))}
+          </div>
+        ) : null}
 
         <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+          {otherLines.map((line) => (
+            <Row
+              {...why}
+              key={line.key}
+              label={line.label}
+              whyKey={line.key}
+              explanation={line.explanation}
+              hint={unitsHint(line)}
+              value={<MoneyValue agorot={line.amount} manual={line.manual} />}
+            />
+          ))}
+          {userBefore.length > 0 ? userLineRow(userBefore, "beforeGross") : null}
           <Row
             {...why}
             label={he.month.preview.gross}
@@ -346,7 +417,8 @@ function MonthPreview({
             value={<MoneyValue agorot={result.gross} chip="warm" />}
             strong
           />
-          {result.closing.map((line) => (
+          {userAfter.length > 0 ? userLineRow(userAfter, "afterGross") : null}
+          {closingRows.map((line) => (
             <Row
               {...why}
               key={line.key}
@@ -369,6 +441,28 @@ function MonthPreview({
             within="tint"
           />
         </Card>
+
+        {/* Two of criterion 1's four checkable figures, kept where they can be
+            read off the screen — apart from the lines, because the lines above
+            are grouped by kind and these are sums over columns. */}
+        <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+          <h3
+            dir="auto"
+            className="text-[13px] font-semibold tracking-[0.06em] text-ink-quiet"
+          >
+            {he.month.preview.byColumn}
+          </h3>
+          {workerSubtotals.map((subtotal) => (
+            <Row
+              {...why}
+              key={subtotal.column}
+              label={subtotal.label}
+              whyKey={`subtotal-${subtotal.column}`}
+              explanation={subtotal.explanation}
+              value={<MoneyValue agorot={subtotal.amount} />}
+            />
+          ))}
+        </div>
       </Card>
 
       {/* Outside the card above, and that is the point: this money went to a

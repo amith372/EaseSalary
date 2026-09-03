@@ -309,11 +309,30 @@ export const he = {
     },
     preview: {
       title: "החישוב של החודש",
+      /**
+       * The heading over the three lines the days of the week added, and **it
+       * names her own two days** (specs.md items 5 and 14): "ימי שישי, שבתות
+       * וחגים" for a Saturday-resting worker and "ימי חמישי, ימי שישי וחגים" for
+       * one who rests on Friday.
+       */
+      dayAdditions: (restDay: RestDay) =>
+        `${eve(restDay).plural}, ${day(restDay).plural} וחגים`,
+      /**
+       * The lines the user added, summed. One heading covers both directions,
+       * so the sum may come out either way and the wording may not name only
+       * one of them (item 20).
+       */
+      userLines: "תוספות והורדות שהוספת",
+      userLinesWhy:
+        "סיכום השורות שהוספת. הפירוט המלא — שורה־שורה, עם הסיבה שרשמת לכל אחת — נמצא במסך התשלומים ובקובץ האקסל, כי בתלוש כל תשלום חייב להופיע בנפרד.",
       /** The month's own total, before the closing block — ₪9,305.75 in the
        * August 2025 case, and the third of criterion 1's four figures. */
       gross: "סך הכול החודש",
       /** What is actually handed over, after the advances and the deductions. */
       net: "לתשלום לעובד/ת",
+      /** The sheet's own column totals, shown apart from the lines rather than
+       * under them (specs.md item 5). */
+      byColumn: "לפי העמודות בדף המשכורת",
       thirdParty: "תשלומים לגורמים שלישיים",
       balances: "יתרות אחרי החודש הזה",
       warnings: "כדאי לדעת",
@@ -452,16 +471,29 @@ export const he = {
         `מקדמה מספר ${advanceNumber} שניתנה החודש ומתווספת לסכום המועבר. היא תיפרע בחודשים הבאים, לפי הסכום שיוזן בכל חודש.`,
       advanceRepaid: (advanceNumber: number) =>
         `החזר של מקדמה מספר ${advanceNumber} שניתנה קודם לכן. הסכום נקבע לחודש הזה בלבד ואינו נגזר מלוח תשלומים קבוע.`,
-      extra: "תשלום שהוספת לחודש הזה, עם הסיבה שרשמת לו.",
-      /** The three that join it, all of them lines the user defined. The label
-       * is the user's own words and is never written here — only the reasoning
-       * beside it is (specs.md item 20). */
-      userDeduction:
-        "ניכוי שהוספת לחודש הזה, עם הסיבה שרשמת לו. הוא נגרע מהסכום המועבר בפועל ואינו משנה את שכר החודש עצמו.",
-      standingAddition:
-        "תשלום קבוע שהגדרת בפרופיל, והוא חוזר בכל חודש באותו סכום עד שתשנה או תפסיק אותו. הוא נשמר עם החודש שחושב, ולכן הפסקה שלו עכשיו אינה משנה חודשים קודמים.",
-      standingDeduction:
-        "ניכוי קבוע שהגדרת בפרופיל, והוא חוזר בכל חודש באותו סכום עד שתשנה או תפסיק אותו. הוא נגרע מהסכום המועבר בפועל, ונשמר עם החודש שחושב.",
+      /**
+       * A line the user added, explained in two halves: how long it lasts, and
+       * where the user put it (specs.md item 20). The label is the user's own
+       * words and is never written here — only the reasoning beside it is.
+       *
+       * **Two whole sentences joined, and not a sentence assembled from
+       * fragments.** The lifetime and the placement are independent choices and
+       * writing all four combinations out would be four sentences to keep in
+       * step; each half here is a complete sentence that reads correctly on its
+       * own, which is what keeps the join from being the thing `CLAUDE.md`
+       * warns about. The **direction** is deliberately not a third half: the
+       * amount already carries its sign, and a sentence restating it would say
+       * what the figure beside it says.
+       */
+      userLine: {
+        standing:
+          "שורה קבועה שהגדרת בפרופיל, והיא חוזרת בכל חודש באותו סכום עד שתשנה או תפסיק אותה. היא נשמרת עם החודש שחושב, ולכן הפסקה שלה עכשיו אינה משנה חודשים קודמים.",
+        oneOff: "שורה שהוספת לחודש הזה בלבד, עם הסיבה שרשמת לה.",
+        beforeGross:
+          "בחרת שהיא תיכנס לסך הכול של החודש, ולכן היא גם נכללת באומדן הביטוח הלאומי, שמחושב מעלות החודש המלאה.",
+        afterGross:
+          "בחרת שהיא תבוא אחרי סך הכול של החודש, ולכן היא משנה רק את הסכום שמועבר בפועל ואינה נכללת באומדן הביטוח הלאומי.",
+      },
       thirdParty:
         "תשלום שיוצא לגורם שלישי ולא לעובד/ת, ולכן אינו נכלל בסכום שמשולם לה.",
       nationalInsurancePaid:

@@ -612,6 +612,81 @@ day she worked and an unmarked rest day is one of them (item 5). So the switch i
 the labels and the free-rest-day mark, both of which move. Do not add the shading back
 without reopening that decision first.
 
+### Step 1b — the user's own lines choose their side of the total · **done**
+
+Unplanned, and asked for by the user in two sentences while step 1 was being checked. Both
+went into `specs.md` before any code moved.
+
+**Fridays are shown beside Saturdays and holidays, and nothing about the file changes.**
+The user asked for the rest-eve supplement to sit with the rest-day work and the worked
+holiday. On the sheet it belongs to the salary column — criterion 1 pins August 2025 at
+₪6,747.65 for column E, which is the base plus the ₪500 Friday supplement, against
+₪2,558.10 for column F — so moving it would restate the one month the engine is checked
+against. The resolution is item 5's new paragraph: **the preview groups by kind and the
+sheet groups by column**, the three day lines are shown together under a heading that names
+her own two days, and the column totals are shown *apart* at the foot rather than under the
+groups. A column total printed under a group it does not add up to is worse than no
+grouping, and that is exactly what the obvious reading would have produced — the first
+mock-up of this drawn for the user had that error in it.
+
+**A line the user adds now chooses its side of the month's total** (item 20, rewritten).
+The direction decides the sign and nothing else; `placement` is a third independent choice
+and defaults to where every line sat before it existed — an addition before, a deduction
+after — so the whole suite went on asserting the figures it always had. The two
+combinations that were previously impossible are now expressible and both are ordinary: a
+deduction inside the month lowers what the month cost and with it item 19's estimate, and
+an addition outside it adds to the transfer without reaching either.
+
+**On the month screen the lines are summarised, one row per side.** The itemisation is the
+payments screen's and the export's, and that division is not a preference: item 2 requires
+the payslip to show every payment with its type, its units and its amount, so a summarised
+row in the *file* would breach it while a summarised row on a *screen* answers "what did
+this month come to" better than nine rows would.
+
+**Check:** the two mutations that matter were made and both were caught — `placementOf`
+returning `beforeGross` for everything failed six tests, and dropping the sign on a
+before-gross deduction failed two.
+
+**Check — click it.** On http://localhost:3000/month press `‹` to **יוני 2026**:
+
+- The heading `ימי שישי, שבתות וחגים` now stands over `תוספת ימי שישי ₪400.00` and
+  `עבודה בשבת ₪1,705.40` together. Switch worker and it reads `ימי חמישי, ימי שישי וחגים`.
+- `תוספות והורדות שהוספת ₪250.00` sits **above** `סך הכול החודש ₪8,603.05`, and a second
+  row of the same name reading **−₪180.00** sits below it, so
+  `לתשלום לעובד/ת` is ₪8,423.05. The heading appears twice on purpose: one heading covers
+  both directions, and the side of the total it sits on is what differs.
+- At the foot, `לפי העמודות בדף המשכורת` reads `סך שכר החודש ₪6,647.65` — the ₪400 is
+  still counted there, which is the whole point of "display only".
+- Now `›` to **יולי 2026**. The added row is **−₪180.00 above** the total this time, the
+  month comes to ₪8,273.05 instead of ₪8,453.05, and `סך תשלומים חד־פעמיים` is −₪180.00. A
+  deduction placed before the total is a negative line in a column, not a row below them.
+
+**What a failure looks like:** the Friday supplement missing from `סך שכר החודש`; July's
+₪180 appearing below the total instead of above it; or the same figure for June and July,
+which would mean the placement was being ignored.
+
+**What the review found, and what is still owed.** A two-axis review ran over this change
+before it was committed. Three findings were real and are fixed here: a line the user
+withheld was signed on its **rate**, which puts a negative unit price in column D and is the
+reading Part 5 warns about — it is signed on the units now, as the sickness deduction
+already was; an **override** on such a line rounded differently on the two sides of the
+total, so moving a line across it silently inverted an amount the user had typed (item 17),
+and the sign is now forced from the direction on both sides; and the preview's groups were
+keyed whitelists, so the next line the engine grows — the recuperation payment, item 15 —
+would have counted in the total and appeared nowhere, which a catch-all group now makes
+impossible by construction. Both engine fixes carry a test and both were mutation-checked.
+
+**Still owed, and it is scope rather than a defect: nothing on any screen can yet *make*
+the placement choice.** The spec says it is offered beside the line; today only the seed
+sets it. The screen that adds a line is stage 4's "three groups beside it" step, and that
+is where the control belongs — it is listed there and not forgotten here.
+
+**Editing the seed needs the dev server restarted.** The store is a `globalThis` singleton
+so that saving a file mid-check does not silently reset the marks — the same property means
+a change to `src/lib/dev/seed.ts` is not picked up until the process restarts. This was
+found the honest way: the seeded lines were added and the screen went on showing the month
+without them.
+
 ## Stage 5 — External data and yearly settings
 
 `fetch` plus an HTML parser, server-side, cached in Postgres.

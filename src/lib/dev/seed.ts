@@ -190,6 +190,49 @@ const devMonths: Record<string, MonthRecord[]> = {
       ],
     },
     5: { advances: [{ number: 1, kind: "repaid", agorot: 100000 }] },
+    // The two defaults side by side (specs.md item 20): an addition before the
+    // month's total and a deduction after it, which is where each sits when the
+    // user says nothing. The screen shows one summarised row for each.
+    //
+    // **The Hebrew here is not a translation and does not belong in `he.ts`.**
+    // A user line's label and note are the user's own sentence and never the
+    // application's (item 20), so what stands in for one in a seed is a made-up
+    // sentence in the language the user would have written — the convention is
+    // that `he.ts` holds every string the *application* says, and these are
+    // stored data of the kind a family would have typed.
+    6: {
+      userLines: [
+        {
+          id: "shortfall",
+          label: "השלמה מחודש קודם",
+          direction: "addition",
+          agorot: 25000,
+          note: "חסר שהתגלה בחודש שעבר",
+        },
+        {
+          id: "damage",
+          label: "השתתפות בנזק",
+          direction: "deduction",
+          agorot: 18000,
+          note: "סוכם בעל פה",
+        },
+      ],
+    },
+    // The combination the old rule could not express at all: a deduction the
+    // user put *before* the total, so it lowers what the month cost and with it
+    // the national-insurance estimate rather than only what is transferred.
+    7: {
+      userLines: [
+        {
+          id: "phone",
+          label: "השתתפות בחשבון הטלפון",
+          direction: "deduction",
+          placement: "beforeGross",
+          agorot: 18000,
+          note: "מנוכה מהשכר עצמו לפי ההסכם",
+        },
+      ],
+    },
   }),
   "worker-2": monthsFor(secondWorker),
 };

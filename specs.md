@@ -105,6 +105,17 @@ Each of these is true or false at a glance.
     repaid, the income-tax line, manual overrides), payments to third parties (national
     insurance, medical insurance, fees), and yearly settings (the nine holidays, the
     recuperation month). Every action can carry a free-text note.
+    **The month's preview reads by kind, not by the sheet's columns.** The rest-eve
+    supplement, the work on a rest day and the worked holiday are shown together, because
+    to the family they are one thing — what the days of the week added to an ordinary
+    month — while on the sheet the supplement belongs to the salary column and the other
+    two to the rest-day column (item 2, Part 5). Neither the calculation nor the exported
+    file moves an agora for it: the columns are the sheet's structure and the sheet is
+    where they are totalled. The preview therefore shows the column totals as figures of
+    their own, apart from the lines, rather than at the foot of the groups it drew — a
+    group whose lines do not add up to the total printed under it is worse than no
+    grouping at all, and that is exactly what putting the supplement beside the rest days
+    under a salary subtotal would produce.
     **The weekly rest day is a term of the employment, not a constant.** The law allows
     only Friday, Saturday or Sunday, whichever the worker holds as her own — a Catholic
     Filipina worker may ask for Sunday and a Muslim worker for Friday, and it is her right
@@ -412,8 +423,8 @@ Each of these is true or false at a glance.
     application warns before either runs out.
 20. The user can add lines of their own to a month, with a reason of their own, and each
     appears as its own line in the export — which is how a shortfall from an earlier
-    month is settled later. A line the user adds has **two independent choices** and the
-    four combinations are all meant:
+    month is settled later. A line the user adds has **three independent choices** and
+    every combination of them is meant:
 
     - **Which way it moves.** An *addition* is money that reaches the worker; a
       *deduction* is money withheld from what is transferred to her. The sign follows
@@ -424,14 +435,46 @@ Each of these is true or false at a glance.
       until the user changes it or stops it. A standing line is a term of the employment
       and is snapshotted onto the month like every other term (Part 3), so stopping it in
       June leaves the earlier months exactly as they were.
+    - **Where it sits: before the month's total, or after it.** This is the user's own
+      choice on every line, and it is not implied by the direction. A line placed
+      *before* is part of what the month came to — it enters the month's total and with it
+      the national-insurance estimate, which is 3.6% of the month's full cost (item 19). A
+      line placed *after* changes only what is transferred at the end, and reaches neither.
+      **The two are different money and the difference is real**, which is why the
+      application asks rather than deciding: a standing payment the family agreed as part
+      of the wage belongs inside the month's cost, while a sum handed over on the side does
+      not, and no rule the application could apply would tell them apart.
 
-    **Where each lands on the sheet.** A standing addition is part of what she earns every
-    month, so it sits in column E beside the salary and the rest-eve supplement; a one-off
-    addition sits in column G, which is what that column is for. Deductions of both kinds
-    go to the block below the columns, beside the income tax and the advance instalment —
-    that block is where everything withheld on the way from the month's total to the
-    figure actually transferred already lives, and it already grows with however many rows
-    the month has.
+    **Where each lands on the sheet.** A line placed *before* the month's total needs a
+    column, and which one follows from how long it lasts: a standing line sits in column E
+    beside the salary and the rest-eve supplement, because that is where what she earns
+    every month lives, and a one-off line sits in column G, which is what that column is
+    for. A line placed *after* goes to the block below the columns, beside the income tax
+    and the advance instalment — that block is where everything on the way from the
+    month's total to the figure actually transferred already lives, and it already grows
+    with however many rows the month has.
+
+    **The application defaults the placement and lets the user move it.** An addition
+    defaults to *before* and a deduction to *after*, which is where each usually belongs
+    and which is what the user would have chosen without being asked; the choice is
+    offered beside the line and never demanded of someone who does not want it. The
+    default is not a rule, and the two combinations it does not produce are ordinary: an
+    addition after the total is a payment that is not part of the month's cost, and a
+    deduction before it is one the wage itself is meant to be net of.
+
+    **On the month screen they are summarised; the export and the payments screen itemise
+    them.** However many lines a month carries, the month screen shows one row for the ones
+    placed before the total and one for the ones placed after it, each holding the sum of
+    its own and carrying a single heading that covers both directions — a group's sum may
+    therefore come out either way, and the heading says "added and withheld" rather than
+    naming one of them. The full list, line by line with the reason on each, is on the
+    payments screen and in the exported file. The two rows are not a saving of space but a
+    division of labour: the month screen answers "what did this month come to", and a
+    month with nine added lines answers it worse by printing nine of them, while the
+    document that must account for each one is the sheet. That the export itemises is
+    therefore not a preference here but the requirement of item 2 — the payslip shows every
+    payment as its type, its number of units and its amount — and a summarised row in the
+    file would breach it.
 
     **This is what a family uses instead of bending another line into a shape it is not**,
     and the direction follows from the agreement rather than from what the money is

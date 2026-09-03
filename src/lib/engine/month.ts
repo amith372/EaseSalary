@@ -12,7 +12,8 @@ import {
   nationalInsuranceEstimateOf,
   thirdPartyLines,
 } from "@/lib/engine/thirdParty";
-import { closeMonth } from "@/lib/engine/types";
+import { closeMonth, placementOf } from "@/lib/engine/types";
+import type { UserLinePlacement } from "@/lib/engine/types";
 import type {
   ClosedMonthFacts,
   MonthContext,
@@ -78,6 +79,69 @@ export const lineKeys = {
   sickDeduction: "sickDeduction",
   incomeTax: "incomeTax",
 } as const;
+
+/**
+ * How a line the user added is addressed: `standing.<id>` for one set on the
+ * profile and `extra.<id>` for one belonging to this month alone.
+ *
+ * **The two prefixes are stored values**, because `MonthFacts.overrides` is
+ * keyed by them (specs.md item 17), and they are what keeps a standing line and
+ * a one-off line from colliding on an override when they share an id. They are
+ * written here once and read everywhere — the screen that groups these lines
+ * asks `isUserLineKey` rather than testing the strings itself, so a rename is a
+ * compile error in one file instead of a row that silently empties.
+ */
+export const userLinePrefixes = ["standing", "extra"] as const;
+
+export type UserLinePrefix = (typeof userLinePrefixes)[number];
+
+export function isUserLineKey(key: string): boolean {
+  return userLinePrefixes.some((prefix) => key.startsWith(`${prefix}.`));
+}
+
+/**
+ * The user's two sets of lines, with the column each takes **when it is placed
+ * before the month's total** (specs.md item 20) — the block below the columns
+ * has no columns, so `buildClosing` reads the first two and not the third.
+ *
+ * Written once because both halves of the month walk the same two sets and now
+ * differ only in which placement they take: two loops deciding separately which
+ * lines are standing and which are one-off is two places for a line to fall
+ * through.
+ */
+function userLineGroups(facts: ClosedMonthFacts | MonthFacts) {
+  return [
+    [userLinePrefixes[0], facts.terms.standingLines, "E"],
+    [userLinePrefixes[1], facts.userLines, "G"],
+  ] as const;
+}
+
+/**
+ * An override on a line the user added is a **magnitude**, and the sign still
+ * comes from the direction (specs.md item 20: the user picks the kind and never
+ * types a minus).
+ *
+ * It is forced here because the same line can now sit on either side of the
+ * month's total, and the two sides round differently: the block below the
+ * columns already signs the income tax and the advances itself, while `toLine`
+ * takes an override verbatim. Without this, moving a line across the total
+ * would silently invert an amount the user had typed — which item 17 says must
+ * never happen, and which would look like an ordinary figure.
+ */
+function signedUserLine(line: MonthLine, sign: 1 | -1): MonthLine {
+  if (!line.manual) return line;
+  return { ...line, amount: sign * Math.abs(line.amount ?? 0) || 0 };
+}
+
+/** The sentence beside a line the user added: how long it lasts, then where the
+ * user put it. Both halves are whole sentences in `he.ts` (item 20). */
+function userLineWhy(
+  prefix: UserLinePrefix,
+  placement: UserLinePlacement,
+): string {
+  const why = he.sheet.why.userLine;
+  return `${prefix === "standing" ? why.standing : why.oneOff} ${why[placement]}`;
+}
 
 function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
   const rates = deriveRates(facts.confirmedWage.baseAgorot);
@@ -195,36 +259,39 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
     });
   }
 
-  // The lines the user added, in the direction and the lifetime they were given
-  // (specs.md item 20). **Only the additions are here**: a deduction is withheld
-  // on the way from the month's total to what is actually transferred, so it
-  // belongs to the block below the columns beside the income tax and the advance
-  // instalment, and `buildClosing` emits it.
+  // The lines the user added (specs.md item 20). **What decides whether a line
+  // is here is where the user put it and not which way it moves**: a line placed
+  // before the month's total is part of what the month came to and enters the
+  // national-insurance estimate with it, and one placed after only changes what
+  // is transferred — `buildClosing` emits those. The direction decides the sign
+  // alone, so a deduction placed before the total is a negative line in a column
+  // rather than a row below them.
   //
-  // A standing addition sits in column E, because it is part of what she earns
-  // every month; a one-off sits in G, which is what that column is for.
-  for (const line of facts.terms.standingLines) {
-    if (line.direction !== "addition") continue;
-    drafts.push({
-      key: `standing.${line.id}`,
-      label: line.label,
-      units: 1,
-      rate: line.agorot,
-      column: "E",
-      explanation: { text: he.sheet.why.standingAddition },
-    });
-  }
-
-  for (const line of facts.userLines) {
-    if (line.direction !== "addition") continue;
-    drafts.push({
-      key: `extra.${line.id}`,
-      label: line.label,
-      units: 1,
-      rate: line.agorot,
-      column: "G",
-      explanation: { text: he.sheet.why.extra },
-    });
+  // Which column follows from how long the line lasts: a standing line sits in
+  // column E, because that is where what she earns every month lives, and a
+  // one-off in G, which is what that column is for.
+  const userDrafts: { draft: LineDraft; sign: 1 | -1 }[] = [];
+  for (const [prefix, lines, column] of userLineGroups(facts)) {
+    for (const line of lines) {
+      if (placementOf(line) !== "beforeGross") continue;
+      const sign = line.direction === "addition" ? 1 : -1;
+      userDrafts.push({
+        sign,
+        draft: {
+          key: `${prefix}.${line.id}`,
+          label: line.label,
+          units: sign,
+          // **The units carry the sign and the rate does not**, exactly as the
+          // sickness deduction above does it. The rate is column D of the sheet,
+          // which is a unit price: a negative price is the reading Part 5 warns
+          // about, and one withheld unit at a positive price is what this row
+          // actually records.
+          rate: Math.abs(line.agorot),
+          column,
+          explanation: { text: userLineWhy(prefix, "beforeGross") },
+        },
+      });
+    }
   }
 
   // Column H — money paid to third parties, and excluded from the total:
@@ -233,6 +300,9 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
   // beside them, and this file restates neither.
   return [
     ...drafts.map((draft) => toLine(draft, facts.overrides)),
+    ...userDrafts.map(({ draft, sign }) =>
+      signedUserLine(toLine(draft, facts.overrides), sign),
+    ),
     ...thirdPartyLines(facts.thirdPartyPayments, facts.overrides),
   ];
 }
@@ -265,25 +335,26 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
     explanation: { text: he.sheet.why.incomeTax, link: "incomeTax" },
   });
 
-  // The user's own deductions, standing first and then this month's, before the
-  // advances: everything here is withheld from the month's total, and the sign
-  // comes from `direction` rather than from a figure the user could type
-  // negative (item 20).
-  for (const [prefix, lines, why] of [
-    ["standing", facts.terms.standingLines, he.sheet.why.standingDeduction],
-    ["extra", facts.userLines, he.sheet.why.userDeduction],
-  ] as const) {
+  // The user's own lines placed *after* the month's total, standing first and
+  // then this month's, before the advances. **Placement is what puts a line
+  // here, not direction** (item 20): an addition placed after the total is a
+  // payment that is not part of the month's cost, and it adds to what is
+  // transferred without reaching the national-insurance estimate. The sign
+  // still comes from `direction` rather than from a figure the user could type
+  // negative.
+  for (const [prefix, lines] of userLineGroups(facts)) {
     for (const line of lines) {
-      if (line.direction !== "deduction") continue;
+      if (placementOf(line) !== "afterGross") continue;
       const key = `${prefix}.${line.id}`;
       const override = facts.overrides[key];
       const agorot = override ? override.agorot : Math.abs(line.agorot);
+      const signed = line.direction === "addition" ? 1 : -1;
       rows.push({
         key,
         label: line.label,
-        amount: -Math.round(agorot) || 0,
+        amount: signed * Math.round(Math.abs(agorot)) || 0,
         manual: override !== undefined,
-        explanation: { text: why },
+        explanation: { text: userLineWhy(prefix, "afterGross") },
       });
     }
   }

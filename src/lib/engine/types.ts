@@ -276,6 +276,32 @@ export interface Advance {
 export type UserLineDirection = "addition" | "deduction";
 
 /**
+ * Whether a line the user added is part of what the month came to, or only
+ * changes what is transferred at the end (specs.md item 20).
+ *
+ * **It is the user's own choice and is not implied by the direction**, because
+ * the two are different money and no rule the application could apply would tell
+ * them apart: a standing payment the family agreed as part of the wage belongs
+ * inside the month's cost, and a sum handed over on the side does not. The
+ * difference is real — a line placed `beforeGross` enters the month's total and
+ * with it the national-insurance estimate, which is 3.6% of the month's full
+ * cost (item 19), and a line placed `afterGross` reaches neither.
+ */
+export type UserLinePlacement = "beforeGross" | "afterGross";
+
+/**
+ * Where a line sits when the user has not said. An addition is usually part of
+ * the month and a deduction usually is not, so the default is what the user
+ * would have chosen without being asked (item 20) — and it is a default and not
+ * a rule, which is the whole reason `placement` is optional rather than absent.
+ */
+export function placementOf(line: UserLine): UserLinePlacement {
+  return (
+    line.placement ?? (line.direction === "addition" ? "beforeGross" : "afterGross")
+  );
+}
+
+/**
  * A line the user added with a reason of their own (specs.md item 20) — how a
  * shortfall from an earlier month is settled later, and how a family records
  * pocket money without bending the rest-eve supplement into something it is
@@ -298,6 +324,13 @@ export interface UserLine {
    * application: it is the user's sentence, not the application's. */
   label: string;
   direction: UserLineDirection;
+  /**
+   * Before the month's total or after it (specs.md item 20). Left out, it falls
+   * to `placementOf`'s default — an addition before, a deduction after — which
+   * is what every line meant before the choice existed, so an omitted value and
+   * the old behaviour are the same thing rather than merely similar.
+   */
+  placement?: UserLinePlacement;
   /** Always positive. Whether the month adds or withholds it follows from
    * `direction`. */
   agorot: number;
