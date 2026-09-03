@@ -695,6 +695,32 @@ a change to `src/lib/dev/seed.ts` is not picked up until the process restarts. T
 found the honest way: the seeded lines were added and the screen went on showing the month
 without them.
 
+### Asked for on 2026-09-03, not yet built
+
+Three things the user said about the closing block and the preview, after clicking step 2.
+They are written here because two are settled and one is not, and a decision that lives
+only in a chat message is a decision the next session will make again.
+
+1. **`ברוטו` and `סך הכל תשלום לעובדת` are two separate things**, and the user's own words
+   for them are those. The engine already keeps them apart — `gross` and `net`, criterion
+   1's third and fourth figures — so what is owed is the wording on screen, which today
+   reads `סך הכול החודש` for the first. Settled: use the terms the user uses.
+2. **Drop the `לפי העמודות בדף המשכורת` block from the month screen.** "You show the
+   summary above, no need to do it twice." It was added in step 1b to keep criterion 1's
+   column totals readable, and the criterion is about the **exported sheet** rather than
+   the screen, so removing it breaches nothing. Settled: remove it.
+3. **Income tax and the advance are not the same kind of line, and the block treats them
+   as one.** The user: *"מס הכנסה is taken from the ברוטו while if she had taken מקדמה that
+   is after the ברוטו then its for the סך הכל תשלום לעובדת."* Today both sit in one block
+   between `gross` and `net`. The reading that needs confirming is whether the sheet wants
+   **three** levels rather than two — the gross, then the gross less the tax, then that
+   less the advances and anything else that only changes the transfer — which is how a
+   payslip ordinarily reads and which is where item 20's "after the total" lines would
+   then sit. **Ask before building it.** Criterion 1 is safe either way: August 2025 has no
+   income tax, so a middle level would equal its gross and the four totals do not move.
+   Whoever asks should also settle where a user line placed after the total goes under a
+   three-level block, since that is the same question asked twice.
+
 ### Step 2 — the holiday stops being a mark, and the calendar starts writing · **done**
 
 The swap `build_plan.md` said had to happen in one step, and the step that makes the month
