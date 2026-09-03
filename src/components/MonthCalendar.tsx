@@ -17,11 +17,17 @@ import {
   WEEK_LENGTH,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import { monthLabel, rangeLabel } from "@/lib/dateLabels";
+import { dayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
 import { clipEndOf } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { endOf } from "@/lib/spans";
-import type { DaySpan, IsoDate, MarkKind, YearMonth } from "@/lib/types";
+import type {
+  DaySpan,
+  HolidaySpan,
+  IsoDate,
+  MarkKind,
+  YearMonth,
+} from "@/lib/types";
 
 /**
  * The month, marked as `EaseSalary - דף הבית v3 לוח במרכז` draws it: a day is
@@ -65,6 +71,13 @@ interface MonthCalendarProps {
    * span lying half inside it means. */
   onClearRange?: (from: IsoDate, to: IsoDate) => void;
   /**
+   * The one fact a month records about a holiday (specs.md item 9). The dates
+   * themselves are not the calendar's to change: they come from the year's
+   * chosen list, and moving one is criterion 10's editable date in the yearly
+   * picker.
+   */
+  onSetHolidayWorked?: (spanId: string, worked: boolean) => void;
+  /**
    * Draw the month without offering to mark it. **Marking only** — the month
    * buttons still work, because moving between months is reading and not
    * writing.
@@ -77,32 +90,53 @@ interface MonthCalendarProps {
   className?: string;
 }
 
-/** The four kinds a range can be marked as, in the artboard's order. */
-const pickerKinds: MarkKind[] = ["vacation", "sick", "holiday", "freeRestDay"];
+/**
+ * **The three kinds the user may mark — and a holiday is not one of them**
+ * (specs.md item 9). The year's holidays are chosen in advance from the
+ * country's candidate list, arrive on the month already drawn, and the only
+ * thing recorded about one is whether she worked it. `MarkKind` no longer
+ * contains `"holiday"`, so this list cannot regrow it by accident.
+ */
+const pickerKinds: MarkKind[] = ["vacation", "sick", "freeRestDay"];
 
 /** The fill a marked day takes, and the ink that stays legible on it. */
 const markClass: Record<MarkKind, string> = {
   vacation: "bg-vacation text-day-ink",
   sick: "bg-sick text-ink",
-  holiday: "bg-holiday text-ink",
   freeRestDay: "bg-rest text-day-ink",
 };
 
 const dotClass: Record<MarkKind, string> = {
   vacation: "bg-vacation",
   sick: "bg-sick",
-  holiday: "bg-holiday",
   freeRestDay: "bg-rest",
 };
 
 /**
- * Five entries, as v3 draws them. "יום עבודה" is a day she worked, which is
- * every unmarked day including an unmarked rest day — so there is no sixth
- * entry for the weekly rest day and no separate fill for it. The legend says
- * what the colours mean and marks nothing: marking is the picker's job.
+ * A holiday, in the two weights item 9 asks for: **an outline for one she did
+ * not work and a fill for one she did**, so the state that costs money is the
+ * louder of the two. One colour, two weights — the same hue in both, because
+ * they are two answers about one kind of day and not two kinds.
+ */
+const HOLIDAY_WORKED = "bg-holiday text-ink";
+const HOLIDAY_NOT_WORKED = "bg-day text-day-ink border-2 border-holiday";
+
+/** Whether a span is a holiday she worked. Written once because the cell, its
+ * label and the legend all ask it, and a holiday with no answer yet must read
+ * as *not worked* nowhere — item 9 leaves that to the pre-export questions. */
+function isWorkedHoliday(span: DaySpan): boolean {
+  return span.kind === "holiday" && (span as HolidaySpan).worked;
+}
+
+/**
+ * Six entries. "יום עבודה" is a day she worked, which is every unmarked day
+ * including an unmarked rest day — so there is no entry for the weekly rest day
+ * and no separate fill for it. The holiday takes two, because its two weights
+ * are the whole of what the month records about one and a month read back later
+ * has to be tellable apart at a glance (specs.md item 9).
  *
- * Built per render rather than held as a module constant, because the last
- * entry names her own rest day (item 5).
+ * Built per render rather than held as a module constant, because one entry
+ * names her own rest day (item 5).
  */
 function legendFor(restDay: RestDay): { label: string; swatch: string }[] {
   const marks = he.calendar.marks(restDay);
@@ -110,7 +144,10 @@ function legendFor(restDay: RestDay): { label: string; swatch: string }[] {
     { label: marks.workDay, swatch: "bg-workday-dot" },
     { label: marks.vacation, swatch: "bg-vacation" },
     { label: marks.sick, swatch: "bg-sick" },
-    { label: marks.holiday, swatch: "bg-holiday" },
+    { label: he.calendar.holiday.worked, swatch: "bg-holiday" },
+    // The outline, drawn as an outline: a ring of the same hue around the
+    // page's own day colour, which is what the cell does two sizes up.
+    { label: he.calendar.holiday.notWorked, swatch: "bg-day border-2 border-holiday" },
     { label: marks.freeRestDay, swatch: "bg-rest" },
   ];
 }
@@ -123,6 +160,7 @@ export function MonthCalendar({
   onMonthChange,
   onSelectRange,
   onClearRange,
+  onSetHolidayWorked,
   readOnly = false,
   className,
 }: MonthCalendarProps) {
@@ -155,6 +193,8 @@ export function MonthCalendar({
   const [anchor, setAnchor] = useState<IsoDate | null>(null);
   const [cursor, setCursor] = useState<IsoDate | null>(null);
   const [picking, setPicking] = useState(false);
+  /** The holiday whose one question is open, if any. */
+  const [asking, setAsking] = useState<HolidaySpan | null>(null);
   const firstChip = useRef<HTMLButtonElement>(null);
 
   // The single tab stop follows the month when the month changes under it.
@@ -176,19 +216,35 @@ export function MonthCalendar({
   // Pointer and keyboard both end at the picker, so the picker takes the focus
   // when it opens rather than leaving the next Tab to go and find it.
   useEffect(() => {
-    if (picking) firstChip.current?.focus();
-  }, [picking]);
+    if (picking || asking) firstChip.current?.focus();
+  }, [picking, asking]);
 
   function reset() {
     setAnchor(null);
     setCursor(null);
     setPicking(false);
+    setAsking(null);
   }
 
-  /** The first click opens a range, the second closes it and asks what it is.
-   * A click while the picker is open starts again from that day. */
+  /**
+   * The first click opens a range, the second closes it and asks what it is.
+   * A click while the picker is open starts again from that day.
+   *
+   * **A holiday answers a single click instead**, because a holiday is not
+   * marked — it is already there, and the one thing the month records about it
+   * is whether she worked it (specs.md item 9). Asking that on the second click
+   * of a range would be two clicks for a yes-or-no about a day the user did not
+   * choose. The cost is that a holiday cannot be the day a sweep starts on;
+   * every other day still can, and a sweep that *crosses* one is unaffected.
+   */
   function pressDay(date: IsoDate) {
     setFocused(date);
+    const covering = coverage.get(date);
+    if (covering?.kind === "holiday" && anchor === null) {
+      setAsking(covering as HolidaySpan);
+      return;
+    }
+    setAsking(null);
     if (anchor === null || picking) {
       setAnchor(date);
       setCursor(null);
@@ -197,6 +253,11 @@ export function MonthCalendar({
     }
     setCursor(date);
     setPicking(true);
+  }
+
+  function answerHoliday(workedIt: boolean) {
+    if (asking) onSetHolidayWorked?.(asking.id, workedIt);
+    setAsking(null);
   }
 
   /** The range follows the pointer between the two clicks, so the days it will
@@ -321,12 +382,28 @@ export function MonthCalendar({
             compareIsoDate(date, selection.from) >= 0 &&
             compareIsoDate(date, selection.to) <= 0;
           const dayNumber = fromIsoDate(date).getUTCDate();
+          // A holiday is a state and not a mark, so its cell is not looked up in
+          // `markClass` at all: the two weights say which answer the month
+          // holds, and the words say it to a reader who cannot see them.
+          const holiday = span?.kind === "holiday";
+          const worked = span !== undefined && isWorkedHoliday(span);
+          const stateName = holiday
+            ? worked
+              ? he.calendar.holiday.worked
+              : he.calendar.holiday.notWorked
+            : span
+              ? marks[span.kind as MarkKind]
+              : undefined;
           const label = `${dayNumber} ${monthLabel(month)}${
-            span ? `, ${marks[span.kind]}` : ""
+            stateName ? `, ${stateName}` : ""
           }`;
           const face = [
             "flex flex-col items-center justify-center gap-px rounded-day text-[17px] transition-colors",
-            span ? `font-semibold ${markClass[span.kind]}` : "bg-day font-normal text-day-ink",
+            holiday
+              ? `font-semibold ${worked ? HOLIDAY_WORKED : HOLIDAY_NOT_WORKED}`
+              : span
+                ? `font-semibold ${markClass[span.kind as MarkKind]}`
+                : "bg-day font-normal text-day-ink",
           ];
           const content = (
             <>
@@ -335,7 +412,7 @@ export function MonthCalendar({
               </Bidi>
               {span ? (
                 <span dir="auto" className="text-[10px] leading-[1.1] font-semibold opacity-75">
-                  {marks[span.kind]}
+                  {holiday ? marks.holiday : marks[span.kind as MarkKind]}
                 </span>
               ) : null}
             </>
@@ -376,6 +453,63 @@ export function MonthCalendar({
           );
         })}
       </div>
+
+      {/* The holiday's one question, asked where the range picker would be and
+          in the same shape, so the two do not read as two different mechanisms.
+          It offers no "clear": the date is the year's and not this month's to
+          remove (specs.md items 9 and 10). */}
+      {asking ? (
+        <div className="flex flex-none flex-wrap items-center gap-3.5 rounded-card-sm border border-line-strong bg-ground px-3.5 py-3">
+          <div className="flex min-w-0 flex-col gap-px">
+            <span className="text-[15px] font-semibold">
+              <Bidi noTranslate>{dayLabel(asking.from)}</Bidi>
+            </span>
+            <span dir="auto" className="text-[13px] font-light text-ink-quiet">
+              <span>{marks.holiday}</span>
+              <span> · </span>
+              <span>{he.calendar.holiday.question}</span>
+            </span>
+          </div>
+          <div className="flex flex-auto flex-wrap items-center gap-2">
+            {[
+              { worked: true, label: he.calendar.holiday.yes, swatch: "bg-holiday" },
+              {
+                worked: false,
+                label: he.calendar.holiday.no,
+                swatch: "bg-day border-2 border-holiday",
+              },
+            ].map((answer, index) => (
+              <button
+                key={answer.label}
+                type="button"
+                ref={index === 0 ? firstChip : undefined}
+                aria-pressed={asking.worked === answer.worked}
+                onClick={() => answerHoliday(answer.worked)}
+                className={[
+                  "flex items-center gap-2 rounded-full border bg-surface px-3.25 py-1.75 text-[14px] font-medium text-day-ink transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
+                  asking.worked === answer.worked
+                    ? "border-line-hover text-ink"
+                    : "border-line hover:border-line-hover",
+                ].join(" ")}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`size-2.75 flex-none rounded-full ${answer.swatch}`}
+                />
+                <span dir="auto">{answer.label}</span>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            aria-label={he.calendar.picker.cancelLabel}
+            onClick={reset}
+            className="flex-none text-[14px] text-ink-quiet transition-colors hover:text-ink"
+          >
+            <span dir="auto">{he.calendar.picker.cancel}</span>
+          </button>
+        </div>
+      ) : null}
 
       {/* What the range means, asked once the range exists. Nothing on the
           screen is displaced by it: with no range open there is no picker. */}

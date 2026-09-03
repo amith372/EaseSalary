@@ -218,6 +218,12 @@ export const he = {
     marks: (restDay: RestDay) => ({
       vacation: "חופשה",
       sick: "מחלה",
+      /** What a holiday's own cell says, in either weight. The **weight** is
+       * what tells the two apart on the calendar — an outline for one she did
+       * not work and a fill for one she did (specs.md item 9) — so the cell
+       * says only that the day is a holiday, and the legend below names the two
+       * states in words for the eye that has not learned the weights yet and
+       * for the reader who cannot see them at all. */
       holiday: "חג",
       /** The weekly rest day the worker had off — an exception the user
        * recorded, not an entitlement. */
@@ -226,6 +232,19 @@ export const he = {
        * unmarked rest day included. It labels the legend and marks nothing. */
       workDay: "יום עבודה",
     }),
+    /**
+     * The one fact a month records about a holiday: whether she worked it
+     * (specs.md item 9). The user never marks the day — the year's dates arrive
+     * drawn — so this is a question and not a kind, and the two answers are the
+     * whole of it.
+     */
+    holiday: {
+      worked: "חג שנעבד",
+      notWorked: "חג שלא נעבד",
+      question: "עבדה בחג?",
+      yes: "כן, עבדה",
+      no: "לא עבדה",
+    },
     selection: {
       /** "‎16–20 באוגוסט": the day numbers, then the month with its prefix. */
       separator: "–",
@@ -258,8 +277,9 @@ export const he = {
       title: "ימים שלא סומנו",
       weeklyRest: `${day(restDay).bare} ${agrees(day(restDay)).pronoun} כבר יום המנוחה השבועי, ולכן ${agrees(day(restDay)).isntSubtracted} ממכסת החופשה`,
       notRestDay: `רק ${day(restDay).bare} ${agrees(day(restDay)).can} להיות ${agrees(day(restDay)).marked} כ${day(restDay).bare} ${agrees(day(restDay)).free}`,
+      /** A holiday is one of the marks a day can already carry: the year's
+       * dates arrive drawn and are not the user's to sweep over (item 9). */
       alreadyMarked: "היום כבר מסומן",
-      restDayHoliday: `${day(restDay).bare} ${agrees(day(restDay)).wasMarked} כחופשית ${agrees(day(restDay)).paid} פעם אחת, ולכן אי אפשר לסמן ${agrees(day(restDay)).inIt} גם חג`,
       dismiss: "להסתיר",
     }),
   },

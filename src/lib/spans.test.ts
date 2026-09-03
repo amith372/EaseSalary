@@ -119,23 +119,37 @@ describe("only a rest day can be marked as the rest day the worker had off", () 
   });
 });
 
-describe("a paid holiday cannot land on a free rest day", () => {
-  const freeRestDay: DaySpan[] = [
-    { id: "rest", kind: "freeRestDay", from: "2026-08-15", to: "2026-08-15" },
+/**
+ * **A holiday is no longer something a sweep can produce** (specs.md item 9).
+ * The user never marks a day as a holiday: the year's dates are chosen in
+ * advance and arrive on the calendar drawn, and `MarkIntent.kind` is a
+ * `MarkKind`, which no longer includes one — so the case this block used to
+ * assert, a swept holiday refused for landing on a free rest day, is a compile
+ * error rather than a runtime refusal and cannot be written here at all.
+ *
+ * The refusal itself has not gone: a stored holiday on a free rest day is still
+ * refused by `validate.ts`, which is where it belongs now that the only caller
+ * able to place one is the year's chosen dates. What follows is the behaviour
+ * that replaced the gesture — a mark swept over a day the holiday already
+ * covers.
+ */
+describe("a day carrying a holiday refuses a mark like any other marked day", () => {
+  const holiday: DaySpan[] = [
+    { id: "hol", kind: "holiday", from: "2026-08-15", to: "2026-08-15" },
   ];
 
-  it("refuses the day and says why, marking the days around it", () => {
+  it("marks around it and reports the day it skipped", () => {
     const { spans, skipped } = applyMark(
-      { kind: "holiday", from: "2026-08-14", to: "2026-08-16" },
+      { kind: "sick", from: "2026-08-14", to: "2026-08-16" },
       SATURDAY,
-      freeRestDay,
+      holiday,
     );
 
     expect(spans.map((s) => [s.from, s.to])).toEqual([
       ["2026-08-14", "2026-08-14"],
       ["2026-08-16", "2026-08-16"],
     ]);
-    expect(skipped).toEqual([{ date: "2026-08-15", reason: "restDayHoliday" }]);
+    expect(skipped).toEqual([{ date: "2026-08-15", reason: "alreadyMarked" }]);
   });
 });
 

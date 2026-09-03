@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
+import { clearRange, markRange, setHolidayWorked } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { MonthCalendar } from "@/components/MonthCalendar";
@@ -11,12 +12,14 @@ import { useWorkerScope } from "@/components/WorkerScope";
 import { WhyButton, WhyPanel } from "@/components/WhyDisclosure";
 import { monthOf, sameMonth } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import { monthLabel } from "@/lib/dateLabels";
+import { dayLabel, monthLabel } from "@/lib/dateLabels";
 import { isUserLineKey, lineKeys } from "@/lib/engine/month";
+import type { SpanIntent } from "@/components/MonthCalendar";
 import type { MonthInSeries } from "@/lib/engine/series";
 import type { UserLinePlacement } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { formatAgorot, formatDays } from "@/lib/money";
+import type { SkippedDay, SkipReason } from "@/lib/spans";
 import type {
   BalanceLine,
   Explanation,
@@ -104,9 +107,58 @@ export function MonthScreen({ household, today }: MonthScreenProps) {
   const shown = entry.months.find((inSeries) =>
     sameMonth(inSeries.facts.month, month),
   );
+  // The month's own rest day where there is a month, so a calendar over a
+  // corrected past month shades the column that month was calculated against
+  // (specs.md Part 3).
+  const shownRestDay = shown?.facts.terms.restDay ?? entry.restDay;
+
+  // A gesture reaches the store and the page re-renders from it, so nothing here
+  // predicts what the engine will say — the figures beside the calendar are the
+  // answer to what was actually saved.
+  const [saving, startSaving] = useTransition();
+  // A refusal belongs to the gesture that produced it, and that gesture was made
+  // against one worker: it is stamped with whose it was rather than cleared by
+  // an effect watching the switcher, which would run a render late.
+  const [skipped, setSkipped] = useState<{
+    workerId: string;
+    days: SkippedDay[];
+  } | null>(null);
 
   const toggleWhy = (key: string) =>
     setOpenWhy((current) => (current === key ? null : key));
+
+  function handleSelectRange(intent: SpanIntent) {
+    const workerId = worker.id;
+    startSaving(async () => {
+      const { skipped: refused } = await markRange(workerId, intent);
+      setSkipped({ workerId, days: refused });
+    });
+  }
+
+  function handleClearRange(from: string, to: string) {
+    const workerId = worker.id;
+    setSkipped(null);
+    startSaving(() => clearRange(workerId, from, to));
+  }
+
+  function handleSetHolidayWorked(spanId: string, workedIt: boolean) {
+    const workerId = worker.id;
+    setSkipped(null);
+    startSaving(() => setHolidayWorked(workerId, spanId, workedIt));
+  }
+
+  /** Grouped by reason, so a week swept across five taken days reads as one
+   * sentence rather than five. */
+  const refusals = useMemo(() => {
+    if (!skipped || skipped.workerId !== worker.id) return [];
+    const byReason = new Map<SkipReason, string[]>();
+    for (const day of skipped.days) {
+      const dates = byReason.get(day.reason);
+      if (dates) dates.push(day.date);
+      else byReason.set(day.reason, [day.date]);
+    }
+    return [...byReason.entries()];
+  }, [skipped, worker.id]);
 
   return (
     <>
@@ -122,24 +174,74 @@ export function MonthScreen({ household, today }: MonthScreenProps) {
           <MonthCalendar
             month={month}
             spans={shown?.facts.spans ?? []}
-            // The month's own rest day where there is a month, so a calendar
-            // over a corrected past month shades the column that month was
-            // calculated against (specs.md Part 3).
-            restDay={shown?.facts.terms.restDay ?? entry.restDay}
+            restDay={shownRestDay}
             today={today}
             onMonthChange={setMonth}
-            readOnly
+            onSelectRange={handleSelectRange}
+            onClearRange={handleClearRange}
+            onSetHolidayWorked={handleSetHolidayWorked}
             className="flex-1"
           />
+
+          {refusals.length > 0 ? (
+            <Card
+              tone="inset"
+              radius="panel"
+              className="mt-2.5 flex flex-none flex-col gap-1.5 px-3.5 py-3"
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span dir="auto" className="text-[14px] font-semibold text-ink-warm">
+                  {he.calendar.skipped(shownRestDay).title}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSkipped(null)}
+                  className="text-[13px] font-medium text-ink-quiet transition-colors hover:text-ink"
+                >
+                  <span dir="auto">{he.calendar.skipped(shownRestDay).dismiss}</span>
+                </button>
+              </div>
+              <ul aria-live="polite" className="flex flex-col gap-1">
+                {refusals.map(([reason, dates]) => (
+                  <li
+                    key={reason}
+                    className="text-[14px] leading-[1.5] font-light text-ink-warm text-pretty"
+                  >
+                    {dates.map((date, index) => (
+                      <span key={date}>
+                        {index > 0 ? <span>, </span> : null}
+                        <Bidi>{dayLabel(date)}</Bidi>
+                      </span>
+                    ))}
+                    <span> — </span>
+                    <span>{he.calendar.skipped(shownRestDay)[reason]}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
+
           <SpanOverflowNotes
             spans={shown?.facts.spans ?? []}
             month={month}
-            restDay={shown?.facts.terms.restDay ?? entry.restDay}
+            restDay={shownRestDay}
             className="mt-2.5"
           />
         </Card>
 
-        <div className="flex min-w-0 flex-col gap-2.5">
+        {/* Dimmed while a gesture is on its way to the store and back. The
+            figures here are the engine's answer to what was saved, so between
+            the click and the answer they are the *previous* month's — saying so
+            is better than letting a stale number look settled. */}
+        <div
+          aria-busy={saving}
+          className={[
+            "flex min-w-0 flex-col gap-2.5 transition-opacity",
+            saving ? "opacity-60" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           {shown ? (
             <MonthPreview
               result={shown.result}

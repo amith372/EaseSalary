@@ -687,6 +687,67 @@ a change to `src/lib/dev/seed.ts` is not picked up until the process restarts. T
 found the honest way: the seeded lines were added and the screen went on showing the month
 without them.
 
+### Step 2 — the holiday stops being a mark, and the calendar starts writing · **done**
+
+The swap `build_plan.md` said had to happen in one step, and the step that makes the month
+screen a screen rather than a display.
+
+**The model splits in two.** `MarkKind` is now what the *user* may mark — `vacation`,
+`sick`, `freeRestDay` — and `SpanKind` is what a span may *be*, which adds `holiday`. No
+stored string moved: a holiday span still carries `"holiday"`. What moved is which code may
+write one, and the compiler now says so — `MarkIntent.kind` is a `MarkKind`, so `applyMark`
+cannot produce a holiday, and the picker is built from the same union it stores.
+
+Three things fell out of that split and each was resolved rather than patched around:
+
+- **`restDayHoliday` is no longer a skip reason**, because no sweep can produce a holiday.
+  The refusal itself did not go — it moved wholly into `validate.ts`, which is where it
+  belongs now that the only caller able to place a holiday is the year's chosen dates, a
+  caller the calendar's own refusals never see. The test that asserted the old gesture was
+  replaced by the behaviour that replaced it, not deleted.
+- **A day carrying a holiday refuses a mark like any other marked day**, as `alreadyMarked`.
+- **`specs.md` item 5 still listed "a holiday worked" among the things the user marks**,
+  which contradicted item 9. Item 9 is the authority and item 5 was corrected.
+
+**The gesture, which had no artboard and was the user's to decide.** A holiday answers a
+**single click**: the panel that opens where the range picker would be asks `עבדה בחג?` and
+offers two chips, and no "clear" — the date belongs to the year and removing one is the
+yearly picker's (item 10). The cost is that a holiday cannot be the day a sweep *starts*
+on; every other day still can, and a sweep that crosses one is unaffected. Asking the
+question on the second click of a range would have been two clicks for a yes-or-no about a
+day the user did not choose.
+
+**Marking writes through the store, and the browser decides nothing.**
+`src/app/month/actions.ts` holds three server actions — mark a range, clear a range, answer
+a holiday. Which days inside a swept range may actually take the mark is an entitlement
+question, so it is answered on the server by the same `spans.ts` the suite tests, against
+the worker's stored rest day. Each action revalidates the route, so the figures beside the
+calendar are the engine's answer to what was saved rather than something the browser
+guessed; the preview dims while that round trip is in flight.
+
+**Check — this is the first step in the project where the user changes something.** With
+`npm run dev` running, open http://localhost:3000/month and press `‹` back to **אפריל 2026**.
+
+1. The 3rd is drawn as a **filled** `חג` and the panel reads `24 / 26` work days with a
+   line `עבודה בחג ₪426.35`, `סך הכול החודש ₪8,654.45`.
+2. **Click the 3rd once.** A panel opens asking `עבדה בחג?`. Choose `לא עבדה`.
+3. The day is redrawn as an **outline**, the `עבודה בחג` line disappears, the count falls
+   to `23 / 26`, and the month falls to `₪8,228.10`. That is item 5's own check seen from
+   both sides at once: a holiday worked changes the money and not the count, one she did
+   not work changes the count and not the money.
+4. **Now click the 20th, then the 22nd**, and choose `חופשה` from the panel. Three days are
+   drawn, `ימים שנוצלו החודש` under חופשה reads 3, the balance falls from 9.67 to **6.67** —
+   and `סך הכול החודש` does **not** move. Vacation never shrinks the base (item 5); if the
+   money changed, the base is being computed from the actual count instead of the standard
+   one.
+5. **Reload the page.** The marks are still there. They are in the store, not in the
+   browser — until the process restarts, which is what an in-memory store means.
+6. The legend now has six entries, with `חג שנעבד` filled and `חג שלא נעבד` outlined, and
+   the picker offers three kinds and no `חג`.
+
+**What a failure looks like:** `חג` still among the picker's chips; the month's total moving
+when a vacation is marked; the marks gone after a reload; or a holiday needing two clicks.
+
 ## Stage 5 — External data and yearly settings
 
 `fetch` plus an HTML parser, server-side, cached in Postgres.

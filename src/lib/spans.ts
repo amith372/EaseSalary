@@ -48,16 +48,29 @@ export type SkipReason =
   /** Only the worker's own rest day can be the rest day she had off. */
   | "notRestDay"
   /** The day already carries a mark, and a span is replaced rather than
-   * layered. */
-  | "alreadyMarked"
-  /** A paid holiday landing on a free rest day: the day is paid once, not at
-   * both the rest-day rate and the holiday rate (specs.md Part 4). */
-  | "restDayHoliday";
+   * layered. **A day carrying a holiday is one of them**: the year's holidays
+   * arrive drawn and the month records only whether she worked one (specs.md
+   * item 9), so a mark swept over one is refused here rather than layered.
+   *
+   * There is no `restDayHoliday` beside it any more, and its absence is the
+   * decision. A paid holiday landing on a free rest day is still refused — by
+   * `validate.ts`, where the rule belongs now that the holiday can only arrive
+   * from the year's chosen dates. It cannot arrive from a sweep, because
+   * `MarkIntent.kind` is a `MarkKind` and a holiday is not one. */
+  | "alreadyMarked";
 
 export interface SkippedDay {
   date: IsoDate;
   reason: SkipReason;
 }
+
+/**
+ * A span a sweep produced. **Never a holiday**, because the user does not mark
+ * one (specs.md item 9) and `MarkIntent.kind` cannot say so — narrowing the
+ * kind here is what lets the store take one of these without asking whether it
+ * needs a `worked` beside it.
+ */
+export type MarkedSpan = ClosedDaySpan & { kind: MarkKind };
 
 export interface MarkResult {
   /**
@@ -68,7 +81,7 @@ export interface MarkResult {
    * recorded by a different gesture — "she fell ill today", with no return date
    * asked for (specs.md item 8) — which the month screen builds in stage 4.
    */
-  spans: ClosedDaySpan[];
+  spans: MarkedSpan[];
   skipped: SkippedDay[];
 }
 
@@ -138,15 +151,8 @@ export function markableDays(
     }
     // An open spell already covers this day if it began before it, so a mark
     // swept over one is refused as `alreadyMarked` rather than layered on top.
-    const covering = coveringSpan(existing, date, date);
-    if (covering) {
-      skipped.push({
-        date,
-        reason:
-          intent.kind === "holiday" && covering.kind === "freeRestDay"
-            ? "restDayHoliday"
-            : "alreadyMarked",
-      });
+    if (coveringSpan(existing, date, date)) {
+      skipped.push({ date, reason: "alreadyMarked" });
       continue;
     }
     taken.push(date);
@@ -184,7 +190,7 @@ export function applyMark(
   existing: DaySpan[] = [],
 ): MarkResult {
   const { taken, skipped } = markableDays(intent, restDay, existing);
-  const spans = runsOf(taken).map<ClosedDaySpan>((run) => ({
+  const spans = runsOf(taken).map<MarkedSpan>((run) => ({
     id: `${intent.kind}-${run.from}-${run.to}`,
     kind: intent.kind,
     from: run.from,

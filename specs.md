@@ -74,8 +74,11 @@ Each of these is true or false at a glance.
    so plainly and lets the user enter the figure by hand.
 5. The month is presented as a calendar. Its rest days and rest-eves are counted from the
     calendar rather than typed, and the user marks a span of days for what departed from
-    an ordinary month — a free rest day, a vacation day, sick days, a holiday worked —
-    of which a single day is the common case and is simply a span of one. A vacation span
+    an ordinary month — a free rest day, a vacation day, sick days — of which a single day
+    is the common case and is simply a span of one. **A holiday is not among them**: the
+    year's dates are chosen in advance and arrive on the month already drawn, and the only
+    thing the month records about one is whether she worked it, which is item 9's own
+    question and not a fourth mark. A vacation span
     skips the rest days inside it, because the rest day already stands outside the
     standard count, so drawing a vacation day for one would charge the worker twice; a
     sick span keeps its rest days, for the reason given in criterion 8.

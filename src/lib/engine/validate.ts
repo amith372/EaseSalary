@@ -19,17 +19,22 @@ import type {
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import type { LegalLinkKey } from "@/lib/links";
-import type { IsoDate, MarkKind, YearMonth } from "@/lib/types";
+import type { IsoDate, SpanKind, YearMonth } from "@/lib/types";
 
 /**
  * The facts the engine refuses, with the reason each was refused.
  *
- * `src/lib/spans.ts` already stops these at the calendar: a holiday swept over
- * a free rest day comes back as a `restDayHoliday` skip rather than a mark. But
+ * `src/lib/spans.ts` stops what it can at the calendar: a mark swept over a day
+ * that already carries one comes back as a skip rather than a second span. But
  * the calendar is one caller and the repository in Stage 3 is another, so the
  * engine refuses the facts if such a pair reaches it anyway (specs.md Part 4).
  * A month that cannot be calculated correctly is refused with a reason and
  * never calculated wrongly in silence.
+ *
+ * **`restDayHoliday` is now refused here and nowhere else.** The user cannot
+ * mark a holiday at all (item 9), so the only thing that can put one on a free
+ * rest day is the year's chosen dates — a caller the calendar's own refusals
+ * never see, and the reason this rule had to move rather than be duplicated.
  */
 
 export type RefusalCode =
@@ -109,7 +114,7 @@ const LINK_FOR: Record<
  * `LINK_FOR_THIRD_PARTY`, which `thirdParty.ts` already holds for the lines
  * themselves, so a payment's rule is named in one place (specs.md item 25).
  */
-const LINK_FOR_KIND: Record<MarkKind, LegalLinkKey> = {
+const LINK_FOR_KIND: Record<SpanKind, LegalLinkKey> = {
   vacation: "annualLeave",
   sick: "sickPay",
   holiday: "holidayWork",
@@ -151,13 +156,16 @@ function datesOf(span: ClosedSpan): IsoDate[] {
  * requires every payment to carry its type, its number of units and its amount,
  * and the units are what is wrong.
  *
- * `src/lib/spans.ts` already refuses both at mark time, as `alreadyMarked` and
- * `restDayHoliday`. This is the same rule enforced where it cannot be skipped:
- * the calendar is one caller, and the repository and the export are others.
+ * `src/lib/spans.ts` already refuses a second mark on a marked day, as
+ * `alreadyMarked`. This is the same rule enforced where it cannot be skipped:
+ * the calendar is one caller, and the repository and the export are others —
+ * and since the user cannot mark a holiday at all (item 9), the holiday half of
+ * this can now only arrive from the year's chosen dates, which is a caller the
+ * calendar's own refusals never see.
  */
-function datesRecordedTwice(spans: ClosedSpan[]): Map<IsoDate, MarkKind> {
-  const seen = new Map<IsoDate, MarkKind>();
-  const twice = new Map<IsoDate, MarkKind>();
+function datesRecordedTwice(spans: ClosedSpan[]): Map<IsoDate, SpanKind> {
+  const seen = new Map<IsoDate, SpanKind>();
+  const twice = new Map<IsoDate, SpanKind>();
   for (const span of spans) {
     for (const date of datesOf(span)) {
       if (seen.has(date)) twice.set(date, span.kind);

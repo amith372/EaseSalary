@@ -34,7 +34,24 @@ export interface YearMonth {
  * of this union is free.** Anything added to it after stage 3 is named once and
  * kept.
  */
-export type MarkKind = "vacation" | "sick" | "holiday" | "freeRestDay";
+export type MarkKind = "vacation" | "sick" | "freeRestDay";
+
+/**
+ * What a span on the calendar can be, which is **not** the same set.
+ *
+ * A holiday is a state the calendar draws and never a mark the user makes
+ * (specs.md item 9): the year's dates are chosen in advance from the country's
+ * candidate list, they arrive on the month already drawn, and the only thing the
+ * month records about one is whether she worked it. Splitting the two unions is
+ * what makes that a compile error rather than a convention — `applyMark` takes a
+ * `MarkKind` and so cannot produce a holiday, and the picker that offers the
+ * kinds is built from the same union it stores.
+ *
+ * The stored strings do not move: `"holiday"` is still what a holiday span
+ * carries, so this is a change to which code may *write* one and not to any
+ * value in the store.
+ */
+export type SpanKind = MarkKind | "holiday";
 
 /**
  * A run of days carrying one mark. A single marked day is a span whose `from`
@@ -45,7 +62,7 @@ export type MarkKind = "vacation" | "sick" | "holiday" | "freeRestDay";
  */
 export interface DaySpan {
   id: string;
-  kind: MarkKind;
+  kind: SpanKind;
   from: IsoDate;
   /**
    * `null` while the spell is still running.
