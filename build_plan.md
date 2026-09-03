@@ -496,6 +496,14 @@ Next.js App Router, Tailwind right-to-left, Hebrew strings in one translations f
 - **Range entry.** A week's vacation is one gesture, not seven clicks, and the stored
   shape is a span either way. The entitlement rules for a swept range are already written
   and tested in `src/lib/spans.ts`; this stage puts the calendar's gesture on top of them.
+- **A sick spell needs no gesture of its own — settled 2026-09-03.** It was the last thing
+  in this stage the user had reserved, and the answer is that a spell is simply a
+  continuous range: the days she was absent are marked like any others, and the engine
+  joins the ones that touch into one spell (step 9's rule, already built and tested). So
+  nothing is built for opening one, nothing is built for saying "she is still ill", and a
+  spell crossing a month boundary needs nothing either — the days on either side touch.
+  The open shape stays in storage and in the engine; what was never added is a screen
+  asking the user to declare it. `specs.md` item 8 now says so outright.
 - **A sick spell is entered open, which is what closes the month-boundary gap.** The two
   shapes this stage once weighed — a sweep that carries past the month edge, or an end date
   the user sets past it — are both rejected, and neither is built. Each asks the user to

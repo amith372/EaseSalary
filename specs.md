@@ -240,9 +240,23 @@ Each of these is true or false at a glance.
    An earlier version of this criterion did define one — the six days ending at the rest
    day — and it existed only to qualify a "pocket money" setting that item 14 no longer
    has. It is gone rather than kept for a caller that no longer exists.
-   **A spell may be left open, and that is how one is normally recorded.** On the day a
-   worker falls ill nobody knows the day she will return, so the application does not ask
-   for one: the spell runs from its first day and is closed when she comes back. This is
+   **A spell may be left open, and the application never asks for an end date.** On the day
+   a worker falls ill nobody knows the day she will return, so it is not asked for: the
+   spell runs from its first day and is closed when she comes back.
+
+   **There is no gesture for opening one, and there is deliberately none.** A spell is
+   entered the way an illness is actually recorded — the days she was absent are marked,
+   as they happen or afterwards, in one range or several — and the days that touch are one
+   spell however many spans they were entered as, with the weekly rest day and an unworked
+   holiday between two of them sitting inside the period rather than breaking it (above).
+   So continuity is *inferred* and never declared, and a second gesture meaning "she is
+   still ill" would be a second way to say what marking the days already says, with two
+   states to keep in step. A spell crossing the end of a month needs no gesture for the
+   same reason: the days on either side touch, so they are one spell with one first day,
+   which is what the tiers are counted from. The open shape stays in storage and in the
+   engine — `to` may be null and a month clips such a spell at its own last day — because
+   a spell genuinely has no end until she returns; what has gone is any screen that asks
+   the user to say so. This is
    why a spell crossing the end of a month needs no gesture of its own — an open spell is
    never *crossed*, it simply has not ended, and it stays one spell with one first day,
    which is what the tiers are counted from. An open spell is counted in a month by
