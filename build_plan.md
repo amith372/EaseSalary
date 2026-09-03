@@ -515,13 +515,26 @@ Next.js App Router, Tailwind right-to-left, Hebrew strings in one translations f
   finished month; only the live preview of the current month clips at the `today` prop.
   Closing a spell late is a correction and rides on criterion 13, already built in stage 1.
 - The three groups beside it: additional payments, third-party payments, yearly settings.
+  Two things are already owed to the first of them and are listed at their own steps rather
+  than only here: **the control for item 20's before/after-the-total choice**, which today
+  only the seed can set (step 1b), and **the income-tax line's own control and the rule
+  beside it** — the 2.25 credit points and item 26's link — which step 3 took off the
+  preview when it stopped drawing a tax row that reads zero.
 - A free-text note on every action; manual override of any computed amount, shown as
   manual.
 - A future month accepts facts and refuses export, saying which of the two it is.
 - The live preview, driven by the same engine as the export.
 
-**Done when** the August 2025 facts can be entered by marking days, and the preview shows
-the same four totals the engine produced in stage 1.
+**Done when** the August 2025 facts can be entered by marking days, and the month the
+engine calculates from them is the one stage 1 produced.
+
+**That is checked against the engine and not by reading four figures off the screen.** This
+clause once said "the preview shows the same four totals", which stopped being possible in
+step 3: two of criterion 1's four are the column subtotals, and the preview no longer prints
+column totals at all (item 5) — it groups by kind, and the columns are the sheet's. The
+preview shows the month's own figures, the export shows the sheet's, and the test that they
+agree drives both from one engine result and belongs with the calculation suite
+(`CLAUDE.md`). Criterion 1 is checked on the exported file, which is what it is about.
 
 **It is built against `docs/design-pass-jobs-1-2.md` and not against the canvas.** The
 hand-over was written on 2026-09-03 and has not been applied: the two slice artboards still
@@ -587,30 +600,39 @@ leaves the month buttons alone, because moving between months is reading.
 open http://localhost:3000/month.
 
 - It opens on **ספטמבר 2026** and reads `26 / 26` work days, `₪6,247.65` base, `4 × ₪100.00`
-  supplement, `₪8,353.05` as both `סך הכול החודש` and `לתשלום לעובד/ת`, and balances of
-  15.50 vacation and 33.50 sick days. September 2026 has four Saturdays, so 30 − 4 = 26 —
-  the standard count, and the actual count equals it because she took nothing.
+  supplement, `₪8,353.05` once as `סך הכל תשלום לעובד/ת`, and balances of 15.50 vacation
+  and 33.50 sick days. September 2026 has four Saturdays, so 30 − 4 = 26 — the standard
+  count, and the actual count equals it because she took nothing. The figure appears
+  **once and not three times**: September withholds nothing and transfers nothing, so the
+  ברוטו and the נטו would both equal it and step 3's rule draws neither (item 17).
 - Press `‹` back to **מרץ** and then `›` to **אפריל**. `ניכוי ימי מחלה` reads **−₪374.86** in
   March and **−₪124.95** in April. That is the whole of what the crossing spell means: one
   spell of four days from 30.3 to 2.4, stored once, whose first day pays nothing, second and
   third pay half and fourth pays in full — so March deducts 1.5 days and April 0.5. **If
   April also read −₪374.86 the spell had been read as two, and the tiers restarted.**
 - April also carries `ביטוח לאומי ₪1,000.00` in a card of its own under the total, with
-  `בגין החודשים ינואר 2026, פברואר 2026, מרץ 2026`. It must **not** be inside `סך הכול החודש`
-  (₪8,654.45) — that money went to the institute and never to her (item 16).
+  `בגין החודשים ינואר 2026, פברואר 2026, מרץ 2026`. It must **not** be inside `נטו`
+  (₪8,654.45) — that money went to the institute and never to her (item 16). April *does*
+  show a `נטו`, because it repays an advance: `נטו ₪8,654.45`, then `מקדמה שנפרעת −₪1,000.00`,
+  then `סך הכל תשלום לעובד/ת ₪7,654.45`.
 - Now press the **left** arrow of the worker switcher in the top bar and go to **מאי**.
-  Every label that names a day has changed: `תוספת ימי חמישי` at `4 × ₪80.00`,
-  `עבודה ביום שישי` at `3 × ₪426.35`, and the column's own subtotal reading
-  `סך ימי שישי וחגים`. Her free rest day has moved from Saturday the 16th, where the first
+  Every label that names a day has changed: the group heading reads
+  `ימי חמישי, ימי שישי וחגים`, `תוספת ימי חמישי` at `4 × ₪80.00` and `עבודה ביום שישי` at
+  `3 × ₪426.35`. Her free rest day has moved from Saturday the 16th, where the first
   worker's is and where it reads `שבת חופשית`, to Friday the 15th, where it reads
   `יום שישי חופשי`.
-- That May subtotal is ₪1,705.40 — **four** days' worth from a line of three plus a
-  holiday, because the holiday she worked on Friday the 1st fell on her own rest day and is
-  paid once and not twice (item 9). Five would be the double payment.
+- Under that heading `עבודה ביום שישי ₪1,279.05` and `עבודה בחג ₪426.35` come to ₪1,705.40
+  between them — **four** days' worth from a line of three plus a holiday, because the
+  holiday she worked on Friday the 1st fell on her own rest day and is paid once and not
+  twice (item 9). Five would be the double payment. The column subtotal that used to print
+  this figure is gone with step 3's `לפי העמודות` block; the two lines still add to it, and
+  criterion 1 checks the columns on the sheet where they belong.
 
 **What a failure looks like:** the same figure in March and April; a label naming Saturday
-for the Friday-resting worker; the national-insurance ₪1,000 folded into the month's total;
-or a day that highlights on hover as though it could be clicked.
+for the Friday-resting worker; or the national-insurance ₪1,000 folded into the month's
+total. *(This check once ended "or a day that highlights on hover as though it could be
+clicked" — true while the calendar only drew. Step 2 made a day a button, so a day that
+highlights is now correct and that clause no longer applies.)*
 
 **The rest-day column is not shaded, and that is on purpose.** The artboard shades it and
 the hand-over's job 2a item 8 asks for the shading to follow her own day rather than
@@ -659,19 +681,24 @@ before-gross deduction failed two.
 
 - The heading `ימי שישי, שבתות וחגים` now stands over `תוספת ימי שישי ₪400.00` and
   `עבודה בשבת ₪1,705.40` together. Switch worker and it reads `ימי חמישי, ימי שישי וחגים`.
-- `תוספות והורדות שהוספת ₪250.00` sits **above** `סך הכול החודש ₪8,603.05`, and a second
+- `תוספות והורדות שהוספת ₪250.00` sits **above** `נטו ₪8,603.05`, and a second
   row of the same name reading **−₪180.00** sits below it, so
-  `לתשלום לעובד/ת` is ₪8,423.05. The heading appears twice on purpose: one heading covers
-  both directions, and the side of the total it sits on is what differs.
-- At the foot, `לפי העמודות בדף המשכורת` reads `סך שכר החודש ₪6,647.65` — the ₪400 is
-  still counted there, which is the whole point of "display only".
-- Now `›` to **יולי 2026**. The added row is **−₪180.00 above** the total this time, the
-  month comes to ₪8,273.05 instead of ₪8,453.05, and `סך תשלומים חד־פעמיים` is −₪180.00. A
-  deduction placed before the total is a negative line in a column, not a row below them.
+  `סך הכל תשלום לעובד/ת` is ₪8,423.05. The heading appears twice on purpose: one heading
+  covers both directions, and the side of the total it sits on is what differs. June shows
+  a `נטו` at all because that −₪180 is a transfer row; it withholds no tax, so there is no
+  `ברוטו` row above it (item 17).
+- Now `›` to **יולי 2026**. The added row is **−₪180.00 above** the total this time, and
+  the month closes on a single `סך הכל תשלום לעובד/ת ₪8,273.05` instead of ₪8,453.05 —
+  one figure, because July neither withholds nor transfers anything. A deduction placed
+  before the total is a negative line among the month's own lines, not a row below them.
 
-**What a failure looks like:** the Friday supplement missing from `סך שכר החודש`; July's
-₪180 appearing below the total instead of above it; or the same figure for June and July,
-which would mean the placement was being ignored.
+**What a failure looks like:** July's ₪180 appearing below the total instead of above it;
+the same figure for June and July, which would mean the placement was being ignored; or a
+`ברוטו` row on either month, neither of which withholds anything.
+
+*(Written for step 1b against the `לפי העמודות בדף המשכורת` block, which step 3 removed at
+the user's request. The two clauses that read the column subtotals off the screen are gone
+with it; the column totals are criterion 1's and are checked on the exported sheet.)*
 
 **What the review found, and what is still owed.** A two-axis review ran over this change
 before it was committed. Three findings were real and are fixed here: a line the user
@@ -694,32 +721,6 @@ so that saving a file mid-check does not silently reset the marks — the same p
 a change to `src/lib/dev/seed.ts` is not picked up until the process restarts. This was
 found the honest way: the seeded lines were added and the screen went on showing the month
 without them.
-
-### Asked for on 2026-09-03, not yet built
-
-Three things the user said about the closing block and the preview, after clicking step 2.
-They are written here because two are settled and one is not, and a decision that lives
-only in a chat message is a decision the next session will make again.
-
-1. **`ברוטו` and `סך הכל תשלום לעובדת` are two separate things**, and the user's own words
-   for them are those. The engine already keeps them apart — `gross` and `net`, criterion
-   1's third and fourth figures — so what is owed is the wording on screen, which today
-   reads `סך הכול החודש` for the first. Settled: use the terms the user uses.
-2. **Drop the `לפי העמודות בדף המשכורת` block from the month screen.** "You show the
-   summary above, no need to do it twice." It was added in step 1b to keep criterion 1's
-   column totals readable, and the criterion is about the **exported sheet** rather than
-   the screen, so removing it breaches nothing. Settled: remove it.
-3. **Income tax and the advance are not the same kind of line, and the block treats them
-   as one.** The user: *"מס הכנסה is taken from the ברוטו while if she had taken מקדמה that
-   is after the ברוטו then its for the סך הכל תשלום לעובדת."* Today both sit in one block
-   between `gross` and `net`. The reading that needs confirming is whether the sheet wants
-   **three** levels rather than two — the gross, then the gross less the tax, then that
-   less the advances and anything else that only changes the transfer — which is how a
-   payslip ordinarily reads and which is where item 20's "after the total" lines would
-   then sit. **Ask before building it.** Criterion 1 is safe either way: August 2025 has no
-   income tax, so a middle level would equal its gross and the four totals do not move.
-   Whoever asks should also settle where a user line placed after the total goes under a
-   three-level block, since that is the same question asked twice.
 
 ### Step 2 — the holiday stops being a mark, and the calendar starts writing · **done**
 
@@ -763,7 +764,8 @@ guessed; the preview dims while that round trip is in flight.
 `npm run dev` running, open http://localhost:3000/month and press `‹` back to **אפריל 2026**.
 
 1. The 3rd is drawn as a **filled** `חג` and the panel reads `24 / 26` work days with a
-   line `עבודה בחג ₪426.35`, `סך הכול החודש ₪8,654.45`.
+   line `עבודה בחג ₪426.35`, `נטו ₪8,654.45`. April says `נטו` rather than `ברוטו`
+   because it repays an advance below it and withholds no tax (item 17).
 2. **Click the 3rd once.** A panel opens asking `עבדה בחג?`. Choose `לא עבדה`.
 3. The day is redrawn as an **outline**, the `עבודה בחג` line disappears, the count falls
    to `23 / 26`, and the month falls to `₪8,228.10`. That is item 5's own check seen from
@@ -771,9 +773,8 @@ guessed; the preview dims while that round trip is in flight.
    not work changes the count and not the money.
 4. **Now click the 20th, then the 22nd**, and choose `חופשה` from the panel. Three days are
    drawn, `ימים שנוצלו החודש` under חופשה reads 3, the balance falls from 9.67 to **6.67** —
-   and `סך הכול החודש` does **not** move. Vacation never shrinks the base (item 5); if the
-   money changed, the base is being computed from the actual count instead of the standard
-   one.
+   and `נטו` does **not** move. Vacation never shrinks the base (item 5); if the money
+   changed, the base is being computed from the actual count instead of the standard one.
 5. **Reload the page.** The marks are still there. They are in the store, not in the
    browser — until the process restarts, which is what an in-memory store means.
 6. The legend now has six entries, with `חג שנעבד` filled and `חג שלא נעבד` outlined, and
@@ -781,6 +782,120 @@ guessed; the preview dims while that round trip is in flight.
 
 **What a failure looks like:** `חג` still among the picker's chips; the month's total moving
 when a vacation is marked; the marks gone after a reload; or a holiday needing two clicks.
+
+### Step 3 — the closing block gets a middle level, and the user's own words · **done**
+
+The three things the user asked for on 2026-09-03 after clicking step 2. Two were settled
+when they were asked; the third was the question this step opened with, and the answer
+changed the shape of the block rather than only its wording.
+
+**The words are the user's** (item 1 of the three). `סך הכול החודש` is gone: the month's
+total is `ברוטו` and the figure transferred is `סך הכל תשלום לעובד/ת`, which is what the
+user calls them. The `/ת` is the one departure — the codebase writes `עובד/ת` everywhere
+because a worker may be male, and one gendered label among neutral ones would be the
+inconsistency, not the fidelity. The home screen's own total was renamed with it: it shows
+the same `net` and Part 5 forbids two names for one number.
+
+**`לפי העמודות בדף המשכורת` is gone** (item 2). It was step 1b's, and it printed the
+column subtotals under the lines they do not add up to — which item 5 had asked for as the
+lesser of two evils and which is simply the month said twice. `specs.md` item 5 now says
+the preview prints no column totals at all; criterion 1 checks them on the exported sheet,
+which is what the criterion is about.
+
+**The block has three levels and two halves** (item 3, asked and answered). The user:
+*"מס הכנסה is taken from the ברוטו while if she had taken מקדמה that is after the ברוטו
+then its for the סך הכל תשלום לעובדת."* The template settles what the sheet does —
+`template_month_standard.xlsx` has `A26` (`ד=א+ב+ג`), then `B28` (`ה. הפחתה מקדמה`), then
+`B29`, and **no income-tax row at all** — so the middle figure is the screen's and not the
+sheet's. Three answers came out of asking:
+
+1. **Three levels**, not two: `ברוטו` → what is withheld → `נטו` → what is transferred →
+   `סך הכל תשלום לעובד/ת`.
+2. **A line the user placed after the total sits below the `נטו`, with the advances** and
+   not beside the tax — which is item 20's own sentence about it, that it "changes only
+   what is transferred at the end".
+3. **A level is drawn only when something below it changes the figure.** The user asked for
+   the collapse at the upper boundary ("if מס הכנסה is at 0 then hide that part") and for
+   the surviving row to keep the name `נטו`. Applying the same rule at the lower boundary
+   was not asked for and is this step's own call: September has neither a tax nor an
+   advance, so `נטו` and `סך הכל` were the same figure printed twice — the redundancy the
+   user had just asked to remove one boundary up. One rule now covers both.
+
+**Which half a row is in is the engine's answer.** `ClosingLine.block` is `withholding` or
+`transfer` and is set where the row is built; `MonthResult.afterWithholding` is the ברוטו
+plus the withholding half. A screen sorting the rows by their keys would be the keyed
+whitelist step 1b's review already caught once — the next row the block grows would land in
+whichever half the `else` happened to be.
+
+**`net` is not `נטו`, and that is written into Part 5 rather than left to be discovered.**
+`net` stays criterion 1's fourth total, Part 4's ₪7,305.75, labelled `סך הכל תשלום לעובד/ת`;
+the Hebrew `נטו` is the middle figure and is `afterWithholding` in code. Renaming either to
+make them agree would break the tie between Part 4's two named figures and the engine.
+
+**Nothing in the calculation moved.** `august-2025.snap.md` is byte-identical and the 299
+tests that existed before this step all still pass; 13 were added, and the three mutations
+that matter were made and caught — the advance rows tagged `withholding` (4 failures), the
+after-gross user lines tagged `withholding` (3), and `afterWithholding` never withholding
+(4).
+
+**August 2026 is seeded with income tax**, because a month that withholds nothing cannot
+show the block at its full height and no other seeded month has any. It is the one month
+no earlier check names. A seeded month still proves nothing: the figures below are derived
+on paper from the calendar and the rates, and the engine was run afterwards to confirm
+them, not to supply them.
+
+**Check — restart the dev server first.** The store is seeded once per process, so August's
+income tax is not there until the running `npm run dev` is stopped and started again. Then
+open http://localhost:3000/month.
+
+1. It opens on **ספטמבר 2026** and the panel closes on **one** figure:
+   `סך הכל תשלום לעובד/ת ₪8,353.05`. No `ברוטו`, no `נטו` — September withholds nothing and
+   transfers nothing, so both would read ₪8,353.05 as well. There is also no
+   `לפי העמודות בדף המשכורת` block at the foot any more.
+2. Press `‹` back to **אוגוסט 2026**. The block is now at its full height and the three
+   figures are all different:
+   `ברוטו ₪9,205.75` → `מס הכנסה −₪450.00` → `נטו ₪8,755.75` →
+   `תוספות והורדות שהוספת −₪200.00` → `סך הכל תשלום לעובד/ת ₪8,555.75`.
+   Derived on paper: 1.8.2026 is a Saturday, so August holds five Saturdays and four
+   Fridays; 31 − 5 = 26 standard days, `26 / 26` because the holiday on the 20th was
+   worked. Column E is 6,247.65 + 4 × 100 = ₪6,647.65 and column F is 5 × 426.35 + 426.35
+   = ₪2,558.10, which come to ₪9,205.75.
+3. **The ₪200 is below the `נטו` and not above it.** That is the whole of the second
+   question settled here: it is a line the user added and left where a deduction defaults
+   to — after the total — so it changes the transfer and must leave the `נטו` alone. If it
+   sat above the `נטו`, the `נטו` would read ₪8,555.75 and the answer had been inverted.
+4. Press `‹` twice more to **יוני 2026**. Two levels, not three: `נטו ₪8,603.05` above
+   `סך הכל תשלום לעובד/ת ₪8,423.05`, with the added −₪180.00 between them and **no**
+   `ברוטו` row, because June withholds nothing.
+5. Press `›` to **יולי 2026**. One level again, `סך הכל תשלום לעובד/ת ₪8,273.05`, with the
+   user's −₪180.00 **above** it — a deduction placed before the total is a line among the
+   month's own lines, and July neither withholds nor transfers anything.
+6. **Open http://localhost:3000/ — the home screen.** Its own total now reads
+   `סך הכל תשלום לעובד/ת` too. It is the same `net` the month screen closes on, and Part 5
+   forbids two names for one number; renaming the month screen alone would have created
+   exactly the disagreement that rule exists to stop.
+
+**What a failure looks like:** `ברוטו` and `נטו` reading the same figure in any month; the
+₪200 in August moving the `נטו`; September or July showing three figures where two of them
+are equal; `סך הכול החודש` surviving anywhere; or the `לפי העמודות` block still at the foot.
+
+**What this step owes the next one, found by the two-axis review and not fixed here.**
+Hiding the income-tax row when it reads zero hides its *explanation* with it — the 2.25
+credit points a foreign caregiver in home care is entitled to, and item 26's link to the
+rule — and today `MonthScreen` is the only thing that reads `result.closing`, so in a month
+with no tax that rule is now reachable nowhere. That is the right place for it to stop
+being: item 17 says the figure is entered from the month's actions, so the rule belongs
+beside the **control**, in the additional-payments group of the next step, and not on a row
+printed at zero. `specs.md` item 17 now says so outright. **Until that group is built the
+rule is unreachable**, which is a real gap and is written here rather than discovered later.
+
+**Two of the review's findings were defects in this step's own work and are fixed above.**
+`specs.md` item 5 was amended to say the preview prints no column totals at all, which was
+false — column H keeps its subtotal, and item 5 now says why that is the rule rather than
+an exception to it. And the transfer rows were drawn unconditionally while the `נטו` above
+them was gated, so a transfer row that moved no money would have printed under no heading
+and above a total it did not move; the whole lower half is now gated together, as the
+upper half already was.
 
 ## Stage 5 — External data and yearly settings
 

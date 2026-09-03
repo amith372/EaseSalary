@@ -243,6 +243,15 @@ record at all. Stage 4 builds both ends of that swap together.
 - **An open sick spell, and a spell crossing a month boundary.** Nothing is drawn for
   either. Deliberately left alone: how a spell is opened is the stage-4 question that is
   still open, and nothing should be drawn for it before it is answered.
+- **The month screen's closing block has three levels and a collapse rule, and no artboard
+  draws it.** Added on 2026-09-03, after this hand-over was written and while the canvas
+  was still unchanged, so it is a gap in the canvas rather than a drift in the code:
+  `ברוטו` → what is withheld → `נטו` → what is transferred → `סך הכל תשלום לעובד/ת`, with a
+  level drawn only when something below it changes the figure (`specs.md` items 17 and 20,
+  Part 5; `build_plan.md` stage 4 step 3). `סך הכול החודש` and the `לפי העמודות בדף המשכורת`
+  block are both gone from the month screen. **Job 2b item 6 is unaffected** — it is about
+  `דף המשכורת`, which is the sheet's own view and does show the column subtotals; what
+  stopped showing them is the month screen.
 - The holiday picker, part-days, the third-party payments group, the pre-export questions,
   a note on every action, and a future month filled but not exportable — all already on the
   reconciliation list at the foot of `build_plan.md`.

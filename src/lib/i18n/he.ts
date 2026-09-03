@@ -297,7 +297,9 @@ export const he = {
     },
     paid: {
       title: "מה שולם החודש",
-      total: "לתשלום לעובד/ת",
+      /** The same figure the month screen closes with, so it carries the same
+       * word: one number, one name (specs.md Part 5). */
+      total: "סך הכל תשלום לעובד/ת",
       totalExplanation: "השכר של החודש והתוספות עליו, פחות המקדמה שנפרעת החודש.",
       exportToExcel: "לייצא לאקסל",
       fullSheet: "לצפייה בדף המשכורת המלא",
@@ -345,14 +347,24 @@ export const he = {
       userLines: "תוספות והורדות שהוספת",
       userLinesWhy:
         "סיכום השורות שהוספת. הפירוט המלא — שורה־שורה, עם הסיבה שרשמת לכל אחת — נמצא במסך התשלומים ובקובץ האקסל, כי בתלוש כל תשלום חייב להופיע בנפרד.",
-      /** The month's own total, before the closing block — ₪9,305.75 in the
-       * August 2025 case, and the third of criterion 1's four figures. */
-      gross: "סך הכול החודש",
-      /** What is actually handed over, after the advances and the deductions. */
-      net: "לתשלום לעובד/ת",
-      /** The sheet's own column totals, shown apart from the lines rather than
-       * under them (specs.md item 5). */
-      byColumn: "לפי העמודות בדף המשכורת",
+      /**
+       * The three figures the block closes with, in the order it draws them,
+       * and **the user's own words for the first and the last** (specs.md
+       * Part 5).
+       *
+       * `gross` is the month's own total before anything is withheld —
+       * ₪9,305.75 in the August 2025 case, the third of criterion 1's four
+       * figures, and `A26` of the month template. `net` is what is actually
+       * transferred, ₪7,305.75 there, the fourth figure and `B29`.
+       *
+       * **`afterWithholding` is the one the sheet has no cell for**, and it is
+       * the Hebrew נטו — which the code's own `net` is *not*. A month with no
+       * income tax draws it alone, because it equals the ברוטו and two
+       * identical figures under two headings is worse than one.
+       */
+      gross: "ברוטו",
+      afterWithholding: "נטו",
+      net: "סך הכל תשלום לעובד/ת",
       thirdParty: "תשלומים לגורמים שלישיים",
       balances: "יתרות אחרי החודש הזה",
       warnings: "כדאי לדעת",
@@ -518,8 +530,10 @@ export const he = {
         "תשלום שיוצא לגורם שלישי ולא לעובד/ת, ולכן אינו נכלל בסכום שמשולם לה.",
       nationalInsurancePaid:
         "הכסף שיצא בפועל לביטוח לאומי. התשלום נעשה אחת לרבעון ובדיעבד, ולכן הוא מופיע רק בחודש שבו שולם, יחד עם החודשים שהוא מכסה. זה אינו אומדן החודש: האומדן הוא מה שהחודש צבר, וזה מה שיצא מהחשבון.",
-      gross: "השכר, התוספות והתשלומים החד־פעמיים של החודש, לפני המקדמות והניכויים.",
-      net: "מה שמועבר בפועל: סכום החודש, אחרי המקדמות והניכויים שבתחתית הדף.",
+      gross: "השכר, התוספות והתשלומים החד־פעמיים של החודש, לפני כל ניכוי. זה מה שהחודש עלה, וממנו נגזר גם אומדן הביטוח הלאומי.",
+      afterWithholding:
+        "הברוטו פחות מה שמנוכה ממנו — כרגע מס הכנסה בלבד. מקדמה, וכן שורה שהוספה ומקומה נקבע אחרי הסכום, אינן משנות את הנטו אלא רק את מה שמועבר בסוף.",
+      net: "מה שמועבר בפועל: הנטו, אחרי המקדמות ואחרי השורות שהוספת וביקשת שישבו אחרי הסכום.",
       subtotal: (restDay: RestDay) => ({
         E: `סכום שורות השכר של החודש — המשכורת החודשית, תוספת ${eve(restDay).pluralDefinite}, וכל תשלום קבוע שהגדרת.`,
         F: `סכום התשלומים עבור עבודה ב${day(restDay).bare} ובחג, שניהם בתעריף המנוחה השבועית.`,

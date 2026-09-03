@@ -204,8 +204,27 @@ export interface ClosingLine {
   label: string;
   amount: number | null;
   manual: boolean;
+  /** Which of the block's two halves the row belongs to, and with it which of
+   * the two figures below it the row has already reached. */
+  block: ClosingBlock;
   explanation: Explanation;
 }
+
+/**
+ * Which half of the block below the columns a row sits in — and so which side
+ * of the נטו it falls on (specs.md Part 5, items 17 and 20).
+ *
+ * `withholding` is what is taken **out of the ברוטו**: today the income-tax
+ * line and nothing else. `transfer` is what only changes the sum handed over —
+ * the advances, and a line the user added and placed after the total, which
+ * item 20 says reaches neither the month's cost nor item 19's estimate.
+ *
+ * **It is decided here and not on a screen.** Which side a row falls on is a
+ * rule about the row, so a screen that sorted the rows by their keys would be
+ * the keyed whitelist this file has already been bitten by once: the next row
+ * the block grows would land in whichever half the `else` happened to be.
+ */
+export type ClosingBlock = "withholding" | "transfer";
 
 /**
  * A column's own total, as the month tab prints it.
@@ -282,7 +301,7 @@ export interface MonthResult {
    * live here; `gross` and `net` are the other two. */
   subtotals: ColumnSubtotal[];
   /** The rows below the columns, generated from the month's advances and its
-   * income-tax line. */
+   * income-tax line. Each says which half of the block it is in. */
   closing: ClosingLine[];
   /**
    * Columns E, F and G alone — "the month's total" of specs.md Part 5, and
@@ -297,6 +316,21 @@ export interface MonthResult {
    * (Part 5).
    */
   net: number | null;
+  /**
+   * The ברוטו less what was withheld from it — the נטו, and the middle of
+   * the three figures the month screen shows (specs.md Part 5).
+   *
+   * **It is not `net`.** `net` is criterion 1's fourth total, the sum actually
+   * transferred, and the Hebrew word for it is סך הכל תשלום לעובד/ת. The
+   * sheet has a cell for the ברוטו (`A26`, ד) and for the transfer (`B29`) and
+   * none for this one, which is why it is named for what it is rather than for
+   * a column.
+   *
+   * With no income tax it equals `gross`, which is every month the family has
+   * ever had and August 2025 among them; the month screen draws one row rather
+   * than two identical ones in that case.
+   */
+  afterWithholding: number | null;
   /**
    * The vacation and sick days used in the month and the balances left after
    * them — a Wage Protection Act requirement of the payslip made from this

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { SATURDAY } from "@/lib/dates";
+import {
+  plainAugustFacts,
+  plainWorker,
+} from "@/lib/engine/august-2025.fixture";
 import { calculateMonth } from "@/lib/engine/month";
-import { placementOf, snapshotTerms } from "@/lib/engine/types";
+import { placementOf } from "@/lib/engine/types";
 import type { MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 
@@ -9,15 +12,9 @@ import { he } from "@/lib/i18n/he";
  * Lines the user added, in both directions and both lifetimes (specs.md
  * item 20).
  *
- * **The figures are derived on paper from Part 4's own salary.** August 2025
- * with nothing marked: five Saturdays all worked and five Fridays, so
- *
- *   column E   624,765 + 5 × 10,000                 = 674,765   ₪6,747.65
- *   column F   5 × 42,635.062087912… = 213,175.31…  = 213,175   ₪2,131.75
- *   gross                                            = 887,940   ₪8,879.40
- *
- * Part 4 states the ₪6,747.65 outright and the rest-day rate is the one its
- * ₪2,558.10 is built from, so nothing below is read back from the engine.
+ * **The figures are derived on paper**, in `august-2025.fixture.ts`: the month
+ * with nothing marked comes to ₪8,879.40, and every case below moves it by
+ * exactly one thing. Nothing here is read back from the engine.
  *
  * **The four combinations, each moving one thing.** A standing addition of ₪500
  * lands in column E, because a payment made every month is part of what she
@@ -31,38 +28,10 @@ import { he } from "@/lib/i18n/he";
  *   one-off deduction   E 674,765   gross 887,940   net 872,940
  */
 
-const AUGUST_2025 = { year: 2025, month: 8 } as const;
-const SALARY = 624765;
-
-function worker(standingLines: UserLine[] = []): WorkerTerms {
-  return {
-    employedSince: "2024-04-01",
-    baseMonthlySalaryAgorot: SALARY,
-    restDay: SATURDAY,
-    restEveSupplementAgorot: 10000,
-    recuperationMonth: 7,
-    standingLines,
-    country: "PH",
-    openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
-  };
-}
+const worker = plainWorker;
 
 function facts(w: WorkerTerms, userLines: UserLine[] = []): MonthFacts {
-  return {
-    month: AUGUST_2025,
-    terms: snapshotTerms(w),
-    confirmedWage: {
-      baseAgorot: SALARY,
-      minimumAgorot: SALARY,
-      effectiveFrom: "2025-04-01",
-    },
-    spans: [],
-    advances: [],
-    thirdPartyPayments: [],
-    userLines,
-    incomeTaxAgorot: 0,
-    overrides: {},
-  };
+  return { ...plainAugustFacts(w), userLines };
 }
 
 /** A payment the family agreed **on top of** the salary (specs.md item 20). */

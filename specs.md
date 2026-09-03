@@ -114,11 +114,19 @@ Each of these is true or false at a glance.
     month — while on the sheet the supplement belongs to the salary column and the other
     two to the rest-day column (item 2, Part 5). Neither the calculation nor the exported
     file moves an agora for it: the columns are the sheet's structure and the sheet is
-    where they are totalled. The preview therefore shows the column totals as figures of
-    their own, apart from the lines, rather than at the foot of the groups it drew — a
-    group whose lines do not add up to the total printed under it is worse than no
-    grouping at all, and that is exactly what putting the supplement beside the rest days
-    under a salary subtotal would produce.
+    where they are totalled. **The preview therefore prints no subtotal for any column
+    that reaches the worker** — E, F and G. A group whose lines do not add up to the total
+    printed under it is worse than no grouping at all, which is what putting the supplement
+    beside the rest days under a salary subtotal would produce; and printing those three
+    apart from the lines instead, as this criterion once asked for, answers that by saying
+    the same month twice, since the figures above already are the month grouped the way the
+    family reads it. They are the sheet's own totals and are read on the sheet, where
+    criterion 1 checks them.
+    **Column H keeps its subtotal, and that is not an exception to the rule but the reason
+    for it.** The third-party group is money that never reaches the worker (item 16), so it
+    is drawn outside her total in a card of its own, and its lines *do* add up to the figure
+    printed under them. What the rule forbids is a column total sitting under a group that
+    is not that column; H is the one group on the screen that is a column.
     **The weekly rest day is a term of the employment, not a constant.** The law allows
     only Friday, Saturday or Sunday, whichever the worker holds as her own — a Catholic
     Filipina worker may ask for Sunday and a Muslim worker for Friday, and it is her right
@@ -394,6 +402,31 @@ Each of these is true or false at a glance.
     that month's actions, and the income-tax line is editable in the same way while
     defaulting to zero. An overridden amount is visibly marked as manual and survives
     every later recalculation of that month.
+    **The income tax is withheld from the ברוטו and an advance is not**, and the month
+    screen draws that difference rather than describing it: the tax comes off the month's
+    total and what is left is the נטו, while an advance — and a line the user placed after
+    the total (item 20) — comes off the נטו and changes only what is transferred. The
+    three figures and the order they are drawn in are given in Part 5.
+    **A level is drawn only when something below it changes the figure.** With the tax at
+    zero the נטו is the ברוטו, and with nothing transferred the figure paid is the נטו;
+    the same number printed twice under two headings reads as an error and sends the user
+    looking for a difference that is not there. So a month with neither closes on one
+    figure, a month with an advance shows the נטו above it, and only a month that actually
+    withholds something shows all three. The figure actually paid is always drawn, because
+    it is the screen's answer. This is a rule about the screen and not about the sheet:
+    the export prints the sheet's own rows whatever they come to.
+    **When two levels collapse, the lower name is the one that survives**, which is what
+    keeps the rule from needing a table of cases. A month with no tax shows נטו and not
+    ברוטו; a month that withholds a tax but transfers nothing shows ברוטו, the tax, and
+    then סך הכל תשלום לעובד/ת with no נטו between them — the figure below the tax is the
+    figure paid, and naming it twice is the thing being avoided. The name that goes is
+    always the name of a figure nothing has yet been taken off.
+    **Hiding the zero row moves the tax's explanation and does not delete it.** The rule a
+    user needs before typing a figure — the 2.25 credit points below, with its link — is
+    attached to the place the figure is *entered*, which this criterion already says is the
+    month's actions, and not to a row printed at zero in the preview. A preview that draws
+    no row for a tax nobody owes must therefore not be the only place that rule appears, or
+    the collapse takes item 26's link with it.
     Income tax is never calculated and the intention is that it never will be. What the
     user needs before typing a figure is therefore the rule and not an arithmetic: the
     employer deducts income tax on the basis of the wage and of the credits the worker
@@ -470,6 +503,15 @@ Each of these is true or false at a glance.
     and the advance instalment — that block is where everything on the way from the
     month's total to the figure actually transferred already lives, and it already grows
     with however many rows the month has.
+
+    **On the month screen that block has two halves and the line sits in the lower one**,
+    with the advances and not with the income tax. The screen shows three figures where
+    the sheet shows two (Part 5, item 17): the tax is withheld from the ברוטו and what is
+    left is the נטו, while a line placed after the total does what this criterion already
+    says it does — it "changes only what is transferred at the end" and reaches neither
+    the month's cost nor item 19's estimate, which is the same sentence as an advance and
+    not the same as a withholding. So it comes off the נטו and never moves it. The sheet
+    is unaffected: it has one block below the columns and the line is in it.
 
     **The application defaults the placement and lets the user move it.** An addition
     defaults to *before* and a deduction to *after*, which is where each usually belongs
@@ -860,7 +902,25 @@ naming either. They are written down here because the export and the on-screen p
 two views of one calculation and must call the same figure by the same word; two names for
 one number is how the sheet and the screen begin to disagree while both are right. The
 income-tax line sits in the closing block and not in column E, so it reduces the net and
-never the gross: the gross is what she earned, the net is what she is handed. Column H holds money paid
+never the gross: the gross is what she earned, the net is what she is handed.
+
+**In Hebrew there are three figures and not two, and `net` is not נטו.** The user's own
+words are ברוטו for the month's total and סך הכל תשלום לעובד/ת for the figure actually
+transferred, which are the code's `gross` and `net` and the sheet's `A26` (ד) and `B29`.
+Between them stands the נטו — the ברוטו less what was **withheld from it**, today the
+income-tax line and nothing else — which the sheet has no cell for and the code therefore
+names `afterWithholding` rather than `net`. That the English `net` and the Hebrew נטו name
+different figures is a trap and is written here so that nobody resolves it by renaming one
+of them: `net` is criterion 1's fourth total and Part 4's ₪7,305.75, and it keeps that
+meaning everywhere.
+
+**The block below the columns therefore has two halves.** A row is *withheld* if it comes
+out of the ברוטו — the income tax — and a *transfer* row if it only changes the sum handed
+over: the advances, and a line the user placed after the total (item 20). Which half a row
+is in is a fact about the row and belongs to the calculation, not to a screen sorting rows
+by name; a screen that sorted them would put the next row the block grows into whichever
+half it happened to fall through to. Item 17 gives the rule for when each of the three
+figures is drawn. Column H holds money paid
 to third parties — the medical insurance premium, the national-insurance contribution
 paid quarterly, the agency and placement fees, the visa and licence fees — and is
 deliberately excluded from that total. Reading H as salary would overpay the worker, and

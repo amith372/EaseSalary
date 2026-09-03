@@ -23,6 +23,7 @@ import type {
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 import { he } from "@/lib/i18n/he";
 import type {
+  ClosingBlock,
   ClosingLine,
   ColumnSubtotal,
   MonthLine,
@@ -330,6 +331,9 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
     // `Object.is` — and so `toBe` — reports as different from 0.
     amount: -Math.abs(Math.round(tax)) || 0,
     manual: taxOverride !== undefined || facts.incomeTaxAgorot !== 0,
+    // The one row taken out of the ברוטו rather than out of the transfer, and
+    // so the only thing standing between the two figures (specs.md Part 5).
+    block: "withholding",
     // The application never calculates the tax, so the link is the whole of what
     // it can give the user before she types a figure (specs.md items 17, 26).
     explanation: { text: he.sheet.why.incomeTax, link: "incomeTax" },
@@ -354,6 +358,11 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
         label: line.label,
         amount: signed * Math.round(Math.abs(agorot)) || 0,
         manual: override !== undefined,
+        // Item 20 says such a line "changes only what is transferred at the
+        // end" and reaches neither the month's cost nor item 19's estimate,
+        // which is the same sentence as an advance — so it sits with them,
+        // below the נטו and not beside the tax.
+        block: "transfer",
         explanation: { text: userLineWhy(prefix, "afterGross") },
       });
     }
@@ -371,6 +380,7 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
         : he.sheet.lines.advanceRepaid,
       amount: granted ? Math.round(agorot) : -Math.round(agorot),
       manual: override !== undefined,
+      block: "transfer",
       explanation: {
         text: granted
           ? he.sheet.why.advanceGranted(advance.number)
@@ -432,10 +442,16 @@ export function calculateMonth(
     .filter((line) => COLUMNS_THAT_REACH_THE_WORKER.includes(line.column))
     .reduce((total, line) => total + (line.amount ?? 0), 0);
 
-  const net = closing.reduce(
-    (total, row) => total + (row.amount ?? 0),
-    gross,
-  );
+  // Two sums over one list rather than two lists, so a row cannot be counted
+  // in the transfer and forgotten in the נטו or the other way round: every
+  // row carries its own half and `net` is still the sum of all of them.
+  const sumOfBlock = (block: ClosingBlock) =>
+    closing
+      .filter((row) => row.block === block)
+      .reduce((total, row) => total + (row.amount ?? 0), 0);
+
+  const afterWithholding = gross + sumOfBlock("withholding");
+  const net = afterWithholding + sumOfBlock("transfer");
 
   return {
     month: facts.month,
@@ -445,6 +461,7 @@ export function calculateMonth(
     subtotals: buildSubtotals(lines, facts.terms.restDay),
     closing,
     gross,
+    afterWithholding,
     net,
     balances: buildBalances(month, employment, context.openingBalances),
     warnings: buildWarnings(month, context),

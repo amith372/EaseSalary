@@ -233,6 +233,27 @@ const devMonths: Record<string, MonthRecord[]> = {
         },
       ],
     },
+    // **The only seeded month with income tax in it**, and the only one that can
+    // therefore show the block at its full height: a tax is withheld from the
+    // ברוטו and reaches the נטו, while the line below it — a deduction, so
+    // `placementOf` puts it after the total by default — changes only what is
+    // transferred and leaves the נטו alone (specs.md items 17 and 20). Every
+    // other month withholds nothing, which is the collapsed shape.
+    //
+    // The application never calculates income tax and never will (item 17);
+    // this figure stands in for one the user typed.
+    8: {
+      incomeTaxAgorot: 45000,
+      userLines: [
+        {
+          id: "market",
+          label: "קניות שהעברתי לה במזומן",
+          direction: "deduction",
+          agorot: 20000,
+          note: "סוכם שיקוזז מהתשלום בסוף החודש",
+        },
+      ],
+    },
   }),
   "worker-2": monthsFor(secondWorker),
 };

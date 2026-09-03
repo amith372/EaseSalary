@@ -22,6 +22,7 @@ import { formatAgorot, formatDays } from "@/lib/money";
 import type { SkippedDay, SkipReason } from "@/lib/spans";
 import type {
   BalanceLine,
+  ClosingLine,
   Explanation,
   IsoDate,
   MonthLine,
@@ -406,7 +407,28 @@ function MonthPreview({
   // 20). The itemisation is the payments screen's and the export's.
   const userBefore = result.lines.filter((line) => isUserLineKey(line.key));
   const userAfter = result.closing.filter((row) => isUserLineKey(row.key));
+  // **The block below the columns has two halves and the נטו stands between
+  // them** (specs.md Part 5). Which half a row is in is the engine's answer and
+  // not a list of keys kept here: a screen that sorted them itself would put
+  // the next row the block grows into whichever half the `else` happened to be.
   const closingRows = result.closing.filter((row) => !isUserLineKey(row.key));
+  const withholdingRows = closingRows.filter((row) => row.block === "withholding");
+  const transferRows = closingRows.filter((row) => row.block === "transfer");
+  // **A level is drawn only when something below it changes the figure**, which
+  // is one rule over both boundaries rather than a special case at each. With
+  // nothing withheld the נטו *is* the ברוטו, and with nothing transferred the
+  // סך הכל *is* the נטו — and two identical figures under two headings read
+  // as an error the user then goes looking for. So a month with no income tax
+  // and no advance closes on one figure, a month with an advance shows the נטו
+  // above it, and only a month that withholds something shows all three.
+  //
+  // Settled with the user on 2026-09-03: the collapse itself, and that the
+  // surviving upper row is the נטו rather than the ברוטו. The bottom row is
+  // always drawn, because it is the screen's answer.
+  const changesTheFigure = (rows: ClosingLine[]) =>
+    rows.some((row) => (row.amount ?? 0) !== 0);
+  const withholds = changesTheFigure(withholdingRows);
+  const transfers = changesTheFigure(transferRows) || changesTheFigure(userAfter);
   // **Everything the engine emitted that the three groups above did not claim.**
   // The groups are keyed whitelists, so a line the engine grows later — the
   // recuperation payment is the next one (item 15) — would otherwise count in
@@ -420,10 +442,6 @@ function MonthPreview({
   const otherLines = result.lines.filter(
     (line) => line.column !== "H" && !claimed.has(line.key),
   );
-  const workerSubtotals = result.subtotals.filter(
-    (subtotal) => subtotal.column !== "H",
-  );
-
   const userLineRow = (rows: SummarisableLine[], placement: UserLinePlacement) => (
     <Row
       {...why}
@@ -511,25 +529,51 @@ function MonthPreview({
             />
           ))}
           {userBefore.length > 0 ? userLineRow(userBefore, "beforeGross") : null}
-          <Row
-            {...why}
-            label={he.month.preview.gross}
-            whyKey="gross"
-            explanation={{ text: he.sheet.why.gross }}
-            value={<MoneyValue agorot={result.gross} chip="warm" />}
-            strong
-          />
-          {userAfter.length > 0 ? userLineRow(userAfter, "afterGross") : null}
-          {closingRows.map((line) => (
-            <Row
-              {...why}
-              key={line.key}
-              label={line.label}
-              whyKey={line.key}
-              explanation={line.explanation}
-              value={<MoneyValue agorot={line.amount} manual={line.manual} />}
-            />
-          ))}
+          {withholds ? (
+            <>
+              <Row
+                {...why}
+                label={he.month.preview.gross}
+                whyKey="gross"
+                explanation={{ text: he.sheet.why.gross }}
+                value={<MoneyValue agorot={result.gross} chip="warm" />}
+                strong
+              />
+              {withholdingRows.map((line) => (
+                <Row
+                  {...why}
+                  key={line.key}
+                  label={line.label}
+                  whyKey={line.key}
+                  explanation={line.explanation}
+                  value={<MoneyValue agorot={line.amount} manual={line.manual} />}
+                />
+              ))}
+            </>
+          ) : null}
+          {transfers ? (
+            <>
+              <Row
+                {...why}
+                label={he.month.preview.afterWithholding}
+                whyKey="afterWithholding"
+                explanation={{ text: he.sheet.why.afterWithholding }}
+                value={<MoneyValue agorot={result.afterWithholding} chip="warm" />}
+                strong
+              />
+              {userAfter.length > 0 ? userLineRow(userAfter, "afterGross") : null}
+              {transferRows.map((line) => (
+                <Row
+                  {...why}
+                  key={line.key}
+                  label={line.label}
+                  whyKey={line.key}
+                  explanation={line.explanation}
+                  value={<MoneyValue agorot={line.amount} manual={line.manual} />}
+                />
+              ))}
+            </>
+          ) : null}
         </div>
 
         <Card tone="tint" radius="tint" className="flex flex-col gap-2 px-3.5 py-2.5">
@@ -543,28 +587,6 @@ function MonthPreview({
             within="tint"
           />
         </Card>
-
-        {/* Two of criterion 1's four checkable figures, kept where they can be
-            read off the screen — apart from the lines, because the lines above
-            are grouped by kind and these are sums over columns. */}
-        <div className="flex flex-col gap-2 border-t border-line pt-2.5">
-          <h3
-            dir="auto"
-            className="text-[13px] font-semibold tracking-[0.06em] text-ink-quiet"
-          >
-            {he.month.preview.byColumn}
-          </h3>
-          {workerSubtotals.map((subtotal) => (
-            <Row
-              {...why}
-              key={subtotal.column}
-              label={subtotal.label}
-              whyKey={`subtotal-${subtotal.column}`}
-              explanation={subtotal.explanation}
-              value={<MoneyValue agorot={subtotal.amount} />}
-            />
-          ))}
-        </div>
       </Card>
 
       {/* Outside the card above, and that is the point: this money went to a

@@ -138,6 +138,7 @@ function resultFor(restDay: RestDay): MonthResult {
   subtotals: [],
   closing: [],
   gross: null,
+  afterWithholding: null,
   net: null,
   balances,
   // No warning fires on a fixture month: a warning is a fact about a real year.
