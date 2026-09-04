@@ -15,10 +15,16 @@
 
 /**
  * A sick day is worth the monthly salary over twenty-five (specs.md item 8),
- * and the appendix records that a vacation balance settled at the end of an
- * employment is valued at the same divisor — so it is decided here once and not
- * a second time when that is built. These are divisors from the rule, not rates
- * standing in for a figure the salary should have supplied.
+ * and the future-features appendix records that a vacation balance settled at
+ * the end of an employment is valued at the same divisor — so it is decided here
+ * once and not a second time when that is built. These are divisors from the
+ * rule, not rates standing in for a figure the salary should have supplied.
+ *
+ * **The numerator is the salary alone and the rest-eve supplement is not in
+ * it.** The sick-pay statute names a closed list of what enters the regular
+ * wage and an agreed weekly supplement is none of it (item 8), which is why
+ * `dailyRate` takes the base salary and not the month's column E. It is the
+ * change this function most invites and it would be wrong.
  */
 const SICK_DAY_DIVISOR = 25;
 

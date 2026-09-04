@@ -203,12 +203,13 @@ describe("a holiday she did not work sits inside the period", () => {
   });
 });
 
-describe("a vacation day between two reported days still breaks the spell", () => {
-  it("reads them as two illnesses, which is the narrower answer", () => {
-    // Recorded as unsettled in `specs.md`'s appendix rather than decided: a
-    // vacation day is one she owed no attendance on, which argues for bridging,
-    // but it is also one she chose and one drawn from another quota. This test
-    // exists so the choice is visible and moves deliberately if it ever moves.
+describe("a vacation day between two reported days breaks the spell", () => {
+  it("reads them as two illnesses, because one day cannot be both", () => {
+    // Settled, and not a balance of arguments (specs.md item 8): illness during
+    // a vacation converts the day into a sick day and draws only the rest from
+    // the vacation quota, so a day still recorded as vacation is a day she was
+    // not ill on. The rest day and the unworked holiday sit inside a spell
+    // because they contradict nothing; a vacation day would contradict itself.
     const spans = [sick("2025-08-11"), vacation("2025-08-12"), sick("2025-08-13")];
     expect(spellsOf(spans, SATURDAY)).toHaveLength(2);
     expect(sickDrawn(spans)).toBe(2);

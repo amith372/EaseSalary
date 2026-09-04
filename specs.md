@@ -165,9 +165,33 @@ Each of these is true or false at a glance.
    total: a monthly salary is paid in full for a month in which vacation was taken, and
    the day is drawn from the balance alone. The sheet carries no vacation payment line at
    all: the base is computed from the standard count and never shrinks, so a vacation line
-   beside it would pay the day a second time. Vacation reaches the sheet only as two
-   figures in the reporting block — the days used in the month, and the balance left after
-   them. A vacation day, like a holiday, may be
+   beside it would pay the day a second time. Vacation reaches the sheet as a **count and
+   never as money**: the days used in the month and the balance left after them, in the
+   reporting block, and the days used again on the workbook's own vacation row, whose
+   units are filled and whose price and amount cells are left empty.
+   **That row is where the double payment gets in, and the family's own sheet shows both
+   ways of filling it.** The workbook has a row reading `ימי חופש עד 14 יום בשנה למשך 5
+   שנים ראשונות. - ניצול בחודש זה`, and three months of one file fill it three ways: a
+   month with one day recorded its unit and left the money empty against a **full** base; a
+   month with one day wrote ₪235.20 against a base reduced by 0.96 of a day; and a month
+   with 8.5 days wrote ₪1,999.20 against a base reduced by 8.5/25 of the salary. The last
+   two reconcile exactly — 5,644.82 + 235.20 = 5,880.02, and 8.5/25 of the salary is
+   1,999.20 — so all three reach the same money, and the second and third do it by
+   *reducing the base and paying the day back*. **This application never reduces the base**
+   (the standard count, above), so only the first is consistent with it: taking the second
+   style without the reduction that makes it work pays the day twice, once inside the
+   salary and once beside it. It would also enlarge the national-insurance base, which is
+   columns E, F and G and nothing else (item 19).
+   **The unit-price cell on that row stays empty and is not recalculated.** The row pays
+   nothing, so there is no amount for a price to multiply into, and item 2's rule that a
+   payment carries its type, its units and its amount does not govern a row that is not a
+   payment — what it reports is a count. A price standing beside that count is an
+   invitation to multiply it, which is how the second style got into the family's sheet in
+   the first place: the figure sitting there, ₪235.20, is a day valued at a minimum wage
+   that has since moved twice, and writing a *current* rate there would replace a stale
+   invitation with a live one. Item 19's national-insurance estimate is not the precedent
+   it looks like — there the figure in the unit-price column **is** the thing being
+   reported, and here the thing being reported is the number of days. A vacation day, like a holiday, may be
    taken as part of a day and is drawn from the balance in that proportion. Vacation
    accrues by seniority — fourteen days a year through year four, sixteen in year five,
    eighteen in year six, twenty-one in year seven, and one more each year to a ceiling of
@@ -199,7 +223,17 @@ Each of these is true or false at a glance.
 8. Sick days accrue at 1.5 a month to a ceiling of ninety, and the payment follows the
    statutory tiers from what was reported: nothing for the first day, half for the
    second and third, and the full day from the fourth onward. A sick day is worth the
-   monthly salary over twenty-five. Because the salary is calculated from the standard
+   monthly salary over twenty-five.
+   **The base it is priced from is the salary alone, and the rest-eve supplement is not
+   in it.** The statute does not ask what a wage generally consists of; it names a closed
+   list of the components that enter the regular wage — שכר יסוד without overtime,
+   תוספת ותק, תוספת יוקר or פיצוי בעד התייקרות, תוספת משפחה, and
+   תוספת מחלקתית או מקצועית — and a weekly supplement agreed between one family and one
+   worker (item 14) is none of the five. The same rule is visible from the other side in
+   what sickness does *not* pay: travel expenses are not paid for a day of absence, so
+   payments standing alongside the wage are left out deliberately rather than by
+   omission. The family's workbook prices a sick day the same way, so the statute and the
+   anchor the engine is checked against agree, and there is one numerator and not two. Because the salary is calculated from the standard
    count, sickness never reduces the base; it appears instead as a deduction covering the
    unpaid part of the sick days — a whole day for the first, half a day for the second
    and third, nothing from the fourth onward — so the worker is left with exactly what
@@ -251,8 +285,15 @@ Each of these is true or false at a glance.
    written here rather than left to be discovered: the page speaks of the weekly rest day
    alone, and the weekly rest day is simply the day that happened to be before the court.
    A holiday she **did** work breaks the spell like any other day of attendance, because
-   she was at work. A **vacation** day between two reported days is not settled and is
-   left breaking the spell — see the appendix. That is how the law measures a period of
+   she was at work. A **vacation** day breaks it too, and for a reason that is stronger
+   than the balance of arguments it first looks like: the law does not let one day be
+   both. Where a worker falls ill *during* a vacation, the days she is entitled to sick
+   pay for are counted as sick days and only the days beyond them are drawn from the
+   vacation quota — the day is converted rather than held in two places at once. So a day
+   still recorded as vacation is by definition a day she was not ill on, and a vacation
+   day sitting *inside* a period of illness is not a state that can arise. That is what
+   separates it from the weekly rest day and the unworked holiday, which sit inside a
+   period without contradicting it. That is how the law measures a period of
    illness: an unbroken
    run from its first day, the rest days inside it counted, regardless of how many
    medical certificates were written over it. Where two genuinely separate illnesses do
@@ -415,6 +456,46 @@ Each of these is true or false at a glance.
     overridden nor explained apart (items 17, 24), and merging them would lose the
     months each covers. Two payments of one kind are entered as one summed payment,
     which is what the workbook itself writes.
+    **The kinds are the sheet's own rows, and there are seven of them because the sheet
+    has two visa rows.** `template_month_standard.xlsx` cell **B14** is the fee for
+    extending the work visa and **B15** is `ויזת עובד זר`, the visa itself, which item 28 says
+    is issued through the private agency against a charge of its own. They are two
+    payments and a month may make both. One name covering both would not merely be a
+    missing kind: the rule immediately above refuses two payments of one kind, so a month
+    that paid both would be refused outright, with a message telling the family to sum two
+    figures their own sheet keeps apart. The extension fee is therefore named for what it
+    is — the visa **extension** fee, which is the wording item 28 already uses for B14 —
+    and the visa itself is a seventh kind beside it.
+    **Each kind is named on screen in the template's own words and never in a paraphrase.**
+    Item 2 requires the exported file to carry the same Hebrew labels a month tab carries,
+    and a screen that taught the user a different name would send her looking for it on the
+    sheet. `דמי השמה` (B12) and `דמי תאגיד` (B13) are two different fees in this
+    industry and neither is `דמי תיווך`; B16 is `אגרה להארכת רשיון העסקה` and not a
+    licence "renewal" in general. Where the two disagree the template is the authority and
+    the interface is what moves, because the family reads the two side by side.
+    **A payment records four things and the user has to know none of them by heart:** which
+    kind it is, chosen from the kinds this month has not already recorded; how much left the
+    account; the months it covers, where those are not simply the month it was paid in; and
+    a note, like every other action. **The covered period is a first month and a last month,
+    and it is optional** — most payments cover the month they were made in and say nothing.
+    Where a kind has a period the application can work out, it is *offered* and not imposed:
+    the national insurance is paid once a quarter and in arrears (item 19), so a payment of
+    it is offered the quarter that ended before the month it is being recorded in, and the
+    user changes it if the family paid late. The offer stops following the kind the moment
+    she touches it, exactly as item 20's placement chips stop following the direction. No
+    period is derived for the yearly fees, and deriving one would be wrong rather than
+    merely unhelpful: item 15's year runs from one employment anniversary to the next, so a
+    fee paid in March covers the year *forward* from March while a quarter covers the months
+    *behind* it, and one rule cannot serve both.
+    **A kind this month has already recorded is not offered a second time.** The refusal
+    above is what would answer the click, and a control that answers a click with a refusal
+    is a control that should not have been drawn. The refusal stands underneath it all the
+    same, in the engine and where the payment is entered, because what the screen offers is
+    never the rule (Part 3).
+    **Removing a payment takes any override on it away with it**, for the reason items 17
+    and 20 already give for a line the user added and for an advance movement: an override
+    is addressed by the row's own key, and one left behind is an amount waiting to reattach
+    itself to a row that never asked for it.
 17. Any amount the application worked out for a month can be overridden by the user from
     that month's actions, and the income-tax line is editable in the same way while
     defaulting to zero. An overridden amount is visibly marked as manual and survives
@@ -476,8 +557,10 @@ Each of these is true or false at a glance.
     and nothing else. Three of those six are already inside the monthly salary rather
     than beside it — the base is computed from the standard count and never shrinks, so
     a day of vacation, of sickness or of holiday not worked is paid within it (items 5,
-    7, 8) — which is why the sheet carries no vacation line at all and still bases the
-    contribution correctly. What is missing from the base is what the worker was not
+    7, 8) — which is why the sheet carries no vacation *payment* line and still bases the
+    contribution correctly. Its vacation row reports a count and no money (item 7), so it
+    reaches neither column E nor this base; a figure written there would enlarge the
+    contribution by a day the salary has already paid for. What is missing from the base is what the worker was not
     paid: the third-party column, which is money to somebody else (item 16), and the
     advances, which are the same money moved in time. It is shown as an
     estimate to be confirmed rather than as a fact, because the sum actually billed has
@@ -1069,7 +1152,11 @@ as bugs:
 - End of employment: settling the vacation balance, prorating recuperation, and closing
   an advance that has not finished being repaid. A settled balance day is valued at the
   same monthly salary over twenty-five that values a sick day, recorded here so the
-  divisor is not decided a second time when it is built.
+  divisor is not decided a second time when it is built. **The divisor carries over and
+  the numerator is not decided with it**: item 8's closed list of wage components is the
+  sick-pay statute's, and what a settled vacation day is priced from rests on the annual
+  leave law instead. Reading the one answer onto the other is the mistake this sentence
+  exists to stop.
 - Accrued severance shown on the worker's screen. The canvas draws such a card and the
   first version does not build it: severance accrual turns on continuity rules, partial
   years and end-of-employment prorating, all of which are deferred with the item above,
@@ -1077,34 +1164,3 @@ as bugs:
   It arrives with end of employment or not at all.
 - History: keeping past exported files and a log of edits, so a corrected month can be
   compared against what was originally produced.
-
-## Appendix — open questions
-
-**Does the rest-eve supplement belong inside the base a sick day is priced from?** Item 8
-values a sick day at the monthly salary over twenty-five and does not add the supplement
-into it. The statute pays sickness as a share of "שכר העבודה הרגיל שהיה זכאי לו אילו
-המשיך לעבוד" — the regular wage she would have earned had she kept working — and a
-supplement paid week in and week out is ordinarily read as part of a regular wage rather
-than as something outside it.
-
-Nothing is changed on the strength of that reading. The family's own workbook prices a
-sick day from the salary alone and the workbook is the anchor the whole engine is checked
-against, so moving the base would break the one case that is known to be right in order to
-satisfy an argument nobody has tested. It is recorded here rather than acted on because
-the difference is real money: if the supplement does belong in the base, every sick day is
-priced slightly under.
-
-Settling it needs a source that speaks to this employment specifically — the caregiver
-terms page does not — or an accountant's reading. Whoever settles it should also say
-whether the same answer governs the vacation-day valuation the appendix already ties to
-the same divisor.
-
-**Does a vacation day between two reported sick days break the spell?** Item 8 counts a
-period of illness in calendar days and lets the weekly rest day and an unworked holiday
-sit inside it, on the strength of ד"מ 48713-10-17. A vacation day is a third kind of
-day and the source says nothing about it: it is a day she owed no attendance, which
-argues for bridging, but it is also a day she chose to take and one that is drawn from a
-different quota, which argues the other way. The law has a rule for falling ill *during*
-a vacation that is not the same question and has not been read here. It is left breaking
-the spell, which is the narrower answer and the one that changes nothing already built;
-settling it needs a source on this specific case.

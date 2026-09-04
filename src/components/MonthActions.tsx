@@ -3,8 +3,10 @@
 import { useState, type ReactNode } from "react";
 import {
   addAdvance,
+  addThirdPartyPayment,
   addUserLine,
   removeAdvance,
+  removeThirdPartyPayment,
   removeUserLine,
   setIncomeTax,
   type MonthActionRefusal,
@@ -12,18 +14,24 @@ import {
 } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { CoveredMonths } from "@/components/CoveredMonths";
 import { MoneyValue } from "@/components/MoneyValue";
-import { compareMonth } from "@/lib/dates";
+import { addMonths, compareMonth, yearMonthText } from "@/lib/dates";
+import { monthLabel } from "@/lib/dateLabels";
 import type { AdvanceStanding } from "@/lib/engine/advances";
+import { offeredPeriodFor } from "@/lib/engine/thirdParty";
 import {
   defaultPlacementFor,
   placementOf,
+  thirdPartyKinds,
   userLineDirections,
   userLinePlacements,
 } from "@/lib/engine/types";
 import type {
   Advance,
   AdvanceKind,
+  ThirdPartyKind,
+  ThirdPartyPayment,
   UserLine,
   UserLineDirection,
   UserLinePlacement,
@@ -81,6 +89,10 @@ interface MonthActionsProps {
   /** What this month itself records about them — the itemisation the group owes
    * beside the preview's summary. */
   monthAdvances: Advance[];
+  /** What this month paid to somebody other than the worker (specs.md item 16).
+   * One row per kind, which is what makes a payment addressable by its kind
+   * alone. */
+  thirdPartyPayments: ThirdPartyPayment[];
   /** Runs the change inside the screen's own transition, so the preview dims
    * while the round trip is in flight and the figures are never left looking
    * settled while they are stale. */
@@ -154,6 +166,7 @@ export function MonthActions({
   userLines,
   ledger,
   monthAdvances,
+  thirdPartyPayments,
   onSubmit,
 }: MonthActionsProps) {
   const words = he.month.actions;
@@ -183,6 +196,18 @@ export function MonthActions({
         month={month}
         ledger={ledger}
         monthAdvances={monthAdvances}
+        onSubmit={onSubmit}
+      />
+
+      {/* Last, and deliberately: the three sections above are money that reaches
+          the worker or is withheld from what reaches her, and this one never
+          touches her total in either direction (item 16). Reading down the card
+          the user meets everything about her pay before anything about somebody
+          else's. */}
+      <ThirdPartyControl
+        workerId={workerId}
+        month={month}
+        thirdPartyPayments={thirdPartyPayments}
         onSubmit={onSubmit}
       />
     </Card>
@@ -873,5 +898,353 @@ function AdvancesControl({
 
       {refusal ? <Refusal reason={refusal} /> : null}
     </div>
+  );
+}
+
+/**
+ * The payments that go to a third party rather than to the worker (specs.md
+ * item 16).
+ *
+ * **It is on this card and outside the worker's total at the same time, and the
+ * lead is what carries that.** Everything else in the group either reaches her
+ * or is withheld from what reaches her; this money is neither added to her
+ * salary nor taken out of it, and a user who has just typed an income tax has
+ * every reason to expect otherwise. The month screen draws the same payments in
+ * a card of their own, outside her total, where their subtotal is the one
+ * column total the preview prints (item 5).
+ *
+ * **A kind already recorded this month is not offered.** The sheet holds one row
+ * per kind, so the refusal is what would answer the click, and a control that
+ * answers a click with a refusal is a control that should not have been drawn —
+ * the same rule `AdvancesControl` follows for a repayment it would be refused.
+ * The server refuses it again regardless, because what the screen offers is
+ * never the rule (Part 3).
+ *
+ * **The covered period follows the kind until she touches it**, which is
+ * `offeredPeriodFor` read forwards rather than a second copy of it — the same
+ * shape as the placement chips above. Only the national insurance has an offer,
+ * because only it is paid on a clock the application can read backwards
+ * (item 19).
+ *
+ * **No artboard draws this section.** `EaseSalary - תשלומים` draws two sections
+ * for third-party payments and both are a *reminder* view — what is due and what
+ * is coming — resting on item 15's yearly clock and item 28's document expiry
+ * dates, neither of which any type holds. It draws no recording surface at all,
+ * exactly as it draws no income-tax field and no user lines. So this is built in
+ * the idiom the calendar's picker established, and it is written down here so
+ * nobody later reads it as having been checked against a drawing.
+ */
+function ThirdPartyControl({
+  workerId,
+  month,
+  thirdPartyPayments,
+  onSubmit,
+}: Pick<
+  MonthActionsProps,
+  "workerId" | "month" | "thirdPartyPayments" | "onSubmit"
+>) {
+  const words = he.month.actions.thirdParty;
+  const [adding, setAdding] = useState(false);
+  const [kind, setKind] = useState<ThirdPartyKind | null>(null);
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  /** `null` until she chooses, which is what lets the period follow the kind and
+   * then stop following it. */
+  const [chosenPeriod, setChosenPeriod] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
+  const { refusal, run, clear } = useMonthAction(onSubmit);
+
+  const recorded = new Set(thirdPartyPayments.map((payment) => payment.kind));
+  const available = thirdPartyKinds.filter(
+    (candidate) => !recorded.has(candidate),
+  );
+
+  const offered = kind === null ? null : offeredPeriodFor(kind, month);
+  const period = chosenPeriod ?? {
+    from: offered === null ? "" : yearMonthText(offered.from),
+    to: offered === null ? "" : yearMonthText(offered.to),
+  };
+
+  function reset() {
+    setAdding(false);
+    setKind(null);
+    setAmount("");
+    setNote("");
+    setChosenPeriod(null);
+    clear();
+  }
+
+  function add() {
+    if (kind === null) return;
+    run(
+      () =>
+        addThirdPartyPayment(workerId, month, {
+          kind,
+          amount,
+          coversFrom: period.from,
+          coversTo: period.to,
+          note,
+        }),
+      reset,
+    );
+  }
+
+  function remove(paid: ThirdPartyKind) {
+    run(() => removeThirdPartyPayment(workerId, month, paid));
+  }
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+      <h3 dir="auto" className="text-[15px] font-semibold">
+        {words.title}
+      </h3>
+      <p
+        dir="auto"
+        className="text-[13px] leading-[1.5] font-light text-ink-mute text-pretty"
+      >
+        {words.lead}
+      </p>
+
+      {thirdPartyPayments.length === 0 ? (
+        <p dir="auto" className="text-[14px] font-light text-ink-quiet">
+          {words.empty}
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {thirdPartyPayments.map((payment) => (
+            <li
+              key={payment.kind}
+              className="flex flex-col gap-1 rounded-card-sm border border-line px-3 py-2"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span dir="auto" className="min-w-0 text-[15px] font-medium">
+                  {he.sheet.thirdParty[payment.kind]}
+                </span>
+                {/* Drawn positive. It is money that left the account, but it
+                    leaves nobody's total on this screen — a minus here would
+                    read as a deduction from her pay, which is the one thing
+                    item 16 says it is not. */}
+                <MoneyValue agorot={payment.agorot} />
+              </div>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-light text-ink-quiet">
+                {/* The same component `/month` draws beside the sheet's own row.
+                    One period, one spelling — see `CoveredMonths`. */}
+                {payment.coversMonths ? (
+                  <span>
+                    <CoveredMonths months={payment.coversMonths} />
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => remove(payment.kind)}
+                  aria-label={words.removeLabel(
+                    he.sheet.thirdParty[payment.kind],
+                  )}
+                  className="ms-auto text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                >
+                  <span dir="auto">{words.remove}</span>
+                </button>
+              </div>
+              {payment.note ? (
+                <span
+                  dir="auto"
+                  className="text-[13px] leading-[1.5] font-light text-ink-warm text-pretty"
+                >
+                  <Bidi>{payment.note}</Bidi>
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {adding ? (
+        <Card
+          tone="inset"
+          radius="panel"
+          as="form"
+          className="flex flex-col gap-2.5 px-3.5 py-3"
+        >
+          <div className="flex flex-col gap-1">
+            <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+              {words.kind}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {available.map((candidate) => (
+                <Chip
+                  key={candidate}
+                  selected={kind === candidate}
+                  onClick={() => {
+                    setKind(candidate);
+                    // The offer follows the kind again whenever the kind
+                    // changes, which is the only moment it can: once she edits a
+                    // month field her choice stands for the rest of the entry.
+                    setChosenPeriod(null);
+                  }}
+                >
+                  <span dir="auto">{he.sheet.thirdParty[candidate]}</span>
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <Field label={words.amount}>
+            <input
+              type="text"
+              inputMode="decimal"
+              dir="ltr"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              placeholder={he.placeholder.amountInput}
+              className={inputClass}
+            />
+          </Field>
+
+          <div className="flex flex-col gap-1">
+            <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+              {words.period}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <MonthSelect
+                label={words.periodFrom}
+                month={month}
+                value={period.from}
+                onChange={(value) =>
+                  setChosenPeriod({ from: value, to: period.to })
+                }
+              />
+              <MonthSelect
+                label={words.periodTo}
+                month={month}
+                value={period.to}
+                onChange={(value) =>
+                  setChosenPeriod({ from: period.from, to: value })
+                }
+              />
+            </div>
+            <span
+              dir="auto"
+              className="text-[12px] leading-[1.5] font-light text-ink-quiet text-pretty"
+            >
+              {words.periodHint}
+            </span>
+          </div>
+
+          <Field label={words.note} hint={words.noteHint}>
+            <input
+              type="text"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              dir="auto"
+              className={inputClass}
+            />
+          </Field>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              disabled={kind === null}
+              onClick={(event) => {
+                event.preventDefault();
+                add();
+              }}
+              className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+            >
+              <span dir="auto">{words.submit}</span>
+            </button>
+            <button
+              type="button"
+              onClick={reset}
+              className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
+            >
+              <span dir="auto">{words.cancel}</span>
+            </button>
+          </div>
+        </Card>
+      ) : available.length === 0 ? (
+        /* Not a refusal — nothing was refused, there is simply nothing left to
+           record — so it stands where the button was rather than under it. */
+        <p dir="auto" className="text-[14px] font-light text-ink-quiet">
+          {words.allRecorded}
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="self-start rounded-full border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+        >
+          <span dir="auto">{words.add}</span>
+        </button>
+      )}
+
+      {refusal ? <Refusal reason={refusal} /> : null}
+    </div>
+  );
+}
+
+/**
+ * One end of a covered period, as a select over months rather than a typed date.
+ *
+ * **A `<input type="month">` is not used, and that is deliberate.** Its picker
+ * is the browser's own and is laid out and worded by the browser's locale, not
+ * the page's — so on a Hebrew right-to-left page it can arrive left-to-right and
+ * in another language entirely, which is exactly the mixed-direction failure
+ * Part 5 warns about, in a control the application cannot style or isolate. A
+ * select holds labels the application wrote.
+ *
+ * **The range reaches both ways, because the two kinds of payment look opposite
+ * ways.** The national insurance is paid in arrears and covers months already
+ * lived through (item 19), while a yearly fee covers the year running *forward*
+ * from one employment anniversary to the next (item 15) — so a visa fee paid in
+ * March is for March through next February, and a control offering only past
+ * months could not record it at all. Four years back is the employment permit's
+ * own cycle, the slowest clock the application knows (item 28); a year forward
+ * is the longest any payment reaches ahead.
+ *
+ * Each option carries the month's own label, and the value is `YYYY-MM`, which
+ * is what `parseYearMonth` reads on the server.
+ */
+function MonthSelect({
+  label,
+  month,
+  value,
+  onChange,
+}: {
+  label: string;
+  month: YearMonth;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const words = he.month.actions.thirdParty;
+  // Newest first, so the months a quarterly payment wants are at the top of the
+  // list and the forward year is reached by scrolling past them: the arrears
+  // case is the common one.
+  const MONTHS_BACK = 4 * 12;
+  const MONTHS_FORWARD = 12;
+  const options = Array.from(
+    { length: MONTHS_BACK + MONTHS_FORWARD + 1 },
+    (_, index) => addMonths(month, MONTHS_FORWARD - index),
+  );
+
+  return (
+    <label className="flex min-w-0 flex-1 flex-col gap-1">
+      <span dir="auto" className="text-[12px] font-light text-ink-quiet">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={inputClass}
+      >
+        <option value="">{words.periodNone}</option>
+        {options.map((candidate) => (
+          <option key={yearMonthText(candidate)} value={yearMonthText(candidate)}>
+            {monthLabel(candidate)}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

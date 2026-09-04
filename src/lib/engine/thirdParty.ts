@@ -1,12 +1,21 @@
+import {
+  compareMonth,
+  eachMonth,
+  parseYearMonth,
+  previousQuarter,
+} from "@/lib/dates";
 import { type LineDraft, toLine } from "@/lib/engine/lines";
+import { thirdPartyKinds } from "@/lib/engine/types";
 import type {
   LineOverride,
+  MonthFacts,
   ThirdPartyKind,
   ThirdPartyPayment,
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import type { LegalLinkKey } from "@/lib/links";
-import type { Explanation, MonthLine, SheetColumn } from "@/lib/types";
+import { parseShekels } from "@/lib/money";
+import type { Explanation, MonthLine, SheetColumn, YearMonth } from "@/lib/types";
 
 /**
  * The money that goes somewhere other than to the worker — the medical
@@ -123,11 +132,12 @@ export function duplicateThirdPartyKinds(
  */
 export const LINK_FOR_THIRD_PARTY: Record<ThirdPartyKind, LegalLinkKey> = {
   medicalInsurance: "medicalInsurance",
-  nationalInsurance: "nationalInsurance",
-  agencyFee: "employmentGuide",
   placementFee: "employmentGuide",
-  visaFee: "employmentGuide",
+  agencyFee: "employmentGuide",
+  visaExtensionFee: "employmentGuide",
+  workerVisa: "employmentGuide",
   licenceFee: "employmentGuide",
+  nationalInsurance: "nationalInsurance",
 };
 
 /**
@@ -175,4 +185,204 @@ export function thirdPartyLines(
       explanation: explanationFor(payment.kind),
     }))
     .map((draft) => toLine(draft, overrides));
+}
+
+/**
+ * The covered period the application *offers* for a kind, or `null` where it has
+ * none to offer (specs.md items 16, 19).
+ *
+ * **Only the national insurance has one, and the rest are left empty on
+ * purpose.** It is paid once a quarter and in arrears, so the quarter it is for
+ * is the last one to have closed before the month it is being recorded in. The
+ * yearly fees have no such answer: item 15's year runs from one employment
+ * anniversary to the next, so a fee paid in March covers the year *forward*
+ * from March while a quarter covers the months *behind* it, and one rule cannot
+ * serve both. Guessing a period for them would be worse than leaving it blank,
+ * because a period on the sheet's own row reads as a fact somebody checked.
+ *
+ * **It is an offer and stops following the kind the moment the user touches
+ * it**, exactly as item 20's placement chips stop following the direction. A
+ * family that paid a quarter late still chooses the quarter it was for.
+ */
+export function offeredPeriodFor(
+  kind: ThirdPartyKind,
+  month: YearMonth,
+): { from: YearMonth; to: YearMonth } | null {
+  return kind === "nationalInsurance" ? previousQuarter(month) : null;
+}
+
+/**
+ * A payment on its way in from the browser, and the rule that says whether it
+ * is a payment at all (specs.md item 16).
+ *
+ * **Everything travels as the user typed or chose it and is read here**, on the
+ * server side of the boundary (Part 3). The kind arrives as a string because a
+ * server action is reachable by a crafted request, and a stored kind outside the
+ * union would reach `he.sheet.thirdParty[kind]` and come back undefined — a row
+ * on the sheet with no label on it.
+ */
+export interface ThirdPartyDraft {
+  kind: string;
+  /** As typed — "936", "1,234.50". */
+  amount: string;
+  /**
+   * The covered period as the two month selects hand it up: `YYYY-MM`, or empty
+   * for "not said". **Both empty is the ordinary case** — most payments cover
+   * the month they were made in and the sheet says nothing more about them.
+   */
+  coversFrom: string;
+  coversTo: string;
+  note: string;
+}
+
+/**
+ * Why a draft is not a payment. Each is a sentence the user is shown rather than
+ * a log line (specs.md item 25), and none of them carries a link: every one is
+ * about the *form* of an entry, and nothing in law says a period must have two
+ * ends. The engine's own `thirdPartyPaidTwice` refusal does carry one, because
+ * what it refuses is a row on the sheet.
+ */
+export type ThirdPartyRefusal =
+  | "amount"
+  | "shape"
+  | "thirdPartyPaidTwice"
+  | "periodIncomplete"
+  | "periodBackwards";
+
+export type ReviewedThirdParty =
+  | { ok: true; payment: ThirdPartyPayment }
+  | { ok: false; reason: ThirdPartyRefusal };
+
+/**
+ * The longest period a single payment can cover: the employment permit's own
+ * four-year cycle, which is the slowest clock this application knows (specs.md
+ * items 16, 28). It is a bound on a crafted request and not a rule the user can
+ * meet — every period the screen offers is inside it — which is why a period
+ * past it comes back as `shape` rather than as a sentence of its own.
+ *
+ * It exists because `coversMonths` is stored one entry per month: a period of
+ * `0001-01` to `9999-12` is ninety-six thousand entries written into a row's
+ * label, and the bound is taken from a rule rather than from a round number so
+ * that nobody later has to guess what it was protecting.
+ */
+const LONGEST_COVERED_PERIOD_MONTHS = 4 * 12;
+
+/**
+ * The covered months, or the reason the pair is not a period.
+ *
+ * Half a period is refused rather than completed: a first month with no last
+ * one names nothing, and guessing the other end would put months on the sheet's
+ * row that the user never chose.
+ */
+function coveredMonths(
+  draft: ThirdPartyDraft,
+):
+  | { ok: true; months: YearMonth[] | undefined }
+  | { ok: false; reason: ThirdPartyRefusal } {
+  const fromText = draft.coversFrom.trim();
+  const toText = draft.coversTo.trim();
+
+  if (fromText === "" && toText === "") return { ok: true, months: undefined };
+  if (fromText === "" || toText === "") {
+    return { ok: false, reason: "periodIncomplete" };
+  }
+
+  const from = parseYearMonth(fromText);
+  const to = parseYearMonth(toText);
+  if (from === null || to === null) return { ok: false, reason: "shape" };
+
+  // Refused and never reordered. Which way round she meant it is not the
+  // application's to decide, and a period silently flipped is one she will not
+  // check (specs.md item 16).
+  if (compareMonth(from, to) > 0) return { ok: false, reason: "periodBackwards" };
+
+  const months = eachMonth(from, to);
+  if (months.length > LONGEST_COVERED_PERIOD_MONTHS) {
+    return { ok: false, reason: "shape" };
+  }
+  return { ok: true, months };
+}
+
+/**
+ * The draft as a `ThirdPartyPayment`, or the reason it is not one (specs.md
+ * item 16). Pure, so the rule can be tested without a store or a request.
+ *
+ * **The month's existing payments are passed in because the sheet holds one row
+ * per kind.** Two rows under one name can be neither overridden nor explained
+ * apart (items 17, 24), so a second payment of a kind is refused here as well
+ * as in `validateMonth` — the engine refuses a stored month and this refuses an
+ * entry, and the user who reaches this one has not seen that one. The screen
+ * additionally does not *offer* a kind already recorded, which is an offer and
+ * never the rule (Part 3).
+ */
+export function reviewThirdPartyPayment(
+  draft: ThirdPartyDraft,
+  existing: ThirdPartyPayment[],
+): ReviewedThirdParty {
+  const kind = thirdPartyKinds.find((candidate) => candidate === draft.kind);
+  if (kind === undefined) return { ok: false, reason: "shape" };
+
+  if (existing.some((payment) => payment.kind === kind)) {
+    return { ok: false, reason: "thirdPartyPaidTwice" };
+  }
+
+  const agorot = parseShekels(draft.amount);
+  // Zero is refused, as it is for a line the user adds (item 20): a payment
+  // that moved no money is not a payment, and it would print in the export as
+  // a payment of nothing (item 2). `parseShekels` has already refused a minus.
+  if (agorot === null || agorot === 0) return { ok: false, reason: "amount" };
+
+  const covered = coveredMonths(draft);
+  if (!covered.ok) return { ok: false, reason: covered.reason };
+
+  const note = draft.note.trim();
+  return {
+    ok: true,
+    payment: {
+      kind,
+      agorot,
+      ...(covered.months === undefined ? {} : { coversMonths: covered.months }),
+      ...(note === "" ? {} : { note }),
+    },
+  };
+}
+
+/**
+ * The two fields a third-party payment lives in. Written structurally rather
+ * than as `MonthFacts`, so the rule below can be read and tested without a
+ * month, a wage or a set of terms around it — the same shape
+ * `withoutOneOffUserLine` is written in.
+ */
+type WhereThirdPartyPaymentsLive = Pick<
+  MonthFacts,
+  "thirdPartyPayments" | "overrides"
+>;
+
+/**
+ * A month with one third-party payment gone, **and any amount the user typed
+ * over it gone with it** (specs.md items 16, 17).
+ *
+ * The two removals are one operation and are a rule rather than plumbing, for
+ * the reason `withoutOneOffUserLine` and `withoutAdvance` already give: an
+ * override is addressed by the row's own key, so one left behind is an amount
+ * waiting to reattach itself to a row that never asked for it — and since a
+ * stored override *replaces* the calculated figure, the row it landed on would
+ * show an amount nobody entered for it, marked as manual.
+ *
+ * The kind is the whole address, which is what the one-row-per-kind rule buys:
+ * there is never a second payment of that kind to tell it apart from.
+ */
+export function withoutThirdPartyPayment<T extends WhereThirdPartyPaymentsLive>(
+  month: T,
+  kind: ThirdPartyKind,
+): T {
+  const overrides = { ...month.overrides };
+  delete overrides[thirdPartyLineKey(kind)];
+  return {
+    ...month,
+    thirdPartyPayments: month.thirdPartyPayments.filter(
+      (payment) => payment.kind !== kind,
+    ),
+    overrides,
+  };
 }

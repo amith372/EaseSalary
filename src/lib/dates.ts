@@ -132,6 +132,76 @@ export function compareMonth(a: YearMonth, b: YearMonth): number {
   return a.year - b.year || a.month - b.month;
 }
 
+/**
+ * A month written as `YYYY-MM`, or `null` when the text is not one.
+ *
+ * The two month selects on the payments screen hand their choice up as this,
+ * and a server action is reachable by a crafted request — so the shape is
+ * checked here rather than trusted from the form (specs.md Part 3). It is
+ * deliberately strict about the padding: `2026-9` and `2026-09` would otherwise
+ * be two spellings of one month, and a stored month that round-trips to a
+ * different string is one the sheet's own row label cannot be compared against.
+ *
+ * Month 0 and month 13 are refused rather than normalised. `addMonths` would
+ * happily carry either into the neighbouring year, and a period silently moved
+ * into a year the user did not choose is the sort of mistake that reads as
+ * plausible on the row it lands on.
+ */
+export function parseYearMonth(text: string): YearMonth | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(text.trim());
+  if (match === null) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return null;
+  return { year, month };
+}
+
+/** A month as `YYYY-MM` — what `parseYearMonth` reads, so a month written by
+ * one and read by the other is the same month. */
+export function yearMonthText(ym: YearMonth): string {
+  return `${String(ym.year).padStart(4, "0")}-${String(ym.month).padStart(2, "0")}`;
+}
+
+/**
+ * Every month from `from` to `to` inclusive, the way `eachDate` gives every
+ * date. Empty when `to` falls before `from`, which lets a caller order the pair
+ * itself and be refused rather than silently corrected: which way round the
+ * user meant a period is not the application's to decide (specs.md item 16).
+ */
+export function eachMonth(from: YearMonth, to: YearMonth): YearMonth[] {
+  const months: YearMonth[] = [];
+  for (let m = from; compareMonth(m, to) <= 0; m = addMonths(m, 1)) months.push(m);
+  return months;
+}
+
+/**
+ * The last calendar quarter that had ended before `month` began.
+ *
+ * The national insurance is paid once a quarter and in arrears (specs.md item
+ * 19), so this is the period a payment recorded in a given month is *offered* —
+ * an offer and never a rule, since a family that paid late still chooses the
+ * quarter it was actually for.
+ *
+ * **It is the last quarter to have ended and not the three months before**, and
+ * the difference shows up exactly when a payment is late: recorded in April the
+ * two agree on January–March, but recorded in May the three preceding months
+ * are February–April, which is no quarter anyone is billed for. Quarters are
+ * the calendar's, so a payment made in the middle of one is still for the last
+ * one that closed.
+ */
+export function previousQuarter(month: YearMonth): {
+  from: YearMonth;
+  to: YearMonth;
+} {
+  const quarter = Math.floor((month.month - 1) / 3);
+  const previous = quarter === 0 ? 3 : quarter - 1;
+  const year = quarter === 0 ? month.year - 1 : month.year;
+  return {
+    from: { year, month: previous * 3 + 1 },
+    to: { year, month: previous * 3 + 3 },
+  };
+}
+
 /** Negative when `a` falls before `b`. ISO dates sort lexicographically, which
  * is the whole reason the application holds them as strings. */
 export function compareIsoDate(a: IsoDate, b: IsoDate): number {

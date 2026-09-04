@@ -100,6 +100,54 @@ silent: the screen holds no meaningful text inside an image, and translating it 
 English throws no `NotFoundError` on `removeChild` and leaves the layout intact when
 translated back.
 
+## The routes — every address the application answers, and who builds it
+
+Added on 2026-09-04, because five of the shell's own nav tabs were 404s that no line of
+this file named. The design table above says which stage consumes which *artboard*; this
+one says which stage owes which *address*, and they are not the same list — an artboard
+with no route is a screen nobody can reach, and a route in the nav with no stage is a tab
+that 404s until someone notices.
+
+**The nav is the contract.** `src/components/AppShell.tsx` links five tabs plus the "?" and
+the bell on every screen, so every one of them is a promise the application makes on every
+page. A tab that 404s is worse than a tab that is not there.
+
+| Route | Artboard | Stage | State on 2026-09-04 |
+|---|---|---|---|
+| `/` | `דף הבית v3 לוח במרכז` | 6 — built in stage 0 against fixtures | **built**, on fixtures |
+| `/month` | `חישוב החודש` | 4 | **built** — the stage in progress |
+| `/payments` | `תשלומים` | 4 (pulled forward, step 6) + 5 | **built** for what it records (step 7); the artboard's two reminder sections are stage 5's |
+| `/workers` | `העובדות` | 3 | 404 |
+| `/settings` | `הגדרות` | 3 + 5 | 404 |
+| `/reports` | `דוחות` | 2 — the yearly balances file (item 23) | 404 |
+| `/alerts` | `התראות` | 6 | 404 |
+| `/help` | none — stage 7 draws it | 7 | 404 |
+
+**Three artboards have no route at all, and each is a different kind of gap:**
+
+- **`דף המשכורת`** — the payslip as the family reads it, mapped to stages 2 and 4. It is the
+  export's own layout seen on screen, so what it needs is the export; the address is stage
+  2's to choose and no earlier stage should invent one.
+- **`החודשים`** — the list of the worker's months. Stage 4's per the design table, and the
+  one thing in this stage nothing has yet asked for: `/month` moves between months with its
+  own stepper, so the list answers "which months exist and which are done" rather than
+  "take me to a month". It is built when the month's four states are (Part 5), which is
+  what gives the list something to say.
+- **`דף העובד` and `הוספת עובד`** — the worker's profile. **This is the unowned debt, and it
+  is now recorded in four places**: step 7c could not check the rest day because there is no
+  profile to change it on; step 4 could not offer item 20's standing line for the same
+  reason; step 5 seeded an opening advance rather than letting anyone enter one; and here.
+  The design table maps both artboards to stage 3, but **stage 3's own bullets are the
+  schema, the opening position and row-level security and name no screen** — so writing
+  "stage 3 builds it" would assign the work to a step that does not exist. It stays recorded
+  as unowned until it is given a step, and the four things waiting on it are the argument
+  for giving it one early rather than late.
+
+**Nothing here reorders the stages.** The table is what each stage already owed, written
+down as addresses so that a 404 is a known debt rather than a discovery. The one change it
+records is step 6's: `/payments` came forward into stage 4 because the group the user was
+looking at belongs on it.
+
 ### The design pass — split by kind, not run as one block
 
 Every screen stage builds against an artboard. Three of those artboards do not yet exist,
@@ -382,8 +430,11 @@ from the sick balance too**, so the balance follows the spell and not the marks.
 inside a spell is a sick day and is not drawn from the yearly entitlement; the family moves
 the holiday, which is the one of the two that can be moved.
 
-A vacation day between two reported days is left breaking the spell and is recorded in the
-appendix as unsettled — the narrower answer, and the one that changes nothing already built.
+A vacation day between two reported days breaks the spell, and it is **settled** rather
+than left as the narrower answer (`specs.md` item 8, 2026-09-04): the law converts a day of
+illness taken during a vacation into a sick day and draws only the rest from the vacation
+quota, so a day still recorded as vacation is a day she was not ill on. Nothing in the code
+moved — the answer is the one already built — and the reasoning is now beside the rule.
 
 **Check:** `august-2025.snap.md` byte-identical, which it is by construction: the known
 month carries no sickness at all and both its holidays were worked.
@@ -435,6 +486,93 @@ ExcelJS in a server route. One month template and one balances template.
 
 **Done when** an exported file for August 2025 can be opened beside the family's own
 sheet and read as the same document.
+
+### What the committed template's own rows say, and five things they turn up
+
+Read out of `data/templates/template_month_standard.xlsx` on 2026-09-04, cell by cell,
+because the user pointed at a screenshot of the fee rows and nothing in this repository had
+ever checked the model against the template it is supposed to reproduce. The month tab
+carries **seventeen numbered rows** in column B:
+
+| # | The template's own label | Where it lives today |
+|---|---|---|
+| 1 | `משכורת בסיסית ללא הורדות (לינה ,מזון, שתיה,ביטוח רפואי )` | `lineKeys.base` |
+| 2 | `תוספת שבועית בגין ימי שישי` | `lineKeys.restEveSupplement` |
+| 3 | `תשלום ימי חג` | `lineKeys.holidaysWorked` |
+| 4 | `עבודה בשבת` | `lineKeys.restDays` |
+| 5 | `ביטוח רפואי ל…` | `medicalInsurance` |
+| 6 | `תשלום פיצויי פיטורין ופנסיה.` | out of scope, row empty for layout only |
+| 7 | `דמי השמה` | `placementFee` |
+| 8 | `דמי תאגיד` | `agencyFee` |
+| 9 | `אגרה להארכת ויזה ל…` | `visaFee` |
+| 10 | `ויזת עובד זר` | **nothing** |
+| 11 | `אגרה להארכת רשיון העסקה , אחת ל- 4 שנים.` | `licenceFee` |
+| 12 | `ימי חופש עד 14 יום בשנה למשך 5 שנים ראשונות. - ניצול בחודש זה` | **nothing — see below** |
+| 13 | `דמי הבראה.` | item 15, **no engine line** |
+| 14 | `העדרות עקב מחלה` | `lineKeys.sickDeduction` |
+| 15 | `מס הכנסה` | `lineKeys.incomeTax` |
+| 16 | `ביטוח לאומי.` | `nationalInsurance` |
+| 17 | `שעות עבודה נוספות במהלך אישפוז בביח` | Part 5 names it, **no engine line** |
+
+**1. `ויזת עובד זר` has no kind, and item 16 would refuse the month that paid it.**
+**Fixed in stage 4's step 7 — 2026-09-04.** The template holds **two** visa rows — row 9 at
+B14, the fee for extending the visa, and row 10 at B15, the visa itself — and
+`ThirdPartyKind` had one `visaFee`. That was not merely a missing member: item 16 refuses
+two payments of one kind in a single month, so a month that paid both was refused outright,
+with a message telling the family to sum two figures the sheet itself keeps apart. The
+union now has seven members, `visaFee` is `visaExtensionFee`, and `workerVisa` is B15's.
+
+**2. Five labels do not match the template.** Item 2 requires the exported file to carry
+"the same Hebrew labels" as a month tab. `he.ts` says `דמי תיווך` where the template says
+`דמי השמה`, `דמי טיפול` where it says `דמי תאגיד`, `אגרת ויזה` where it says
+`אגרה להארכת ויזה`, and `חידוש רישיון` where it says `אגרה להארכת רשיון העסקה`. These are
+not synonyms a reader would gloss: `דמי השמה` and `דמי תיווך` are two different fees in this
+industry, and a family comparing the file against last month's sheet reads a renamed row as
+a different payment. **The template is the authority and `he.ts` is what moves.**
+
+**Moved in stage 4's step 7 — 2026-09-04, earlier than this paragraph expected.** The
+argument for deferring was that item 2's "same labels" is checkable only against the
+exported file; the argument that overtook it is that step 7 puts these names *on a screen*,
+where a user reads them long before an export exists. Deferring the fix would have taught
+her four names the sheet does not use and then changed them under her. The keys did not
+move, so no stored override was touched.
+
+**3. Two of column G's one-off payments are not built.** `דמי הבראה` is item 15 and was
+already named by step 1b's review as the next line the engine grows; `שעות עבודה נוספות
+במהלך אישפוז` is named in Part 5 and nowhere else. Neither has a `lineKeys` entry, so
+neither can be overridden or explained (items 17, 24) until it does.
+
+**4. Row 12 is a vacation row, and it is a reporting row — settled 2026-09-04 against the
+family's own file.** Items 3, 7 and 19 each said the sheet carries no vacation line, and
+item 19 leans on it, since the national-insurance base is correct only because vacation is
+already inside the monthly salary. The template appeared to disagree. It does not, and the
+evidence is that **the same file fills the row three different ways**: one month put a
+single unit against a **full** base and left the money empty; one wrote ₪235.20 against a
+base reduced by 0.96 of a day; one wrote ₪1,999.20 for 8.5 days against a base reduced by
+8.5/25 of the salary. The last two reconcile to the agora, so all three reach the same
+money — the second and third by *reducing the base and paying the day back*. This
+application never reduces the base, so only the first style is consistent with it, and the
+other two taken without their reduction are exactly item 7's double payment. **The export
+therefore fills the row's units and leaves its price and amount cells empty**, and item 7
+now says so with the figures. Item 19's wording was loosened from "no vacation line" to "no
+vacation *payment* line", which is what it always meant.
+
+**5. The two rates in the family's sheet are stale, which is the application's own
+argument.** Row 12's per-unit figure is ₪235.20, and 235.20 × 25 = ₪5,880 — a minimum wage
+that has since moved twice. **It is not refreshed and the cell is left empty instead**
+(item 7): a price beside a count nothing multiplies is an invitation, and replacing a stale
+invitation with a live one is worse, not better — the stale figure is how the second filling
+style got into the sheet at all. Row 13's is ₪418, a recuperation day rate that has also moved.
+Neither is wrong in the sheet; both are simply from the year they were typed. That is the
+whole reason no rate is hardcoded (item 3) and the reason the workbook needs "legal upkeep
+the employing family does not have" (Part 1). It is also a caution for the export: the
+figures in the template are **sample data, not defaults**, and a filler that left one
+standing would ship a stale rate to every family.
+
+**None of this changes a figure the engine produces today.** Rows 10, 12, 13 and 17 are
+rows nothing yet writes, and the four labels are strings only the export will read. It is
+recorded here rather than fixed in place because fixing it belongs to the export, and
+because item 2's "same labels" is checkable only against the file this stage produces.
 
 ## Stage 3 — Accounts and storage
 
@@ -524,7 +662,9 @@ Next.js App Router, Tailwind right-to-left, Hebrew strings in one translations f
   with the rule beside it — the 2.25 credit points and item 26's link — which step 3 took
   off the preview when it stopped drawing a tax row that reads zero. **The advances joined
   it in step 5**, given and repaid, with what is still owed walked from the whole
-  employment. What the group is still owed is the last of item 5's four contents: the
+  employment, and **the payments to third parties arrived in step 7** — the payments
+  screen's second group, together with the seventh kind the sheet had always held and the
+  union never had. What the screen is still owed is the last of item 5's four contents: the
   manual overrides.
 - A free-text note on every action — **a line the user adds carries one** (step 4) and so
   does an advance (step 5), which also carries the reason forward onto the debt so a later
@@ -1295,12 +1435,223 @@ other's figures.
 
 **What this step owes the next ones.** `/payments` holds one of its two groups. **The
 third-party payments** — national insurance, medical insurance, the fees (item 16) — are the
-other, and they are the artboard's own `ממתין לתשלום` and `לקראת החודשים הבאים` sections; they
-are the next step. The manual overrides join the additional-payments group in their own step,
+other, and **step 7 built them**. What step 7 did *not* build is the artboard's own
+`ממתין לתשלום` and `לקראת החודשים הבאים`: read properly, those two are a
+*reminder* view resting on item 15's yearly clock and item 28's document dates rather than
+a surface that records anything, and step 7's own table says what each of their six rows is
+still waiting on. The manual overrides join the additional-payments group in their own step,
 as step 4 already recorded. And the artboard's advances section draws a progress bar and names
 the date an advance was given, neither of which is built: what is on screen is the same three
 figures in words. That is a departure from a drawing and is written down here rather than left
 to be found.
+
+### Step 7 — the third-party payments, and the seventh kind
+
+The second of `/payments`'s two groups, and the last of item 16 the application had no way
+to reach: until this step a payment to somebody other than the worker could only be
+**seeded**. The engine has drawn column H since stage 1 and refused two payments of one
+kind since then too — what was missing was any surface that could produce one.
+
+**`specs.md` moved first, and item 16 needed five decisions rather than a transcription.**
+The criterion already said that these payments are their own column, that they are neither
+added to the worker's total nor taken out of it, and that a month recording two of one kind
+is refused. What it did not say was how many kinds there are, what a payment records
+besides its amount, whether the user enters the months it covers, what the application may
+offer her there, and what a removal takes with it. All five are now in item 16 and each
+says why.
+
+**The union had six members and the sheet has seven rows.** `template_month_standard.xlsx`
+-> `sheet1` -> B14 is `אגרה להארכת ויזה ל{{worker_role}}.` and **B15 is `ויזת עובד זר`** —
+the fee for extending the visa, and the visa itself, which item 28 says is issued through
+the private agency against a charge of its own. Item 28 had already cited B14 and B16 by
+cell and called them two fees; nothing had noticed that B15 was a third. One `visaFee`
+covering two rows was not a missing member so much as a **refusal**: item 16 refuses two
+payments of one kind, so a month that paid both was turned away and told to sum two figures
+its own sheet keeps apart. `visaFee` is now `visaExtensionFee`, which is item 28's own
+wording for B14, and `workerVisa` is B15's. **The rename is deliberate and costs nothing
+today** — the store is in memory and no month holds a `thirdParty.visaFee` override — while
+after stage 3 it would be a migration; a name meaning "the visa fee" where there are two
+visa payments preserves exactly the confusion the seventh member exists to end.
+
+**The list is now the source and the union derived from it**, as `userLineDirections`
+already was, and in the template's own row order. The hand-kept `ALL_KINDS` array in
+`thirdParty.test.ts` is gone with it — a second copy that would have compiled clean the day
+a seventh kind arrived and quietly stopped covering it, which is precisely what happened.
+
+**Four labels moved to the template's words**, which this file had recorded as the export's
+to fix. Putting the names on a screen is what overtook that: `דמי השמה` (B12) and
+`דמי תאגיד` (B13) are two different fees and neither is `דמי תיווך`, and a user taught the
+wrong name looks for a row that is not on her sheet.
+
+**The covered period is the one thing here that needed inventing, and it is offered rather
+than derived.** A payment records which kind, how much, the months it covers and a note.
+The period is optional — most payments cover the month they were made in — and it is
+entered as a first month and a last month. Where the application can work one out it is
+*offered* and stops following the kind the moment the user touches it, exactly as item 20's
+placement chips stop following the direction. **Only the national insurance has an offer**,
+and the shape of it is `previousQuarter`: the last calendar quarter to have **closed**, not
+the three preceding months. The two agree for a punctual payment and part company for a
+late one — recorded in May the three preceding months are February–April, which is no
+quarter anybody is billed for. The yearly fees get no offer at all, and that is a decision
+rather than a gap: item 15's year runs *forward* from an employment anniversary while a
+quarter runs *backwards*, so one rule cannot serve both, and a period on the sheet's own
+row reads as a fact somebody checked.
+
+**Six things were built:**
+
+- `src/lib/engine/thirdParty.ts` — `reviewThirdPartyPayment`, the pure rule for what a
+  draft may be; `withoutThirdPartyPayment`, which takes the row's override with it; and
+  `offeredPeriodFor`. All pure, all tested.
+- `src/lib/dates.ts` — `parseYearMonth`, `yearMonthText`, `eachMonth` and `previousQuarter`.
+  The parser is strict about padding on purpose: `2026-9` and `2026-09` would otherwise be
+  two spellings of one month, and a stored month that round-trips to a different string is
+  one the sheet's row label cannot be compared against. Month 0 and month 13 are refused
+  rather than normalised, because `addMonths` would carry either into a neighbouring year.
+- `src/lib/engine/types.ts` — `thirdPartyKinds`, and the union derived from it.
+- `src/app/month/actions.ts` — `addThirdPartyPayment` and `removeThirdPartyPayment`. The
+  first reads the month before it accepts anything, which is `addAdvance`'s own shape and
+  for the same reason: the rule that decides it is a fact about the month rather than about
+  the draft, and a refused draft never reaches `saveMonth`.
+- `src/components/MonthActions.tsx` — the group's fourth section, and `MonthSelect`.
+- `src/lib/i18n/he.ts` — the group's words, and the four corrected labels.
+
+**Three decisions inside it, none reopenable without a reason:**
+
+1. **A kind the month already holds is not offered.** The refusal is what would answer the
+   click, and a control that answers a click with a refusal should not have been drawn —
+   the rule `AdvancesControl` already follows for a repayment it would be refused. The
+   server refuses it again regardless, because the offer is never the rule (Part 3).
+2. **`MonthSelect` is a `<select>` and not `<input type="month">`.** That control's picker
+   is laid out and worded by the *browser's* locale rather than the page's, so on a Hebrew
+   right-to-left page it can arrive left-to-right and in another language — the mixed
+   direction failure Part 5 warns about, in a widget the application can neither style nor
+   isolate. A select holds labels the application wrote. **Its range reaches a year forward
+   as well as four years back**, which was a defect found while writing this entry rather
+   than a decision taken up front: the first version offered past months only, on the
+   reasoning that a payment cannot cover months nobody has lived through — which is item
+   19's arrears and exactly backwards for item 15, whose yearly fee covers the year running
+   *forward* from an employment anniversary. A visa fee paid in March is for March through
+   next February, and the control could not have recorded one.
+3. **The amount is drawn positive.** It is money that left the account, but it leaves
+   nobody's total on this screen, and a minus beside it would read as a deduction from her
+   pay — the one thing item 16 says it is not.
+
+**`CoveredMonths` was extracted, and it is the second defect this step found in itself.**
+Driving the two screens after the group was built showed `/month` printing
+`בגין החודשים אפריל 2026, מאי 2026, יוני 2026` while `/payments` printed
+`אפריל 2026 – יוני 2026` — one period, two spellings, on two screens reading one stored
+value. It is now one component both import, and it draws the run as its two ends: a stored
+period is contiguous by construction, so the ends carry what the list carries and stay
+readable at twelve months or at the permit's forty-eight, where a list would not. The
+month screen's recorded decision was that the months travel *beside* the label and are
+isolated (Part 5); how many of them are enumerated was never a decision, which is what
+makes this safe to settle here. Same argument as `MonthStepper` and `advanceKey`.
+
+**A period is bounded at forty-eight months, and the bound comes from a rule.** It is the
+employment permit's own four-year cycle (item 28), the slowest clock the application knows.
+It exists because `coversMonths` stores one entry per month and a crafted request naming
+`0001-01` to `9999-12` is ninety-six thousand of them; it is taken from a rule rather than
+from a round number so that a later reader is not left guessing what it protected. No
+period the screen offers can reach it, which is why it comes back as `shape` rather than as
+a sentence of its own.
+
+**What this step does *not* build, and why the artboard is not the reference.**
+`EaseSalary - תשלומים` draws two sections for this group — `ממתין לתשלום` and
+`לקראת החודשים הבאים` — and **both are a reminder view rather than a recording surface**.
+Read on 2026-09-04, they draw six rows between them, and the data stands like this:
+
+| Row | Needs | Have it? |
+|---|---|---|
+| `ביטוח לאומי` quarterly | the month's own estimates and which quarters are settled | **yes** — derivable today |
+| `דמי הבראה` | `terms.recuperationMonth` **and** an amount | month yes, amount no — item 15 has no engine line (finding 3 above) |
+| `ביטוח רפואי` "עומד לפוג" | the policy's expiry date | no — nothing holds one |
+| `אגרת ויזה` | the visa's date | no — item 28's dates, unheld |
+| `דמי טיפול לחברה` | the fee's yearly date | no |
+| `חידוש היתר העסקה` | the permit's expiry | no — item 28's, unheld |
+
+So four of six need item 28's three documents and their dates, which no type holds and no
+screen sets — the **profile screen**, which the routes table above already records as this
+plan's unowned debt. This is now the fifth place that debt is written down and the
+strongest of them, because here it blocks a whole artboard rather than one control.
+
+The artboard draws **no recording surface at all**, exactly as it draws no income-tax field
+and no user lines — the same finding step 6 made about it from the other side. So this
+section is built in the idiom the calendar's picker established, the component says so, and
+the two sections the artboard *does* draw belong to stage 5, which is where the routes
+table has always put the second half of this route. **The one derivable row was deliberately
+not built early**: it would have put an engine run on `/payments`, which step 6 established
+runs none, and item 19 puts that reminder on the *opening* screen (stage 6), so building it
+here would have created it in two places before either had an owner.
+
+**Nothing in the calculation moved.** The 368 tests that existed before this step all still
+pass; 22 were added, and the nine mutations that matter were made and caught — half a
+period completed instead of refused (1 failure), a backwards period quietly reordered (1),
+a duplicate kind accepted at entry (1), a payment of zero accepted (1), an unbounded period
+(1), the override orphaned when its payment is removed (1), the quarter read as the three
+preceding months (2), an unpadded month accepted (1), and month 0 and month 13 accepted (1).
+
+**Check — restart the dev server first, and not for the reason the earlier steps ask.**
+This step changed no seed data, so the code needs no restart; the *store* does, if anything
+has been clicked into September already. The store is a module singleton and keeps every
+entry made since the process started, so a September carrying a tax or a line from an
+earlier session will not show the figures quoted below. Stop and start `npm run dev` and
+September is back to its seeded state.
+
+Open http://localhost:3000/payments; it opens on **ספטמבר 2026**. The
+`תשלומים נוספים` card now ends with a fourth section, `תשלומים לגורמים שלישיים`, reading
+`לא נרשם החודש תשלום לגורם שלישי.` over a `לרשום תשלום` button.
+
+September's figures are step 4's, derived there on paper: ברוטו **₪8,353.05** and a
+national-insurance estimate of **₪300.71**.
+
+1. **Press `לרשום תשלום`.** Seven chips, in the sheet's own row order:
+   `ביטוח רפואי` · `דמי השמה` · `דמי תאגיד` · `אגרה להארכת ויזה` · `ויזת עובד זר` ·
+   `אגרה להארכת רשיון העסקה` · `ביטוח לאומי`. **Two of them are visa rows** — that pair is
+   the whole of what this step fixed, and four of the seven read differently from last week
+   because they now read as the template does.
+2. **Press `ביטוח לאומי`.** The two month fields fill themselves: `אפריל 2026` and
+   `יוני 2026`. That is the last quarter to have **closed** — September sits inside
+   July–September, which has not — and it is the one place on screen item 19's "once a
+   quarter and in arrears" is visible. Type `936` and press `לרשום`.
+3. The row appears reading `ביטוח לאומי ₪936.00`, with `בגין החודשים אפריל 2026 – יוני 2026`
+   under it. **Press `לרשום תשלום` again: `ביטוח לאומי` is no longer among the chips.** One
+   row per kind, and the kind is simply not offered rather than refused after the fact.
+4. **Press `אגרה להארכת ויזה`. Both month fields are empty** — no period is offered, because
+   a yearly fee runs forward from an anniversary and the quarter rule cannot serve it. Type
+   `195` and press `לרשום`. Now add `ויזת עובד זר` at `210`. **Both are accepted**, and that
+   is the seventh kind doing its whole job: before this step the second was refused as a
+   second payment of one kind.
+5. **Press `לרשום תשלום`, choose any kind, fill only `מחודש` and press `לרשום`.** Refused
+   with `צריך לבחור את שני החודשים…`. Now set `מחודש` to a month *later* than `עד חודש`:
+   refused with `החודש האחרון מוקדם מהחודש הראשון…` and nothing is reordered for you.
+6. **Open http://localhost:3000/month on the same month.** A
+   `תשלומים לגורמים שלישיים` card stands **outside** `החישוב של החודש`, holding the three
+   rows and a subtotal of **₪1,341.00** (936 + 195 + 210). And the month is untouched:
+   `סך הכל תשלום לעובד/ת` is still **₪8,353.05** and the estimate is still **₪300.71**.
+   That is item 16 and item 19 in one screen — column H reaches neither her total nor the
+   base the estimate is taken from.
+7. **Back on `/payments`, press `להסיר` on `ויזת עובד זר`.** It goes, `/month`'s subtotal
+   falls to ₪1,131.00, and the chip is offered again.
+
+**What a failure looks like:** a `ביטוח לאומי` chip still offered after one is recorded;
+`ויזת עובד זר` refused after `אגרה להארכת ויזה` was accepted, which would mean the union is
+back to six; the offered quarter reading `יולי – ספטמבר` (the quarter still in progress) or
+`יוני – אוגוסט` (the three preceding months) instead of `אפריל – יוני`; a period offered for
+one of the fees; `סך הכל תשלום לעובד/ת` or the national-insurance estimate moving in step 6,
+which would mean column H is reaching the worker; or a backwards period being accepted and
+silently turned round.
+
+**What this step owes the next ones, and none of it is a defect:**
+
+- **A recorded payment cannot be edited, only removed and recorded again**, which is the
+  same debt step 4 left for a user line and which belongs to the same step: the manual
+  overrides.
+- **Nothing warns that a payment is due.** That is the artboard's two sections, and the
+  table above says what each of their six rows is waiting on. Four wait on the profile
+  screen and item 28's three documents.
+- **`דמי הבראה` and `שעות עבודה נוספות במהלך אישפוז` still have no engine line**, as
+  finding 3 of stage 2 records. Neither is a third-party payment, so neither is this step's
+  — but the recuperation one is what `לקראת החודשים הבאים` most wants.
 
 ## Stage 5 — External data and yearly settings
 

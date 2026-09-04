@@ -12,7 +12,19 @@ import {
 import type { AdvanceDraft, AdvanceRefusal } from "@/lib/engine/advances";
 import { recordOf } from "@/lib/engine/repository";
 import type { MonthRecord } from "@/lib/engine/repository";
-import type { AdvanceKind, MonthSpan } from "@/lib/engine/types";
+import {
+  reviewThirdPartyPayment,
+  withoutThirdPartyPayment,
+} from "@/lib/engine/thirdParty";
+import type {
+  ThirdPartyDraft,
+  ThirdPartyRefusal,
+} from "@/lib/engine/thirdParty";
+import type {
+  AdvanceKind,
+  MonthSpan,
+  ThirdPartyKind,
+} from "@/lib/engine/types";
 import { reviewUserLine, withoutOneOffUserLine } from "@/lib/engine/userLines";
 import type { UserLineDraft, UserLineRefusal } from "@/lib/engine/userLines";
 import { parseShekels } from "@/lib/money";
@@ -155,7 +167,11 @@ export async function setHolidayWorked(
  * one the user cannot cause by typing: it is a page held open over a month the
  * store has no record of, which until the future-month step exists is any month
  * outside the seeded range. */
-export type MonthActionRefusal = UserLineRefusal | AdvanceRefusal | "noMonth";
+export type MonthActionRefusal =
+  | UserLineRefusal
+  | AdvanceRefusal
+  | ThirdPartyRefusal
+  | "noMonth";
 
 export type MonthActionResult =
   | { ok: true }
@@ -319,5 +335,62 @@ export async function removeAdvance(
 
   return changeMonth(workerId, month, (record) =>
     withoutAdvance(record, advanceNumber, kind),
+  );
+}
+
+/**
+ * A payment to somebody other than the worker, recorded in the month it left
+ * the account (specs.md item 16).
+ *
+ * **The month is read before the draft is accepted**, because the rule that
+ * decides this one is a fact about the month and not about the draft: the sheet
+ * holds one row per kind, so what makes a payment acceptable is which kinds the
+ * month has already recorded. That is the shape `addAdvance` above already has,
+ * and for the same reason — a rule that cannot be answered from the draft alone
+ * is answered from the store first and the change made second, so that a
+ * refused draft never reaches `saveMonth` at all.
+ *
+ * The screen additionally does not *offer* a kind the month already has, which
+ * is why this refusal is reachable only from a stale page or a crafted request.
+ * The offer is not the rule (Part 3).
+ */
+export async function addThirdPartyPayment(
+  workerId: string,
+  month: YearMonth,
+  draft: ThirdPartyDraft,
+): Promise<MonthActionResult> {
+  const repository = getRepository();
+  await profileOf(workerId);
+
+  const facts = await repository.getMonth(workerId, month);
+  if (facts === null) return { ok: false, reason: "noMonth" };
+
+  const reviewed = reviewThirdPartyPayment(draft, facts.thirdPartyPayments);
+  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+  return changeMonth(workerId, month, (record) => ({
+    ...record,
+    thirdPartyPayments: [...record.thirdPartyPayments, reviewed.payment],
+  }));
+}
+
+/**
+ * A payment removed, **and any amount the user typed over it removed with it**
+ * (specs.md items 16, 17) — the same rule `removeUserLine` and `removeAdvance`
+ * follow, and for the same reason: an override left behind is an amount waiting
+ * to reattach itself to a row that never asked for it.
+ *
+ * The kind is the whole address, which is what one row per kind buys: there is
+ * never a second payment of that kind to tell it apart from. Nothing refuses a
+ * removal, either — unlike an advance, a payment to a third party is not the
+ * thing some other row is counted against.
+ */
+export async function removeThirdPartyPayment(
+  workerId: string,
+  month: YearMonth,
+  kind: ThirdPartyKind,
+): Promise<MonthActionResult> {
+  return changeMonth(workerId, month, (record) =>
+    withoutThirdPartyPayment(record, kind),
   );
 }

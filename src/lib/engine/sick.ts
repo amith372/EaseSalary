@@ -78,8 +78,12 @@ export interface SickSpell {
  * precisely a day not worked in fact.
  *
  * A holiday she **did** work is a day of attendance and ends a spell like any
- * other. A vacation day also ends one, which is the narrower answer and is
- * recorded as unsettled in `specs.md`'s appendix rather than decided here.
+ * other, and so does a **vacation** day — not because it is a lesser kind of
+ * absence, but because the law does not let one day be both: illness during a
+ * vacation converts the day into a sick day and draws only the rest from the
+ * vacation quota (item 8). A day still recorded as vacation is therefore a day
+ * she was not ill on, so a vacation day *inside* a spell is not a state this
+ * function can be asked about.
  */
 function owesNoAttendance(spans: ClosedSpan[], restDay: RestDay) {
   const holidaysOff = new Set(

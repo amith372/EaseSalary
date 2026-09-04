@@ -143,6 +143,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
             userLines={shown.userLines}
             ledger={entry.advances}
             monthAdvances={shown.advances}
+            thirdPartyPayments={shown.thirdPartyPayments}
             onSubmit={handleAction}
           />
         ) : (

@@ -381,15 +381,44 @@ export interface UserLine {
   note?: string;
 }
 
-/** A payment that goes to a third party rather than to the worker (specs.md
- * item 16). */
-export type ThirdPartyKind =
-  | "medicalInsurance"
-  | "nationalInsurance"
-  | "agencyFee"
-  | "placementFee"
-  | "visaFee"
-  | "licenceFee";
+/**
+ * The payments that go to a third party rather than to the worker, in the order
+ * the month template numbers them — B10, B12, B13, B14, B15, B16 and B21 of
+ * `template_month_standard.xlsx` -> `sheet1` (specs.md item 16).
+ *
+ * **The list is the source and the union is derived from it**, as
+ * `userLineDirections` already is and for the same reason: the chips that offer
+ * the choice, the server check that refuses a value outside it and the engine's
+ * own rows read one list, and a member added to a hand-kept union would compile
+ * clean against a hand-kept array that had not grown with it. The order is the
+ * sheet's, so the set can be read against the template without a lookup and
+ * neither the chips nor the export has to choose an order of its own.
+ *
+ * **There are seven because the sheet has two visa rows.** B14 is the fee for
+ * extending the work visa and B15 is `ויזת עובד זר`, the visa itself,
+ * issued through the private agency against a charge of its own (item 28). A
+ * single `visaFee` covering both was not merely a missing member: item 16
+ * refuses two payments of one kind, so a month that paid both would have been
+ * refused outright and told to sum two figures the sheet keeps apart.
+ *
+ * `visaExtensionFee` carries item 28's own wording for B14. It was `visaFee`
+ * until 2026-09-04, and the rename is deliberate rather than cosmetic: a name
+ * meaning "the visa fee" where there are two visa payments preserves exactly
+ * the confusion the seventh member exists to end. It costs nothing now because
+ * nothing persists it — the store is in memory and no month holds a
+ * `thirdParty.visaFee` override — and it would be a migration after stage 3.
+ */
+export const thirdPartyKinds = [
+  "medicalInsurance",
+  "placementFee",
+  "agencyFee",
+  "visaExtensionFee",
+  "workerVisa",
+  "licenceFee",
+  "nationalInsurance",
+] as const;
+
+export type ThirdPartyKind = (typeof thirdPartyKinds)[number];
 
 /**
  * Money that actually left the account, recorded only in the month it left it.

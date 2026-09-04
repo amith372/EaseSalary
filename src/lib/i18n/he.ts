@@ -510,6 +510,65 @@ export const he = {
             ? `להסיר את מקדמה ${advanceNumber} שניתנה החודש`
             : `להסיר את הפירעון של מקדמה ${advanceNumber} החודש`,
       },
+      /**
+       * The payments that go to a third party rather than to the worker
+       * (specs.md item 16).
+       *
+       * **Every kind is named by `sheet.thirdParty` and never again here.** The
+       * names are the template's own (item 2), and a second copy beside the
+       * control would be a second place for one of them to be corrected alone
+       * — which is the failure these labels were just fixed for.
+       *
+       * **The heading says where the money goes and not what it is called.** It
+       * is the one group on this screen whose money never reaches the worker,
+       * and a user who has just typed an income tax and an advance needs that
+       * difference said rather than inferred from the fee names.
+       */
+      thirdParty: {
+        title: "תשלומים לגורמים שלישיים",
+        /** Said once, above the list: this money is not hers, and it is neither
+         * added to her salary nor taken out of it (item 16). */
+        lead: "כסף ששולם החודש לגורם אחר — מבטח רפואי, ביטוח לאומי, אגרות ודמי חברה. הוא אינו מתווסף למשכורת העובד/ת וגם אינו מנוכה ממנה.",
+        empty: "לא נרשם החודש תשלום לגורם שלישי.",
+        add: "לרשום תשלום",
+        /** The kinds still open this month. One already recorded is not
+         * offered, because the sheet holds one row per kind and the refusal is
+         * what would answer the click (item 16). */
+        kind: "על מה שולם",
+        /** Every kind taken. Not a refusal — nothing was refused, there is
+         * simply nothing left to add — so it stands where the button was. */
+        allRecorded:
+          "כל סוגי התשלום כבר נרשמו החודש. דף המשכורת מחזיק שורה אחת מכל סוג.",
+        amount: "כמה שולם",
+        note: "למה",
+        noteHint: "לא חובה, אבל זה מה שיסביר את התשלום בעוד שנה",
+        /**
+         * The months the payment covers (specs.md items 16, 19).
+         *
+         * **Optional, and the hint says what leaving it empty means** — most
+         * payments cover the month they were made in and need nothing said. The
+         * national insurance is the one kind the application can offer a period
+         * for, because it is paid once a quarter and in arrears (item 19); the
+         * yearly fees run forward from an anniversary (item 15) and are left
+         * empty rather than guessed.
+         */
+        period: "בגין אילו חודשים",
+        periodHint:
+          "לא חובה. אם התשלום מכסה רק את החודש שבו שולם, אפשר להשאיר ריק.",
+        periodFrom: "מחודש",
+        periodTo: "עד חודש",
+        /** The empty option of each select, which is what "no period" reads as
+         * in a control that otherwise lists months. */
+        periodNone: "—",
+        submit: "לרשום",
+        cancel: "ביטול",
+        remove: "להסיר",
+        /** The button shows the word above, which is the same word on every
+         * row; this names *which* payment it removes, for a reader who reaches
+         * the button without the row around it. */
+        removeLabel: (paymentType: string) =>
+          `להסיר את התשלום על ${paymentType}`,
+      },
       /** A refusal carries the reason it was refused (specs.md item 25). Each
        * is the sentence shown to the user, not a code written to a log.
        *
@@ -536,6 +595,32 @@ export const he = {
           "הסכום גדול ממה שנותר לפרוע מהמקדמה. פירעון מעבר לחוב אינו מקדמה — אם נוכה סכום נוסף, אפשר לרשום אותו כהורדה בשורה משלך.",
         advanceRepaidAlready:
           "כבר נרשמו פירעונות של המקדמה הזו, ולכן אי אפשר להסיר אותה עכשיו — היו נשארים החזרים של חוב שאינו קיים. צריך להסיר קודם את הפירעונות, ואז את המקדמה עצמה.",
+        /**
+         * **It says "the kind you chose" rather than naming it, and that is a
+         * decision.** Every other sentence in this record is a plain string, and
+         * `Refusal` reads them by key; one function member would make the whole
+         * record `string | ((s: string) => string)` and the component would have
+         * to branch on which sort each reason is. The kind is also the thing the
+         * user has this second chosen, so naming it back to her adds nothing.
+         * `sheet.refusals.thirdPartyPaidTwice` does name it, because that one is
+         * read off a stored month nobody is looking at (specs.md item 16).
+         *
+         * The two exist together on purpose: the engine refuses a stored month
+         * and this refuses an entry, and a user who reaches the second has not
+         * seen the first. It is reachable only from a stale page or a crafted
+         * request, because the chips do not offer a kind already recorded.
+         */
+        thirdPartyPaidTwice:
+          "כבר נרשם החודש תשלום מהסוג שבחרת. דף המשכורת מחזיק שורה אחת מכל סוג, ולכן צריך להסיר את מה שנרשם ולרשום סכום אחד מסוכם במקומו.",
+        /** Only one of the two month fields filled. A period is a run of months
+         * and half of one names nothing. */
+        periodIncomplete:
+          "צריך לבחור את שני החודשים — מאיזה ועד איזה — או להשאיר את שניהם ריקים.",
+        /** The last month before the first. Refused rather than quietly
+         * reordered: which way round she meant it is not the application's to
+         * decide, and a period silently flipped is one she will not check. */
+        periodBackwards:
+          "החודש האחרון מוקדם מהחודש הראשון. כדאי לבדוק את סדר החודשים.",
       },
     },
   },
@@ -615,13 +700,30 @@ export const he = {
       advanceRepaid: "מקדמה שנפרעת",
     },
 
+    /**
+     * The seven column H rows, **named in the template's own words** (specs.md
+     * items 2, 16). Four of these were the application's own paraphrase until
+     * 2026-09-04, which item 2 does not allow: the exported file has to carry
+     * the labels a month tab carries, and a screen teaching the user a name the
+     * sheet does not use sends her looking for a row that is not there.
+     * `דמי השמה` and `דמי תאגיד` are two different fees in this
+     * industry and neither of them is `דמי תיווך`.
+     *
+     * Each is `template_month_standard.xlsx` -> `sheet1` cell by cell: B12,
+     * B13, B14, B15 and B16 carry these words outright. B10 and B21 are blank
+     * in the template because their labels are written at export with the
+     * period each covers — the medical insurance's year and the national
+     * insurance's quarter (item 19) — so those two are the application's, and
+     * are the plain name of the payment without the period.
+     */
     thirdParty: {
       medicalInsurance: "ביטוח רפואי",
+      placementFee: "דמי השמה",
+      agencyFee: "דמי תאגיד",
+      visaExtensionFee: "אגרה להארכת ויזה",
+      workerVisa: "ויזת עובד זר",
+      licenceFee: "אגרה להארכת רשיון העסקה",
       nationalInsurance: "ביטוח לאומי",
-      agencyFee: "דמי טיפול",
-      placementFee: "דמי תיווך",
-      visaFee: "אגרת ויזה",
-      licenceFee: "חידוש רישיון",
     },
 
     /** The sheet prints a total per column before the month's own two totals:

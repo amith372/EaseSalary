@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { clearRange, markRange, setHolidayWorked } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
+import { CoveredMonths } from "@/components/CoveredMonths";
 import { Card } from "@/components/Card";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { openingMonthOf } from "@/components/MonthStepper";
@@ -322,24 +323,11 @@ function unitsHint(line: MonthLine): ReactNode {
   );
 }
 
-/** The months a payment covers, where they are not the month it appears in — a
- * quarterly national-insurance payment is made in arrears (specs.md item 19).
- * They travel beside the label rather than inside it, so the dates are isolated
- * rather than dropped into a Hebrew sentence (Part 5). */
+/** The months a payment covers, drawn by the one component both screens read —
+ * `CoveredMonths` says why it is not written twice (specs.md item 19). */
 function coversHint(line: MonthLine): ReactNode {
   if (!line.coversMonths || line.coversMonths.length === 0) return undefined;
-  return (
-    <>
-      <span dir="auto">{he.sheet.reporting.coversMonths}</span>
-      <span> </span>
-      {line.coversMonths.map((covered, index) => (
-        <span key={`${covered.year}-${covered.month}`}>
-          {index > 0 ? <span>, </span> : null}
-          <Bidi noTranslate>{monthLabel(covered)}</Bidi>
-        </span>
-      ))}
-    </>
-  );
+  return <CoveredMonths months={line.coversMonths} />;
 }
 
 /**

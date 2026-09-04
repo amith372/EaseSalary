@@ -6,7 +6,7 @@ import {
   nationalInsuranceEstimateOf,
   thirdPartyLineKey,
 } from "@/lib/engine/thirdParty";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms, thirdPartyKinds } from "@/lib/engine/types";
 import type {
   ClosedMonthFacts,
   ClosedSpan,
@@ -121,14 +121,11 @@ function columnTotal(result: MonthResult, column: string): number {
     .reduce((total, line) => total + (line.amount ?? 0), 0);
 }
 
-const ALL_KINDS: ThirdPartyKind[] = [
-  "medicalInsurance",
-  "nationalInsurance",
-  "agencyFee",
-  "placementFee",
-  "visaFee",
-  "licenceFee",
-];
+// Read from the engine's own list rather than kept by hand here. A second copy
+// would compile clean the day a seventh kind was added and would quietly stop
+// covering it, which is the drift `thirdPartyKinds` exists to end — and it is
+// exactly what happened to `visaFee` before B15 was given a member of its own.
+const ALL_KINDS: readonly ThirdPartyKind[] = thirdPartyKinds;
 
 describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
   const bare = calculateMonth(facts(), terms);
@@ -347,12 +344,45 @@ describe("one row per kind, and a month with two is refused (item 16)", () => {
     expect(() =>
       calculateMonth(
         facts([
-          { kind: "visaFee", agorot: 19500 },
-          { kind: "visaFee", agorot: 21000 },
+          { kind: "visaExtensionFee", agorot: 19500 },
+          { kind: "visaExtensionFee", agorot: 21000 },
         ]),
         terms,
       ),
     ).toThrow(InvalidMonthError);
+  });
+
+  it("lets a month pay both of the sheet's two visa rows", () => {
+    // The reason B15 has a member of its own (specs.md items 16, 28). While one
+    // `visaFee` covered both rows, a month that paid the extension fee and the
+    // visa itself was two payments of one kind — so it was refused outright,
+    // and the family was told to sum two figures their own sheet keeps apart in
+    // B14 and B15. The figures are two different fees and neither is derived:
+    // what is asserted is that the month calculates at all and that both rows
+    // reach column H.
+    const result = calculateMonth(
+      facts([
+        { kind: "visaExtensionFee", agorot: 19500 },
+        { kind: "workerVisa", agorot: 21000 },
+      ]),
+      terms,
+    );
+    // `calculateMonth` throws on a refusal, so reaching this line at all is the
+    // assertion that the pair is no longer refused.
+    expect(columnTotal(result, "H")).toBe(40500);
+    // Two rows, addressable apart, which is what an override and an
+    // explanation each need (items 17, 24).
+    expect(
+      result.lines.find((l) => l.key === thirdPartyLineKey("visaExtensionFee"))
+        ?.amount,
+    ).toBe(19500);
+    expect(
+      result.lines.find((l) => l.key === thirdPartyLineKey("workerVisa"))
+        ?.amount,
+    ).toBe(21000);
+    // And still none of it reaches her.
+    expect(result.gross).toBe(GROSS);
+    expect(result.net).toBe(NET);
   });
 
   it("allows two payments of different kinds in one month", () => {
