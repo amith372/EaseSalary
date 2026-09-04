@@ -105,7 +105,8 @@ Each of these is true or false at a glance.
     pay. A free rest day is not an entitlement and a month without
     one is unremarkable.
     Beside the calendar sit three groups: additional payments (advances given and
-    repaid, the income-tax line, manual overrides), payments to third parties (national
+    repaid, the income-tax line, the lines the user adds of her own (item 20), and
+    manual overrides), payments to third parties (national
     insurance, medical insurance, fees), and yearly settings (the nine holidays, the
     recuperation month). Every action can carry a free-text note.
     **The month's preview reads by kind, not by the sheet's columns.** The rest-eve
@@ -427,6 +428,16 @@ Each of these is true or false at a glance.
     month's actions, and not to a row printed at zero in the preview. A preview that draws
     no row for a tax nobody owes must therefore not be the only place that rule appears, or
     the collapse takes item 26's link with it.
+    **Beside the control the rule stands in words, and not behind the "?".** Everywhere
+    else an explanation is reached through the button beside a figure (item 24), and this
+    one is not: it is what the user has to know *before* she types, and someone who does
+    not know it deducts too much. A rule that is merely reachable is reachable by the user
+    who already suspects there is something to find, which is the user who did not need it.
+    **The figure is typed as what is withheld, and the application gives it its sign** —
+    the same rule item 20 states for a line the user adds, for the same reason: a sign the
+    user types can disagree with the label beside it, and a tax entered negative would pay
+    her instead. A figure of zero is not an entry but the absence of one, and it is what
+    every month holds until the user says otherwise.
     Income tax is never calculated and the intention is that it never will be. What the
     user needs before typing a figure is therefore the rule and not an arithmetic: the
     employer deducts income tax on the basis of the wage and of the credits the worker
@@ -521,14 +532,24 @@ Each of these is true or false at a glance.
     addition after the total is a payment that is not part of the month's cost, and a
     deduction before it is one the wage itself is meant to be net of.
 
-    **On the month screen they are summarised; the export and the payments screen itemise
-    them.** However many lines a month carries, the month screen shows one row for the ones
+    **The month's preview summarises them; the group that adds them itemises them, and the
+    export and the payments screen do too.** The preview and the group are two surfaces on
+    one screen and they answer two questions. The preview answers "what did this month come
+    to", which nine rows answer worse than one. The group beside the calendar is where the
+    lines are *made*, and a control surface that hides what it has already recorded cannot
+    be used — a user who cannot see the line she just added adds it a second time. So the
+    group lists this month's own lines, each with its reason, its direction and the side of
+    the total it sits on, and each can be removed from there. **Removing a line takes any
+    manual override on it away with it** (item 17): an override is addressed by the line's
+    own key, and a key with nothing behind it is an amount waiting to reattach itself to a
+    line that never asked for it.
+    However many lines a month carries, the preview shows one row for the ones
     placed before the total and one for the ones placed after it, each holding the sum of
     its own and carrying a single heading that covers both directions — a group's sum may
     therefore come out either way, and the heading says "added and withheld" rather than
     naming one of them. The full list, line by line with the reason on each, is on the
     payments screen and in the exported file. The two rows are not a saving of space but a
-    division of labour: the month screen answers "what did this month come to", and a
+    division of labour: the preview answers "what did this month come to", and a
     month with nine added lines answers it worse by printing nine of them, while the
     document that must account for each one is the sheet. That the export itemises is
     therefore not a preference here but the requirement of item 2 — the payslip shows every
@@ -578,6 +599,15 @@ Each of these is true or false at a glance.
     one of the pages of item 26: a holiday refused points at the holiday rule, a free
     rest day refused at the weekly rest, sick days beyond the balance at the sick-pay
     rule. A refusal with no link is a refusal the user can only argue with.
+    **This is a rule about refusals that rest on a legal rule, which is what gives them a
+    page to point at.** A refusal about the *form* of an entry carries none, because there
+    is none: an empty field, an amount that is not a number, a choice outside the two the
+    application offers. Nothing in law says a line must be given a name before it can be
+    added — the application says it, because it cannot show the user a line with nothing
+    written on it. Such a refusal owes her the reason and not a reference, and inventing a
+    link for it would send her to a page that does not mention what stopped her, which is
+    worse than the sentence alone. The test is item 26's own: a refusal carries a link
+    exactly where the action it refused would have carried one.
 26. Every action that rests on a legal rule carries a link to the page that states it —
     the minimum wage, the rest-day and holiday premium, annual leave, sick pay,
     recuperation, national insurance — so a user who wants to check a figure can read

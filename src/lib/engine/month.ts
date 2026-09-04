@@ -101,6 +101,19 @@ export function isUserLineKey(key: string): boolean {
 }
 
 /**
+ * How a line the user added is addressed, built in one place.
+ *
+ * The key is a stored value — `MonthFacts.overrides` is keyed by it (item 17) —
+ * so the code that *removes* a line has to build the same string the engine
+ * built when it drew one, or the override outlives the line it belonged to.
+ * Two call sites assembling it from the same two pieces is one call site too
+ * many for a value that cannot be allowed to differ.
+ */
+export function userLineKey(prefix: UserLinePrefix, id: string): string {
+  return `${prefix}.${id}`;
+}
+
+/**
  * The user's two sets of lines, with the column each takes **when it is placed
  * before the month's total** (specs.md item 20) — the block below the columns
  * has no columns, so `buildClosing` reads the first two and not the third.
@@ -279,7 +292,7 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
       userDrafts.push({
         sign,
         draft: {
-          key: `${prefix}.${line.id}`,
+          key: userLineKey(prefix, line.id),
           label: line.label,
           units: sign,
           // **The units carry the sign and the rate does not**, exactly as the
@@ -349,7 +362,7 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
   for (const [prefix, lines] of userLineGroups(facts)) {
     for (const line of lines) {
       if (placementOf(line) !== "afterGross") continue;
-      const key = `${prefix}.${line.id}`;
+      const key = userLineKey(prefix, line.id);
       const override = facts.overrides[key];
       const agorot = override ? override.agorot : Math.abs(line.agorot);
       const signed = line.direction === "addition" ? 1 : -1;

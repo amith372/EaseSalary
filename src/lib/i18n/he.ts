@@ -162,6 +162,10 @@ export const he = {
 
   placeholder: {
     amount: "[סכום]",
+    /** What an empty amount field shows. Not a translatable sentence — it is
+     * the shape of the figure being asked for — but it is text the user reads,
+     * and every such string lives in this file (`CLAUDE.md`). */
+    amountInput: "0.00",
     count: "[מספר]",
     date: "[תאריך]",
     year: "[שנה]",
@@ -368,6 +372,88 @@ export const he = {
       thirdParty: "תשלומים לגורמים שלישיים",
       balances: "יתרות אחרי החודש הזה",
       warnings: "כדאי לדעת",
+    },
+
+    /**
+     * The first of the three groups beside the calendar — additional payments
+     * (specs.md item 5). It holds the income-tax line and the lines the user
+     * adds; the advances and the manual overrides join it in their own steps,
+     * which is why it is named for the group and not for what is in it today.
+     */
+    actions: {
+      title: "תשלומים נוספים",
+      incomeTax: {
+        title: "מס הכנסה",
+        field: "כמה נוכה החודש",
+        /**
+         * **Shown in words beside the control and not behind the "?"**
+         * (specs.md item 17). It is what the user has to know before she types,
+         * and someone who does not know it deducts too much — a rule that is
+         * merely reachable is reachable by the user who already suspects there
+         * is something to find.
+         */
+        rule: "מס הכנסה מנוכה לפי השכר ולפי נקודות הזיכוי שמגיעות לעובד/ת. עובד/ת זר/ה בסיעוד בבית המטופל/ת מקבל/ת 2.25 נקודות זיכוי — יותר מעובד/ת זר/ה בענף אחר, ומי שלא יודע/ת את זה מנכה יותר מדי.",
+        /** Zero is an ordinary answer and not an empty field: it is what every
+         * month holds until the user says otherwise, and typing it back is how
+         * a tax entered by mistake is taken off. */
+        none: "לא נוכה מס החודש",
+        save: "לשמור",
+        /**
+         * **This field's own version of the amount refusal, and it may not say
+         * "greater than zero".** Zero is an ordinary entry here (item 17) while
+         * a line the user adds refuses it (item 20), so one sentence serving
+         * both would state the wrong rule beside one of them — and beside this
+         * one it would tell her that the figure she is allowed to type is not
+         * allowed.
+         */
+        notANumber: "צריך להקליד סכום — מספר, בלי מינוס. שדה ריק או 0 פירושו שלא נוכה מס החודש.",
+      },
+      lines: {
+        /** The list carries the preview's own heading. One thing, one name:
+         * a summarised row above and the lines it summarises below must not
+         * read as two different things (specs.md Part 5). */
+        empty: "לא הוספת שורות לחודש הזה.",
+        add: "להוסיף שורה",
+        label: "על מה",
+        labelHint: "במילים שלך — כך זה יופיע בדף המשכורת",
+        amount: "סכום",
+        note: "למה",
+        noteHint: "לא חובה, אבל זה מה שיסביר את השורה בעוד שנה",
+        submit: "להוסיף",
+        cancel: "ביטול",
+        remove: "להסיר",
+        /** The button shows the word above, which is the same word on every
+         * line; this names *which* line it removes, for a reader who reaches
+         * the button without the row around it. */
+        removeLabel: (label: string) => `להסיר את השורה "${label}"`,
+        direction: {
+          addition: "תוספת",
+          deduction: "הורדה",
+        },
+        /**
+         * **Named for what the choice does and not for the row it lands under**
+         * (specs.md Part 1: the option that requires the user to know less).
+         * A chip reading "בתוך הברוטו" names a row the preview does not always
+         * draw — a month withholding nothing shows no ברוטו at all (item 17) —
+         * so the chip says the consequence and the sentence under it names the
+         * figure for the user who thinks in those terms.
+         */
+        placement: {
+          beforeGross: "חלק מהשכר של החודש",
+          afterGross: "רק מהתשלום בסוף",
+          beforeGrossWhy: "נכנס לברוטו, ולכן גם להערכת הביטוח הלאומי.",
+          afterGrossWhy:
+            "משנה רק את הסכום שמועבר בסוף החודש, ולא את הברוטו ולא את הערכת הביטוח הלאומי.",
+        },
+      },
+      /** A refusal carries the reason it was refused (specs.md item 25). Each
+       * is the sentence shown to the user, not a code written to a log. */
+      refused: {
+        label: "צריך לכתוב על מה השורה.",
+        amount: "צריך סכום — מספר גדול מאפס, בלי מינוס.",
+        shape: "משהו בבחירה לא נקלט. כדאי לבחור שוב ולנסות.",
+        noMonth: "אין עדיין רישום לחודש הזה, ולכן אי אפשר להוסיף לו שורות.",
+      },
     },
   },
 

@@ -2,8 +2,10 @@
 
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { clearRange, markRange, setHolidayWorked } from "@/app/month/actions";
+import type { MonthActionResult } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { MonthActions } from "@/components/MonthActions";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { MoneyValue } from "@/components/MoneyValue";
 import { SpanOverflowNotes } from "@/components/SpanOverflow";
@@ -148,6 +150,25 @@ export function MonthScreen({ household, today }: MonthScreenProps) {
     startSaving(() => setHolidayWorked(workerId, spanId, workedIt));
   }
 
+  /**
+   * The additional-payments group's changes ride the same transition the
+   * calendar's do, so the preview dims for one exactly as it does for the
+   * other: between the click and the engine's answer the figures beside the
+   * calendar are the *previous* month's, and saying so is better than letting a
+   * stale number look settled.
+   *
+   * The result comes back to the caller rather than being handled here, because
+   * a refusal belongs to the control that produced it — the group knows which
+   * field the user was in and this screen does not.
+   */
+  function handleAction(
+    action: () => Promise<MonthActionResult>,
+    onResult: (result: MonthActionResult) => void,
+  ) {
+    setSkipped(null);
+    startSaving(async () => onResult(await action()));
+  }
+
   /** Grouped by reason, so a week swept across five taken days reads as one
    * sentence rather than five. */
   const refusals = useMemo(() => {
@@ -249,6 +270,19 @@ export function MonthScreen({ household, today }: MonthScreenProps) {
               restDay={shown.facts.terms.restDay}
               openWhy={openWhy}
               onToggleWhy={toggleWhy}
+              actions={
+                /* Keyed on the worker and the month, so the fields a user was
+                   half-way through typing do not follow her to another month
+                   and offer themselves as that month's. */
+                <MonthActions
+                  key={`${worker.id}-${month.year}-${month.month}`}
+                  workerId={worker.id}
+                  month={month}
+                  incomeTaxAgorot={shown.facts.incomeTaxAgorot}
+                  userLines={shown.facts.userLines}
+                  onSubmit={handleAction}
+                />
+              }
             />
           ) : (
             <Card className="flex flex-none flex-col gap-1.5 px-4.5 py-3">
@@ -388,11 +422,24 @@ function MonthPreview({
   restDay,
   openWhy,
   onToggleWhy,
+  actions,
 }: {
   result: MonthResult;
   restDay: RestDay;
   openWhy: string | null;
   onToggleWhy: (key: string) => void;
+  /**
+   * The groups that *change* the month, drawn immediately under the figures
+   * they change and above everything that is only read (specs.md item 5: the
+   * groups sit beside the calendar).
+   *
+   * It is threaded through rather than placed by the caller because the order
+   * within this column is this component's: the third-party card, the balances
+   * and the warnings all come out of one result and are drawn in one place, so
+   * a caller putting a card "somewhere among them" would be reaching into an
+   * order it cannot see.
+   */
+  actions?: ReactNode;
 }) {
   const why = { openWhy, onToggleWhy };
   const thirdPartyLines = result.lines.filter((line) => line.column === "H");
@@ -588,6 +635,8 @@ function MonthPreview({
           />
         </Card>
       </Card>
+
+      {actions}
 
       {/* Outside the card above, and that is the point: this money went to a
           third party and never reaches the worker's own total (item 16). */}

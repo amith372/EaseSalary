@@ -272,8 +272,20 @@ export interface Advance {
  * The user picks the kind and never types a minus: the sign follows from what
  * the line is, so it can never disagree with the label beside it — the same
  * argument `ClosingLine.amount` already makes for the advances.
+ *
+ * **The list is the source and the union is derived from it**, which is how
+ * `userLinePrefixes` in `month.ts` already does it. The chips that offer these
+ * choices and the server check that refuses a value outside them read the same
+ * list, and the pair must not drift: a value the form can offer but the server
+ * refuses is a control that silently does nothing, and a value the server
+ * accepts but the form cannot show is a line the user can never see the shape
+ * of. Written the other way round — a hand-kept array annotated with the union
+ * — a third member added to the union would compile clean with the array
+ * unchanged, and only the drift would say so.
  */
-export type UserLineDirection = "addition" | "deduction";
+export const userLineDirections = ["addition", "deduction"] as const;
+
+export type UserLineDirection = (typeof userLineDirections)[number];
 
 /**
  * Whether a line the user added is part of what the month came to, or only
@@ -286,19 +298,34 @@ export type UserLineDirection = "addition" | "deduction";
  * difference is real — a line placed `beforeGross` enters the month's total and
  * with it the national-insurance estimate, which is 3.6% of the month's full
  * cost (item 19), and a line placed `afterGross` reaches neither.
+ *
+ * The list is the source and the union derived from it, for the reason given at
+ * `userLineDirections`.
  */
-export type UserLinePlacement = "beforeGross" | "afterGross";
+export const userLinePlacements = ["beforeGross", "afterGross"] as const;
+
+export type UserLinePlacement = (typeof userLinePlacements)[number];
 
 /**
  * Where a line sits when the user has not said. An addition is usually part of
  * the month and a deduction usually is not, so the default is what the user
  * would have chosen without being asked (item 20) — and it is a default and not
  * a rule, which is the whole reason `placement` is optional rather than absent.
+ *
+ * **The default is exported on its own because the form that adds a line needs
+ * it too.** The chips it offers move with the direction until the user touches
+ * them, which is the same rule read forwards; a form that restated it would be
+ * a second copy of the sentence that decides which side of the month's total a
+ * line lands on.
  */
+export function defaultPlacementFor(
+  direction: UserLineDirection,
+): UserLinePlacement {
+  return direction === "addition" ? "beforeGross" : "afterGross";
+}
+
 export function placementOf(line: UserLine): UserLinePlacement {
-  return (
-    line.placement ?? (line.direction === "addition" ? "beforeGross" : "afterGross")
-  );
+  return line.placement ?? defaultPlacementFor(line.direction);
 }
 
 /**

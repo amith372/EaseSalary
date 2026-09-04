@@ -90,6 +90,23 @@ export interface SalaryRepository {
   saveMonth(workerId: string, record: MonthRecord): Promise<void>;
 }
 
+/**
+ * A month read back out of the store, on its way in again — `MonthFacts` less
+ * the spans the store assembled onto it.
+ *
+ * It spreads rather than listing the fields, and that is deliberate: a field
+ * added to `MonthFacts` later would be silently dropped on every save by a
+ * function that named them one by one, which is a month quietly losing a fact
+ * nobody would see until an export. `spans` is discarded rather than ignored,
+ * because writing them back would write a second copy of a spell that belongs
+ * to the worker and must stay one thing.
+ */
+export function recordOf(facts: MonthFacts): MonthRecord {
+  const { spans, ...record } = facts;
+  void spans;
+  return record;
+}
+
 /** The month's own spans, in the order they were recorded. Exported because
  * every implementation owes the same answer, and two implementations deciding
  * separately what "in this month" means is two engines. */

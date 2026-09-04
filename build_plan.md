@@ -515,13 +515,17 @@ Next.js App Router, Tailwind right-to-left, Hebrew strings in one translations f
   finished month; only the live preview of the current month clips at the `today` prop.
   Closing a spell late is a correction and rides on criterion 13, already built in stage 1.
 - The three groups beside it: additional payments, third-party payments, yearly settings.
-  Two things are already owed to the first of them and are listed at their own steps rather
-  than only here: **the control for item 20's before/after-the-total choice**, which today
-  only the seed can set (step 1b), and **the income-tax line's own control and the rule
-  beside it** — the 2.25 credit points and item 26's link — which step 3 took off the
-  preview when it stopped drawing a tax row that reads zero.
-- A free-text note on every action; manual override of any computed amount, shown as
-  manual.
+  **The first of them exists** (step 4), and with it the two things stage 4 had owed since
+  its own earlier steps: the control for item 20's before/after-the-total choice, which
+  until then only the seed could set (step 1b), and the income-tax line's control together
+  with the rule beside it — the 2.25 credit points and item 26's link — which step 3 took
+  off the preview when it stopped drawing a tax row that reads zero. What that group is
+  still owed is its other half: the advances given and repaid, and the manual overrides,
+  which item 5 names as its contents alongside the tax line.
+- A free-text note on every action — **a line the user adds carries one** (step 4); the
+  marks on the calendar and the advances do not yet. Manual override of any computed
+  amount, shown as manual, is not built at all: today an override can only be seeded, and
+  it is what the next step in this group is for.
 - A future month accepts facts and refuses export, saying which of the two it is.
 - The live preview, driven by the same engine as the export.
 
@@ -711,10 +715,11 @@ keyed whitelists, so the next line the engine grows — the recuperation payment
 would have counted in the total and appeared nowhere, which a catch-all group now makes
 impossible by construction. Both engine fixes carry a test and both were mutation-checked.
 
-**Still owed, and it is scope rather than a defect: nothing on any screen can yet *make*
-the placement choice.** The spec says it is offered beside the line; today only the seed
-sets it. The screen that adds a line is stage 4's "three groups beside it" step, and that
-is where the control belongs — it is listed there and not forgotten here.
+**Nothing on any screen could yet *make* the placement choice, and step 4 is where it
+arrived.** The spec says the choice is offered beside the line; for three steps only the
+seed could set it. The control is now in the additional-payments group, as two chips that
+follow the direction until the user touches them — which is `defaultPlacementFor` read
+forwards rather than a second copy of the default.
 
 **Editing the seed needs the dev server restarted.** The store is a `globalThis` singleton
 so that saving a file mid-check does not silently reset the marks — the same property means
@@ -886,8 +891,11 @@ rule — and today `MonthScreen` is the only thing that reads `result.closing`, 
 with no tax that rule is now reachable nowhere. That is the right place for it to stop
 being: item 17 says the figure is entered from the month's actions, so the rule belongs
 beside the **control**, in the additional-payments group of the next step, and not on a row
-printed at zero. `specs.md` item 17 now says so outright. **Until that group is built the
-rule is unreachable**, which is a real gap and is written here rather than discovered later.
+printed at zero. `specs.md` item 17 now says so outright. **Step 4 built that group and the
+rule is reachable again** — it stands under the tax field in words rather than behind the
+"?", because it is what the user has to know before she types. The gap was written down here
+while it stood, which is the only reason it was closed by the next step rather than found
+by the family.
 
 **Two of the review's findings were defects in this step's own work and are fixed above.**
 `specs.md` item 5 was amended to say the preview prints no column totals at all, which was
@@ -896,6 +904,155 @@ an exception to it. And the transfer rows were drawn unconditionally while the `
 them was gated, so a transfer row that moved no money would have printed under no heading
 and above a total it did not move; the whole lower half is now gated together, as the
 upper half already was.
+
+### Step 4 — the additional-payments group, and the two controls stage 4 owed
+
+The first of item 5's three groups beside the calendar, and the step that turns two recorded
+gaps into things a user can press. Both were listed at stage 4's own bullet and at the steps
+that created them, so this is the step they were waiting for:
+
+- **The control for item 20's before/after-the-total choice**, which since step 1b only the
+  seed could set.
+- **The income-tax line's control and the rule beside it** — the 2.25 credit points and item
+  26's link — which step 3 took off the preview when it stopped drawing a tax row reading
+  zero, leaving that rule reachable nowhere.
+
+**The group is named for the group and not for what is in it.** `תשלומים נוספים` is item 5's
+own "additional payments", which the criterion says holds the advances given and repaid, the
+income-tax line and the manual overrides. Two of those are built here and two are not; naming
+the card after today's contents would mean renaming it twice more.
+
+**`specs.md` moved first, and item 20 needed a decision rather than a transcription.** The
+criterion says the month screen *summarises* the user's lines — one row for those before the
+total, one for those after — and that the itemisation belongs to the export and the payments
+screen. But the group that *adds* a line is on the month screen too, and a control surface
+that hides what it has already recorded cannot be used: a user who cannot see the line she
+just added adds it a second time. The reading that resolves it is item 20's own sentence about
+the division of labour, applied one level finer: **the preview summarises and the group
+itemises**, because they answer two different questions on one screen. Item 20 now says so and
+says why. Item 17 gained two sentences: the tax is typed as what is withheld and the
+application signs it, and the rule stands beside the control in words rather than behind the
+"?" — a rule that is merely reachable is reachable by the user who already suspects there is
+something to find, which is the user who did not need it.
+
+**Removing a line takes its override with it, and that is a rule rather than plumbing.** An
+override is addressed by the line's own key (item 17) and *replaces* the calculated figure, so
+one left behind is an amount waiting to reattach itself to a line that never asked for it —
+and the line it landed on would show an amount nobody entered, marked as manual, with nothing
+on screen to say where it came from. It is `withoutUserLine` in
+`src/lib/engine/userLines.ts` and it carries five tests; the server action calls it and holds
+no rule of its own.
+
+**Four things were built and each decides on the server side of the boundary** (Part 3):
+
+- `src/lib/money.ts` — `parseShekels`, the one place a figure crosses from the interface into
+  the calculation. **It never goes through a float.** `Math.round(Number("1.005") * 100)` is
+  100 and the nearest agora to 1.005 shekels is 101, so the digits are read as digits and the
+  third decimal place decides the second. Which amounts a float gets wrong cannot be reasoned
+  about from the decimal — 12.345 comes out right and 1.005 does not — which is why there is
+  no set of "careful" figures to route around and the whole path is replaced instead.
+- `src/lib/engine/userLines.ts` — `reviewUserLine`, the pure rule for what a draft may be, and
+  `withoutUserLine`. The amount travels as the user typed it and is parsed here rather than in
+  the browser; the direction and the placement are checked against their unions, because a
+  server action is reachable by a crafted request and a stored `placement` outside the union
+  would reach `placementOf`, match neither branch, and leave the line in whichever half the
+  engine's filter happened to put it.
+- `src/app/month/actions.ts` — `setIncomeTax`, `addUserLine`, `removeUserLine`, with `recordOf`
+  added to the repository beside them. The id of a new line is minted on the server: an id is
+  the store's to give and never a caller's.
+- `src/components/MonthActions.tsx` — the card, drawn under the preview it changes and above
+  everything that is only read.
+
+**Two decisions inside it, neither reopenable without a reason:**
+
+1. **The placement chips follow the direction until she touches them.** That is
+   `defaultPlacementFor` read forwards and not a second copy of it — the default was exported
+   from `engine/types.ts` for exactly this, so the sentence that decides which side of the
+   month's total a line lands on exists once. An addition defaults to part of the month and a
+   deduction to the transfer alone (item 20), and the moment she chooses, her choice stops
+   moving.
+2. **The chips are named for what the choice does, not for the row it lands under.**
+   `חלק מהשכר של החודש` and `רק מהתשלום בסוף`, with the sentence below them naming the ברוטו
+   for the user who thinks in those terms. A chip reading "בתוך הברוטו" would name a row the
+   preview does not always draw — a month withholding nothing shows no ברוטו at all (item 17)
+   — so the chip explaining the choice would depend on which rows the collapse happened to
+   leave standing.
+
+**No artboard draws this group, and that is written into the component.** The two slice
+artboards fold the month's additions into a preview row and carry no control surface at all;
+`docs/design-pass-jobs-1-2.md` lists the missing screens as job 3. So it is built in the idiom
+the calendar's own picker established — a panel of chips that opens where it is needed and
+closes when it is answered — rather than against a drawing, and the file says so, so that
+nobody later reads it as having been checked against one.
+
+**Nothing in the calculation moved.** The 312 tests that existed before this step all still
+pass; 25 were added, and the four mutations that matter were made and caught — parsing through
+a float (1 failure, and it is the only test that catches it), storing no placement on the line
+(3), keeping the orphaned override (1), and accepting a line of zero (1).
+
+**Check — no restart needed.** This step changed no seed data, so the running `npm run dev` is
+enough. Open http://localhost:3000/month; it opens on **ספטמבר 2026**. Under the
+`החישוב של החודש` card there is now a `תשלומים נוספים` card.
+
+The figures below were derived on paper from September's calendar and the rates, and the
+engine was run afterwards to confirm them rather than to supply them. September 2026 holds
+four Saturdays, so 30 − 4 = 26 standard days; column E is 6,247.65 + 4 × 100 = ₪6,647.65 and
+column F is the four Saturdays she worked at 426.35 = ₪1,705.40, which come to **₪8,353.05**.
+The national-insurance estimate is 3.6% of that (item 19): 835,305 × 0.036 = 30,070.98
+agorot, so **₪300.71**.
+
+1. **The tax line reads `לא נוכה מס החודש`**, and under the field stands the rule in words —
+   2.25 נקודות זיכוי — with `ניכוי מס הכנסה משכר העובד/ת — באתר כל זכות` beside it. That
+   sentence is the whole of what step 3 owed: it is on screen in a month with no tax, which is
+   exactly where it had become unreachable.
+2. **Type `450` into `כמה נוכה החודש` and press `לשמור`.** The preview goes from one figure to
+   three rows and *not* to four: `ברוטו ₪8,353.05` → `מס הכנסה −₪450.00` →
+   `סך הכל תשלום לעובד/ת ₪7,903.05`, with **no `נטו` between them**. That is item 17's own
+   sentence about the lower boundary — the figure below the tax is the figure paid, and naming
+   it twice is the thing being avoided.
+3. **Clear the field and press `לשמור` again.** Back to one figure, ₪8,353.05. Zero is an
+   ordinary entry and not an empty one, which is how a tax typed by mistake comes off.
+4. **Press `להוסיף שורה`.** Type anything into `על מה`, `250` into `סכום`, and leave `תוספת`
+   selected. The placement chip already on is `חלק מהשכר של החודש`. Press `להוסיף`.
+5. The line appears in the group in your own words, and `תוספות והורדות שהוספת ₪250.00`
+   appears in the preview **above** the total, which reads ₪8,603.05. **The national-insurance
+   estimate moves to ₪309.71** — that is the whole of item 20's before/after difference, and
+   the only place on the screen it is visible.
+6. **Press `להסיר` on the line, then add the same line again with `רק מהתשלום בסוף` chosen.**
+   The total is ₪8,603.05 again, but now a `נטו ₪8,353.05` row stands above it and **the
+   estimate is back to ₪300.71**. Same money, same direction, different side of the total.
+7. **Press `הורדה` while adding a line and watch the placement chip move to `רק מהתשלום בסוף`
+   on its own** — then press `חלק מהשכר של החודש` and switch back to `תוספת`: the chip stays
+   where you put it. The default follows the direction until the user touches it, and never
+   afterwards.
+
+**What a failure looks like:** a `נטו` row in step 2, which would mean the collapse is not
+applied at the lower boundary; the estimate moving in step 6 or standing still in step 5,
+which would mean the placement is being ignored; the placement chip jumping back after step
+7's second half, which would mean the default is being applied as a rule; or a tax entered as
+`-450` being accepted.
+
+**What this step owes the next ones, and none of it is a defect:**
+
+- **A line cannot be edited, only removed and added again.** Item 20 asks that the placement
+  choice be "offered beside the line", which adding satisfies; changing an amount or a
+  direction after the fact is the manual-override step's surface and belongs with it.
+- **The lifetime choice is not offered, and it has no owner in this plan.** Item 20's three
+  choices are direction, lifetime and placement; a *standing* line is a term of the
+  employment set once on the profile, so it cannot be offered here at all — only one-off
+  lines belong to a month, which is what this group is for. **What is missing is the screen
+  that sets one.** The design table maps `דף העובד` and `הוספת עובד` to stage 3, but stage 3's
+  own bullets are the schema, the opening position and row-level security and name no
+  screen — the same gap step 7c already recorded from the other side, where the rest day
+  could not be checked because "there is no profile to change it on". Writing "the profile
+  screen is stage 3's" here would assign the debt to a step that does not exist; it is
+  recorded as unowned instead, and it is the same debt in both places.
+- **A month the store has no record of refuses the group entirely.** The action answers
+  `noMonth` and the screen draws `החודש הזה עדיין ריק` instead of the card. Creating a month
+  out of a fact entered into it is the "future month accepts facts" step, which is where that
+  belongs (item 21).
+- **The advances and the manual overrides are still owed to this group.** They are item 5's
+  own contents and each is its own step.
 
 ## Stage 5 — External data and yearly settings
 
