@@ -89,7 +89,8 @@ that appears in this file is in the wrong one.
 | `חישוב החודש`, `החודשים` | Stage 4 |
 | `דף המשכורת` | Stages 2 + 4 |
 | `העובדות`, `דף העובד`, `הוספת עובד` | Stage 3 |
-| `הגדרות`, `תשלומים` | Stages 3 + 5 |
+| `תשלומים` | Stage 4 — pulled forward; see step 6 |
+| `הגדרות` | Stages 3 + 5 |
 | `דוחות` | Stage 2 — the yearly balances file |
 | `התראות` | Stage 6 — see the reconciliation below |
 
@@ -514,18 +515,22 @@ Next.js App Router, Tailwind right-to-left, Hebrew strings in one translations f
   span's counting is clipped at the month's last day, which keeps the clock out of every
   finished month; only the live preview of the current month clips at the `today` prop.
   Closing a spell late is a correction and rides on criterion 13, already built in stage 1.
-- The three groups beside it: additional payments, third-party payments, yearly settings.
+- The three groups, which **step 6 moved off this screen**: additional payments and
+  third-party payments are the payments screen's and the yearly settings are the settings
+  screen's (item 5, corrected). The month screen is the calendar and the preview.
   **The first of them exists** (step 4), and with it the two things stage 4 had owed since
   its own earlier steps: the control for item 20's before/after-the-total choice, which
   until then only the seed could set (step 1b), and the income-tax line's control together
   with the rule beside it — the 2.25 credit points and item 26's link — which step 3 took
-  off the preview when it stopped drawing a tax row that reads zero. What that group is
-  still owed is its other half: the advances given and repaid, and the manual overrides,
-  which item 5 names as its contents alongside the tax line.
-- A free-text note on every action — **a line the user adds carries one** (step 4); the
-  marks on the calendar and the advances do not yet. Manual override of any computed
-  amount, shown as manual, is not built at all: today an override can only be seeded, and
-  it is what the next step in this group is for.
+  off the preview when it stopped drawing a tax row that reads zero. **The advances joined
+  it in step 5**, given and repaid, with what is still owed walked from the whole
+  employment. What the group is still owed is the last of item 5's four contents: the
+  manual overrides.
+- A free-text note on every action — **a line the user adds carries one** (step 4) and so
+  does an advance (step 5), which also carries the reason forward onto the debt so a later
+  month reads why it was given; the marks on the calendar do not yet. Manual override of
+  any computed amount, shown as manual, is not built at all: today an override can only be
+  seeded, and it is what the next step in this group is for.
 - A future month accepts facts and refuses export, saying which of the two it is.
 - The live preview, driven by the same engine as the export.
 
@@ -1051,8 +1056,251 @@ which would mean the placement is being ignored; the placement chip jumping back
   `noMonth` and the screen draws `החודש הזה עדיין ריק` instead of the card. Creating a month
   out of a fact entered into it is the "future month accepts facts" step, which is where that
   belongs (item 21).
-- **The advances and the manual overrides are still owed to this group.** They are item 5's
-  own contents and each is its own step.
+- **The manual overrides are still owed to this group.** They are item 5's own contents and
+  the last of them, and the step after this one. **The advances arrived in step 5.**
+
+### Step 5 — the advances, given and repaid
+
+The second half of the additional-payments group, and the first thing in this application
+whose figure cannot be read off the month it is entered in.
+
+**`specs.md` moved first, and item 20 needed four decisions rather than a transcription.**
+The criterion already said that advances are numbered and tracked one by one, that a month
+may grant one and repay another, that the amount repaid is entered per month, and that what
+is still owed is carried from the opening position. What it did not say was who mints the
+number, what happens when a repayment is more than the debt, whether a repayment may name an
+advance that had not been given yet, and what a month does with two repayments of one
+advance. All four are now in item 20 and each says why.
+
+**The number is the application's and is never typed.** It is minted one past the highest
+the worker carries, the opening position's included, so the user chooses which advance she
+is repaying from the advances she has and never has to know a number (Part 1: the option
+that requires the user to know less). It is also what the closing block's rows are addressed
+by, which is why it is never reused.
+
+**What is still owed is a fact about the whole employment**, and that is the shape of this
+step. An advance granted in February and repaid across March, April and May is one debt seen
+from four months, so `advanceLedger` walks every month the worker has from the opening
+position outwards — the same walk `calculateSeries` makes for the balances, with the same
+consequence: nothing is stored, so a repayment corrected in a past month moves what every
+later month may repay for free (item 13). The screen receives the walk already done and
+computes nothing.
+
+**Where each refusal lives, and why they are not all in one place.** Two of them need the
+whole employment, and a month `validateMonth` refuses stops the replay that produces every
+later month's balances — so an over-repayment that reached storage would close the very
+screen it would have to be corrected on. Those two are refused where the figure is entered.
+The third is a fact about one month and the engine can see it, so it is refused in both
+places, exactly as item 16's pair of third-party payments already is.
+
+**One rule with two readers.** `whyRepaymentIsRefused` answers everything settled before an
+amount is read — the advance is not hers, the month already repays it, it had not been given
+yet, nothing is left — and both the server's refusal and the screen's decision whether to
+*offer* the button at all read it. The screen deciding that for itself would have been a
+second copy of the same three sentences, one that agrees today and drifts the first time
+either is corrected. It was two copies when this step was first written, and the review is
+what turned it into one.
+
+**Four things were built:**
+
+- `src/lib/engine/advances.ts` — `advanceLedger` and the walk behind it, `nextAdvanceNumber`,
+  `reviewAdvance`, `whyRepaymentIsRefused`, `whyRemovalIsRefused`, `withoutAdvance`, and
+  `advanceKey`. All pure, all tested.
+- **`advanceKey` moved out of `month.ts`**, where it was a template string built inline. It
+  is a stored value — `MonthFacts.overrides` is keyed by it (item 17) — so the code that
+  *removes* a movement has to build the same string the engine built when it drew one, and
+  two call sites assembling it from the same two pieces is one too many. It is the same
+  argument `userLineKey` already carries.
+- `compareMonth` in `src/lib/dates.ts`, which `series.ts` had privately and the ledger needs.
+  Two modules ordering months separately is two chances for one of them to compare the month
+  before the year, which sorts December 2025 after January 2026 and produces figures that are
+  merely wrong.
+- `src/app/month/actions.ts` gained `addAdvance` and `removeAdvance`, and
+  `src/components/MonthActions.tsx` the group's third section.
+
+**A grant cannot be taken away from under a repayment, and that is this step's own
+finding.** Removing February's ₪3,000 while March and April still repay ₪1,000 each leaves an
+advance whose principal is nothing and whose repayments are ₪2,000 — the negative balance
+item 20 refuses from the other direction when it refuses over-repaying. It was missed when
+the step was written, found by the spec review, and it is the way in that is easy to miss
+because it makes the *debt* smaller rather than the repayment bigger. The repayments come off
+first, and then the grant. `AdvanceStanding.outstandingAgorot` now says what actually keeps
+it positive instead of claiming it cannot be negative.
+
+**The seed gained an opening advance for the second worker** — ₪2,000 given, ₪500 repaid, so
+₪1,500 still owed. It is the only place a debt with **no granting month** is visible, which
+is the case item 20 says may be repaid in any month, and it is why her next advance is
+numbered 2. It changes no figure in any month: an opening advance is a position, not a
+movement, and nothing in the calculation reads it.
+
+**Nothing in the calculation moved.** The 337 tests that existed before this step all still
+pass; 30 were added, and the six mutations that matter were made and caught — loosening the
+over-repayment bound by one agora (1 failure, and it is the only test that catches it), the
+ledger reading only the opening position and never the months (8), the removal rule never
+refusing (1), the removal rule comparing the standing as it is rather than as it would become
+(1), a repayment before the grant being allowed (1), and a new number filling a gap instead of
+counting past the highest (1).
+
+**One test passed for the wrong reason and was rewritten.** "The months are sorted here
+rather than trusted from the caller" was asserted with a single grant, and with one grant the
+answer is the same whatever order the months arrive in — deleting the sort broke nothing. It
+takes two grants on one number to exercise it at all, which cannot arise from this
+application and is exactly why the sort is there: the same defence against an assembled array
+that `calculateSeries` keeps for the balances. The test now uses two and fails without the
+sort.
+
+**Check — restart the dev server first, and run it on `/payments`.** The store is seeded once
+per process, so the second worker's opening advance is not there until the running
+`npm run dev` is stopped and started again. **The card this check was written against moved
+in step 6**, so open http://localhost:3000/payments rather than `/month`; it opens on
+**ספטמבר 2026** and the `תשלומים נוספים` card there ends with a `מקדמות` section. Where a
+step below says the preview moved, that is read on http://localhost:3000/month, on the same
+month.
+
+The figures below are September's from step 4, derived there on paper: ברוטו **₪8,353.05**
+and a national-insurance estimate of **₪300.71**.
+
+1. `מקדמה 1` reads `נפרעה במלואה`, with `ניתנה ₪3,000.00 · נפרעו ₪3,000.00` under it, and
+   **no `לפרוע` button** — the seed grants ₪3,000 in February and repays ₪1,000 in each of
+   March, April and May, so nothing is left. That figure is on screen in September, which is
+   the whole point: no month of it can be read off September alone.
+2. **Press `לתת מקדמה`, type `1200`, type anything into `למה`, and press `לתת`.** A
+   `מקדמה 2` appears reading `נותרו ₪1,200.00`, with your own words beside the figures, and
+   under it `מקדמה שניתנה ₪1,200.00 · נרשם החודש`. The preview goes to two levels:
+   `נטו ₪8,353.05` → `מקדמה שניתנה ₪1,200.00` → `סך הכל תשלום לעובד/ת ₪9,553.05`.
+   **The estimate stays at ₪300.71.** An advance is the same money moved in time and is
+   outside the base item 19 takes 3.6% of — this is the one place on the screen that says so.
+3. **Press `לפרוע` on `מקדמה 2`, type `500`, press `לפרוע`.** `סך הכל תשלום לעובד/ת` falls to
+   **₪9,053.05**, `מקדמה 2` reads `נותרו ₪700.00`, and **the `לפרוע` button is gone** — one
+   repayment per advance per month, entered as one summed figure (item 20).
+4. **Press `להסיר` on the repayment.** `נותרו` goes back to ₪1,200.00 and `לפרוע` comes back.
+   Now press `לפרוע` and type `1300`: it is refused with
+   `הסכום גדול ממה שנותר לפרוע מהמקדמה…` and no figure moves.
+5. **Press `להסיר` on `מקדמה שניתנה` — it works, because nothing repays it.** Now give it
+   again, repay ₪500 of it, and press `להסיר` on the grant: it is refused with
+   `כבר נרשמו פירעונות של המקדמה הזו…`. That is the negative balance being refused before it
+   can exist.
+6. **Press `‹` back to אוגוסט 2026.** `מקדמה 2` is listed there too, with what is still owed
+   — a debt belongs to the worker and not to a month — but **there is no `לפרוע` button**,
+   because it was given in September and August is before it. August's own three figures are
+   unchanged: `ברוטו ₪9,205.75` → `מס הכנסה −₪450.00` → `נטו ₪8,755.75` → `−₪200.00` →
+   `סך הכל תשלום לעובד/ת ₪8,555.75`.
+7. **Switch worker with the left arrow in the top bar and go to ינואר 2026.** `מקדמה 1` reads
+   `נותרו ₪1,500.00`, with `ניתנה ₪2,000.00 · נפרעו ₪500.00 · מלפני תחילת השימוש ביישום`, and
+   `לפרוע` **is** offered — in January, the first month she has. An advance carried in from
+   the opening position was given before the application existed, so no month is too early
+   for it. Press `לתת מקדמה` there and the new one is `מקדמה 2` and not `מקדמה 1`: the number
+   counts past what she already carries.
+
+**What a failure looks like:** the estimate moving in step 2, which would mean an advance is
+reaching item 19's base; a `לפרוע` button on a settled advance, or on `מקדמה 2` in August;
+the second worker's first advance numbered 1; `נותרו` not moving when a repayment is removed,
+which would mean the debt is being stored rather than walked; or a grant removable while a
+repayment stands against it.
+
+**One thing found while writing the check, and it is not this step's to settle.** Grant
+₪1,200 and repay ₪1,200 in the same month and the preview draws `נטו ₪8,353.05`, the two
+rows, and `סך הכל תשלום לעובד/ת ₪8,353.05` — the same figure twice, which item 17's collapse
+rule says should not happen. Step 3's gate asks whether any row below the level is non-zero,
+not whether the rows *come to* something, and the two readings differ only when rows cancel
+exactly. The row-based reading is the one that keeps both movements on screen: summing would
+hide two payments the family actually made, and a preview that drops a payment is worse than
+one that prints a figure twice. It is left as it is and written down here rather than changed
+inside a step about advances.
+
+### Step 6 — the groups leave the calendar, and `/payments` exists
+
+Asked for by the user on 2026-09-04 in one sentence, while step 5 was being read: what the
+`תשלומים נוספים` card was showing belongs to `/payments`. `specs.md` moved first, and it was
+a correction rather than a transcription — item 5 had said, from the beginning, that three
+groups sit *beside the calendar*.
+
+**The canvas already agreed and nobody had opened it.** `EaseSalary - תשלומים.dc.html` draws
+a `מקדמות` section — `לרשום מקדמה חדשה`, `לעדכן פירעון`, and what is repaid out of what —
+beside the third-party payments, and it has done since the batch of edits read here on
+2026-09-04. It is the same class of thing the design pass found twice before: this file
+asserted a placement for months and the drawing said otherwise. The artboard does **not**
+draw the income-tax field or the user's own lines, which `docs/design-pass-jobs-1-2.md`
+already lists among job 3's missing screens, so those two sections keep the idiom the
+calendar's picker established and the component says so.
+
+**What item 5 now says, and why it is the better rule and not only the user's.** The month
+screen answers "what did this month come to", and every one of the three groups is a place
+where something is *recorded* — so two of them are the payments screen's and the yearly
+settings are the settings screen's, which is also where the nav has always pointed. A
+calendar with four control surfaces around it asks the user to find the right one before she
+can answer the question she arrived with. What stays beside the calendar is the preview,
+which summarises (item 20), and the summary is the thing that sends her to the screen that
+itemises.
+
+**The one decision this needed, and it was the user's** (asked and answered on 2026-09-04):
+**the payments screen is scoped to one worker and one month**, and carries the same month
+control the calendar does. Two of the things it records are facts about a month rather than
+dated payments — what income tax was withheld, and a line the user added — so a screen that
+could not say *which* month could not record them at all. The alternative considered was a
+list across months keyed off a payment's own date, which is closer to the artboard's own
+closing sentence but leaves the income tax with no home, since a withholding is not a dated
+payment. Item 5 records the choice and the reason.
+
+**Nothing about the group itself changed.** `MonthActions` moved screens and kept its shape,
+its actions and its rules; the actions stayed in `src/app/month/actions.ts`, because what
+they change is a *month* — `incomeTaxAgorot`, `userLines` and `advances` are fields of
+`MonthFacts` — and filing them by which button presses them rather than by what they write
+would be the wrong axis.
+
+**Two things were extracted rather than copied, and each is a rule that must not exist
+twice:**
+
+- `MonthStepper` — back a month, to this month, forward a month. Two screens each drawing
+  their own would be two places for "forward" to stop meaning the same thing, in a layout
+  where the arrow that means *forward in time* is the one on the **left** (`CLAUDE.md`).
+- `openingMonthOf` — which month a screen opens on. The month screen and the payments screen
+  reading the same store must not open on different months, and they would have the moment
+  either rule was corrected alone.
+
+**`/payments` runs no engine, and that is the shape of the split.** Nothing on it is a
+derived figure: the amounts are the ones the user typed, and the one walked figure — what is
+still owed on an advance — is a sum of typed amounts and not a rate applied to anything. So
+the route reads facts and calculates nothing, and what the entries come to is `/month`'s
+answer, from the one calculation path that also fills the export (Part 3). The advance ledger
+moved to the payments route with the group; the month route no longer walks it.
+
+**Nothing in the calculation moved.** All 368 tests still pass and none was added: this step
+changed which screen draws a control and no rule about what it records.
+
+**Check — the same restart step 5 asks for, and then both screens.**
+
+1. **http://localhost:3000/payments.** `תשלומים` is the active tab in the top bar. The screen
+   opens on **ספטמבר 2026**, named at the top beside a `‹ החודש ›` stepper, over one column
+   holding `תשלומים נוספים` with its three sections — `מס הכנסה`, `תוספות והורדות שהוספת`,
+   `מקדמות`. Step 5's check runs here, in full.
+2. **http://localhost:3000/month.** The `תשלומים נוספים` card is **gone**. What is left is the
+   calendar, `החישוב של החודש` closing on `סך הכל תשלום לעובד/ת ₪8,353.05`, and
+   `יתרות אחרי החודש הזה`. The calendar still marks: click the 20th, then the 22nd, choose
+   `חופשה`, and the balance falls from 15.50 to 12.50 — the month screen lost a card and no
+   gesture.
+3. **The two screens agree about which month they are on.** On `/payments` press `‹` to
+   **אוגוסט 2026** and type `450` into `כמה נוכה החודש`. Then open `/month` and press `‹` to
+   August: `ברוטו ₪9,205.75` → `מס הכנסה −₪450.00` → `נטו ₪8,755.75` → `−₪200.00` →
+   `סך הכל תשלום לעובד/ת ₪8,555.75`. That is the whole of the split working — recorded on one
+   screen, calculated on the other, one store between them.
+4. **The month follows the worker and not the other way round.** On `/payments`, press the
+   left arrow of the worker switcher in the top bar: the month stays where it was and the
+   `מקדמות` section changes to hers — `מקדמה 1 · נותרו ₪1,500.00 · מלפני תחילת השימוש ביישום`.
+
+**What a failure looks like:** the `תשלומים נוספים` card still on `/month`; `/payments`
+opening on a different month from `/month` against the same store; the stepper's `‹` moving
+*forward* in time on either screen; or August's tax typed on one screen not reaching the
+other's figures.
+
+**What this step owes the next ones.** `/payments` holds one of its two groups. **The
+third-party payments** — national insurance, medical insurance, the fees (item 16) — are the
+other, and they are the artboard's own `ממתין לתשלום` and `לקראת החודשים הבאים` sections; they
+are the next step. The manual overrides join the additional-payments group in their own step,
+as step 4 already recorded. And the artboard's advances section draws a progress bar and names
+the date an advance was given, neither of which is built: what is on screen is the same three
+figures in words. That is a departure from a drawing and is written down here rather than left
+to be found.
 
 ## Stage 5 — External data and yearly settings
 

@@ -1,5 +1,6 @@
 import { restEveOf, SATURDAY, SUNDAY, THURSDAY, FRIDAY } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import type { AdvanceKind } from "@/lib/engine/types";
 import { formatDays } from "@/lib/money";
 
 /**
@@ -325,6 +326,22 @@ export const he = {
   /** The month screen: the calendar, and the preview of what the month comes
    * to. The preview and the export are one engine's output shown twice, so
    * nothing here names a figure — only the rows it is shown in. */
+  /**
+   * The payments screen (specs.md item 5). It is where everything that *records*
+   * a payment lives — the additional payments and, in its own step, the payments
+   * to third parties — while the month screen answers what the month came to.
+   *
+   * The lead says what the screen is for rather than what is on it, because a
+   * user arrives here from a summarised row on the month screen and the first
+   * thing she needs to know is that this is where that row is made.
+   */
+  payments: {
+    title: "תשלומים",
+    lead: "כאן נרשם כל מה שאינו נגזר מהלוח — מקדמות, מס הכנסה, ותוספות והורדות משלך. החישוב עצמו נמצא בדף החודש, והשורות האלה נכנסות אליו.",
+    /** The screen records one month at a time, so it says which (item 5). */
+    forMonth: "החודש שנרשם",
+  },
+
   month: {
     /** A month the store has no record of. It is not an error and not an empty
      * result — nothing has been entered yet, which for a month ahead of the
@@ -375,10 +392,12 @@ export const he = {
     },
 
     /**
-     * The first of the three groups beside the calendar — additional payments
-     * (specs.md item 5). It holds the income-tax line and the lines the user
-     * adds; the advances and the manual overrides join it in their own steps,
-     * which is why it is named for the group and not for what is in it today.
+     * The additional-payments group on the payments screen — the first of item
+     * 5's three groups, and not beside the calendar: the month screen answers
+     * what the month came to and everything that *records* something lives on
+     * `/payments`. It holds the income-tax line, the lines the user adds and the
+     * advances; the manual overrides join them in their own step, which is why
+     * it is named for the group and not for what is in it today.
      */
     actions: {
       title: "תשלומים נוספים",
@@ -446,13 +465,77 @@ export const he = {
             "משנה רק את הסכום שמועבר בסוף החודש, ולא את הברוטו ולא את הערכת הביטוח הלאומי.",
         },
       },
+      /**
+       * The advances, given and repaid (specs.md item 20).
+       *
+       * **The number is the application's and the user never types one**, so
+       * every sentence here names an advance by a number she reads rather than
+       * one she has to remember — and a repayment is chosen from the advances
+       * she has rather than typed against a number.
+       */
+      advances: {
+        title: "מקדמות",
+        empty: "לא נרשמו מקדמות.",
+        /** The number is written into the sentence because it is what the
+         * workbook calls the advance and what the salary sheet's own row says
+         * (item 20). */
+        name: (advanceNumber: number) => `מקדמה ${advanceNumber}`,
+        given: "ניתנה",
+        repaid: "נפרעו",
+        outstanding: "נותרו",
+        settled: "נפרעה במלואה",
+        /** Given before the application existed, so no month granted it
+         * (item 6) — and so no month is too early to repay it in. */
+        fromOpening: "מלפני תחילת השימוש ביישום",
+        grant: "לתת מקדמה",
+        repay: "לפרוע",
+        repayLabel: (advanceNumber: number) =>
+          `לרשום פירעון של מקדמה ${advanceNumber}`,
+        /** This month's own movements, listed under the advances they belong to
+         * — the group itemises what the preview summarises (item 20). */
+        thisMonth: "נרשם החודש",
+        movement: {
+          granted: "מקדמה שניתנה",
+          repaid: "מקדמה שנפרעה",
+        },
+        amount: "סכום",
+        note: "למה",
+        noteHint: "לא חובה, אבל זה מה שיסביר את השורה בעוד שנה",
+        submitGrant: "לתת",
+        submitRepay: "לפרוע",
+        cancel: "ביטול",
+        remove: "להסיר",
+        removeLabel: (advanceNumber: number, kind: AdvanceKind) =>
+          kind === "granted"
+            ? `להסיר את מקדמה ${advanceNumber} שניתנה החודש`
+            : `להסיר את הפירעון של מקדמה ${advanceNumber} החודש`,
+      },
       /** A refusal carries the reason it was refused (specs.md item 25). Each
-       * is the sentence shown to the user, not a code written to a log. */
+       * is the sentence shown to the user, not a code written to a log.
+       *
+       * **None of the refusals here carries a link, and that is item 25's own
+       * rule and not an omission**: each is about the *form* of an entry — an
+       * amount that is not one, a second row where the sheet holds one, more
+       * than the debt — and nothing in law says any of them, so they owe the
+       * user the reason and not a reference to a page that would not mention
+       * what stopped her. The engine's own `sheet.refusals` are the other case
+       * and do carry one.
+       */
       refused: {
         label: "צריך לכתוב על מה השורה.",
         amount: "צריך סכום — מספר גדול מאפס, בלי מינוס.",
         shape: "משהו בבחירה לא נקלט. כדאי לבחור שוב ולנסות.",
         noMonth: "אין עדיין רישום לחודש הזה, ולכן אי אפשר להוסיף לו שורות.",
+        advanceUnknown:
+          "המקדמה הזו כבר לא קיימת. כדאי לרענן את הדף ולבחור מחדש.",
+        advanceNotYetGiven:
+          "המקדמה הזו ניתנה אחרי החודש הזה, ולכן אי אפשר לפרוע אותה בו.",
+        advanceRecordedTwice:
+          "כבר נרשם החודש פירעון של המקדמה הזו. אפשר להסיר אותו ולרשום סכום אחד מסוכם במקומו.",
+        advanceOverRepaid:
+          "הסכום גדול ממה שנותר לפרוע מהמקדמה. פירעון מעבר לחוב אינו מקדמה — אם נוכה סכום נוסף, אפשר לרשום אותו כהורדה בשורה משלך.",
+        advanceRepaidAlready:
+          "כבר נרשמו פירעונות של המקדמה הזו, ולכן אי אפשר להסיר אותה עכשיו — היו נשארים החזרים של חוב שאינו קיים. צריך להסיר קודם את הפירעונות, ואז את המקדמה עצמה.",
       },
     },
   },
@@ -651,6 +734,16 @@ export const he = {
         "בתאריך הזה נרשמו שני סימונים. יום אחד לא יכול להיות גם יום שנעבד וגם יום שלא נעבד, ואי אפשר לספור אותו פעמיים. היישום אינו יודע מה מבין השניים קרה, ולכן הוא עוצר ומבקש שתחליט/י — במקום לבחור לבד ולהראות סכום שנראה רגיל לגמרי.",
       thirdPartyPaidTwice: (paymentType: string) =>
         `נרשמו שני תשלומים מסוג ${paymentType} באותו חודש. דף המשכורת מחזיק שורה אחת לכל סוג תשלום, ושתי שורות באותו שם אי אפשר לעדכן או להסביר בנפרד. אפשר לרשום אותם כתשלום אחד מסוכם, או לבחור סוג אחר לאחד מהם.`,
+      /**
+       * Two movements of one kind on one advance in a month (specs.md item 20).
+       * It says the same thing `thirdPartyPaidTwice` says, because it is the
+       * same rule: two rows under one key can be neither overridden nor
+       * explained apart, and the answer is one summed figure.
+       */
+      advanceRecordedTwice: (advanceNumber: number, kind: AdvanceKind) =>
+        kind === "granted"
+          ? `מקדמה מספר ${advanceNumber} נרשמה פעמיים כמקדמה שניתנה באותו חודש. אפשר לרשום אותה כסכום אחד מסוכם.`
+          : `נרשמו שני החזרים של מקדמה מספר ${advanceNumber} באותו חודש. דף המשכורת מחזיק שורה אחת לכל החזר בחודש, ושתי שורות באותו שם אי אפשר לעדכן או להסביר בנפרד. אפשר לרשום אותן כהחזר אחד מסוכם.`,
       sickBalanceExhausted: (available: number, requested: number) =>
         `נרשמו ${formatDays(requested)} ימי מחלה, ובמאזן יש ${formatDays(available)} בלבד. יתרת המחלה אינה יורדת מתחת לאפס, ולכן אי אפשר לרשום מעבר לה. ימים מעבר ליתרה הם היעדרות ללא זכאות, וזה מצב שהיישום עדיין אינו יודע לחשב — עדיף לומר זאת מאשר לשלם או לנכות עליהם בשקט.`,
     },

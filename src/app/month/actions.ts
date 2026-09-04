@@ -3,14 +3,21 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getRepository } from "@/lib/dev/store";
+import {
+  advanceLedger,
+  reviewAdvance,
+  whyRemovalIsRefused,
+  withoutAdvance,
+} from "@/lib/engine/advances";
+import type { AdvanceDraft, AdvanceRefusal } from "@/lib/engine/advances";
 import { recordOf } from "@/lib/engine/repository";
 import type { MonthRecord } from "@/lib/engine/repository";
-import type { MonthSpan } from "@/lib/engine/types";
+import type { AdvanceKind, MonthSpan } from "@/lib/engine/types";
 import { reviewUserLine, withoutOneOffUserLine } from "@/lib/engine/userLines";
 import type { UserLineDraft, UserLineRefusal } from "@/lib/engine/userLines";
 import { parseShekels } from "@/lib/money";
 import { applyMark, endOf, type MarkIntent, type SkippedDay } from "@/lib/spans";
-import { compareIsoDate, orderDates } from "@/lib/dates";
+import { compareIsoDate, orderDates, sameMonth } from "@/lib/dates";
 import type { DaySpan, IsoDate, YearMonth } from "@/lib/types";
 
 /**
@@ -127,7 +134,13 @@ export async function setHolidayWorked(
 }
 
 /**
- * The additional-payments group's three actions (specs.md items 5, 17, 20).
+ * The additional-payments group's actions (specs.md items 5, 17, 20).
+ *
+ * **They live in this file and the group they serve is on `/payments`**, which
+ * is deliberate: what they change is a *month* — `incomeTaxAgorot`, `userLines`
+ * and `advances` are all fields of `MonthFacts` — and they revalidate the route
+ * that draws the consequences. Moving them beside the screen that calls them
+ * would file them by which button presses them rather than by what they write.
  *
  * **Every one of them decides on the server**, for the reason the marking
  * actions already give: an action is reachable by a crafted request, and the
@@ -142,7 +155,7 @@ export async function setHolidayWorked(
  * one the user cannot cause by typing: it is a page held open over a month the
  * store has no record of, which until the future-month step exists is any month
  * outside the seeded range. */
-export type MonthActionRefusal = UserLineRefusal | "noMonth";
+export type MonthActionRefusal = UserLineRefusal | AdvanceRefusal | "noMonth";
 
 export type MonthActionResult =
   | { ok: true }
@@ -228,5 +241,83 @@ export async function removeUserLine(
 ): Promise<MonthActionResult> {
   return changeMonth(workerId, month, (record) =>
     withoutOneOffUserLine(record, lineId),
+  );
+}
+
+/**
+ * An advance given, or an instalment of one repaid (specs.md item 20).
+ *
+ * **The whole of the worker's history is read before the figure is accepted**,
+ * because what is still owed is a fact about the employment and not about the
+ * month being edited: an advance granted in February and repaid across March,
+ * April and May is one debt, and the month on screen can see none of it. The
+ * number a grant gets is minted from that same walk, so it is one past the
+ * highest the worker carries and is never the caller's to choose.
+ *
+ * The two refusals that need the walk — more than is owed, and a repayment
+ * before the advance was given — live here and not in `validateMonth`, for the
+ * reason item 20 gives: a month the engine refuses stops the replay that
+ * produces every later month's balances, so an over-repayment that reached
+ * storage would close the screen it would have to be corrected on.
+ */
+export async function addAdvance(
+  workerId: string,
+  month: YearMonth,
+  draft: AdvanceDraft,
+): Promise<MonthActionResult> {
+  const repository = getRepository();
+  const profile = await profileOf(workerId);
+  const months = await repository.listMonths(workerId);
+  const facts = months.find((candidate) => sameMonth(candidate.month, month));
+  if (facts === undefined) return { ok: false, reason: "noMonth" };
+
+  const reviewed = reviewAdvance(draft, {
+    ledger: advanceLedger(profile.openingPosition, months),
+    monthAdvances: facts.advances,
+    month,
+  });
+  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+  return changeMonth(workerId, month, (record) => ({
+    ...record,
+    advances: [...record.advances, reviewed.advance],
+  }));
+}
+
+/**
+ * A movement removed, **and any amount the user typed over it removed with it**
+ * (specs.md items 17, 20) — the same rule `removeUserLine` follows, and for the
+ * same reason: an override left behind is an amount waiting to reattach itself
+ * to a row that never asked for it.
+ *
+ * **It reads the whole history too, because removing a grant can be refused.**
+ * A grant is what makes the debt, so taking February's away while March still
+ * repays it would leave repayments of a debt that never existed — the negative
+ * balance item 20 refuses from the other direction when it refuses
+ * over-repaying. The repayments come off first, and only then the grant.
+ */
+export async function removeAdvance(
+  workerId: string,
+  month: YearMonth,
+  advanceNumber: number,
+  kind: AdvanceKind,
+): Promise<MonthActionResult> {
+  const repository = getRepository();
+  const profile = await profileOf(workerId);
+  const months = await repository.listMonths(workerId);
+  const facts = months.find((candidate) => sameMonth(candidate.month, month));
+  if (facts === undefined) return { ok: false, reason: "noMonth" };
+
+  const ledger = advanceLedger(profile.openingPosition, months);
+  const refused = whyRemovalIsRefused(
+    ledger.find((standing) => standing.number === advanceNumber),
+    facts.advances.find(
+      (advance) => advance.number === advanceNumber && advance.kind === kind,
+    ),
+  );
+  if (refused !== null) return { ok: false, reason: refused };
+
+  return changeMonth(workerId, month, (record) =>
+    withoutAdvance(record, advanceNumber, kind),
   );
 }

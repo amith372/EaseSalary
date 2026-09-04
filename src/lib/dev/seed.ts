@@ -88,7 +88,17 @@ const secondWorker: WorkerProfile = {
   recuperationMonth: 3,
   standingLines: [],
   country: "IN",
-  openingPosition: { vacationDays: 4, sickDays: 6, advances: [] },
+  openingPosition: {
+    vacationDays: 4,
+    sickDays: 6,
+    // An advance still being repaid when the application took the employment
+    // over: ₪2,000 given, ₪500 of it already repaid, so ₪1,500 is still owed
+    // (specs.md item 6 — the family states this once). It is the only place a
+    // debt with **no granting month** is visible, which is the case item 20
+    // says may be repaid in any month, and it is why the second worker's next
+    // advance is numbered 2 rather than 1.
+    advances: [{ number: 1, principalAgorot: 200000, repaidAgorot: 50000 }],
+  },
 };
 
 export const devWorkers: WorkerProfile[] = [firstWorker, secondWorker];

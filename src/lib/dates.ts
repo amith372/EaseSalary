@@ -120,6 +120,18 @@ export function addMonths(ym: YearMonth, months: number): YearMonth {
   return { year: Math.floor(zeroBased / 12), month: (zeroBased % 12) + 1 };
 }
 
+/**
+ * Negative when the month `a` falls before the month `b`.
+ *
+ * Written here beside `compareIsoDate` rather than in each caller, because two
+ * modules ordering months separately is two chances for one of them to compare
+ * the month before the year — which sorts December 2025 after January 2026 and
+ * produces balances and ledgers that are merely wrong.
+ */
+export function compareMonth(a: YearMonth, b: YearMonth): number {
+  return a.year - b.year || a.month - b.month;
+}
+
 /** Negative when `a` falls before `b`. ISO dates sort lexicographically, which
  * is the whole reason the application holds them as strings. */
 export function compareIsoDate(a: IsoDate, b: IsoDate): number {

@@ -9,6 +9,11 @@ import { todayInIsrael } from "@/lib/today";
  * The month screen's route, and the only place in the application where the
  * store and the engine meet a request.
  *
+ * **It reads and does not record** (specs.md item 5). Everything that enters a
+ * payment — the advances, the income tax, the lines the user adds — is the
+ * payments screen's, and this route shows what those come to; the two are one
+ * calculation seen from its two ends and never two calculations.
+ *
  * **The salary is worked out here and never in the browser** (`specs.md`
  * Part 3): the page reads the household's facts, replays each worker's months
  * from her opening position, and hands the calculated months down. The client
@@ -35,19 +40,22 @@ export default async function MonthPage() {
   const workers = await repository.listWorkers();
 
   const household: WorkerMonths[] = await Promise.all(
-    workers.map(async (profile) => ({
-      worker: {
-        id: profile.id,
-        name: profile.name,
-        firstName: profile.firstName,
-      },
-      restDay: profile.restDay,
+    workers.map(async (profile) => {
       // The whole of her history, because a month's opening balances are the
       // previous month's closing ones and balances are never stored (item 13).
       // `today` reaches every month and only the one still running is clipped
       // by it (item 8).
-      months: calculateSeries(await repository.listMonths(profile.id), profile, today),
-    })),
+      const months = await repository.listMonths(profile.id);
+      return {
+        worker: {
+          id: profile.id,
+          name: profile.name,
+          firstName: profile.firstName,
+        },
+        restDay: profile.restDay,
+        months: calculateSeries(months, profile, today),
+      };
+    }),
   );
 
   return <MonthScreen household={household} today={today} />;

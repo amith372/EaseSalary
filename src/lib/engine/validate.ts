@@ -4,6 +4,7 @@ import {
   isRestDay,
   orderDates,
 } from "@/lib/dates";
+import { duplicateAdvanceMovements } from "@/lib/engine/advances";
 import { daysUsedIn, sickDaysAvailable } from "@/lib/engine/balances";
 import { holidayAllowanceFor, holidayDaysOf } from "@/lib/engine/leave";
 import {
@@ -68,7 +69,22 @@ export type RefusalCode =
   | "thirdPartyPaidTwice"
   /** More sick days recorded in the month than the balance can fund. The sick
    * balance is a floor and never falls below zero (specs.md item 8). */
-  | "sickBalanceExhausted";
+  | "sickBalanceExhausted"
+  /**
+   * Two movements of one kind on one advance in a single month (specs.md item
+   * 20). The two rows would be addressed by one key, so neither could be
+   * overridden or explained apart from the other (items 17, 24) — the same
+   * shape, and the same reason, as `thirdPartyPaidTwice`.
+   *
+   * **The other two advance rules are not here, and their absence is the
+   * decision.** What is still owed can only be counted by walking the worker's
+   * months, and a month this function refuses stops the replay that produces
+   * every later month's balances (item 13) — so an over-repayment that reached
+   * storage would close the very screen it would have to be corrected on. Item
+   * 20 puts those two refusals where the figure is entered instead. This one is
+   * a fact about one month, which is what makes it safe to see here.
+   */
+  | "advanceRecordedTwice";
 
 export interface Refusal {
   code: RefusalCode;
@@ -105,6 +121,12 @@ const LINK_FOR: Record<
   holidayLimit: "holidayWork",
   freeRestDayNotRestDay: "restDayWork",
   sickBalanceExhausted: "sickPay",
+  // An advance rests on no legal rule, so what this refusal points at is the
+  // rule it would breach: the payslip has to show every payment as its type,
+  // its number of units and its amount (item 2), which two rows sharing one key
+  // cannot do. That is item 25's own test — the link of the *action* refused,
+  // and the action was recording a row on the sheet.
+  advanceRecordedTwice: "wageProtection",
 };
 
 /**
@@ -317,6 +339,20 @@ export function validateMonth(
       dates: facts.spans
         .filter((span) => span.kind === "sick")
         .map((span) => span.from),
+    });
+  }
+
+  // Two movements of one kind on one advance. The pair shares a key, so an
+  // override could not reach one without reaching the other (items 17, 24) —
+  // the same rule item 16 states for two third-party payments of one kind, and
+  // answered the same way: the two are entered as one summed figure.
+  for (const [advanceNumber, kind] of duplicateAdvanceMovements(facts.advances)) {
+    refusals.push({
+      code: "advanceRecordedTwice",
+      message: he.sheet.refusals.advanceRecordedTwice(advanceNumber, kind),
+      // A movement carries no date of its own; what it concerns is an advance.
+      dates: [],
+      link: LINK_FOR.advanceRecordedTwice,
     });
   }
 

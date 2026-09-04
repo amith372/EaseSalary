@@ -1,4 +1,5 @@
 import type { RestDay } from "@/lib/dates";
+import { advanceKey } from "@/lib/engine/advances";
 import { buildBalances, buildWarnings } from "@/lib/engine/balances";
 import { countMonth, type MonthCounts } from "@/lib/engine/counts";
 import {
@@ -383,7 +384,7 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
 
   for (const advance of facts.advances) {
     const granted = advance.kind === "granted";
-    const key = `advance.${advance.number}.${advance.kind}`;
+    const key = advanceKey(advance.number, advance.kind);
     const override = facts.overrides[key];
     const agorot = override ? override.agorot : Math.abs(advance.agorot);
     rows.push({

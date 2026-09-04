@@ -104,11 +104,27 @@ Each of these is true or false at a glance.
     and if it fell on a rest-eve the supplement, and if on a rest day the rest-day
     pay. A free rest day is not an entitlement and a month without
     one is unremarkable.
-    Beside the calendar sit three groups: additional payments (advances given and
-    repaid, the income-tax line, the lines the user adds of her own (item 20), and
-    manual overrides), payments to third parties (national
-    insurance, medical insurance, fees), and yearly settings (the nine holidays, the
-    recuperation month). Every action can carry a free-text note.
+    **The month screen is the calendar and what the month came to, and nothing that
+    records a payment.** Three groups carry the rest, and each is a screen of its own
+    rather than a card beside the calendar: **additional payments** — the advances
+    given and repaid, the income-tax line, the lines the user adds of her own (item
+    20) and the manual overrides — and **payments to third parties** — national
+    insurance, medical insurance, fees — are both the payments screen's, and **yearly
+    settings** — the nine holidays, the recuperation month — are the settings
+    screen's. Every action can carry a free-text note.
+    This was once written as three groups beside the calendar and is corrected here
+    rather than argued with, because the reason is what the screens are *for*: the
+    month screen answers "what did this month come to", and every one of those groups
+    is a place where something is *recorded*. A calendar with four control surfaces
+    around it asks the user to find the right one before she can answer a question she
+    came with. What stays beside the calendar is the preview, which summarises (item
+    20) — and the summary is the thing that sends her to the screen that itemises.
+    **The payments screen is scoped to one worker and to one month**, and carries the
+    same month control the calendar does. Two of the things it records are facts about
+    a month and not dated payments — what income tax was withheld, and a line the user
+    added — so a screen that could not say *which* month could not record them at all;
+    and a screen holding two ways of choosing a month, one for the dated payments and
+    one for the rest, would be two answers to a question the user asks once.
     **The month's preview reads by kind, not by the sheet's columns.** The rest-eve
     supplement, the work on a rest day and the worked holiday are shown together, because
     to the family they are one thing — what the days of the week added to an ordinary
@@ -532,14 +548,14 @@ Each of these is true or false at a glance.
     addition after the total is a payment that is not part of the month's cost, and a
     deduction before it is one the wage itself is meant to be net of.
 
-    **The month's preview summarises them; the group that adds them itemises them, and the
-    export and the payments screen do too.** The preview and the group are two surfaces on
-    one screen and they answer two questions. The preview answers "what did this month come
-    to", which nine rows answer worse than one. The group beside the calendar is where the
-    lines are *made*, and a control surface that hides what it has already recorded cannot
-    be used — a user who cannot see the line she just added adds it a second time. So the
-    group lists this month's own lines, each with its reason, its direction and the side of
-    the total it sits on, and each can be removed from there. **Removing a line takes any
+    **The month's preview summarises them and the payments screen itemises them, and so
+    does the export.** The two answer different questions and now sit on different screens
+    (item 5). The preview answers "what did this month come to", which nine rows answer
+    worse than one. The payments screen is where the lines are *made*, and a control
+    surface that hides what it has already recorded cannot be used — a user who cannot see
+    the line she just added adds it a second time. So it lists that month's own lines, each
+    with its reason, its direction and the side of the total it sits on, and each can be
+    removed from there. **Removing a line takes any
     manual override on it away with it** (item 17): an override is addressed by the line's
     own key, and a key with nothing behind it is an amount waiting to reattach itself to a
     line that never asked for it.
@@ -571,6 +587,46 @@ Each of these is true or false at a glance.
     each on its own line, the amount repaid is entered for the month rather than fixed by
     a schedule, and what is still owed is carried from the opening position (item 6). A
     repayment that varies month by month is exactly what a standing line cannot express.
+
+    **The number is the application's and is never typed.** It is minted in order — one
+    past the highest the worker already carries, the opening position's included — so the
+    user chooses which advance she is repaying from the advances she has, and never has to
+    know or remember a number (Part 1: the option that requires the user to know less). It
+    is the workbook's own number and it is what the closing block's rows are addressed by,
+    so it belongs to the worker for the life of the employment and is never reused.
+
+    **What is still owed is a fact about the whole employment and not about a month.** It
+    is the advance's principal less every repayment recorded against it in any month, which
+    is why it cannot be read off the month being edited: a repayment entered in June is
+    still a repayment of an advance granted in February. From it follow three refusals, and
+    each says which:
+
+    - **A repayment may not exceed what is still owed.** Over-repaying is not an advance
+      at all — money withheld beyond the debt is a deduction, which item 20's own lines
+      already express — and an advance that has been repaid twice over leaves a negative
+      balance no screen has a way to name.
+    - **A repayment may not name an advance that had not been given yet.** The month it
+      was granted in is the first month it can be repaid in; an advance carried in from the
+      opening position was given before the application existed and may be repaid in any
+      month.
+    - **One movement of a kind per advance per month.** Two repayments of one advance in a
+      single month are entered as one summed repayment, which is what item 16 already says
+      for two payments of one kind to a third party, and for the same reason: the two rows
+      would share a key, so neither could be overridden or explained apart from the other
+      (items 17, 24).
+
+    **The first two are refused where the figure is entered and not inside the month's
+    calculation**, which is the one place this differs from item 16's pair. What is owed
+    can only be counted by walking the worker's months, and a month refused by the engine
+    stops the replay that produces every later month's balances (item 13) — so an
+    over-repayment that reached storage would close the screen it would have to be
+    corrected on. The third is refused in both places, because it is a fact about one month
+    and the engine can see it.
+
+    **Removing a movement takes any override on it away with it**, for the reason already
+    given above for a line the user added: an override is addressed by the row's own key
+    (item 17), and one left behind is an amount waiting to reattach itself to a row that
+    never asked for it.
 21. A future month can be filled in ahead of time through the calendar, but it can only
     be exported once it has ended.
 22. Reading the identifying columns straight out of the database shows unreadable values;

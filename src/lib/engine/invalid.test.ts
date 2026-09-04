@@ -27,7 +27,10 @@ const terms: WorkerTerms = {
   openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
 };
 
-function facts(spans: ClosedSpan[]): ClosedMonthFacts {
+function facts(
+  spans: ClosedSpan[],
+  extras: Partial<Pick<ClosedMonthFacts, "advances">> = {},
+): ClosedMonthFacts {
   return {
     terms: snapshotTerms(terms),
     month: { year: 2025, month: 8 },
@@ -42,6 +45,7 @@ function facts(spans: ClosedSpan[]): ClosedMonthFacts {
     userLines: [],
     incomeTaxAgorot: 0,
     overrides: {},
+    ...extras,
   };
 }
 
@@ -330,5 +334,58 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
     ).map((r) => r.code);
     expect(codes).toContain("restDayHoliday");
     expect(codes).not.toContain("dayRecordedTwice");
+  });
+});
+
+/**
+ * Two movements of one kind on one advance in a single month (specs.md item
+ * 20). The engine sees it because it is a fact about one month; what it does
+ * *not* see is what is still owed, which needs the whole employment and is
+ * refused where the figure is entered instead.
+ */
+describe("two movements of one kind on one advance", () => {
+  it("is refused, and a grant beside a repayment is not", () => {
+    const twice = validateMonth(
+      facts([], {
+        advances: [
+          { number: 1, kind: "repaid", agorot: 100000 },
+          { number: 1, kind: "repaid", agorot: 50000 },
+        ],
+      }),
+      terms,
+    );
+    expect(twice.map((refusal) => refusal.code)).toEqual([
+      "advanceRecordedTwice",
+    ]);
+    // A refusal about a row on the payslip points at what the payslip must
+    // carry (specs.md items 2, 25): every payment as its type, its units and
+    // its amount, which two rows sharing one key cannot do.
+    expect(twice[0].link).toBe("wageProtection");
+
+    expect(
+      validateMonth(
+        facts([], {
+          advances: [
+            { number: 1, kind: "granted", agorot: 300000 },
+            { number: 1, kind: "repaid", agorot: 100000 },
+          ],
+        }),
+        terms,
+      ),
+    ).toEqual([]);
+  });
+
+  it("stops the month rather than paying it twice", () => {
+    expect(() =>
+      calculateMonth(
+        facts([], {
+          advances: [
+            { number: 2, kind: "granted", agorot: 100000 },
+            { number: 2, kind: "granted", agorot: 100000 },
+          ],
+        }),
+        terms,
+      ),
+    ).toThrow(InvalidMonthError);
   });
 });

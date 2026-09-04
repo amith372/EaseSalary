@@ -253,13 +253,28 @@ export interface ConfirmedWage {
 }
 
 /**
+ * The two things a month can record about an advance (specs.md item 20).
+ *
+ * **The list is the source and the union is derived from it**, as
+ * `userLineDirections` already is and for the same reason: the controls that
+ * offer the choice, the server check that refuses a value outside it and the
+ * engine's own rows read one list, and a member added to a hand-kept union
+ * would compile clean against a hand-kept array that had not grown with it.
+ */
+export const advanceKinds = ["granted", "repaid"] as const;
+
+export type AdvanceKind = (typeof advanceKinds)[number];
+
+/**
  * One movement on one numbered advance. A month may both grant one advance and
  * repay another, each on its own line, and the amount repaid is entered for the
  * month rather than fixed by a schedule (specs.md item 20).
  */
 export interface Advance {
+  /** The application's own number, minted one past the highest the worker
+   * already carries and never typed by the user (specs.md item 20). */
   number: number;
-  kind: "granted" | "repaid";
+  kind: AdvanceKind;
   /** Always positive. Whether the closing block adds or subtracts it follows
    * from `kind`, so a sign can never disagree with a label. */
   agorot: number;

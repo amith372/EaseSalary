@@ -1,3 +1,4 @@
+import { compareMonth } from "@/lib/dates";
 import { holidayDaysOf } from "@/lib/engine/leave";
 import { calculateMonth } from "@/lib/engine/month";
 import { closeMonth } from "@/lib/engine/types";
@@ -58,10 +59,6 @@ export class DuplicateMonthError extends Error {
   }
 }
 
-function comesBefore(a: YearMonth, b: YearMonth): number {
-  return a.year - b.year || a.month - b.month;
-}
-
 /** The vacation days the month drew, read off the balance line rather than
  * counted again here. Counting them a second time would be a second path to one
  * figure, and the two would disagree the day either is corrected. */
@@ -98,9 +95,9 @@ export function calculateSeries(
   employment: Employment,
   today?: IsoDate,
 ): MonthInSeries[] {
-  const ordered = [...months].sort((a, b) => comesBefore(a.month, b.month));
+  const ordered = [...months].sort((a, b) => compareMonth(a.month, b.month));
   for (let i = 1; i < ordered.length; i += 1) {
-    if (comesBefore(ordered[i - 1].month, ordered[i].month) === 0) {
+    if (compareMonth(ordered[i - 1].month, ordered[i].month) === 0) {
       throw new DuplicateMonthError(ordered[i].month);
     }
   }

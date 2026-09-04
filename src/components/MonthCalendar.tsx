@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bidi } from "@/components/Bidi";
-import { Chevron } from "@/components/icons";
 import {
   addDays,
-  addMonths,
   compareIsoDate,
   daysBetween,
   fromIsoDate,
@@ -19,6 +17,7 @@ import {
 import type { RestDay } from "@/lib/dates";
 import { dayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
 import { clipEndOf } from "@/lib/engine/types";
+import { MonthStepper } from "@/components/MonthStepper";
 import { he } from "@/lib/i18n/he";
 import { endOf } from "@/lib/spans";
 import type {
@@ -327,33 +326,15 @@ export function MonthCalendar({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label={he.calendar.previousMonth}
-            onClick={() => onMonthChange?.(addMonths(month, -1))}
-            className="flex size-8 items-center justify-center rounded-tab border border-line text-ink-quiet transition-colors hover:bg-hover hover:text-ink"
-          >
-            <Chevron towards="previous" />
-          </button>
-          {today ? (
-            <button
-              type="button"
-              onClick={() => onMonthChange?.(monthOf(today))}
-              className="rounded-tab border border-line px-3.5 py-1.5 text-[15px] font-medium text-ink-warm transition-colors hover:bg-hover hover:text-ink"
-            >
-              <span dir="auto">{he.calendar.thisMonth}</span>
-            </button>
-          ) : null}
-          <button
-            type="button"
-            aria-label={he.calendar.nextMonth}
-            onClick={() => onMonthChange?.(addMonths(month, 1))}
-            className="flex size-8 items-center justify-center rounded-tab border border-line text-ink-quiet transition-colors hover:bg-hover hover:text-ink"
-          >
-            <Chevron towards="next" />
-          </button>
-        </div>
+        {/* The same stepper the payments screen carries. Moving between months
+            is one question and it is answered in one place — which matters most
+            under right-to-left, where the arrow meaning *forward in time* is the
+            one on the left. */}
+        <MonthStepper
+          month={month}
+          today={today}
+          onMonthChange={(next) => onMonthChange?.(next)}
+        />
       </div>
 
       <div className="grid flex-none grid-cols-7 gap-1.5">
