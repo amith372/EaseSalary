@@ -72,6 +72,32 @@ Each of these is true or false at a glance.
 4. Before every export the application shows the minimum wage it fetched from its
    source and requires the user to confirm it; if the fetch fails, the application says
    so plainly and lets the user enter the figure by hand.
+   **Every rate the application does not derive is held with the date it took effect, in
+   one table, and a month reads the one in force during it.** The minimum wage is the
+   first and most visible of them, but it is not the only one: the national-insurance
+   percentage is set by the state and changes on a date, and so does anything else the
+   application ever takes from outside itself. A rate written into the code as a bare
+   number has no date, so a month calculated after it changes is valued at today's figure
+   and a month calculated before it is valued at yesterday's — with nothing in either
+   month to say which happened. That is not a hypothetical failure mode: it is exactly
+   how the family's own workbook went wrong, and Part 5 records two instances of it, the
+   vacation-day rate frozen at its 2024 figure and the national-insurance line left at 2%
+   after the rate rose to 3.6%. Reproducing history as history (Part 5) is impossible
+   without the dates, because a past month cannot be recalculated correctly from a figure
+   that only knows what it is now.
+   **The table is the same mechanism the minimum wage already needs**, extended to cover
+   the rest rather than invented for them: a rate, the date it took effect, and where it
+   came from. Deriving one is always preferred to storing one — item 3 requires every rate
+   that *can* be derived from the base monthly salary to be — so what the table holds is
+   the small set that cannot be: figures the state or a source publishes. It is seeded with
+   what is known, and fetching is what keeps it current (Part 3); a rate the application
+   has never fetched is still dated, because a seeded figure has an effective date as
+   surely as a fetched one.
+   **A month is valued at the rate in force during it and never at the current one**,
+   which is the same sentence criterion 13 rests on from the other side: a month corrected
+   years later moves every later month's balances precisely because nothing about it was
+   frozen except the terms it snapshotted (Part 3). A rate looked up by today's date would
+   put a second kind of freezing into the replay, invisible and in one direction only.
 5. The month is presented as a calendar. Its rest days and rest-eves are counted from the
     calendar rather than typed, and the user marks a span of days for what departed from
     an ordinary month — a free rest day, a vacation day, sick days — of which a single day
@@ -492,6 +518,16 @@ Each of these is true or false at a glance.
     is a control that should not have been drawn. The refusal stands underneath it all the
     same, in the engine and where the payment is entered, because what the screen offers is
     never the rule (Part 3).
+    **A recorded payment is edited in place, and every one of its four things
+    may change.** Correcting it by removing it and recording it again is the
+    same two refusals read twice and loses the note in between, so the entry is
+    reopened with what it holds already in the fields. Changing the *kind* is
+    part of that and is checked like any other: the kind it is changed to must be
+    one this month has not otherwise recorded, since the sheet still holds one
+    row per kind, and the row it leaves behind takes any override addressed to
+    the old kind with it, for the reason the removal rule below gives. An amount
+    here is edited and never overridden, because the figure is what left the
+    account and there is nothing under it for an override to replace (item 17).
     **Removing a payment takes any override on it away with it**, for the reason items 17
     and 20 already give for a line the user added and for an advance movement: an override
     is addressed by the row's own key, and one left behind is an amount waiting to reattach
@@ -542,6 +578,72 @@ Each of these is true or false at a glance.
     more than a foreign worker in another sector. Someone who does not know that
     deducts too much, so the line's own explanation says it and links the rule beside
     it (items 25, 26). It is said there and enters no calculation.
+    **What may be overridden is what the application worked out, and what the
+    month itself recorded is edited instead.** The two are different gestures and
+    naming them apart is what keeps either usable. An override replaces a figure
+    the application derived — the salary, the rest-eve supplement, the rest-day
+    and holiday pay, the sickness deduction — and leaves the fact behind it
+    standing, which is why the row still says what it would otherwise have been.
+    A line the user added, an advance movement and a payment to a third party
+    carry no derived figure at all: the amount **is** what she typed, so an
+    override on one would be a second amount standing in front of the first with
+    nothing on screen to say which is which, and the row would be marked manual
+    against a figure that was manual already. Those are corrected by **editing
+    the entry** — its amount, and everything else it records — which is the
+    surface items 16 and 20 each defer to this one.
+    **A standing line is on the overridable side, and it is the case that shows
+    why the division is not "typed or derived".** Its amount was typed, but it
+    was typed on the profile: item 20 says it appears in every month afterwards
+    at the same amount, so a month in which the family paid something else has no
+    other way to say so — editing it would restate every month, which is the one
+    thing a term of the employment must not do. The test is not who typed the
+    figure but **where**: an amount this month recorded is edited in this month,
+    and an amount that reached this month from somewhere else is overridden in it.
+    **The income-tax line is not offered twice.** It is editable in the same way
+    — that is this criterion's own first sentence — and the control that edits it
+    is the one described above, where its rule stands. Offering it again among
+    the overrides would be two controls writing one figure, and a user who set it
+    in one place and saw the other still reading zero would have no way to tell
+    which the month held.
+    **An override is a magnitude and the application gives it its sign**, taken
+    from the figure it replaces, which is the rule this criterion already states
+    for the income tax and item 20 states for a line the user adds. The sickness
+    deduction is the row that proves it is needed: it is a negative amount, and
+    an override typed over it without a sign of its own would turn a deduction
+    into a payment while looking like an ordinary correction.
+    **Zero is an ordinary override**, and here it differs from a line the user
+    adds (item 20), which refuses zero because a line that moves no money is not
+    a line. A derived figure of zero is a real answer — a month in which the
+    family did not pay the rest-eve supplement — and it is the only way to say so
+    without pretending the row is absent.
+    **Clearing an override is its own gesture and never the typing back of the
+    calculated figure.** The two produce the same number and mean opposite
+    things: one says "the application is right after all" and leaves the row
+    derived, the other stores that number by hand and leaves the row marked
+    manual for ever, so a later correction to the wage would move every figure on
+    the sheet except that one.
+    **An override outlives the row it addresses, which is what "survives every
+    later recalculation" means — and it is therefore never stored out of
+    sight.** A month whose rest-day work is all unmarked stops drawing a
+    rest-day row, and the amount typed over it is still held and comes back with
+    the row. So the control lists any override whose row the month no longer
+    draws, together with the rows it does, and offers it to be cleared: an
+    amount that is stored, will reappear, and cannot be seen is the one failure
+    in this criterion that looks like nothing went wrong.
+    **Such an override is named by the row's own name as it stood when the
+    figure was typed**, kept with the amount rather than looked up. There is no
+    row left to read a name off — that is what makes it an orphan — and the
+    names of several of these rows are derived from the worker's rest day
+    (item 5), so a name worked out afresh would rename an override she set
+    years ago the day her rest day changed. The name that is true of the moment
+    she chose the figure is the one that lets her recognise it. An override
+    stored before the name was kept has none, and is known by its amount and by
+    the reason she gave it.
+    **The control lives in the additional-payments group** — item 5 puts it
+    there with the advances, the income tax and the user's own lines, and item 5
+    puts that group on the payments screen. So that screen sees the month's
+    derived figures, which is what an override addresses; it is the one thing on
+    it that is not simply an amount somebody typed.
 18. Exporting begins with a short set of confirmation questions covering everything that
     changes the month — whether an advance was given, whether an instalment is being
     repaid, whether a rest day was free, which holidays were worked, whether there were
@@ -642,6 +744,14 @@ Each of these is true or false at a glance.
     manual override on it away with it** (item 17): an override is addressed by the line's
     own key, and a key with nothing behind it is an amount waiting to reattach itself to a
     line that never asked for it.
+    **A line is edited in place and not removed and re-added**, and all four of
+    the things it records may change — the words, the amount, the direction and
+    the placement. Removing and adding again would lose the note and mint a new
+    id, and the id is what the line's own key is built from (item 17), so a
+    reader looking for the line she corrected would find one that had never
+    existed before. Its amount is edited and never overridden, for the reason
+    item 17 gives: what is written on a one-off line is the figure itself, and
+    nothing under it was derived.
     However many lines a month carries, the preview shows one row for the ones
     placed before the total and one for the ones placed after it, each holding the sum of
     its own and carrying a single heading that covers both directions — a group's sum may
@@ -945,7 +1055,20 @@ quietly short.
 External data is never load-bearing. The minimum wage is read from the Kol Zchut
 minimum-wage page (https://www.kolzchut.org.il/he/שכר_מינימום), which publishes both the
 figure and the date it takes effect, so a month is always valued at the rate in force
-during it. The same source supplies the reference links shown beside the actions, kept
+during it.
+
+**Both halves of that sentence are stored, and they are stored for every undeliverable
+rate rather than for the wage alone** (criterion 4). The store holds one dated-rates
+table — which rate, the figure, the date it took effect, and the source it came from —
+and the engine asks it for the figure in force during the month it is calculating, never
+for the latest one. The national-insurance percentage belongs in it beside the minimum
+wage: it is set by the state and changes on a date, and it is today a constant in the code
+with no date at all. The table is **seeded** with what is known and a fetch updates it, so
+the application works before any fetch has ever succeeded and a failed one leaves a dated
+figure standing rather than nothing (the degradation this Part already requires). Nothing
+that can be derived from the base monthly salary goes in it — item 3 requires those to be
+derived — so it stays the short list of figures the application takes from outside itself.
+ The same source supplies the reference links shown beside the actions, kept
 in one list rather than scattered through the interface, so a page that moves is fixed
 in a single place. The cached figure is shown first and a fetch runs behind it, so a slow
 or broken source never delays a screen. **The text of a fetched page is kept beside the
@@ -1011,6 +1134,47 @@ the three happened and leaving the user able to continue by hand, and none may e
 number that merely looks right. This is what separates a failure from a wrong answer
 presented as a result, and a scraper is only ever checked against a page that has already
 changed once.
+
+### What a test has to prove
+
+Tests verify actual behavior and results, never merely that code runs. For every
+meaningful feature or change:
+
+- Assert the **correct result**, against a value derived independently of the code under
+  test — from this specification, a verified workbook cell, a fixed fixture, or an
+  arithmetic worked by hand. **Never from what the implementation returned**, or the suite
+  proves only that the engine agrees with itself and fails the day the bug is corrected.
+- Include realistic cases and at least one case a likely implementation mistake would
+  fail. A test every plausible wrong version also passes is a test that measures nothing.
+- A bug fix carries a regression test.
+- Salary calculations and exports verify actual values, rows and balances — never merely
+  that an `.xlsx` file was produced.
+
+### Verifying through the browser
+
+The important user-facing flows are exercised through the running application as a user
+meets them, and not by calling the functions underneath. A flow assembled from unit tests
+that each pass is a flow nobody has ever performed: the wiring between them is exactly
+where it breaks, and it is invisible to both halves.
+
+- Open the real site and use its real navigation, inputs, calendar, buttons,
+  confirmations and export flow, with realistic data, through the whole workflow.
+- Verify both what the screen displays and what the calculation came to. A browser test is
+  not successful because the page loaded, a button clicked, or a file appeared.
+- Where a month is exported, open the file and check its values against the screen and
+  against the expected figures. The preview and the export are one calculation shown
+  twice (Part 3), so a test that reads both must find them equal.
+- Capture screenshots at meaningful checkpoints — an important state change, and before
+  and after an export — and not after every click. A screenshot supplements an assertion
+  and never replaces one.
+- Cover the edge cases where they are relevant: partial days, sickness across a month
+  boundary, sickness on a holiday, a holiday on a rest day, advances, manual overrides, a
+  minimum wage that changed, a failed fetch, an unanswered pre-export question, a
+  correction to a past month, and a future month.
+
+For an important test, record the scenario, the data used, the expected result, the actual
+result, and what incorrect behavior the test would catch — the last of these is what
+separates a test from a demonstration.
 
 ## Part 5 — Known pitfalls
 

@@ -65,6 +65,19 @@ describe("the income tax is withheld from the ברוטו (specs.md item 17)", ()
     const tax = result.closing.find((row) => row.key === lineKeys.incomeTax);
     expect(tax?.block).toBe("withholding");
   });
+
+  /**
+   * **A typed tax is not a manual amount** (specs.md item 17). The badge means
+   * one thing on every other row — an amount the user put over a figure the
+   * application worked out — and the tax is never worked out at all: it is
+   * entered, and entering it is the only way it can exist. This row said
+   * otherwise until the override control put the two meanings on one screen.
+   */
+  it("does not mark the tax as manual merely for having been entered", () => {
+    const tax = result.closing.find((row) => row.key === lineKeys.incomeTax);
+    expect(tax?.amount).toBe(-20000);
+    expect(tax?.manual).toBe(false);
+  });
 });
 
 describe("an advance instalment sits below the נטו (specs.md item 17)", () => {

@@ -10,10 +10,18 @@ import {
   withoutAdvance,
 } from "@/lib/engine/advances";
 import type { AdvanceDraft, AdvanceRefusal } from "@/lib/engine/advances";
+import {
+  reviewOverride,
+  withOverride,
+  withoutOverride,
+} from "@/lib/engine/overrides";
+import type { OverrideDraft, OverrideRefusal } from "@/lib/engine/overrides";
 import { recordOf } from "@/lib/engine/repository";
 import type { MonthRecord } from "@/lib/engine/repository";
+import { calculateSeries } from "@/lib/engine/series";
 import {
   reviewThirdPartyPayment,
+  thirdPartyLineKey,
   withoutThirdPartyPayment,
 } from "@/lib/engine/thirdParty";
 import type {
@@ -28,9 +36,15 @@ import type {
 import { reviewUserLine, withoutOneOffUserLine } from "@/lib/engine/userLines";
 import type { UserLineDraft, UserLineRefusal } from "@/lib/engine/userLines";
 import { parseShekels } from "@/lib/money";
-import { applyMark, endOf, type MarkIntent, type SkippedDay } from "@/lib/spans";
-import { compareIsoDate, orderDates, sameMonth } from "@/lib/dates";
-import type { DaySpan, IsoDate, YearMonth } from "@/lib/types";
+import {
+  applyMark,
+  touchesRange,
+  type MarkIntent,
+  type SkippedDay,
+} from "@/lib/spans";
+import { orderDates, sameMonth } from "@/lib/dates";
+import { todayInIsrael } from "@/lib/today";
+import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
  * The three things the month screen can change, and the only way it changes
@@ -49,6 +63,22 @@ import type { DaySpan, IsoDate, YearMonth } from "@/lib/types";
  * the preview beside the calendar is the engine's answer to what was just saved
  * rather than a figure the browser guessed while waiting.
  */
+
+/**
+ * Both routes that read the month, revalidated together.
+ *
+ * **Every action revalidates both, whichever screen called it**, because the
+ * two screens are one month seen from its two ends (specs.md item 5): a figure
+ * is entered on `/payments` and what it comes to is drawn on `/month`, and a
+ * page left holding the figures from before the change is the one failure the
+ * split can produce. Which of the two the user is looking at is not this file's
+ * to know, and an action that revalidated only its caller's route would leave
+ * the other stale until something else happened to touch it.
+ */
+function revalidateMonth(): void {
+  revalidatePath("/month");
+  revalidatePath("/payments");
+}
 
 /** Asked to change a worker the store does not have. Actions are reachable by a
  * crafted request, so the id is checked rather than assumed — stage 3 adds the
@@ -75,18 +105,10 @@ export async function markRange(
     await repository.saveSpan(workerId, span satisfies MonthSpan);
   }
 
-  revalidatePath("/month");
+  revalidateMonth();
   // The days that could not take the mark and why, shown to the user rather
   // than absorbed silently (items 5, 8).
   return { skipped };
-}
-
-/** Whether a span has any day inside the range, the open case included. */
-function touches(span: DaySpan, from: IsoDate, to: IsoDate): boolean {
-  const ordered = orderDates(span.from, endOf(span, to));
-  return (
-    compareIsoDate(ordered.from, to) <= 0 && compareIsoDate(ordered.to, from) >= 0
-  );
 }
 
 /**
@@ -111,12 +133,12 @@ export async function clearRange(
 
   for (const span of await repository.listSpans(workerId)) {
     if (span.kind === "holiday") continue;
-    if (touches(span, ordered.from, ordered.to)) {
+    if (touchesRange(span, ordered.from, ordered.to)) {
       await repository.deleteSpan(workerId, span.id);
     }
   }
 
-  revalidatePath("/month");
+  revalidateMonth();
 }
 
 /**
@@ -142,7 +164,7 @@ export async function setHolidayWorked(
   if (span === undefined || span.kind !== "holiday") return;
 
   await repository.saveSpan(workerId, { ...span, worked });
-  revalidatePath("/month");
+  revalidateMonth();
 }
 
 /**
@@ -171,7 +193,9 @@ export type MonthActionRefusal =
   | UserLineRefusal
   | AdvanceRefusal
   | ThirdPartyRefusal
-  | "noMonth";
+  | OverrideRefusal
+  | "noMonth"
+  | "entryUnknown";
 
 export type MonthActionResult =
   | { ok: true }
@@ -198,7 +222,7 @@ async function changeMonth(
 
   await repository.saveMonth(workerId, change(recordOf(facts)));
 
-  revalidatePath("/month");
+  revalidateMonth();
   return { ok: true };
 }
 
@@ -393,4 +417,169 @@ export async function removeThirdPartyPayment(
   return changeMonth(workerId, month, (record) =>
     withoutThirdPartyPayment(record, kind),
   );
+}
+
+/**
+ * The lines the engine drew for one month of one worker (specs.md item 17).
+ *
+ * **An override is validated against the engine's own `overridable` and never
+ * against a list of keys kept here.** Which rows are figures the application
+ * worked out is known where each draft is made (`lines.ts`), so the question is
+ * asked of the line rather than of its name — a whitelist in this file would
+ * compile clean and quietly stop covering the next row the engine grows.
+ *
+ * It replays the worker's whole history for the same reason `/month` does:
+ * balances are never stored, and a month calculated alone would open from
+ * nothing (item 13). Reading the clock is safe here because this is an action
+ * and not a render — what `CLAUDE.md` forbids is a clock read while a page is
+ * being drawn, which is what makes the server and the browser disagree.
+ */
+async function linesOf(workerId: string, month: YearMonth) {
+  const repository = getRepository();
+  const profile = await profileOf(workerId);
+  const months = await repository.listMonths(workerId);
+  const series = calculateSeries(months, profile, todayInIsrael());
+  return series.find((entry) => sameMonth(entry.facts.month, month)) ?? null;
+}
+
+/**
+ * An amount the application worked out, replaced by hand (specs.md item 17).
+ *
+ * **It is a magnitude and the row gives it its sign.** The figure travels as
+ * the user typed it, `parseShekels` refuses a minus, and `toLine` signs what is
+ * stored from the draft's own units — so an override typed over the sickness
+ * deduction stays a deduction instead of turning into a payment while looking
+ * like an ordinary correction.
+ */
+export async function setOverride(
+  workerId: string,
+  month: YearMonth,
+  draft: OverrideDraft,
+): Promise<MonthActionResult> {
+  const entry = await linesOf(workerId, month);
+  if (entry === null) return { ok: false, reason: "noMonth" };
+
+  const reviewed = reviewOverride(draft, entry.result.lines);
+  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+  return changeMonth(workerId, month, (record) =>
+    withOverride(record, reviewed.key, reviewed.override),
+  );
+}
+
+/**
+ * An override cleared, and the row left derived again (specs.md item 17).
+ *
+ * **It is its own gesture and it asks nothing about the key**, which is the one
+ * place this differs from setting one. Clearing and typing the calculated
+ * figure back produce the same number and mean opposite things — one says the
+ * application is right after all, the other stores that number by hand for
+ * ever — and the override that most needs clearing is the one whose row the
+ * month no longer draws, which a check against the drawn lines would refuse.
+ */
+export async function clearOverride(
+  workerId: string,
+  month: YearMonth,
+  key: string,
+): Promise<MonthActionResult> {
+  return changeMonth(workerId, month, (record) => withoutOverride(record, key));
+}
+
+/**
+ * A line the user added, corrected in place (specs.md item 20).
+ *
+ * **All four of the things it records may change — the words, the amount, the
+ * direction and the placement — and the id does not.** Removing it and adding
+ * it again would lose the note and mint a new id, and the id is what the line's
+ * own key is built from (item 17), so a reader looking for the line she
+ * corrected would find one that had never existed before.
+ *
+ * Its amount is edited and never overridden, for the reason item 17 gives: what
+ * is written on a one-off line is the figure itself, and nothing under it was
+ * derived.
+ */
+export async function updateUserLine(
+  workerId: string,
+  month: YearMonth,
+  lineId: string,
+  draft: UserLineDraft,
+): Promise<MonthActionResult> {
+  // Reviewed with the id it already has, which is the whole of what makes this
+  // an edit rather than a removal and an addition.
+  const reviewed = reviewUserLine(draft, lineId);
+  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+  const repository = getRepository();
+  await profileOf(workerId);
+  const facts = await repository.getMonth(workerId, month);
+  if (facts === null) return { ok: false, reason: "noMonth" };
+  // A page held open over a line another tab has since removed. Refused rather
+  // than added back: she is looking at a form for something that is gone.
+  if (!facts.userLines.some((line) => line.id === lineId)) {
+    return { ok: false, reason: "entryUnknown" };
+  }
+
+  return changeMonth(workerId, month, (record) => ({
+    ...record,
+    userLines: record.userLines.map((line) =>
+      line.id === lineId ? reviewed.line : line,
+    ),
+  }));
+}
+
+/**
+ * A payment to a third party, corrected in place (specs.md item 16).
+ *
+ * **Every one of its four things may change, the kind included.** Correcting it
+ * by removing it and recording it again is the same two refusals read twice and
+ * loses the note in between, so the entry is reopened with what it holds.
+ *
+ * **The kind is checked against the month's *other* payments and not against
+ * all of them**, or a payment whose kind did not change would be refused as a
+ * second payment of its own kind. The sheet still holds one row per kind, so
+ * changing it to one the month already records is refused exactly as recording
+ * a second would be.
+ *
+ * **A changed kind takes any override addressed to the old row with it**, for
+ * the reason item 16 gives for a removal: an override is addressed by the row's
+ * own key, and one left behind is an amount waiting to reattach itself to a row
+ * that never asked for it. No row of column H is overridable (item 17), so this
+ * can only reach an amount stored before that division was drawn — which is
+ * exactly the amount nobody would think to look for.
+ */
+export async function updateThirdPartyPayment(
+  workerId: string,
+  month: YearMonth,
+  kind: ThirdPartyKind,
+  draft: ThirdPartyDraft,
+): Promise<MonthActionResult> {
+  const repository = getRepository();
+  await profileOf(workerId);
+
+  const facts = await repository.getMonth(workerId, month);
+  if (facts === null) return { ok: false, reason: "noMonth" };
+
+  const others = facts.thirdPartyPayments.filter(
+    (payment) => payment.kind !== kind,
+  );
+  if (others.length === facts.thirdPartyPayments.length) {
+    return { ok: false, reason: "entryUnknown" };
+  }
+
+  const reviewed = reviewThirdPartyPayment(draft, others);
+  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+  return changeMonth(workerId, month, (record) => {
+    const changed = {
+      ...record,
+      // Replaced where it stood, so the list does not reorder itself under a
+      // user who only changed an amount.
+      thirdPartyPayments: record.thirdPartyPayments.map((payment) =>
+        payment.kind === kind ? reviewed.payment : payment,
+      ),
+    };
+    return reviewed.payment.kind === kind
+      ? changed
+      : withoutOverride(changed, thirdPartyLineKey(kind));
+  });
 }

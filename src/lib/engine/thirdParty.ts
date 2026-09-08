@@ -52,7 +52,7 @@ import type { Explanation, MonthLine, SheetColumn, YearMonth } from "@/lib/types
 
 /** Column H — the quarterly, yearly and one-off payments to third parties
  * (`שכר_חודשי_להאנה2025.xlsx` -> `חודש  8.25` -> H5). */
-export const THIRD_PARTY_COLUMN: SheetColumn = "H";
+const THIRD_PARTY_COLUMN: SheetColumn = "H";
 
 /**
  * 3.6% of the month's full cost (specs.md item 19).
@@ -66,6 +66,17 @@ export const THIRD_PARTY_COLUMN: SheetColumn = "H";
  * Part 5's rule in one row: where a note and an amount disagree the amount is
  * what happened, and where the workbook and the statute disagree the statute
  * is.
+ *
+ * **It carries no effective date, and that is the same defect one paragraph
+ * up.** The rate rose to 3.6% in January 2025, so a month of 2024 is not valued
+ * at it — and this constant cannot say so, which is precisely how D21 went
+ * stale. It is not fixed here because the fix is a *table* and not a second
+ * constant: `specs.md` item 4 and Part 3 now require every rate the application
+ * does not derive to be held with the date it took effect, and stage 5's first
+ * bullet builds it with this figure and the minimum wage as its first two rows.
+ * Until then the application calculates only months from 2025 onward, where
+ * this figure is the one in force, and the debt is written down in three places
+ * rather than left in a number.
  */
 export const NATIONAL_INSURANCE_RATE = 0.036;
 

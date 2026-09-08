@@ -3,7 +3,9 @@ import { PaymentsScreen } from "@/components/PaymentsScreen";
 import type { WorkerPayments } from "@/components/PaymentsScreen";
 import { getRepository } from "@/lib/dev/store";
 import { advanceLedger } from "@/lib/engine/advances";
+import { orphanedOverrides } from "@/lib/engine/overrides";
 import { recordOf } from "@/lib/engine/repository";
+import { calculateSeries } from "@/lib/engine/series";
 import { todayInIsrael } from "@/lib/today";
 
 /**
@@ -15,13 +17,21 @@ import { todayInIsrael } from "@/lib/today";
  * income-tax line, the lines the user adds, and the payments that go to third
  * parties rather than to the worker (item 16).
  *
- * **It reads facts and calculates nothing**, which is where it differs from
- * `/month`. Nothing on this screen shows a derived figure: the amounts are the
- * ones the user entered and the one walked figure — what is still owed on an
- * advance — is a sum of entered amounts and not a rate applied to anything. So
- * the engine is not run here at all, and what the entries come to is answered on
- * the month screen, by the one calculation path that also fills the export
- * (Part 3).
+ * **It ran no engine until the manual overrides arrived, and now it runs one.**
+ * Every other thing this screen records is an amount somebody typed — the tax,
+ * a line the user added, an advance, a payment to a third party — and the one
+ * walked figure, what is still owed on an advance, is a sum of typed amounts
+ * rather than a rate applied to anything. An override is the exception by
+ * definition: it addresses a figure the *application worked out* (specs.md item
+ * 17), so the group that holds it has to see one. The engine's own `overridable`
+ * is what says which rows may be replaced, and reading it is the only thing this
+ * route asks the calculation for.
+ *
+ * **It is still not a second calculation path.** What the month came to is drawn
+ * on `/month` and nothing here totals anything: the lines are handed down so the
+ * control can list the rows and their figures, and every amount on this screen
+ * that the user did not type came out of the same `calculateSeries` the month
+ * screen and the export run (Part 3).
  *
  * `connection()` keeps it out of the prerender: the store is a live value and
  * `today` is read from a clock.
@@ -35,17 +45,28 @@ export default async function PaymentsPage() {
 
   const household: WorkerPayments[] = await Promise.all(
     workers.map(async (profile) => {
+      // The whole of her history, for the reason `/month` gives: balances are
+      // never stored, so a month calculated alone would open from nothing
+      // (item 13).
       const months = await repository.listMonths(profile.id);
+      const series = calculateSeries(months, profile, today);
       return {
         worker: {
           id: profile.id,
           name: profile.name,
           firstName: profile.firstName,
         },
-        // The facts each month holds, without their figures. `recordOf` drops
-        // the spans, which belong to the worker and not to a month
-        // (`repository.ts`) and which this screen has nothing to say about.
-        months: months.map(recordOf),
+        months: series.map(({ facts, result }) => ({
+          // `recordOf` drops the spans, which belong to the worker and not to a
+          // month (`repository.ts`) and which this screen has nothing to say
+          // about.
+          record: recordOf(facts),
+          lines: result.lines,
+          // Held for a row this month is not drawing, and listed all the same:
+          // an amount that is stored, will reappear, and cannot be seen is the
+          // one failure in item 17 that looks like nothing went wrong.
+          orphanedOverrides: orphanedOverrides(result, facts.overrides),
+        })),
         // What is still owed on each advance — a fact about the whole
         // employment that no single month can see, so it is walked here from
         // the same history and the same opening position the balances are

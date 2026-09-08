@@ -121,7 +121,7 @@ export function holidayDaysWorked(spans: ClosedSpan[]): number {
  * so the fact that makes the day special is the one that should carry it — and
  * `restDayUnitsOf` takes it back out of the rest days.
  */
-export function holidayRestDaysWorked(
+function holidayRestDaysWorked(
   spans: ClosedSpan[],
   restDay: RestDay,
 ): number {

@@ -182,6 +182,27 @@ export interface MonthLine {
   /** An overridden amount is visibly marked as manual and survives every later
    * recalculation of that month (specs.md item 17). */
   manual: boolean;
+  /**
+   * What the engine worked out, present **only** where an override replaced it
+   * (specs.md item 17).
+   *
+   * It is what lets the row still say what it would otherwise have been without
+   * anything outside the engine multiplying `units` by `rate` and rounding the
+   * result — a second copy of the one place the calculation rounds
+   * (`lines.ts`), which would disagree with it the day either moved.
+   */
+  calculatedAmount?: number;
+  /**
+   * Whether the user may replace this amount by hand (specs.md item 17).
+   *
+   * **The engine says so and no screen decides it.** An override replaces a
+   * figure the application worked out; a row carrying an amount the month
+   * itself recorded is edited instead, because there is nothing under it to
+   * replace. A screen testing keys for that would be the keyed whitelist this
+   * file has been bitten by before — the next row the engine grows would fall
+   * into whichever answer the `else` happened to give.
+   */
+  overridable: boolean;
   explanation: Explanation;
 }
 
@@ -204,6 +225,21 @@ export interface ClosingLine {
   label: string;
   amount: number | null;
   manual: boolean;
+  /**
+   * **No row of this block is overridable, so it carries no flag saying so**
+   * (specs.md item 17). Every row here is an amount the month itself recorded
+   * — the income tax, an advance movement, a one-off line the user placed after
+   * the total — and those are corrected by editing the entry, because there is
+   * nothing under them for an override to replace.
+   *
+   * The one row that would not be is a **standing** line placed after the
+   * total, whose amount came from the profile. No standing line can exist yet:
+   * `MonthTerms.standingLines` is empty in the seed and the profile screen that
+   * would set one is `build_plan.md`'s unowned debt. A flag with one reachable
+   * value is flexibility for a case that cannot arise, so it is added the day
+   * the case can — and the override control reads `MonthResult.lines` alone
+   * until then.
+   */
   /** Which of the block's two halves the row belongs to, and with it which of
    * the two figures below it the row has already reached. */
   block: ClosingBlock;

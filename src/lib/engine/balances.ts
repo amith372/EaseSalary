@@ -160,7 +160,7 @@ export interface OpeningBalances {
  * and 7). Resolved in one place so the balance lines and the refusal that
  * guards the sick floor can never disagree about where a month starts.
  */
-export function openingBalancesOf(
+function openingBalancesOf(
   employment: Employment,
   opening?: OpeningBalances,
 ): OpeningBalances {

@@ -110,7 +110,7 @@ export function recordOf(facts: MonthFacts): MonthRecord {
 /** The month's own spans, in the order they were recorded. Exported because
  * every implementation owes the same answer, and two implementations deciding
  * separately what "in this month" means is two engines. */
-export function spansOf(spans: MonthSpan[], month: YearMonth): MonthSpan[] {
+function spansOf(spans: MonthSpan[], month: YearMonth): MonthSpan[] {
   return spans.filter((span) => overlapsMonth(span, month));
 }
 

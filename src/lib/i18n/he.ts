@@ -395,9 +395,11 @@ export const he = {
      * The additional-payments group on the payments screen — the first of item
      * 5's three groups, and not beside the calendar: the month screen answers
      * what the month came to and everything that *records* something lives on
-     * `/payments`. It holds the income-tax line, the lines the user adds and the
-     * advances; the manual overrides join them in their own step, which is why
-     * it is named for the group and not for what is in it today.
+     * `/payments`. All four of item 5's contents are now in it — the income-tax
+     * line, the lines the user adds, the advances and the manual overrides —
+     * and the payments to third parties beside them (item 16). It is still
+     * named for the group and not for what is in it, which is what let the four
+     * arrive one at a time without the card being renamed three times.
      */
     actions: {
       title: "תשלומים נוספים",
@@ -439,6 +441,13 @@ export const he = {
         note: "למה",
         noteHint: "לא חובה, אבל זה מה שיסביר את השורה בעוד שנה",
         submit: "להוסיף",
+        /** The same panel, reopened over a line that already exists (item 20).
+         * The verb changes because the gesture does: adding makes a line and
+         * this one corrects the line she is looking at. */
+        edit: "לתקן",
+        editLabel: (label: string) => `לתקן את השורה "${label}"`,
+        editTitle: "תיקון השורה",
+        save: "לשמור",
         cancel: "ביטול",
         remove: "להסיר",
         /** The button shows the word above, which is the same word on every
@@ -561,6 +570,14 @@ export const he = {
          * in a control that otherwise lists months. */
         periodNone: "—",
         submit: "לרשום",
+        /** Reopened with what it holds already in the fields, because
+         * correcting a payment by removing it and recording it again is the
+         * same two refusals read twice and loses the note in between
+         * (item 16). */
+        edit: "לתקן",
+        editLabel: (paymentType: string) => `לתקן את התשלום על ${paymentType}`,
+        editTitle: "תיקון התשלום",
+        save: "לשמור",
         cancel: "ביטול",
         remove: "להסיר",
         /** The button shows the word above, which is the same word on every
@@ -569,6 +586,69 @@ export const he = {
         removeLabel: (paymentType: string) =>
           `להסיר את התשלום על ${paymentType}`,
       },
+      /**
+       * The amounts the application worked out, and the user's own figure over
+       * one of them (specs.md item 17).
+       *
+       * **The heading names what the section holds rather than the gesture.**
+       * "החלפה ידנית" would be the word for what she does to one row; the list
+       * is every derived figure the month has, most of which she will never
+       * touch, and a section named for a correction reads as a list of things
+       * already gone wrong.
+       *
+       * **The lead says which amounts are *not* here and where they are
+       * instead**, because that division is the whole of the criterion and it
+       * is not guessable: a line she typed herself and a payment she recorded
+       * are corrected where she entered them, and only an amount that reached
+       * this month from somewhere else is replaced here.
+       */
+      overrides: {
+        title: "סכומים שהיישום חישב",
+        lead: "אפשר להחליף כל אחד מהם בסכום אחר, והוא יישאר כך גם אחרי כל חישוב מחדש של החודש. סכום שהקלדת בעצמך — שורה משלך, מקדמה או תשלום לגורם שלישי — אינו כאן, ואותו מתקנים במקום שבו הוקלד.",
+        empty: "אין החודש סכומים מחושבים.",
+        /** Said beside the manual figure, so the row still says what it would
+         * otherwise have been (items 17, 24) — which is what makes the
+         * replacement checkable without recalculating it by hand. */
+        calculated: "היישום חישב",
+        change: "להחליף סכום",
+        changeLabel: (label: string) => `להחליף את הסכום של ${label}`,
+        panelTitle: "סכום במקום החישוב",
+        amount: "סכום",
+        /** An override is a magnitude and the row gives it its sign (item 17),
+         * so the field says so rather than refusing a minus after the fact. */
+        amountHint:
+          "בלי מינוס. אם השורה מורידה מהשכר, היישום ישאיר אותה שורה שמורידה.",
+        note: "למה",
+        noteHint: "לא חובה, אבל זה מה שיסביר את הסכום בעוד שנה",
+        save: "להחליף",
+        cancel: "ביטול",
+        /**
+         * **Clearing is its own gesture and never the typing back of the
+         * calculated figure** (item 17). The two produce the same number and
+         * mean opposite things, so the button says what it restores rather than
+         * saying "לנקות" — a user who read "clear" would have no reason to
+         * prefer it over typing the figure she can see beside it.
+         */
+        clear: "לחזור לחישוב של היישום",
+        clearLabel: (label: string) =>
+          `לחזור לסכום שהיישום חישב עבור ${label}`,
+        /**
+         * The overrides the month is holding for rows it is not drawing
+         * (item 17).
+         *
+         * An amount that is stored, will reappear, and cannot be seen is the
+         * one failure in the criterion that looks like nothing went wrong — so
+         * they are listed rather than kept out of the way, with the name the
+         * row had when the figure was typed.
+         */
+        orphaned: "סכומים ששמורים לשורות שאינן בחודש הזה",
+        orphanedHint:
+          "השורות האלה אינן בחודש הזה כרגע — למשל אם לא סומנה עבודה בחג. הסכומים נשמרו ויחזרו יחד עם השורות.",
+        /** No name was stored with it, which is a month saved before the name
+         * was kept. The amount and the reason are what is left to know it by. */
+        unnamed: "שורה ללא שם שמור",
+      },
+
       /** A refusal carries the reason it was refused (specs.md item 25). Each
        * is the sentence shown to the user, not a code written to a log.
        *
@@ -585,6 +665,18 @@ export const he = {
         amount: "צריך סכום — מספר גדול מאפס, בלי מינוס.",
         shape: "משהו בבחירה לא נקלט. כדאי לבחור שוב ולנסות.",
         noMonth: "אין עדיין רישום לחודש הזה, ולכן אי אפשר להוסיף לו שורות.",
+        /**
+         * **One sentence for both halves of one question** (specs.md item 17):
+         * a row this month does not draw, and a row carrying an amount the
+         * month itself recorded. They have one answer — this is not a figure
+         * the application worked out — and telling the user which of the two
+         * her stale page had got wrong is nothing she can act on.
+         */
+        notOverridable:
+          "אי אפשר להחליף את הסכום הזה — הוא לא סכום שהיישום חישב. סכום שהוקלד ידנית מתקנים במקום שבו הוקלד.",
+        /** A page held open over an entry another tab has since removed. */
+        entryUnknown:
+          "הרישום הזה כבר לא קיים בחודש הזה. כדאי לרענן את הדף ולבדוק מה נשמר.",
         advanceUnknown:
           "המקדמה הזו כבר לא קיימת. כדאי לרענן את הדף ולבחור מחדש.",
         advanceNotYetGiven:

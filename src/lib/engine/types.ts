@@ -72,7 +72,7 @@ export function clipEndOf(month: YearMonth, today?: IsoDate): IsoDate {
  * future month would otherwise hand the counting an inverted range, and a range
  * that runs backwards is the kind of thing that produces a plausible number.
  */
-export function closeSpans(spans: MonthSpan[], clipAt: IsoDate): ClosedSpan[] {
+function closeSpans(spans: MonthSpan[], clipAt: IsoDate): ClosedSpan[] {
   return spans.map((span) =>
     span.to === null
       ? { ...span, to: compareIsoDate(clipAt, span.from) < 0 ? span.from : clipAt }
@@ -448,6 +448,24 @@ export interface ThirdPartyPayment {
  */
 export interface LineOverride {
   agorot: number;
+  /**
+   * What the row was called when she replaced its amount — a **snapshot** and
+   * never a lookup.
+   *
+   * An override outlives the row it addresses (specs.md item 17): a month whose
+   * rest-day work is all unmarked stops drawing that row, and the amount typed
+   * over it is still held and comes back with the row. The control has to list
+   * such an override so that a stored figure is never out of sight — and at
+   * that moment there is no row left to read a name off. The name kept here is
+   * the one the row carried when she chose the figure, which is also the only
+   * name that is true of the moment she chose it: a label derived from the
+   * worker's rest day would otherwise rename an old override the day her rest
+   * day changed.
+   *
+   * Optional, because a month seeded or stored before this field existed
+   * carries none, and the control names such a row by its amount and its note.
+   */
+  label?: string;
   note?: string;
 }
 

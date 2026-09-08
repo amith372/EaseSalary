@@ -53,7 +53,7 @@ export function paidFractionOfSpellDay(dayOfSpell: number): number {
 
 /** The part of a day the tiers do **not** fund, which is the part the base
  * already paid and the deduction takes back. */
-export function unpaidFractionOfSpellDay(dayOfSpell: number): number {
+function unpaidFractionOfSpellDay(dayOfSpell: number): number {
   return 1 - paidFractionOfSpellDay(dayOfSpell);
 }
 
@@ -178,7 +178,7 @@ export interface SickDay {
 /** Every day of every spell, with its tier position. The whole spell is walked
  * even where most of it falls outside the month, because the position of a day
  * inside this month depends on how many days of the spell came before it. */
-export function sickDaysOf(spans: ClosedSpan[], restDay: RestDay): SickDay[] {
+function sickDaysOf(spans: ClosedSpan[], restDay: RestDay): SickDay[] {
   return spellsOf(spans, restDay).flatMap((spell) =>
     eachDate(spell.from, spell.to).map((date, index) => ({
       date,

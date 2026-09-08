@@ -9,7 +9,7 @@
  */
 
 const AGOROT_PER_SHEKEL = 100;
-export const SHEKEL_SIGN = "₪";
+const SHEKEL_SIGN = "₪";
 
 /** Groups the integer part in threes: 730575 -> "7,305". */
 function groupThousands(digits: string): string {

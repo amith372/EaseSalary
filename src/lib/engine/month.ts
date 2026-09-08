@@ -131,23 +131,6 @@ function userLineGroups(facts: ClosedMonthFacts | MonthFacts) {
   ] as const;
 }
 
-/**
- * An override on a line the user added is a **magnitude**, and the sign still
- * comes from the direction (specs.md item 20: the user picks the kind and never
- * types a minus).
- *
- * It is forced here because the same line can now sit on either side of the
- * month's total, and the two sides round differently: the block below the
- * columns already signs the income tax and the advances itself, while `toLine`
- * takes an override verbatim. Without this, moving a line across the total
- * would silently invert an amount the user had typed — which item 17 says must
- * never happen, and which would look like an ordinary figure.
- */
-function signedUserLine(line: MonthLine, sign: 1 | -1): MonthLine {
-  if (!line.manual) return line;
-  return { ...line, amount: sign * Math.abs(line.amount ?? 0) || 0 };
-}
-
 /** The sentence beside a line the user added: how long it lasts, then where the
  * user put it. Both halves are whole sentences in `he.ts` (item 20). */
 function userLineWhy(
@@ -177,6 +160,7 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
     units: 1,
     rate: facts.confirmedWage.baseAgorot,
     column: "E",
+    overridable: true,
     explanation: {
       text: he.sheet.why.base(counts.standardDays, restDay),
       link: "caregiverWage",
@@ -192,6 +176,7 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
       units: counts.restEves,
       rate: facts.terms.restEveSupplementAgorot,
       column: "E",
+      overridable: true,
       explanation: {
         text: he.sheet.why.restEveSupplement(counts.restEves, restDay),
         link: "caregiverWage",
@@ -223,6 +208,7 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
       units: -sickDays,
       rate: rates.daily,
       column: "E",
+      overridable: true,
       explanation: {
         text: he.sheet.why.sickDeduction(sickDays, restDay),
         link: "sickPay",
@@ -248,6 +234,7 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
       units: restDayUnits,
       rate: rates.restDay,
       column: "F",
+      overridable: true,
       explanation: {
         text: he.sheet.why.restDays(restDayUnits, restDay),
         link: "restDayWork",
@@ -267,6 +254,7 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
       units: holidaysWorked,
       rate: rates.restDay,
       column: "F",
+      overridable: true,
       explanation: {
         text: he.sheet.why.holidaysWorked(holidaysWorked, restDay),
         link: "holidayWork",
@@ -285,26 +273,27 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
   // Which column follows from how long the line lasts: a standing line sits in
   // column E, because that is where what she earns every month lives, and a
   // one-off in G, which is what that column is for.
-  const userDrafts: { draft: LineDraft; sign: 1 | -1 }[] = [];
+  const userDrafts: LineDraft[] = [];
   for (const [prefix, lines, column] of userLineGroups(facts)) {
     for (const line of lines) {
       if (placementOf(line) !== "beforeGross") continue;
-      const sign = line.direction === "addition" ? 1 : -1;
       userDrafts.push({
-        sign,
-        draft: {
-          key: userLineKey(prefix, line.id),
-          label: line.label,
-          units: sign,
-          // **The units carry the sign and the rate does not**, exactly as the
-          // sickness deduction above does it. The rate is column D of the sheet,
-          // which is a unit price: a negative price is the reading Part 5 warns
-          // about, and one withheld unit at a positive price is what this row
-          // actually records.
-          rate: Math.abs(line.agorot),
-          column,
-          explanation: { text: userLineWhy(prefix, "beforeGross") },
-        },
+        key: userLineKey(prefix, line.id),
+        label: line.label,
+        // **The units carry the sign and the rate does not**, exactly as the
+        // sickness deduction above does it. The rate is column D of the sheet,
+        // which is a unit price: a negative price is the reading Part 5 warns
+        // about, and one withheld unit at a positive price is what this row
+        // actually records. It is also what `toLine` signs an override from.
+        units: line.direction === "addition" ? 1 : -1,
+        rate: Math.abs(line.agorot),
+        column,
+        // A **standing** line reached this month from the profile, so an
+        // override is the only way to say that one month paid something else;
+        // a one-off line was typed into this month and is edited instead
+        // (specs.md item 17).
+        overridable: prefix === "standing",
+        explanation: { text: userLineWhy(prefix, "beforeGross") },
       });
     }
   }
@@ -313,11 +302,16 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
   // reading H as salary would overpay the worker (item 16, Part 5).
   // `thirdParty.ts` owns those lines and the national-insurance estimate
   // beside them, and this file restates neither.
+  //
+  // **An override on one of these is a magnitude and `toLine` signs it from the
+  // draft's own `units`**, which is where a draft carries its sign. It used to
+  // be re-signed here by a wrapper, because `toLine` took an override verbatim
+  // and a line moved across the month's total would otherwise have inverted an
+  // amount the user typed — item 17 says that must never happen. Signing inside
+  // `toLine` says it once, for the sickness deduction as well as for these.
   return [
     ...drafts.map((draft) => toLine(draft, facts.overrides)),
-    ...userDrafts.map(({ draft, sign }) =>
-      signedUserLine(toLine(draft, facts.overrides), sign),
-    ),
+    ...userDrafts.map((draft) => toLine(draft, facts.overrides)),
     ...thirdPartyLines(facts.thirdPartyPayments, facts.overrides),
   ];
 }
@@ -344,7 +338,14 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
     // `|| 0` is not decoration: negating a rounded zero gives -0, which
     // `Object.is` — and so `toBe` — reports as different from 0.
     amount: -Math.abs(Math.round(tax)) || 0,
-    manual: taxOverride !== undefined || facts.incomeTaxAgorot !== 0,
+    // **A typed tax is not a manual amount, and this row once said it was.**
+    // The badge means one thing everywhere else — an amount the user put over a
+    // figure the application worked out (item 17) — and the tax is never
+    // worked out at all: it is entered, and entering it is the only way it can
+    // exist. Marking every month that withholds anything as manual made the
+    // badge say "overridden" on five rows and "filled in" on this one, which is
+    // exactly the collision the override control puts on one screen.
+    manual: taxOverride !== undefined,
     // The one row taken out of the ברוטו rather than out of the transfer, and
     // so the only thing standing between the two figures (specs.md Part 5).
     block: "withholding",

@@ -63,7 +63,7 @@ export function daysInMonth(ym: YearMonth): number {
 }
 
 /** 0 for Sunday through 6 for Saturday. */
-export function weekdayOf(iso: IsoDate): number {
+function weekdayOf(iso: IsoDate): number {
   return fromIsoDate(iso).getUTCDay();
 }
 
@@ -83,10 +83,6 @@ export function weekdayOfFirst(ym: YearMonth): number {
  */
 export type RestDay = typeof SUNDAY | typeof FRIDAY | typeof SATURDAY;
 
-/** Saturday, which is the common choice rather than the legal one (item 5).
- * The default lives with the profile that applies it, not in the engine, which
- * always reads the day off the month. */
-export const DEFAULT_REST_DAY: RestDay = SATURDAY;
 
 /**
  * The working day immediately before the weekly rest day — where the rest-eve

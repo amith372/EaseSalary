@@ -441,7 +441,7 @@ function MonthPreview({
           whyKey="workDays"
           explanation={{ text: he.sheet.why.workDays(restDay) }}
           value={
-            <ValueChip className="text-[16px] font-semibold">
+            <ValueChip>
               <Bidi noTranslate>
                 {`${formatDays(result.actualDays ?? 0)} / ${formatDays(result.standardDays ?? 0)}`}
               </Bidi>
@@ -669,7 +669,7 @@ function BalanceRow({
         </>
       }
       value={
-        <ValueChip className="text-[16px] font-semibold">
+        <ValueChip>
           <Bidi noTranslate>
             {balance.closing === null
               ? he.placeholder.count

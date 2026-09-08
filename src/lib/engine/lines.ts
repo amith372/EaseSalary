@@ -29,6 +29,24 @@ export interface LineDraft {
    * reason: dates inside a Hebrew sentence are a mixed run a browser may
    * reorder (Part 5). */
   coversMonths?: YearMonth[];
+  /**
+   * Whether the user may replace this line's amount by hand (specs.md item 17).
+   *
+   * **It is declared by whoever builds the draft and is never a list of keys
+   * kept somewhere else.** An override replaces a figure the application
+   * *worked out*; a row that carries an amount the month itself recorded — a
+   * line the user added to this month, a payment to a third party — has nothing
+   * under it to replace, and is corrected by editing the entry instead. Which
+   * of the two a draft is, is known where the draft is made and nowhere else,
+   * so a screen or an action asking "may this be overridden" reads the answer
+   * off the line rather than testing its key against a whitelist that would
+   * silently stop covering the next row the engine grows.
+   *
+   * **Absent means no**, which is the safe direction: a row added later is not
+   * overridable until someone says it is, where the opposite default would let
+   * a new row quietly acquire a control nobody designed for it.
+   */
+  overridable?: boolean;
   explanation: Explanation;
 }
 
@@ -36,14 +54,28 @@ export interface LineDraft {
  * An override replaces the amount and sets `manual` without touching the key,
  * so a manual figure is still addressable and still says what it would
  * otherwise have been (specs.md items 17, 24). The units and the rate stay as
- * the engine worked them out, which is what "says what it would otherwise have
- * been" means in practice.
+ * the engine worked them out, and `calculatedAmount` carries the figure they
+ * came to, so the control that offered the override can show what it replaced
+ * without multiplying anything itself.
+ *
+ * **The override is a magnitude and the sign comes from the line** (item 17).
+ * `units` is where a draft carries its sign — the sickness deduction is one
+ * withheld unit at a positive price, and so is a user's deduction placed before
+ * the total — so the sign is read from there and applied to whatever the user
+ * typed. Taken verbatim instead, an override typed over the sickness deduction
+ * would turn a deduction into a payment while looking like an ordinary
+ * correction, and `parseShekels` refuses a minus precisely so that the user
+ * never has the option of disagreeing with the label beside her figure.
  */
 export function toLine(
   draft: LineDraft,
   overrides: Record<string, LineOverride>,
 ): MonthLine {
   const override = overrides[draft.key];
+  // The one rounding in the whole calculation: a rate carries its fraction up
+  // to here and the amount is integer agorot from here on (item 3).
+  const calculated = Math.round(draft.units * draft.rate);
+  const sign = draft.units < 0 ? -1 : 1;
   return {
     key: draft.key,
     label: draft.label,
@@ -51,10 +83,12 @@ export function toLine(
     rate: draft.rate,
     column: draft.column,
     ...(draft.coversMonths ? { coversMonths: draft.coversMonths } : {}),
-    // The one rounding in the whole calculation: a rate carries its fraction up
-    // to here and the amount is integer agorot from here on (item 3).
-    amount: override ? override.agorot : Math.round(draft.units * draft.rate),
+    // `|| 0` is not decoration: `-1 * 0` is -0, which `Object.is` — and so
+    // `toBe` — reports as different from 0.
+    amount: override ? sign * Math.abs(override.agorot) || 0 : calculated,
     manual: override !== undefined,
+    ...(override ? { calculatedAmount: calculated } : {}),
+    overridable: draft.overridable === true,
     explanation: draft.explanation,
   };
 }

@@ -355,3 +355,43 @@ describe("a month with no sickness in it", () => {
     expect(result.gross).toBe(624765 + 50000 + 213175);
   });
 });
+
+/**
+ * The sickness deduction is the negative line in the month, so it is where the
+ * override's sign rule is checked (specs.md item 17).
+ *
+ * **The expected figures come from the rule and not from the engine.** Item 17
+ * says an override is a magnitude and the application gives it its sign, taken
+ * from the figure it replaces; `parseShekels` refuses a minus so the user never
+ * has one to type. A deduction is therefore still a deduction after the user
+ * corrects its amount, and the figure below is the one she typed with the row's
+ * own sign put back on it.
+ */
+describe("an override on a deduction stays a deduction (specs.md item 17)", () => {
+  const spans = [sick("2025-08-04", "2025-08-06")];
+
+  it("signs the magnitude from the line it replaces", () => {
+    const result = calculateMonth(
+      { ...facts(AUGUST_2025, spans), overrides: { sickDeduction: { agorot: 30000 } } },
+      terms(),
+    );
+    const line = deductionLine(result);
+    // ₪300 withheld, not ₪300 paid: the sign is the row's and the magnitude is
+    // hers. Taken verbatim this reads +30000, and the month pays her ₪600 more
+    // than she earned while looking like an ordinary correction.
+    expect(line?.amount).toBe(-30000);
+    expect(line?.manual).toBe(true);
+    // Still says what it would otherwise have been: two days deducted at
+    // S / 25, which is 2 × 24,990.6 = 49,981.2 -> 49,981 agorot.
+    expect(line?.calculatedAmount).toBe(-49981);
+    // The base, five Fridays at ₪100, five Saturdays at ₪426.35, less the ₪300.
+    expect(result.gross).toBe(624765 + 50000 + 213175 - 30000);
+  });
+
+  it("is offered on a figure the application worked out", () => {
+    const result = calculateMonth(facts(AUGUST_2025, spans), terms());
+    // The five computed rows are overridable; nothing the month itself recorded
+    // is, because an amount the user typed is edited and not replaced.
+    expect(deductionLine(result)?.overridable).toBe(true);
+  });
+});

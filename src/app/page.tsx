@@ -11,12 +11,16 @@ import { SpanOverflowNotes } from "@/components/SpanOverflow";
 import { ValueChip } from "@/components/ValueChip";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { WhyButton, WhyPanel } from "@/components/WhyDisclosure";
-import { compareIsoDate, orderDates } from "@/lib/dates";
 import { fixtureMonth, fixtureToday, homeFixtures } from "@/lib/fixtures/home";
-import { dayLabel } from "@/lib/dateLabels";
+import { dayLabel, monthLabel } from "@/lib/dateLabels";
 import { he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
-import { applyMark, type SkippedDay, type SkipReason, endOf } from "@/lib/spans";
+import {
+  applyMark,
+  touchesRange,
+  type SkippedDay,
+  type SkipReason,
+} from "@/lib/spans";
 import type { DaySpan, IsoDate, YearMonth } from "@/lib/types";
 import type { SpanIntent } from "@/components/MonthCalendar";
 
@@ -40,15 +44,6 @@ import type { SpanIntent } from "@/components/MonthCalendar";
  * in the top bar instead, so the screen opens straight onto the month. Which
  * worker is shown is therefore read from the shell rather than held here.
  */
-
-function monthLabel(ym: YearMonth): string {
-  return `${he.calendar.monthNames[ym.month - 1]} ${ym.year}`;
-}
-
-function overlapsRange(span: DaySpan, from: IsoDate, to: IsoDate): boolean {
-  const ordered = orderDates(span.from, endOf(span, to));
-  return compareIsoDate(ordered.from, to) <= 0 && compareIsoDate(ordered.to, from) >= 0;
-}
 
 export default function Home() {
   const { worker } = useWorkerScope();
@@ -88,7 +83,7 @@ export default function Home() {
   function handleClearRange(from: IsoDate, to: IsoDate) {
     setSpansByWorker((current) => ({
       ...current,
-      [worker.id]: current[worker.id].filter((span) => !overlapsRange(span, from, to)),
+      [worker.id]: current[worker.id].filter((span) => !touchesRange(span, from, to)),
     }));
     setSkipped(null);
   }
@@ -190,7 +185,7 @@ export default function Home() {
                     />
                     <span dir="auto">{he.home.balances[balance.kind]}</span>
                   </span>
-                  <ValueChip className="text-[16px] font-semibold">
+                  <ValueChip>
                     <Bidi noTranslate>
                       {balance.closing === null
                         ? he.placeholder.count

@@ -87,6 +87,7 @@ function linesFor(restDay: RestDay): MonthLine[] {
     amount: null,
     column: "E",
     manual: false,
+    overridable: false,
     explanation: { text: he.explanations.baseSalary, link: "caregiverWage" },
   },
   {
@@ -95,6 +96,7 @@ function linesFor(restDay: RestDay): MonthLine[] {
     amount: null,
     column: "F",
     manual: false,
+    overridable: false,
     explanation: { text: he.explanations.supplements(restDay), link: "restDayWork" },
   },
   {
@@ -103,6 +105,7 @@ function linesFor(restDay: RestDay): MonthLine[] {
     amount: null,
     column: "G",
     manual: false,
+    overridable: false,
     explanation: { text: he.explanations.advanceRepaid },
   },
   ];

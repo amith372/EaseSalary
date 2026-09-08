@@ -10,9 +10,10 @@ import { useWorkerScope } from "@/components/WorkerScope";
 import { sameMonth } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
 import type { AdvanceStanding } from "@/lib/engine/advances";
+import type { OrphanedOverride } from "@/lib/engine/overrides";
 import type { MonthRecord } from "@/lib/engine/repository";
 import { he } from "@/lib/i18n/he";
-import type { IsoDate, Worker, YearMonth } from "@/lib/types";
+import type { IsoDate, MonthLine, Worker, YearMonth } from "@/lib/types";
 
 /**
  * The payments screen — where everything that *records* a payment lives
@@ -26,12 +27,14 @@ import type { IsoDate, Worker, YearMonth } from "@/lib/types";
  * four control surfaces around it asks the user to find the right one before she
  * can answer the question she arrived with.
  *
- * **It holds no calculation at all, and it needs none.** Nothing here is a
- * derived figure — the amounts are the ones the user typed, and the one walked
- * figure, what is still owed on an advance, is a sum of typed amounts rather
- * than a rate applied to anything. So the engine does not run for this route;
- * what the entries come to is the month screen's answer, from the one
- * calculation path that also fills the export (Part 3).
+ * **It holds no calculation and it is handed one.** Nothing here is totalled:
+ * the amounts are the ones the user typed, and the one walked figure — what is
+ * still owed on an advance — is a sum of typed amounts rather than a rate
+ * applied to anything. The exception is the overrides, which by definition
+ * address figures the *application worked out* (item 17), so the route runs
+ * `calculateSeries` and hands this screen the month's lines to list. What the
+ * month came to is still the month screen's answer, from that same calculation
+ * path, and nothing on this screen adds anything up.
  *
  * **It is scoped to one worker and one month.** The worker comes from the
  * shell's switcher, as everywhere; the month is this screen's own state and
@@ -41,13 +44,30 @@ import type { IsoDate, Worker, YearMonth } from "@/lib/types";
  * which month could not record them at all.
  */
 
-/** One worker as this screen needs her: who she is, the facts each of her
- * months holds, and what is still owed on each advance. */
+/** One month as this screen needs it: the facts it holds, the lines the engine
+ * drew for it, and the overrides it is holding for rows it is not drawing. */
+export interface MonthPayments {
+  /** Without the spans, which belong to the worker rather than to a month. */
+  record: MonthRecord;
+  /**
+   * The month's own lines, and the only derived thing on this screen. It is
+   * here for one reason: an override may only replace a figure the application
+   * worked out, and the engine's own `overridable` is what says which those are
+   * (specs.md item 17). Nothing on this screen totals them.
+   */
+  lines: MonthLine[];
+  /** Amounts typed over rows the month is not drawing now — listed rather than
+   * kept out of sight, because a stored amount that will reappear and cannot be
+   * seen is item 17's quietest failure. */
+  orphanedOverrides: OrphanedOverride[];
+}
+
+/** One worker as this screen needs her: who she is, each of her months, and
+ * what is still owed on each advance. */
 export interface WorkerPayments {
   worker: Worker;
-  /** Oldest first, and **without the figures**: this screen shows what was
-   * entered and never what it came to. */
-  months: MonthRecord[];
+  /** Oldest first. */
+  months: MonthPayments[];
   advances: AdvanceStanding[];
 }
 
@@ -62,7 +82,9 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   const { worker } = useWorkerScope();
   const [month, setMonth] = useState<YearMonth>(() =>
     openingMonthOf(
-      household.flatMap((entry) => entry.months.map((record) => record.month)),
+      household.flatMap((entry) =>
+        entry.months.map(({ record }) => record.month),
+      ),
       today,
     ),
   );
@@ -73,7 +95,9 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   const entry =
     household.find((candidate) => candidate.worker.id === worker.id) ??
     household[0];
-  const shown = entry.months.find((record) => sameMonth(record.month, month));
+  const shown = entry.months.find(({ record }) =>
+    sameMonth(record.month, month),
+  );
 
   // A change reaches the store and the page re-renders from it, so nothing here
   // predicts what was saved. The card dims while the round trip is in flight,
@@ -139,11 +163,13 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
             key={`${worker.id}-${month.year}-${month.month}`}
             workerId={worker.id}
             month={month}
-            incomeTaxAgorot={shown.incomeTaxAgorot}
-            userLines={shown.userLines}
+            incomeTaxAgorot={shown.record.incomeTaxAgorot}
+            userLines={shown.record.userLines}
             ledger={entry.advances}
-            monthAdvances={shown.advances}
-            thirdPartyPayments={shown.thirdPartyPayments}
+            monthAdvances={shown.record.advances}
+            thirdPartyPayments={shown.record.thirdPartyPayments}
+            lines={shown.lines}
+            orphanedOverrides={shown.orphanedOverrides}
             onSubmit={handleAction}
           />
         ) : (

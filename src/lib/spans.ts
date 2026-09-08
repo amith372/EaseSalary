@@ -117,6 +117,28 @@ export function endOf(span: DaySpan, openEnd: IsoDate): IsoDate {
   return compareIsoDate(openEnd, span.from) < 0 ? span.from : openEnd;
 }
 
+/**
+ * Whether a span has any day inside a range, the open case included.
+ *
+ * **Written once because it was written twice.** The home screen used it to
+ * decide which spans a sweep clears and `month/actions.ts` to decide which the
+ * store deletes, in four identical lines under two names — and the two answer
+ * the same question about the same shape, so a correction to either was a
+ * correction to half the application. It belongs here with `endOf`, which is
+ * the part of it that is not obvious: an open spell has no `to`, and the range's
+ * own end is what stands in for one.
+ */
+export function touchesRange(
+  span: DaySpan,
+  from: IsoDate,
+  to: IsoDate,
+): boolean {
+  const ordered = orderDates(span.from, endOf(span, to));
+  return (
+    compareIsoDate(ordered.from, to) <= 0 && compareIsoDate(ordered.to, from) >= 0
+  );
+}
+
 function coveringSpan(
   spans: DaySpan[],
   date: IsoDate,

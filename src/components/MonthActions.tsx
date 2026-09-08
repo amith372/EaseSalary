@@ -5,10 +5,14 @@ import {
   addAdvance,
   addThirdPartyPayment,
   addUserLine,
+  clearOverride,
   removeAdvance,
   removeThirdPartyPayment,
   removeUserLine,
   setIncomeTax,
+  setOverride,
+  updateThirdPartyPayment,
+  updateUserLine,
   type MonthActionRefusal,
   type MonthActionResult,
 } from "@/app/month/actions";
@@ -16,9 +20,11 @@ import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { CoveredMonths } from "@/components/CoveredMonths";
 import { MoneyValue } from "@/components/MoneyValue";
-import { addMonths, compareMonth, yearMonthText } from "@/lib/dates";
+import { addMonths, yearMonthText } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
+import { whyRepaymentIsRefused } from "@/lib/engine/advances";
 import type { AdvanceStanding } from "@/lib/engine/advances";
+import type { OrphanedOverride } from "@/lib/engine/overrides";
 import { offeredPeriodFor } from "@/lib/engine/thirdParty";
 import {
   defaultPlacementFor,
@@ -39,7 +45,7 @@ import type {
 import { he } from "@/lib/i18n/he";
 import { legalLink } from "@/lib/links";
 import { formatAgorot, parseShekels } from "@/lib/money";
-import type { YearMonth } from "@/lib/types";
+import type { MonthLine, YearMonth } from "@/lib/types";
 
 /**
  * The additional-payments group, on the payments screen (specs.md item 5).
@@ -50,12 +56,24 @@ import type { YearMonth } from "@/lib/types";
  * user's own lines summarised into a row apiece (item 20), and that summary is
  * what sends her here.
  *
- * **Three of the criterion's four contents are here.** The income-tax line,
- * which is never calculated and whose figure has no other way in (item 17); the
- * lines the user adds, with all three of item 20's choices on each; and the
- * advances, given and repaid. The manual overrides belong to this group too and
- * arrive in their own step, which is why the card is named for the group rather
- * than for what is in it today.
+ * **All four of the criterion's contents are here.** The income-tax line, which
+ * is never calculated and whose figure has no other way in (item 17); the lines
+ * the user adds, with all three of item 20's choices on each; the advances,
+ * given and repaid; and the manual overrides, which arrived last and are the
+ * reason the card was named for the group rather than for what was in it.
+ *
+ * **The last of them is why this screen sees a calculation at all.** An override
+ * replaces a figure the *application worked out*, so the group holding it has to
+ * be shown one — every other thing on the card is an amount somebody typed. The
+ * lines arrive already calculated from the route and nothing here totals them
+ * (`PaymentsScreen`).
+ *
+ * **The division between overriding and editing is drawn once, in the engine,
+ * and this file only reads it.** A row that carries an amount this month
+ * recorded is corrected where it was entered — the panels on the user's own
+ * lines and on the third-party payments below — and a row carrying a figure the
+ * application derived is replaced in the overrides section. `MonthLine
+ * .overridable` is what says which is which, and no section here tests a key.
  *
  * **The `תשלומים` artboard draws one of its three sections and not the other
  * two.** It has the advances — "לרשום מקדמה חדשה", "לעדכן פירעון", and what is
@@ -93,6 +111,17 @@ interface MonthActionsProps {
    * One row per kind, which is what makes a payment addressable by its kind
    * alone. */
   thirdPartyPayments: ThirdPartyPayment[];
+  /**
+   * The month's own lines, as the engine drew them. **The only derived thing on
+   * this screen**, and here for one reason: an override may replace a figure the
+   * application worked out and nothing else (specs.md item 17), and the engine's
+   * own `overridable` is what says which rows those are.
+   */
+  lines: MonthLine[];
+  /** Amounts typed over rows this month is not drawing now. An override
+   * outlives the row it addresses, so these are listed rather than kept out of
+   * sight (item 17). */
+  orphanedOverrides: OrphanedOverride[];
   /** Runs the change inside the screen's own transition, so the preview dims
    * while the round trip is in flight and the figures are never left looking
    * settled while they are stale. */
@@ -167,6 +196,8 @@ export function MonthActions({
   ledger,
   monthAdvances,
   thirdPartyPayments,
+  lines,
+  orphanedOverrides,
   onSubmit,
 }: MonthActionsProps) {
   const words = he.month.actions;
@@ -199,15 +230,26 @@ export function MonthActions({
         onSubmit={onSubmit}
       />
 
-      {/* Last, and deliberately: the three sections above are money that reaches
-          the worker or is withheld from what reaches her, and this one never
-          touches her total in either direction (item 16). Reading down the card
-          the user meets everything about her pay before anything about somebody
-          else's. */}
+      {/* The three sections above are money that reaches the worker or is
+          withheld from what reaches her, and this one never touches her total in
+          either direction (item 16). Reading down the card the user meets
+          everything about her pay before anything about somebody else's. */}
       <ThirdPartyControl
         workerId={workerId}
         month={month}
         thirdPartyPayments={thirdPartyPayments}
+        onSubmit={onSubmit}
+      />
+
+      {/* Last, and deliberately: everything above it *records* something and
+          this one corrects what the application made of the records. A user who
+          met it first would be asked to replace figures she has not yet given
+          the facts for. */}
+      <OverridesControl
+        workerId={workerId}
+        month={month}
+        lines={lines}
+        orphanedOverrides={orphanedOverrides}
         onSubmit={onSubmit}
       />
     </Card>
@@ -391,7 +433,7 @@ function IncomeTaxControl({
 }
 
 /**
- * The lines the user adds, listed and added (specs.md item 20).
+ * The lines the user adds, listed, added and corrected (specs.md item 20).
  *
  * **The list is here and the summary is in the preview, and the two are not in
  * conflict**: the preview answers "what did this month come to", which nine
@@ -403,6 +445,24 @@ function IncomeTaxControl({
  * `defaultPlacementFor` read forwards rather than a second copy of it: an
  * addition defaults to part of the month and a deduction to the transfer alone,
  * and the moment she chooses, her choice stops moving.
+ *
+ * **A line is edited in place and never removed and re-added** (item 20). All
+ * four of the things it records may change — the words, the amount, the
+ * direction and the placement — and the id does not: removing and adding again
+ * would lose the note and mint a new id, and the id is what the line's own key
+ * is built from (item 17), so a reader looking for the line she corrected would
+ * find one that had never existed before.
+ *
+ * **Its amount is edited and never overridden**, which is the division item 17
+ * draws: what is written on a one-off line is the figure itself, and nothing
+ * under it was derived. One panel does both, because adding and correcting ask
+ * the same question — what should this line say — and a second panel would be a
+ * second place for the placement rule to drift.
+ *
+ * **No artboard draws it.** `EaseSalary - תשלומים` carries no user lines at all;
+ * `docs/design-pass-jobs-1-2.md` lists them among job 3's missing screens, so
+ * this is built in the idiom the calendar's picker established and that is
+ * written down here rather than left to be inferred.
  */
 function UserLinesControl({
   workerId,
@@ -411,7 +471,11 @@ function UserLinesControl({
   onSubmit,
 }: Pick<MonthActionsProps, "workerId" | "month" | "userLines" | "onSubmit">) {
   const words = he.month.actions.lines;
-  const [adding, setAdding] = useState(false);
+  /** `null` when nothing is open, `"new"` for a line being added, and a line's
+   * id when that line is being corrected — one panel at a time, so two
+   * half-filled forms cannot both be on screen claiming the same month. It is
+   * `AdvancesControl`'s own shape, and for the same reason. */
+  const [open, setOpen] = useState<"new" | string | null>(null);
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -425,12 +489,12 @@ function UserLinesControl({
 
   /**
    * Closes the panel and empties it, the last refusal included. It is reached
-   * both by a successful add and by the cancel button, and a refusal left
+   * both by a successful save and by the cancel button, and a refusal left
    * standing after the panel that produced it has gone would be an error about
    * a field the user can no longer see.
    */
   function reset() {
-    setAdding(false);
+    setOpen(null);
     setLabel("");
     setAmount("");
     setNote("");
@@ -439,16 +503,35 @@ function UserLinesControl({
     clear();
   }
 
-  function add() {
+  /**
+   * The panel reopened over a line that already exists, with what it holds
+   * already in the fields (item 20).
+   *
+   * **The placement is set rather than left to follow the direction.** What is
+   * stored is what she chose, so a panel that let the default take it again
+   * would silently move a line she had deliberately placed, the moment she
+   * reopened it to correct a typo in its words.
+   */
+  function openEdit(line: UserLine) {
+    clear();
+    setOpen(line.id);
+    setLabel(line.label);
+    setAmount(formatAgorot(line.agorot));
+    setNote(line.note ?? "");
+    setDirection(line.direction);
+    setChosen(placementOf(line));
+  }
+
+  /** One call for both gestures: the id is what tells them apart, and the
+   * server keeps it rather than minting a new one. */
+  function submit() {
+    if (open === null) return;
+    const draft = { label, amount, direction, placement, note };
     run(
       () =>
-        addUserLine(workerId, month, {
-          label,
-          amount,
-          direction,
-          placement,
-          note,
-        }),
+        open === "new"
+          ? addUserLine(workerId, month, draft)
+          : updateUserLine(workerId, month, open, draft),
       reset,
     );
   }
@@ -456,6 +539,101 @@ function UserLinesControl({
   function remove(lineId: string) {
     run(() => removeUserLine(workerId, month, lineId));
   }
+
+  const panel = (
+    <Card
+      tone="inset"
+      radius="panel"
+      as="form"
+      className="mt-1 flex flex-col gap-2.5 px-3.5 py-3"
+    >
+      <Field label={words.label} hint={words.labelHint}>
+        <input
+          type="text"
+          value={label}
+          onChange={(event) => setLabel(event.target.value)}
+          dir="auto"
+          className={inputClass}
+        />
+      </Field>
+
+      <Field label={words.amount}>
+        <input
+          type="text"
+          inputMode="decimal"
+          dir="ltr"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+          placeholder={he.placeholder.amountInput}
+          className={inputClass}
+        />
+      </Field>
+
+      <div className="flex flex-wrap gap-2">
+        {userLineDirections.map((candidate) => (
+          <Chip
+            key={candidate}
+            selected={direction === candidate}
+            onClick={() => setDirection(candidate)}
+          >
+            <span dir="auto">{words.direction[candidate]}</span>
+          </Chip>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <div className="flex flex-wrap gap-2">
+          {userLinePlacements.map((candidate) => (
+            <Chip
+              key={candidate}
+              selected={placement === candidate}
+              onClick={() => setChosen(candidate)}
+            >
+              <span dir="auto">{words.placement[candidate]}</span>
+            </Chip>
+          ))}
+        </div>
+        <span
+          dir="auto"
+          className="text-[12px] leading-[1.5] font-light text-ink-quiet text-pretty"
+        >
+          {placement === "beforeGross"
+            ? words.placement.beforeGrossWhy
+            : words.placement.afterGrossWhy}
+        </span>
+      </div>
+
+      <Field label={words.note} hint={words.noteHint}>
+        <input
+          type="text"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          dir="auto"
+          className={inputClass}
+        />
+      </Field>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          onClick={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+          className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+        >
+          <span dir="auto">{open === "new" ? words.submit : words.save}</span>
+        </button>
+        <button
+          type="button"
+          onClick={reset}
+          className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
+        >
+          <span dir="auto">{words.cancel}</span>
+        </button>
+      </div>
+    </Card>
+  );
 
   return (
     <div className="flex flex-col gap-2 border-t border-line pt-2.5">
@@ -492,9 +670,17 @@ function UserLinesControl({
                 <span dir="auto">{words.placement[placementOf(line)]}</span>
                 <button
                   type="button"
+                  onClick={() => openEdit(line)}
+                  aria-label={words.editLabel(line.label)}
+                  className="ms-auto text-[13px] font-medium text-ink-mute transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                >
+                  <span dir="auto">{words.edit}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => remove(line.id)}
                   aria-label={words.removeLabel(line.label)}
-                  className="ms-auto text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                  className="text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
                 >
                   <span dir="auto">{words.remove}</span>
                 </button>
@@ -507,113 +693,25 @@ function UserLinesControl({
                   <Bidi>{line.note}</Bidi>
                 </span>
               ) : null}
+              {/* Opened under the line it corrects, so the words in the fields
+                  and the row they belong to are read together. */}
+              {open === line.id ? panel : null}
             </li>
           ))}
         </ul>
       )}
 
-      {adding ? (
-        <Card
-          tone="inset"
-          radius="panel"
-          as="form"
-          className="flex flex-col gap-2.5 px-3.5 py-3"
-        >
-          <Field label={words.label} hint={words.labelHint}>
-            <input
-              type="text"
-              value={label}
-              onChange={(event) => setLabel(event.target.value)}
-              dir="auto"
-              className={inputClass}
-            />
-          </Field>
+      {open === "new" ? panel : null}
 
-          <Field label={words.amount}>
-            <input
-              type="text"
-              inputMode="decimal"
-              dir="ltr"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-              placeholder={he.placeholder.amountInput}
-              className={inputClass}
-            />
-          </Field>
-
-          <div className="flex flex-wrap gap-2">
-            {userLineDirections.map((candidate) => (
-              <Chip
-                key={candidate}
-                selected={direction === candidate}
-                onClick={() => setDirection(candidate)}
-              >
-                <span dir="auto">{words.direction[candidate]}</span>
-              </Chip>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <div className="flex flex-wrap gap-2">
-              {userLinePlacements.map((candidate) => (
-                <Chip
-                  key={candidate}
-                  selected={placement === candidate}
-                  onClick={() => setChosen(candidate)}
-                >
-                  <span dir="auto">{words.placement[candidate]}</span>
-                </Chip>
-              ))}
-            </div>
-            <span
-              dir="auto"
-              className="text-[12px] leading-[1.5] font-light text-ink-quiet text-pretty"
-            >
-              {placement === "beforeGross"
-                ? words.placement.beforeGrossWhy
-                : words.placement.afterGrossWhy}
-            </span>
-          </div>
-
-          <Field label={words.note} hint={words.noteHint}>
-            <input
-              type="text"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              dir="auto"
-              className={inputClass}
-            />
-          </Field>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              onClick={(event) => {
-                event.preventDefault();
-                add();
-              }}
-              className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
-            >
-              <span dir="auto">{words.submit}</span>
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
-            >
-              <span dir="auto">{words.cancel}</span>
-            </button>
-          </div>
-        </Card>
-      ) : (
+      {open === null ? (
         <button
           type="button"
-          onClick={() => setAdding(true)}
+          onClick={() => setOpen("new")}
           className="self-start rounded-full border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
         >
           <span dir="auto">{words.add}</span>
         </button>
-      )}
+      ) : null}
 
       {/* Drawn once, below whichever of the two is showing. Rendered inside
           each branch instead, it was the same element written twice and two
@@ -767,15 +865,16 @@ function AdvancesControl({
             const here = monthAdvances.filter(
               (advance) => advance.number === standing.number,
             );
-            // Not offered where the server would refuse it: nothing left owed,
-            // a repayment already recorded this month, or a month before the
-            // one the advance was given in. An advance carried in from the
-            // opening position has no granting month and so no month too early.
+            // **Asked of the engine and never decided here.** Nothing left
+            // owed, a repayment already recorded this month, or a month before
+            // the one the advance was given in — three sentences the server
+            // refuses on, and a control that answers a click with a refusal is
+            // a control that should not have been drawn. Restating them here
+            // would be a second copy that agrees today and drifts the first
+            // time either is corrected, which is what it was until this call
+            // replaced it.
             const canRepay =
-              standing.outstandingAgorot > 0 &&
-              !here.some((advance) => advance.kind === "repaid") &&
-              (standing.grantedIn === null ||
-                compareMonth(month, standing.grantedIn) >= 0);
+              whyRepaymentIsRefused(standing, month, monthAdvances) === null;
 
             return (
               <li
@@ -926,6 +1025,18 @@ function AdvancesControl({
  * because only it is paid on a clock the application can read backwards
  * (item 19).
  *
+ * **A recorded payment is edited in place and every one of its four things may
+ * change, the kind included** (item 16). Correcting it by removing it and
+ * recording it again is the same two refusals read twice and loses the note in
+ * between. The kind it is changed *to* is checked like any other — one row per
+ * kind — which is why the chips offer the kinds this month has not recorded
+ * **plus the one being corrected**: a payment refused as a second of its own
+ * kind would be a control refusing to leave a field where it found it.
+ *
+ * **Its amount is edited and never overridden**, for the reason item 17 gives:
+ * the figure is what left the account, and there is nothing under it for an
+ * override to replace.
+ *
  * **No artboard draws this section.** `EaseSalary - תשלומים` draws two sections
  * for third-party payments and both are a *reminder* view — what is due and what
  * is coming — resting on item 15's yearly clock and item 28's document expiry
@@ -944,7 +1055,10 @@ function ThirdPartyControl({
   "workerId" | "month" | "thirdPartyPayments" | "onSubmit"
 >) {
   const words = he.month.actions.thirdParty;
-  const [adding, setAdding] = useState(false);
+  /** `null` when nothing is open, `"new"` for a payment being recorded, and the
+   * kind of the payment being corrected — one panel at a time, which is the
+   * shape the other sections of this card use. */
+  const [open, setOpen] = useState<"new" | ThirdPartyKind | null>(null);
   const [kind, setKind] = useState<ThirdPartyKind | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -957,8 +1071,11 @@ function ThirdPartyControl({
   const { refusal, run, clear } = useMonthAction(onSubmit);
 
   const recorded = new Set(thirdPartyPayments.map((payment) => payment.kind));
+  // The kinds still open this month, **and the one being corrected**: a panel
+  // that hid the kind it was opened over would show the user a chip row with
+  // her own payment missing from it.
   const available = thirdPartyKinds.filter(
-    (candidate) => !recorded.has(candidate),
+    (candidate) => !recorded.has(candidate) || candidate === open,
   );
 
   const offered = kind === null ? null : offeredPeriodFor(kind, month);
@@ -968,7 +1085,7 @@ function ThirdPartyControl({
   };
 
   function reset() {
-    setAdding(false);
+    setOpen(null);
     setKind(null);
     setAmount("");
     setNote("");
@@ -976,17 +1093,51 @@ function ThirdPartyControl({
     clear();
   }
 
-  function add() {
-    if (kind === null) return;
+  /**
+   * The panel reopened over a payment already recorded, with its four things in
+   * the fields (item 16).
+   *
+   * **The period is set rather than left to follow the kind.** A stored period
+   * is contiguous by construction, so its two ends are its first and last
+   * months; a payment recorded with no period keeps two empty fields, which is
+   * what "covers the month it was paid in" reads as. Letting the offer take it
+   * again would put last quarter into a payment the family had deliberately
+   * left unqualified.
+   */
+  function openEdit(payment: ThirdPartyPayment) {
+    clear();
+    setOpen(payment.kind);
+    setKind(payment.kind);
+    setAmount(formatAgorot(payment.agorot));
+    setNote(payment.note ?? "");
+    const covers = payment.coversMonths ?? [];
+    setChosenPeriod(
+      covers.length === 0
+        ? { from: "", to: "" }
+        : {
+            from: yearMonthText(covers[0]),
+            to: yearMonthText(covers[covers.length - 1]),
+          },
+    );
+  }
+
+  /** One call for both gestures, and the kind the panel was *opened* with is
+   * what addresses the payment being corrected — not the kind now in the chips,
+   * which is the thing she may be changing. */
+  function submit() {
+    if (kind === null || open === null) return;
+    const draft = {
+      kind,
+      amount,
+      coversFrom: period.from,
+      coversTo: period.to,
+      note,
+    };
     run(
       () =>
-        addThirdPartyPayment(workerId, month, {
-          kind,
-          amount,
-          coversFrom: period.from,
-          coversTo: period.to,
-          note,
-        }),
+        open === "new"
+          ? addThirdPartyPayment(workerId, month, draft)
+          : updateThirdPartyPayment(workerId, month, open, draft),
       reset,
     );
   }
@@ -994,6 +1145,111 @@ function ThirdPartyControl({
   function remove(paid: ThirdPartyKind) {
     run(() => removeThirdPartyPayment(workerId, month, paid));
   }
+
+  const panel = (
+    <Card
+      tone="inset"
+      radius="panel"
+      as="form"
+      className="mt-1 flex flex-col gap-2.5 px-3.5 py-3"
+    >
+      <div className="flex flex-col gap-1">
+        <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+          {words.kind}
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {available.map((candidate) => (
+            <Chip
+              key={candidate}
+              selected={kind === candidate}
+              onClick={() => {
+                setKind(candidate);
+                // The offer follows the kind again whenever the kind changes,
+                // which is the only moment it can: once she edits a month field
+                // her choice stands for the rest of the entry.
+                setChosenPeriod(null);
+              }}
+            >
+              <span dir="auto">{he.sheet.thirdParty[candidate]}</span>
+            </Chip>
+          ))}
+        </div>
+      </div>
+
+      <Field label={words.amount}>
+        <input
+          type="text"
+          inputMode="decimal"
+          dir="ltr"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+          placeholder={he.placeholder.amountInput}
+          className={inputClass}
+        />
+      </Field>
+
+      <div className="flex flex-col gap-1">
+        <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+          {words.period}
+        </span>
+        <div className="flex flex-wrap gap-2">
+          <MonthSelect
+            label={words.periodFrom}
+            month={month}
+            value={period.from}
+            onChange={(value) =>
+              setChosenPeriod({ from: value, to: period.to })
+            }
+          />
+          <MonthSelect
+            label={words.periodTo}
+            month={month}
+            value={period.to}
+            onChange={(value) =>
+              setChosenPeriod({ from: period.from, to: value })
+            }
+          />
+        </div>
+        <span
+          dir="auto"
+          className="text-[12px] leading-[1.5] font-light text-ink-quiet text-pretty"
+        >
+          {words.periodHint}
+        </span>
+      </div>
+
+      <Field label={words.note} hint={words.noteHint}>
+        <input
+          type="text"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          dir="auto"
+          className={inputClass}
+        />
+      </Field>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          disabled={kind === null}
+          onClick={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+          className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+        >
+          <span dir="auto">{open === "new" ? words.submit : words.save}</span>
+        </button>
+        <button
+          type="button"
+          onClick={reset}
+          className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
+        >
+          <span dir="auto">{words.cancel}</span>
+        </button>
+      </div>
+    </Card>
+  );
 
   return (
     <div className="flex flex-col gap-2 border-t border-line pt-2.5">
@@ -1038,11 +1294,21 @@ function ThirdPartyControl({
                 ) : null}
                 <button
                   type="button"
+                  onClick={() => openEdit(payment)}
+                  aria-label={words.editLabel(
+                    he.sheet.thirdParty[payment.kind],
+                  )}
+                  className="ms-auto text-[13px] font-medium text-ink-mute transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                >
+                  <span dir="auto">{words.edit}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => remove(payment.kind)}
                   aria-label={words.removeLabel(
                     he.sheet.thirdParty[payment.kind],
                   )}
-                  className="ms-auto text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                  className="text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
                 >
                   <span dir="auto">{words.remove}</span>
                 </button>
@@ -1055,129 +1321,297 @@ function ThirdPartyControl({
                   <Bidi>{payment.note}</Bidi>
                 </span>
               ) : null}
+              {/* Opened under the payment it corrects, so the fields and the row
+                  they belong to are read together. */}
+              {open === payment.kind ? panel : null}
             </li>
           ))}
         </ul>
       )}
 
-      {adding ? (
-        <Card
-          tone="inset"
-          radius="panel"
-          as="form"
-          className="flex flex-col gap-2.5 px-3.5 py-3"
-        >
-          <div className="flex flex-col gap-1">
-            <span dir="auto" className="text-[13px] font-medium text-ink-warm">
-              {words.kind}
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {available.map((candidate) => (
-                <Chip
-                  key={candidate}
-                  selected={kind === candidate}
-                  onClick={() => {
-                    setKind(candidate);
-                    // The offer follows the kind again whenever the kind
-                    // changes, which is the only moment it can: once she edits a
-                    // month field her choice stands for the rest of the entry.
-                    setChosenPeriod(null);
-                  }}
-                >
-                  <span dir="auto">{he.sheet.thirdParty[candidate]}</span>
-                </Chip>
-              ))}
-            </div>
-          </div>
-
-          <Field label={words.amount}>
-            <input
-              type="text"
-              inputMode="decimal"
-              dir="ltr"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-              placeholder={he.placeholder.amountInput}
-              className={inputClass}
-            />
-          </Field>
-
-          <div className="flex flex-col gap-1">
-            <span dir="auto" className="text-[13px] font-medium text-ink-warm">
-              {words.period}
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <MonthSelect
-                label={words.periodFrom}
-                month={month}
-                value={period.from}
-                onChange={(value) =>
-                  setChosenPeriod({ from: value, to: period.to })
-                }
-              />
-              <MonthSelect
-                label={words.periodTo}
-                month={month}
-                value={period.to}
-                onChange={(value) =>
-                  setChosenPeriod({ from: period.from, to: value })
-                }
-              />
-            </div>
-            <span
-              dir="auto"
-              className="text-[12px] leading-[1.5] font-light text-ink-quiet text-pretty"
-            >
-              {words.periodHint}
-            </span>
-          </div>
-
-          <Field label={words.note} hint={words.noteHint}>
-            <input
-              type="text"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              dir="auto"
-              className={inputClass}
-            />
-          </Field>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              disabled={kind === null}
-              onClick={(event) => {
-                event.preventDefault();
-                add();
-              }}
-              className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
-            >
-              <span dir="auto">{words.submit}</span>
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
-            >
-              <span dir="auto">{words.cancel}</span>
-            </button>
-          </div>
-        </Card>
-      ) : available.length === 0 ? (
+      {open === "new" ? (
+        panel
+      ) : open === null && available.length === 0 ? (
         /* Not a refusal — nothing was refused, there is simply nothing left to
            record — so it stands where the button was rather than under it. */
         <p dir="auto" className="text-[14px] font-light text-ink-quiet">
           {words.allRecorded}
         </p>
-      ) : (
+      ) : open === null ? (
         <button
           type="button"
-          onClick={() => setAdding(true)}
+          onClick={() => setOpen("new")}
           className="self-start rounded-full border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
         >
           <span dir="auto">{words.add}</span>
         </button>
+      ) : null}
+
+      {refusal ? <Refusal reason={refusal} /> : null}
+    </div>
+  );
+}
+
+/**
+ * The amounts the application worked out, and the user's own figure over one of
+ * them (specs.md item 17).
+ *
+ * **The list is the engine's answer and this component asks it nothing.** Which
+ * rows may be replaced is `MonthLine.overridable`, declared where each draft is
+ * made (`lines.ts`), so no key is tested here and no list of names is kept — the
+ * failure a whitelist produces is that the next row the engine grows falls
+ * silently into whichever answer the `else` gives.
+ *
+ * **This is the one section of the card that is shown a calculation.** Every
+ * other one records an amount somebody typed; an override by definition
+ * addresses a figure that was derived, so the route runs the engine and hands
+ * the lines down (`PaymentsScreen`). Nothing here totals them.
+ *
+ * **A row already replaced still says what it would otherwise have been.**
+ * `calculatedAmount` comes from the engine beside the manual figure, so the two
+ * are read together and the replacement can be checked without anybody
+ * recalculating it by hand (items 17, 24).
+ *
+ * **Clearing is its own button and the field is never prefilled with the
+ * calculated figure.** The two produce the same number and mean opposite
+ * things: clearing leaves the row derived, while typing that number in stores
+ * it by hand for ever, so a later correction to the wage would move every
+ * figure on the sheet except that one. A panel opened over a derived row
+ * therefore opens **empty** — it is asking what should stand instead — and one
+ * opened over a row already replaced opens with the figure standing there.
+ *
+ * **An override outlives the row it addresses**, so the overrides this month is
+ * holding for rows it is not drawing are listed under the rest and offered to
+ * be cleared. An amount that is stored, will reappear, and cannot be seen is
+ * the one failure in this criterion that looks like nothing went wrong.
+ *
+ * **No artboard draws any of this.** `EaseSalary - תשלומים` has no override
+ * surface at all, as it has no income-tax field and no user lines;
+ * `docs/design-pass-jobs-1-2.md` lists the manual-override state among job 3's
+ * missing screens. So it is built in the idiom the calendar's picker
+ * established — a panel that opens where it is needed and closes when it is
+ * answered — and that is written here so nobody later reads it as having been
+ * checked against a drawing.
+ */
+function OverridesControl({
+  workerId,
+  month,
+  lines,
+  orphanedOverrides,
+  onSubmit,
+}: Pick<
+  MonthActionsProps,
+  "workerId" | "month" | "lines" | "orphanedOverrides" | "onSubmit"
+>) {
+  const words = he.month.actions.overrides;
+  /** The key of the row whose panel is open, or `null`. One at a time, which is
+   * the shape the rest of this card uses. */
+  const [open, setOpen] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const { refusal, run, clear } = useMonthAction(onSubmit);
+
+  const overridable = lines.filter((line) => line.overridable);
+
+  function reset() {
+    setOpen(null);
+    setAmount("");
+    setNote("");
+    clear();
+  }
+
+  /** Opened empty over a derived row and filled over one already replaced —
+   * never with the calculated figure, for the reason the docblock gives. */
+  function openPanel(line: MonthLine) {
+    clear();
+    setOpen(line.key);
+    setAmount(
+      line.manual && line.amount !== null ? formatAgorot(Math.abs(line.amount)) : "",
+    );
+    setNote("");
+  }
+
+  function save(key: string) {
+    run(() => setOverride(workerId, month, { key, amount, note }), reset);
+  }
+
+  function restore(key: string) {
+    run(() => clearOverride(workerId, month, key));
+  }
+
+  const panel = (key: string) => (
+    <Card
+      tone="inset"
+      radius="panel"
+      as="form"
+      className="mt-1 flex flex-col gap-2.5 px-3.5 py-3"
+    >
+      <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+        {words.panelTitle}
+      </span>
+      <Field label={words.amount} hint={words.amountHint}>
+        <input
+          type="text"
+          inputMode="decimal"
+          dir="ltr"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+          placeholder={he.placeholder.amountInput}
+          className={inputClass}
+        />
+      </Field>
+      <Field label={words.note} hint={words.noteHint}>
+        <input
+          type="text"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          dir="auto"
+          className={inputClass}
+        />
+      </Field>
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          onClick={(event) => {
+            event.preventDefault();
+            save(key);
+          }}
+          className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+        >
+          <span dir="auto">{words.save}</span>
+        </button>
+        <button
+          type="button"
+          onClick={reset}
+          className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
+        >
+          <span dir="auto">{words.cancel}</span>
+        </button>
+      </div>
+    </Card>
+  );
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+      <h3 dir="auto" className="text-[15px] font-semibold">
+        {words.title}
+      </h3>
+      <p
+        dir="auto"
+        className="text-[13px] leading-[1.5] font-light text-ink-mute text-pretty"
+      >
+        {words.lead}
+      </p>
+
+      {overridable.length === 0 ? (
+        <p dir="auto" className="text-[14px] font-light text-ink-quiet">
+          {words.empty}
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {overridable.map((line) => (
+            <li
+              key={line.key}
+              className="flex flex-col gap-1 rounded-card-sm border border-line px-3 py-2"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="min-w-0 text-[15px] font-medium">
+                  {/* The engine's own label, which names her rest day where the
+                      row does (item 5) — never a second copy kept beside this
+                      control. */}
+                  <Bidi>{line.label}</Bidi>
+                </span>
+                <MoneyValue agorot={line.amount} manual={line.manual} />
+              </div>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-light text-ink-quiet">
+                {/* What the row would otherwise have said, beside what it says
+                    — the whole of why an override is checkable (item 24). */}
+                {line.manual && line.calculatedAmount !== undefined ? (
+                  <span>
+                    <span dir="auto">{words.calculated}</span>
+                    <span> </span>
+                    <Bidi noTranslate>
+                      {formatAgorot(line.calculatedAmount)}
+                    </Bidi>
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => openPanel(line)}
+                  aria-label={words.changeLabel(line.label)}
+                  className="ms-auto text-[13px] font-medium text-ink-mute transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                >
+                  <span dir="auto">{words.change}</span>
+                </button>
+                {line.manual ? (
+                  <button
+                    type="button"
+                    onClick={() => restore(line.key)}
+                    aria-label={words.clearLabel(line.label)}
+                    className="text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                  >
+                    <span dir="auto">{words.clear}</span>
+                  </button>
+                ) : null}
+              </div>
+              {open === line.key ? panel(line.key) : null}
+            </li>
+          ))}
+        </ul>
       )}
+
+      {orphanedOverrides.length > 0 ? (
+        <div className="flex flex-col gap-1.5 border-t border-line pt-2">
+          <span dir="auto" className="text-[14px] font-medium text-ink-warm">
+            {words.orphaned}
+          </span>
+          <p
+            dir="auto"
+            className="text-[12px] leading-[1.5] font-light text-ink-quiet text-pretty"
+          >
+            {words.orphanedHint}
+          </p>
+          <ul className="flex flex-col gap-2">
+            {orphanedOverrides.map(({ key, override }) => (
+              <li
+                key={key}
+                className="flex flex-col gap-1 rounded-card-sm border border-line px-3 py-2"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span
+                    dir="auto"
+                    className="min-w-0 text-[15px] font-medium text-ink-warm"
+                  >
+                    {/* The name the row carried when the figure was typed. There
+                        is no row left to read one off, and a month stored before
+                        the name was kept has none at all — the amount and the
+                        reason are then what it is known by. */}
+                    {override.label === undefined ? (
+                      words.unnamed
+                    ) : (
+                      <Bidi>{override.label}</Bidi>
+                    )}
+                  </span>
+                  <MoneyValue agorot={override.agorot} manual />
+                </div>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-light text-ink-quiet">
+                  {override.note ? <Bidi>{override.note}</Bidi> : null}
+                  <button
+                    type="button"
+                    onClick={() => restore(key)}
+                    aria-label={words.clearLabel(
+                      override.label ?? words.unnamed,
+                    )}
+                    className="ms-auto text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                  >
+                    <span dir="auto">{words.clear}</span>
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {refusal ? <Refusal reason={refusal} /> : null}
     </div>

@@ -12,15 +12,18 @@ export const chipClass: Record<ChipTone, string> = {
   plain: "rounded-chip bg-surface px-3 py-1",
 };
 
-interface ValueChipProps {
-  children: ReactNode;
-  tone?: ChipTone;
-  className?: string;
-}
-
-export function ValueChip({ children, tone = "warm", className }: ValueChipProps) {
+/**
+ * A count in its pill, at the size every row draws one.
+ *
+ * **It carries no `tone` and no `className`**, because it had both and no
+ * caller ever set either: all three passed the same size class and none passed
+ * a tone. `MoneyValue` is the other reader of `chipClass` and it needs the
+ * tone, so the record stays exported and the component does not offer a choice
+ * that only one of the two ever makes.
+ */
+export function ValueChip({ children }: { children: ReactNode }) {
   return (
-    <span className={[chipClass[tone], className ?? ""].filter(Boolean).join(" ")}>
+    <span className={`${chipClass.warm} text-[16px] font-semibold`}>
       {children}
     </span>
   );
