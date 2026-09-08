@@ -28,7 +28,7 @@ that names no Supabase, stage 4's screen runs on an in-memory store and stage 3 
 | 3 | The rest-day generalisation — Friday and Sunday workers | 1 · step 7c | 2 | — |
 | 4 | The open sick spell | 1 · step 7d | 3 | — |
 | 5 | The repository interface and its in-memory implementation | 1 · step 8 | 1, 3, 4 | — |
-| 6 | Two artboards reconciled with the shell — `חישוב החודש`, `דף המשכורת` | design pass, jobs 1–2 only | — | — |
+| 6 | The canvas reconciled with the shell and with `specs.md` | design pass — jobs 1, 2 and 3, **all run 2026-09-05** | — | — |
 | 7 | The month screen: calendar, marks, live preview | 4 | 5, 6 | — |
 | 8 | The export, reachable by a user | 2 | 3 | 7 |
 | 9 | Everything else | 3, 5, 6, 7 | 8 | — |
@@ -123,6 +123,14 @@ page. A tab that 404s is worse than a tab that is not there.
 | `/alerts` | `התראות` | 6 | 404 |
 | `/help` | none — stage 7 draws it | 7 | 404 |
 
+**Two artboards were added on 2026-09-05 and neither has a route yet**, which is a gap to
+close when their stage arrives rather than a drift:
+
+| Artboard | What it is | Whose route |
+|---|---|---|
+| `בחירת חגים` | The year's holidays chosen in advance (item 10). Reached from `הגדרות` and from the home screen's own alert, so it draws `הגדרות` as the active tab | **stage 5's**, which is the stage that needs it |
+| `לפני הייצוא` | The confirmation questions and the minimum-wage confirmation (items 18 and 4). No tab is active: it is a step in an action, not a section | **stage 2's**, with the export |
+
 **Three artboards have no route at all, and each is a different kind of gap:**
 
 - **`דף המשכורת`** — the payslip as the family reads it, mapped to stages 2 and 4. It is the
@@ -164,9 +172,49 @@ only the transcription:
   artboards the slice builds against. **The green sidebar is already gone from both**, which
   this file asserted for months and nobody had opened the canvas to check: read on 2026-09-02,
   each carries the 62px top bar as `AppShell` builds it, and so does `החודשים` from the older
-  of the two edit batches. The ten unread artboards are therefore unknown rather than known to
-  be stale. What the two do still lack is the worker switcher, and each marks `דף הבית` as the
-  active tab on a route that is not home. The rest are transcribed when their own stage arrives.
+  of the two edit batches. What the two still lacked was the worker switcher, and each marked
+  `דף הבית` as the active tab on a route that is not home — **both fixed on 2026-09-05**, along
+  with the greeting, which moved into the bar with the switcher. The rest are transcribed when
+  their own stage arrives.
+- **The whole canvas was surveyed on 2026-09-05 and the green sidebar is not on it.** This was
+  the last thing left from job 2: the unread artboards were *unknown* rather than known to be
+  stale, and reading all thirteen settles it in the direction this file had not expected.
+  **Only `דף הבית v2` and `דף הבית v2 layout A` draw the 232px `#2E4636` aside, and neither is
+  a screen the application owes** — they are the comparison pair `דף הבית v3 לוח במרכז` came
+  out of, kept for the record. Every artboard that answers a route carries the 62px white top
+  bar as `AppShell` builds it, and the five active tabs are each correct: `דוחות`, `הגדרות`,
+  `העובדות` and `דף העובד` (both `עובדים/ות`), and `תשלומים`. **So job 2's premise was wrong
+  and the work it named is smaller than the work the survey found**, which is the next two
+  bullets.
+- **Six artboards draw the top bar without the worker switcher and without the greeting.**
+  `דוחות`, `דף העובד`, `הגדרות`, `העובדות`, `התראות` and `תשלומים` each draw the profile link
+  as a bare `[השם שלך]` beside the avatar — no `בוקר טוב,` and no `‹ [שם העובד/ת] ›`. **Jobs 1
+  and 2 created this gap rather than finding it**: they moved the greeting into the bar and
+  added the switcher, on the four artboards those jobs named and nowhere else, so a shell that
+  was consistent before the pass is inconsistent after it. It is transcription and it is the
+  only thing job 2 still owes.
+- **`התראות` marks `דף הבית` as the active tab, which is the bug job 2 fixed twice already.**
+  `/alerts` is its own route and it is reached from the **bell**, which is not one of the five
+  tabs — so it is `החודשים`'s case and the answer is the same, no tab lit. Its etag sits
+  between the two edit batches, which is why the sweep that caught `חישוב החודש` and
+  `דף המשכורת` passed over it.
+- **The built `/month` draws the month name twice, and the artboard now draws it once.**
+  `MonthScreen.tsx` renders `monthLabel(month)` as the page `h1`, and `MonthCalendar.tsx`
+  renders it again in its own header at the same 24px bold, directly beneath. Confirmed on
+  the running dev server on 2026-09-05. It is almost certainly a leftover from step 6, when
+  the stepper and the month label moved into the calendar's header and the page `h1` was
+  left behind. **`חישוב החודש` names it once**, in the calendar card's header beside the hint
+  and opposite the stepper — the control that changes the month has to sit next to it. The
+  code fix is owed and is not this pass's: delete the page `h1`.
+- **`הוספת עובד` draws neither shell, and that is an undocumented decision rather than drift.**
+  It carries a focused wizard chrome — the wordmark, `לצאת בלי לשמור`, a four-step progress
+  bar, and no nav at all — which is the right shape for an add-flow, since a wizard offering
+  five ways out is a wizard the user leaves halfway. But `AppShell` wraps every route today,
+  nothing in this plan says a route may opt out of it, and the artboard carries the oldest etag
+  on the canvas by a wide margin: it predates both edit batches and escaped the green sidebar
+  only by never having had a nav. **The decision is recorded here so that the stage which
+  builds it inherits it rather than rediscovers it**, and it needs an answer from `AppShell`'s
+  side before that stage runs.
 - **Job 3 waits for the decisions it rests on.** The reconciliation table at the foot of
   this file now records all eleven as settled, so job 3 is no longer blocked on the user —
   but it is still design work and it is still not folded into a stage that consumes it.
@@ -178,18 +226,16 @@ Three jobs, in order of how much design they actually involve:
    settled by measuring the built screen — but while they live only in prose, every future
    screen session has to be told, and any session that is not told will faithfully undo
    them. Transcription, not design.
-2. **Bring the artboards that still draw the v2 green sidebar onto the top bar.** They
-   disagree with `AppShell` on every route. Also transcription.
+2. **Bring the artboards whose top bar is out of date onto the current one.** This job was
+   written as "the ones that still draw the v2 green sidebar", and the survey above found no
+   such artboard: what is actually out of date is the *right-hand end* of a bar that is
+   otherwise correct — six artboards with no worker switcher and no greeting, and `התראות`
+   lighting a tab it should not. Also transcription, and now a defined list rather than a
+   suspicion.
 3. **Draw the screens that have no artboard at all.** This is the real design work, and
-   the `frontend-design` skill belongs here and nowhere else in this plan. The
-   reconciliation list at the foot of this file says what they are — the holiday picker
-   first, since no artboard exists for it and stage 5 needs it, then the part-day, the
-   manual-override state, the third-party payments group, the two day counts, the
-   pre-export questions, a future month filled but not exportable, and a sick spell
-   crossing a month boundary. Three more join them from the settled canvas list: the
-   worker's three documents and their expiry dates (item 28), the bell and its split from
-   the opening screen's own list (item 27), and the per-year salary summary download
-   (item 29).
+   the `frontend-design` skill belongs here and nowhere else in this plan. **Run on
+   2026-09-05 and almost entirely closed**; what it drew is recorded under "Job 3 as it
+   ran" below.
 
 Anything in job 3 that *ought to exist* was a `specs.md` decision before it became a
 drawing. Those decisions have now been taken and the table below records them, so job 3
@@ -214,16 +260,83 @@ step or a holiday becomes impossible to record in between.
 with the shell, and nothing that stage needs is still missing from the canvas. For the
 slice that means exactly two artboards; for the later stages it means the rest.
 
-**As of 2026-09-03 that is not met, and stage 4 started anyway.** The hand-over is written
-and the canvas has not been changed, so the two slice artboards still carry the three bar
-items, the pre-v3 mark colours, the tool-palette gesture and the folded `תוספות ומקדמות`
-row. Stage 4 therefore builds against `docs/design-pass-jobs-1-2.md` — the description
-rather than the drawing — which is the weaker of the two and is written down here so that
-nobody later reads the built screens as having been checked against a canvas they were
-not. It is the weaker of the two and not a licence: every item of the hand-over is
-something already settled in `specs.md` or in the built system, which is why the
-description can stand in for the drawing at all. When the canvas catches up, the artboards
-become the reference again.
+**The wizard is gone.** `חישוב החודש` was drawn as a three-step wizard while `/month` is a
+calendar and a preview with the recording groups on `/payments`, and this file called it the
+largest disagreement left between the canvas and the built application. It was restructured
+on 2026-09-05 into the shape the route actually has: the calendar on one side, and on the
+other the four cards `MonthPreview` renders — the two day counts, the grouped lines under
+their own headings, the closing block with its collapse rule, the third-party payments
+outside the worker's total, the balances with the days each month drew, and `כדאי לדעת`.
+
+**Stage 4 was built against the description and the canvas caught up afterwards.** From
+2026-09-03 the hand-over was written and the canvas was not changed, so stage 4 built
+against `docs/design-pass-jobs-1-2.md` — the description rather than the drawing, which is
+the weaker of the two and was written down here so that nobody later read the built screens
+as having been checked against a canvas they were not. It was never a licence: every item of
+the hand-over was something already settled in `specs.md` or in the built system, which is
+why the description could stand in for the drawing at all.
+
+### Job 3 as it ran — 2026-09-05
+
+Two artboards were **created**, five were **restructured or corrected**, and the canvas grew
+from thirteen files to fifteen. What each closed:
+
+| Drawn | Closes | Where |
+|---|---|---|
+| The yearly holiday picker | item 10 in full — the candidate list, another country's list, the nine-day quota with its proration *and the reasoning behind it*, the remainder shown fractional, an editable date, the refusal past the quota, and an incomplete selection visible at a glance. Plus **item 12's degradation**: the fetch failing, with manual entry beside it | **`בחירת חגים`**, new |
+| Part-days | item 10's "a holiday can be taken as part of a day" — `יום מלא` / `חצי יום` on each chosen date | same |
+| The pre-export questions | item 18, each question arriving **with what the month already knows** so the user confirms rather than recalls; and the open sick spell drawn as a **block** rather than a warning, because a month is not exported over an unanswered one | **`לפני הייצוא`**, new |
+| The minimum-wage confirmation | item 4 — the figure, the date it took effect, where it was read from, a way to correct it, and the sentence that a month is valued at the rate in force during it | same |
+| The manual-override control | item 17 — the derived rows and only those, `להחליף סכום`, the `ידני` badge, `היישום חישב …` beneath the figure it replaced, and `לבטל את ההחלפה` as its own button. The panel opens **empty**, and says why | `תשלומים` |
+| The user-line edit panel | item 20 — one panel for adding and editing, with the direction and the placement set explicitly and the placement rule stated beneath them | same |
+| The third-party edit panel | item 16 — the seven kinds as chips in the template's own words, the amount, and the months the payment covers | same |
+| A future month, filled and not exportable | item 21 — the `כדאי לדעת` card | `חישוב החודש` |
+| The two day counts, the third-party group, an override shown as manual, balances with days used | items 2, 5, 16, 17 | `דף המשכורת` (job 2b) |
+| The worker's three documents and their expiry dates | item 28 — three, not one | `הגדרות` |
+| The per-year salary summary | item 29, reshaped — one worker, one year | `דוחות`, `הגדרות` |
+| The bell as its own state | item 27 — `התראות` is reached from the bell, so the bell is what lights, not a nav tab | `התראות` |
+
+**The two things job 3 nearly missed, drawn on 2026-09-08.** A free-text note on a
+*calendar mark* (item 5) and a **part-day for vacation** (item 7) are one surface, not two:
+both belong to the picker that opens when a range is swept. The picker now carries a second
+row — `כמה מהיום נלקח` with `יום מלא`/`חצי יום`, and a `הערה` field — under the kind chips,
+with the rule stated beneath rather than hidden: vacation may be taken as half a day and is
+deducted from the quota in the same proportion, while sickness and a free rest day are whole
+days. The same row went into `חישוב החודש` and `דף הבית v3` in one step, because two
+calendars that disagree about what a mark can carry is the failure this was going to be.
+The picker draws in each artboard's resting state behind a `showPicker` prop, since a
+control that only appears mid-drag is a control nobody reviewing the artboard ever sees.
+
+### What job 3 found that was not on its list
+
+Reading every artboard to draw the missing ones turned up **settled decisions that never
+reached the canvas** — the same class as the `חג` picker, and more of it than anyone had
+counted. All are now applied:
+
+- **`הגדרות` carried three *drops* at once**: the notification toggles (item 27 — nothing
+  leaves the application, so there is nothing to toggle), the editable `ימי חופשה בשנה` and
+  `ימי מחלה בשנה` (item 7 — derived, and an editable quota raises "which past months does
+  the edit reach into", which has no answer), and `להוריד את כל הנתונים` (item 29 gave it a
+  narrower shape). The two entitlements now read as derived, with the reason on the row.
+- **`דוחות` offered PDF in three places** against a spec that exports `.xlsx` only, and a
+  severance report that Part 1 puts out of scope. Both gone; the report is `דמי הבראה`.
+- **`דף העובד` drew the accrued-severance card and `לסיים העסקה`**, both settled *drop*. In
+  the card's place is the advance still owed, which is the third figure that carries across
+  the whole employment rather than sitting in one month.
+- **`דף העובד`'s balance colours were its own** — blue for vacation, pink for sickness —
+  where the calendar, the legend and the home strip use amber and dust-blue. A balance and
+  the days that produced it now read as the same thing on every screen.
+- **`התראות` lit `דף הבית`**, the bug job 2 fixed twice elsewhere.
+- **Four artboards carried a full-width row under the bar** (`› חזרה ל…`, or the date) that
+  job 2a item 4 had already settled has nowhere to live in the shell. All removed.
+
+**On 2026-09-05 jobs 1 and 2 were applied to the canvas**, and `docs/design-pass-jobs-1-2.md`
+is now a record of what changed rather than a work order. All four artboards it names are
+written: `דף הבית v3` and `חישוב החודש` in the session that composed them, and
+`דף המשכורת` and `החודשים` on the next one, the design server having dropped before they
+could be uploaded. They waited in `docs/canvas-pending/` in the meantime; that directory was
+deleted with the upload, because a `.dc.html` living in the repo is a second copy of a
+drawing whose home is the canvas. **For all four, the artboard is the reference again.**
 
 ## Stage 0 — Repo, scaffold, design system · **done**
 
@@ -664,13 +777,17 @@ Next.js App Router, Tailwind right-to-left, Hebrew strings in one translations f
   it in step 5**, given and repaid, with what is still owed walked from the whole
   employment, and **the payments to third parties arrived in step 7** — the payments
   screen's second group, together with the seventh kind the sheet had always held and the
-  union never had. What the screen is still owed is the last of item 5's four contents: the
-  manual overrides.
+  union never had. **The last of item 5's four contents, the manual overrides, arrived in
+  step 8**, which is also where `/payments` stopped being a route that runs no engine — an
+  override addresses a derived figure, so the group holding it has to be shown one.
 - A free-text note on every action — **a line the user adds carries one** (step 4) and so
   does an advance (step 5), which also carries the reason forward onto the debt so a later
-  month reads why it was given; the marks on the calendar do not yet. Manual override of
-  any computed amount, shown as manual, is not built at all: today an override can only be
-  seeded, and it is what the next step in this group is for.
+  month reads why it was given; **an override carries one too** (step 8); the marks on the
+  calendar do not yet. **Manual override of any computed amount, shown as manual, arrived in
+  step 8**, together with the division it turned out to rest on: an amount the application
+  worked out is *overridden* and an amount the month itself recorded is *edited*, so the
+  same step gave the user's own lines and the third-party payments the edit panels steps 4
+  and 7 had each deferred to it.
 - A future month accepts facts and refuses export, saying which of the two it is.
 - The live preview, driven by the same engine as the export.
 
@@ -685,12 +802,13 @@ preview shows the month's own figures, the export shows the sheet's, and the tes
 agree drives both from one engine result and belongs with the calculation suite
 (`CLAUDE.md`). Criterion 1 is checked on the exported file, which is what it is about.
 
-**It is built against `docs/design-pass-jobs-1-2.md` and not against the canvas.** The
-hand-over was written on 2026-09-03 and has not been applied: the two slice artboards still
-carry the three bar items, the pre-v3 mark colours, the tool-palette gesture and the folded
-`תוספות ומקדמות` row. So the description is what this stage follows, item by item, and the
-etags in the hand-over are what says whether that is still true. When the canvas catches up,
-the artboards become the reference again and the hand-over becomes a record of what changed.
+**It was built against `docs/design-pass-jobs-1-2.md` and the canvas caught up on
+2026-09-05.** The hand-over was written on 2026-09-03 and applied two days later, so
+`חישוב החודש` now carries the system's mark colours, the range-then-picker gesture, the
+six-entry legend, the month stepper and the split `תוספות ומקדמות` rows. The artboard is the
+reference again — with one thing it still gets wrong, recorded in the hand-over: it is drawn
+as a three-step wizard, while this stage built a calendar with a preview and put the
+recording groups on `/payments`. That is job 3's to settle, not this stage's.
 
 ### Step 1 — the month screen exists, on the store, and draws · **done**
 
@@ -1398,12 +1516,17 @@ twice:**
   reading the same store must not open on different months, and they would have the moment
   either rule was corrected alone.
 
-**`/payments` runs no engine, and that is the shape of the split.** Nothing on it is a
-derived figure: the amounts are the ones the user typed, and the one walked figure — what is
-still owed on an advance — is a sum of typed amounts and not a rate applied to anything. So
-the route reads facts and calculates nothing, and what the entries come to is `/month`'s
-answer, from the one calculation path that also fills the export (Part 3). The advance ledger
-moved to the payments route with the group; the month route no longer walks it.
+**`/payments` ran no engine, and step 8 changed that** — the sentence is kept because the
+reasoning still holds for everything but the one thing that overturned it. Nothing on this
+route is a derived figure: the amounts are the ones the user typed, and the one walked
+figure — what is still owed on an advance — is a sum of typed amounts and not a rate applied
+to anything. The exception is the **manual overrides**, which by definition address a figure
+the application *worked out* (item 17), so the group that holds them has to be shown one;
+step 8 therefore runs `calculateSeries` here and hands the month's lines down. It is still
+not a second calculation path and this route still totals nothing: what the entries come to
+is `/month`'s answer, from the one calculation that also fills the export (Part 3). The
+advance ledger moved to the payments route with the group; the month route no longer walks
+it.
 
 **Nothing in the calculation moved.** All 368 tests still pass and none was added: this step
 changed which screen draws a control and no rule about what it records.
@@ -1653,10 +1776,215 @@ silently turned round.
   finding 3 of stage 2 records. Neither is a third-party payment, so neither is this step's
   — but the recuperation one is what `לקראת החודשים הבאים` most wants.
 
+### Step 8 — the manual overrides, and the division between overriding and editing
+
+The last of item 5's four contents, and the step that finished the additional-payments
+group. Until it, an override could only be **seeded**: `MonthFacts.overrides` had been in
+the engine since stage 1 and no surface could write one, which is the same shape step 7
+found in the third-party payments a week earlier.
+
+**`specs.md` moved first, and three criteria moved rather than one.** Item 17 gained the
+whole override/edit division and six decisions under it; items 16 and 20 gained the
+edit-in-place paragraphs steps 4 and 7 had each deferred to "the manual-override step".
+What the criterion had said was that any amount the application worked out can be
+overridden and that an override is marked manual and survives recalculation. What it had
+not said was **which amounts those are**, and that question had been quietly answered the
+wrong way by every earlier step: item 20 and item 16 both promised that an override on a
+user line or a third-party payment would be carried and removed with it, which describes a
+figure standing in front of an amount that was already the user's own.
+
+**The rule is that an amount the application worked out is *overridden* and an amount this
+month *recorded* is edited.** The two are different gestures and naming them apart is what
+keeps either usable: a row whose amount **is** what she typed has nothing under it for an
+override to replace, so an override on one would be a second amount in front of the first
+with nothing on screen to say which is which, and the row would be marked manual against a
+figure that was manual already.
+
+**The test is not who typed the figure but *where*, and the standing line is the case that
+proves it.** Its amount was typed — on the profile — and item 20 says it appears in every
+month afterwards at the same amount, so a month in which the family paid something else has
+no other way to say so; editing it would restate every month it appears in, which is the one
+thing a term of the employment must not do. So `overridable` is not "derived" and not
+"typed": it is *reached this month from somewhere else*. A standing line is on the
+overridable side and a one-off line is not, and they are the same shape of object.
+
+**The engine declares it and nothing else may.** `LineDraft.overridable` is set where each
+draft is made and `MonthLine.overridable` carries it out; absent means no, which is the safe
+direction, because the opposite default would let the next row the engine grows quietly
+acquire a control nobody designed for it. The server action validates an override against
+that flag on the line the engine actually drew — **never against a list of keys**, which
+would compile clean and stop covering a new row silently. This file has been bitten by a
+keyed whitelist twice already (`ClosingBlock`, `thirdPartyKinds`), and this is the third
+place the lesson is written down.
+
+**`ClosingLine` deliberately has neither field, and that is not an omission.** Every row of
+the block below the columns is an amount the month itself recorded — the income tax, an
+advance movement, a one-off line placed after the total — so none of them is overridable and
+a flag with one reachable value is flexibility for a case that cannot arise. The one row
+that *would* be is a **standing** line placed after the total, and no standing line can
+exist: `MonthTerms.standingLines` is empty in the seed and the profile screen that would set
+one is this plan's unowned debt. The flag is added the day the case can happen; until then
+the override control reads `MonthResult.lines` alone.
+
+**Six things were built:**
+
+- `src/lib/engine/overrides.ts` — `reviewOverride`, the pure rule for what an override may
+  be; `withOverride` and `withoutOverride`; and `orphanedOverrides`. All pure, all tested.
+- `src/lib/engine/lines.ts` — `LineDraft.overridable`, and **`toLine` now signs an override
+  from the draft's own `units`**. `signedUserLine` in `month.ts` is deleted rather than
+  moved: it wrapped the user's own lines because `toLine` took an override verbatim, and
+  signing inside `toLine` says the rule once and covers the **sickness deduction**, which
+  the wrapper never did. Reverting the sign rule fails two tests — `sick.test.ts` and
+  `user-lines.test.ts` — which is what proved the deletion safe.
+- `src/lib/engine/types.ts` — `LineOverride.label`, the name the row carried when the figure
+  was typed. It is a snapshot and not a lookup, for the reason item 17 now gives: an orphan
+  has no row left to read a name off, and several of these names are derived from the
+  worker's rest day, so a name worked out afresh would rename an old override the day her
+  rest day changed.
+- `src/app/month/actions.ts` — `setOverride`, `clearOverride`, `updateUserLine` and
+  `updateThirdPartyPayment`, and `revalidateMonth` beside them.
+- `src/app/payments/page.tsx` — the engine, which this route did not run.
+- `src/components/MonthActions.tsx` — the group's fifth section, and the edit panels on the
+  user's own lines and on the third-party payments.
+
+**Five decisions inside it, none reopenable without a reason:**
+
+1. **`/payments` runs the engine now, and step 6's sentence is corrected above rather than
+   left standing.** Everything else on the route is an amount somebody typed; an override
+   addresses a figure the application worked out, so the group holding it has to be shown
+   one. It is still not a second calculation path — the route totals nothing, and the lines
+   it hands down came out of the same `calculateSeries` the month screen and the export run.
+2. **Clearing is its own button and the field is never prefilled with the calculated
+   figure.** The two produce the same number and mean opposite things (item 17), so a panel
+   opened over a derived row opens **empty** — it is asking what should stand instead — and
+   one opened over a row already replaced opens with the figure standing there. A prefilled
+   calculated figure would make "press save" the shortest path to storing that number by
+   hand for ever, which is exactly the failure the criterion names.
+3. **`clearOverride` validates nothing about the key**, which is the one place it differs
+   from setting one. The override that most needs clearing is the one whose row the month no
+   longer draws, and a check against the drawn lines would refuse the only case it exists
+   for.
+4. **The edit panel is the add panel, in all three places.** Adding a line and correcting
+   one ask the same question — what should this say — and a second panel would be a second
+   place for the placement rule, the period offer and the chip defaults to drift. What the
+   two do differ in is what the panel *opens with*: an edit sets the placement and the
+   period explicitly rather than letting the defaults take them again, or reopening a line
+   to fix a typo would silently move it across the month's total.
+5. **A third-party payment being corrected is offered its own kind among the chips.** The
+   available kinds are those the month has not recorded **plus the one the panel was opened
+   over**, and the server checks the draft against the month's *other* payments — otherwise
+   a payment whose kind did not change would be refused as a second payment of its own kind,
+   which is a control refusing to leave a field where it found it.
+
+**One defect was fixed rather than carried.** `month.ts` set the income-tax row
+`manual: true` whenever a tax had been typed, override or not — so the badge meant
+"overridden" on five rows and "filled in" on that one, and this step is what put the two
+meanings on one screen. A typed tax is not a manual amount: the tax is never worked out at
+all, entering it is the only way it can exist, and item 17 says it is *edited*, in the
+control where its rule stands. The row now says `manual` only for an override, like every
+other row, and a test pins it.
+
+**No artboard draws any of the three surfaces, and each component says so.** The two edit
+panels and the whole override section are among `docs/design-pass-jobs-1-2.md`'s job 3
+missing screens — `EaseSalary - תשלומים` draws no recording surface at all, as steps 6 and 7
+each found from their own side. So they are built in the idiom the calendar's picker
+established, and that is written into the files so nobody later reads them as having been
+checked against a drawing. **They are the first thing job 3 should draw after the holiday
+picker**, because they are now built and unowned rather than merely unbuilt.
+
+**Nothing else in the calculation moved.** The 392 tests that existed before this step all
+still pass; 12 were added, and the six mutations that matter were made and caught — an
+override accepted on a row the month itself recorded (1 failure), zero refused as it is for
+a user line (1), the row's name not stored with the amount (1), an orphan hidden because the
+closing block draws its key (1), the sign taken from the typed figure rather than from the
+row (2, in `sick.test.ts` and `user-lines.test.ts`), and the income tax marked manual for
+having been entered (1).
+
+**Check — restart the dev server first.** The store is a module singleton and keeps
+everything clicked in since the process started, so a September carrying entries from an
+earlier session will not show the figures below. Stop and start `npm run dev`.
+
+Open http://localhost:3000/payments; it opens on **ספטמבר 2026**. September's figures are
+step 4's, derived there on paper: ברוטו **₪8,353.05**, of which שכר החודש ₪6,247.65,
+תוספת ימי שישי ₪400.00 (4 × 100) and עבודה בשבת ₪1,705.40 (4 × 426.35).
+
+1. **The card now ends with a fifth section, `סכומים שהיישום חישב`**, holding exactly those
+   three rows and no others. **`מס הכנסה` is not among them and neither is
+   `מזומן לקניות`** — that is the whole of the division: the tax is edited in its own
+   section above, where its rule stands, and a line you typed is edited on the line.
+2. **Press `להחליף סכום` on `עבודה בשבת`. The field is empty.** Type `1600` and press
+   `להחליף`. The row reads **₪1,600.00** with a `ידני` badge, and under it
+   `היישום חישב ₪1,705.40` — what it would otherwise have been, beside what it says.
+3. **Open http://localhost:3000/month on the same month.** `ברוטו` has fallen from
+   ₪8,353.05 to **₪8,247.65**, and the national-insurance estimate from ₪300.71 to
+   **₪296.92** (3.6% of the new ברוטו). The rest-day row carries the same `ידני` badge. One
+   store, one calculation, two screens.
+4. **Back on `/payments`, press `לחזור לחישוב של היישום`.** The row is ₪1,705.40 again with
+   no badge, and `/month` is back to ₪8,353.05 and ₪300.71. **Now press `להחליף סכום` again
+   and type `1705.40` yourself:** the row shows the same figure *with* the badge. Those are
+   the two gestures item 17 says must not be confused — same number, opposite meanings.
+5. **The sign is the row's and never yours.** Mark two sick days on `/month` (click a day,
+   then a second, choose `מחלה`) so a `ניכוי ימי מחלה` row appears in the section. Press
+   `להחליף סכום` on it, type `300` — **no minus** — and press `להחליף`. The row reads
+   **−₪300.00**. Typing `-300` instead is refused before it is sent.
+6. **Zero is an ordinary override.** Press `להחליף סכום` on `תוספת ימי שישי`, type `0`, press
+   `להחליף`: the row reads ₪0.00 with the badge, and `ברוטו` falls by ₪400. That is the only
+   way to say the family did not pay it, and it is where an override differs from a line the
+   user adds, which refuses zero.
+7. **An override outlives its row.** With that ₪0 override standing on `תוספת ימי שישי`,
+   leave it and press `להחליף סכום` on `עבודה בשבת` and set `1600`. Now on `/month` clear
+   every Saturday she worked (sweep the four Saturdays and press the clear gesture). Return
+   to `/payments`: `עבודה בשבת` is **gone from the list**, and a block headed
+   `סכומים ששמורים לשורות שאינן בחודש הזה` now holds `עבודה בשבת ₪1,600.00` with its own
+   `לחזור לחישוב של היישום`. Mark one Saturday worked again and it moves back up into the
+   list, still at ₪1,600.00.
+8. **A line the user added is corrected in place.** In `תוספות והורדות שהוספת`, press `לתקן`
+   on a line: the panel opens **under that line** with its words, its amount, its direction
+   and its placement already in it. Change the amount and press `לשמור` — the line keeps its
+   place in the list and its note, and `/month`'s summarised row moves by the difference.
+9. **A third-party payment likewise, its kind included.** Press `לתקן` on `ביטוח לאומי`: the
+   chips offer `ביטוח לאומי` **and** every kind the month has not recorded. Change it to
+   `ביטוח רפואי`, press `לשמור`, and the row is renamed rather than duplicated. Press `לתקן`
+   again and press `לשמור` without changing anything: it is **accepted**, not refused as a
+   second payment of its own kind.
+
+**What a failure looks like:** `מס הכנסה` or a line you typed appearing in the fifth
+section, which would mean the division is being read off a key rather than off the engine; a
+panel opening over a derived row with the calculated figure already in it; the sickness
+deduction turning positive at step 5; `להחליף` refusing `0`; the override at step 7
+disappearing with its row instead of moving into the block below; a corrected user line
+jumping to the end of the list or losing its note, which would mean it was removed and added
+rather than edited; or `לשמור` on an unchanged third-party payment being refused.
+
+**What this step owes the next ones, and none of it is a defect:**
+
+- **`NATIONAL_INSURANCE_RATE = 0.036` is still a bare constant with no effective date**, in
+  the one file whose own comment explains how the family's workbook went stale exactly that
+  way. It belongs with the dated-rates question stage 5 has to answer, and it is recorded
+  here because this step is what made the estimate move on screen for the first time.
+- **A standing line still cannot be set**, so the one case that makes the override/edit
+  division *necessary* rather than merely tidy has no screen behind it and `overridable:
+  prefix === "standing"` has one reachable value. That is the profile screen, this plan's
+  unowned debt, and this is the sixth place it is written down.
+- **The three new surfaces have no artboard**, and are now the strongest argument for job 3
+  after the holiday picker.
+
 ## Stage 5 — External data and yearly settings
 
 `fetch` plus an HTML parser, server-side, cached in Postgres.
 
+- **The dated-rates table, first, because everything else in this stage writes into it.**
+  Criterion 4 and Part 3: one table holding every rate the application does not derive —
+  which rate, the figure, the date it took effect, where it came from — and the engine asks
+  it for the figure in force during the month it is calculating rather than for the latest
+  one. It is **seeded** with what is known, so the application works before any fetch has
+  succeeded, and the wage scrape below then updates a table that already exists instead of
+  introducing one. Two rates go in it on day one: the minimum wage, and
+  `NATIONAL_INSURANCE_RATE = 0.036`, which is a bare constant with no effective date in
+  `src/lib/engine/thirdParty.ts` — the file whose own comment explains how the family's
+  workbook went stale in exactly that way, since its national-insurance line stayed at 2%
+  after the rate rose to 3.6% (Part 5). Anything item 3 can derive from the base monthly
+  salary stays derived and never enters the table.
 - The minimum wage with its effective date, and the plausibility check.
 - Holiday lists per country and year, with the shipped files as fallback. An **empty**
   cached list is a failed fetch and not a country without holidays — the shipped
@@ -1681,13 +2009,14 @@ silently turned round.
   fixtures in the test suite rather than a live fetch, so the suite neither depends on a
   site being up nor waits for one.
 
-Roughly four tickets' worth: the wage scrape, the holiday scrape, the heading-segmented
-cache, the holiday picker — which has no artboard at all — recuperation, and the pre-export
-questions.
+Roughly five tickets' worth: the dated-rates table, the wage scrape, the holiday scrape, the
+heading-segmented cache, the holiday picker — which has no artboard at all — recuperation,
+and the pre-export questions.
 
 **Done when** a year with no stored holiday list fills itself, each of the three spoiled
-pages produces a stated failure rather than a number, and a failed fetch leaves the user
-able to type the figure and continue.
+pages produces a stated failure rather than a number, a failed fetch leaves the user able to
+type the figure and continue, and **no rate the application did not derive is still a
+number in the code without a date beside it**.
 
 ## Stage 6 — The opening screen
 
@@ -1759,14 +2088,30 @@ where it belongs rather than here. The canvas is what changes for the six marked
 | "היתר העסקה" number | **keep, and it was under-drawn** | Item 28 — three documents, three expiry dates, not one |
 | "לסיים העסקה" | drop | The appendix keeps ending an employment out of v1 |
 
-**In the spec, missing from the canvas.** The two day counts, standard and actual (items
-2 and 5, a Wage Protection Act requirement) — half-corrected on 2026-09-02: `חישוב החודש`
-now carries the pair on its confirm step as ימי עבודה (בפועל / תקני), while `דף המשכורת`,
-which is the sheet the Act actually governs, still shows one count · minimum-wage confirmation before every
-export (item 4) · the pre-export confirmation questions (item 18 — the wizard's third
-step is a read-only summary, not questions) · part-days for vacation and holiday (items 7
-and 10 — the calendar mark is binary) · the third-party payments group (items 5 and 16 —
-column H, never inside the worker's total) · the holiday picker (item 10 — the home
-screen links to it, but no artboard exists) · a sick spell crossing a month boundary
-(item 8) · an override shown as manual (item 17) · a note on every action (item 5) · a
-future month filled but not exportable (item 21).
+**In the spec, missing from the canvas — four of the ten closed on 2026-09-05.** Job 2b
+drew them onto `דף המשכורת` and they are struck from the list rather than left standing:
+the **two day counts** (items 2 and 5, a Wage Protection Act requirement) now read
+`ימי עבודה (בפועל / תקני)` there as well as on `חישוב החודש`'s confirm step, which is what
+the Act actually governs; the **third-party payments group** (items 5 and 16) has its own
+section outside the worker's total with a column subtotal of its own; an **override shown
+as manual** (item 17) carries the `ידני` badge beside the figure it replaced; and
+`אחרי החודש הזה` now shows the days used beside each balance, which criterion 2 asks for.
+
+**A fifth is struck for a different reason: a sick spell crossing a month boundary
+(item 8) needs no drawing at all.** Stage 4 settled on 2026-09-03 that a spell has no
+gesture of its own — the days on either side of the boundary touch and the engine joins
+them — so there is no screen to draw and this was a gap in the list rather than in the
+canvas.
+
+**Job 3 drew five of the six remaining on 2026-09-05, and the sixth on 2026-09-08.**
+Closed: the **holiday picker** and the **minimum-wage confirmation** and the
+**pre-export questions** each got an artboard of their own (`בחירת חגים`,
+`לפני הייצוא`); a **future month filled but not exportable** is `חישוב החודש`'s
+`כדאי לדעת` card; and **part-days** are drawn for holidays, in the picker where a holiday
+is chosen.
+
+**The sixth closed on 2026-09-08, and the list is empty.** A **part-day for vacation**
+(item 7) and a **note on a calendar mark** (item 5) were one surface rather than two, and
+the sweep picker in both `חישוב החודש` and `דף הבית v3` now carries them on a second row.
+Everywhere else a note was already offered: an override panel has one, and a line the user
+adds is its own words by definition.

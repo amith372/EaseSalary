@@ -1,9 +1,69 @@
-# The design pass — jobs 1 and 2, handed over as changes
+# The design pass — jobs 1 and 2
 
-`build_plan.md` says the canvas is edited in its own editor and that an agent reads the
-artboards but does not write them, so jobs 1 and 2 are handed over as a list rather than
-made directly. This is that list. Job 3 — the screens that have no artboard at all — is
-not here.
+## Applied on 2026-09-05, and this file is now a record of what changed
+
+**The premise below is wrong and is kept for the sentence that follows it.** This file
+opened by saying an agent reads the artboards but does not write them, so jobs 1 and 2 were
+handed over as a list. That was never true of the tooling: the `claude_design` MCP server
+exposes `write_files`, and on 2026-09-05 the list was applied directly. What the hand-over
+bought anyway was the thing rule 7 is about — the changes were *decided* in one pass and
+*made* in another, so nothing was designed and implemented in the same breath.
+
+| Artboard | State | Etag after |
+|---|---|---|
+| `דף הבית v3 לוח במרכז` | **applied** — job 1, all four departures, plus job 1 items 6–8 below | `1788555202670472` |
+| `חישוב החודש` | **applied** — job 2a, all sixteen items | `1788555813456795` |
+| `דף המשכורת` | **applied** — job 2b, all ten items; composed on 2026-09-05 and uploaded on the session after, the server having dropped in between | `1788600219415393` |
+| `החודשים` | **applied** — bar items only, same two-session split | `1788599991623563` |
+
+**Job 3 ran on 2026-09-05 too, and with it the whole design pass is done.** It is recorded
+in `build_plan.md` under "Job 3 as it ran" rather than here, because this file is the record
+of a *hand-over list* and job 3 had none — it was design work done against `specs.md`
+directly. What it touched: two new artboards (`בחירת חגים`, `לפני הייצוא`), the
+restructuring of `חישוב החודש` off the wizard, the three built-but-undrawn surfaces on
+`תשלומים`, and the six artboards whose top bar had fallen behind. The canvas is fifteen
+files now, not thirteen.
+
+**Three changes were made that this list did not ask for, and each is the same settled
+decision applied where the list had not looked.** They are recorded here as job 1 items 6–8
+rather than left to be rediscovered:
+
+6. **`דף הבית v3`'s picker offered `חג` too.** Job 2a item 12 settled that the user never
+   marks a day as a holiday, and scoped the fix to `חישוב החודש` — but v3 is the artboard
+   the built calendar was made from, and leaving it offering `חג` would have left the canvas
+   contradicting itself on the one point the pass had just settled. Its picker now offers
+   three kinds.
+7. **`דף הבית v3` drew a holiday in one weight.** Same criterion, same argument as 2a
+   item 13: an outline for one she did not work, a fill for one she did, and both in the
+   legend, which takes it to six entries.
+8. **`דף הבית v3` hardcoded `שבת חופשית`.** Item 8's argument holds on every artboard, so
+   the label is `[יום המנוחה] חופשי`.
+
+**Two departures from the list itself, each for a reason the list could not have known:**
+
+- **Page padding is the shell's own numbers and not zero.** Item 2a-5 said to set the
+  artboard's page padding to zero because the shell supplies it. But each artboard *draws
+  its own header* — no shell wraps it — so zero would have drawn a page the application
+  never looks like. Both now carry `12px 28px`, which is what `AppShell`'s `main` gives, and
+  the drawing therefore matches the built page.
+- **The full-width row was dropped and its one useful sentence folded into the page.** Item
+  2a-4 allowed either. `› חזרה לדף הבית` went (the nav carries it on every route);
+  `נשמר אוטומטית · אפשר לעצור ולהמשיך אחר כך` and `אושר ב[תאריך]` are now quiet lines under
+  each screen's own subtitle.
+
+**What is still not reconciled, and was out of this list's scope:** `חישוב החודש` is still
+**— fixed on 2026-09-05, and the paragraph below is kept as the record of what was wrong.**
+It was drawn as a three-step wizard while `/month` is a calendar and a preview with the recording
+groups on `/payments`. That is a restructuring and not a transcription, so it belongs to job
+3 or to the stage that consumes it — but it is now the largest disagreement left between the
+canvas and the built application, and it is written here so that nobody reads the wizard as
+current.
+
+---
+
+## The list as it was written on 2026-09-03
+
+Job 3 — the screens that have no artboard at all — is not here.
 
 Read on 2026-09-03, against the canvas as it then stood:
 
