@@ -39,7 +39,7 @@ import { todayInIsrael } from "@/lib/today";
 export default async function PaymentsPage() {
   await connection();
 
-  const repository = getRepository();
+  const repository = await getRepository();
   const today = todayInIsrael();
   const workers = await repository.listWorkers();
 

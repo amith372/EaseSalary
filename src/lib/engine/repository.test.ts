@@ -3,7 +3,9 @@ import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
 import {
   createInMemoryRepository,
+  openMonthRecord,
   UnknownWorkerError,
+  wageToCarry,
   type MonthRecord,
   type WorkerProfile,
 } from "@/lib/engine/repository";
@@ -362,5 +364,105 @@ describe("a month is reproducible from its facts alone", () => {
     );
 
     expect(once).toEqual(twice);
+  });
+});
+
+describe("opening a month the store has no record of (specs.md item 21)", () => {
+  const APRIL: YearMonth = { year: 2026, month: 4 };
+  const DECEMBER_2025: YearMonth = { year: 2025, month: 12 };
+
+  /** Two wage positions the application could carry, told apart by their
+   * figures so a test can say which one it got. The rise from 5,880 to 6,247.65
+   * on 1.4.2025 is the one `august-2025.test.ts` reads off the workbook. */
+  const OLD_WAGE = {
+    baseAgorot: 588000,
+    minimumAgorot: 588000,
+    effectiveFrom: "2024-04-01",
+  };
+  const NEW_WAGE = {
+    baseAgorot: 624765,
+    minimumAgorot: 624765,
+    effectiveFrom: "2025-04-01",
+  };
+
+  const history = [
+    { ...record(JANUARY), confirmedWage: OLD_WAGE },
+    { ...record(FEBRUARY), confirmedWage: NEW_WAGE },
+  ].map((each) => ({ ...each, spans: [] }));
+
+  it("carries the wage from the latest month before it", async () => {
+    // A month filled in ahead of time opens on the position that was standing
+    // when it began — February's, not January's, and never the other way round
+    // (item 4).
+    expect(wageToCarry(history, APRIL)).toEqual(NEW_WAGE);
+  });
+
+  it("carries the earliest month's wage to a month behind the whole history", async () => {
+    // A family correcting a month from before they started using the
+    // application. January's is the closest figure that exists; the user
+    // confirms the real one before the export (item 4).
+    expect(wageToCarry(history, DECEMBER_2025)).toEqual(OLD_WAGE);
+  });
+
+  it("invents nothing for a worker with no months at all", async () => {
+    // There is no figure to carry and no rate may be hardcoded (`CLAUDE.md`),
+    // so the answer is that there is no answer.
+    expect(wageToCarry([], APRIL)).toBeNull();
+  });
+
+  it("does not depend on the order the months arrive in", async () => {
+    // The store promises date order and an unsorted array does not fail — it
+    // merely carries the wrong wage, which is the class of mistake that looks
+    // entirely ordinary afterwards.
+    expect(wageToCarry([...history].reverse(), APRIL)).toEqual(NEW_WAGE);
+  });
+
+  it("opens a month holding nothing but the position it opens from", async () => {
+    // Part 5: a month that only holds facts is a draft, and a draft opened by a
+    // mark has no advance, no third-party payment, no line of the user's own,
+    // no override, and income tax at zero (item 17).
+    const opened = openMonthRecord(HANNA, APRIL, NEW_WAGE);
+    expect(opened).toEqual({
+      month: APRIL,
+      confirmedWage: NEW_WAGE,
+      terms: snapshotTerms(HANNA),
+      advances: [],
+      thirdPartyPayments: [],
+      userLines: [],
+      incomeTaxAgorot: 0,
+      overrides: {},
+    });
+  });
+
+  it("snapshots the terms so the month keeps what it was calculated with", async () => {
+    // Part 3: a family that moves the rest day later must not thereby restate
+    // this month. The profile's standing lines travel with the snapshot, which
+    // is what makes the copy a copy and not a reference.
+    const opened = openMonthRecord(HANNA, APRIL, NEW_WAGE);
+    expect(opened.terms.restDay).toBe(SATURDAY);
+    expect(opened.terms.standingLines).toEqual(HANNA.standingLines);
+  });
+
+  it("is a month the store then takes and the engine then calculates", async () => {
+    // The round trip the calendar's first mark makes: nothing recorded for
+    // April, a span saved into it, the month opened, and April is a month with
+    // figures instead of an empty screen.
+    const repository = store();
+    for (const each of history) await repository.saveMonth("hanna", each);
+    expect(await repository.getMonth("hanna", APRIL)).toBeNull();
+
+    await repository.saveSpan("hanna", {
+      id: "april-vacation",
+      kind: "vacation",
+      // A Wednesday, so it is neither the rest day nor the rest-eve.
+      from: "2026-04-15",
+      to: "2026-04-15",
+    });
+    const wage = wageToCarry(await repository.listMonths("hanna"), APRIL);
+    await repository.saveMonth("hanna", openMonthRecord(HANNA, APRIL, wage!));
+
+    const april = await repository.getMonth("hanna", APRIL);
+    expect(april?.spans.map((span) => span.id)).toEqual(["april-vacation"]);
+    expect(calculateMonth(april!, HANNA).gross).toBeGreaterThan(0);
   });
 });

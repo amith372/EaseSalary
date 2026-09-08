@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Bidi } from "@/components/Bidi";
 import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
-import { fixtureWorkers } from "@/lib/fixtures/home";
 import { he } from "@/lib/i18n/he";
+import type { Worker } from "@/lib/types";
 
 /**
  * The frame every route gets: a single 62px white bar across the top, as
@@ -50,6 +50,17 @@ const navItems: NavItem[] = [
 
 interface AppShellProps {
   children: ReactNode;
+  /**
+   * The household's workers, read from the store by the layout above.
+   *
+   * **They are not the home screen's fixtures**, and the difference is not
+   * cosmetic: the switcher's worker is the id every write action is made
+   * against, so a shell holding a fixed list would send one household's ids to
+   * another household's store — which is exactly what it did, and what the
+   * second seeded household found. Stage 3 changes where the layout reads them
+   * from and nothing here.
+   */
+  workers: Worker[];
   /** Defaults to the canvas placeholders, so the shell renders before there is
    * an account behind it. */
   userName?: string;
@@ -58,6 +69,7 @@ interface AppShellProps {
 
 export function AppShell({
   children,
+  workers,
   userName = he.header.yourName,
   alertCount = he.placeholder.count,
 }: AppShellProps) {
@@ -70,7 +82,7 @@ export function AppShell({
       lock is released and the page stacks and scrolls, because a phone has no
       screen to fit (v3, and there is no narrow artboard).
     */
-    <WorkerScopeProvider workers={fixtureWorkers}>
+    <WorkerScopeProvider workers={workers}>
     <div className="flex min-h-screen flex-col bg-ground text-ink md:h-screen md:min-h-0 md:overflow-hidden">
       <header className="flex h-15.5 flex-none items-center justify-between gap-6 border-b border-line bg-surface px-4 md:px-7">
         <div className="flex min-w-0 flex-auto items-center gap-6">

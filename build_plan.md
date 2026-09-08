@@ -43,6 +43,12 @@ test needs a preview to compare against. Writing that preference as a blocking e
 say the template fill cannot begin until the whole screen is done, which is false, and a
 table whose edges are partly preferences cannot be used to decide what may be picked up.
 
+**Row 7 grew two pieces on 2026-09-08 and the table is not reordered by them.** Stage 4's
+steps 9 and 10 — the worker's profile and the browser verification of the two screens already
+built — are part of row 7, not part of row 9, so nothing in this table puts them after the
+export. The profile is blocked on step 8's repository interface (row 5) and on nothing else;
+reading row 9's "everything else … blocked by 8" as covering it is what kept it unowned.
+
 **What the slice does not need:** a login, Postgres, row-level security, or a live
 minimum-wage fetch. Stage 3 later swaps the repository implementation underneath a screen
 that already works, and stage 5 replaces manual wage entry with the fetch on a confirmation
@@ -148,8 +154,19 @@ close when their stage arrives rather than a drift:
   The design table maps both artboards to stage 3, but **stage 3's own bullets are the
   schema, the opening position and row-level security and name no screen** — so writing
   "stage 3 builds it" would assign the work to a step that does not exist. It stays recorded
-  as unowned until it is given a step, and the four things waiting on it are the argument
-  for giving it one early rather than late.
+  **It was given one on 2026-09-08: stage 4's step 9**, because the profile is a screen on
+  the repository interface and this slice builds screens before stage 3 persists what they
+  write. Assigning it to stage 3 is precisely what left it unowned for four stages, and the
+  four things waiting on it are why it is built now rather than late.
+
+**Where the five 404s stand after 2026-09-08.** The table above is a dated snapshot and is
+left as it was read; what changed since is that each remaining 404 now answers to a *step*
+rather than to this table alone, which is the difference between a debt and a plan. `/workers`
+and the profile are **stage 4's step 9**; `/reports` is a bullet of **stage 2** and `/alerts`
+a bullet of **stage 6**, both written into those stages rather than inferred from here;
+`/help` was always stage 7's, whose bullets name it outright. `/settings` stays split between
+stage 3's yearly settings and stage 5's holiday picker, and is the one address still held by
+two stages at once.
 
 **Nothing here reorders the stages.** The table is what each stage already owed, written
 down as addresses so that a 404 is a known debt rather than a discovery. The one change it
@@ -205,7 +222,9 @@ only the transcription:
   the stepper and the month label moved into the calendar's header and the page `h1` was
   left behind. **`חישוב החודש` names it once**, in the calendar card's header beside the hint
   and opposite the stepper — the control that changes the month has to sit next to it. The
-  code fix is owed and is not this pass's: delete the page `h1`.
+  code fix is owed and is not this pass's: delete the page `h1`. **Done in step 8b on
+  2026-09-08**, with the calendar's own label promoted to the `h1` behind a prop, since
+  `דף הבית v3` draws the same label as a `span` beneath a hero card that is already the `h1`.
 - **`הוספת עובד` draws neither shell, and that is an undocumented decision rather than drift.**
   It carries a focused wizard chrome — the wordmark, `לצאת בלי לשמור`, a four-step progress
   bar, and no nav at all — which is the right shape for an add-flow, since a wizard offering
@@ -587,6 +606,11 @@ ExcelJS in a server route. One month template and one balances template.
   carry identical figures, since the whole reason for one file is that they cannot
   drift apart.
 - The yearly balances export as its own file.
+- **`/reports` is this stage's address and not only its file.** The nav links `דוחות` on
+  every page and it 404s, which is worse than a tab that is not there. Item 23's file is
+  generated here, so the screen that offers it — with the per-year salary summary and the
+  `דמי הבראה` report job 3 reshaped onto that artboard — is built beside it. Naming it only
+  in the routes table is what leaves a tab 404ing until someone notices.
 - A test that drives the preview's lines and the filled cells from the **same** engine
   output and asserts they say the same thing. That agreement is the property that
   matters, and a test sitting beside only the engine or only the filler cannot check it:
@@ -1168,7 +1192,7 @@ them was gated, so a transfer row that moved no money would have printed under n
 and above a total it did not move; the whole lower half is now gated together, as the
 upper half already was.
 
-### Step 4 — the additional-payments group, and the two controls stage 4 owed
+### Step 4 — the additional-payments group, and the two controls stage 4 owed · **done**
 
 The first of item 5's three groups beside the calendar, and the step that turns two recorded
 gaps into things a user can press. Both were listed at stage 4's own bullet and at the steps
@@ -1317,7 +1341,7 @@ which would mean the placement is being ignored; the placement chip jumping back
 - **The manual overrides are still owed to this group.** They are item 5's own contents and
   the last of them, and the step after this one. **The advances arrived in step 5.**
 
-### Step 5 — the advances, given and repaid
+### Step 5 — the advances, given and repaid · **done**
 
 The second half of the additional-payments group, and the first thing in this application
 whose figure cannot be read off the month it is entered in.
@@ -1466,7 +1490,7 @@ hide two payments the family actually made, and a preview that drops a payment i
 one that prints a figure twice. It is left as it is and written down here rather than changed
 inside a step about advances.
 
-### Step 6 — the groups leave the calendar, and `/payments` exists
+### Step 6 — the groups leave the calendar, and `/payments` exists · **done**
 
 Asked for by the user on 2026-09-04 in one sentence, while step 5 was being read: what the
 `תשלומים נוספים` card was showing belongs to `/payments`. `specs.md` moved first, and it was
@@ -1568,7 +1592,7 @@ the date an advance was given, neither of which is built: what is on screen is t
 figures in words. That is a departure from a drawing and is written down here rather than left
 to be found.
 
-### Step 7 — the third-party payments, and the seventh kind
+### Step 7 — the third-party payments, and the seventh kind · **done**
 
 The second of `/payments`'s two groups, and the last of item 16 the application had no way
 to reach: until this step a payment to somebody other than the worker could only be
@@ -1776,7 +1800,7 @@ silently turned round.
   finding 3 of stage 2 records. Neither is a third-party payment, so neither is this step's
   — but the recuperation one is what `לקראת החודשים הבאים` most wants.
 
-### Step 8 — the manual overrides, and the division between overriding and editing
+### Step 8 — the manual overrides, and the division between overriding and editing · **done**
 
 The last of item 5's four contents, and the step that finished the additional-payments
 group. Until it, an override could only be **seeded**: `MonthFacts.overrides` had been in
@@ -1969,6 +1993,171 @@ rather than edited; or `לשמור` on an unchanged third-party payment being re
 - **The three new surfaces have no artboard**, and are now the strongest argument for job 3
   after the holiday picker.
 
+### Step 8b — the duplicate heading, item 21, the month with no record, and the known case made enterable · **done**
+
+**Written and built 2026-09-08.** Four things the design pass and the steps before it had
+left owed, done in one step because the middle two are the same screen and the last is what
+makes any of them checkable end to end.
+
+**The duplicate `h1`.** `MonthScreen.tsx` named the month above the calendar card and
+`MonthCalendar.tsx` named it again inside it, both at 24px bold; `חישוב החודש` names it once,
+in the card's header beside the hint and opposite the stepper. The page `h1` is gone and the
+calendar's label became the `h1` — behind a prop, because the two artboards genuinely differ:
+`דף הבית v3` heads itself with the hero card and draws the same label as a `span`, so a
+calendar that promoted it unconditionally would give the home screen two `h1`s.
+
+**Item 21, and where its condition lives.** A month that has not ended raises a warning and
+nothing else: it is calculated, it takes every fact, and Part 5 is explicit that it is a draft
+that cannot be *confirmed* rather than a fifth state. The condition is `monthHasEnded` in
+`dates.ts`, named for what it tests and not `isExportable` — confirming the wage (item 4) and
+answering the pre-export questions (item 18) are conditions of an export too, and neither is
+date arithmetic. **The month still running is one of them**, which is one boundary rather than
+two: September cannot be exported on the 30th either, and the export stage reads the same
+function the warning does.
+
+**A month is opened by the first mark on its calendar, and by nothing else.** Every action in
+`month/actions.ts` answered `noMonth` for a month the store had no record of, so a future
+month could not in fact be filled in. The gesture item 21 names is the calendar, and it is the
+only one: no button that says "start this month", and no month brought into being by a page
+being looked at, since a render that writes grows the store every time somebody steps forward.
+`/payments` offers nothing for a month with no record, so the question cannot arise there.
+The new month carries the wage position last confirmed nearest to it (`wageToCarry`), which
+until stage 5's dated-rates table is the only source in the application that is not an
+invented number — and item 4's confirmation before every export is where a carried figure is
+replaced by a real one.
+
+**The known case, as a second seeded household.** `august-2025.test.ts` already checks the
+engine's answer to Part 4 to the agora from facts handed to it directly. What was missing was
+the half rule 9 names: the same four figures reached by clicking. `src/lib/dev/known.ts` seeds
+Hanna, her opening position and its ₪10,000 advance, August 2025, and the year's two holiday
+dates — and **nothing else**. The free rest day of the 16th is swept, each holiday's one
+question is answered on the day, and the ₪2,000 instalment is entered on `/payments`: three
+gestures move ₪8,879.40 to ₪9,305.75 and ₪7,305.75. A seed that arrived at the four figures on
+its own would be a demonstration.
+
+**The store is selected by a cookie, and that is what makes the second household reachable.**
+`getRepository()` reads `household` and keys a per-name singleton; the seed is the part before
+the first hyphen, so `known-e2e-<run>` is the known case seeded fresh. That last part is not a
+convenience: the store outlives a test run, so a fixed name hands the second run the marks the
+first one made, and the "before" assertions would be asserting the previous run. An env var
+chosen at server start was the alternative and was rejected with the user on 2026-09-08 — it
+gives one household per running server and no isolation at all.
+
+**What the second household found, which was a real bug and not its own.** `AppShell` handed
+`WorkerScopeProvider` the home screen's fixtures, so the switcher's worker — the id **every
+write action is made against** — was `worker-1` whatever household was loaded. On the known
+household every mark threw `No worker with id worker-1`. The layout now reads the household's
+workers from the store and passes them down: one bar, one read, and stage 3 changes only where
+the layout reads them from. It would have surfaced on the first real account and not before.
+
+**A `data-row` attribute on each preview row**, which is the browser suite's handle on one
+figure. Rule 9 requires the figures be asserted rather than looked at, and a selector built
+out of the Hebrew beside a figure breaks on a wording change that broke nothing.
+
+**The check the user runs.** `npm run test:e2e` — six specs in `e2e/month-screen.spec.ts`, all
+green. By hand: open `/month` and the month is named once, in the calendar card; the
+`כדאי לדעת` card says the month has not ended; step forward to a month past the seeded range
+and it says it is empty, then sweep a range on it and the preview appears with the same
+sentence still under it. Then set the `household` cookie to `known`, reload, and August 2025
+opens at ₪8,879.40; mark the 16th free, answer both holidays "she worked it", and record a
+₪2,000 repayment on `/payments`; the נטו reads ₪9,305.75 and the סך הכל ₪7,305.75.
+
+**What a failure looks like:** the month named twice again, or named nowhere; the warning on a
+month that has ended, or absent from the month still running — the second is the one that
+looks fine, because most months a user opens have ended; a month that stays empty after a
+sweep, or one that opens carrying a base salary no month before it was confirmed at; the four
+figures reached without all three gestures, which would mean the seed answered a question the
+case exists to put to the user.
+
+**What it does not do.** Nothing refuses an export, because there is no export: item 21's
+second half is one function call in stage 2, and it is `monthHasEnded`. Step 10 below still
+owns the rest of the browser verification — the part-day and the note, the advances walked
+across months, the third-party edit, and the overrides.
+
+### Step 9 — the worker's profile, the debt given a step
+
+**Written 2026-09-08, and it exists because the debt was recorded six times and never
+assigned.** The route table maps `דף העובד` and `הוספת עובד` to stage 3, but stage 3's own
+bullets are the schema, the opening position and row-level security and **draw nothing** —
+which is how a screen four built things are waiting on stayed nobody's for four stages.
+
+**It lands in stage 4 rather than in stage 3 because it is a screen on the repository
+interface**, which is the whole reason step 8 built that interface: the slice builds a screen
+on the in-memory store and stage 3 persists what it writes, exactly as it will for the month.
+Nothing here is built twice, and nothing here waits on Postgres.
+
+Routes: `/workers`, the list with item 11's two-worker limit, and the profile itself. Both
+artboards were corrected in job 3, so both are the reference.
+
+**Each thing it builds is something already built that has been waiting on it:**
+
+- **The rest day as a term of the employment** — Friday, Saturday or Sunday, defaulting to
+  Saturday (Part 2 item 5). Step 7c built the generalisation and could not check it, because
+  no screen could change the value from its default.
+- **Item 20's standing line**, which is the one case that makes step 8's override/edit
+  division *necessary* rather than merely tidy: `overridable: prefix === "standing"` has one
+  reachable value until a standing line can be set.
+- **The opening position** — balances already accrued and an advance part repaid. Step 5
+  seeded an opening advance because nothing could enter one, and criterion 13's replay reads
+  from it, so a wrong opening position is wrong in every month at once.
+- **The three documents and their expiry dates** (item 28, drawn in job 3). The dates are not
+  encrypted — the warnings query them.
+
+**The five identifying numbers are not built here, and that is deliberate.** Passport, bank
+account and the three document numbers are encrypted at rest with a key held outside the
+database, and there is no database yet: a profile screen that took them now would put five
+plaintext identifiers into the in-memory store, which is the one thing the non-negotiables
+say may never happen. They arrive with their encryption, in stage 3, on a screen this step
+has already built.
+
+**Done when**, and the check the user runs: open `/workers` and see one worker with the two
+her account allows; change her rest day to Friday and `/month`'s calendar redraws its rest
+days and rest-eves and the preview's rest-day figures move with them; set a standing line and
+it appears on `/payments` offering `להחליף סכום`, while a line typed this month still offers
+`לתקן`; enter an opening advance and the debt on `/payments` reads it rather than the seed.
+
+**What a failure looks like:** the rest day changing on the profile while a past month keeps
+its Saturdays, which would mean it is read off the profile rather than off the month and is
+what Part 2 item 5 forbids; a standing line offering `לתקן`, or a this-month line offering
+`להחליף סכום`, which would mean the division is keyed off the row rather than off who
+produced the amount; the opening position editable in a way that silently moves a month
+already exported; or any identity field appearing on the screen before stage 3.
+
+### Step 10 — the two built screens verified through a real browser
+
+**Written 2026-09-08.** `e2e/home-screen.spec.ts` is the only Playwright spec in the
+repository and all four of its tests are on `/`, while eight steps of this stage built
+`/month` and `/payments`. Every one of those steps was checked by the user by hand, once, and
+none of them is held by anything that runs again. Rule 9 requires the important flows be
+driven through the real interface; no step owned it, and steps 4–8 are committed, so nothing
+later in the plan would have come back to it.
+
+**No behaviour changes.** What is added is coverage of what the eight steps already built, so
+that stage 3 swapping the store underneath these screens and stage 5 putting a picker in
+front of their holidays cannot break a gesture in silence.
+
+- **The calendar's sweep**, end to end: a range swept, the picker, the kind, the part-day and
+  the note, with the resulting spans and the preview's figures asserted — not the click. The
+  range is ordered by date and never by screen position: in right-to-left a leftward drag
+  moves *forward* in time, which is the failure that looks entirely plausible on screen.
+- **An advance given and repaid**, with what is still owed walked across months.
+- **A third-party payment**, its seven kinds, and the edit that renames rather than
+  duplicates — including `לשמור` on an unchanged payment being accepted.
+- **An override on a derived row**: the `ידני` badge, `היישום חישב …` beneath the figure it
+  replaced, `לבטל את ההחלפה`, and `0` accepted rather than refused.
+- **The month stepper**, and the future month that accepts facts and refuses export while
+  saying which of the two it is. **This one landed in step 8b**, together with the month the
+  store had no record of and the known case entered end to end; what is left here is the rest
+  of the list above.
+- Every expected figure comes from `specs.md`, the workbook or arithmetic worked by hand, and
+  never from what the screen printed (`CLAUDE.md`) — a suite that records what the screen
+  said proves the screen agrees with itself and fails the day someone fixes a bug.
+
+**Done when** `npx playwright test` covers both screens, each assertion names where its
+expected figure came from, **and changing one figure in the store on purpose turns the suite
+red** — that last part is the check the user runs, because a test that cannot fail is a
+demonstration (rule 12).
+
 ## Stage 5 — External data and yearly settings
 
 `fetch` plus an HTML parser, server-side, cached in Postgres.
@@ -2023,6 +2212,10 @@ number in the code without a date beside it**.
 Same stack. The screen was built in stage 0 against fixtures; this stage replaces the
 fixtures with what the earlier stages produce and adds nothing to the layout.
 
+- **`/alerts` is this stage's address.** The bell links `התראות` from every screen and it
+  404s. The action list below is its content at full length: the home screen shows the list
+  and the bell is what lights (item 27), so the two are one thing built once, not a bullet
+  here and a table row elsewhere.
 - The action list: quarterly national insurance, expiring licence or medical insurance,
   an advance still being repaid, holidays not all chosen, recuperation due, a year with
   no vacation taken, a finished month not exported, a wage that changed, a worker

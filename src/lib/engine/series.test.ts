@@ -14,7 +14,7 @@ import {
 import { snapshotTerms } from "@/lib/engine/types";
 import type { MonthFacts, MonthSpan } from "@/lib/engine/types";
 import { InvalidMonthError } from "@/lib/engine/validate";
-import type { BalanceKind, YearMonth } from "@/lib/types";
+import type { BalanceKind, MonthResult, YearMonth } from "@/lib/types";
 
 /**
  * The replay: a worker's months walked from the opening position, which is the
@@ -442,10 +442,22 @@ describe("nothing in the walk reads a clock", () => {
     // the earlier of it and its own last day (item 8). A finished month is
     // therefore settled whenever it is looked at.
     const months = [facts(month(2026, 1)), facts(month(2026, 2))];
+    // **Every figure, and not the warnings.** Criterion 21's warning is the one
+    // thing in a result that *is* about the date it is read on — a month that
+    // has not ended yet cannot be exported — and 14.2.2026 below is a day on
+    // which February had not. It changes no amount, which is what this test is
+    // about, so it is dropped here rather than the date being dropped: the
+    // three todays are what would catch a clock reaching an amount.
+    const figures = (entries: { result: MonthResult }[]) =>
+      entries.map(({ result }) => {
+        const { warnings, ...rest } = result;
+        void warnings;
+        return rest;
+      });
     const withoutToday = calculateSeries(months, HANNA);
     for (const today of ["2026-03-15", "2030-01-01", "2026-02-14"]) {
-      expect(calculateSeries(months, HANNA, today).map((e) => e.result)).toEqual(
-        withoutToday.map((e) => e.result),
+      expect(figures(calculateSeries(months, HANNA, today))).toEqual(
+        figures(withoutToday),
       );
     }
   });

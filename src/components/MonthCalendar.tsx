@@ -86,6 +86,17 @@ interface MonthCalendarProps {
    * the hint line that tells the user to click one goes with it.
    */
   readOnly?: boolean;
+  /**
+   * Draw the month's name as the page's `h1` rather than as a plain label.
+   *
+   * **The two artboards differ on this and neither is wrong.** `חישוב החודש`
+   * has nothing else to head the page, so the name in this header *is* its
+   * `h1`; `דף הבית v3` heads itself with the hero card and draws the same name
+   * here as a `span`. Both carry it at 24px bold, so what the prop changes is
+   * the element and never the look — and a screen that drew it as an `h1`
+   * unconditionally would give the home screen two.
+   */
+  asPageHeading?: boolean;
   className?: string;
 }
 
@@ -161,6 +172,7 @@ export function MonthCalendar({
   onClearRange,
   onSetHolidayWorked,
   readOnly = false,
+  asPageHeading = false,
   className,
 }: MonthCalendarProps) {
   const marks = he.calendar.marks(restDay);
@@ -317,9 +329,15 @@ export function MonthCalendar({
     <div className={["flex min-h-0 flex-col gap-2", className ?? ""].filter(Boolean).join(" ")}>
       <div className="flex flex-wrap items-start justify-between gap-4.5">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[24px] font-bold tracking-[-0.02em]">
-            <Bidi>{monthLabel(month)}</Bidi>
-          </span>
+          {asPageHeading ? (
+            <h1 dir="auto" className="text-[24px] font-bold tracking-[-0.02em]">
+              <Bidi>{monthLabel(month)}</Bidi>
+            </h1>
+          ) : (
+            <span className="text-[24px] font-bold tracking-[-0.02em]">
+              <Bidi>{monthLabel(month)}</Bidi>
+            </span>
+          )}
           {readOnly ? null : (
             <span dir="auto" className="text-[15px] font-light text-ink-quiet">
               {he.calendar.hint}

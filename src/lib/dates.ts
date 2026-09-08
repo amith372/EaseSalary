@@ -223,6 +223,26 @@ export function daysBetween(from: IsoDate, to: IsoDate): number {
   return Math.round(ms / 86_400_000);
 }
 
+/**
+ * Whether the calendar month is over — its last day is behind `today`.
+ *
+ * **This is criterion 21's whole condition**, and it is named for what it tests
+ * rather than for what the export will do with it: a month can be filled in
+ * ahead of time and can only be exported once it has ended, so the export asks
+ * this and the month screen's warning asks the same one. Naming it
+ * `isExportable` would be a promise this function cannot keep — confirming the
+ * minimum wage (item 4) and answering the pre-export questions (item 18) are
+ * conditions of an export too, and they are not date arithmetic.
+ *
+ * **The month still running has not ended either.** The last day of the current
+ * month is not behind today until it is, which is the same boundary a month
+ * years ahead crosses, and one boundary is what keeps a month from becoming
+ * exportable on its own final morning.
+ */
+export function monthHasEnded(ym: YearMonth, today: IsoDate): boolean {
+  return compareIsoDate(isoOf(ym, daysInMonth(ym)), today) < 0;
+}
+
 export function everyDayOf(ym: YearMonth): IsoDate[] {
   return eachDate(isoOf(ym, 1), isoOf(ym, daysInMonth(ym)));
 }

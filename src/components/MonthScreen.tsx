@@ -14,7 +14,7 @@ import { useWorkerScope } from "@/components/WorkerScope";
 import { WhyButton, WhyPanel } from "@/components/WhyDisclosure";
 import { sameMonth } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import { dayLabel, monthLabel } from "@/lib/dateLabels";
+import { dayLabel } from "@/lib/dateLabels";
 import { isUserLineKey, lineKeys } from "@/lib/engine/month";
 import type { SpanIntent } from "@/components/MonthCalendar";
 import type { MonthInSeries } from "@/lib/engine/series";
@@ -145,13 +145,11 @@ export function MonthScreen({ household, today }: MonthScreenProps) {
 
   return (
     <>
-      <h1
-        dir="auto"
-        className="flex-none text-[24px] leading-[1.2] font-bold tracking-[-0.02em]"
-      >
-        <Bidi>{monthLabel(month)}</Bidi>
-      </h1>
-
+      {/* **The month is named once, in the calendar card's header** — beside
+          the hint and opposite the stepper, as `חישוב החודש` draws it. A page
+          `h1` above the card said the same thing at the same weight directly
+          above itself, and the control that changes the month sits next to the
+          name rather than a card away from it. */}
       <section className="grid flex-1 items-stretch gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <Card radius="lg" className="flex min-h-72 min-w-0 flex-col px-5 pt-3.5 pb-3">
           <MonthCalendar
@@ -163,6 +161,7 @@ export function MonthScreen({ household, today }: MonthScreenProps) {
             onSelectRange={handleSelectRange}
             onClearRange={handleClearRange}
             onSetHolidayWorked={handleSetHolidayWorked}
+            asPageHeading
             className="flex-1"
           />
 
@@ -273,7 +272,11 @@ function Row({
 }) {
   const open = openWhy === whyKey;
   return (
-    <div className="flex flex-col gap-2">
+    // `data-row` is the browser suite's handle on one row (`CLAUDE.md` rule 9):
+    // the preview's figures have to be *asserted* and not looked at, and a
+    // selector built out of the Hebrew label beside a figure breaks on a
+    // wording change that broke nothing.
+    <div data-row={whyKey} className="flex flex-col gap-2">
       <div className="flex items-start justify-between gap-3">
         <span className="flex min-w-0 flex-col gap-px">
           <span

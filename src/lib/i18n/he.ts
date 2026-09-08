@@ -945,6 +945,16 @@ export const he = {
     /** A warning changes no figure and stops nothing. It is worded as what the
      * law asks rather than as what the user did wrong (specs.md item 7). */
     warnings: {
+      /**
+       * The month that has not ended yet (specs.md item 21), as
+       * `חישוב החודש` words it in the כדאי לדעת card.
+       *
+       * **It says both halves in one sentence**, which is the point: a user who
+       * reads only "cannot be exported" would stop filling the month in, and
+       * filling it in ahead of time is exactly what item 21 allows.
+       */
+      monthNotEnded:
+        "החודש הזה טרם הסתיים, ולכן אפשר למלא אותו אבל עדיין אי אפשר לייצא אותו.",
       vacationUnderSeven: (year: number, days: number) =>
         `בשנת ${year} נוצלו ${formatDays(days)} ימי חופשה. החוק מבקש לפחות שבעה ימי חופשה בשנה. היתרה עצמה נשמרת ואינה נמחקת.`,
     },

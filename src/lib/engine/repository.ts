@@ -1,4 +1,11 @@
-import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
+import { compareMonth } from "@/lib/dates";
+import { snapshotTerms } from "@/lib/engine/types";
+import type {
+  ConfirmedWage,
+  MonthFacts,
+  MonthSpan,
+  WorkerTerms,
+} from "@/lib/engine/types";
 import { overlapsMonth } from "@/lib/spans";
 import type { Worker, YearMonth } from "@/lib/types";
 
@@ -105,6 +112,71 @@ export function recordOf(facts: MonthFacts): MonthRecord {
   const { spans, ...record } = facts;
   void spans;
   return record;
+}
+
+/**
+ * The wage position a month opened after the fact carries — the position last
+ * confirmed nearest to it.
+ *
+ * **A month the store has no record of has to get its wage from somewhere**
+ * (specs.md item 4), and until stage 5 lands the dated-rates table there is
+ * exactly one source in the application: the months the worker already has.
+ * The latest month *before* the new one is the position that was standing when
+ * it began, which is the answer for the ordinary case — a month filled in ahead
+ * of time (item 21).
+ *
+ * **A month opened behind the whole history falls back to the earliest one**,
+ * which is a family correcting a month from before they started using the
+ * application. It is the closest figure that exists and it is not necessarily
+ * the right one, because a minimum wage that rose since is not the one that was
+ * in force then — and it does not have to be: the wage is confirmed by the user
+ * before every export (item 4), which is where a carried figure is replaced by
+ * a real one, and stage 5's dated-rates table is what answers this without
+ * asking.
+ *
+ * `null` for a worker with no months at all, which is a worker who has nothing
+ * to carry: there is no figure to invent one from, and inventing one is what
+ * this returns `null` rather than doing.
+ */
+export function wageToCarry(
+  months: MonthFacts[],
+  month: YearMonth,
+): ConfirmedWage | null {
+  const ordered = [...months].sort((a, b) => compareMonth(a.month, b.month));
+  const before = ordered.filter((each) => compareMonth(each.month, month) < 0);
+  const nearest = before.length > 0 ? before[before.length - 1] : ordered[0];
+  return nearest?.confirmedWage ?? null;
+}
+
+/**
+ * A month the store had no record of, opened so that a fact can be recorded in
+ * it (specs.md item 21).
+ *
+ * **It holds nothing but the position it opens from**, which is the whole of
+ * what a draft month is (Part 5): no advance, no payment, no line of the user's
+ * own, and an income-tax line at zero, because zero is what every month holds
+ * until she says otherwise (item 17). The facts arrive afterwards, one gesture
+ * at a time, which is what a month created by its first mark means.
+ *
+ * The terms are snapshotted off the profile as they stand now, the way every
+ * other month's were: a month keeps the terms it was calculated with and never
+ * reads the profile again (Part 3).
+ */
+export function openMonthRecord(
+  profile: WorkerProfile,
+  month: YearMonth,
+  confirmedWage: ConfirmedWage,
+): MonthRecord {
+  return {
+    month,
+    confirmedWage,
+    terms: snapshotTerms(profile),
+    advances: [],
+    thirdPartyPayments: [],
+    userLines: [],
+    incomeTaxAgorot: 0,
+    overrides: {},
+  };
 }
 
 /** The month's own spans, in the order they were recorded. Exported because

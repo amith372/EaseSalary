@@ -16,8 +16,8 @@ import {
   withoutOverride,
 } from "@/lib/engine/overrides";
 import type { OverrideDraft, OverrideRefusal } from "@/lib/engine/overrides";
-import { recordOf } from "@/lib/engine/repository";
-import type { MonthRecord } from "@/lib/engine/repository";
+import { openMonthRecord, recordOf, wageToCarry } from "@/lib/engine/repository";
+import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
 import {
   reviewThirdPartyPayment,
@@ -42,7 +42,7 @@ import {
   type MarkIntent,
   type SkippedDay,
 } from "@/lib/spans";
-import { orderDates, sameMonth } from "@/lib/dates";
+import { monthOf, orderDates, sameMonth } from "@/lib/dates";
 import { todayInIsrael } from "@/lib/today";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
@@ -84,16 +84,49 @@ function revalidateMonth(): void {
  * crafted request, so the id is checked rather than assumed — stage 3 adds the
  * household check beside this one. */
 async function profileOf(workerId: string) {
-  const profile = await getRepository().getWorker(workerId);
+  const profile = await (await getRepository()).getWorker(workerId);
   if (profile === null) throw new Error(`No worker with id ${workerId}`);
   return profile;
+}
+
+/**
+ * The month a mark is being made in, opened if the store has no record of it
+ * (specs.md item 21).
+ *
+ * **A month is created by the first mark on its calendar and by nothing else.**
+ * Item 21 says a future month is filled in ahead of time *through the calendar*,
+ * and that is the whole of the gesture: no button that says "start this month",
+ * nothing for the user to know about months existing, and no month brought into
+ * being by a page merely being looked at — a render that writes is a store that
+ * grows every time somebody steps forward through the stepper. Everything on
+ * `/payments` is offered only for a month that already has a record, so the
+ * calendar is also the only place the question can arise.
+ *
+ * It returns whether a month is now there. `false` is a worker with no months at
+ * all, which is the one case `wageToCarry` cannot answer: the marks are still
+ * saved — they belong to the worker (Part 3) — and the month shows as empty
+ * until she has a wage position to open one from.
+ */
+async function openMonthIfMissing(
+  workerId: string,
+  profile: WorkerProfile,
+  month: YearMonth,
+): Promise<boolean> {
+  const repository = await getRepository();
+  if ((await repository.getMonth(workerId, month)) !== null) return true;
+
+  const wage = wageToCarry(await repository.listMonths(workerId), month);
+  if (wage === null) return false;
+
+  await repository.saveMonth(workerId, openMonthRecord(profile, month, wage));
+  return true;
 }
 
 export async function markRange(
   workerId: string,
   intent: MarkIntent,
 ): Promise<{ skipped: SkippedDay[] }> {
-  const repository = getRepository();
+  const repository = await getRepository();
   const profile = await profileOf(workerId);
   const existing = await repository.listSpans(workerId);
 
@@ -103,6 +136,15 @@ export async function markRange(
   const { spans, skipped } = applyMark(intent, profile.restDay, existing);
   for (const span of spans) {
     await repository.saveSpan(workerId, span satisfies MonthSpan);
+  }
+
+  // **The month the user is looking at, and not the months the stored spans
+  // reach.** A sweep is made on one calendar, so the month it is a fact about
+  // is the one the range was swept in; a spell that merges with an existing one
+  // across a boundary reaches a month the user did not open and must not create
+  // it, because a month that never happened accrued nothing (`series.ts`).
+  if (spans.length > 0) {
+    await openMonthIfMissing(workerId, profile, monthOf(orderDates(intent.from, intent.to).from));
   }
 
   revalidateMonth();
@@ -127,7 +169,7 @@ export async function clearRange(
   from: IsoDate,
   to: IsoDate,
 ): Promise<void> {
-  const repository = getRepository();
+  const repository = await getRepository();
   await profileOf(workerId);
   const ordered = orderDates(from, to);
 
@@ -153,7 +195,7 @@ export async function setHolidayWorked(
   spanId: string,
   worked: boolean,
 ): Promise<void> {
-  const repository = getRepository();
+  const repository = await getRepository();
   await profileOf(workerId);
 
   const span = (await repository.listSpans(workerId)).find(
@@ -214,7 +256,7 @@ async function changeMonth(
   month: YearMonth,
   change: (record: MonthRecord) => MonthRecord,
 ): Promise<MonthActionResult> {
-  const repository = getRepository();
+  const repository = await getRepository();
   await profileOf(workerId);
 
   const facts = await repository.getMonth(workerId, month);
@@ -305,7 +347,7 @@ export async function addAdvance(
   month: YearMonth,
   draft: AdvanceDraft,
 ): Promise<MonthActionResult> {
-  const repository = getRepository();
+  const repository = await getRepository();
   const profile = await profileOf(workerId);
   const months = await repository.listMonths(workerId);
   const facts = months.find((candidate) => sameMonth(candidate.month, month));
@@ -342,7 +384,7 @@ export async function removeAdvance(
   advanceNumber: number,
   kind: AdvanceKind,
 ): Promise<MonthActionResult> {
-  const repository = getRepository();
+  const repository = await getRepository();
   const profile = await profileOf(workerId);
   const months = await repository.listMonths(workerId);
   const facts = months.find((candidate) => sameMonth(candidate.month, month));
@@ -383,7 +425,7 @@ export async function addThirdPartyPayment(
   month: YearMonth,
   draft: ThirdPartyDraft,
 ): Promise<MonthActionResult> {
-  const repository = getRepository();
+  const repository = await getRepository();
   await profileOf(workerId);
 
   const facts = await repository.getMonth(workerId, month);
@@ -435,7 +477,7 @@ export async function removeThirdPartyPayment(
  * being drawn, which is what makes the server and the browser disagree.
  */
 async function linesOf(workerId: string, month: YearMonth) {
-  const repository = getRepository();
+  const repository = await getRepository();
   const profile = await profileOf(workerId);
   const months = await repository.listMonths(workerId);
   const series = calculateSeries(months, profile, todayInIsrael());
@@ -509,7 +551,7 @@ export async function updateUserLine(
   const reviewed = reviewUserLine(draft, lineId);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  const repository = getRepository();
+  const repository = await getRepository();
   await profileOf(workerId);
   const facts = await repository.getMonth(workerId, month);
   if (facts === null) return { ok: false, reason: "noMonth" };
@@ -553,7 +595,7 @@ export async function updateThirdPartyPayment(
   kind: ThirdPartyKind,
   draft: ThirdPartyDraft,
 ): Promise<MonthActionResult> {
-  const repository = getRepository();
+  const repository = await getRepository();
   await profileOf(workerId);
 
   const facts = await repository.getMonth(workerId, month);

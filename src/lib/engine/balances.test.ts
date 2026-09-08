@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { SATURDAY } from "@/lib/dates";
+import { monthHasEnded, SATURDAY } from "@/lib/dates";
 import {
   buildBalances,
   monthlySickAccrual,
+  monthNotEndedWarning,
   monthlyVacationAccrual,
   seniorityYearOfCalendarYear,
   sickDaysAvailable,
@@ -430,5 +431,71 @@ describe("the seven-day vacation warning (specs.md item 7)", () => {
     // The point of the list being usually empty: a warning that appears every
     // month is one nobody reads.
     expect(calculateMonth(facts(AUGUST_2025), worker).warnings).toEqual([]);
+  });
+});
+
+describe("the month that has not ended yet (specs.md item 21)", () => {
+  const worker = terms();
+
+  it("warns on a month whose last day is still ahead", () => {
+    // Item 21: a future month can be filled in ahead of time and can only be
+    // exported once it has ended. Asked on 8.9.2026, December 2026 is four
+    // months away.
+    const december = facts({ year: 2026, month: 12 });
+    const warning = monthNotEndedWarning(december, { today: "2026-09-08" });
+    expect(warning?.key).toBe("monthNotEnded");
+    expect(warning?.message.length).toBeGreaterThan(0);
+  });
+
+  it("warns on the month still running, including on its own last day", () => {
+    // Part 5: a month whose calendar month has not finished yet sits in draft
+    // and cannot leave it. The 30th of September is still September, so the
+    // month has not ended and the export is still refused; the 1st of October
+    // is the first day it is allowed.
+    const september = facts({ year: 2026, month: 9 });
+    expect(monthNotEndedWarning(september, { today: "2026-09-08" })).not.toBeNull();
+    expect(monthNotEndedWarning(september, { today: "2026-09-30" })).not.toBeNull();
+    expect(monthNotEndedWarning(september, { today: "2026-10-01" })).toBeNull();
+  });
+
+  it("leaves a month that has ended alone", () => {
+    // August 2025 read on the 8th of September 2026 is a year gone by.
+    expect(monthNotEndedWarning(facts(AUGUST_2025), { today: "2026-09-08" })).toBeNull();
+  });
+
+  it("says nothing when the caller named no today", () => {
+    // Nothing in the engine reads a clock (`CLAUDE.md`). A caller that passed
+    // no date is calculating a month in the abstract and has not asked when now
+    // is, so a month two centuries ahead is as silent as August 2025.
+    expect(monthNotEndedWarning(facts({ year: 2226, month: 1 }))).toBeNull();
+  });
+
+  it("reaches the month's result and stops nothing", () => {
+    // The whole of item 21's first half: the month takes its facts and is
+    // calculated. A sick day marked in a month still running is drawn from the
+    // balance and priced like any other — the warning sits beside the figures
+    // and never instead of them. One day, because a month standing alone has
+    // only its own day and a half accrued (item 8).
+    const running = facts({ year: 2026, month: 9 }, [
+      span("sick", "2026-09-01", "2026-09-01"),
+    ]);
+    const result = calculateMonth(running, worker, { today: "2026-09-30" });
+    expect(result.warnings.map((warning) => warning.key)).toEqual([
+      "monthNotEnded",
+    ]);
+    expect(result.gross).toBeGreaterThan(0);
+    expect(balance("sick", running, worker).used).toBe(1);
+  });
+
+  it("is what monthHasEnded says, so the export and the screen cannot disagree", () => {
+    // The warning and the export ask one predicate (specs.md item 21, Part 3).
+    // A second rule kept beside the export would agree today and drift the day
+    // either is corrected.
+    for (const today of ["2026-08-31", "2026-09-01", "2026-09-30", "2026-10-01"]) {
+      const ended = monthHasEnded({ year: 2026, month: 9 }, today);
+      expect(monthNotEndedWarning(facts({ year: 2026, month: 9 }), { today })).toEqual(
+        ended ? null : expect.objectContaining({ key: "monthNotEnded" }),
+      );
+    }
   });
 });
