@@ -47,3 +47,9 @@ next-env.d.ts
 
 # agent skill scratch output — throwaway ticket files, never load-bearing
 /.scratch/
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
