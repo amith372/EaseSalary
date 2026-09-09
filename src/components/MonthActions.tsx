@@ -45,7 +45,7 @@ import type {
 import { he } from "@/lib/i18n/he";
 import { legalLink } from "@/lib/links";
 import { formatAgorot, parseShekels } from "@/lib/money";
-import type { MonthLine, YearMonth } from "@/lib/types";
+import type { OverrideCandidate, YearMonth } from "@/lib/types";
 
 /**
  * The additional-payments group, on the payments screen (specs.md item 5).
@@ -98,8 +98,10 @@ interface MonthActionsProps {
   /** As the month stores it: positive, and signed by the engine (item 17). */
   incomeTaxAgorot: number;
   /** This month's own lines. The standing ones are terms of the employment and
-   * live on the profile, which no screen yet sets — see `build_plan.md` step 4
-   * on why that debt is recorded as unowned rather than assigned (item 20). */
+   * live on the profile, which stage 4's step 9 is the screen for — so they are
+   * not listed here and are not corrected here: a month that paid something
+   * else than a standing line says replaces its amount in the overrides
+   * section below (item 20). */
   userLines: UserLine[];
   /** Every advance the worker has and what is still owed on each, walked on the
    * server: the debt spans months and this one cannot see it (item 20). */
@@ -117,7 +119,7 @@ interface MonthActionsProps {
    * application worked out and nothing else (specs.md item 17), and the engine's
    * own `overridable` is what says which rows those are.
    */
-  lines: MonthLine[];
+  lines: OverrideCandidate[];
   /** Amounts typed over rows this month is not drawing now. An override
    * outlives the row it addresses, so these are listed rather than kept out of
    * sight (item 17). */
@@ -636,7 +638,14 @@ function UserLinesControl({
   );
 
   return (
-    <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+    /* `data-group` is the browser suite's handle on this section, for the reason
+       `data-row` exists on a preview row (`CLAUDE.md` rule 9): the word "סכום"
+       labels a field in four of this card's five sections, so a lookup by label
+       alone matches several and the section has to say which one is meant. */
+    <div
+      data-group="userLines"
+      className="flex flex-col gap-2 border-t border-line pt-2.5"
+    >
       <h3 dir="auto" className="text-[15px] font-semibold">
         {he.month.preview.userLines}
       </h3>
@@ -835,7 +844,10 @@ function AdvancesControl({
   );
 
   return (
-    <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+    <div
+      data-group="advances"
+      className="flex flex-col gap-2 border-t border-line pt-2.5"
+    >
       <div className="flex items-baseline justify-between gap-3">
         <h3 dir="auto" className="text-[15px] font-semibold">
           {words.title}
@@ -879,6 +891,12 @@ function AdvancesControl({
             return (
               <li
                 key={standing.number}
+                /* The browser suite's handle on one advance, for the reason
+                   `data-row` exists on a preview row (`CLAUDE.md` rule 9): what
+                   is still owed has to be *asserted*, and a selector built out
+                   of the Hebrew beside the figure breaks on a wording change
+                   that broke nothing. */
+                data-advance={standing.number}
                 className="flex flex-col gap-1 rounded-card-sm border border-line px-3 py-2"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -1252,7 +1270,10 @@ function ThirdPartyControl({
   );
 
   return (
-    <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+    <div
+      data-group="thirdParty"
+      className="flex flex-col gap-2 border-t border-line pt-2.5"
+    >
       <h3 dir="auto" className="text-[15px] font-semibold">
         {words.title}
       </h3>
@@ -1422,7 +1443,7 @@ function OverridesControl({
 
   /** Opened empty over a derived row and filled over one already replaced —
    * never with the calculated figure, for the reason the docblock gives. */
-  function openPanel(line: MonthLine) {
+  function openPanel(line: OverrideCandidate) {
     clear();
     setOpen(line.key);
     setAmount(
@@ -1492,7 +1513,10 @@ function OverridesControl({
   );
 
   return (
-    <div className="flex flex-col gap-2 border-t border-line pt-2.5">
+    <div
+      data-group="overrides"
+      className="flex flex-col gap-2 border-t border-line pt-2.5"
+    >
       <h3 dir="auto" className="text-[15px] font-semibold">
         {words.title}
       </h3>

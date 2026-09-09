@@ -79,6 +79,14 @@ const hanna: WorkerProfile = {
     // is the user's to record.
     advances: [{ number: 1, principalAgorot: 1000000, repaidAgorot: 0 }],
   },
+  // Part 4 states no document dates, so none is invented: three empty fields
+  // are what a worker whose papers the family has not typed in looks like
+  // (item 28), and the case is checked on its four totals rather than on these.
+  documents: {
+    employmentPermitExpiry: null,
+    workVisaExpiry: null,
+    passportExpiry: null,
+  },
 };
 
 /**

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
+import { dayLabel, fullDayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
 
 /**
  * Every expected string is written out here in Hebrew rather than assembled from
@@ -64,5 +64,24 @@ describe("the labels the rest of the screen uses", () => {
     // the selection summary sit on the same screen, and a day worded one way in
     // one and another way in the other is a difference with no reason behind it.
     expect(dayLabel("2026-08-26")).toBe(rangeLabel("2026-08-26", "2026-08-26"));
+  });
+});
+
+describe("a date outside the month on screen", () => {
+  it("carries its year, which is the whole of what makes it readable", () => {
+    // When the employment began and when a document expires are years away from
+    // anything on the page (specs.md items 6, 28), so the year is not optional
+    // decoration — "31 במרץ" says nothing about which March is meant.
+    expect(fullDayLabel("2024-04-01")).toBe("1 באפריל 2024");
+    expect(fullDayLabel("2027-03-31")).toBe("31 במרץ 2027");
+  });
+
+  it("says the same day the year-less form says", () => {
+    // One date worded two ways on one screen is a difference with no reason
+    // behind it, which is the argument `dayLabel` and `rangeLabel` already
+    // settled above.
+    expect(fullDayLabel("2026-08-26").startsWith(dayLabel("2026-08-26"))).toBe(
+      true,
+    );
   });
 });

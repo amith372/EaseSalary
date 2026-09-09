@@ -69,6 +69,16 @@ const firstWorker: WorkerProfile = {
   standingLines: [],
   country: "PH",
   openingPosition: { vacationDays: 9, sickDays: 24, advances: [] },
+  // Three documents with three expiry dates (specs.md item 28). The dates are
+  // seeded and the **numbers are not held at all**: they are encrypted at rest
+  // and there is no database yet, so they arrive in stage 3 with the key that
+  // protects them. Her permit runs out first, which is what gives item 27's
+  // bell something to find before it is built.
+  documents: {
+    employmentPermitExpiry: "2026-11-30",
+    workVisaExpiry: "2027-03-31",
+    passportExpiry: "2029-06-30",
+  },
 };
 
 /**
@@ -98,6 +108,16 @@ const secondWorker: WorkerProfile = {
     // says may be repaid in any month, and it is why the second worker's next
     // advance is numbered 2 rather than 1.
     advances: [{ number: 1, principalAgorot: 200000, repaidAgorot: 50000 }],
+  },
+  // Her permit date is the first worker's, and deliberately: the employment
+  // permit belongs to the *employer* and a household holds one of them
+  // (item 28). Until stage 3 gives the household a record of its own, each
+  // worker carries a copy of it and the two are seeded equal so the screen
+  // shows what the household actually has.
+  documents: {
+    employmentPermitExpiry: "2026-11-30",
+    workVisaExpiry: "2026-10-15",
+    passportExpiry: "2027-01-31",
   },
 };
 

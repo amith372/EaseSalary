@@ -45,6 +45,13 @@ const HANNA: WorkerProfile = {
   ],
   country: "PH",
   openingPosition: { vacationDays: 5, sickDays: 10, advances: [] },
+  // Three empty dates: these fixtures check the store and the replay, and item
+  // 28's documents reach neither.
+  documents: {
+    employmentPermitExpiry: null,
+    workVisaExpiry: null,
+    passportExpiry: null,
+  },
 };
 
 function record(month: YearMonth, extra: Partial<MonthRecord> = {}): MonthRecord {

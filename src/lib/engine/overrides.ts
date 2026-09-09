@@ -73,9 +73,21 @@ export type ReviewedOverride =
  * had when she typed the figure — which is also the only name that is true of
  * the moment she chose it.
  */
+/**
+ * Enough of a row to decide an override, which both a column line and a row of
+ * the closing block satisfy.
+ *
+ * **It is written structurally rather than as a union of the two**, for the
+ * reason the docblock above gives: the authority is the row's own
+ * `overridable`, and a signature naming the two shapes would be a list of
+ * places to remember to grow — which is the whitelist this file refuses in a
+ * different spelling.
+ */
+export type OverridableRow = Pick<MonthLine, "key" | "label" | "overridable">;
+
 export function reviewOverride(
   draft: OverrideDraft,
-  lines: MonthLine[],
+  lines: OverridableRow[],
 ): ReviewedOverride {
   const line = lines.find((candidate) => candidate.key === draft.key);
   if (line === undefined || !line.overridable) {

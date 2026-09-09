@@ -7,7 +7,7 @@ import type {
   WorkerTerms,
 } from "@/lib/engine/types";
 import { overlapsMonth } from "@/lib/spans";
-import type { Worker, YearMonth } from "@/lib/types";
+import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
 
 /**
  * Where a worker's facts are kept, said in a way that names no database.
@@ -46,7 +46,17 @@ import type { Worker, YearMonth } from "@/lib/types";
  * `calculateMonth` and nothing has to be unpacked; what a month was *calculated*
  * with still comes off the month and never off this (Part 3).
  */
-export interface WorkerProfile extends Worker, WorkerTerms {}
+export interface WorkerProfile extends Worker, WorkerTerms {
+  /**
+   * The three documents the employment rests on, as dates (specs.md item 28).
+   *
+   * **They are on the profile and not in `WorkerTerms`**, because they are not
+   * terms of a month: a passport renewed in June does not restate May, and
+   * nothing snapshots them. What reads them is item 27's warnings, which ask
+   * what is coming due now and never what was due in a month already exported.
+   */
+  documents: WorkerDocuments;
+}
 
 /**
  * A month as the store holds it — everything in `MonthFacts` except its spans.

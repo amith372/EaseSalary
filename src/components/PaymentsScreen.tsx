@@ -13,7 +13,7 @@ import type { AdvanceStanding } from "@/lib/engine/advances";
 import type { OrphanedOverride } from "@/lib/engine/overrides";
 import type { MonthRecord } from "@/lib/engine/repository";
 import { he } from "@/lib/i18n/he";
-import type { IsoDate, MonthLine, Worker, YearMonth } from "@/lib/types";
+import type { IsoDate, OverrideCandidate, Worker, YearMonth } from "@/lib/types";
 
 /**
  * The payments screen — where everything that *records* a payment lives
@@ -50,12 +50,13 @@ export interface MonthPayments {
   /** Without the spans, which belong to the worker rather than to a month. */
   record: MonthRecord;
   /**
-   * The month's own lines, and the only derived thing on this screen. It is
-   * here for one reason: an override may only replace a figure the application
-   * worked out, and the engine's own `overridable` is what says which those are
-   * (specs.md item 17). Nothing on this screen totals them.
+   * The month's own rows — its columns and its closing block together — and
+   * the only derived thing on this screen. They are here for one reason: an
+   * override may only replace a figure the application worked out, and the
+   * engine's own `overridable` is what says which those are (specs.md item 17).
+   * Nothing on this screen totals them.
    */
-  lines: MonthLine[];
+  lines: OverrideCandidate[];
   /** Amounts typed over rows the month is not drawing now — listed rather than
    * kept out of sight, because a stored amount that will reappear and cannot be
    * seen is item 17's quietest failure. */

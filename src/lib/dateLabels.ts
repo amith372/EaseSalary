@@ -36,6 +36,21 @@ export function dayLabel(iso: IsoDate): string {
   }`;
 }
 
+/**
+ * "1 באפריל 2024" — a date with its year, which is what a date outside the
+ * month on screen needs.
+ *
+ * `dayLabel` above deliberately carries no year, because every date it names
+ * sits in a month the calendar is already headed by. The dates the worker's
+ * profile shows — when the employment began, when a document expires — are
+ * years away from anything on the page, and a year is the whole of what makes
+ * them readable (specs.md item 28).
+ */
+export function fullDayLabel(iso: IsoDate): string {
+  const date = fromIsoDate(iso);
+  return `${dayLabel(iso)} ${date.getUTCFullYear()}`;
+}
+
 /** "20 באוגוסט" for one day, "16–20 באוגוסט" inside a month. */
 function withinMonth(from: Date, to: Date): string {
   const days =

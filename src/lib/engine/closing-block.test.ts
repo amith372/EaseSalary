@@ -177,3 +177,69 @@ describe("the split loses no row (specs.md Part 5)", () => {
     expect(result.net).toBe(702940);
   });
 });
+
+/**
+ * Which row of the block may be replaced by hand, and which is corrected where
+ * it was entered (specs.md item 17).
+ *
+ * **The division is about who produced the amount and not about which row it
+ * is.** The tax, an advance movement and a one-off line are all figures the
+ * user typed into this month, so there is nothing under them to replace; a
+ * *standing* line reached this month from the profile, so a month that paid
+ * something else has no entry here to correct and says so with an override.
+ *
+ * It is checked here because a standing deduction lands on this side of the
+ * total by default (item 20, `defaultPlacementFor`), which makes it the
+ * ordinary case rather than a corner of one — and because the flag had one
+ * reachable value until the profile screen could set a standing line.
+ */
+describe("only a standing line may be overridden in the block (item 17)", () => {
+  const standing: UserLine = {
+    id: "pocket",
+    label: "דמי כיס",
+    direction: "deduction",
+    agorot: 20000,
+  };
+
+  it("offers the standing line and refuses every other row", () => {
+    const worker: WorkerTerms = plainWorker([standing]);
+    const result = calculateMonth(
+      facts(worker, {
+        incomeTaxAgorot: 20000,
+        advances: [instalment],
+        userLines: [oneOffDeduction],
+      }),
+      worker,
+    );
+
+    const overridable = result.closing
+      .filter((row) => row.overridable)
+      .map((row) => row.key);
+    expect(overridable).toEqual([`standing.${standing.id}`]);
+
+    // Named the other way round as well, so a change that made everything
+    // overridable would fail here rather than merely widening the list above.
+    const byKey = (key: string) =>
+      result.closing.find((row) => row.key === key)?.overridable;
+    expect(byKey(lineKeys.incomeTax)).toBe(false);
+    expect(byKey(`extra.${oneOffDeduction.id}`)).toBe(false);
+    expect(byKey("advance.1.repaid")).toBe(false);
+  });
+
+  it("says what the row would have been, beside what it says", () => {
+    const worker: WorkerTerms = plainWorker([standing]);
+    const key = `standing.${standing.id}`;
+    const result = calculateMonth(
+      facts(worker, { overrides: { [key]: { agorot: 5000 } } }),
+      worker,
+    );
+
+    const row = result.closing.find((each) => each.key === key);
+    // ₪200 was the standing amount and ₪50 is what this month paid instead;
+    // both are deductions, so both are drawn negative — an override is a
+    // magnitude and the row gives it its sign (item 17).
+    expect(row?.manual).toBe(true);
+    expect(row?.amount).toBe(-5000);
+    expect(row?.calculatedAmount).toBe(-20000);
+  });
+});

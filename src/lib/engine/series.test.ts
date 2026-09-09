@@ -50,6 +50,13 @@ const HANNA: WorkerProfile = {
   standingLines: [],
   country: "PH",
   openingPosition: { vacationDays: 5, sickDays: 10, advances: [] },
+  // Three empty dates: these fixtures check the store and the replay, and item
+  // 28's documents reach neither.
+  documents: {
+    employmentPermitExpiry: null,
+    workVisaExpiry: null,
+    passportExpiry: null,
+  },
 };
 
 const VACATION_A_MONTH = 14 / 12;

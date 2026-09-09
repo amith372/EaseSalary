@@ -718,6 +718,153 @@ export const he = {
   },
 
   /**
+   * The workers' list and the worker's own page — `EaseSalary - העובדות` and
+   * `EaseSalary - דף העובד` (specs.md items 5, 6, 11, 14, 20, 28).
+   *
+   * **The profile is where the terms of the employment are changed**, which is
+   * a departure from `דף העובד` as drawn: the artboard reads the worker and
+   * sends "פרטים והגדרות" to `הגדרות`, whose route belongs to two later
+   * stages. The section carries `הגדרות`'s own row vocabulary — a label, the
+   * hint under it, the value, and a link that changes it — so the two screens
+   * still read as one mechanism when `/settings` is built.
+   */
+  workers: {
+    title: "עובדים/ות",
+    lead: "כל מה ששייך לעובד/ת נמצא בדף האישי — החודשים, היתרות והפרטים.",
+    /** Item 11's limit, said as a fact about the account rather than as a
+     * refusal: a household holds no more than two workers, and a worker shared
+     * from another household is that household's and is not counted here. */
+    limit:
+      "בחשבון אפשר לנהל עד שני עובדים/ות. מי שהתקבל/ה בשיתוף מחשבון אחר לא נספר/ת במסגרת הזו.",
+    employedSince: "מועסק/ת מאז",
+    /** The country of origin as the application holds it — the code the
+     * holiday list is filed under (item 10). It is shown rather than named
+     * because there is no country list yet: stage 5 fetches the holidays per
+     * country and is where a code becomes a name. */
+    country: "ארץ מוצא",
+    facts: {
+      salary: "שכר בסיס לחודש",
+      vacation: "יתרת חופשה",
+      sick: "יתרת מחלה",
+      advance: "מקדמה שנשארה לפירעון",
+    },
+    toProfile: (firstName: string) => `לדף של ${firstName}`,
+    profile: {
+      /** The months she has, listed. **No status badge**: a month's four states
+       * are Part 5's and nothing in the application can confirm or export one
+       * yet, so a badge here would be a state invented to fill a shape. */
+      months: {
+        title: "החודשים",
+        empty: "עוד לא נרשם אף חודש.",
+        /** What the figures in the list are, said **once above them** in the
+         * same words the month screen closes with — one figure, one name
+         * (Part 5). It is a column heading and not a caption on every row: the
+         * same nine words beside nine amounts is noise the eye has to step
+         * over to reach the figure it came for. */
+        total: "סך הכל תשלום לעובד/ת",
+      },
+      advances: {
+        title: "מקדמות פתוחות",
+        empty: "אין מקדמה פתוחה.",
+        of: "מתוך",
+        repaid: "נפרע",
+        /** The artboard's own link out of this section: an advance is *given*
+         * and *repaid* on the payments screen, because that is where everything
+         * that records a payment lives (item 5). */
+        record: "לרשום מקדמה או פירעון",
+      },
+      terms: {
+        title: "תנאי ההעסקה",
+        note: "מה שנכון לכל חודש, עד שמשנים אותו. חודש שכבר אושר שומר על התנאים שאיתם חושב.",
+        restDay: {
+          label: "יום המנוחה השבועי",
+          hint: "שישי, שבת או ראשון — לפי מה שמקובל על העובד/ת. הלוח סופר לפיו את ימי המנוחה ואת ערבי המנוחה.",
+          /** The day as a bare noun phrase, which is what a chip shows. The
+           * gender goes with it (`DAY_WORDS`), so nothing here concatenates. */
+          day: (restDay: RestDay) => day(restDay).bare,
+          eve: (restDay: RestDay) => eve(restDay).bare,
+          /** Said under the chips, because it is the consequence the user is
+           * choosing and not a detail behind a "?": the supplement follows the
+           * rest day rather than being set beside it (item 14). */
+          eveNote: (restDay: RestDay) =>
+            `ערב המנוחה הוא ${eve(restDay).bare}, והתוספת השבועית משולמת עליו.`,
+        },
+        standing: {
+          title: "שורות קבועות",
+          hint: "שורה שנקבעת פעם אחת ומופיעה בכל חודש מאז, באותו סכום, עד שמשנים אותה או מפסיקים אותה. סכום שונה בחודש מסוים מחליפים במסך התשלומים.",
+          empty: "לא נקבעה שורה קבועה.",
+          add: "להוסיף שורה קבועה",
+          edit: "לתקן",
+          editLabel: (label: string) => `לתקן את השורה הקבועה "${label}"`,
+          stop: "להפסיק",
+          stopLabel: (label: string) => `להפסיק את השורה הקבועה "${label}"`,
+        },
+        opening: {
+          title: "המצב שממנו מתחילים",
+          /** Item 6 in the family's own terms, and item 13's consequence said
+           * plainly: the balances are replayed from here, so correcting this
+           * moves every month at once. That is the correct behaviour and it is
+           * said before the fact rather than discovered after it. */
+          hint: "מה שכבר נצבר לפני שהתחלנו — ימי חופשה, ימי מחלה, ומקדמה שעדיין נפרעת. היתרות בכל החודשים נספרות מכאן, ולכן תיקון כאן מזיז את כולם.",
+          vacation: "ימי חופשה שכבר נצברו",
+          sick: "ימי מחלה שכבר נצברו",
+          save: "לשמור",
+          addAdvance: "להוסיף מקדמה שנשארה מלפני כן",
+          principal: "הסכום שניתן",
+          repaid: "כמה כבר נפרע",
+          repaidHint: "אפשר להשאיר ריק אם עוד לא נפרע דבר",
+          note: "למה",
+          submit: "להוסיף",
+          remove: "להסיר",
+          removeLabel: (number: number) => `להסיר את מקדמה ${number}`,
+        },
+        documents: {
+          title: "המסמכים",
+          /** Item 28's own division, said once: three documents, three dates,
+           * and which of them belongs to whom. The numbers are named as absent
+           * on purpose — a user who has typed three dates and no numbers should
+           * be told why rather than left looking for the fields. */
+          note: "שלושה מסמכים נפרדים, כל אחד עם תאריך תפוגה משלו. המספרים עצמם יישמרו מוצפנים ועדיין לא נשמרים כאן.",
+          employmentPermit: "היתר העסקה",
+          employmentPermitHint:
+            "שייך למעסיק/ה ולא לעובד/ת, ומחודש בבקשה מקוונת לרשות האוכלוסין. בחשבון עם שני עובדים/ות זה אותו היתר.",
+          workVisa: "אשרת עבודה",
+          workVisaHint: "שייכת לעובד/ת, ומחודשת דרך החברה בתשלום אגרה.",
+          passport: "דרכון",
+          /** The threshold is not expiry (item 28), and the field holds the
+           * expiry — so the sentence says both, or a user reads the date as the
+           * moment to act on. */
+          passportHint:
+            "כאן נשמר תאריך התפוגה. ההתראה תופיע כשנשארו פחות משמונה עשר חודשים, ולא כשהוא פג.",
+          none: "לא הוזן",
+          save: "לשמור",
+          /** The shape the fields ask for. Not a sentence to translate — it is
+           * the form of the value — but it is text the user reads. */
+          format: "שנה-חודש-יום",
+        },
+        cancel: "ביטול",
+        change: "לשנות",
+        /** Why a change was refused, in words (item 25). Each names the field
+         * it is about, because the panel that shows it holds several. */
+        refused: {
+          restDay: "אפשר לבחור רק שישי, שבת או ראשון.",
+          date: "אחד התאריכים אינו תאריך. הצורה היא שנה-חודש-יום, למשל 2027-03-31.",
+          days: "מספר הימים צריך להיות מספר שאינו שלילי.",
+          principal: "צריך להקליד את הסכום שניתן — מספר גדול מאפס, בלי מינוס.",
+          repaid: "מה שנפרע צריך להיות מספר, בלי מינוס.",
+          overRepaid:
+            "מה שנפרע גדול מהסכום שניתן. אפשר להקטין אותו, או להגדיל את הסכום שניתן.",
+          label: "צריך לכתוב על מה השורה.",
+          amount: "צריך להקליד סכום — מספר גדול מאפס, בלי מינוס.",
+          shape: "אחת מהבחירות אינה מוכרת. כדאי לרענן את הדף ולנסות שוב.",
+          entryUnknown:
+            "השורה הזאת כבר לא קיימת. כדאי לרענן את הדף ולראות מה נשמר.",
+        },
+      },
+    },
+  },
+
+  /**
    * The home screen's coarse summary of a month, which folds several of the
    * sheet's own rows into one line each. The sheet's full row set is `sheet.lines`
    * below; these three are what a screen that is not the sheet shows.

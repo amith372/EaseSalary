@@ -220,26 +220,48 @@ export interface MonthLine {
  * subtracts is negative. The sign follows from what the row is, so it can never
  * disagree with the label beside it.
  */
+/**
+ * A row the override control may be shown: enough of one to list it, say what
+ * it came to, and ask whether it may be replaced (specs.md item 17).
+ *
+ * **Both a column line and a row of the closing block satisfy it**, which is
+ * the point: which rows are overridable is `overridable`, declared where each
+ * row is built, and a screen that named the two shapes instead would be the
+ * keyed whitelist `overrides.ts` refuses — the next kind of row the engine
+ * grows would fall silently into whichever answer the `else` gives.
+ */
+export type OverrideCandidate = Pick<
+  MonthLine,
+  "key" | "label" | "amount" | "manual" | "calculatedAmount" | "overridable"
+>;
+
 export interface ClosingLine {
   key: string;
   label: string;
   amount: number | null;
   manual: boolean;
   /**
-   * **No row of this block is overridable, so it carries no flag saying so**
-   * (specs.md item 17). Every row here is an amount the month itself recorded
-   * — the income tax, an advance movement, a one-off line the user placed after
-   * the total — and those are corrected by editing the entry, because there is
-   * nothing under them for an override to replace.
+   * **Almost no row of this block is overridable, and exactly one is** (specs.md
+   * item 17). The income tax, an advance movement and a one-off line the user
+   * placed after the total are all amounts the month itself recorded, and those
+   * are corrected by editing the entry — there is nothing under them for an
+   * override to replace.
    *
-   * The one row that would not be is a **standing** line placed after the
-   * total, whose amount came from the profile. No standing line can exist yet:
-   * `MonthTerms.standingLines` is empty in the seed and the profile screen that
-   * would set one is `build_plan.md`'s unowned debt. A flag with one reachable
-   * value is flexibility for a case that cannot arise, so it is added the day
-   * the case can — and the override control reads `MonthResult.lines` alone
-   * until then.
+   * The exception is a **standing** line placed after the total, whose amount
+   * came from the profile: a month that paid something else has no entry here
+   * to edit, so an override is the only way to say so. This flag had one
+   * reachable value until 2026-09-09, when stage 4's step 9 built the screen
+   * that sets a standing line — and a standing *deduction* defaults to this
+   * side of the total (`defaultPlacementFor`), so it is the ordinary case and
+   * not a corner of one.
    */
+  overridable: boolean;
+  /**
+   * What the row would have said had it not been replaced, carried beside the
+   * manual figure so the two are read together (items 17, 24). Present only on
+   * a row that *is* replaced, which is the same shape `MonthLine` uses.
+   */
+  calculatedAmount?: number;
   /** Which of the block's two halves the row belongs to, and with it which of
    * the two figures below it the row has already reached. */
   block: ClosingBlock;
@@ -397,6 +419,58 @@ export interface Worker {
   name: string;
   /** The first name alone, for "לדף של [שם]". */
   firstName: string;
+}
+
+/**
+ * The three documents an employment rests on, held as **dates alone**
+ * (specs.md item 28).
+ *
+ * They are three separate documents with three separate expiry dates and are
+ * not one thing under different names: the **employment permit** belongs to the
+ * employer and is renewed by the employer's own application, the **work visa**
+ * belongs to the worker and is renewed through the agency, and the **passport**
+ * is the one the employer is obliged to check stays valid — and its threshold
+ * is not expiry but eighteen months remaining, so it lapses in the warnings
+ * long before it lapses in fact.
+ *
+ * **The three numbers are not here and their absence is the design** (item 28,
+ * item 22). Each is encrypted at rest with a key held outside the database, and
+ * there is no database yet: a field for one now would put a plaintext
+ * identifier into an in-memory store, which is the one thing `CLAUDE.md`'s
+ * non-negotiables say may never happen. They arrive with their encryption, in
+ * stage 3, on the screen this holds the dates for.
+ *
+ * **The dates are deliberately not encrypted**, which is item 28's own
+ * sentence: a date identifies nobody, and the warnings of item 27 have to find
+ * what is coming due — an encrypted date cannot be queried or indexed, so the
+ * bell would have to decrypt every worker's three dates on every load to
+ * discover it has nothing to say.
+ *
+ * `null` is "not entered yet" and is the ordinary state of a worker whose
+ * papers the family has not typed in. It is not "no expiry": every one of the
+ * three has one.
+ */
+export interface WorkerDocuments {
+  /**
+   * היתר העסקה — the employer's, not the worker's.
+   *
+   * **It is held per worker here and it is the employer's position** (item 28:
+   * a household with two workers holds one permit and two visas), so two
+   * workers in one household each carry a copy of one date and nothing stops
+   * them disagreeing. That is a known and written-down consequence of there
+   * being no household record to hold it on: the store is keyed by worker and
+   * stage 3 is the stage that builds the household. It moves there with the
+   * schema, and until then the profile labels it as the employer's so the user
+   * is not told it belongs to the worker.
+   */
+  employmentPermitExpiry: IsoDate | null;
+  /** אשרת עבודה, B/1 — the worker's, renewed through the agency against a fee
+   * that is recorded as an ordinary payment to a third party (item 16). */
+  workVisaExpiry: IsoDate | null;
+  /** The passport's own expiry. The **warning** fires at eighteen months
+   * remaining rather than at this date (item 28), so the two are not the same
+   * figure and the threshold is never stored here. */
+  passportExpiry: IsoDate | null;
 }
 
 /** A thing on the opening screen that needs the user to do something

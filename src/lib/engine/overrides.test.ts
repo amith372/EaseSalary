@@ -160,6 +160,7 @@ describe("an override whose row the month no longer draws", () => {
       amount: -20000,
       manual: false,
       block: "transfer",
+      overridable: false,
       explanation: { text: "" },
     },
   ];

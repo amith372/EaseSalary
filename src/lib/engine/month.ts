@@ -349,6 +349,9 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
     // The one row taken out of the ברוטו rather than out of the transfer, and
     // so the only thing standing between the two figures (specs.md Part 5).
     block: "withholding",
+    // The figure is the user's own and there is nothing under it to replace: a
+    // tax entered by mistake is corrected where it was entered (item 17).
+    overridable: false,
     // The application never calculates the tax, so the link is the whole of what
     // it can give the user before she types a figure (specs.md items 17, 26).
     explanation: { text: he.sheet.why.incomeTax, link: "incomeTax" },
@@ -373,6 +376,19 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
         label: line.label,
         amount: signed * Math.round(Math.abs(agorot)) || 0,
         manual: override !== undefined,
+        // **The one overridable row of this block** (item 17). A *standing*
+        // line reached this month from the profile, so a month that paid
+        // something else has no entry here to correct and says so with an
+        // override; a one-off line was typed into this month and is edited
+        // where it was typed. It is the same division `lines.ts` draws for a
+        // line placed before the total, read from the same prefix.
+        overridable: prefix === "standing",
+        ...(override
+          ? {
+              calculatedAmount:
+                signed * Math.round(Math.abs(line.agorot)) || 0,
+            }
+          : {}),
         // Item 20 says such a line "changes only what is transferred at the
         // end" and reaches neither the month's cost nor item 19's estimate,
         // which is the same sentence as an advance — so it sits with them,
@@ -396,6 +412,9 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
       amount: granted ? Math.round(agorot) : -Math.round(agorot),
       manual: override !== undefined,
       block: "transfer",
+      // An amount the month itself recorded, so it is corrected on the advance
+      // it belongs to rather than replaced (item 17).
+      overridable: false,
       explanation: {
         text: granted
           ? he.sheet.why.advanceGranted(advance.number)

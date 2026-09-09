@@ -293,8 +293,8 @@ export async function setIncomeTax(
 }
 
 /** A line of the user's own, added to this month alone (specs.md item 20). The
- * standing ones are terms of the employment and are set on the profile, which
- * is stage 3's screen. */
+ * standing ones are terms of the employment and are set on the profile, whose
+ * own actions are in `app/workers/actions.ts`. */
 export async function addUserLine(
   workerId: string,
   month: YearMonth,
@@ -501,7 +501,14 @@ export async function setOverride(
   const entry = await linesOf(workerId, month);
   if (entry === null) return { ok: false, reason: "noMonth" };
 
-  const reviewed = reviewOverride(draft, entry.result.lines);
+  // **Both the columns and the closing block.** A standing line placed after
+  // the month's total is a row of the closing block whose amount came from the
+  // profile, so it is overridable too (item 17, `types.ts`) — and a call that
+  // passed the columns alone would refuse the one override the block has.
+  const reviewed = reviewOverride(draft, [
+    ...entry.result.lines,
+    ...entry.result.closing,
+  ]);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   return changeMonth(workerId, month, (record) =>

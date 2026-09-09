@@ -61,7 +61,11 @@ export default async function PaymentsPage() {
           // month (`repository.ts`) and which this screen has nothing to say
           // about.
           record: recordOf(facts),
-          lines: result.lines,
+          // The columns and the closing block together, because the override
+          // control asks each row its own `overridable` and one of the block's
+          // rows answers yes: a standing line placed after the month's total
+          // (item 17, `types.ts`).
+          lines: [...result.lines, ...result.closing],
           // Held for a row this month is not drawing, and listed all the same:
           // an amount that is stored, will reappear, and cannot be seen is the
           // one failure in item 17 that looks like nothing went wrong.
