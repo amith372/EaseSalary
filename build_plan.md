@@ -122,6 +122,7 @@ page. A tab that 404s is worse than a tab that is not there.
 |---|---|---|---|
 | `/` | `דף הבית v3 לוח במרכז` | 6 — built in stage 0 against fixtures | **built**, on fixtures |
 | `/month` | `חישוב החודש` | 4 | **built** — the stage in progress |
+| `/month/export` | `לפני הייצוא` | 5 (the questions) + 2 (the file) | **built on 2026-09-09** by stage 5's step 7 |
 | `/payments` | `תשלומים` | 4 (pulled forward, step 6) + 5 | **built** for what it records (step 7); the artboard's two reminder sections are stage 5's |
 | `/workers` | `העובדות` | 3 in this table, **built by stage 4's step 9** | **built** on 2026-09-09, with `/workers/[id]` beside it |
 | `/settings` | `הגדרות` | 3 + 5 | 404 |
@@ -129,13 +130,14 @@ page. A tab that 404s is worse than a tab that is not there.
 | `/alerts` | `התראות` | 6 | 404 |
 | `/help` | none — stage 7 draws it | 7 | 404 |
 
-**Two artboards were added on 2026-09-05 and neither has a route yet**, which is a gap to
-close when their stage arrives rather than a drift:
+**Two artboards were added on 2026-09-05 and both were given routes on 2026-09-09**, by
+stage 5's steps 5 and 7. The rows are kept because where each landed, and why, is the
+part a later session would otherwise have to reconstruct:
 
 | Artboard | What it is | Whose route |
 |---|---|---|
 | `בחירת חגים` | The year's holidays chosen in advance (item 10). Reached from `הגדרות` and from the home screen's own alert, so it draws `הגדרות` as the active tab | **stage 5's**, which is the stage that needs it |
-| `לפני הייצוא` | The confirmation questions and the minimum-wage confirmation (items 18 and 4). No tab is active: it is a step in an action, not a section | **stage 2's**, with the export |
+| `לפני הייצוא` | The confirmation questions and the minimum-wage confirmation (items 18 and 4). No tab is active: it is a step in an action, not a section | **built on 2026-09-09** at `/month/export`, by stage 5's step 7. The address is the home screen's own link from stage 0, so the questions landed where the application already pointed; stage 2 puts the file behind the button they end with |
 
 **Three artboards have no route at all, and each is a different kind of gap:**
 
@@ -2346,9 +2348,11 @@ choosing it disables sickness and the free rest day. The name assertion was conf
 against a third mutation, the half dropped from the cell's label.
 
 
-## Stage 5 — External data and yearly settings
+## Stage 5 — External data and yearly settings · **done**
 
-`fetch` plus an HTML parser, server-side, cached in Postgres.
+`fetch` plus an HTML parser, server-side, cached in Postgres. Seven steps, all landed
+between 2026-09-08 and 2026-09-09; the last of them is what makes stage 2's export
+reachable by a user at all, so stage 2 is what follows.
 
 - **The dated-rates table, first, because everything else in this stage writes into it.**
   Criterion 4 and Part 3: one table holding every rate the application does not derive —
@@ -2380,7 +2384,7 @@ against a third mutation, the half dropped from the cell's label.
 - The holiday picker: the candidate list, the entitlement, part days, the remainder.
 - The recuperation month and entitlement from seniority.
 - The confirmation questions that open an export, which are what make stage 2's export
-  reachable by a user at all.
+  reachable by a user at all. **Done** — step 7, and the stage's last.
 
 - The saved source pages and their three spoiled versions, as Part 4 requires: markup
   moved, an empty or failing response, and a figure outside the plausible range. They are
@@ -2983,6 +2987,129 @@ Fourth, the worker with no entitlement yet. Open `/workers/worker-2`, who began 
 1.9.2025. Her recuperation row says אין עדיין זכאות rather than a figure, because her
 first employment year is not out. A failure is a payment offered to a worker who has
 not completed a year.
+
+### Step 7 — the questions that open an export · **done**
+
+`src/lib/engine/beforeExport.ts`, `/month/export`, and two methods on the
+repository. It is the stage's seventh bullet and the whole of item 18, with
+item 4's minimum-wage confirmation and item 15's day rate beside it — the two
+figures the application cannot derive, confirmed at the one moment both are
+needed. It closes stage 5.
+
+**The address was chosen in stage 0 and not here.** The home screen has linked
+to `/month/export` since the first commit, with a comment saying the
+confirmation behind the link is built in stage 5. Picking a different address
+now would have left that link on a 404 while the screen it names sat somewhere
+else, so the artboard `לפני הייצוא` — which the routes table above assigns to
+stage 2 — is built at stage 0's address by stage 5. No tab lights, which is what
+the artboard draws: it is a step in an action and not a section.
+
+**Two decisions were asked and answered on 2026-09-09, and a third came out of
+the browser.**
+
+- **What the `לייצא לאקסל` button does**, with no export built. It **confirms
+  the month**: the minimum wage with its effective date, the base salary copied
+  off the profile, and the recuperation day rate where one is owed, written
+  together in one gesture. That is Part 5's *confirmed* state, which nothing had
+  ever reached before — the moment a month's figures stop moving with the
+  profile. Stage 2 puts the file behind the same button and changes nothing
+  else.
+- **An answer that contradicts what the month recorded is a warning, not a
+  refusal.** The user is the one who knows what happened, and a month she has
+  looked at and answered for is a month she may export; what item 18 buys is
+  that she was *asked*. The warning names the screen where the missing fact is
+  actually recorded, so it is a way forward rather than a verdict.
+- **A salary that has fallen below the minimum wage is raised to it**, and the
+  screen says so before she presses. This was found by running the flow: the
+  demo pays the 1.4.2025 figure and every month of 2026 is valued at the
+  1.4.2026 one, so the first version refused every month the household has.
+  Item 3 settles it — a salary may sit above the minimum and may never sit below
+  it — and the profile itself is left alone, because how far *above* the minimum
+  she is paid stays the family's decision.
+
+**Two things block and everything else warns, and each block says so in
+`specs.md` itself.** Item 21: a month may be filled in ahead of time and may
+only be exported once it has ended. Item 18: a month is not exported over an
+unanswered open spell, because the one thing an open spell can get wrong is
+counting days for a worker who was already back. Both are re-checked in the
+action and not merely disabled on the button — a disabled button is a courtesy,
+and the rule has to be true where a crafted request also arrives.
+
+**The questions are answered in the browser and are never stored.** Item 18 says
+exporting *begins* with them, so they are asked again before every export;
+storing them would make a month "already answered" and turn the second export
+into a silence. What reaches the server is only the confirmations they lead to.
+That is also why the screen adds no state to `MonthRecord`: stage 3 has nothing
+extra to migrate.
+
+**The open spell is answered by the day she returned, and the spell ends the day
+before.** The user is asked the event the family witnessed rather than the last
+day of illness, which is how item 18 words it and how the artboard asks it. The
+subtraction is in the engine, so the one place it happens carries a test.
+
+**`SalaryRepository` gained `listRates` and `saveRate`**, which is what
+`datedRates.ts` said would happen with the screen that has to show a fetched
+figure. A confirmed wage enters that table dated, so a figure typed by hand
+after a failed fetch is known the next time rather than typed again.
+
+**What the tests would catch** (27 cases in `beforeExport.test.ts`, four more in
+`repository.test.ts`, seven browser flows in `e2e/before-export.spec.ts`). Every
+expected figure is item 18's own list, the seeded table's two minimum wages, the
+recuperation ladder, or a day count read off a calendar by hand. Caught: a
+question dropped from the six, which is a thing then left out by silence; a
+question arriving without what the month knows, which turns a confirmation into
+a memory test; a crossing spell reported to both months as its whole length,
+which is the neighbouring month's days confirmed as this one's; a month exported
+before it ended, or over an open spell; a spell closed on the day she returned
+rather than the day before, which pays one sick day too many; a salary left
+below its own confirmed minimum; a recuperation rate asked for in an ordinary
+month or missing from the one that owes it; and — the two only a browser can see
+— a button that enables before every question is answered, and a confirmation
+that writes nothing and leaves every screen looking exactly as it did.
+
+**One thing is verified by hand and not by the suite, and it is written down
+rather than left to be discovered.** Nothing in the application can *open* a
+sick spell yet: `markRange` always writes an end, and the seed deliberately
+carries no open spell because one would go on drawing days from the balance
+month after month and start failing on a date nobody chose. So the block and the
+question that closes it were checked once against a seed opened by hand on
+2026-09-09 — the panel appeared, the export was refused, the return date closed
+the spell and the block went — and then the seed was put back. The rules
+themselves carry unit tests. A browser test lands with the gesture that opens a
+spell.
+
+**Three things left out on purpose, and none is a bug.** The **file** is stage
+2's; this screen is what makes it reachable and the button is where it plugs in.
+A **salary field on the profile** is not built, which is why the raise happens
+here — the screen that sets a salary is stage 3's `הגדרות` work, and building it
+to get past this would be building another stage. And the questions are not
+carried between months: stepping the stepper starts the conversation again,
+because an answer is about the month it was given for.
+
+**The check the user runs.** Four parts.
+
+First, the questions. Open `/month/export` on the demo household. It opens on
+אוגוסט 2026 — the last month that ended, not the current one. Six questions,
+each with a line under it saying what the month already holds, and
+`לייצא לאקסל` greyed out with "אפשר לייצא אחרי שכל השאלות נענו" beneath it.
+Answer all six and the button lights. A failure is a button that was pressable
+before the questions were answered.
+
+Second, the wage. In the same card at the top: ₪6,443.85, בתוקף מ־1 באפריל 2026,
+with a link to כל זכות and a `לתקן` that opens a field. Beneath it a sentence
+saying the month will be confirmed at ₪6,443.85 because the salary recorded for
+her is lower. A failure is a figure with no date beside it.
+
+Third, the month that has not ended. Step forward to ספטמבר 2026. A
+`החודש עדיין לא הסתיים` panel appears and the button stays greyed out however
+the questions are answered. A failure is an unfinished month that can be
+exported.
+
+Fourth, the confirmation. Step back to יולי 2026 — the recuperation month — and
+a `ערך יום הבראה` field appears holding 451.50. Answer the six questions and
+press `לייצא לאקסל`. The screen says the month was confirmed. Then open `/month`,
+step back to יולי, and the דמי הבראה row still reads ₪2,709.00. A failure is a
+press that says nothing happened, or a July that lost its recuperation line.
 
 ## Stage 6 — The opening screen
 

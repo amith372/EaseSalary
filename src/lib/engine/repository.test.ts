@@ -11,6 +11,7 @@ import {
 } from "@/lib/engine/repository";
 import { snapshotTerms } from "@/lib/engine/types";
 import type { MonthSpan } from "@/lib/engine/types";
+import { SEEDED_RATES } from "@/lib/datedRates";
 import { SEEDED_HOLIDAY_LISTS } from "@/lib/holidayLists";
 import type { YearMonth } from "@/lib/types";
 
@@ -531,5 +532,62 @@ describe("the household's holiday lists", () => {
     expect(await repository.listHolidayLists()).toHaveLength(
       SEEDED_HOLIDAY_LISTS.length,
     );
+  });
+});
+
+/**
+ * The dated-rates table as the household holds it (specs.md item 4). The
+ * methods arrived with the screen that has to show a fetched figure, which is
+ * the pre-export confirmation — `datedRates.ts` said so before either existed.
+ */
+describe("the household's dated rates", () => {
+  /** Seeded, so a month is valued before any fetch has ever run. */
+  it("open seeded with what the application ships knowing", async () => {
+    expect(await store().listRates()).toEqual(SEEDED_RATES);
+  });
+
+  /**
+   * Replaced and not appended, for the reason `withFetchedRate` gives: two rows
+   * claiming one key and one effective date make `rateInForce` answer with
+   * whichever the sort left last, which is a coin toss dressed as a lookup.
+   */
+  it("replace the row held for the same key and effective date", async () => {
+    const repository = store();
+    const corrected = {
+      key: "minimumWage" as const,
+      value: 650000,
+      effectiveFrom: "2026-04-01" as const,
+      source: "אושר על ידי המשתמש/ת",
+    };
+    await repository.saveRate(corrected);
+
+    const rates = await repository.listRates();
+    expect(
+      rates.filter(
+        (rate) =>
+          rate.key === "minimumWage" && rate.effectiveFrom === "2026-04-01",
+      ),
+    ).toEqual([corrected]);
+    expect(rates).toHaveLength(SEEDED_RATES.length);
+  });
+
+  /** A figure for a date the table does not hold is a new row, which is what a
+   * wage that rose again looks like. */
+  it("take a row for a date the table does not hold", async () => {
+    const repository = store();
+    await repository.saveRate({
+      key: "minimumWage",
+      value: 660000,
+      effectiveFrom: "2027-04-01",
+      source: "https://www.kolzchut.org.il/he/שכר_מינימום",
+    });
+    expect(await repository.listRates()).toHaveLength(SEEDED_RATES.length + 1);
+  });
+
+  /** It copies on the way out, as every other read does. */
+  it("hand back a copy", async () => {
+    const repository = store();
+    (await repository.listRates()).pop();
+    expect(await repository.listRates()).toHaveLength(SEEDED_RATES.length);
   });
 });

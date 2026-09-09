@@ -1,7 +1,7 @@
 import { restEveOf, SATURDAY, SUNDAY, THURSDAY, FRIDAY } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import type { AdvanceKind } from "@/lib/engine/types";
-import { formatDays } from "@/lib/money";
+import { formatAgorot, formatDays } from "@/lib/money";
 
 /**
  * **The weekly rest day is a term of the employment, so the words for it are
@@ -1026,6 +1026,219 @@ export const he = {
     /** The artboard's own closing sentence, which is also what saving on each
      * gesture means: nothing here is held as a draft. */
     note: "אפשר לחזור ולשנות כל עוד החודש לא יוצא.",
+  },
+
+  /**
+   * The questions that open an export, and the confirmations that go with them
+   * — `EaseSalary - לפני הייצוא` (specs.md items 18, 4 and 15).
+   *
+   * **Every question is asked beside what the month already knows**, which is
+   * the whole of item 18: the user confirms or corrects rather than answering
+   * from memory, and a family that reads "no advance was recorded" and
+   * disagrees has found exactly the thing that would otherwise have been left
+   * out by silence.
+   *
+   * **A question is a question and not an accusation.** The wording asks what
+   * happened; it never says the user forgot something, because most of the time
+   * she did not and the screen is asked for on every export.
+   */
+  beforeExport: {
+    eyebrow: "לפני הייצוא",
+    /** `[חודש] [שנה] של [שם העובד/ת]`, as the artboard draws it. The three
+     * parts are separate elements, so nothing here is a sentence with a name
+     * inside it (`CLAUDE.md`). */
+    of: "של",
+    lead: "כמה שאלות קצרות על מה שמשנה את החודש, כדי ששום דבר לא יישכח בשתיקה.",
+
+    /**
+     * The minimum-wage confirmation (specs.md item 4). It carries all four
+     * things the item asks for: the figure, the date it took effect, where it
+     * was read from, and a way to correct it.
+     */
+    wage: {
+      title: "שכר המינימום שלפיו החודש הזה מחושב",
+      /** Where the figure came from and from when it holds. The two are
+       * different things and the wording keeps them apart: the row's own
+       * effective date, and the address it was read at. */
+      inForceFrom: "בתוקף מ־",
+      readFrom: "נקרא מ־",
+      /** The source page as the user knows it, which is also what item 26's
+       * links call it. */
+      sourceName: "כל זכות",
+      note: "חודש מוערך לפי השער שהיה בתוקף בו, ולא לפי השער של היום. אם הסכום אינו נכון — אפשר להקליד אותו ידנית, והוא יישמר עם התאריך שממנו הוא בתוקף.",
+      confirm: "הסכום נכון",
+      confirmed: "אושר",
+      correct: "לתקן",
+      amountLabel: "שכר מינימום חודשי",
+      effectiveFromLabel: "בתוקף מהתאריך",
+      save: "לשמור את הסכום",
+      cancel: "לבטל",
+      /** No row in the table covers this month, which is an honest answer and
+       * not a failure (item 4): the table says nothing rather than reaching for
+       * a figure that was not in force. */
+      unknown: "היישום אינו יודע מה היה שכר המינימום בחודש הזה, ולכן צריך להקליד אותו.",
+      /**
+       * The three ways a fetch ends without an answer, told apart because the
+       * user does different things about them (Part 4). A source that is down
+       * may work in a minute; markup that moved is a defect in this
+       * application; a figure outside the plausible range means the page was
+       * read and disbelieved.
+       */
+      failed: {
+        unreachable:
+          "לא הצלחנו להגיע לאתר כל זכות כרגע. הסכום למטה הוא האחרון שהיישום מכיר, ואפשר גם להקליד סכום אחר.",
+        notFound:
+          "הגענו לאתר כל זכות, אבל לא מצאנו בו את המשפט שמפרסם את שכר המינימום. הסכום למטה הוא האחרון שהיישום מכיר, ואפשר גם להקליד סכום אחר.",
+        implausible:
+          "הסכום שקראנו מהאתר רחוק מדי מהשכר שהיה בתוקף עד כה, ולכן לא סמכנו עליו. הסכום למטה הוא האחרון שהיישום מכיר, ואפשר גם להקליד סכום אחר.",
+      },
+      /**
+       * Item 3: a salary may sit above the minimum wage and may never sit below
+       * it. So a profile still holding last year's figure does not stop the
+       * export — the month is confirmed at the wage in force — and the screen
+       * says it is happening before the user presses, because a salary that
+       * changed without being announced is exactly the silent figure Part 5 is
+       * about. Settled with the user on 2026-09-09.
+       */
+      raised: (salary: number, minimum: number) =>
+        `המשכורת הרשומה לעובד/ת היא ${formatAgorot(salary)}, ושכר המינימום שבתוקף בחודש הזה גבוה ממנה. החודש יאושר לפי ${formatAgorot(minimum)}, כי משכורת אינה יכולה להיות נמוכה משכר המינימום. אפשר לקבוע משכורת גבוהה יותר בדף העובד/ת.`,
+      refused: {
+        amount: "צריך להקליד סכום גדול מאפס.",
+      },
+    },
+
+    /**
+     * The recuperation day rate (specs.md item 15), confirmed the way the
+     * minimum wage is and asked only in the month the payment falls in.
+     *
+     * **The days are reported and only the rate is asked**, which is item 15
+     * read as it is written: the entitlement is worked out from her seniority,
+     * and the day rate is the one figure in it the application cannot derive.
+     */
+    recuperation: {
+      title: "ערך יום הבראה לחודש הזה",
+      days: "החודש משולמים",
+      note: "ערך יום ההבראה אינו נגזר מהמשכורת — הוא נקבע מחוץ ליישום ומתעדכן כל יולי — ולכן מאשרים אותו כאן ושומרים אותו עם החודש שחושב לפיו.",
+      unknown: "היישום אינו יודע מה היה ערך יום ההבראה בחודש הזה, ולכן צריך להקליד אותו.",
+      amountLabel: "ערך יום הבראה",
+      refused: {
+        amount: "צריך להקליד סכום גדול מאפס.",
+      },
+    },
+
+    /**
+     * The open spell of sickness (specs.md items 8 and 18). **A block and not a
+     * warning**, which item 18 says outright: the one thing an open spell can
+     * get wrong is counting days for a worker who was already back.
+     */
+    openSpell: {
+      title: "יש מחלה שעדיין פתוחה",
+      /** Named by the day it began, because that is the fact the family has and
+       * the one that says which spell is meant. */
+      since: "המחלה נרשמה מ־",
+      ask: "האם העובד/ת חזר/ה לעבודה, ובאיזה יום?",
+      returnLabel: "תאריך החזרה",
+      save: "לסגור את המחלה",
+      note: "בלי תשובה אי אפשר לייצא את החודש: מחלה שנשארה פתוחה בטעות סופרת ימים למי שכבר חזרה.",
+      refused: {
+        beforeTheSpell: "תאריך החזרה צריך להיות אחרי היום שבו התחילה המחלה.",
+      },
+    },
+
+    /** The month that has not ended (specs.md item 21). It is drawn here as a
+     * block, where the month screen draws the same fact as a warning: filling
+     * the month in ahead of time is allowed and exporting it is not. */
+    notEnded: {
+      title: "החודש עדיין לא הסתיים",
+      note: "אפשר להמשיך למלא אותו, ואפשר לייצא אותו אחרי שיסתיים.",
+    },
+
+    /**
+     * The six questions. Each `ask` is what the user answers and each `from` is
+     * what the month already holds — never a sentence about what she should
+     * have done.
+     */
+    questions: {
+      yes: "כן",
+      no: "לא",
+      advanceGranted: {
+        ask: "ניתנה מקדמה החודש?",
+        from: (agorot: number | null) =>
+          agorot === null
+            ? "לא נרשמה מקדמה בחודש הזה"
+            : `נרשמה מקדמה של ${formatAgorot(agorot)}`,
+        mismatch: "מקדמה שניתנה נרשמת במסך התשלומים, ומשם היא נכנסת לחישוב.",
+      },
+      advanceRepaid: {
+        ask: "נפרע החודש חלק ממקדמה קודמת?",
+        from: (agorot: number | null) =>
+          agorot === null
+            ? "לא נרשם פירעון בחודש הזה"
+            : `נרשם פירעון של ${formatAgorot(agorot)}`,
+        mismatch: "פירעון של מקדמה נרשם במסך התשלומים, ומשם הוא נכנס לחישוב.",
+      },
+      freeRestDays: {
+        /** It names her own rest day, so a worker who rests on Friday is asked
+         * about Fridays (specs.md item 5). */
+        ask: (restDay: RestDay) => `היו ${day(restDay).plural} חופשיים?`,
+        from: (restDay: RestDay, days: number) =>
+          days === 0
+            ? `לא סומנו ${day(restDay).plural} חופשיים בלוח`
+            : `סומנו ${formatDays(days)} בלוח`,
+        mismatch: "יום מנוחה חופשי מסומן בלוח של החודש.",
+      },
+      holidaysWorked: {
+        ask: "אילו חגים נעבדו?",
+        from: (falling: number, worked: number) =>
+          falling === 0
+            ? "לא נופלים חגים בחודש הזה"
+            : `בחודש הזה נופלים ${formatDays(falling)} חגים · סומנו ${formatDays(worked)} כנעבדו`,
+        mismatch: "מה שנעבד בחג מסומן על החג עצמו בלוח של החודש.",
+      },
+      sickDays: {
+        ask: "היו ימי מחלה?",
+        from: (days: number) =>
+          days === 0
+            ? "לא סומנו ימי מחלה בחודש הזה"
+            : `סומנו ${formatDays(days)} ימים`,
+        mismatch: "ימי מחלה מסומנים בלוח של החודש.",
+      },
+      thirdParty: {
+        ask: "שולם משהו לגורם אחר?",
+        from: (count: number) =>
+          count === 0
+            ? "לא נרשמו תשלומים לגורם אחר בחודש הזה"
+            : `נרשמו ${formatDays(count)} תשלומים`,
+        mismatch: "תשלום לגורם אחר נרשם במסך התשלומים.",
+      },
+    },
+
+    /** What a contradicting answer produces — a warning and never a refusal,
+     * settled with the user on 2026-09-09. She is the one who knows what
+     * happened, and what item 18 buys is that she was asked. */
+    mismatch: {
+      title: "שווה לבדוק לפני הייצוא",
+    },
+
+    /**
+     * The month is confirmed here (specs.md Part 5, the four states): the
+     * moment the minimum wage is confirmed against it is the moment the base
+     * monthly salary is copied off the profile onto the month, and the moment
+     * its figures stop moving with the profile.
+     */
+    finish: {
+      /** The artboard's own words. The file itself is stage 2's, and this
+       * button is where it will be produced from. */
+      action: "לייצא לאקסל",
+      back: "לחזור לחודש",
+      /** Why the button is not pressable, in the order the screen resolves
+       * them: the blocks first, because no answer makes them go away. */
+      blocked: "כדי לייצא צריך קודם לטפל במה שמסומן למעלה.",
+      unanswered: "אפשר לייצא אחרי שכל השאלות נענו.",
+      /** The export itself is stage 2's, so the screen says what it actually
+       * did rather than pretending a file appeared. */
+      done: "החודש אושר ונשמר עם שכר המינימום שאישרת.",
+    },
   },
 
   /**

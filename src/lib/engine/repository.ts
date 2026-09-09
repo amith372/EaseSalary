@@ -1,4 +1,6 @@
 import { compareMonth } from "@/lib/dates";
+import { SEEDED_RATES, withFetchedRate } from "@/lib/datedRates";
+import type { DatedRate } from "@/lib/datedRates";
 import { snapshotTerms } from "@/lib/engine/types";
 import type {
   ConfirmedWage,
@@ -142,6 +144,25 @@ export interface SalaryRepository {
   /** Records the list, replacing any held for the same source and year rather
    * than being appended beside it (`withFetchedList`). */
   saveHolidayList(list: HolidayList): Promise<void>;
+
+  /**
+   * The dated-rates table — every rate the application does not derive, with
+   * the date it took effect (specs.md item 4).
+   *
+   * **Seeded and never empty.** `SEEDED_RATES` is what the application ships
+   * knowing, so a household that has never fetched anything still values a
+   * month; a fetch updates the table rather than introducing one, which is why
+   * this returns rows rather than `null`.
+   *
+   * **They belong to the household and not to a worker**, for the reason the
+   * holiday lists do: the minimum wage is the state's figure and not one
+   * worker's. What a *month* was valued at is on the month (`ConfirmedWage`)
+   * and is never read back from here.
+   */
+  listRates(): Promise<DatedRate[]>;
+  /** Records the row, replacing any held for the same key and effective date
+   * rather than being appended beside it (`withFetchedRate`). */
+  saveRate(rate: DatedRate): Promise<void>;
 }
 
 /**
@@ -261,12 +282,15 @@ export function createInMemoryRepository(
     /** Defaults to what the application ships knowing, which is what a
      * household starts from before any fetch has run (item 12). */
     holidayLists?: HolidayList[];
+    /** Defaults to `SEEDED_RATES`, for the same reason (item 4). */
+    rates?: DatedRate[];
   } = {},
 ): SalaryRepository {
   const workers = new Map<string, WorkerRow>();
   let holidayLists = structuredClone(
     seed.holidayLists ?? SEEDED_HOLIDAY_LISTS,
   );
+  let rates = structuredClone(seed.rates ?? SEEDED_RATES);
 
   function rowOf(workerId: string): WorkerRow {
     const row = workers.get(workerId);
@@ -345,6 +369,14 @@ export function createInMemoryRepository(
 
     async saveHolidayList(list) {
       holidayLists = withFetchedList(holidayLists, structuredClone(list));
+    },
+
+    async listRates() {
+      return structuredClone(rates);
+    },
+
+    async saveRate(rate) {
+      rates = withFetchedRate(rates, structuredClone(rate));
     },
   };
 

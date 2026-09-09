@@ -38,6 +38,17 @@ interface CardProps {
   className?: string;
 }
 
+/**
+ * A card may carry `data-*` attributes and nothing else.
+ *
+ * The browser suite addresses a panel by a data attribute rather than by the
+ * Hebrew inside it (`CLAUDE.md` rule 9), and a card is often the panel being
+ * addressed. Widening this to every DOM prop would let a call site set a class,
+ * a role or an `onClick` past the three the design system offers, which is how
+ * a shared component stops being one.
+ */
+type CardDataAttributes = Record<`data-${string}`, string | undefined>;
+
 export function Card({
   children,
   tone = "surface",
@@ -45,13 +56,15 @@ export function Card({
   as: Tag = "div",
   id,
   className,
-}: CardProps) {
+  ...data
+}: CardProps & CardDataAttributes) {
   return (
     <Tag
       id={id}
       className={[radiusClass[radius], toneClass[tone], className ?? ""]
         .filter(Boolean)
         .join(" ")}
+      {...data}
     >
       {children}
     </Tag>
