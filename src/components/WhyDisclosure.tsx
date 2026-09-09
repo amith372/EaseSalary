@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Card } from "@/components/Card";
 import { he } from "@/lib/i18n/he";
 import { legalLink } from "@/lib/links";
@@ -48,13 +49,28 @@ interface WhyPanelProps {
   id: string;
   open: boolean;
   explanation: Explanation;
+  /**
+   * Anything the sentence cannot carry, drawn between the text and the link.
+   *
+   * The holiday quota is the case it exists for: its reasoning is the family's
+   * own workbook note, and the arithmetic in it — `(9×9)÷12 = 6.75` — is not
+   * Hebrew and must be isolated left-to-right and left untranslated. A second
+   * panel component would have been a second place the legal link is written.
+   */
+  children?: ReactNode;
   /** Which panel it sits inside, which decides whether it takes the page's
    * ground or goes white — inside the tinted total block, ground on tint would
    * disappear. */
   within?: "surface" | "tint";
 }
 
-export function WhyPanel({ id, open, explanation, within = "surface" }: WhyPanelProps) {
+export function WhyPanel({
+  id,
+  open,
+  explanation,
+  within = "surface",
+  children,
+}: WhyPanelProps) {
   if (!open) return null;
 
   const link = explanation.link ? legalLink(explanation.link) : undefined;
@@ -72,6 +88,7 @@ export function WhyPanel({ id, open, explanation, within = "surface" }: WhyPanel
       >
         {explanation.text}
       </span>
+      {children}
       {link ? (
         <a
           href={link.url}

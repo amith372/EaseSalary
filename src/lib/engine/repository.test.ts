@@ -11,6 +11,7 @@ import {
 } from "@/lib/engine/repository";
 import { snapshotTerms } from "@/lib/engine/types";
 import type { MonthSpan } from "@/lib/engine/types";
+import { SEEDED_HOLIDAY_LISTS } from "@/lib/holidayLists";
 import type { YearMonth } from "@/lib/types";
 
 /**
@@ -471,5 +472,64 @@ describe("opening a month the store has no record of (specs.md item 21)", () => 
     const april = await repository.getMonth("hanna", APRIL);
     expect(april?.spans.map((span) => span.id)).toEqual(["april-vacation"]);
     expect(calculateMonth(april!, HANNA).gross).toBeGreaterThan(0);
+  });
+});
+
+describe("the household's holiday lists", () => {
+  /** A household starts from what the application ships knowing, so the picker
+   * has something to show before any fetch has run (specs.md item 12). */
+  it("open seeded with the shipped lists", async () => {
+    const lists = await store().listHolidayLists();
+    expect(lists).toEqual(SEEDED_HOLIDAY_LISTS);
+  });
+
+  /** Replaced and not appended, for the reason `withFetchedList` gives: two
+   * lists under one source and one year make every lookup answer with whichever
+   * the array order left first. */
+  it("replace the list held for the same source and year", async () => {
+    const repository = store();
+    const fetched = {
+      source: { kind: "country", code: "PH" } as const,
+      year: 2026,
+      sourceUrl: "https://www.isavta.co.il/he/holidays/PH/2026",
+      nameHe: "הפיליפינים",
+      holidays: [{ date: "2026-01-01", name: "New Year's Day" }],
+    };
+    await repository.saveHolidayList(fetched);
+
+    const lists = await repository.listHolidayLists();
+    expect(
+      lists.filter(
+        (list) => list.source.kind === "country" && list.source.code === "PH",
+      ),
+    ).toEqual([fetched]);
+    expect(lists).toHaveLength(SEEDED_HOLIDAY_LISTS.length);
+  });
+
+  /** A faith's list has no shipped file, so the first one stored is an
+   * addition rather than a replacement (`build_plan.md` stage 5, step 3). */
+  it("take a faith's list beside the countries", async () => {
+    const repository = store();
+    await repository.saveHolidayList({
+      source: { kind: "religion", religion: "druze" },
+      year: 2026,
+      sourceUrl: "https://www.kolzchut.org.il/he/חגים_דרוזיים",
+      nameHe: "חגים דרוזיים",
+      holidays: [{ date: "2026-04-30", name: "זיארת אל-נבי שועייב" }],
+    });
+
+    expect(await repository.listHolidayLists()).toHaveLength(
+      SEEDED_HOLIDAY_LISTS.length + 1,
+    );
+  });
+
+  /** It copies on the way out, as every other read does: a caller that pushed
+   * onto what it read would be writing into the store. */
+  it("hand back a copy", async () => {
+    const repository = store();
+    (await repository.listHolidayLists()).pop();
+    expect(await repository.listHolidayLists()).toHaveLength(
+      SEEDED_HOLIDAY_LISTS.length,
+    );
   });
 });

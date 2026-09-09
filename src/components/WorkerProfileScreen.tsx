@@ -78,6 +78,14 @@ export interface ProfileMonth {
 interface WorkerProfileScreenProps {
   profile: WorkerProfile;
   months: ProfileMonth[];
+  /** The calendar year the holiday row reports on, passed in because nothing
+   * reads a clock during a render (`CLAUDE.md`). */
+  year: number;
+  /** Her holiday days chosen for that year and the entitlement they are drawn
+   * against — the picker's own two figures (item 10), worked out on the server
+   * so the row and the picker cannot disagree. */
+  holidayDaysChosen: number;
+  holidayAllowance: number;
   /** Her closing balances after the last month the store holds — the replay's
    * own figures and not a second count (items 7, 13). */
   vacationDays: number;
@@ -92,6 +100,9 @@ const TERMS_ID = "terms";
 export function WorkerProfileScreen({
   profile,
   months,
+  year,
+  holidayDaysChosen,
+  holidayAllowance,
   vacationDays,
   sickDays,
   ledger,
@@ -267,6 +278,8 @@ export function WorkerProfileScreen({
             onSubmit={handleAction}
           />
 
+          <HolidaysRow year={year} chosen={holidayDaysChosen} allowance={holidayAllowance} />
+
           <StandingLinesControl
             workerId={profile.id}
             standingLines={profile.standingLines}
@@ -287,6 +300,57 @@ export function WorkerProfileScreen({
         </Card>
       </div>
     </div>
+  );
+}
+
+/**
+ * The way in to `בחירת חגים` (`build_plan.md` stage 5).
+ *
+ * **The artboard's own two ways in do not exist yet**: it is reached from
+ * `הגדרות`, whose route is split between stages 3 and 5, and from the home
+ * screen's alert, which is stage 6's. Settled with the user on 2026-09-09 that
+ * the profile carries the link in the meantime — the picker keeps the
+ * artboard's address, so `הגדרות` is still the tab that lights.
+ *
+ * It shows what is chosen against what she has, because "an incomplete
+ * selection is visible at a glance" is item 10's, and a row that only said
+ * "choose holidays" would hide exactly the thing worth glancing at.
+ */
+function HolidaysRow({
+  year,
+  chosen,
+  allowance,
+}: {
+  year: number;
+  chosen: number;
+  allowance: number;
+}) {
+  const words = he.workers.profile.terms.holidays;
+  return (
+    <TermRow label={words.label} hint={words.hint}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span data-holidays className="flex items-baseline gap-1.5 text-[15px]">
+          <span dir="auto" className="font-light text-ink-mute">
+            {words.chosen}
+          </span>
+          <Bidi noTranslate className="font-semibold">
+            {formatDays(chosen)}
+          </Bidi>
+          <span dir="auto" className="font-light text-ink-mute">
+            {words.of}
+          </span>
+          <Bidi noTranslate className="font-semibold">
+            {formatDays(allowance)}
+          </Bidi>
+        </span>
+        <Link
+          href={`/settings/holidays?year=${year}`}
+          className="rounded-full border border-line bg-surface px-3.25 py-1.75 text-[14px] font-medium text-forest transition-colors hover:border-line-hover"
+        >
+          <span dir="auto">{words.open}</span>
+        </Link>
+      </div>
+    </TermRow>
   );
 }
 

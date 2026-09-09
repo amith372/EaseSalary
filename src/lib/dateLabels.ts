@@ -1,4 +1,4 @@
-import { fromIsoDate } from "@/lib/dates";
+import { fromIsoDate, SATURDAY } from "@/lib/dates";
 import { he } from "@/lib/i18n/he";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
@@ -34,6 +34,21 @@ export function dayLabel(iso: IsoDate): string {
   return `${date.getUTCDate()} ${he.calendar.selection.inMonth}${
     he.calendar.monthNames[date.getUTCMonth()]
   }`;
+}
+
+/**
+ * "יום שני, 26 בינואר" — the weekday before the date.
+ *
+ * The holiday picker is the one screen that needs it: a year's candidate dates
+ * are read as a list rather than on a calendar, and which day of the week a
+ * holiday falls on is what decides whether the family needs her that day at
+ * all. The weekday is the calendar's own name for it, so the picker and the
+ * calendar cannot come to call the same day two different things.
+ */
+export function weekdayDayLabel(iso: IsoDate): string {
+  const weekday = fromIsoDate(iso).getUTCDay();
+  const named = weekday === SATURDAY ? "" : he.calendar.selection.weekdayPrefix;
+  return `${named}${he.calendar.dayNames[weekday]}, ${dayLabel(iso)}`;
 }
 
 /**

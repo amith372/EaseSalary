@@ -4,7 +4,10 @@ import { WorkerProfileScreen } from "@/components/WorkerProfileScreen";
 import type { ProfileMonth } from "@/components/WorkerProfileScreen";
 import { getRepository } from "@/lib/dev/store";
 import { advanceLedger } from "@/lib/engine/advances";
+import { holidayYear } from "@/lib/engine/holidayYear";
+import { holidayAllowanceFor } from "@/lib/engine/leave";
 import { calculateSeries } from "@/lib/engine/series";
+import { fromIsoDate } from "@/lib/dates";
 import { todayInIsrael } from "@/lib/today";
 
 /**
@@ -36,9 +39,25 @@ export default async function WorkerPage({
   if (profile === null) notFound();
 
   const today = todayInIsrael();
+  const year = fromIsoDate(today).getUTCFullYear();
   const months = await repository.listMonths(id);
   const series = calculateSeries(months, profile, today);
   const closing = series[series.length - 1]?.result.balances;
+
+  // The picker's own two figures, worked out here rather than in the row that
+  // shows them: the entitlement and what is drawn against it are one
+  // calculation, and the profile row and `/settings/holidays` must not be able
+  // to disagree about how much of her year is chosen (specs.md item 10). The
+  // candidate list is left empty because this row reports only what is chosen:
+  // the candidates are what the picker offers, and fetching a year's list to
+  // draw one line of a profile would put a live scrape behind a page that does
+  // not show it.
+  const holidays = holidayYear(
+    [],
+    await repository.listSpans(id),
+    holidayAllowanceFor(profile.employedSince, year),
+    year,
+  );
 
   const listed: ProfileMonth[] = series.map(({ result }) => ({
     month: result.month,
@@ -61,6 +80,9 @@ export default async function WorkerPage({
         profile.openingPosition.sickDays
       }
       ledger={advanceLedger(profile.openingPosition, months)}
+      year={year}
+      holidayDaysChosen={holidays.chosenDays}
+      holidayAllowance={holidays.allowance}
     />
   );
 }

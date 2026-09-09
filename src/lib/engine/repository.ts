@@ -6,6 +6,12 @@ import type {
   MonthSpan,
   WorkerTerms,
 } from "@/lib/engine/types";
+import {
+  SEEDED_HOLIDAY_LISTS,
+  withFetchedList,
+  type HolidayList,
+  type HolidaySource,
+} from "@/lib/holidayLists";
 import { overlapsMonth } from "@/lib/spans";
 import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
 
@@ -47,6 +53,22 @@ import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
  * with still comes off the month and never off this (Part 3).
  */
 export interface WorkerProfile extends Worker, WorkerTerms {
+  /**
+   * The list her year's holidays are chosen from, where it is not her own
+   * country's (specs.md item 10, decided with the user on 2026-09-09).
+   *
+   * **Absent is her country's list**, which is what item 10 makes the default:
+   * the candidate list is "her country of origin's, with another country's
+   * selectable instead" — and a religion's beside it. Storing the exception
+   * rather than restating `country` is what keeps one worker from having two
+   * fields that can disagree about where her holidays come from.
+   *
+   * **It is on the profile and not in `WorkerTerms`**, for the reason the
+   * documents are: it is not a term of a month. A family that switches her from
+   * her country's list to a faith's in June does not restate May — the dates
+   * already chosen are spans, and they stay exactly where they are.
+   */
+  holidaySource?: HolidaySource;
   /**
    * The three documents the employment rests on, as dates (specs.md item 28).
    *
@@ -105,6 +127,21 @@ export interface SalaryRepository {
    * replays them in. */
   listMonths(workerId: string): Promise<MonthFacts[]>;
   saveMonth(workerId: string, record: MonthRecord): Promise<void>;
+
+  /**
+   * The holiday lists the household holds, seeded with what ships and added to
+   * by a fetch (specs.md item 12).
+   *
+   * **They belong to the household and not to a worker**, because a list is a
+   * source and a year and nothing about one worker: two workers from the same
+   * country share one list, and a list fetched for the first is the list the
+   * second reads. Which list a worker's year is drawn from is her own, and that
+   * is `holidaySource` above.
+   */
+  listHolidayLists(): Promise<HolidayList[]>;
+  /** Records the list, replacing any held for the same source and year rather
+   * than being appended beside it (`withFetchedList`). */
+  saveHolidayList(list: HolidayList): Promise<void>;
 }
 
 /**
@@ -221,9 +258,15 @@ export function createInMemoryRepository(
     workers?: WorkerProfile[];
     spans?: Record<string, MonthSpan[]>;
     months?: Record<string, MonthRecord[]>;
+    /** Defaults to what the application ships knowing, which is what a
+     * household starts from before any fetch has run (item 12). */
+    holidayLists?: HolidayList[];
   } = {},
 ): SalaryRepository {
   const workers = new Map<string, WorkerRow>();
+  let holidayLists = structuredClone(
+    seed.holidayLists ?? SEEDED_HOLIDAY_LISTS,
+  );
 
   function rowOf(workerId: string): WorkerRow {
     const row = workers.get(workerId);
@@ -294,6 +337,14 @@ export function createInMemoryRepository(
     async saveMonth(workerId, record) {
       const row = rowOf(workerId);
       row.months.set(monthKey(record.month), structuredClone(record));
+    },
+
+    async listHolidayLists() {
+      return structuredClone(holidayLists);
+    },
+
+    async saveHolidayList(list) {
+      holidayLists = withFetchedList(holidayLists, structuredClone(list));
     },
   };
 

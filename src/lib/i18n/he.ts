@@ -254,6 +254,10 @@ export const he = {
       /** "‎16–20 באוגוסט": the day numbers, then the month with its prefix. */
       separator: "–",
       inMonth: "ב",
+      /** "יום" before the weekday name, which `dayNames` holds bare because the
+       * calendar's column headings show it bare. שבת takes no prefix: it is a
+       * name and not a numbered day. */
+      weekdayPrefix: "יום ",
       dayCount: "ימים",
       oneDay: "יום אחד",
       /** A span running past the month's end is stored whole and shown clipped;
@@ -810,6 +814,17 @@ export const he = {
           eveNote: (restDay: RestDay) =>
             `ערב המנוחה הוא ${eve(restDay).bare}, והתוספת השבועית משולמת עליו.`,
         },
+        /** The way in to `בחירת חגים` (`build_plan.md` stage 5). The artboard
+         * is reached from `הגדרות` and from the home screen's own alert, and
+         * neither is built — so the profile carries the link, settled with the
+         * user on 2026-09-09. */
+        holidays: {
+          label: "חגי השנה",
+          hint: "התאריכים נבחרים מראש לשנה שלמה, ומגיעים ללוח החודשי מצוירים. מכאן גם בוחרים מאיזו רשימה — ארץ המוצא, מדינה אחרת או דת.",
+          chosen: "נבחרו",
+          of: "מתוך",
+          open: "לבחור חגים",
+        },
         standing: {
           title: "שורות קבועות",
           hint: "שורה שנקבעת פעם אחת ומופיעה בכל חודש מאז, באותו סכום, עד שמשנים אותה או מפסיקים אותה. סכום שונה בחודש מסוים מחליפים במסך התשלומים.",
@@ -883,6 +898,112 @@ export const he = {
         },
       },
     },
+  },
+
+  /**
+   * The year's holidays, chosen in advance — `EaseSalary - בחירת חגים`
+   * (specs.md item 10).
+   *
+   * The screen is the only place a holiday's **date** is decided: on the month's
+   * calendar the user never marks a day as a holiday (item 9), so the dates
+   * arrive from here already drawn and the month records only whether she
+   * worked one.
+   */
+  holidays: {
+    title: "חגים לשנת",
+    forWorker: "עבור",
+    lead: "בוחרים מראש אילו ימים יהיו חגים בתשלום, והלוח החודשי מצייר אותם מוכנים.",
+    previousYear: "לשנה הקודמת",
+    nextYear: "לשנה הבאה",
+    /** How many days are chosen against how many she has, and where the quota
+     * comes from — the reasoning behind the figure and not only the figure
+     * (item 10). */
+    quota: {
+      chosen: "נבחרו",
+      of: "מתוך",
+      days: "ימי חג",
+      why: "מאין המכסה?",
+      whyLabel: "מאין המכסה",
+      rule: "תשעה ימי חג לשנה מלאה. לשנה שנעבדה בחלקה המכסה קטנה באותו יחס — תשעה כפול מספר חודשי ההעסקה בשנה הזו, לחלק לשנים עשר, כאשר החודש שבו ההעסקה התחילה נספר כחודש מלא.",
+      /** The example is the workbook's own — `שכר_חודשי_להאנה2024.xlsx` →
+       * `חודש  12.24` → C9 and the note in I9. The arithmetic is a separate
+       * string because it is not Hebrew and must not be translated or
+       * reordered. */
+      exampleBefore: "למשל: העסקה שהתחילה באפריל נותנת תשעה חודשים, ולכן",
+      exampleFigure: "(9×9)÷12 = 6.75",
+      exampleAfter:
+        "ימי חג לאותה שנה, ותשעה מלאים מהשנה שאחריה. היתרה מוצגת גם כשהיא אינה מספר שלם.",
+      /** Item 10's "an incomplete selection is visible at a glance", said as
+       * what it costs rather than as a scolding. */
+      incomplete: "עדיין לא נבחרו כל הימים. חודש שבו נופל חג שלא נבחר יחושב בלעדיו.",
+      complete: "כל ימי החג של השנה הזו נבחרו.",
+    },
+    /** The candidate list is a country's **or** a faith's, and the two are one
+     * choice with two kinds of answer (item 10). */
+    sources: {
+      label: "רשימת החגים של",
+      religions: "או של דת",
+      manual: "להוסיף תאריך בעצמי",
+    },
+    /** A fetch that came back with nothing, in the three kinds a scrape can
+     * fail in — the user is told which happened, because only one of the three
+     * is worth retrying (`src/lib/scrape/failure.ts`). Each ends the same way:
+     * item 12 requires that she can type the dates herself and carry on. */
+    failure: {
+      title: "לא הצלחנו להביא את רשימת החגים לשנה הזו",
+      unreachable:
+        "לא הצלחנו להגיע לאתר שממנו הרשימה נקראת. אפשר להקליד את התאריכים כאן, וכל השאר עובד אותו דבר. ננסה שוב בפעם הבאה שהמסך ייפתח.",
+      notFound:
+        "האתר נפתח, אבל רשימת החגים לא נמצאה בו — כנראה מבנה העמוד השתנה. אפשר להקליד את התאריכים כאן, וכל השאר עובד אותו דבר.",
+      implausible:
+        "הרשימה שחזרה נראית שונה מדי מהשנים האחרות של אותו מקור, ולכן לא נשמרה. אפשר להקליד את התאריכים כאן, וכל השאר עובד אותו דבר.",
+    },
+    row: {
+      /** The tick shows no text, so this is its whole meaning to a screen
+       * reader. It names the date, because a screen of ticks is otherwise a
+       * screen of identical controls. */
+      choose: (date: string) => `לסמן את ${date} כחג בתשלום`,
+      unchoose: (date: string) => `לבטל את ${date} כחג בתשלום`,
+      /** The refusal said where it happened, rather than in a message
+       * elsewhere (item 25). */
+      blocked: "המכסה נוצלה במלואה",
+      move: "להעביר תאריך",
+      moveLabel: (date: string) => `להעביר את החג מ-${date} לתאריך אחר`,
+      /** A date nobody published: she typed it herself, or moved a holiday onto
+       * it. There is no name to show, so the row says what it is. */
+      own: "תאריך שהוספת",
+      empty: "אין רשימת חגים לשנה הזו.",
+      part: {
+        label: "כמה מהיום נלקח",
+        whole: "יום מלא",
+        half: "חצי יום",
+        rule: "חג אפשר לקחת גם כחצי יום. הוא משולם באותו יחס ונגרע מהמכסה באותו יחס.",
+      },
+    },
+    add: {
+      title: "להוסיף תאריך בעצמי",
+      hint: "תאריך שאינו ברשימה — חג שסוכם עם העובד/ת, או שנה שלא הצלחנו להביא.",
+      date: "תאריך",
+      submit: "להוסיף",
+      cancel: "ביטול",
+      move: "לאיזה תאריך להעביר",
+      /** The button that commits a move. It is not "להעביר תאריך" a second
+       * time: the link that opened the form already says that, and two controls
+       * reading the same on one row is a row nobody can act on with confidence. */
+      moveSubmit: "להעביר",
+    },
+    /** Why a choice was refused, in words (item 25). */
+    refused: {
+      holidayLimit:
+        "המכסה השנתית נוצלה במלואה. אפשר לבטל יום אחר, או לקחת יום קיים כחצי יום.",
+      alreadyMarked: "התאריך הזה כבר מסומן בלוח החודשי. אפשר לבחור תאריך אחר.",
+      date: "התאריך אינו תאריך של השנה שמוצגת. הצורה היא שנה-חודש-יום, למשל 2026-05-01.",
+      part: "החלק שנבחר אינו מוכר. כדאי לרענן את הדף ולנסות שוב.",
+      entryUnknown: "החג הזה כבר לא קיים. כדאי לרענן את הדף ולראות מה נשמר.",
+    },
+    /** The artboard's own closing sentence, which is also what saving on each
+     * gesture means: nothing here is held as a draft. */
+    note: "אפשר לחזור ולשנות כל עוד החודש לא יוצא.",
   },
 
   /**

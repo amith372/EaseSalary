@@ -168,6 +168,12 @@ a bullet of **stage 6**, both written into those stages rather than inferred fro
 stage 3's yearly settings and stage 5's holiday picker, and is the one address still held by
 two stages at once.
 
+**Three of the five 404s remain after stage 5's holiday picker.** It answers at
+`/settings/holidays`, which is the address the `בחירת חגים` artboard names, so `הגדרות`
+lights in the nav — but `/settings` itself still 404s and is stage 3's to answer. Until it
+does, the way into the picker is a row on the worker's profile, settled with the user on
+2026-09-09 and recorded in stage 5's step 5.
+
 **Four of the five 404s remain, and `/workers` is not one of them.** Step 9 built it and
 `/workers/[id]` on 2026-09-09, which is the first of the five the nav promised to be
 answered; the dated table above is left as it was read, and this line is what says it has
@@ -2382,8 +2388,8 @@ against a third mutation, the half dropped from the cell's label.
   site being up nor waits for one.
 
 Roughly five tickets' worth: the dated-rates table, the wage scrape, the holiday scrape, the
-heading-segmented cache, the holiday picker — which has no artboard at all — recuperation,
-and the pre-export questions.
+heading-segmented cache, the holiday picker — `בחירת חגים`, drawn by the design pass's job 3
+on 2026-09-05, after this line was written — recuperation, and the pre-export questions.
 
 **Done when** a year with no stored holiday list fills itself, each of the three spoiled
 pages produces a stated failure rather than a number, a failed fetch leaves the user able to
@@ -2738,6 +2744,134 @@ the number of headings on the live page and one line per linked section — on 2
 printed thirty-five headings and `ok` for all six. `NOT FOUND` against a line means that
 heading was renamed and the link would open the top of the page; `UNREACHABLE` means the
 network or the address, not the segmenter. It exits non-zero if any line failed.
+
+### Step 5 — the holiday picker · **done**
+
+`/settings/holidays`, `src/lib/engine/holidayYear.ts` and
+`src/components/HolidayPickerScreen.tsx`, and it is the stage's fifth bullet: the
+candidate list, the entitlement, part days and the remainder. It is the artboard
+`בחירת חגים`, which job 3 drew on 2026-09-05 for exactly this step — so the line
+in this stage's summary calling the picker "the one with no artboard at all" is
+older than the canvas and is superseded here.
+
+**It is the only place a holiday's date is decided.** On the month's calendar the
+user never marks a day as a holiday (item 9), so until now the dates arrived from
+the dev seed, and item 10's picker was the one thing the whole holiday half of the
+application rested on and did not have. What a month records about a holiday is
+still one fact and only one — whether she worked it — and a date chosen here is a
+span on the worker, so it is drawn on the calendar and counted in the month's
+figures the moment it is written.
+
+**Two decisions the artboard could not settle, asked and answered on 2026-09-09.**
+The screen keeps the artboard's address so `הגדרות` is the tab that lights, and
+**the way in is a row on the worker's profile**: `/settings` is split between
+stages 3 and 5 and the home screen's alert is stage 6's, so neither of the
+artboard's own two ways in exists, and building a settings screen to hold one row
+would be building two other stages' work in order to reach this one. And **nothing
+is held as a draft** — each tick, each part and each move writes on its own, as the
+calendar and the profile already do, so `לשמור את הבחירה` is a way back rather than
+a save. The artboard's own closing sentence, `אפשר לחזור ולשנות כל עוד החודש לא יוצא`,
+is what the screen now means literally.
+
+**The chips offer the four faiths beside the countries**, which the artboard does
+not draw. It was drawn on 2026-09-05 and item 10 gained the religions on
+2026-09-09: the candidate list is a country's *or* a faith's, one choice with two
+kinds of answer. A country is offered only where a list of some year is stored for
+it — the address a year is fetched at comes from that stored list and is never
+rebuilt from the code (Part 5) — while all four faiths are always offered, each
+being one page the application holds. Her own country stands whether or not
+anything is stored for it, or the screen would show a chosen source with no chip
+selected.
+
+**The quota bar has as many slots as the entitlement has days, not nine.** Nine is
+a full year's; a worker employed from April has 6.75, and nine slots would draw her
+a quota she does not have.
+
+**One rule the spec leaves open, decided here and worth revisiting.** Item 10 says
+a holiday may be taken as part of a day, and that a day beyond the entitlement is
+refused, but not what the *tick* takes when less than a whole day is left. It takes
+**the largest part that fits** — a whole day, or a half where only a half or three
+quarters remains — because the alternative is a remainder the user can see and
+cannot spend, and working out that she must first halve some other day to reach it
+is the kind of knowledge this application exists to hold for her. It is one
+function, `partThatFits`, if it should be the other way.
+
+**What the picker refuses, and where each rule already lived.** A tenth day against
+a nine-day entitlement is `validateMonth`'s `holidayLimit` asked at the gesture; a
+date another span already covers is its `dayRecordedTwice` asked at the gesture.
+Neither is a new rule and neither is a second arithmetic: the entitlement is
+`holidayAllowanceFor`'s and the count is `holidayYear`'s, and the profile row that
+reports "chosen, of the entitlement" reads the same function rather than counting
+for itself.
+
+**`SalaryRepository` gained the methods steps 2, 3 and 4 deferred**, because this is
+the screen that reads a stored list: `listHolidayLists` and `saveHolidayList`,
+household-wide and not per worker — a list is a source and a year and nothing about
+one worker, while *which* list her year is drawn from is hers and sits on the
+profile as `holidaySource`. That field is on the profile and not in `WorkerTerms`
+for the reason the documents are: it is not a term of a month, and moving her to
+another list in June does not restate May. A year the household holds no list for is
+fetched when the screen is opened (item 12) and written into the store on success; a
+failure is not written, so the next opening tries again, which is what the panel
+promises.
+
+**What the tests would catch** (27 cases in `holidayYear.test.ts`, six in
+`holidaySources.test.ts`, four in `holidayList.test.ts`, four added to
+`repository.test.ts`, and seven browser flows in `e2e/holiday-picker.spec.ts`).
+Every expected figure is item 10's, the workbook's C9 of `חודש  12.24`, Part 5's own
+rate formula, or a date read off the shipped `PH-2026.json` — none off the picker.
+Caught: a count of spans rather than of days, which lets a five-day holiday draw one
+day of the quota; a chosen date the source never published dropped from the screen
+while still drawing on the quota; a choice from another calendar year counted
+against this one; a row blocked while half a day is left, which leaves the last half
+of an entitlement unspendable; a chosen row blocked, which makes a full year
+impossible to undo; a part change judged against the whole fraction rather than
+against the increase, which refuses the very gesture that makes room; a collision
+check that does not exclude the span being moved, so a holiday can never be moved
+onto its own date; a faith sent through the country fetch, which answers `notFound`
+and sends someone looking at the parser; and — the two only a browser can see — a
+date chosen here that never reaches the month's calendar, and a part day the picker
+records that the sheet still pays whole.
+
+**The half-day figure is the one to read twice.** April 2026's worked holiday is
+₪426.35, which is Part 4's own figure and also what Part 5's formula gives for the
+seeded wage. Taken as half a day it is ₪213.18 — that rate halved and rounded at the
+end. The browser spec asserts both on the month screen, after the gesture was made
+on the picker, which is rule 11's "preview and export agree" applied to the two
+screens that exist.
+
+**Five things left out on purpose, and none is a bug.** `/settings` itself still
+404s. The candidate list is not fetched for the profile's own row, which reports
+only what is chosen — a live scrape behind a page that shows no candidates would be
+a scrape nobody asked for. The fetch on opening a year with no list is live, so the
+browser suite stays on 2026 where both workers' lists ship, and the three failure
+kinds are covered by unit tests over the pure functions with the request injected.
+A holiday span covering several days is listed a day at a time and unchoosing any
+of its days removes the whole span; the picker cannot create one, and only seed data
+can. And the pre-export question about a holiday nobody has answered for (item 18)
+belongs to the pre-export ticket and not to this one.
+
+**The check the user runs.** Four parts.
+
+First, open a worker — `/workers/worker-1` on the demo household. Under
+תנאי ההעסקה there is now a חגי השנה row reading "נבחרו 3 מתוך 9" with
+לבחור חגים beside it. Press it.
+
+Second, the picker itself. The heading reads חגים לשנת 2026, the count reads 3 of 9,
+the sentence beneath says not all the days are chosen, and הגדרות is the tab lit in
+the bar. Tick a date — 12 ביוני is a good one — and the count moves to 4. Then open
+`/month`, step back to June, and the 12th is drawn as a חג. A failure looks like a
+date that ticks on the picker and never appears on the calendar.
+
+Third, the part day. Back on the picker, press חצי יום on 3 באפריל; the count falls
+to 3.50. Open `/month`, step back to April, and the עבודה בחג line reads ₪213.18
+where it read ₪426.35. A failure is the line still reading ₪426.35 — a part day
+recorded and paid whole.
+
+Fourth, the refusals. Tick 2 באפריל, which the seeded spell of sickness covers: the
+row must say the date is already marked rather than take it. Then tick on until nine
+days are chosen — every remaining row greys, says המכסה נוצלה במלואה, and cannot be
+pressed.
 
 ## Stage 6 — The opening screen
 
