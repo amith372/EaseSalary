@@ -3067,6 +3067,19 @@ month or missing from the one that owes it; and — the two only a browser can s
 — a button that enables before every question is answered, and a confirmation
 that writes nothing and leaves every screen looking exactly as it did.
 
+**Two wording defects were found by the user reading the built screen on
+2026-09-09, and both are corrected.** The holidays row asked `אילו חגים נעבדו?`
+— the artboard's own wording — under כן/לא chips, which is a question its own
+control cannot answer; it now asks whether there were any, and *which* one she
+worked stays marked on the holiday itself in the month's calendar, which is
+where the row's warning sends her. And every count that named its noun read
+`1 חגים`: Hebrew writes one as a word after the noun and every other number as
+a numeral before a plural, so four of the six sentences were wrong for a month
+that recorded exactly one of something — the commonest month there is. The
+agreement table that already inflects her rest day gained the three words this
+needed. Both are worth recording because neither is caught by a type, a lint or
+a figure: the screen was right and read wrong.
+
 **One thing is verified by hand and not by the suite, and it is written down
 rather than left to be discovered.** Nothing in the application can *open* a
 sick spell yet: `markRange` always writes an end, and the seed deliberately

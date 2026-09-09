@@ -68,6 +68,13 @@ const DAY_WORDS: Record<number, DayWords> = {
 const AGREEMENT = {
   feminine: {
     free: "חופשית",
+    freePlural: "חופשיות",
+    /** "שבת אחת", "יום שישי אחד" — Hebrew writes one as a word and puts it
+     * after the noun, where every other count is a numeral before a plural. */
+    one: "אחת",
+    /** "סומנה" against the plural "סומנו", which is the same for both
+     * genders and therefore is not in this table. */
+    wasMarkedOne: "סומנה",
     pronoun: "היא",
     can: "יכולה",
     marked: "מסומנת",
@@ -84,6 +91,9 @@ const AGREEMENT = {
   },
   masculine: {
     free: "חופשי",
+    freePlural: "חופשיים",
+    one: "אחד",
+    wasMarkedOne: "סומן",
     pronoun: "הוא",
     can: "יכול",
     marked: "מסומן",
@@ -1157,6 +1167,21 @@ export const he = {
      * The six questions. Each `ask` is what the user answers and each `from` is
      * what the month already holds — never a sentence about what she should
      * have done.
+     *
+     * **Every one of them is a question the chips can answer.** The artboard
+     * words the holidays as `אילו חגים נעבדו?` and draws כן/לא beneath it,
+     * which is a question its own control cannot answer; corrected on
+     * 2026-09-09 after the user read it on the built screen. Which holiday was
+     * worked is recorded on the holiday itself in the month's calendar — this
+     * screen confirms and never records, so the question it may ask is whether
+     * there were any.
+     *
+     * **A count agrees with what it counts.** Hebrew writes one as a word after
+     * the noun — `חג אחד`, `יום מחלה אחד` — where every other number is a
+     * numeral before a plural, so a format string produces `1 חגים` and the
+     * user reads it as a defect in the application. Zero never reaches the
+     * counting branch: a month that recorded nothing has a wording of its own,
+     * because "no advance was recorded" is what she is being asked to confirm.
      */
     questions: {
       yes: "כן",
@@ -1179,36 +1204,58 @@ export const he = {
       },
       freeRestDays: {
         /** It names her own rest day, so a worker who rests on Friday is asked
-         * about Fridays (specs.md item 5). */
-        ask: (restDay: RestDay) => `היו ${day(restDay).plural} חופשיים?`,
-        from: (restDay: RestDay, days: number) =>
-          days === 0
-            ? `לא סומנו ${day(restDay).plural} חופשיים בלוח`
-            : `סומנו ${formatDays(days)} בלוח`,
+         * about Fridays (specs.md item 5) — and the adjective agrees with it,
+         * since שבת is feminine and יום שישי is not. */
+        ask: (restDay: RestDay) =>
+          `היו ${day(restDay).plural} ${agrees(day(restDay)).freePlural}?`,
+        from: (restDay: RestDay, days: number) => {
+          const words = day(restDay);
+          const agreement = agrees(words);
+          if (days === 0) {
+            return `לא סומנו ${words.plural} ${agreement.freePlural} בלוח`;
+          }
+          if (days === 1) {
+            return `${agreement.wasMarkedOne} בלוח ${words.bare} ${agreement.free} ${agreement.one}`;
+          }
+          return `סומנו בלוח ${formatDays(days)} ${words.plural} ${agreement.freePlural}`;
+        },
         mismatch: "יום מנוחה חופשי מסומן בלוח של החודש.",
       },
       holidaysWorked: {
-        ask: "אילו חגים נעבדו?",
-        from: (falling: number, worked: number) =>
-          falling === 0
-            ? "לא נופלים חגים בחודש הזה"
-            : `בחודש הזה נופלים ${formatDays(falling)} חגים · סומנו ${formatDays(worked)} כנעבדו`,
+        /** A question the chips can answer. *Which* holiday she worked is
+         * marked on the holiday itself, on the month's calendar, which is where
+         * the `mismatch` sentence sends her. */
+        ask: "היו חגים שנעבדו?",
+        from: (falling: number, worked: number) => {
+          if (falling === 0) return "לא נופלים חגים בחודש הזה";
+          if (falling === 1) {
+            return worked === 1
+              ? "בחודש הזה נופל חג אחד, והוא סומן כנעבד"
+              : "בחודש הזה נופל חג אחד, והוא לא סומן כנעבד";
+          }
+          const fell = `בחודש הזה נופלים ${formatDays(falling)} חגים`;
+          if (worked === 0) return `${fell}, ואף אחד מהם לא סומן כנעבד`;
+          if (worked === 1) return `${fell}, ואחד מהם סומן כנעבד`;
+          return `${fell}, ו־${formatDays(worked)} מהם סומנו כנעבדו`;
+        },
         mismatch: "מה שנעבד בחג מסומן על החג עצמו בלוח של החודש.",
       },
       sickDays: {
         ask: "היו ימי מחלה?",
-        from: (days: number) =>
-          days === 0
-            ? "לא סומנו ימי מחלה בחודש הזה"
-            : `סומנו ${formatDays(days)} ימים`,
+        from: (days: number) => {
+          if (days === 0) return "לא סומנו ימי מחלה בחודש הזה";
+          if (days === 1) return "סומן יום מחלה אחד";
+          return `סומנו ${formatDays(days)} ימי מחלה`;
+        },
         mismatch: "ימי מחלה מסומנים בלוח של החודש.",
       },
       thirdParty: {
         ask: "שולם משהו לגורם אחר?",
-        from: (count: number) =>
-          count === 0
-            ? "לא נרשמו תשלומים לגורם אחר בחודש הזה"
-            : `נרשמו ${formatDays(count)} תשלומים`,
+        from: (count: number) => {
+          if (count === 0) return "לא נרשמו תשלומים לגורם אחר בחודש הזה";
+          if (count === 1) return "נרשם תשלום אחד לגורם אחר";
+          return `נרשמו ${formatDays(count)} תשלומים לגורם אחר`;
+        },
         mismatch: "תשלום לגורם אחר נרשם במסך התשלומים.",
       },
     },

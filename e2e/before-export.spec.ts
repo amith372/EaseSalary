@@ -126,6 +126,37 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
   });
 
   /**
+   * A count agrees with what it counts. Hebrew writes one as a word after the
+   * noun and every other number as a numeral before a plural, so a sentence
+   * built by a format string reads `1 חגים` — which the user meets as a defect
+   * in the application rather than as a wording choice. Found on the built
+   * screen on 2026-09-09.
+   *
+   * April 2026 carries both shapes at once (`seed.ts`): the spell running
+   * 30.3–2.4 leaves **two** of its days in April, and the holiday on the 3rd is
+   * **one**.
+   */
+  test("writes a count the way Hebrew writes it, singular and plural", async ({
+    page,
+  }) => {
+    await useHousehold(page, "agreement");
+    await page.goto("/month/export");
+    await backTo(page, 4);
+
+    await expect(page.locator('[data-question="sickDays"]')).toContainText(
+      he.beforeExport.questions.sickDays.from(2),
+    );
+    await expect(page.locator('[data-question="holidaysWorked"]')).toContainText(
+      he.beforeExport.questions.holidaysWorked.from(1, 1),
+    );
+    // The shape the bug had: a numeral pinned to a plural noun.
+    await expect(page.locator("[data-question]").first()).not.toContainText("1 ימים");
+    await expect(page.locator('[data-question="holidaysWorked"]')).not.toContainText(
+      "1 חגים",
+    );
+  });
+
+  /**
    * Item 21, drawn here as a block where the month screen draws it as a
    * warning: filling a month in ahead of time is allowed and exporting it is
    * not. Answering every question must not make the block go away.
