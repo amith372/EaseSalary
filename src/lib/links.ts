@@ -22,10 +22,12 @@
  *
  * **Every address below has been checked against the live site.** None is
  * assembled from an article's title: a slug built from a page's name is the
- * mistake Part 5 records against Ukraine's holiday list, where the address
- * looked right and returned nothing, which reads exactly like a rule that does
- * not exist. Where no dedicated page could be found, the key points at a
- * section of a page that does exist rather than at a plausible address.
+ * mistake Part 5 records against a holiday address rebuilt rather than stored,
+ * where the address looked right and returned nothing, which reads exactly like
+ * a rule that does not exist. Where no dedicated page could be found, the key
+ * points at a section of a page that does exist rather than at a plausible
+ * address — and it names that section by the page's own heading id, which is
+ * also the unit the page's cached text is segmented into (Part 3).
  */
 
 const KOL_ZCHUT = "https://www.kolzchut.org.il/he";
@@ -38,7 +40,26 @@ const KOL_ZCHUT = "https://www.kolzchut.org.il/he";
  * actions resting on the same article still get their own entry and their own
  * label rather than sharing one.
  */
-const CAREGIVER_TERMS = `${KOL_ZCHUT}/תנאי_העסקה_של_עובד_זר_בסיעוד_המועסק_בבית_המטופל`;
+export const CAREGIVER_TERMS = `${KOL_ZCHUT}/תנאי_העסקה_של_עובד_זר_בסיעוד_המועסק_בבית_המטופל`;
+
+/**
+ * A single section of that page, named by the page's **own** heading id.
+ *
+ * **The anchor is not a nicety and it is not assembled from a label.** The page
+ * text is cached segmented by those same headings (Part 3), so a key here, a
+ * cached section and — in stage 7 — a question all resolve to one unit only
+ * because they all carry the heading id. An anchor invented from a Hebrew label
+ * would land the user at the top of the page and match no section at all, which
+ * is the same silent failure `links.ts` already refuses for addresses.
+ *
+ * Every anchor below is read off the saved page in
+ * `src/lib/scrape/fixtures/kolzchut-caregiver-terms.html`, and a test asserts
+ * that each one still names a section of it — so a heading renamed at the
+ * source fails the suite rather than quietly sending the user nowhere.
+ */
+function termsSection(anchor: string): string {
+  return `${CAREGIVER_TERMS}#${anchor}`;
+}
 
 interface LegalLink {
   /** The label the interface shows, before " — באתר כל זכות". */
@@ -51,7 +72,7 @@ export const legalLinks = {
     label: "שכר מינימום לעובד/ת סיעוד",
     // The general שכר_מינימום article is valid — the figure is the same — but
     // this one is about this worker, so it is the primary link (item 26).
-    url: CAREGIVER_TERMS,
+    url: termsSection("שכר_מינימום"),
   },
   caregiverWage: {
     label: "תנאי העסקה של עובד/ת זר/ה בסיעוד",
@@ -63,8 +84,8 @@ export const legalLinks = {
     // article on a caregiver's weekly rest. The section is linked rather than
     // that article, because the onward address has not been read here and a
     // slug assembled from a page's title is the mistake Part 5 records against
-    // Ukraine's holiday list.
-    url: CAREGIVER_TERMS,
+    // an address rebuilt rather than stored.
+    url: termsSection("גמול_עבור_העסקה_במנוחה_השבועית"),
   },
   holidayWork: {
     label: "תשלום על עבודה בימי חג",
@@ -80,12 +101,12 @@ export const legalLinks = {
   sickPay: {
     label: "ימי מחלה לעובד/ת סיעוד",
     // 1.5 days a month, 18 a year, accruing to 90 — the figures of item 8 —
-    // are in the terms page rather than in the general דמי_מחלה article.
-    url: CAREGIVER_TERMS,
+    // are in this section rather than in the general דמי_מחלה article.
+    url: termsSection("דמי_מחלה"),
   },
   recuperation: {
     label: "דמי הבראה",
-    url: CAREGIVER_TERMS,
+    url: termsSection("דמי_הבראה"),
   },
   nationalInsurance: {
     label: "ביטוח לאומי עבור עובד/ת זר/ה בסיעוד",
@@ -102,10 +123,13 @@ export const legalLinks = {
   medicalInsurance: {
     label: "ביטוח רפואי לעובד/ת זר/ה",
     // No dedicated article for a foreign worker's medical insurance exists, and
-    // the terms page carries the rule anyway: the employer may deduct up to half
-    // the cost of the insurance and no more than ₪154.29 a month — which this
-    // application deducts nothing of (item 16).
-    url: CAREGIVER_TERMS,
+    // the terms page carries the rule anyway. This section is the employer's
+    // obligation to insure her; the cap on deducting for it — half the cost and
+    // no more than ₪154.29 a month, which this application deducts nothing of
+    // (item 16) — is a paragraph of ניכויים_משכר_העובד, where `incomeTax`
+    // points. The obligation is what the label promises, so it is what the link
+    // opens at.
+    url: termsSection("ביטוח_רפואי"),
   },
   incomeTax: {
     label: "ניכוי מס הכנסה משכר העובד/ת",
@@ -115,7 +139,7 @@ export const legalLinks = {
     // of the credits the worker is entitled to — and a caregiver in home care
     // receives 2.25 credit points, more than a foreign worker in another
     // sector, which is the fact that stops her deducting too much.
-    url: CAREGIVER_TERMS,
+    url: termsSection("ניכויים_משכר_העובד"),
   },
   wageProtection: {
     label: "תלוש שכר",

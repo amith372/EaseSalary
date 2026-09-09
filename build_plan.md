@@ -2357,10 +2357,11 @@ against a third mutation, the half dropped from the cell's label.
   after the rate rose to 3.6% (Part 5). Anything item 3 can derive from the base monthly
   salary stays derived and never enters the table.
 - The minimum wage with its effective date, and the plausibility check.
-- Holiday lists per country and year, with the shipped files as fallback. An **empty**
-  cached list is a failed fetch and not a country without holidays — the shipped
-  `UA-2026.json` is empty and its `source_url` points at country code `UK`, which is what
-  that mistake looks like from the inside.
+- Holiday lists per source and year, with the shipped files as fallback. A source is a
+  country **or a religion** — item 10, decided with the user on 2026-09-09. An **empty**
+  cached list is a failed fetch and not a source without holidays: `UA-2026.json` shipped
+  empty with its `source_url` pointing at country code `UK`, which is what that mistake
+  looks like from the inside, and commit 38d44d0 corrected it.
 - The fetched page text is cached beside the figure extracted from it rather than
   discarded. Stage 7 answers out of that text, and a corpus thrown away here has to be
   scraped a second time. It is cached **segmented by heading**, not as one blob per URL.
@@ -2442,6 +2443,301 @@ engine.
 ברוטו and must read exactly what it read before this step — the change is where the
 percentage comes from and not what it is. A failure looks like an empty line, a line that
 moved, or a month that refuses to calculate.
+
+### Step 2 — the minimum wage scrape, its effective date, and the plausibility check · **done**
+
+`src/lib/scrape/minimumWage.ts`, and it is the stage's second bullet: the figure, the date
+it takes effect, and the check that decides whether to believe it. It writes into the table
+step 1 built rather than introducing one, which is why that step came first.
+
+**The source publishes both halves in one sentence**, which is why Part 3 named this page.
+`https://www.kolzchut.org.il/he/שכר_מינימום` carries, in its summary box,
+`החל מיום 01.04.2026 שכר המינימום הוא 6,443.85 ₪ לחודש למשרה מלאה ו-35.40 ₪ לשעה` — the
+תאריך תחולה and the monthly figure together, which is exactly the pair criterion 4 stores.
+A sentence carrying only one of the two is not a partial success: it is a failed fetch,
+because a figure without its date is the undated constant the table exists to remove.
+
+**The statement is found by its shape and not by a keyword.** Four boxes on the page share
+the class, and one of them contains the words שכר המינימום as well; the statement is the one
+holding *both* a date of application and a monthly figure. The monthly figure is matched by
+the words that follow it — `₪ לחודש` — because the hourly rate ₪35.40 sits in the same
+sentence, and reading it as the monthly wage is the realistic corruption here.
+
+**`node-html-parser`, decided with the user on 2026-09-09.** The alternative was a scoped
+regex and no dependency, which is shorter for this one sentence; the parser was chosen
+because the two scrapes still owed — a holiday **table** and a page split at its own
+headings — are structural, and three regexes would be three parsers nobody could correct in
+one place. `CLAUDE.md`'s stack row now names it. The parse is a pure function over an HTML
+string with the request injected beside it, so the suite reads saved pages and never the
+network.
+
+**The plausibility range is the table's own history, decided with the user in the same
+exchange, and written into Part 3.** The baseline is the minimum-wage row already in force
+on the **fetched figure's own** effective date, and the fetched figure must lie between it
+and twice it. The alternative was an absolute floor and ceiling, which would have been two
+invented numbers with no date beside them — the shape criterion 4 exists to remove. The
+baseline is the row in force and not the latest row, because those differ the moment a
+figure arrives dated to a month already past, and the latest would refuse it for having
+fallen. A table with no row in force yet refuses rather than accepts; the table always ships
+seeded, so that is reached only by a page that has moved backwards.
+
+**Part 4's saved page and its three spoiled versions.**
+`src/lib/scrape/fixtures/kolzchut-minimum-wage.html` is the real page, fetched 2026-09-09
+and committed whole rather than trimmed — a fixture cut down to the interesting div is a
+page that has already been parsed once, and it would stop catching a selector that matches
+something else on a page full of other things.
+`src/lib/scrape/minimum-wage-page.fixture.ts` derives the three spoiled versions from it by
+transform rather than saving three more hundred-kilobyte copies: four near-identical files
+would differ in one line nobody could find in a diff, and each would rot on its own the next
+time the page was re-saved. **Every transform asserts that it changed something**, which is
+the risk that shape carries and the answer to it — a transform that quietly matched nothing
+would hand the parser an unspoiled page and the test would pass for the opposite of its
+reason. The three are: the statement's class renamed, with the sentence left in the page
+word for word; an empty body; and the hourly ₪35.40 put in the monthly slot, which is a real
+figure off the same page and reads as corrupt to nothing but the plausibility check.
+
+**Three failure kinds and not one**, because the user is told which happened —
+`unreachable`, `notFound`, `implausible`. Their `detail` is English, for a log and a test;
+the Hebrew sentence she reads is chosen from the kind in the translations file when the
+screen exists.
+
+**What the tests would catch** (`src/lib/scrape/minimumWage.test.ts`, eighteen cases; the
+expected figures are the workbook's D6 cells and the hourly rate off the page, none read
+back from the parser). Six wrong implementations were written and run against the suite, and
+each was caught: a parser searching the whole document text instead of the statement's
+element, which still finds the sentence in the markup-moved page and reports success; a
+parser taking the last figure in the sentence, which is the hourly rate; a parser stamping
+today's date instead of reading the page's, which today is September and the answer April; a
+plausibility check judging against the latest row rather than the one in force; a merge
+appending rather than replacing, which puts two rows under one date and makes `rateInForce`
+answer with whichever the sort left last; and no plausibility check at all.
+
+**One mutant deliberately not chased.** A figure regex that drops the `לחודש` requirement
+and takes the first `₪` figure still answers correctly on this page, because the monthly
+figure happens to come first. The suite does not catch it and no test was contorted to: what
+protects against that ordering changing is the plausibility check, which is the layer built
+for exactly the case where the page is read and the number is wrong.
+
+**Two things left out on purpose.** Nothing persists the fetched row: `withFetchedRate` in
+`datedRates.ts` is the writing-into-the-table half, a pure function over a value, and
+`SalaryRepository` still gains its methods with the screen that has to show a fetched
+figure. And the heading-segmented cache is not built here — the fetch does not need it, and
+Stage 5's own bullet owns it.
+
+**The check the user runs.** Two parts, because this step changes nothing on screen.
+
+First, that nothing regressed: open `/month` on the demo household and read the
+אומדן ביטוח לאומי לחודש line at the foot of the balances card. It must read exactly what it
+read before. A failure looks like an empty line or a month that refuses to calculate.
+
+Second, that the scrape works against the site as it is today and not only against a page
+saved this morning — which is the half no fixture can prove. Run `node scripts/check-minimum-wage-page.mjs`
+from the repository root.
+
+It must print a sentence naming a first-of-month date and a monthly figure — on 2026-09-09
+it printed `החל מיום 01.04.2026 שכר המינימום הוא 6,443.85 ₪ לחודש למשרה מלאה  ו-35.40 ₪ לשעה`.
+`NOT FOUND` means the page's markup has moved and the saved fixture is stale; `UNREACHABLE`
+means the address or the network is the problem, not the parser.
+
+**One thing the page turned up that is not a bug and is not acted on here.** The source
+page's history table writes the 2025 wage as **₪6,247.67**, while the family's workbook
+(`שכר_חודשי_להאנה2025.xlsx` → `חודש  4.25` → D6) and `SEEDED_RATES` both carry **₪6,247.65**
+— two agorot apart. The scrape reads only the current dated statement and never that table,
+so nothing here touches it, and August 2025's four totals come from the workbook and stay
+exactly as they are. It is written down so it is not rediscovered as a rounding bug.
+
+### Step 3 — the holiday lists, per source and per year · **done**
+
+`src/lib/holidayLists.ts` holds them and `src/lib/scrape/countryHolidays.ts` and
+`src/lib/scrape/religiousHolidays.ts` fetch them. It is the stage's third bullet, built the
+way step 2 was: a pure parse over an HTML string with the request injected, three named
+failures, and the source pages committed whole with their spoiled versions derived by
+transform.
+
+**The step widened, and by a decision the user took inside it.** Item 10 said a candidate
+list was a country's, with another country's selectable instead. Asked what the four Kol
+Zchut religious-holiday pages were for, the user answered that a list may be chosen **either
+by religion or by country** — so the four are a second kind of candidate list and not a
+reference link, and item 10 now says so. The picker that chooses between them is still its
+own ticket in this stage; what landed here is the fetching of both kinds.
+
+**Two rules the spec did not settle, asked and answered on 2026-09-09, and written into
+`specs.md` in the same step.** A list of no holidays is a failed fetch, and beyond that a
+list is judged against the same source's own nearest stored year — under half or over twice
+its count is disbelieved. A source with no other stored year is believed if it is not empty,
+which is the one place this differs from the wage's check and is why: the dated-rates table
+always ships seeded, while a new country and all four religions genuinely have no history,
+and item 12 requires a year with no list to fill itself.
+
+**A page with no rows is two different failures.** The source answers an address it does not
+know with a 200 whose heading reads `חגים לאומיים - - 2026`, no country between the dashes
+and no rows under it. A heading naming the country over a page with no rows is the other
+thing: markup that moved. The first is `implausible`, the second `notFound`, and the whole
+reason for splitting them is that only one of the two is a defect here.
+
+**The address is the stored one with its year changed, never rebuilt from the country
+code** (Part 5), and it is changed only as the address's last segment. Nepal's list is the
+live demonstration and it is asserted: `NP-2026.json` is filed under `/en/` while every
+other shipped file is under `/he/`, so an address assembled from the code would quietly
+change the path along with the year.
+
+**Part 4's saved pages and their spoiled versions.** Five pages committed whole —
+`isavta-holidays-PH-2026.html` and the four `kolzchut-*-holidays.html` — with
+`holiday-pages.fixture.ts` deriving the spoiled versions by transform, each asserting it
+changed something, as the wage fixture does and for the same reasons. The country page has
+five: markup moved, an empty body, the source's answer for an address it does not know, a
+truncated list, and a row whose date is gone. The religious page has three.
+
+**What the tests would catch** (55 cases across `holidayLists.test.ts`,
+`countryHolidays.test.ts` and `religiousHolidays.test.ts`; every expected date read off the
+saved pages or the shipped JSON files, none off a parser). Twelve wrong implementations were
+written and run against the suite. Caught: a range read as its two ends, which drops the
+middle days of עיד אל פיטר; a parser ignoring `(נכון ל-2026)`, which restamps 2026's Easter
+as 2027's; an address whose *first* year segment is swapped rather than its last; a
+plausibility check reading the latest stored year instead of the nearest; a merge appending
+rather than replacing; no plausibility check at all; two religions treated as one source; a
+page with no rows accepted; and a per-row year check removed, which is what lets a 2026 page
+answer a request for 2027.
+
+**Two mutants deliberately not chased**, both equivalent on the pages as they stand. Reading
+a holiday's name from the whole `strong` rather than from its first text node answers the
+same today, because the span the page nests inside each name is empty; the first text node
+is kept because the two stop agreeing the day the source puts a badge in it. And pairing the
+dates and the names off their positions rather than reading each name's own preceding
+`small` answers the same on every page saved here — the structural read is kept because it
+reports a row it cannot place instead of shifting a year by one, but no test distinguishes
+them and none was contorted to.
+
+**Three things left out on purpose, and none is a bug.** Nothing persists a fetched list —
+`withFetchedList` is the writing-into-the-table half, a pure function over a value, and
+`SalaryRepository` still gains its methods with the screen that shows one, exactly as step 2
+left the wage. The picker is its own ticket, so nothing on screen chooses between a country
+and a religion yet. And no seed file ships for the four religious pages: a religion's first
+fetch has no history and is believed if it is not empty, which is the rule above, and
+committing four scraped files to give it one would be seed data nobody asked for.
+
+**One limitation of the source, written down so it is not rediscovered as a bug.** The
+Christian and Druze pages mark their movable feasts `(נכון ל-2026)`, so asking those pages
+for 2027 answers with the fixed holidays alone — eight of the Christian page's sixteen. That
+is the page's own limit and not the parser's: the dates genuinely are not published yet, and
+item 12's manual entry is what covers the rest until they are.
+
+**Part 5's justification was disputed and is now corrected; its rule never changed.** Part 5
+told the scraper never to rebuild an address from the country code on the grounds that
+"Ukraine's list is filed under one code and published under another". That was a typo rather
+than a fact: `UA-2026.json` shipped with its address pointing at `UK`, commit 38d44d0
+corrected it, and the live `.../holidays/UA/2026` answers with twelve holidays under
+Ukraine's own code. **Decided with the user on 2026-09-09: the reason is replaced by Nepal's
+`/en/` path**, which is undisputed and is asserted by the suite — a list published under a
+path no other shipped list uses, so an address assembled from the code changes the path along
+with the year. The paragraph in Part 5, the same sentence in `engine/types.ts` and the same
+reference in `links.ts` now say so. The rule itself is unchanged, and so is every test.
+
+**The check the user runs.** Two parts, because this step changes nothing on screen.
+
+First, that nothing regressed: open `/month` on the demo household and read the
+אומדן ביטוח לאומי לחודש line at the foot of the balances card. It must read exactly what it
+read before, and the month must still calculate.
+
+Second, that the parsers work against the sites as they are today and not only against pages
+saved this morning. Run `node scripts/check-holiday-pages.mjs` from the repository root. It
+fetches all six shipped lists at their own stored addresses and all four religious pages,
+and prints a count for each — on 2026-09-09 it printed fifty for India, twenty-seven for Sri
+Lanka against the twenty-six shipped, eleven for Nepal, twenty-four for the Philippines,
+twelve for Ukraine, eighteen for Uzbekistan, and six, four, seven and three for the Jewish,
+Muslim, Christian and Druze pages. `NOT FOUND` against any line means that page's markup has
+moved or its stored address has stopped answering; `UNREACHABLE` means the network or the
+address, not the parser. It exits non-zero if any line failed.
+
+**One difference the check turned up that is not a bug.** Sri Lanka's page now publishes
+twenty-seven holidays where the shipped `LK-2026.json` holds twenty-six, and the
+Philippines' page now writes `all saint day eve` where the shipped file has
+`All Saints' Day Eve`. Both are edits at the source since the files were gathered. The
+shipped files are seed data and are not rewritten here; the second is asserted by name in
+the test, so a parser that lower-cased or trimmed names itself would still be caught.
+
+### Step 4 — the heading-segmented cache · **done**
+
+`src/lib/scrape/pageSections.ts`, and it is the stage's fourth bullet: the text of a fetched
+page kept beside what was taken from it, segmented by the page's own headings rather than
+stored as one blob per address.
+
+**The unit is a heading, because that is already the unit a link points at.** `links.ts` puts
+several keys on one caregiver-terms page on purpose — the wage, the weekly rest, sick pay,
+recuperation, the medical insurance and the deductions are all sections of it — so a question,
+a reference link and a stored section resolve to the same thing only if that thing is a
+section. A `PageSection` is therefore an anchor, a heading, its level and its text, and
+`sectionUrl` writes it as `page#anchor`, which is the form a link already takes.
+
+**The corpus gained the page stage 7 actually needs, and that was a decision the user took
+inside this step (2026-09-09).** The bullet reads as though it caches only pages a figure was
+taken from, but nothing takes a figure from the caregiver-terms page, and a cache shipped
+without it would hold none of the sections item 26 points at. So the terms page is fetched
+for its text alone — `fetchArticleSections` over any Kol Zchut article — and
+`kolzchut-caregiver-terms.html` is committed whole beside the five pages step 3 saved.
+
+**The links now name their section, decided in the same exchange.** Six keys in `links.ts`
+carry the heading id of the section they mean, and a user following one lands on the rule
+rather than on the top of a long page. The anchors are the page's own ids, never assembled
+from a Hebrew label — the same rule the addresses in that file already follow.
+
+**The wage fetch returns both halves of its one request.** `fetchMinimumWage` now answers
+`{ rate, text }`: the dated row and the segmented page. A caller that got only the figure
+would fetch the same page again to get the text, which is exactly the scrape-it-twice outcome
+Part 3's rule exists to prevent. The text survives a failed reading — a page whose statement
+moved is still a page the help screen can answer out of — and is `null` only when no page
+arrived at all.
+
+**The holiday pages are deliberately not cached.** They are tables of dates: a heading
+segments nothing in them, and the dates are already stored as a list. Caching them would put
+a wall of dates into the corpus a question is matched against.
+
+**Two spoiled versions here and not three, and the reason is written into the fixture.**
+Part 4's third is a figure outside the plausible range, and this page yields no figure —
+nothing is read off it that could be judged against the application's own history, because
+what is taken is the text itself. Its nearest analogue, a page that arrived without its
+article, is markup that moved and is already `notFound`. Inventing a plausibility rule for
+prose would be a rule with no figure behind it.
+
+**What the tests would catch** (`src/lib/scrape/pageSections.test.ts`, nineteen cases; every
+expected string read off a saved page, off `links.ts` or off item 8). A segmenter that walked
+the whole document, which files the accessibility toolbar's תפריט נגישות as a section of the
+employment terms. One that read the article's direct children only, which loses
+`מוקדים_ממשלתיים` — the one heading this page wraps in a `div` — and files its text under the
+heading above it. One that ran a section to the end of the page instead of stopping at the
+next heading, which puts the recuperation ladder inside sick pay and makes every question
+match every section. One that folded an `h3` into the `h2` above it, which is most of what
+this application pays out, since דמי מחלה, דמי הבראה and שכר מינימום are all `h3`s under
+מרכיבי שכר. One that kept the table of contents, which repeats every heading and would match
+a question in the lead instead of in the section that answers it. One that tidied an anchor,
+which produces a fragment no link resolves to — `מי_זכאי?` keeps its question mark. And the
+agreement the suite would otherwise have nobody to ask: **every `links.ts` fragment must name
+a section the saved page actually has**, which is the one assertion neither file owns and the
+only thing that turns a renamed heading into a failing test rather than a link that silently
+opens the wrong place.
+
+**Nothing persists it**, exactly as steps 2 and 3 left the wage and the lists.
+`SalaryRepository` gains its methods with the screen that reads a cached section, which is
+stage 7's.
+
+**The check the user runs.** Three parts, because this step changes nothing on screen.
+
+First, that nothing regressed: open `/month` on the demo household and read the
+אומדן ביטוח לאומי לחודש line at the foot of the balances card. It must read exactly what it
+read before, and the month must still calculate.
+
+Second, that the links still open where they say. Anywhere the interface shows a
+"באתר כל זכות" link — a refusal panel or an explanation — follow one that points at the terms
+page. The browser must land on the section, with its heading at the top of the window, rather
+than at the head of the article. A failure looks like a page that opens at the top: the
+heading was renamed at the source.
+
+Third, that the page still carries those headings today and not only in a copy saved this
+morning. Run `node scripts/check-caregiver-terms-page.mjs` from the repository root. It prints
+the number of headings on the live page and one line per linked section — on 2026-09-09 it
+printed thirty-five headings and `ok` for all six. `NOT FOUND` against a line means that
+heading was renamed and the link would open the top of the page; `UNREACHABLE` means the
+network or the address, not the segmenter. It exits non-zero if any line failed.
 
 ## Stage 6 — The opening screen
 

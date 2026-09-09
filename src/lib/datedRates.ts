@@ -136,3 +136,35 @@ export const SEEDED_RATES: DatedRate[] = [
     source: "https://www.kolzchut.org.il/he/דיווח_ותשלום_דמי_ביטוח_לאומי_עבור_עובד_זר_בסיעוד",
   },
 ];
+
+/**
+ * The table with a fetched row written into it (Part 3: the table is seeded and
+ * a fetch updates it).
+ *
+ * **A row is addressed by its key and its effective date together**, which is
+ * the whole of the rule. Fetching the same page twice must not append the same
+ * row twice, and a source that corrects a figure it already published must move
+ * that figure rather than leave two rows claiming the same date — `rateInForce`
+ * would then answer with whichever the sort left last, which is a coin toss
+ * dressed as a lookup.
+ *
+ * **It returns a new table and mutates nothing.** `SEEDED_RATES` is a module-level
+ * array reached by every caller that did not hand the engine a table of its own,
+ * so a merge that pushed into it would make one request's fetch visible to the
+ * next request's calculation.
+ *
+ * **Nothing here persists.** There is no store for the table yet and no consumer
+ * that needs one: this is the writing-into-the-table half of the fetch, kept as
+ * a function over a value so it can be tested without one. `SalaryRepository`
+ * gains its methods with the screen that has to show a fetched figure.
+ */
+export function withFetchedRate(
+  rates: DatedRate[],
+  fetched: DatedRate,
+): DatedRate[] {
+  const others = rates.filter(
+    (rate) =>
+      !(rate.key === fetched.key && rate.effectiveFrom === fetched.effectiveFrom),
+  );
+  return [...others, fetched];
+}

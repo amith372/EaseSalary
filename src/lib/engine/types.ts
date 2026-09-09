@@ -151,10 +151,11 @@ export interface WorkerTerms {
    * The country whose holiday list the worker's year is drawn from (specs.md
    * item 10). It identifies the stored list and nothing else: a list for a new
    * year is found by changing the year in the address stored *with* that list,
-   * never by rebuilding the address from this value — Ukraine's list is filed
-   * under one code and published under another, and an address built from the
-   * code returns nothing, which reads exactly like a country that publishes no
-   * holidays at all (Part 5).
+   * never by rebuilding the address from this value — Nepal's list is published
+   * under `/en/` where every other shipped list is under `/he/`, so an address
+   * built from the code changes the path along with the year and returns
+   * nothing, which reads exactly like a country that publishes no holidays at
+   * all (Part 5).
    */
   country: string;
   openingPosition: OpeningPosition;

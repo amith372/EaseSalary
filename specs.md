@@ -389,7 +389,18 @@ Each of these is true or false at a glance.
    her.
 10. The worker's holidays for the year are shown in advance as her country of origin's
    full candidate list, with another country's list selectable instead, of which the
-   user marks the paid ones. The yearly entitlement is nine days for a full year and is
+   user marks the paid ones. **A religion's list may be chosen in place of a
+   country's** (decided with the user on 2026-09-09): the candidate list is either the
+   holidays of a country or the holidays of a faith — Jewish, Muslim, Christian or
+   Druze — and the two are one choice with two kinds of answer rather than two separate
+   settings. A worker's own holidays need not be her country's, and the four faiths are
+   published in Israel as lists of their own, so the picker offers both and the user
+   picks one. A religion's list is published as one page covering every year it knows
+   rather than one page per year, and where such a page prints a date without a year at
+   all that date does not move from year to year; where it prints a year, or says which
+   year a date holds for, it holds for that year alone. The Christian list is published
+   twice over, once for each of two rites, and both are offered with the rite named
+   beside the holiday rather than merged into one. The yearly entitlement is nine days for a full year and is
    reduced in proportion for a year only partly worked, and the remainder is displayed
    even when it is not a whole number. The year here is the calendar year, as the
    vacation year is (item 7), and as the holiday lists themselves assume — they are
@@ -1096,6 +1107,43 @@ user — a wage far outside the range of recent years, or a holiday list of impl
 length, is treated as a failed fetch rather than a new fact. A failed fetch degrades to
 the last confirmed figure plus manual entry, and never blocks an export.
 
+**The range a fetched wage is judged against is the dated-rates table's own history and
+never a figure written into the code** (decided 2026-09-09). The comparison is with the row
+already in force on the *fetched figure's own* effective date, not with the latest row the
+table holds: those are two different rows whenever a figure arrives dated to a month that
+has already passed, and judging against the latest would refuse it for having fallen. A
+fetched wage below the one standing on its own date, or more than double it, is a failed
+fetch — the first is what reading the hourly rate in place of the monthly one produces, the
+second what a lost decimal point does, and no real rise has ever come near either bound. A
+ratio is not a rate: it values no month and enters no calculation, which is why it may sit
+in the code where criterion 4's figures may not.
+
+**A fetched holiday list is judged the same way, against the same source's own nearest
+stored year** (decided with the user on 2026-09-09). A list of no holidays at all is a
+failed fetch and never a year without any: the source answers an address it does not know
+with a page whose heading names no country and which carries no rows, which is exactly what
+a mistyped country code produces, and believing it would record "this country publishes no
+holidays" — a mistake that surfaces half a year later, the first time someone adds a worker
+from that country. Beyond that, a list is disbelieved when it is under half or over twice
+the count of the nearest year already stored for the same source. **A source with no other
+stored year is believed if it is not empty**, and that is the one place this rule and the
+wage's differ: the dated-rates table always ships seeded, so a wage with no row to judge
+against means a page that has moved backwards, while a country nobody has fetched before
+and every one of the religious lists genuinely has no history — and item 12 requires a year
+with no list to fill itself, which refusing the first fetch would make impossible.
+
+**A page with no rows is not one failure but two, and the user is told which.** A heading
+that names no country is an address the source does not know, and the list exists elsewhere;
+a heading that names the country over a page with no rows is markup that has moved, and the
+defect is in this application. Only one of the two is anyone's to fix here, and collapsing
+them sends whoever reads the log to the wrong place.
+
+**A failed fetch says which of the three failures happened and not merely that it failed**
+— the source could not be reached, the page arrived and the statement was not in it, or the
+figure was read and disbelieved. The user is told which, because they mean different things
+to her: the first may work in a minute, the second is a defect in this application, and the
+third means the page and this application disagree about a number.
+
 ## Part 4 — Validation approach
 
 The known case is August 2025: a worker paid the minimum wage, employed since 1.4.2024,
@@ -1193,10 +1241,11 @@ separates a test from a demonstration.
 
 A holiday list for a new year is found by taking the source address already stored with
 that country's list and changing the year in it, never by rebuilding the address from the
-country code. The two do not always agree — Ukraine's list is filed under one code and
-published under another — and an address built from the code returns nothing, which reads
-exactly like a country that publishes no holidays at all. The failure would surface half a
-year later, the first time someone adds a worker from that country.
+country code. A stored address carries more than the code: Nepal's list is published under
+`/en/` while every other shipped list is under `/he/`, so an address assembled from the code
+would quietly change the path along with the year. It returns nothing, which reads exactly
+like a country that publishes no holidays at all, and the failure would surface half a year
+later, the first time someone adds a worker from that country.
 
 The balances tab rounds inconsistently and should not be copied. In
 `שכר_חודשי_להאנה2026.xlsx` → `חישוב ימי מחלה וחופשה` the monthly vacation accrual is written as

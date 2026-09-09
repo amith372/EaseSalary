@@ -17,7 +17,7 @@ A Hebrew web application for families employing a live-in foreign caregiver. Eac
 | Data | Supabase — Postgres + Auth, row-level security for account isolation |
 | Interface | Tailwind CSS, right-to-left, Hebrew strings in one translations file |
 | Export | ExcelJS on the server, filling the stored .xlsx templates. Those templates are **committed on purpose** — `.gitignore` must never ignore `*.xlsx`. Without them the app still runs and only the export breaks, so the mistake surfaces on someone else's clone rather than here |
-| External data | `fetch` + an HTML parser, results cached in Postgres |
+| External data | `fetch` + `node-html-parser`, results cached in Postgres. The parser is named here rather than left open because the scrapers must agree on one idiom: the wage is a sentence in a classed div, the holiday list is a table, and the Stage 5 cache is a page split at its own headings, and three regexes would be three parsers nobody could correct in one place. Every scrape is a pure function over an HTML **string** with the request injected, so the suite reads saved pages and never the network (`specs.md` Part 4) |
 | Deploy | Vercel; the encryption key and Supabase keys are env vars, never in the repo |
 | Design | The canvas is read through the `claude_design` MCP server, registered in the committed `.mcp.json`. Run `/design-login` **once per clone** — without it the canvas URL is an address the session cannot open, and the screens get rebuilt from prose descriptions instead of from the design |
 | Tests | Vitest — the calculation engine, the export filler, the scrapers' parsing — plus browser verification of the important user-facing flows (rules 9–12) |
