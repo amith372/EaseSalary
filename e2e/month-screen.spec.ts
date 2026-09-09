@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { he } from "../src/lib/i18n/he";
-import { formatAgorot } from "../src/lib/money";
+import { formatAgorot, formatDays } from "../src/lib/money";
 import { SATURDAY } from "../src/lib/dates";
 
 /**
@@ -87,7 +87,7 @@ function row(page: Page, key: string) {
  * effect on the balance is legible as a whole number rather than as a running
  * fraction. */
 function daysUsed(count: number): string {
-  return `${he.sheet.reporting.daysUsed}: ${count}`;
+  return `${he.sheet.reporting.daysUsed}: ${formatDays(count)}`;
 }
 
 /** Sweep a range on the calendar and answer the picker: click the first day,
@@ -98,9 +98,21 @@ async function sweep(
   from: string,
   to: string,
   kind: "vacation" | "sick" | "freeRestDay",
+  // The picker's second row, chosen before the kind chip commits the mark
+  // (specs.md items 5, 7). Omitted is a whole day with no note, which is what
+  // an ordinary sweep is.
+  second?: { half?: boolean; note?: string },
 ): Promise<void> {
   await page.locator(`[data-date="${from}"]`).click();
   await page.locator(`[data-date="${to}"]`).click();
+  if (second?.half) {
+    await page
+      .getByRole("button", { name: he.calendar.picker.part.half, exact: true })
+      .click();
+  }
+  if (second?.note !== undefined) {
+    await page.getByLabel(he.calendar.picker.note.label).fill(second.note);
+  }
   const marks = he.calendar.marks(SATURDAY);
   await page.getByRole("button", { name: marks[kind], exact: true }).click();
 }
@@ -324,5 +336,125 @@ test.describe("the known case of Part 4, entered through the screen", () => {
       page.getByText(he.calendar.skipped(SATURDAY).alreadyMarked),
     ).toBeVisible();
     await expect(row(page, "net")).toContainText(formatAgorot(ONE_REST_DAY_OFF));
+  });
+});
+
+test.describe("half a day of vacation (specs.md items 5, 7)", () => {
+  /**
+   * September 2026, counted by hand and not read off the screen. The month has
+   * 30 days and its Saturdays are the 5th, 12th, 19th and 26th — four of them,
+   * because 1 September 2026 is a Tuesday. The standard count is the month's
+   * days less its rest days, so 30 − 4 = 26, and nothing the worker takes
+   * reduces it (item 5).
+   */
+  const STANDARD = 26;
+  /** A Tuesday, so neither the rest day nor anything that refuses the mark. */
+  const HALF_DAY = "2026-09-15";
+
+  test("leaves half a day of the actual count and half a day of the balance", async ({
+    page,
+  }) => {
+    // **The two halves of item 5's own sentence, in one gesture.** "A day taken
+    // in part leaves the actual count in that same proportion, so half a
+    // vacation day leaves half a day", and item 7 draws it from the balance in
+    // the same proportion. A fraction written to the store but read by only one
+    // of the two would pass every unit test in the suite and still charge the
+    // worker a whole day on the screen she is looking at.
+    await useHousehold(page, "demo", "halfday");
+    await page.goto("/month");
+
+    const marks = he.calendar.marks(SATURDAY);
+
+    // The before state, so the figures below are moves and not coincidences.
+    await expect(row(page, "workDays")).toContainText(
+      `${formatDays(STANDARD)} / ${formatDays(STANDARD)}`,
+    );
+    await expect(row(page, "balance-vacation")).toContainText(daysUsed(0));
+
+    await sweep(page, HALF_DAY, HALF_DAY, "vacation", {
+      half: true,
+      note: "חצי יום אצל הרופא",
+    });
+
+    // The actual count is the standard count less the days not worked, and half
+    // a day was not worked: 26 − 0.5 = 25.5. The standard count does not move,
+    // which is the half a wrong implementation is likeliest to get wrong — a
+    // vacation day that shrank the base would show up here first.
+    await expect(row(page, "workDays")).toContainText(
+      `${formatDays(STANDARD - 0.5)} / ${formatDays(STANDARD)}`,
+    );
+    await expect(row(page, "balance-vacation")).toContainText(daysUsed(0.5));
+
+    // And the day says so where the user is looking. The cell is filled to half
+    // its height and its name carries the words, so the month read back a week
+    // later tells a whole vacation day and a half one apart — which the fill
+    // alone would do for only some of the people reading it.
+    await expect(page.locator(`[data-date="${HALF_DAY}"]`)).toHaveAccessibleName(
+      new RegExp(`${marks.vacation}, ${he.calendar.picker.part.half}$`),
+    );
+
+    await page.screenshot({
+      path: "test-results/half-vacation-day.png",
+      fullPage: true,
+    });
+
+    // And it went to the store rather than to the browser: the mark a reload
+    // forgets is the one failure no unit test can see.
+    await page.reload();
+    await expect(row(page, "workDays")).toContainText(
+      `${formatDays(STANDARD - 0.5)} / ${formatDays(STANDARD)}`,
+    );
+    await expect(row(page, "balance-vacation")).toContainText(daysUsed(0.5));
+  });
+
+  test("is not offered for sickness, for a free rest day, or for a range", async ({
+    page,
+  }) => {
+    // Item 7 gives the part-day to vacation alone among the three marks, and
+    // `DaySpan.fraction` is set only on a single-day span. The picker offers no
+    // combination the server would refuse, so what this asserts is that the
+    // impossible ones are never reachable — a live chip here would store half a
+    // sick day, which the tiers count from the spell's own first day (item 8).
+    await useHousehold(page, "demo", "halfrefused");
+    await page.goto("/month");
+
+    const marks = he.calendar.marks(SATURDAY);
+    const half = page.getByRole("button", {
+      name: he.calendar.picker.part.half,
+      exact: true,
+    });
+
+    // A range of more than one day: the part row is not drawn at all, because
+    // half of a three-day range is not a thing the stored shape can say.
+    await page.locator(`[data-date="2026-09-14"]`).click();
+    await page.locator(`[data-date="2026-09-16"]`).click();
+    await expect(half).toHaveCount(0);
+    await page.keyboard.press("Escape");
+
+    // One day: the part row is drawn, and choosing half closes the two kinds
+    // that are whole days. The rule says so in words beside them.
+    await page.locator(`[data-date="${HALF_DAY}"]`).click();
+    await page.locator(`[data-date="${HALF_DAY}"]`).click();
+    await expect(half).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: marks.vacation, exact: true }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("button", { name: marks.sick, exact: true }),
+    ).toBeEnabled();
+
+    await half.click();
+    await expect(
+      page.getByText(he.calendar.picker.part.rule(SATURDAY)),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: marks.vacation, exact: true }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("button", { name: marks.sick, exact: true }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: marks.freeRestDay, exact: true }),
+    ).toBeDisabled();
   });
 });

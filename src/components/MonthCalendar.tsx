@@ -19,7 +19,7 @@ import { dayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
 import { clipEndOf } from "@/lib/engine/types";
 import { MonthStepper } from "@/components/MonthStepper";
 import { he } from "@/lib/i18n/he";
-import { endOf } from "@/lib/spans";
+import { dayParts, endOf, partIsAllowed, type MarkIntent } from "@/lib/spans";
 import type {
   DaySpan,
   HolidaySpan,
@@ -41,11 +41,13 @@ import type {
  * calculation and lives in `src/lib/spans.ts`.
  */
 
-export interface SpanIntent {
-  kind: MarkKind;
-  from: IsoDate;
-  to: IsoDate;
-}
+/**
+ * What a sweep hands up. It **is** `MarkIntent` and not a shape beside it: the
+ * two were written twice and identically until the picker gained a part and a
+ * note, at which point one of them would have gone on carrying three fields
+ * while the other carried five.
+ */
+export type SpanIntent = MarkIntent;
 
 interface MonthCalendarProps {
   month: YearMonth;
@@ -115,6 +117,53 @@ const markClass: Record<MarkKind, string> = {
   sick: "bg-sick text-ink",
   freeRestDay: "bg-rest text-day-ink",
 };
+
+/**
+ * The picker's own control, in its three states. Written once because this file
+ * draws it three times over — the kinds, the holiday's two answers, and the
+ * part of a day — and they are one mechanism seen three times rather than three
+ * that happen to look alike.
+ */
+function chipClass({
+  selected = false,
+  disabled = false,
+  /**
+   * Fill the chip when it is the chosen one, rather than only firming its
+   * border.
+   *
+   * **Only where one of the chips is always chosen**, which of the three sets
+   * is the part of a day: `יום מלא` stands from the moment the picker opens, so
+   * a border one shade firmer than its neighbour's is not a state anybody
+   * reads — checked in the browser, where the two chips came out
+   * indistinguishable. The kinds are chosen by being pressed and none of them
+   * is ever the standing answer, so they keep the quieter treatment.
+   */
+  fill = false,
+}: { selected?: boolean; disabled?: boolean; fill?: boolean } = {}): string {
+  return [
+    "flex items-center gap-2 rounded-full border px-3.25 py-1.75 text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
+    disabled
+      ? "cursor-not-allowed border-line bg-surface text-ink-quiet opacity-60"
+      : selected
+        ? `border-line-hover text-ink ${fill ? "bg-chip" : "bg-surface"}`
+        : "border-line bg-surface text-day-ink hover:border-line-hover hover:text-ink",
+  ].join(" ");
+}
+
+/**
+ * **A day taken in part, drawn as a day filled in part** (specs.md item 7).
+ * Painted over whichever fill the kind already gave the cell rather than beside
+ * it: the gradient is a `background-image` and `markClass` sets the
+ * `background-color`, so the mark keeps its own colour in the lower half and
+ * the upper half returns to the colour of an unmarked day. One class covers
+ * every kind for that reason, and it needs no second palette entry.
+ *
+ * The split runs across the cell and not down it: a diagonal or a vertical half
+ * would mean the opposite thing in a right-to-left month, and a horizontal one
+ * means the same in both. Fixed at half because `dayParts` offers a whole day
+ * and a half and nothing between them.
+ */
+const PART_DAY = "bg-[linear-gradient(to_top,transparent_50%,var(--color-day)_50%)]";
 
 const dotClass: Record<MarkKind, string> = {
   vacation: "bg-vacation",
@@ -206,6 +255,13 @@ export function MonthCalendar({
   const [picking, setPicking] = useState(false);
   /** The holiday whose one question is open, if any. */
   const [asking, setAsking] = useState<HolidaySpan | null>(null);
+  /**
+   * The picker's second row, held until a kind chip commits it: how much of the
+   * day was taken (specs.md item 7) and the note the action carries (item 5).
+   * A whole day is the default, because it is what an ordinary mark is.
+   */
+  const [part, setPart] = useState<number>(1);
+  const [note, setNote] = useState("");
   const firstChip = useRef<HTMLButtonElement>(null);
 
   // The single tab stop follows the month when the month changes under it.
@@ -235,6 +291,10 @@ export function MonthCalendar({
     setCursor(null);
     setPicking(false);
     setAsking(null);
+    // The second row belongs to the range that is open, so it goes with it: a
+    // note left standing would attach itself to the next range the user drew.
+    setPart(1);
+    setNote("");
   }
 
   /**
@@ -260,6 +320,8 @@ export function MonthCalendar({
       setAnchor(date);
       setCursor(null);
       setPicking(false);
+      setPart(1);
+      setNote("");
       return;
     }
     setCursor(date);
@@ -278,7 +340,15 @@ export function MonthCalendar({
   }
 
   function applyKind(kind: MarkKind) {
-    if (selection) onSelectRange?.({ kind, ...selection });
+    if (selection) {
+      const trimmed = note.trim();
+      onSelectRange?.({
+        kind,
+        ...selection,
+        ...(part === 1 ? {} : { fraction: part }),
+        ...(trimmed === "" ? {} : { note: trimmed }),
+      });
+    }
     reset();
   }
 
@@ -324,6 +394,18 @@ export function MonthCalendar({
   }
 
   const selectionDays = selection ? daysBetween(selection.from, selection.to) + 1 : 0;
+  /**
+   * Whether a part of a day is on offer at all, and which kinds can take the
+   * one chosen — both asked of `partIsAllowed`, so the picker offers exactly
+   * what the server will accept and the two cannot drift apart. With a whole
+   * day chosen every kind answers yes, which is why the chips are only ever
+   * disabled once חצי יום stands.
+   */
+  const partOffered =
+    selection !== null &&
+    partIsAllowed({ kind: "vacation", ...selection, fraction: 0.5 });
+  const kindTakesPart = (kind: MarkKind) =>
+    selection !== null && partIsAllowed({ kind, ...selection, fraction: part });
 
   return (
     <div className={["flex min-h-0 flex-col gap-2", className ?? ""].filter(Boolean).join(" ")}>
@@ -386,12 +468,17 @@ export function MonthCalendar({
           // holds, and the words say it to a reader who cannot see them.
           const holiday = span?.kind === "holiday";
           const worked = span !== undefined && isWorkedHoliday(span);
+          // Half a day is a fill in the cell and words in the label, because a
+          // reader who cannot see the fill is told nothing by it.
+          const partly = span !== undefined && (span.fraction ?? 1) < 1;
           const stateName = holiday
             ? worked
               ? he.calendar.holiday.worked
               : he.calendar.holiday.notWorked
             : span
-              ? marks[span.kind as MarkKind]
+              ? `${marks[span.kind as MarkKind]}${
+                  partly ? `, ${he.calendar.picker.part.half}` : ""
+                }`
               : undefined;
           const label = `${dayNumber} ${monthLabel(month)}${
             stateName ? `, ${stateName}` : ""
@@ -403,7 +490,8 @@ export function MonthCalendar({
               : span
                 ? `font-semibold ${markClass[span.kind as MarkKind]}`
                 : "bg-day font-normal text-day-ink",
-          ];
+            partly ? PART_DAY : "",
+          ].filter(Boolean);
           const content = (
             <>
               <Bidi noTranslate className="leading-[1.1]">
@@ -484,12 +572,7 @@ export function MonthCalendar({
                 ref={index === 0 ? firstChip : undefined}
                 aria-pressed={asking.worked === answer.worked}
                 onClick={() => answerHoliday(answer.worked)}
-                className={[
-                  "flex items-center gap-2 rounded-full border bg-surface px-3.25 py-1.75 text-[14px] font-medium text-day-ink transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
-                  asking.worked === answer.worked
-                    ? "border-line-hover text-ink"
-                    : "border-line hover:border-line-hover",
-                ].join(" ")}
+                className={chipClass({ selected: asking.worked === answer.worked })}
               >
                 <span
                   aria-hidden="true"
@@ -513,7 +596,8 @@ export function MonthCalendar({
       {/* What the range means, asked once the range exists. Nothing on the
           screen is displaced by it: with no range open there is no picker. */}
       {picking && selection ? (
-        <div className="flex flex-none flex-wrap items-center gap-3.5 rounded-card-sm border border-line-strong bg-ground px-3.5 py-3">
+        <div className="flex flex-none flex-col gap-2.75 rounded-card-sm border border-line-strong bg-ground px-3.5 py-3">
+          <div className="flex flex-wrap items-center gap-3.5">
           <div className="flex min-w-0 flex-col gap-px">
             <span className="text-[15px] font-semibold">
               <Bidi noTranslate>{rangeLabel(selection.from, selection.to)}</Bidi>
@@ -529,21 +613,28 @@ export function MonthCalendar({
             </span>
           </div>
           <div className="flex flex-auto flex-wrap items-center gap-2">
-            {pickerKinds.map((kind, index) => (
-              <button
-                key={kind}
-                type="button"
-                ref={index === 0 ? firstChip : undefined}
-                onClick={() => applyKind(kind)}
-                className="flex items-center gap-2 rounded-full border border-line bg-surface px-3.25 py-1.75 text-[14px] font-medium text-day-ink transition-colors hover:border-line-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
-              >
-                <span
-                  aria-hidden="true"
-                  className={`size-2.75 flex-none rounded-full ${dotClass[kind]}`}
-                />
-                <span dir="auto">{marks[kind]}</span>
-              </button>
-            ))}
+            {pickerKinds.map((kind, index) => {
+              // A kind that cannot be taken in part is not offered while a part
+              // stands (specs.md item 7), and the sentence under the row says
+              // why rather than leaving a dead control to be puzzled over.
+              const refused = !kindTakesPart(kind);
+              return (
+                <button
+                  key={kind}
+                  type="button"
+                  ref={index === 0 ? firstChip : undefined}
+                  disabled={refused}
+                  onClick={() => applyKind(kind)}
+                  className={chipClass({ disabled: refused })}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`size-2.75 flex-none rounded-full ${dotClass[kind]}`}
+                  />
+                  <span dir="auto">{marks[kind]}</span>
+                </button>
+              );
+            })}
             <button
               type="button"
               onClick={clearSelection}
@@ -560,6 +651,58 @@ export function MonthCalendar({
           >
             <span dir="auto">{he.calendar.picker.cancel}</span>
           </button>
+          </div>
+
+          {/* The second row: how much of the day was taken (specs.md item 7)
+              and the note every action can carry (item 5). Both are chosen
+              before a kind chip commits the mark, because the kind chip is what
+              commits it — so they sit under the kinds and not beside them. */}
+          <div className="flex flex-wrap items-center gap-4 border-t border-line pt-2.75">
+            {partOffered ? (
+              <span className="flex flex-wrap items-center gap-2">
+                <span dir="auto" className="text-[14px] font-light text-ink-mute">
+                  {he.calendar.picker.part.label}
+                </span>
+                {dayParts.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={part === value}
+                    onClick={() => setPart(value)}
+                    className={chipClass({ selected: part === value, fill: true })}
+                  >
+                    <span dir="auto">
+                      {value === 1
+                        ? he.calendar.picker.part.whole
+                        : he.calendar.picker.part.half}
+                    </span>
+                  </button>
+                ))}
+              </span>
+            ) : null}
+            <label className="flex min-w-60 flex-auto items-center gap-2">
+              <span
+                dir="auto"
+                className="flex-none text-[14px] font-light text-ink-mute"
+              >
+                {he.calendar.picker.note.label}
+              </span>
+              <input
+                type="text"
+                dir="auto"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                placeholder={he.calendar.picker.note.placeholder}
+                className="min-w-0 flex-auto rounded-tab border border-line-strong bg-surface px-3 py-1.75 text-[14px] text-ink transition-colors placeholder:text-ink-quiet hover:border-line-hover focus-visible:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
+              />
+            </label>
+          </div>
+
+          {partOffered ? (
+            <span dir="auto" className="text-[13px] font-light text-ink-quiet text-pretty">
+              {he.calendar.picker.part.rule(restDay)}
+            </span>
+          ) : null}
         </div>
       ) : null}
 

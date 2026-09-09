@@ -35,6 +35,50 @@ export interface MarkIntent {
   kind: MarkKind;
   from: IsoDate;
   to: IsoDate;
+  /**
+   * How much of the day was taken, where the sweep is one day of vacation
+   * (specs.md item 7). Absent is a whole day, and so is `1`.
+   */
+  fraction?: number;
+  /** The user's own words about the mark (specs.md item 5). Trimmed here, and
+   * an empty one is no note at all. */
+  note?: string;
+}
+
+/**
+ * The two parts the picker offers, in the order it draws them.
+ *
+ * **Two and not a typed figure**, because item 7 says a day may be taken in
+ * part and the family's workbook records halves; a field taking any proportion
+ * would ask the user for a number where the question is which of two things
+ * happened, and 0.37 of a vacation day is not a thing anyone means.
+ */
+export const dayParts = [1, 0.5] as const;
+
+/**
+ * Whether the part on an intent is one that intent may carry.
+ *
+ * **Only vacation, and only one day.** Item 7 gives the part-day to vacation
+ * and item 10 to a holiday, which is not a mark at all — so of the three kinds
+ * a sweep can produce, vacation is the only one, and sickness and a free rest
+ * day are whole days. And `DaySpan.fraction` is set only where `from` and `to`
+ * are equal (`types.ts`): half of a five-day range is not a thing the stored
+ * shape can say.
+ *
+ * One rule read by all three of its readers rather than three that must agree:
+ * the picker offers no kind this refuses, `applyMark` writes no fraction it
+ * refuses, and the server action refuses the request outright — a server action
+ * is reachable by a crafted request, which is the only way the combination can
+ * arrive.
+ */
+export function partIsAllowed(intent: MarkIntent): boolean {
+  const fraction = intent.fraction ?? 1;
+  if (fraction === 1) return true;
+  return (
+    (dayParts as readonly number[]).includes(fraction) &&
+    intent.kind === "vacation" &&
+    intent.from === intent.to
+  );
 }
 
 /**
@@ -212,11 +256,20 @@ export function applyMark(
   existing: DaySpan[] = [],
 ): MarkResult {
   const { taken, skipped } = markableDays(intent, restDay, existing);
+  // A part the intent may not carry falls back to a whole day rather than being
+  // written: the picker never offers the combination and the server action
+  // refuses it, so this is the floor under both and not the answer the user
+  // gets. The note carries whatever the kind, because every action can carry
+  // one (specs.md item 5).
+  const fraction = partIsAllowed(intent) ? (intent.fraction ?? 1) : 1;
+  const note = intent.note?.trim() ?? "";
   const spans = runsOf(taken).map<MarkedSpan>((run) => ({
     id: `${intent.kind}-${run.from}-${run.to}`,
     kind: intent.kind,
     from: run.from,
     to: run.to,
+    ...(fraction === 1 ? {} : { fraction }),
+    ...(note === "" ? {} : { note }),
   }));
   return { spans, skipped };
 }

@@ -38,6 +38,7 @@ import type { UserLineDraft, UserLineRefusal } from "@/lib/engine/userLines";
 import { parseShekels } from "@/lib/money";
 import {
   applyMark,
+  partIsAllowed,
   touchesRange,
   type MarkIntent,
   type SkippedDay,
@@ -126,6 +127,15 @@ export async function markRange(
   workerId: string,
   intent: MarkIntent,
 ): Promise<{ skipped: SkippedDay[] }> {
+  // **The part of a day, checked and not trusted.** Only one day of vacation
+  // may be taken in part (specs.md item 7), and the picker offers no other
+  // combination — so a half day of sickness can only arrive from a crafted
+  // request, and it is refused the way an unknown worker id is rather than
+  // stored as something the user never asked for.
+  if (!partIsAllowed(intent)) {
+    throw new Error(`A ${intent.kind} mark cannot be taken as part of a day`);
+  }
+
   const repository = await getRepository();
   const profile = await profileOf(workerId);
   const existing = await repository.listSpans(workerId);

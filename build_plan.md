@@ -2281,34 +2281,63 @@ month's payments including itself; or an override of `0` refused, which is the o
 that a derived row came to nothing.
 
 
-### Step 11 — the part-day and the note on a sweep · **not built, and awaiting the user**
+### Step 11 — the part-day and the note on a sweep · **done**
 
-**Found by step 10 on 2026-09-09, while trying to test it.** Step 10 was written to cover
-"the part-day and the note on a sweep" and could not, because neither gesture exists. This
-records the gap where the next session will look for it rather than leaving it to be found a
-third time.
+**Found by step 10 on 2026-09-09, while trying to test it**, and built on the same day once
+the user scheduled it. Step 10 was written to cover "the part-day and the note on a sweep"
+and could not, because neither gesture existed: `DaySpan.fraction` and `DaySpan.note` were
+stored fields the engine already read — `leave.ts` counts a part day as its fraction,
+`counts.ts` takes the largest fraction lost on a day — and the design pass had drawn both on
+a second row of the sweep picker in `חישוב החודש` and in `דף הבית v3`, but `MarkIntent`
+carried only a kind and two dates, so nothing wrote either.
 
-**Everything under the screen is already there and only the screen is missing.**
-`DaySpan.fraction` and `DaySpan.note` are stored fields; `leave.ts` counts a part day as its
-fraction and `counts.ts` takes the largest fraction lost on a day; `specs.md` item 5 says a
-day taken in part leaves the actual count in that proportion and item 7 draws the balance in
-the same proportion; and every action can carry a free-text note. The design pass drew both,
-on a second row of the sweep picker in `חישוב החודש` and in `דף הבית v3`, on 2026-09-08 —
-which is the last of the reconciliation list's six and the reason that list is now empty.
+**The gesture.** `MarkIntent` gained a `fraction` and a `note`; the picker gained the second
+row the artboard draws — `כמה מהיום נלקח` with `יום מלא` and `חצי יום`, the free-text note
+beside it, and the rule stated in words beneath both; and `applyMark` writes both onto the
+spans a sweep produces, the note onto every span where a broken sweep produced more than one.
 
-**What is missing is one gesture.** `MarkIntent` carries a kind and two dates, `applyMark`
-writes neither field, and no component in `src/` names `fraction` at all. So a part-day is
-reachable only from a seeded span and a note on a mark is reachable from nothing.
+**Only one day of vacation may be taken in part, and the picker offers nothing else.**
+`partIsAllowed` in `spans.ts` is that rule, and it has three readers rather than three copies:
+the picker draws the part chips only for a single-day range and closes the two kinds that are
+whole days while `חצי יום` stands, `applyMark` writes no fraction the rule refuses, and
+`markRange` throws on one — a server action is reachable by a crafted request, which is the
+only way the combination can arrive. Item 7 gives the part-day to vacation and item 10 to a
+holiday, which is not a mark at all; sickness is counted in whole days from the spell's own
+first day (item 8) and a free rest day is not an entitlement (item 5).
 
-**It is not step 10's to build** — that step's own first line is that no behaviour changes —
-and it is not step 9's, which built the profile. It is written here unowned on purpose, the
-way the profile was, and with the lesson applied: it says what it needs rather than which
-stage should want it. **The user schedules it.**
+**Why the chosen chip is filled and the kind chips are not.** The part is a choice where one
+option always stands — `יום מלא` from the moment the picker opens — so the border-only
+selected state the kind chips use came out unreadable in the browser, two chips a shade apart
+with nothing to say which was chosen. The artboard fills it, and so does the code. The kinds
+are pressed rather than standing, so they keep the quieter treatment.
 
-What it would take: a `fraction` and a `note` on `MarkIntent`, a second row on the picker
-that offers them, the server reading both the way `reviewUserLine` reads an amount, and a
-browser test asserting that half a vacation day leaves half a day of balance and half a day
-of the actual count — the two halves of item 5's own sentence.
+**A half day is drawn as a day filled to half its height**, asked for by the user once the
+gesture worked and the marked day still looked exactly like a whole one. The gradient is a
+`background-image` painted over the fill `markClass` already gave the cell, so the mark keeps
+its own colour in the lower half and the upper half returns to the colour of an unmarked day —
+one class for every kind, and no second palette entry. The split runs across the cell rather
+than down it: a vertical or a diagonal half would mean the opposite thing in a right-to-left
+month. The cell's accessible name carries `חצי יום` as well, because the fill says nothing to
+a reader who cannot see it, and that is what the browser test asserts — the fill itself is
+checked by eye in the browser, the 15th half filled beside a whole vacation day on the 17th.
+
+**The note is stored and has no read-back surface yet, on purpose.** Item 2 says where it
+goes: the workbook's helper column, in both versions of the export, which is stage 2 and is
+not built. Every other note in the application is shown back beside the thing it belongs to,
+so this is the one that is not — and it is written here rather than left to be rediscovered
+as a bug. Nothing about a mark's note is decided by stage 2 except where it is printed.
+
+**Verified through the browser** (`month-screen.spec.ts`): half a vacation day on Tuesday 15
+September 2026 leaves the actual count at 25.50 against a standard count of 26 and draws 0.50
+from the vacation balance — the two halves of item 5's own sentence — and survives a reload,
+so the fraction went to the store rather than to the browser. The standard count does not
+move, which is what would catch a part-day that shrank the base. Both figures are derived on
+paper in the spec's comment: September 2026 has 30 days and four Saturdays, so 30 − 4 = 26.
+The test was confirmed to fail against two separate mutations — the fraction dropped in
+`applyMark`, and the fraction dropped in the picker — rather than only confirmed to pass. A
+second test asserts that the half is not offered for a range of more than one day and that
+choosing it disables sickness and the free rest day. The name assertion was confirmed to fail
+against a third mutation, the half dropped from the cell's label.
 
 
 ## Stage 5 — External data and yearly settings

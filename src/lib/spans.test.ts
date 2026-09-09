@@ -4,6 +4,7 @@ import {
   applyMark,
   balanceDaysOf,
   markableDays,
+  partIsAllowed,
   spanOverflow,
 } from "@/lib/spans";
 import type { ClosedDaySpan, DaySpan } from "@/lib/types";
@@ -197,6 +198,123 @@ describe("markableDays", () => {
 
     expect(taken).toEqual(["2026-08-16"]);
     expect(skipped).toEqual([{ date: "2026-08-15", reason: "weeklyRest" }]);
+  });
+});
+
+describe("a sweep carries the part of a day and the note (items 5, 7)", () => {
+  it("writes half a day onto the span the sweep produced", () => {
+    // 17 August 2026 is a Monday, so nothing refuses the mark. The half is the
+    // picker's own second row and the span is where it is stored.
+    const { spans } = applyMark(
+      {
+        kind: "vacation",
+        from: "2026-08-17",
+        to: "2026-08-17",
+        fraction: 0.5,
+        note: "  חצי יום לרופא  ",
+      },
+      SATURDAY,
+    );
+
+    expect(spans).toEqual([
+      {
+        id: "vacation-2026-08-17-2026-08-17",
+        kind: "vacation",
+        from: "2026-08-17",
+        to: "2026-08-17",
+        fraction: 0.5,
+        note: "חצי יום לרופא",
+      },
+    ]);
+    // Half a day off the balance, which is item 7's own sentence and the half
+    // this test exists to protect: a fraction written but never read would look
+    // exactly like this span and cost a whole day.
+    expect(balanceDaysOf(spans[0], SATURDAY)).toBe(0.5);
+  });
+
+  it("leaves a whole day whole, and writes neither field", () => {
+    // An ordinary mark carries no `fraction` and no `note` at all rather than
+    // carrying 1 and "": a stored 1 would make every span look like a decision
+    // the user made about its length.
+    const { spans } = applyMark(
+      { kind: "vacation", from: "2026-08-17", to: "2026-08-17", note: "   " },
+      SATURDAY,
+    );
+
+    expect(spans[0]).toEqual({
+      id: "vacation-2026-08-17-2026-08-17",
+      kind: "vacation",
+      from: "2026-08-17",
+      to: "2026-08-17",
+    });
+  });
+
+  it("carries the note onto every span a broken sweep produced", () => {
+    // 14 to 17 August 2026 crosses Saturday the 15th, which a vacation span
+    // skips (item 5) — so the sweep yields two spans, and the words the user
+    // wrote are about both of them.
+    const { spans } = applyMark(
+      {
+        kind: "vacation",
+        from: "2026-08-14",
+        to: "2026-08-17",
+        note: "טיסה הביתה",
+      },
+      SATURDAY,
+    );
+
+    expect(spans).toHaveLength(2);
+    expect(spans.map((span) => span.note)).toEqual([
+      "טיסה הביתה",
+      "טיסה הביתה",
+    ]);
+  });
+});
+
+describe("only one day of vacation may be taken in part (items 7, 10)", () => {
+  const day = { from: "2026-08-17", to: "2026-08-17" } as const;
+
+  it("allows half a day of vacation", () => {
+    expect(partIsAllowed({ kind: "vacation", ...day, fraction: 0.5 })).toBe(true);
+  });
+
+  it("refuses half a day of sickness or of a free rest day", () => {
+    // Item 7 gives the part-day to vacation and item 10 to a holiday, which is
+    // not a mark at all. Sickness is counted in whole days from the spell's own
+    // first day (item 8), and a free rest day is not an entitlement (item 5).
+    expect(partIsAllowed({ kind: "sick", ...day, fraction: 0.5 })).toBe(false);
+    expect(partIsAllowed({ kind: "freeRestDay", from: "2026-08-15", to: "2026-08-15", fraction: 0.5 })).toBe(false);
+  });
+
+  it("refuses a part of a range of more than one day", () => {
+    // `DaySpan.fraction` is set only where `from` and `to` are equal
+    // (`types.ts`): half of a four-day range is not a thing the stored shape
+    // can say, so it is refused rather than stored as something else.
+    expect(
+      partIsAllowed({ kind: "vacation", from: "2026-08-17", to: "2026-08-20", fraction: 0.5 }),
+    ).toBe(false);
+  });
+
+  it("refuses a proportion the picker never offers", () => {
+    // A server action is reachable by a crafted request, so the two parts the
+    // picker draws are the two the rule allows and not a range of numbers.
+    expect(partIsAllowed({ kind: "vacation", ...day, fraction: 0.37 })).toBe(false);
+    expect(partIsAllowed({ kind: "vacation", ...day, fraction: 0 })).toBe(false);
+  });
+
+  it("allows a whole day of every kind, however it is written", () => {
+    expect(partIsAllowed({ kind: "sick", ...day })).toBe(true);
+    expect(partIsAllowed({ kind: "sick", ...day, fraction: 1 })).toBe(true);
+  });
+
+  it("falls back to a whole day rather than writing a part it refuses", () => {
+    // The floor under the picker and the server action, and not the answer the
+    // user gets: neither of those two can produce this call.
+    const { spans } = applyMark(
+      { kind: "sick", ...day, fraction: 0.5 },
+      SATURDAY,
+    );
+    expect("fraction" in spans[0]).toBe(false);
   });
 });
 

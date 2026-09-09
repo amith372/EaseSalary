@@ -272,6 +272,27 @@ export const he = {
       clear: "לנקות סימון",
       cancel: "ביטול",
       cancelLabel: "לבטל בחירה",
+      /**
+       * How much of the day was taken, asked before the kind is chosen because
+       * the kind chip is what commits the mark (specs.md item 7).
+       *
+       * The rule is said in words beneath both rows rather than left to be
+       * discovered: only vacation among the three may be taken in part, so the
+       * two kinds that may not are not offered while חצי יום stands.
+       */
+      part: {
+        label: "כמה מהיום נלקח",
+        whole: "יום מלא",
+        half: "חצי יום",
+        rule: (restDay: RestDay) =>
+          `חופשה אפשר לקחת גם כחצי יום, והיא נגרעת מהמכסה באותו יחס. מחלה ו${day(restDay).bare} ${agrees(day(restDay)).free} הם ימים שלמים.`,
+      },
+      /** Every action can carry a free-text note (specs.md item 5). It is
+       * optional, and the placeholder says so rather than a label doing it. */
+      note: {
+        label: "הערה",
+        placeholder: "במילים שלך — לא חובה",
+      },
     },
     /**
      * A range applies to the days it legally can and says which it skipped and
