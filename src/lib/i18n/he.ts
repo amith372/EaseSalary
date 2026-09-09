@@ -825,6 +825,27 @@ export const he = {
           of: "מתוך",
           open: "לבחור חגים",
         },
+        /**
+         * The recuperation month, and the days it will pay (specs.md item 15).
+         *
+         * **The row reports the entitlement rather than offering it**, because
+         * the days follow from seniority and the user never chooses them — what
+         * she chooses is the month. Showing the figure beside the choice is
+         * what makes the choice mean something: a month named with nothing
+         * beside it says only that a payment happens sometime.
+         */
+        recuperation: {
+          label: "חודש דמי ההבראה",
+          hint: "פעם בשנה, בחודש שאת/ה בוחר/ת. מספר הימים נקבע לפי הוותק ואינו נבחר — השנה נמדדת מיום תחילת ההעסקה ולא לפי השנה הקלנדרית.",
+          /** Named for what it is, so the row reads as one sentence: "השנה
+           * ישולמו 6 ימים". */
+          thisYear: "השנה ישולמו",
+          days: "ימים",
+          /** Before the first employment year is out there is nothing to pay,
+           * and saying so is better than a zero the user has to interpret. */
+          notYet:
+            "אין עדיין זכאות: דמי הבראה משולמים רק אחרי שהושלמה שנת עבודה מלאה.",
+        },
         standing: {
           title: "שורות קבועות",
           hint: "שורה שנקבעת פעם אחת ומופיעה בכל חודש מאז, באותו סכום, עד שמשנים אותה או מפסיקים אותה. סכום שונה בחודש מסוים מחליפים במסך התשלומים.",
@@ -884,6 +905,7 @@ export const he = {
          * it is about, because the panel that shows it holds several. */
         refused: {
           restDay: "אפשר לבחור רק שישי, שבת או ראשון.",
+          recuperationMonth: "צריך לבחור אחד מחודשי השנה.",
           date: "אחד התאריכים אינו תאריך. הצורה היא שנה-חודש-יום, למשל 2027-03-31.",
           days: "מספר הימים צריך להיות מספר שאינו שלילי.",
           principal: "צריך להקליד את הסכום שניתן — מספר גדול מאפס, בלי מינוס.",
@@ -1076,6 +1098,7 @@ export const he = {
       restDays: (restDay: RestDay) => `עבודה ב${day(restDay).bare}`,
       holidaysWorked: "עבודה בחג",
       sickDeduction: "ניכוי ימי מחלה",
+      recuperation: "דמי הבראה",
       incomeTax: "מס הכנסה",
       advanceGranted: "מקדמה שניתנה",
       advanceRepaid: "מקדמה שנפרעת",
@@ -1149,6 +1172,15 @@ export const he = {
         `חג שנעבד משולם באותו תעריף כמו ${day(restDay).bare}. חג שלא נעבד אינו מזכה בתוספת, כי המשכורת החודשית משולמת עליו במלואה. החודש נעבדו ${holidays} ימי חג.`,
       sickDeduction: (days: number, restDay: RestDay) =>
         `המשכורת החודשית משולמת במלואה גם בחודש שהיו בו ימי מחלה, ולכן השורה הזו מחזירה את החלק שדמי המחלה אינם מכסים: על היום הראשון של כל מחלה לא משולמים דמי מחלה, על השני והשלישי משולם חצי יום, ומהיום הרביעי ואילך המחלה משולמת במלואה. כך נשאר בדיוק מה שהחוק מזכה בו. החודש הניכוי הוא על ${formatDays(days)} ימים, בערך של יום מחלה. ${day(restDay).plural} שבתוך תקופת המחלה ${agrees(day(restDay)).counted} לתקופה ${agrees(day(restDay)).andSubtracted} מהמאזן, אך ${agrees(day(restDay)).arentPaid} ${agrees(day(restDay)).andArentDeducted} — המשכורת ממילא אינה כוללת ${agrees(day(restDay)).them}.`,
+      /**
+       * Recuperation (specs.md item 15). The sentence says the three things the
+       * user cannot see from the figure: that the days come from her seniority
+       * and not from a choice, that the year is measured from the employment
+       * anniversary and not from January, and that the day rate is not derived
+       * from the salary — which is why it is confirmed rather than calculated.
+       */
+      recuperation: (days: number) =>
+        `דמי הבראה משולמים פעם בשנה, בחודש שנקבע בפרופיל של העובד/ת. מספר הימים נקבע לפי הוותק: חמישה ימים על השנה הראשונה, שישה על השנייה והשלישית, שבעה מהרביעית עד העשירית, ואילך לפי הסולם שבחוק. השנה נמדדת מיום תחילת ההעסקה ועד יום השנה שאחריו — ולא לפי השנה הקלנדרית, שלפיה נמדדת החופשה — ואין זכאות עד שהושלמה שנת עבודה מלאה. החודש משולמים ${formatDays(days)} ימים. ערך יום ההבראה אינו נגזר מהשכר: הוא נקבע בחוק ומתעדכן בכל יולי, ולכן הוא מאושר ונשמר עם החודש שחושב לפיו.`,
       incomeTax:
         "היישום אינו מחשב מס הכנסה. השורה מתחילה באפס, והסכום מוזן ידנית על ידך. הכלל הוא שהמעסיק מנכה מס לפי גובה השכר ולפי הזיכויים שהעובד/ת זכאי/ת להם, ועובד/ת זר/ה בסיעוד מקבל/ת 2.25 נקודות זיכוי — יותר מעובד/ת זר/ה בענף אחר. מי שאינו יודע זאת מנכה יותר מדי, ולכן כדאי לקרוא את הכלל לפני הזנת הסכום.",
       advanceGranted: (advanceNumber: number) =>
@@ -1246,6 +1278,11 @@ export const he = {
         "החודש הזה טרם הסתיים, ולכן אפשר למלא אותו אבל עדיין אי אפשר לייצא אותו.",
       vacationUnderSeven: (year: number, days: number) =>
         `בשנת ${year} נוצלו ${formatDays(days)} ימי חופשה. החוק מבקש לפחות שבעה ימי חופשה בשנה. היתרה עצמה נשמרת ואינה נמחקת.`,
+      /** The recuperation month with nothing to price its days at (item 15).
+       * It names the days, because that is the part the application does know
+       * and the part the user would otherwise have to work out for herself. */
+      recuperationRateMissing: (days: number) =>
+        `החודש הזה הוא חודש ההבראה, והעובד/ת זכאית ל־${formatDays(days)} ימי הבראה — אבל ערך יום ההבראה שהיה בתוקף בחודש הזה אינו ידוע ליישום, ולכן השורה אינה מופיעה. אפשר להוסיף אותה כשורה משלך עם הסכום הנכון.`,
     },
   },
 } as const;

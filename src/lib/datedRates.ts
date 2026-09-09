@@ -34,23 +34,28 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * to a hand-kept union would compile clean against a hand-kept array that had
  * not grown with it.
  */
-export const rateKeys = ["minimumWage", "nationalInsurance"] as const;
+export const rateKeys = [
+  "minimumWage",
+  "nationalInsurance",
+  "recuperationDayRate",
+] as const;
 
 export type RateKey = (typeof rateKeys)[number];
 
 /**
  * One figure, from one date, from one source.
  *
- * **`value` is read in the unit its key names, and the two keys do not share
- * one.** `minimumWage` is integer agorot, as every money figure in this
- * application is; `nationalInsurance` is a fraction of the month's gross —
- * 0.036, not 3.6. There is no unit field, because a unit that travels as data
- * is a unit a caller can get wrong at run time; the key is the unit, and each
- * call site names its key.
+ * **`value` is read in the unit its key names, and the keys do not share
+ * one.** `minimumWage` and `recuperationDayRate` are integer agorot, as every
+ * money figure in this application is; `nationalInsurance` is a fraction of the
+ * month's gross — 0.036, not 3.6. There is no unit field, because a unit that
+ * travels as data is a unit a caller can get wrong at run time; the key is the
+ * unit, and each call site names its key.
  */
 export interface DatedRate {
   key: RateKey;
-  /** Agorot for `minimumWage`, a fraction for `nationalInsurance`. */
+  /** Agorot for `minimumWage` and `recuperationDayRate`, a fraction for
+   * `nationalInsurance`. */
   value: number;
   /**
    * The official date of application — the תאריך תחולה the statute or the
@@ -102,11 +107,11 @@ export function rateInForce(
 /**
  * What the application ships knowing, before any fetch has run.
  *
- * **Three rows and no more.** Every figure here is one this repository can
- * cite: two minimum wages read out of the committed workbooks, and the
- * national-insurance percentage. Nothing is seeded from memory — a figure with
- * a date nobody can check is worse than an absent row, because an absent row
- * comes back as `null` and says so.
+ * **Four rows and no more.** Every figure here is one this repository can
+ * cite: two minimum wages read out of the committed workbooks, the
+ * national-insurance percentage, and the recuperation day rate. Nothing is
+ * seeded from memory — a figure with a date nobody can check is worse than an
+ * absent row, because an absent row comes back as `null` and says so.
  *
  * **The wage rises in April and not in January**, which is why a table keyed by
  * calendar year would get March 2026 wrong: it is still valued at the 2025
@@ -134,6 +139,31 @@ export const SEEDED_RATES: DatedRate[] = [
     value: 0.036,
     effectiveFrom: "2025-01-01",
     source: "https://www.kolzchut.org.il/he/דיווח_ותשלום_דמי_ביטוח_לאומי_עבור_עובד_זר_בסיעוד",
+  },
+  {
+    key: "recuperationDayRate",
+    // ₪451.50, the private sector's rate for the recuperation year running
+    // 1.7.2025 to 30.6.2026 (specs.md item 15). The caregiver-terms page names
+    // the same figure and gives it no date at all, which is precisely the
+    // undated number this table exists to refuse; the general article dates it,
+    // so the date comes from there and the figure agrees across both.
+    //
+    // **The private sector's rate and not the public sector's.** The same page
+    // gives ₪511.60 for the public sector, and a family employing a caregiver
+    // in its own home is not it.
+    //
+    // **It steps in July**, where the minimum wage steps in April: the rate is
+    // restated each July against the consumer price index. So there is no year
+    // in which one date serves both, which is the case a table keyed by
+    // calendar year gets wrong twice over.
+    //
+    // Only one row, because only one figure here is precisely dated. The
+    // previous rate of ₪418 is named on the page without a start anyone can
+    // read off it, and a month before July 2025 gets `null` and says so rather
+    // than a guessed date.
+    value: 45150,
+    effectiveFrom: "2025-07-01",
+    source: "https://www.kolzchut.org.il/he/דמי_הבראה",
   },
 ];
 

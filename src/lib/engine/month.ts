@@ -1,4 +1,5 @@
-import { SEEDED_RATES } from "@/lib/datedRates";
+import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
+import type { DatedRate } from "@/lib/datedRates";
 import type { RestDay } from "@/lib/dates";
 import { advanceKey } from "@/lib/engine/advances";
 import { buildBalances, buildWarnings } from "@/lib/engine/balances";
@@ -9,6 +10,7 @@ import {
 } from "@/lib/engine/leave";
 import { type LineDraft, toLine } from "@/lib/engine/lines";
 import { deriveRates } from "@/lib/engine/rates";
+import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import { sickDeductionDays } from "@/lib/engine/sick";
 import {
   nationalInsuranceEstimateOf,
@@ -80,6 +82,7 @@ export const lineKeys = {
   restDays: "restDays",
   holidaysWorked: "holidaysWorked",
   sickDeduction: "sickDeduction",
+  recuperation: "recuperation",
   incomeTax: "incomeTax",
 } as const;
 
@@ -142,7 +145,41 @@ function userLineWhy(
   return `${prefix === "standing" ? why.standing : why.oneOff} ${why[placement]}`;
 }
 
-function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
+/**
+ * What one day of recuperation is worth in this month, or `null` where nothing
+ * can say (specs.md item 15).
+ *
+ * **The month's own figure first, and the table only where the month has
+ * none.** A month that has been through the pre-export confirmation carries the
+ * rate it was valued at, and re-exporting it years later must reproduce that
+ * figure and not today's — which is exactly the argument `ConfirmedWage` makes
+ * for the minimum wage, applied to the one other rate the application does not
+ * derive.
+ *
+ * `null` is an answer and not a failure, for `rateInForce`'s own reason: a
+ * month earlier than anything the table knows has no figure the application can
+ * honestly offer, and the month says so with a warning rather than pricing the
+ * days at nothing.
+ */
+function recuperationRateOf(
+  facts: ClosedMonthFacts,
+  rates: DatedRate[],
+): number | null {
+  if (facts.recuperationDayRateAgorot !== undefined) {
+    return facts.recuperationDayRateAgorot;
+  }
+  return rateInForce(rates, "recuperationDayRate", facts.month)?.value ?? null;
+}
+
+function buildLines(
+  facts: ClosedMonthFacts,
+  counts: MonthCounts,
+  employment: Employment,
+  // Named apart from the derived `rates` below, which are a different thing
+  // entirely: those are computed from the salary and these are the figures the
+  // application cannot derive (specs.md items 3, 4).
+  datedRates: DatedRate[],
+): MonthLine[] {
   const rates = deriveRates(facts.confirmedWage.baseAgorot);
   // Every label and every explanation that names a day names *her* day
   // (specs.md item 5), and it is read off the month like every other term.
@@ -259,6 +296,37 @@ function buildLines(facts: ClosedMonthFacts, counts: MonthCounts): MonthLine[] {
       explanation: {
         text: he.sheet.why.holidaysWorked(holidaysWorked, restDay),
         link: "holidayWork",
+      },
+    });
+  }
+
+  // Column G — the one-off payments, of which recuperation is the one the
+  // application works out for itself (specs.md item 15, Part 5's column
+  // paragraph). It is zero in every month but the one the family named, and
+  // `recuperation.ts` owns both the ladder and the clock it is read against;
+  // this file prices what that module counted and restates neither.
+  //
+  // **The days are the statute's and the rate is not derived**, which is why
+  // one comes from a function and the other from a stored figure. Overridable,
+  // because item 15 offers the entitlement as a suggestion the user may change
+  // before approving, and item 17's override is how a suggestion is changed.
+  const recuperationDays = recuperationDaysFor(
+    employment.employedSince,
+    facts.terms.recuperationMonth,
+    facts.month,
+  );
+  const recuperationRate = recuperationRateOf(facts, datedRates);
+  if (recuperationDays > 0 && recuperationRate !== null) {
+    drafts.push({
+      key: lineKeys.recuperation,
+      label: he.sheet.lines.recuperation,
+      units: recuperationDays,
+      rate: recuperationRate,
+      column: "G",
+      overridable: true,
+      explanation: {
+        text: he.sheet.why.recuperation(recuperationDays),
+        link: "recuperation",
       },
     });
   }
@@ -469,8 +537,9 @@ export function calculateMonth(
   // when the month ends and never moves because of when it is looked at.
   const month = closeMonth(facts, context.today);
 
+  const rates = context.rates ?? SEEDED_RATES;
   const counts = countMonth(month);
-  const lines = buildLines(month, counts);
+  const lines = buildLines(month, counts, employment, rates);
   const closing = buildClosing(month);
 
   const gross = lines
@@ -499,13 +568,13 @@ export function calculateMonth(
     afterWithholding,
     net,
     balances: buildBalances(month, employment, context.openingBalances),
-    warnings: buildWarnings(month, context),
+    warnings: buildWarnings(month, employment, rates, context),
     // An estimate to be confirmed, never a fact (item 19), and never the money
     // that actually left the account — that appears once, in the month it was
     // paid, as a column H line of its own. `thirdParty.ts` holds both.
     nationalInsuranceEstimate: nationalInsuranceEstimateOf(
       gross,
-      context.rates ?? SEEDED_RATES,
+      rates,
       facts.month,
     ),
   };

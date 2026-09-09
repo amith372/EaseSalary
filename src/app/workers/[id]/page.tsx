@@ -6,6 +6,7 @@ import { getRepository } from "@/lib/dev/store";
 import { advanceLedger } from "@/lib/engine/advances";
 import { holidayYear } from "@/lib/engine/holidayYear";
 import { holidayAllowanceFor } from "@/lib/engine/leave";
+import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import { calculateSeries } from "@/lib/engine/series";
 import { fromIsoDate } from "@/lib/dates";
 import { todayInIsrael } from "@/lib/today";
@@ -81,6 +82,15 @@ export default async function WorkerPage({
       }
       ledger={advanceLedger(profile.openingPosition, months)}
       year={year}
+      // The days this calendar year's recuperation payment will pay, worked out
+      // here for the reason the holiday figures are: the row reports the
+      // entitlement and never chooses it, and one calculation serves the row,
+      // the month's line and the export (specs.md item 15).
+      recuperationDays={recuperationDaysFor(
+        profile.employedSince,
+        profile.recuperationMonth,
+        { year, month: profile.recuperationMonth },
+      )}
       holidayDaysChosen={holidays.chosenDays}
       holidayAllowance={holidays.allowance}
     />

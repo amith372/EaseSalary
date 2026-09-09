@@ -498,6 +498,21 @@ export interface MonthFacts {
   /** Income tax is never calculated: the line defaults to zero and is the
    * user's to edit (specs.md item 17, Part 1). */
   incomeTaxAgorot: number;
+  /**
+   * What one day of recuperation was worth when this month was valued, held
+   * here for the reason `ConfirmedWage` holds the minimum wage: the rate is not
+   * derived from the salary — nothing in that salary implies it — so it is
+   * confirmed by the user and stored with the month it was used for, which is
+   * what lets a past month be reproduced at its own rate (specs.md item 15).
+   *
+   * **Optional, and absent in almost every month.** Only the recuperation month
+   * prices anything with it, and a month that has not been through the
+   * confirmation has none — the confirmation is item 18's and arrives with the
+   * pre-export questions. Until then the engine falls back to the dated-rates
+   * table, which is the same figure from the same source, and the month raises
+   * a warning when neither exists rather than pricing the days at nothing.
+   */
+  recuperationDayRateAgorot?: number;
   /** Keyed by the line's explanation key — `base`, `restDays`, `extra.<id>` and
    * the rest — so an override is addressed by the same key the explanation is
    * (specs.md items 17, 24). */

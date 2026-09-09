@@ -1,5 +1,8 @@
 import { daysInMonth, fromIsoDate, isoOf, monthHasEnded } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import { rateInForce } from "@/lib/datedRates";
+import type { DatedRate } from "@/lib/datedRates";
+import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import type {
   ClosedMonthFacts,
   ClosedSpan,
@@ -316,15 +319,54 @@ export function monthNotEndedWarning(
   return { key: "monthNotEnded", message: he.sheet.warnings.monthNotEnded };
 }
 
+/**
+ * The recuperation month that cannot price what it owes (specs.md item 15).
+ *
+ * **It is a warning and not a refusal**, for item 21's reason: the month is
+ * still calculable and the rest of its figures are still correct, and a refusal
+ * would take the whole month away over one line. What it must not do is stay
+ * silent — a recuperation month whose line is simply absent looks like an
+ * ordinary month, which is the class of mistake `specs.md` Part 5 is about.
+ *
+ * It fires only where a rate is owed and none exists: the month carries none
+ * because it has not been through the pre-export confirmation, and the
+ * dated-rates table begins after it. Every month from July 2025 on has a seeded
+ * figure, so this is a fence around a gap rather than a case that arises.
+ */
+export function recuperationRateMissingWarning(
+  facts: ClosedMonthFacts,
+  employment: Employment,
+  rates: DatedRate[],
+): Warning | null {
+  const days = recuperationDaysFor(
+    employment.employedSince,
+    facts.terms.recuperationMonth,
+    facts.month,
+  );
+  if (days === 0) return null;
+  if (facts.recuperationDayRateAgorot !== undefined) return null;
+  if (rateInForce(rates, "recuperationDayRate", facts.month) !== null) {
+    return null;
+  }
+  return {
+    key: "recuperationRateMissing",
+    message: he.sheet.warnings.recuperationRateMissing(days),
+    link: "recuperation",
+  };
+}
+
 /** Every warning the month raises. A list from the first commit, because a
  * second warning arriving later must not change the shape the screen reads. */
 export function buildWarnings(
   facts: ClosedMonthFacts,
+  employment: Employment,
+  rates: DatedRate[],
   context: MonthContext = {},
 ): Warning[] {
   return [
     monthNotEndedWarning(facts, context),
     vacationYearWarning(facts, context),
+    recuperationRateMissingWarning(facts, employment, rates),
   ].filter(
     (warning): warning is Warning => warning !== null,
   );

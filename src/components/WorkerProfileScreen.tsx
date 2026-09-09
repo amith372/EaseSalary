@@ -8,6 +8,7 @@ import {
   removeOpeningAdvance,
   setDocuments,
   setOpeningDays,
+  setRecuperationMonth,
   setRestDay,
   stopStandingLine,
   updateStandingLine,
@@ -86,6 +87,10 @@ interface WorkerProfileScreenProps {
    * so the row and the picker cannot disagree. */
   holidayDaysChosen: number;
   holidayAllowance: number;
+  /** The days the recuperation payment of that same year will pay, worked out
+   * on the server from her seniority (item 15). Zero before her first
+   * employment year is out. */
+  recuperationDays: number;
   /** Her closing balances after the last month the store holds — the replay's
    * own figures and not a second count (items 7, 13). */
   vacationDays: number;
@@ -103,6 +108,7 @@ export function WorkerProfileScreen({
   year,
   holidayDaysChosen,
   holidayAllowance,
+  recuperationDays,
   vacationDays,
   sickDays,
   ledger,
@@ -279,6 +285,13 @@ export function WorkerProfileScreen({
           />
 
           <HolidaysRow year={year} chosen={holidayDaysChosen} allowance={holidayAllowance} />
+
+          <RecuperationControl
+            workerId={profile.id}
+            recuperationMonth={profile.recuperationMonth}
+            days={recuperationDays}
+            onSubmit={handleAction}
+          />
 
           <StandingLinesControl
             workerId={profile.id}
@@ -554,6 +567,78 @@ function RestDayControl({
       <p dir="auto" className="text-[13px] font-light text-ink-quiet">
         {words.eveNote(restDay)}
       </p>
+      {refusal ? <Refusal reason={refusal} /> : null}
+    </TermRow>
+  );
+}
+
+/**
+ * The month the recuperation payment falls in, and the days it will pay
+ * (specs.md item 15).
+ *
+ * **The user chooses the month and never the days.** The entitlement follows
+ * from her seniority and is reported beside the choice rather than offered as
+ * one: item 15 is explicit that the days are worked out, and a field for them
+ * would be a number the family has to know — which is what this application
+ * exists not to ask.
+ *
+ * **Twelve chips and not a select**, because the choice is one of twelve short
+ * names and the row beside it already reads as a row of chips; a dropdown here
+ * would be the only one on the page. The value is checked on the server all the
+ * same, since the offer is never the rule (Part 3).
+ *
+ * The recuperation *rate* is not here. It is confirmed before an export, the
+ * way the minimum wage is, and stored with the month it valued (item 15) — so
+ * it is a fact about a month rather than a term of the employment, and the
+ * screen that asks it is the pre-export one.
+ */
+function RecuperationControl({
+  workerId,
+  recuperationMonth,
+  days,
+  onSubmit,
+}: {
+  workerId: string;
+  recuperationMonth: number;
+  days: number;
+  onSubmit: Submit;
+}) {
+  const words = he.workers.profile.terms.recuperation;
+  const { refusal, run } = useProfileAction(onSubmit);
+
+  return (
+    <TermRow label={words.label} hint={words.hint}>
+      <div data-terms="recuperationMonth" className="flex flex-wrap gap-2">
+        {he.calendar.monthNames.map((name, index) => (
+          <Chip
+            key={name}
+            selected={index + 1 === recuperationMonth}
+            onClick={() => run(() => setRecuperationMonth(workerId, index + 1))}
+          >
+            <Bidi>{name}</Bidi>
+          </Chip>
+        ))}
+      </div>
+      {days > 0 ? (
+        <p
+          data-recuperation
+          className="flex items-baseline gap-1.5 text-[13px] font-light text-ink-quiet"
+        >
+          <span dir="auto">{words.thisYear}</span>
+          <Bidi noTranslate className="font-semibold">
+            {formatDays(days)}
+          </Bidi>
+          <span dir="auto">{words.days}</span>
+        </p>
+      ) : (
+        <p
+          data-recuperation
+          dir="auto"
+          className="text-[13px] font-light text-ink-quiet"
+        >
+          {words.notYet}
+        </p>
+      )}
       {refusal ? <Refusal reason={refusal} /> : null}
     </TermRow>
   );

@@ -55,6 +55,7 @@ export type ProfileActionRefusal =
   | OpeningRefusal
   | UserLineRefusal
   | "restDay"
+  | "recuperationMonth"
   | "date"
   | "entryUnknown";
 
@@ -141,6 +142,31 @@ export async function setRestDay(
   if (!isAllowedRestDay(restDay)) return { ok: false, reason: "restDay" };
   const profile = await profileOf(workerId);
   return saveProfile({ ...profile, restDay }, true);
+}
+
+/**
+ * The month the recuperation payment falls in (specs.md item 15).
+ *
+ * **The family names the month and the application works out the days**, which
+ * is the division item 15 draws: the entitlement follows from seniority and the
+ * user never types it, while *when* it is paid is a fact about this employment
+ * that nothing in the law settles — the article says the summer months are
+ * customary and that any other month is allowed by the practice of the place.
+ *
+ * The value is checked here rather than trusted from the control that sent it,
+ * for the reason `setRestDay` gives: an action is reachable by a crafted
+ * request, and a month of 13 would sit on the profile unnoticed until the
+ * recuperation month simply never arrived.
+ */
+export async function setRecuperationMonth(
+  workerId: string,
+  month: number,
+): Promise<ProfileActionResult> {
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    return { ok: false, reason: "recuperationMonth" };
+  }
+  const profile = await profileOf(workerId);
+  return saveProfile({ ...profile, recuperationMonth: month }, true);
 }
 
 /**

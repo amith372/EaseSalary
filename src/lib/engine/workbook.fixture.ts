@@ -42,8 +42,13 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  *    the base. `specs.md` item 7 rejects that style outright; they are used in
  *    `workbook-vacation.test.ts` as the shape the engine must not produce.
  *  - **`חודש  3.25` and `חודש  3.26`**, which carry a recuperation payment in
- *    column G. The engine emits no recuperation line yet, so their ברוטו is not
- *    a figure it can reach; `3.26` appears below for its advances alone.
+ *    column G. The engine emits that line from `recuperation.ts` since stage
+ *    5's step 6, and the **day counts** those two tabs pay — five and six — are
+ *    what `recuperation.test.ts` checks itself against. What is still missing
+ *    is the **rate** the family valued them at, which was not read out of the
+ *    tabs, so their ברוטו remains a figure this suite cannot reach and neither
+ *    month is listed below for its money; `3.26` appears for its advances
+ *    alone.
  *
  * A fourth thing found in the reading is recorded here rather than tested,
  * because it is a fact about the family's sheet and not about the engine: the

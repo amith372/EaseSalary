@@ -2873,6 +2873,117 @@ row must say the date is already marked rather than take it. Then tick on until 
 days are chosen — every remaining row greys, says המכסה נוצלה במלואה, and cannot be
 pressed.
 
+### Step 6 — the recuperation month, and the entitlement from seniority · **done**
+
+`src/lib/engine/recuperation.ts`, a fourth row in `src/lib/datedRates.ts`, one line
+in column G, and one row on the worker's profile. It is the stage's sixth bullet
+and item 15's first half; the day rate's **confirmation** is item 18's and belongs
+to the pre-export ticket, which is next.
+
+**No artboard draws recuperation anywhere**, which was read before building rather
+than discovered after. `הגדרות` lists neither the month nor the day rate among its
+rows, `דף העובד` does not carry them, and `לפני הייצוא` asks six questions of which
+none is this one. So the row is built in the `הגדרות` artboard's own vocabulary on
+the profile — a label, its hint, the control, and the figure beneath it — which is
+the departure step 9 already took and wrote down, applied once more rather than
+invented here.
+
+**Three decisions were asked and answered on 2026-09-09.** The first was put to the
+user and sent back to the source: *check what the law says*. It does, and the answer
+resolved what looked like a contradiction between item 15 and the family's own sheet.
+
+- **When a year is complete.** `שכר_חודשי_להאנה2025.xlsx` → `חודש  3.25` pays five
+  days and `שכר_חודשי_להאנה2026.xlsx` → `חודש  3.26` six, against `C4`'s
+  "התחלת עבודה:  1.4.2024" — which reads like a payment made a day before the first
+  year is out. It is not: an employment beginning 1.4.2024 has worked a full year by
+  the **end of 31.3.2025**, and 1.4.2025 is the second year's first day. So item 15's
+  "nothing is due until a full working year has been completed" and the workbook agree
+  exactly, and **`specs.md` needed no amendment** — the disagreement was a reading of
+  it. The count is taken at the recuperation month's own last day, so every
+  recuperation month covers one more year than the one before it whichever month the
+  family chose.
+- **Above the tenth year.** The caregiver-terms page stops at "years four to ten —
+  seven days" and the general `דמי_הבראה` article continues: 8 days for years 11–15,
+  9 for 16–19, 10 from the twentieth. The application follows the general article,
+  because stopping at seven would quietly underpay a worker of eleven years, and the
+  page stopping is a fact about that page rather than about the law.
+- **Where the suggested day rate comes from.** A seeded row in the dated-rates table,
+  exactly as the minimum wage is: ₪451.50 from **1.7.2025**, the private sector's
+  figure for the recuperation year running to 30.6.2026. The caregiver page names the
+  same ₪451.50 and gives it **no date at all**, which is precisely the undated number
+  that table exists to refuse, so the figure is corroborated by two pages and dated by
+  one. **The private sector's rate and not the public sector's ₪511.60.** It steps in
+  **July** where the minimum wage steps in April, so no single date serves both — the
+  case a table keyed by calendar year gets wrong twice over. **One row only**: the
+  previous ₪418 is named without a start anyone can read off the page, so a month
+  before July 2025 gets `null` and says so rather than a guessed date.
+
+**Days and money are kept in separate modules on purpose.** The ladder is a rule about
+an employment and the rate is a number about a year; `recuperation.ts` holds the first
+and `datedRates.ts` the second, so neither has to be corrected when the other moves.
+The month prefers **its own** stored rate over the table's, which is the same argument
+`ConfirmedWage` already makes for the minimum wage, and it is what lets a past month be
+re-exported at its own rate.
+
+**A recuperation month with no rate anywhere warns rather than going quiet.** It is a
+warning and not a refusal, for item 21's reason — the rest of the month is still
+correct and a refusal would take it all away over one line — but a line that simply
+vanished would make the month look ordinary, which is the class of mistake Part 5 is
+about. Every month from July 2025 on has a seeded figure, so it is a fence around a
+gap rather than a case that arises.
+
+**The line is overridable and the profile row is not editable**, which is item 15 read
+as it is written: the entitlement is "offered as a suggestion the user can change
+before approving", and item 17's override is how a suggestion is changed — so the row
+on the profile *reports* the days and offers only the twelve months. A field for the
+days would be a number the family has to know, which is what this application exists
+not to ask.
+
+**What the tests would catch** (20 cases in `recuperation.test.ts`, four browser flows
+in `e2e/recuperation.spec.ts`). Every expected figure is the `דמי_הבראה` article's
+ladder, the workbook's own two payments, the article's ₪451.50, or arithmetic worked by
+hand — none off the engine. Caught: a ladder flattened at the tenth year, which
+underpays a worker of eleven; a year counted complete on the anniversary rather than the
+day before it, which pays nothing in the March the family actually pays in; a payment
+that fails to step when the recuperation month is not the month the employment year ends
+in; a line drawn in column H, which would look identical on screen and pay her nothing;
+a line drawn every month rather than one; a stored rate ignored in favour of today's,
+which would restate a past month; a missing rate swallowed silently; and — the two only
+a browser can see — a month chip that writes a term no month reads, and a payment that
+does not leave the month it used to be paid in.
+
+**Four things left out on purpose, and none is a bug.** The **rate's confirmation** is
+item 18's and arrives with the pre-export questions, so until then a month is valued at
+the table's figure and the field on `MonthFacts` that would hold a confirmed one is
+optional and unwritten. The **other three yearly items** of item 15 — the visa fee, the
+licence renewal, the agency fee — are recorded as third-party payments already (item 16),
+and "shown as due in the month they fall" is a reminder rather than a calculation; the
+`תשלומים` artboard's two reminder sections are where they land. **Proration is not
+built**: each payment covers one whole completed year, and the article's proportional
+rule is for an employment that *ends* part way through a year, which the appendix defers.
+And the `הגדרות` artboard is still unbuilt, so the row lives on the profile.
+
+**The check the user runs.** Four parts.
+
+First, the profile. Open `/workers/worker-1` on the demo household. Under
+תנאי ההעסקה there is a חודש דמי ההבראה row: twelve month chips with יולי selected,
+and beneath them "השנה ישולמו 6 ימים". A failure is a field asking you to type the
+number of days.
+
+Second, the money. Open `/month` and step back to יולי 2026. The preview carries a
+דמי הבראה row reading ₪2,709.00, with 6 × ₪451.50 beneath it. Step to any other
+month and the row is gone. A failure is the row appearing every month, or an amount
+that is not 6 × 451.50.
+
+Third, the wire. Back on the profile, press מאי. Then open `/month`, step back to
+מאי 2026 — the ₪2,709.00 row is now there — and step on to יולי, where it is gone. A
+failure is the chip changing on the profile while the money stays in July.
+
+Fourth, the worker with no entitlement yet. Open `/workers/worker-2`, who began on
+1.9.2025. Her recuperation row says אין עדיין זכאות rather than a figure, because her
+first employment year is not out. A failure is a payment offered to a worker who has
+not completed a year.
+
 ## Stage 6 — The opening screen
 
 Same stack. The screen was built in stage 0 against fixtures; this stage replaces the
