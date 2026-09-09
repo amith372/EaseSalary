@@ -1,3 +1,4 @@
+import type { DatedRate } from "@/lib/datedRates";
 import { compareIsoDate, daysInMonth, isoOf } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import type {
@@ -569,6 +570,19 @@ export interface MonthContext {
    * from the opening position given once (item 6).
    */
   openingBalances?: { vacationDays: number; sickDays: number };
+  /**
+   * The dated-rates table the month is valued against — the rates the
+   * application does not derive, each with the date it took effect (specs.md
+   * item 4). Left out, the seeded table is read, which is what the application
+   * ships knowing before any fetch has run; a fetch updates the table rather
+   * than introducing one, so the caller passes it only once there is a stored
+   * one to pass.
+   *
+   * It is handed in for the same reason `today` is: the engine reads no clock
+   * and no store, and a rate it fetched for itself would be a second
+   * calculation path.
+   */
+  rates?: DatedRate[];
   /**
    * Vacation days drawn from the balance earlier in the same **calendar** year,
    * counted the way this month counts its own. The seven-day warning is a

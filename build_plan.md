@@ -2389,6 +2389,60 @@ pages produces a stated failure rather than a number, a failed fetch leaves the 
 type the figure and continue, and **no rate the application did not derive is still a
 number in the code without a date beside it**.
 
+### Step 1 — the dated-rates table · **done**
+
+`src/lib/datedRates.ts`, and it is the whole of the stage's first bullet: which rate, the
+figure, the date it took effect, and where it came from. `rateInForce` answers with the row
+in force on the month's **first day**, and `SEEDED_RATES` is what the application ships
+knowing before any fetch has run.
+
+**Three seeded rows, and every one of them citable.** The two minimum wages come out of the
+committed workbooks — ₪6,247.65 from 1.4.2025 (`שכר_חודשי_להאנה2025.xlsx` → `חודש  4.25`
+→ D6) and ₪6,443.85 from 1.4.2026 (`שכר_חודשי_להאנה2026.xlsx` → `חודש  4.26` → D6) — and
+the third is the national-insurance percentage, 3.6% from 1.1.2025. Nothing is seeded from
+memory: a figure whose date nobody can check is worse than an absent row, because an absent
+row comes back as `null` and says so. **Two wage rows rather than one on purpose**, because
+the rise lands in April and not in January, so `חודש  3.26` is still valued at the 2025
+figure — the mistake a table keyed by calendar year makes, demonstrated by the workbook
+itself.
+
+**`NATIONAL_INSURANCE_RATE` is gone.** It was a bare constant in `engine/thirdParty.ts` whose
+own docblock explained how the workbook's D21 went stale in exactly that way, and named this
+step as the fix. `nationalInsuranceEstimateOf` now takes the table and the month and looks the
+percentage up, so the estimate travels from a dated row rather than from a number in the code.
+
+**Two rules the spec did not settle, asked and answered on 2026-09-09, and written into item
+4 in the same step.** The stored date is the official תאריך תחולה, which is always a first
+of month — a retroactive rise is expressed as an earlier first-of-month, never as a date
+inside a month — so the lookup needs no second rule for a rate that changed mid-month. And a
+month earlier than every row gets no figure: `rateInForce` answers `null`, and the
+national-insurance estimate goes empty rather than being valued at a percentage that was not
+in force then. `MonthResult.nationalInsuranceEstimate` was already `number | null` and the
+month screen already renders the empty case, so nothing on screen had to change to allow it.
+
+**The engine reads no store, so the table is handed in.** `MonthContext.rates` is the seam,
+beside `today` and for the same reason; left out, the seeded table is read. The scrape that
+lands next updates a table that already exists rather than introducing one, which is why this
+step came first. **Persistence is deliberately not built here** — there is no consumer yet,
+and `SalaryRepository` gains its two methods with the fetch that needs them.
+
+**What the tests would catch** (`src/lib/datedRates.test.ts`, ten cases, every expected
+figure from the workbook or from `specs.md`): a table read by calendar year, which pays March
+2026 at the April 2026 wage; a lookup that takes the last matching row in **array order**
+rather than the latest by date, which is correct until a fetch appends an older row — the
+fixture is written newest-first for that reason alone; a lookup that falls back to the
+earliest row instead of answering `null`; and one key's row answering for another. Two cases
+in `engine/thirdParty.test.ts` cover the wiring: a 2024 month gets no estimate, and a month
+handed a table saying 2% produces 2% of Part 4's ₪9,305.75 — 930,575 × 0.02 = 18,611.5
+agorot, rounded once to 18,612 — which is what proves the percentage is not baked into the
+engine.
+
+**The check the user runs.** Open `/month` on the demo household and read the
+אומדן ביטוח לאומי לחודש line at the foot of the balances card. It is 3.6% of the month's
+ברוטו and must read exactly what it read before this step — the change is where the
+percentage comes from and not what it is. A failure looks like an empty line, a line that
+moved, or a month that refuses to calculate.
+
 ## Stage 6 — The opening screen
 
 Same stack. The screen was built in stage 0 against fixtures; this stage replaces the

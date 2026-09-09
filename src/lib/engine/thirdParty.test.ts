@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
 import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
 import {
-  NATIONAL_INSURANCE_RATE,
   nationalInsuranceEstimateOf,
   thirdPartyLineKey,
 } from "@/lib/engine/thirdParty";
@@ -97,10 +97,14 @@ const terms: WorkerTerms = {
   },
 };
 
+/** The month every case below is set in, named once so the rate looked up by
+ * date and the month calculated cannot drift apart. */
+const AUGUST_2025: YearMonth = { year: 2025, month: 8 };
+
 function facts(payments: ThirdPartyPayment[] = []): ClosedMonthFacts {
   return {
     terms: snapshotTerms(terms),
-    month: { year: 2025, month: 8 },
+    month: AUGUST_2025,
     confirmedWage: {
       baseAgorot: SALARY,
       minimumAgorot: SALARY,
@@ -201,11 +205,18 @@ describe("the national-insurance estimate (specs.md item 19)", () => {
     // instalment: the contribution cannot depend on whether the family happened
     // to lend her money.
     const result = calculateMonth(facts(), terms);
-    expect(NATIONAL_INSURANCE_RATE).toBe(0.036);
+    // The percentage is looked up by date rather than read off a constant
+    // (specs.md item 4): August 2025 falls after the 1.1.2025 row, so it is
+    // valued at 3.6%.
+    expect(rateInForce(SEEDED_RATES, "nationalInsurance", AUGUST_2025)?.value).toBe(
+      0.036,
+    );
     expect(result.nationalInsuranceEstimate).toBe(ESTIMATE); // ₪335.01
-    expect(nationalInsuranceEstimateOf(GROSS)).toBe(ESTIMATE);
+    expect(nationalInsuranceEstimateOf(GROSS, SEEDED_RATES, AUGUST_2025)).toBe(
+      ESTIMATE,
+    );
     expect(result.nationalInsuranceEstimate).not.toBe(
-      nationalInsuranceEstimateOf(NET),
+      nationalInsuranceEstimateOf(NET, SEEDED_RATES, AUGUST_2025),
     );
   });
 
@@ -217,6 +228,36 @@ describe("the national-insurance estimate (specs.md item 19)", () => {
     const result = calculateMonth(facts(), terms);
     expect(Math.round(588002 * 0.02)).toBe(STALE_WORKBOOK_LINE);
     expect(result.nationalInsuranceEstimate).not.toBe(STALE_WORKBOOK_LINE);
+  });
+
+  it("is empty in a month earlier than any percentage the table holds", () => {
+    // The rate rose to 3.6% in January 2025 and the application holds no dated
+    // figure before that. A month of 2024 therefore gets no estimate rather
+    // than today's percentage applied to a month it was not in force during
+    // (specs.md item 4) — which is the stale-line mistake of Part 5 with the
+    // sign reversed.
+    expect(
+      nationalInsuranceEstimateOf(GROSS, SEEDED_RATES, { year: 2024, month: 12 }),
+    ).toBe(null);
+  });
+
+  it("follows the table it is handed rather than a constant", () => {
+    // 2% is what the workbook's own line was left at (Part 5). Handed a table
+    // that says so, the engine must produce 2% of Part 4's ₪9,305.75 —
+    // 930,575 × 0.02 = 18,611.5 agorot, rounded once to 18,612 — which proves
+    // the percentage travels from the table and is not baked into the engine.
+    const result = calculateMonth(facts(), terms, {
+      rates: [
+        {
+          key: "nationalInsurance",
+          value: 0.02,
+          effectiveFrom: "2024-01-01",
+          source: "שכר_חודשי_להאנה2024.xlsx → חודש  12.24 → D21",
+        },
+      ],
+    });
+    expect(result.nationalInsuranceEstimate).toBe(18612);
+    expect(result.nationalInsuranceEstimate).not.toBe(ESTIMATE);
   });
 
   it("moves neither of the totals paid to the worker", () => {

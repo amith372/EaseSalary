@@ -1,3 +1,4 @@
+import { SEEDED_RATES } from "@/lib/datedRates";
 import type { RestDay } from "@/lib/dates";
 import { advanceKey } from "@/lib/engine/advances";
 import { buildBalances, buildWarnings } from "@/lib/engine/balances";
@@ -502,6 +503,10 @@ export function calculateMonth(
     // An estimate to be confirmed, never a fact (item 19), and never the money
     // that actually left the account — that appears once, in the month it was
     // paid, as a column H line of its own. `thirdParty.ts` holds both.
-    nationalInsuranceEstimate: nationalInsuranceEstimateOf(gross),
+    nationalInsuranceEstimate: nationalInsuranceEstimateOf(
+      gross,
+      context.rates ?? SEEDED_RATES,
+      facts.month,
+    ),
   };
 }

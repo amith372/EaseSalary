@@ -1,3 +1,5 @@
+import type { DatedRate } from "@/lib/datedRates";
+import { rateInForce } from "@/lib/datedRates";
 import {
   compareMonth,
   eachMonth,
@@ -55,49 +57,46 @@ import type { Explanation, MonthLine, SheetColumn, YearMonth } from "@/lib/types
 const THIRD_PARTY_COLUMN: SheetColumn = "H";
 
 /**
- * 3.6% of the month's full cost (specs.md item 19).
- *
- * **Derived, never copied.** The workbook's own line is stale: D21 of every
- * month tab in `שכר_חודשי_להאנה2025.xlsx` and `שכר_חודשי_להאנה2026.xlsx` still
- * reads 117.60, which is 2% of the 2024 monthly minimum wage — ₪5,880.02, the
- * figure `שכר_חודשי_להאנה2024.xlsx` -> `חודש  12.24` -> D7 pays the salary at.
- * The rate rose to 3.6% in January 2025 and the cell never followed; I21 of the
- * same 2025 tabs says so in words while the cell beside it disagrees, which is
- * Part 5's rule in one row: where a note and an amount disagree the amount is
- * what happened, and where the workbook and the statute disagree the statute
- * is.
- *
- * **It carries no effective date, and that is the same defect one paragraph
- * up.** The rate rose to 3.6% in January 2025, so a month of 2024 is not valued
- * at it — and this constant cannot say so, which is precisely how D21 went
- * stale. It is not fixed here because the fix is a *table* and not a second
- * constant: `specs.md` item 4 and Part 3 now require every rate the application
- * does not derive to be held with the date it took effect, and stage 5's first
- * bullet builds it with this figure and the minimum wage as its first two rows.
- * Until then the application calculates only months from 2025 onward, where
- * this figure is the one in force, and the debt is written down in three places
- * rather than left in a number.
- */
-export const NATIONAL_INSURANCE_RATE = 0.036;
-
-/**
- * This month's estimate: 3.6% of the month's full cost — the salary, the
- * rest-eve supplement, the rest-day and holiday pay, and the one-off payments
- * such as recuperation — taken **before anything to do with advances**
- * (specs.md item 19).
+ * This month's estimate: the national-insurance percentage in force during the
+ * month, taken on the month's full cost — the salary, the rest-eve supplement,
+ * the rest-day and holiday pay, and the one-off payments such as recuperation —
+ * **before anything to do with advances** (specs.md item 19).
  *
  * That base is columns E, F and G, which is the gross, so the gross is what
  * this takes. Applying it to the net would make the contribution depend on
  * whether the family happened to lend her money, which nothing in the rule
  * says: for August 2025 it is 3.6% of ₪9,305.75 and not of ₪7,305.75 (Part 4).
  *
+ * **The percentage is looked up by date and is no longer a constant here.** It
+ * is set by the state and changes on a date, and a bare number in this file
+ * could not say when — which is precisely how the workbook's own line went
+ * stale: D21 of every month tab in `שכר_חודשי_להאנה2025.xlsx` and
+ * `שכר_חודשי_להאנה2026.xlsx` still reads 117.60, which is 2% of the 2024
+ * monthly minimum wage. The rate rose to 3.6% in January 2025 and the cell
+ * never followed; I21 of the same 2025 tabs says so in words while the cell
+ * beside it disagrees, which is Part 5's rule in one row: where a note and an
+ * amount disagree the amount is what happened, and where the workbook and the
+ * statute disagree the statute is. `datedRates.ts` is where the figure and its
+ * date now live together (specs.md item 4).
+ *
+ * **`null` where the table begins after the month**, which today means a month
+ * before January 2025. The estimate is a reporting figure and enters no
+ * subtotal, so the month still calculates and the line simply shows nothing:
+ * an undated percentage applied to a month that predates it is the mistake
+ * this lookup exists to refuse, and it would look like an ordinary figure.
+ *
  * It is an **estimate to be confirmed** and never a fact. It is also never read
  * from `MonthFacts.thirdPartyPayments`: a month that has already settled a
  * quarter still accrues its own, and a month that has settled none still has
  * one.
  */
-export function nationalInsuranceEstimateOf(grossAgorot: number): number {
-  return Math.round(grossAgorot * NATIONAL_INSURANCE_RATE);
+export function nationalInsuranceEstimateOf(
+  grossAgorot: number,
+  rates: DatedRate[],
+  month: YearMonth,
+): number | null {
+  const rate = rateInForce(rates, "nationalInsurance", month);
+  return rate === null ? null : Math.round(grossAgorot * rate.value);
 }
 
 /**

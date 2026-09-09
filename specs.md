@@ -93,6 +93,19 @@ Each of these is true or false at a glance.
    what is known, and fetching is what keeps it current (Part 3); a rate the application
    has never fetched is still dated, because a seeded figure has an effective date as
    surely as a fetched one.
+   **The date stored is the official תאריך תחולה, which is always the first of a
+   month.** A rise ordinarily applies from the first of the month after it was published,
+   so that employers have time to prepare, and where it applies retroactively the notice
+   says so by naming an earlier first-of-month — in rare cases several months back. So a
+   rate never takes effect in the middle of a month, the date is the whole of the rule,
+   and a month reads the row in force on its own first day.
+   **A month earlier than every row the table holds has no figure, and the application
+   says nothing rather than guessing one.** Reaching for the earliest row would apply a
+   rate to a month it was not in force during, which is the undated guess this table
+   exists to remove. What follows from that is the caller's: the national-insurance
+   estimate is a reporting figure that enters no subtotal (item 19), so its line simply
+   shows nothing and the month still calculates, while a rate a payment depended on would
+   refuse the month with its reason.
    **A month is valued at the rate in force during it and never at the current one**,
    which is the same sentence criterion 13 rests on from the other side: a month corrected
    years later moves every later month's balances precisely because nothing about it was
