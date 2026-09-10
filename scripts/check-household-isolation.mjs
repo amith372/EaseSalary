@@ -17,6 +17,17 @@
 // row by every route a request can take: by listing the table, by naming the
 // row's id, by filtering on the other household, and by trying to write.
 //
+// **Every table is asked, not only the workers**, because a table added with
+// policies and no grant -- or with a grant and no policies -- looks exactly
+// like a table that works until somebody else's request tries it. The months
+// and the spans are reached one join further out than the worker is, through
+// `private.owns_worker`, so they are asked separately rather than assumed to
+// follow. The last few checks ask the database for the rules its constraints
+// carry -- only sickness may be left open, a holiday says whether she worked
+// it, a part day is one day -- because each of those is a state the engine's
+// types make a compile error and a crafted request does not go through the
+// types.
+//
 // Run it from the repository root, with .env filled in:
 //   node --env-file=.env scripts/check-household-isolation.mjs
 //
@@ -287,6 +298,240 @@ try {
     prefer: "return=representation",
   });
   check(third.status >= 400, "and the database itself refuses a third");
+
+  // -------------------------------------------------------------------------
+  // The rest of the schema: a month, a span, and the two tables a household
+  // shares between its workers.
+  // -------------------------------------------------------------------------
+  //
+  // Four more tables are four more routes to the same row, and a table added
+  // with policies but no grant -- or with a grant and no policies -- looks
+  // exactly like a table that works until somebody else's request tries it.
+  // The worker-scoped two are reached one join further out than the checks
+  // above, so they are asked separately rather than assumed to follow.
+
+  const month = await rest("months", {
+    token: a.token,
+    method: "POST",
+    body: {
+      worker_id: a.workerId,
+      year: 2026,
+      month: 3,
+      confirmed_base_agorot: 600000,
+      confirmed_minimum_agorot: 600000,
+      confirmed_effective_from: "2025-04-01",
+      terms_rest_day: 6,
+      terms_rest_eve_supplement_agorot: 10000,
+      terms_recuperation_month: 7,
+    },
+    prefer: "return=representation",
+  });
+  check(month.status === 201, "she may record a month for her own worker");
+
+  const span = await rest("spans", {
+    token: a.token,
+    method: "POST",
+    body: {
+      worker_id: a.workerId,
+      id: "sick-2026-03-04",
+      kind: "sick",
+      from: "2026-03-04",
+      to: null,
+    },
+    prefer: "return=representation",
+  });
+  check(span.status === 201, "and may leave a spell of sickness open");
+
+  const list = await rest("holiday_lists", {
+    token: a.token,
+    method: "POST",
+    body: {
+      household_id: a.householdId,
+      source_kind: "country",
+      source_key: "PH",
+      year: 2026,
+      source_url: "https://example.invalid/ph-2026",
+      name_he: "פיליפינים",
+      holidays: [{ date: "2026-04-09", name: "Araw ng Kagitingan" }],
+    },
+    prefer: "return=representation",
+  });
+  check(list.status === 201, "and may cache a holiday list for her household");
+
+  const rate = await rest("dated_rates", {
+    token: a.token,
+    method: "POST",
+    body: {
+      household_id: a.householdId,
+      key: "minimumWage",
+      value: 600000,
+      effective_from: "2025-04-01",
+      source: "https://example.invalid/minimum-wage",
+    },
+    prefer: "return=representation",
+  });
+  check(rate.status === 201, "and may store a dated rate");
+
+  // The other household, asking for every one of them. Listing first, because
+  // a table whose policy was forgotten answers this one with everything in it.
+  for (const [table, own] of [
+    ["months", "worker_id"],
+    ["spans", "worker_id"],
+    ["holiday_lists", "household_id"],
+    ["dated_rates", "household_id"],
+  ]) {
+    const listed = await rest(`${table}?select=${own}`, { token: b.token });
+    check(
+      Array.isArray(listed.body) && listed.body.length === 0,
+      `listing ${table} returns nothing of the other household's`,
+    );
+  }
+
+  // Naming the row's owner directly, which is the crafted request: a worker id
+  // travels in a URL and a household id is in the other's own membership row.
+  const namedMonth = await rest(
+    `months?select=year&worker_id=eq.${a.workerId}`,
+    { token: b.token },
+  );
+  check(
+    Array.isArray(namedMonth.body) && namedMonth.body.length === 0,
+    "naming the other household's worker returns none of her months",
+  );
+  const namedSpan = await rest(
+    `spans?select=kind&worker_id=eq.${a.workerId}`,
+    { token: b.token },
+  );
+  check(
+    Array.isArray(namedSpan.body) && namedSpan.body.length === 0,
+    "and none of her spans",
+  );
+  const namedRate = await rest(
+    `dated_rates?select=value&household_id=eq.${a.householdId}`,
+    { token: b.token },
+  );
+  check(
+    Array.isArray(namedRate.body) && namedRate.body.length === 0,
+    "and none of the other household's rates",
+  );
+
+  // Writing a month against someone else's worker, which is the reach that
+  // matters most here: it would put a salary the other family never entered
+  // into the sheet they export.
+  const forged = await rest("months", {
+    token: b.token,
+    method: "POST",
+    body: {
+      worker_id: a.workerId,
+      year: 2026,
+      month: 4,
+      confirmed_base_agorot: 100,
+      confirmed_minimum_agorot: 100,
+      confirmed_effective_from: "2025-04-01",
+      terms_rest_day: 6,
+      terms_recuperation_month: 7,
+    },
+  });
+  check(
+    forged.status >= 400,
+    "she cannot record a month against the other household's worker",
+  );
+  const forgedSpan = await rest("spans", {
+    token: b.token,
+    method: "POST",
+    body: {
+      worker_id: a.workerId,
+      id: "vacation-2026-04-01-2026-04-02",
+      kind: "vacation",
+      from: "2026-04-01",
+      to: "2026-04-02",
+    },
+  });
+  check(
+    forgedSpan.status >= 400,
+    "nor mark a day on the other household's worker",
+  );
+
+  // And the owner still reaches what she recorded, so the refusals above are
+  // refusals and not four empty tables.
+  const stillThere = await rest(
+    `months?select=year,month,terms_rest_day&worker_id=eq.${a.workerId}`,
+    { token: a.token },
+  );
+  check(
+    stillThere.body?.length === 1 && stillThere.body[0].terms_rest_day === 6,
+    "her own month is still there with the terms it was confirmed with",
+  );
+
+  // -------------------------------------------------------------------------
+  // The constraints that carry a rule, asked of the database rather than read
+  // off the migration. Each of these is a state the engine's types make a
+  // compile error, and a crafted request does not go through the types.
+  // -------------------------------------------------------------------------
+
+  const openVacation = await rest("spans", {
+    token: a.token,
+    method: "POST",
+    body: {
+      worker_id: a.workerId,
+      id: "vacation-open",
+      kind: "vacation",
+      from: "2026-03-10",
+      to: null,
+    },
+  });
+  check(
+    openVacation.status >= 400,
+    "only a spell of sickness may be left open",
+  );
+
+  const silentHoliday = await rest("spans", {
+    token: a.token,
+    method: "POST",
+    body: {
+      worker_id: a.workerId,
+      id: "holiday-2026-04-09",
+      kind: "holiday",
+      from: "2026-04-09",
+      to: "2026-04-09",
+    },
+  });
+  check(
+    silentHoliday.status >= 400,
+    "a holiday is never recorded without saying whether she worked it",
+  );
+
+  const spreadPartDay = await rest("spans", {
+    token: a.token,
+    method: "POST",
+    body: {
+      worker_id: a.workerId,
+      id: "vacation-part-run",
+      kind: "vacation",
+      from: "2026-03-16",
+      to: "2026-03-18",
+      fraction: 0.5,
+    },
+  });
+  check(
+    spreadPartDay.status >= 400,
+    "a part day is one day and never a run of them",
+  );
+
+  const secondMinimumWage = await rest("dated_rates", {
+    token: a.token,
+    method: "POST",
+    body: {
+      household_id: a.householdId,
+      key: "minimumWage",
+      value: 700000,
+      effective_from: "2025-04-01",
+      source: "https://example.invalid/twice",
+    },
+  });
+  check(
+    secondMinimumWage.status >= 400,
+    "one rate per key per effective date, so 'in force' is never ambiguous",
+  );
 } catch (error) {
   console.log("ERROR", error.message);
   failures += 1;
