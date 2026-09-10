@@ -33,6 +33,14 @@ import type { MonthLine, MonthResult } from "@/lib/types";
  * user wrote in her own words, an advance the block grows for — carry a label
  * the engine gave them.
  *
+ * **The one exception is the rest day, and it is an exception the template
+ * itself asks for.** Nine of its cells named Saturday or Friday literally, and
+ * the rest day is a term of the employment rather than a constant (item 5), so
+ * those nine now carry `{{rest_…}}` placeholders and this file fills them from
+ * the month's own stored day. The words still come from `he.ts` and are handed
+ * in — see `restDayWords` — so the filler learns no Hebrew and the exception
+ * does not become a second place labels are written.
+ *
  * **Nothing in the template is a default.** Its own two rates are from the year
  * they were typed and have both moved since (`build_plan.md`, finding 5), so a
  * filler that left one standing would ship a stale rate to every family. Every
@@ -86,6 +94,20 @@ export interface MonthSheetInput {
    * takes the sentence rather than learning to write one.
    */
   freeRestDays: string[];
+  /**
+   * The rest day as the template's own labels name it, already in words.
+   *
+   * Formatted by the caller for the same reason `freeRestDays` is: the Hebrew
+   * belongs to `he.ts`, which is the one translations file, and the filler
+   * learns no words. `he.sheet.restDayTokens` is the one place that builds it.
+   *
+   * These are the only labels the export writes above the block, and they are
+   * written because the rest day is a term of the employment and not a
+   * constant (specs.md item 5): the template says Saturday and Friday in nine
+   * of its cells, and a Friday-resting worker must not receive a sheet that
+   * counts her Fridays and calls them Saturdays.
+   */
+  restDayWords: Record<string, string>;
   /**
    * The holiday days this month drew from the yearly entitlement — the
    * template's own `ניצול יום חג בחודש זה` (specs.md item 10).
@@ -189,7 +211,7 @@ export async function fillMonthSheet(
   writeBlock(sheet, input, layout, block);
   writeTotals(sheet, layout);
   writeReporting(sheet, result, layout);
-  fillPlaceholders(sheet, identity);
+  fillPlaceholders(sheet, identity, input.restDayWords);
 
   sheet.getColumn(NOTES_COLUMN).hidden = !input.showNotes;
 
@@ -439,8 +461,10 @@ function writeReporting(
 function fillPlaceholders(
   sheet: ExcelJS.Worksheet,
   identity: MonthSheetIdentity,
+  restDayWords: Record<string, string>,
 ): void {
   const values: Record<string, string> = {
+    ...restDayWords,
     month_year: identity.monthYear,
     worker_name: identity.workerName,
     worker_role: identity.workerRole,

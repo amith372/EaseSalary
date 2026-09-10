@@ -85,6 +85,15 @@ function inputFor(
     // against whether or not she worked them (item 10).
     holidayDaysUsed: 2,
     freeRestDays: ["16 באוגוסט"],
+    // Hanna rests on Saturday, so these are the words the template already
+    // carried literally before step 2 made its nine labels placeholders.
+    restDayWords: {
+      rest_day: "שבת",
+      rest_days: "שבתות",
+      rest_days_definite: "השבתות",
+      rest_eve_days: "ימי שישי",
+      rest_eve_days_definite: "ימי השישי",
+    },
     notes: {},
     showNotes: false,
     ...over,

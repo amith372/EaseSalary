@@ -1419,6 +1419,30 @@ export const he = {
      */
     workerRole: "עובד/ת",
 
+    /**
+     * The rest day as the month template's own labels name it — the five
+     * `{{rest_…}}` placeholders nine of its cells carry (specs.md Part 3).
+     *
+     * **The template says Saturday and Friday literally, and the rest day is a
+     * term of the employment (item 5), so those words are the month's and not
+     * the template's.** A worker who rests on Friday receives a sheet that says
+     * Friday throughout and counts her Fridays, and Hanna's sheet is unchanged
+     * word for word — which is what keeps one template rather than three.
+     *
+     * The one-letter prefixes compose, so `עבודה ב{{rest_day}}` is `עבודה בשבת`
+     * for Hanna and `עבודה ביום שישי` for a Friday-resting worker, and no
+     * prefixed form is stored.
+     */
+    restDayTokens: (restDay: RestDay) => ({
+      rest_day: day(restDay).bare,
+      rest_days: day(restDay).plural,
+      rest_days_definite: day(restDay).pluralDefinite,
+      /** The rest-eve is the working day before the rest day (item 14), which
+       * is Friday only for the Saturday-resting common case. */
+      rest_eve_days: eve(restDay).plural,
+      rest_eve_days_definite: eve(restDay).pluralDefinite,
+    }),
+
     /** What the exported file is called. */
     file: {
       month: "משכורת",

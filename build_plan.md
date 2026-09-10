@@ -1004,18 +1004,82 @@ attached would have left a false cause written down. The path is now covered by 
 browser test that walks it, so the version of this that *is* the application's fault
 would fail.
 
-#### Step 2 — the rest-day wording, made a placeholder
+#### Step 2 — the rest-day wording, made a placeholder · **done**
 
 Part 3 requires every label that names the rest day to become a placeholder filled
-from the month's stored rest day, and names nine cells. **The template holds eleven**
-— Part 3's list misses `F1` (`ימי שישי שעבדה בחודש זה`) and `F3`
-(`תאריך שבת חופשית`), both of which name a day the way the nine do. Extending the list
-is an edit to `specs.md` and is put to the user before it is made, not after.
+from the month's stored rest day, and names nine cells. Nine is what was built.
 
-The edit is made inside the `.xlsx` rather than by rewriting the file through
-`exceljs`: the labels are shared strings, so the zip's own `sharedStrings.xml` is
-edited and every other part stays byte for byte, which is what keeps the formatting
-the family compares by eye out of the change.
+**The template holds thirteen, and the user chose the nine — 2026-09-10.** The
+count was put to her before any code, because the plan had said eleven and the
+template turned out to say more than that. Read out of
+`data/templates/template_month_standard.xlsx` cell by cell: Part 3's nine, plus `F1`
+(`ימי שישי שעבדה בחודש זה`) and `F3` (`תאריך שבת חופשית`) which this plan had already
+spotted, plus two neither list held — `C5`, the column-C header
+`כמות יחידות/ימים/ שבתות/חגים`, and `B23`, the `א` subtotal
+`א. סה"כ  משכורת בסיסית + תוספת ימי שישי +דמי מחלה`. `A26` is a merged `A26:D26` and is
+one label, not four.
+
+**She chose the nine, so `specs.md` is unedited and the four stay literal.** That is
+a deliberate departure and is written here so nobody corrects it back: a
+Friday-resting worker's sheet says `ימי חמישי` in `A26` while `B23` directly above it
+still says `ימי שישי`, and `G1` says `ימי שישי` above a `C5` header that still says
+`שבתות`. Reopening it is an edit to Part 3 and hers to ask for.
+
+**The mechanism this step described was wrong about this file, and the correction is
+the point of recording it.** The labels are *not* shared strings: the committed
+template has no `xl/sharedStrings.xml` part at all, and every label is an inline
+string (`<c t="inlineStr"><is><t>`) in `xl/worksheets/sheet1.xml`. So that one part is
+rewritten and put back through .NET's `ZipArchive` in update mode, which copies every
+untouched entry's compressed bytes — `diff -rq` against the extracted `HEAD` version
+shows `sheet1.xml` as the only part that differs. Cell count is 285 before and after,
+`<f>` count is zero before and after, the single merge `A26:D26` survives, and the
+fonts do. That is what keeps the formatting the family compares by eye out of the
+change. The one-off rewriting script is not committed: the template diff is the
+artifact, and a script whose assertions have already been consumed is a second thing
+to keep in step with the template.
+
+**Five tokens, not one**, because the labels use four grammatical forms and two
+different days. `{{rest_day}}` bare, `{{rest_days}}` plural, `{{rest_days_definite}}`
+definite plural, and `{{rest_eve_days}}` / `{{rest_eve_days_definite}}` for the
+rest-eve, which is the working day before the rest day and is Friday only for the
+Saturday-resting common case (item 14). The one-letter prefixes compose, which
+`he.ts` already said and relies on here: `עבודה ב{{rest_day}}` is `עבודה בשבת` for
+Hanna and `עבודה ביום שישי` for a Friday-resting worker, so no prefixed form is
+stored. `he.sheet.restDayTokens` is the one place that builds them, and the filler is
+handed the words rather than learning any — the same idiom `freeRestDays` already
+used, and the reason the file's "writes figures and never a label" claim needed only
+a qualification and not a retraction.
+
+**The words come off the month's terms and never off the profile.** `monthSheetInputOf`
+reads `facts.terms.restDay`, which is what stops a family who moves the rest day in
+June from relabelling every earlier month's sheet — the whole reason the terms are
+snapshotted (Part 3).
+
+**What the tests prove, and what they would catch.**
+`src/lib/export/rest-day-wording.test.ts` drives the whole path — the replay, then
+`monthSheetInputOf`, then the filled bytes — for a Saturday-resting worker and a
+Friday-resting one, and reads the nine cells back out of the produced file. The
+Saturday expectations are the template's own wording as it stood *before* the edit,
+so the half of Part 3 that says "Hanna's sheet is unchanged word for word" is a
+regression test and not a restatement; the Friday expectations are that wording with
+the Hebrew day names substituted by hand. Two mutations were run to check the tests
+bite rather than merely pass: hardcoding Saturday in `monthSheetInputOf` fails two of
+them, and filling `rest_eve_days` from the rest day instead of the rest-eve fails
+three. The fourth test asserts `F2` and `G2` still hold 4 and 5 — August 2025's
+Thursdays and Fridays, counted off a calendar — because a label alone proves half of
+"says Friday throughout and counts her Fridays". The suite's existing "leaves no
+placeholder token anywhere in the sheet" test already covers the five new tokens.
+
+**The check the user runs.** Open `/month/export` for the **second** worker, the one
+who rests on Friday, and press `לייצא לאקסל`. In the downloaded file: `E1` reads
+`ימי עבודה בחודש זה (לא כולל ימי שישי )`, `G1` reads `ימי שישי שעבדה בחודש זה`, `B9`
+reads `עבודה ביום שישי (...)`, and `B7` reads `תוספת שבועית בגין ימי חמישי (...)` —
+Thursday, not Friday, because that is her rest-eve. Then export for Hanna and confirm
+those same four cells read exactly as her sheet always has: `שבתות`, `בשבת`,
+`ימי שישי`. A failure looks like a `{{rest_day}}` printed literally onto the sheet, or
+Hanna's file reading `יום שבת` where her workbook has always said `שבת`. `C5`, `B23`,
+`F1` and `F3` still say Saturday and Friday for both workers, which is the decision
+above and not a defect.
 
 #### Step 3 — `/reports`, and the yearly balances file
 

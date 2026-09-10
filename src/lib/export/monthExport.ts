@@ -55,6 +55,10 @@ export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
     freeRestDays: facts.spans
       .filter((span) => span.kind === "freeRestDay")
       .map((span) => dayLabel(span.from)),
+    // Off the month's terms and never off the profile (Part 3): a family that
+    // moves the rest day in June must not thereby relabel every earlier
+    // month's sheet, which is the whole reason the terms are snapshotted.
+    restDayWords: he.sheet.restDayTokens(facts.terms.restDay),
     notes: notesOf(facts),
     showNotes: request.showNotes,
   };
