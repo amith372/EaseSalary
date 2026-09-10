@@ -864,16 +864,23 @@ buttons on `/month/export` are two links to it.
 
 **Three things the step turned up that were not on its list.**
 
-**1. `H2` is the holidays she took *off*, not the ones she worked.** The template
-heads `G1` `שבתות שעבדה` and `H1` `ניצול יום חג` — one counts attendance and the
-other counts utilisation — and the first draft filled both from the worked count.
-A holiday she worked is a day of attendance that draws nothing from the yearly
-quota (item 10); a holiday she took off is the one drawn from it. Filled from the
-worked count, a family would read that her quota had been spent on the very days
-she was paid a premium for. It is now `holidayDaysOf`, which is the same function
-`calculateSeries` counts the year's entitlement with, so the sheet and the replay
-cannot disagree about it. **Caught by reading the filled file, not by a test** —
-both figures are plausible and neither is a type error.
+**1. `H2` is not the count of holidays she worked.** The template heads `G1`
+`שבתות שעבדה` and `H1` `ניצול יום חג` — one counts attendance and the other counts
+what the yearly entitlement was drawn against — and the first draft filled both
+from the worked count. They are different figures: `holidayDaysOf` draws against
+every holiday the month records, worked or not, less any that fell inside a spell
+of sickness, and a part day draws its own proportion. `H2` is now that function,
+which is the same one `calculateSeries` counts the year's entitlement with, so the
+sheet and the replay cannot disagree about it. **Caught by reading the filled file,
+not by a test** — both figures are plausible and neither is a type error.
+
+**The first correction then carried a wrong reason**, which reading the file a
+second time caught: it said a worked holiday draws nothing from the quota, and it
+does draw. The cell was right and three sentences beside it were not, one of them
+a test fixture supplying zero for Part 4's two holidays — a figure no assertion
+could contradict, because the test handed it in. That is the shape of the mistake
+worth remembering here: a corrected value with an uncorrected explanation, which
+the next reader believes.
 
 **2. The browser test's first version compared two different months.** `/month`
 opens on the current month and the file is of the last one that ended, so the
