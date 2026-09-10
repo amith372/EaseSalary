@@ -127,6 +127,7 @@ page. A tab that 404s is worse than a tab that is not there.
 | `/workers` | `העובדות` | 3 in this table, **built by stage 4's step 9** | **built** on 2026-09-09, with `/workers/[id]` beside it |
 | `/settings` | `הגדרות` | 3 + 5 | 404 |
 | `/reports` | `דוחות` | 2 — four report files, item 23 among them | **built** |
+| `/month/payslip` | `דף המשכורת` | 2 — the month seen a third way | **built** |
 | `/alerts` | `התראות` | 6 | 404 |
 | `/help` | none — stage 7 draws it | 7 | 404 |
 
@@ -139,11 +140,14 @@ part a later session would otherwise have to reconstruct:
 | `בחירת חגים` | The year's holidays chosen in advance (item 10). Reached from `הגדרות` and from the home screen's own alert, so it draws `הגדרות` as the active tab | **stage 5's**, which is the stage that needs it |
 | `לפני הייצוא` | The confirmation questions and the minimum-wage confirmation (items 18 and 4). No tab is active: it is a step in an action, not a section | **built on 2026-09-09** at `/month/export`, by stage 5's step 7. The address is the home screen's own link from stage 0, so the questions landed where the application already pointed; stage 2 puts the file behind the button they end with |
 
-**Three artboards have no route at all, and each is a different kind of gap:**
+**Three artboards had no route at all, and each was a different kind of gap. The
+first is now built:**
 
-- **`דף המשכורת`** — the payslip as the family reads it, mapped to stages 2 and 4. It is the
-  export's own layout seen on screen, so what it needs is the export; the address is stage
-  2's to choose and no earlier stage should invent one.
+- **`דף המשכורת`** — the payslip as the family reads it, mapped to stages 2 and 4.
+  **Built on 2026-09-10 at `/month/payslip`** by stage 2's step 4, which is the stage
+  whose export it mirrors. The home screen had linked it at `/sheet` since stage 0 —
+  an address nobody had chosen and which 404'd, a fifth 404 no table counted — and
+  that link now points here, as does `/reports`, month by month.
 - **`החודשים`** — the list of the worker's months. Stage 4's per the design table, and the
   one thing in this stage nothing has yet asked for: `/month` moves between months with its
   own stepper, so the list answers "which months exist and which are done" rather than
@@ -1156,11 +1160,70 @@ display. `סיכום שנתי` must repeat the same ברוטו and נטו the ro
 failure looks like a card that downloads an error page, a balances file with 1.5 in
 both blocks, or a yearly file whose figures differ from the screen above it.
 
-#### Step 4 — `דף המשכורת`
+#### Step 4 — `דף המשכורת` · **done**
 
 The payslip as the family reads it, at `/month/payslip`. The address is stage 2's to
-choose and this is the choice: a sibling of `/month/export`, because it is the same
+choose and this was the choice: a sibling of `/month/export`, because it is the same
 month seen a third way and no nav tab owns it.
+
+**It closed a 404 nobody had counted.** The home screen's `לצפייה בדף המשכורת המלא`
+had pointed at `/sheet` since stage 0 — an address no table lists and no stage chose —
+and it 404'd. The routes table tracked four remaining 404s and this was a fifth.
+
+**It groups by the sheet's columns, where the month screen groups by kind.** That is
+what makes it a third view of the month rather than a second month screen, and item 5
+already says why the two differ. Criterion 1 checks four totals; a screen able to show
+only one ברוטו is one the file cannot be compared against. The subtotal names are the
+sheet's own, from `he.sheet.subtotals`.
+
+**`SummaryRow` was extracted rather than copied.** The month screen's `Row` — a label,
+a figure and the "?" that explains it — is now `src/components/SummaryRow.tsx` and both
+screens import it. Two implementations would have drifted in exactly the details that
+matter: which figure carries the `ידני` badge, where an explanation opens, and what the
+browser suite can take hold of through `data-row`.
+
+**No new counting was written.** `הימים בחודש` reads `exportQuestions`, which is what
+the pre-export screen already counts a month's holidays and vacation days with, so the
+two screens cannot disagree about how many the month had. The unworked holidays are
+every holiday less the worked ones, not a second sweep of the calendar.
+
+**Two things the artboard draws are not built, both put to the user on 2026-09-10 and
+both deliberate.** `אושר ב[תאריך]` needs a confirmation date the application does not
+store — a confirmed month is one that has a `confirmedWage`, with no timestamp — so any
+date shown would be invented; she chose to omit the line, and it can be built when
+stage 3 holds real storage. `להוסיף הערה לחודש` needs a note on the month as a whole,
+and a note belongs to a mark or to a line the user added; she chose to omit the link
+rather than have it lead somewhere that means something else.
+
+**Three defects the built screen showed, and none was reachable by a type or a test.**
+The headline total rendered at the row size rather than the artboard's 42px, because
+`MoneyValue` applied its own size over the wrapper's — it now has an `xl` for the one
+figure the family looks for first. The outlined dot that tells an unworked holiday from
+a worked one was invisible, because `border-1.5` is not a class Tailwind resolves and
+`border-[1.5px]` is. And this screen's address carried a `worker` it then ignored, the
+shell's switcher being the one place that choice lives — a link that lied about which
+worker it opened. The last was caught by a browser test rather than by reading, which
+is the one of the three a test could reach.
+
+**What the tests prove, and what they would catch.** `e2e/payslip.spec.ts` reads the
+four totals off the rendered page, presses the export button, opens the workbook and
+compares them against `E23`, `F24`, `E26` and the transferred total — rule 11 asserted
+end to end, at the figure the user reads. The transferred total is found by the sheet's
+own label rather than by a row number, because the block below `ד` grows with the
+month's advances and added lines: a hardcoded row reads a neighbouring figure on a
+month with one more line, quietly and plausibly. Another test switches worker through
+the shell's own control and asserts the free-rest-day count follows her to Fridays.
+
+**The check the user runs.** From the home screen press `לצפייה בדף המשכורת המלא`. It
+must open `אוגוסט 2026` and not September, with the total in large type at the top and
+`ברוטו` beside it. Under `מה מרכיב את הסכום` the rows must be grouped as the sheet
+groups them — `סך שכר החודש` closing one group and `סך שבתות וחגים` the next — and each
+"?" must open its explanation. Press `לייצא לאקסל` and check the file's `E23`, `F24`
+and `E26` against the three totals on screen. Then step to `ספטמבר 2026` from `דוחות`:
+the export button must be absent. Switch to the second worker with the arrows in the
+bar and confirm `הימים בחודש` names her Fridays rather than Saturdays. A failure looks
+like a total on screen that differs from the file, a group whose subtotal is missing, or
+an export button on a month that has not ended.
 
 ## Stage 3 — Accounts and storage
 

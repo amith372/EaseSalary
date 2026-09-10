@@ -200,7 +200,7 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                       </span>
                     )}
                     <Link
-                      href="/month/payslip"
+                      href={`/month/payslip?month=${entry.month.year}-${String(entry.month.month).padStart(2, "0")}`}
                       className="text-[16px] whitespace-nowrap text-ink-soft hover:text-forest"
                     >
                       <Bidi>{words.previousMonths.payslip}</Bidi>

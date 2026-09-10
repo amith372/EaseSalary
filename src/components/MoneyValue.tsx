@@ -3,13 +3,15 @@ import { chipClass, type ChipTone } from "@/components/ValueChip";
 import { he } from "@/lib/i18n/he";
 import { formatAgorot } from "@/lib/money";
 
-/** The sizes v3 uses for an amount: a line of the summary, and the month's
- * total under it. */
-type MoneySize = "md" | "lg";
+/** The sizes v3 uses for an amount: a line of the summary, the month's total
+ * under it, and the payslip's own headline figure — the one the family looks
+ * for first, which `דף המשכורת` draws at 42px. */
+type MoneySize = "md" | "lg" | "xl";
 
 const sizeClass: Record<MoneySize, string> = {
   md: "text-[16px] font-semibold",
   lg: "text-[18px] font-bold",
+  xl: "text-[42px] leading-tight font-bold tracking-tighter",
 };
 
 interface MoneyValueProps {

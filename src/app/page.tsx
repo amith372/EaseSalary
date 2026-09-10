@@ -305,7 +305,7 @@ export default function Home() {
               <span dir="auto">{he.home.paid.exportToExcel}</span>
             </Link>
             <Link
-              href="/sheet"
+              href="/month/payslip"
               className="flex items-center justify-center gap-2.25 text-[15px] font-normal text-ink-mute transition-colors hover:text-forest"
             >
               <span dir="auto">{he.home.paid.fullSheet}</span>

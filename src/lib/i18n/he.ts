@@ -260,6 +260,59 @@ export const he = {
     },
   },
 
+  /**
+   * `דף המשכורת` — the payslip as the family reads it, and stage 2's step 4.
+   *
+   * **It is the exported sheet's own layout seen on screen**, which is why its
+   * lines are grouped by the sheet's columns and carry the sheet's own subtotal
+   * names, where the month screen groups them by kind (specs.md item 5).
+   *
+   * **Two things the artboard draws are not here, and both were settled with
+   * the user on 2026-09-10.** `אושר ב[תאריך]` is omitted because no
+   * confirmation date is stored — a confirmed month is one that has a
+   * `confirmedWage`, and any date shown would be invented. `להוסיף הערה לחודש`
+   * is omitted because a note belongs to a mark or to a line the user added,
+   * and there is no note on a month as a whole.
+   */
+  payslip: {
+    eyebrow: "דף המשכורת",
+    /** "עבור חנה" — the name is its own element beside this one, never inside
+     * a template, for the reason `CLAUDE.md` gives about Chrome's translation. */
+    forWorker: "עבור",
+    /** The tint block, and the bottom row of the composition card. It is the
+     * money that actually reaches her — the code's `net` (Part 5). */
+    total: "סך הכל תשלום לעובד/ת",
+    composition: "מה מרכיב את הסכום",
+    /** Column H, and the sentence that says why it sits outside her total
+     * (item 16): the law permits deducting some of these and this application
+     * deducts none. */
+    thirdParty: "תשלומים לגורמים שלישיים",
+    thirdPartyNote:
+      "כסף ששולם החודש לגורם אחר. הוא אינו מתווסף למשכורת העובד/ת וגם אינו מנוכה ממנה, ולכן הוא יושב מחוץ לסכום שלה.",
+    days: {
+      title: "הימים בחודש",
+      vacation: "ימי חופשה",
+      sick: "ימי מחלה",
+      holidaysWorked: "ימי חג שנעבדו",
+      /** Drawn as an outline rather than a fill on the calendar, and named in
+       * words here for the eye that has not learned the weights and for the
+       * reader who cannot see them at all (item 9). */
+      holidaysUnworked: "ימי חג שלא נעבדו",
+      /** Her own rest day, so a Friday-resting worker reads about Fridays
+       * (item 5). */
+      freeRestDays: (restDay: RestDay) =>
+        `${day(restDay).plural} ${agrees(day(restDay)).freePlural}`,
+    },
+    after: {
+      title: "אחרי החודש הזה",
+    },
+    /** The two links the artboard ends with that have somewhere to go. */
+    correct: "לתקן את החישוב",
+    allReports: "לכל הדוחות",
+    /** A month with nothing recorded, or one the worker does not have. */
+    none: "אין עדיין חודש להראות כאן.",
+  },
+
   header: {
     /** The bar carries the greeting, so the home screen needs no heading row of
      * its own — the row it saves is the one that made the page scroll. */
