@@ -1164,9 +1164,9 @@ export const he = {
     },
 
     /**
-     * The six questions. Each `ask` is what the user answers and each `from` is
+     * The seven questions. Each `ask` is what the user answers, each `from` is
      * what the month already holds — never a sentence about what she should
-     * have done.
+     * have done — and `detail` words the items themselves.
      *
      * **Every one of them is a question the chips can answer.** The artboard
      * words the holidays as `אילו חגים נעבדו?` and draws כן/לא beneath it,
@@ -1186,20 +1186,53 @@ export const he = {
     questions: {
       yes: "כן",
       no: "לא",
+      /**
+       * The recorded items themselves, under the question that asks about them
+       * — the dates off the calendar and the amounts off the payments screen
+       * (specs.md item 18, settled with the user on 2026-09-10).
+       *
+       * **A date arrives already worded.** `dateLabels.ts` imports this file,
+       * so it cannot be called from inside it; the screen words the day or the
+       * range there — where "16–20 באוגוסט" and a range crossing a month are
+       * already solved and tested — and hands the string in. What is added here
+       * is only what the date alone does not say.
+       */
+      detail: {
+        /** A day taken in part (specs.md item 10). Half is the only part the
+         * calendar offers, and any other fraction is still written honestly
+         * rather than silently rounded to a whole day. */
+        half: "חצי יום",
+        partOfDay: (fraction: number) => `${formatDays(fraction)} יום`,
+        /** The one fact the month records about a holiday (item 9), beside the
+         * date it fell on. Both answers are listed, so the list can be read
+         * against the calendar. */
+        worked: "נעבד",
+        notWorked: "לא נעבד",
+        /** Between a date and what is said about it. A middot and not a comma:
+         * the two halves are separate facts and neither is a clause. */
+        separator: " · ",
+      },
+      /** **The count is part of the sentence and not only the sum.** A month
+       * may record two advances, and `נרשמה מקדמה של 1,000 ₪` then describes
+       * one advance of a figure that was never given — the amounts are listed
+       * beneath it, and a sum presented as a single payment contradicts them.
+       * Corrected on 2026-09-10, when the list made it visible. */
       advanceGranted: {
         ask: "ניתנה מקדמה החודש?",
-        from: (agorot: number | null) =>
-          agorot === null
-            ? "לא נרשמה מקדמה בחודש הזה"
-            : `נרשמה מקדמה של ${formatAgorot(agorot)}`,
+        from: (agorot: number | null, items: number) => {
+          if (agorot === null) return "לא נרשמה מקדמה בחודש הזה";
+          if (items <= 1) return `נרשמה מקדמה של ${formatAgorot(agorot)}`;
+          return `נרשמו ${formatDays(items)} מקדמות בסך ${formatAgorot(agorot)}`;
+        },
         mismatch: "מקדמה שניתנה נרשמת במסך התשלומים, ומשם היא נכנסת לחישוב.",
       },
       advanceRepaid: {
         ask: "נפרע החודש חלק ממקדמה קודמת?",
-        from: (agorot: number | null) =>
-          agorot === null
-            ? "לא נרשם פירעון בחודש הזה"
-            : `נרשם פירעון של ${formatAgorot(agorot)}`,
+        from: (agorot: number | null, items: number) => {
+          if (agorot === null) return "לא נרשם פירעון בחודש הזה";
+          if (items <= 1) return `נרשם פירעון של ${formatAgorot(agorot)}`;
+          return `נרשמו ${formatDays(items)} פירעונות בסך ${formatAgorot(agorot)}`;
+        },
         mismatch: "פירעון של מקדמה נרשם במסך התשלומים, ומשם הוא נכנס לחישוב.",
       },
       freeRestDays: {
@@ -1239,6 +1272,20 @@ export const he = {
           return `${fell}, ו־${formatDays(worked)} מהם סומנו כנעבדו`;
         },
         mismatch: "מה שנעבד בחג מסומן על החג עצמו בלוח של החודש.",
+      },
+      /** Added on 2026-09-10 with item 18's own reason: the vacation balance is
+       * replayed and never stored (item 13), so a day marked on the wrong month
+       * moves every later month — and it was the one mark on the calendar this
+       * screen said nothing about. Half days are counted, which is why the
+       * count can read `1.5`. */
+      vacationDays: {
+        ask: "היו ימי חופשה?",
+        from: (days: number) => {
+          if (days === 0) return "לא סומנו ימי חופשה בחודש הזה";
+          if (days === 1) return "סומן יום חופשה אחד";
+          return `סומנו ${formatDays(days)} ימי חופשה`;
+        },
+        mismatch: "ימי חופשה מסומנים בלוח של החודש.",
       },
       sickDays: {
         ask: "היו ימי מחלה?",

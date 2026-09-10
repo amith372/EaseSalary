@@ -671,9 +671,17 @@ Each of these is true or false at a glance.
 18. Exporting begins with a short set of confirmation questions covering everything that
     changes the month — whether an advance was given, whether an instalment is being
     repaid, whether a rest day was free, which holidays were worked, whether there were
-    sick days — so nothing is left out by silence. Where the month holds a spell of
-    sickness still open (item 8), the question is the specific one: has she returned, and
-    on what day. A month is not exported over an unanswered open spell, because the one
+    vacation days, whether there were sick days, and whether anything was paid to
+    somebody other than the worker — so nothing is left out by silence.
+    **Each question shows the month's own dates and amounts, not only a count**: the
+    days the calendar holds for it, and the sums the payments screen holds. Added on
+    2026-09-10, and it is what makes the set a confirmation of the month rather than of
+    its totals — a count is a figure a family agrees with while the days sit on the wrong
+    dates, and it is the dates she actually remembers. The screen is therefore also the
+    summary of the month it is about, which is the second thing it is for: what was
+    forgotten is visible as an absence.
+    Where the month holds a spell of sickness still open (item 8), the question is the
+    specific one: has she returned, and on what day. A month is not exported over an unanswered open spell, because the one
     thing an open spell can get wrong is counting days for a worker who was already back.
 19. The national-insurance contribution is 3.6% of the month's full cost, taken before
     anything to do with advances. Kol Zchut settles what that cost is, so it is no

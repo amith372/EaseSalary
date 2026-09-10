@@ -958,6 +958,52 @@ who rests on Friday — exports a sheet that counts her Fridays correctly and ca
 them Saturdays; that is step 2. And nothing in the application can open a sick
 spell yet, so the file has never been produced for a month with one.
 
+#### Between steps 1 and 2 — the pre-export screen made a summary of the month · **done**
+
+**Landed on 2026-09-10, at the user's request after reading the built screen.** Not a
+step of stage 2 and not a widening of one: the screen it changes is stage 5's, and the
+button stage 2 put on it is untouched.
+
+**What she asked for.** The questions were answering with counts — "no free Saturdays
+were marked", "2 sick days were marked" — and a count is a figure a family agrees with
+while the days sit on the wrong dates. So each question now lists the month's own
+items beneath it: the dates the calendar holds, and the amounts the payments screen
+holds. Written into item 18, which now says so.
+
+**Vacation became the seventh question.** It was the one mark on the calendar this
+screen said nothing about, and it draws on a balance that is replayed rather than
+stored (item 13) — so a vacation day marked on the wrong month moves every later
+month's balance, silently. `exportQuestionKeys` is the source and the screen gates its
+button on the whole of it, so adding the key is the whole of adding the question.
+
+**The dates are the month's own days and the count is derived from the same clip.**
+A spell running 30.3–2.4 is listed in April as `1–2 באפריל`, because a row reading
+"2 days" above "30 March – 2 April" is a contradiction the user has to resolve
+herself. The holidays list both the worked and the unworked, since the question is
+*which* of them was worked and a list of only the worked ones cannot be read against
+the calendar.
+
+**Two wording defects the built screen showed, and neither a test could.** A single
+advance printed its amount twice — once in the sentence and once in the list beneath
+it — so a lone money item is not listed, while a payment to a third party always is
+because its sentence carries neither the amount nor what it was for. And two advances
+in one month read `נרשמה מקדמה של 1,000 ₪`, describing one advance of a sum that was
+never given; the sentence now counts them and calls the figure a total.
+
+**The free-Saturday disagreement the report opened with could not be reproduced.** The
+calendar showed a mark the questions did not, and the marks were no longer in the dev
+store by the time it was looked at — that store lives only as long as the `next dev`
+process (`dev/store.ts`), and the running one had started at 13:05. Walking the path
+by hand in the browser — the export screen, back to the month, the mark, the export
+screen again through the home screen's link, and the same again with the browser's
+back button — the mark arrives every time, with and without the extra
+`revalidatePath("/month/export")` that was the first suspect. That call was tried and
+reverted: `revalidatePath` clears the whole client router cache for any path, so
+adding a dynamic route to the list changes nothing, and committing it with a story
+attached would have left a false cause written down. The path is now covered by a
+browser test that walks it, so the version of this that *is* the application's fault
+would fail.
+
 #### Step 2 — the rest-day wording, made a placeholder
 
 Part 3 requires every label that names the rest day to become a placeholder filled

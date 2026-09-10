@@ -16,6 +16,7 @@ import type {
   Employment,
   MonthFacts,
   MonthSpan,
+  ThirdPartyKind,
 } from "@/lib/engine/types";
 import { overlapsMonth } from "@/lib/spans";
 import type { IsoDate, YearMonth } from "@/lib/types";
@@ -44,7 +45,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  */
 
 /**
- * The six questions, in the order `לפני הייצוא` draws them.
+ * The seven questions, in the order `לפני הייצוא` draws them.
  *
  * **The list is the source and the union is derived from it**, as
  * `advanceKinds` and `userLineDirections` already are: a key added to a
@@ -53,17 +54,24 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * member of this array — so a seventh question added to one and not the other
  * would be a question nobody is ever asked, or a button that never enables.
  *
- * **They are six because item 18 names six things that change a month**: an
- * advance given, an instalment repaid, a free rest day, the holidays worked,
- * the sick days, and the money that went to somebody other than the worker. The
- * two halves of the advance are asked separately because a month may do both
- * and each is its own line (item 20).
+ * **They are seven because item 18 asks about everything that changes the
+ * month**: an advance given, an instalment repaid, a free rest day, the
+ * holidays worked, the vacation days, the sick days, and the money that went to
+ * somebody other than the worker. The two halves of the advance are asked
+ * separately because a month may do both and each is its own line (item 20).
+ *
+ * **Vacation is asked for the same reason the rest are** — settled with the
+ * user on 2026-09-10, and written into item 18. It draws on a balance that is
+ * replayed rather than stored (item 13), so a vacation day marked on the wrong
+ * month, or forgotten, moves every later month's balance; leaving it out was
+ * the one thing on the calendar the screen said nothing about.
  */
 export const exportQuestionKeys = [
   "advanceGranted",
   "advanceRepaid",
   "freeRestDays",
   "holidaysWorked",
+  "vacationDays",
   "sickDays",
   "thirdParty",
 ] as const;
@@ -78,6 +86,14 @@ export type ExportQuestionKey = (typeof exportQuestionKeys)[number];
  * names — how many days, how many payments, how much money — so the sentence is
  * built in `he.ts` out of numbers rather than the numbers being formatted here
  * (`CLAUDE.md`: every user-facing string in one file).
+ *
+ * `details` is the same month said item by item: the dates the calendar holds
+ * and the amounts the payments screen holds. **A count alone cannot be
+ * confirmed** — settled with the user on 2026-09-10. "Two sick days were
+ * marked" is a figure a family agrees with while the days sit on the wrong
+ * dates, and a month whose figure is right and whose dates are wrong exports a
+ * sheet nobody can reconcile against the calendar. The dates are what she
+ * actually remembers, so they are what she is shown.
  */
 export interface ExportQuestion {
   key: ExportQuestionKey;
@@ -86,7 +102,37 @@ export interface ExportQuestion {
    * confirm. */
   recorded: boolean;
   counts: ExportQuestionCounts;
+  /**
+   * One entry per thing the month recorded, in date order where they have
+   * dates, and empty where it recorded nothing.
+   *
+   * The holidays are the one place a `false` still carries items: `recorded`
+   * answers whether any was *worked*, and a holiday she did not work still
+   * falls in the month and is still listed — a family that reads the date and
+   * remembers working it has found the mark that was never made.
+   */
+  details: ExportQuestionDetail[];
 }
+
+/**
+ * One recorded thing, in the shape its own wording needs.
+ *
+ * **Dates and never labels.** The engine says which days and how much; what to
+ * call a day, a half day, a worked holiday or a payment to the agency is
+ * `he.ts`'s, which is the same division `counts` already keeps.
+ */
+export type ExportQuestionDetail =
+  /** A stretch of the calendar, already clipped to this month. `from` equals
+   * `to` for a single day. */
+  | { shape: "days"; from: IsoDate; to: IsoDate; fraction?: number }
+  /** A holiday falling in this month, and the one fact the month records about
+   * it (specs.md item 9). Both the worked and the unworked are listed: the
+   * question is which of them was worked, and a list of only the worked ones
+   * cannot be checked against the calendar. */
+  | { shape: "holiday"; on: IsoDate; worked: boolean }
+  /** Money. `kind` is the third-party payment's own kind, and absent on an
+   * advance, which has no kinds. */
+  | { shape: "money"; agorot: number; kind?: ThirdPartyKind };
 
 export interface ExportQuestionCounts {
   /** Days, where the question is about days on the calendar. Fractional where a
@@ -111,7 +157,8 @@ function spansOfKind<T extends MonthSpan>(
 }
 
 /**
- * How many days of a span fall inside one month.
+ * The part of a span that falls inside one month, or `null` where none of it
+ * does.
  *
  * **It is not `balanceDaysOf`, and the difference matters here.** That function
  * answers what a span costs its balance, over the whole of the spell and
@@ -120,19 +167,32 @@ function spansOfKind<T extends MonthSpan>(
  * two of them are April's. Asking the month what it holds and being told the
  * neighbouring month's days as well is the kind of figure a user confirms
  * without noticing (Part 5).
+ *
+ * **The dates the screen lists are clipped by this same function**, so the days
+ * it counts and the dates it names can never be two different answers: a
+ * question reading "2 days" above "30 March – 2 April" is a contradiction the
+ * user has to resolve herself.
  */
-function daysInsideMonth(span: ClosedSpan, month: YearMonth): number {
+function insideMonth(
+  span: ClosedSpan,
+  month: YearMonth,
+): { from: IsoDate; to: IsoDate } | null {
   const monthStart = isoOf(month, 1);
   const monthEnd = isoOf(month, daysInMonth(month));
   const { from, to } = orderDates(span.from, span.to);
   const start = compareIsoDate(from, monthStart) < 0 ? monthStart : from;
   const end = compareIsoDate(to, monthEnd) > 0 ? monthEnd : to;
-  if (compareIsoDate(start, end) > 0) return 0;
-  return eachDate(start, end).length * (span.fraction ?? 1);
+  return compareIsoDate(start, end) > 0 ? null : { from: start, to: end };
+}
+
+function daysInsideMonth(span: ClosedSpan, month: YearMonth): number {
+  const clipped = insideMonth(span, month);
+  if (clipped === null) return 0;
+  return eachDate(clipped.from, clipped.to).length * (span.fraction ?? 1);
 }
 
 /**
- * The six questions for one month, each carrying what the month already knows
+ * The seven questions for one month, each carrying what the month already knows
  * (specs.md item 18).
  *
  * **The day counts are this month's own days**, which is why the spans are
@@ -154,20 +214,42 @@ export function exportQuestions(
   const repaid = facts.advances.filter((each) => each.kind === "repaid");
   const sum = (rows: { agorot: number }[]) =>
     rows.reduce((total, row) => total + row.agorot, 0);
+  const amounts = (rows: { agorot: number }[]): ExportQuestionDetail[] =>
+    rows.map((row) => ({ shape: "money", agorot: row.agorot }));
 
   // Every span below has an end: `closeMonth` resolved the open one above.
+  const spansOf = (kind: MonthSpan["kind"]) =>
+    spansOfKind(closed.spans, month, kind);
   const daysOf = (kind: MonthSpan["kind"]) =>
-    spansOfKind(closed.spans, month, kind).reduce(
+    spansOf(kind).reduce(
       (days, span) => days + daysInsideMonth(span, month),
       0,
     );
+  /** The month's own stretches of one kind, in date order. Sorted here and not
+   * left to the store's order: the calendar is read top to bottom and a list
+   * that jumps back to the 3rd after the 19th cannot be checked against it. */
+  const stretchesOf = (kind: MonthSpan["kind"]): ExportQuestionDetail[] =>
+    spansOf(kind)
+      .map((span) => ({ clipped: insideMonth(span, month), span }))
+      .filter(
+        (each): each is { clipped: { from: IsoDate; to: IsoDate }; span: ClosedSpan } =>
+          each.clipped !== null,
+      )
+      .sort((a, b) => compareIsoDate(a.clipped.from, b.clipped.from))
+      .map(({ clipped, span }) => ({
+        shape: "days",
+        from: clipped.from,
+        to: clipped.to,
+        ...(span.fraction === undefined ? {} : { fraction: span.fraction }),
+      }));
 
-  const holidays = spansOfKind(closed.spans, month, "holiday");
+  const holidays = spansOf("holiday");
   const holidaysWorked = holidays.filter(
     (span) => span.kind === "holiday" && span.worked,
   );
 
   const freeRestDays = daysOf("freeRestDay");
+  const vacationDays = daysOf("vacation");
   const sickDays = daysOf("sick");
 
   return [
@@ -175,23 +257,48 @@ export function exportQuestions(
       key: "advanceGranted",
       recorded: granted.length > 0,
       counts: { items: granted.length, agorot: sum(granted) },
+      details: amounts(granted),
     },
     {
       key: "advanceRepaid",
       recorded: repaid.length > 0,
       counts: { items: repaid.length, agorot: sum(repaid) },
+      details: amounts(repaid),
     },
     {
       key: "freeRestDays",
       recorded: freeRestDays > 0,
       counts: { days: freeRestDays },
+      details: stretchesOf("freeRestDay"),
     },
     {
       key: "holidaysWorked",
       recorded: holidaysWorked.length > 0,
       counts: { items: holidays.length, of: holidaysWorked.length },
+      // Every holiday of the month and not only the worked ones, because the
+      // question is which of them was worked and the unworked ones are half of
+      // that answer.
+      details: holidays
+        .slice()
+        .sort((a, b) => compareIsoDate(a.from, b.from))
+        .map((span) => ({
+          shape: "holiday",
+          on: span.from,
+          worked: span.kind === "holiday" && span.worked,
+        })),
     },
-    { key: "sickDays", recorded: sickDays > 0, counts: { days: sickDays } },
+    {
+      key: "vacationDays",
+      recorded: vacationDays > 0,
+      counts: { days: vacationDays },
+      details: stretchesOf("vacation"),
+    },
+    {
+      key: "sickDays",
+      recorded: sickDays > 0,
+      counts: { days: sickDays },
+      details: stretchesOf("sick"),
+    },
     {
       key: "thirdParty",
       recorded: facts.thirdPartyPayments.length > 0,
@@ -199,6 +306,14 @@ export function exportQuestions(
         items: facts.thirdPartyPayments.length,
         agorot: sum(facts.thirdPartyPayments),
       },
+      // Each payment says what it was for: "one payment to a third party" is a
+      // sentence a family cannot check, and the kinds are what she recognises
+      // (specs.md item 16).
+      details: facts.thirdPartyPayments.map((payment) => ({
+        shape: "money",
+        agorot: payment.agorot,
+        kind: payment.kind,
+      })),
     },
   ];
 }

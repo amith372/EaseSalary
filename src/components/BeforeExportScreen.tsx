@@ -16,10 +16,11 @@ import { useWorkerScope } from "@/components/WorkerScope";
 import type { DatedRate } from "@/lib/datedRates";
 import { monthHasEnded, sameMonth, yearMonthText } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
+import { dayLabel, fullDayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
 import type {
   ExportBlockKey,
   ExportQuestion,
+  ExportQuestionDetail,
   ExportQuestionKey,
 } from "@/lib/engine/beforeExport";
 import { exportQuestionKeys } from "@/lib/engine/beforeExport";
@@ -726,6 +727,7 @@ function QuestionRow({
   onAnswer: (value: boolean) => void;
 }) {
   const words = he.beforeExport.questions;
+  const shown = shownDetailsOf(question);
   return (
     <div
       data-question={question.key}
@@ -743,6 +745,22 @@ function QuestionRow({
         <span dir="auto" className="text-[14px] font-light text-ink-quiet text-pretty">
           {knownOf(question, restDay)}
         </span>
+        {shown.length > 0 ? (
+          <span data-detail-list="" className="mt-1 flex flex-col gap-0.5">
+            {shown.map((detail, index) => (
+              <span
+                // The list is derived whole from the month and holds no state
+                // of its own, and two advances of the same amount are two
+                // identical rows — so the position is the only honest key.
+                key={index}
+                data-detail=""
+                className="text-[14px] font-normal text-ink-warm"
+              >
+                <Bidi noTranslate>{detailOf(detail)}</Bidi>
+              </span>
+            ))}
+          </span>
+        ) : null}
       </span>
       <span className="flex flex-none items-center gap-2">
         <AnswerChip
@@ -800,16 +818,76 @@ function knownOf(question: ExportQuestion, restDay: RestDay): string {
   const { counts } = question;
   switch (question.key) {
     case "advanceGranted":
-      return words.advanceGranted.from(question.recorded ? counts.agorot ?? 0 : null);
+      return words.advanceGranted.from(
+        question.recorded ? counts.agorot ?? 0 : null,
+        counts.items ?? 0,
+      );
     case "advanceRepaid":
-      return words.advanceRepaid.from(question.recorded ? counts.agorot ?? 0 : null);
+      return words.advanceRepaid.from(
+        question.recorded ? counts.agorot ?? 0 : null,
+        counts.items ?? 0,
+      );
     case "freeRestDays":
       return words.freeRestDays.from(restDay, counts.days ?? 0);
     case "holidaysWorked":
       return words.holidaysWorked.from(counts.items ?? 0, counts.of ?? 0);
+    case "vacationDays":
+      return words.vacationDays.from(counts.days ?? 0);
     case "sickDays":
       return words.sickDays.from(counts.days ?? 0);
     case "thirdParty":
       return words.thirdParty.from(counts.items ?? 0);
+  }
+}
+
+/**
+ * The items worth listing under the question, which is not always every item
+ * the month holds.
+ *
+ * **A lone advance is not listed, because the sentence above it is already the
+ * amount.** `נרשם פירעון של 1,000 ₪` with `1,000 ₪` printed underneath is the
+ * same figure twice, and a screen that says a thing twice reads as a screen
+ * that has counted it twice — seen on the built screen on 2026-09-10. Two
+ * advances are listed: the sentence then carries their *sum*, and how it was
+ * made up is what the list adds. A payment to a third party is always listed,
+ * because its sentence carries neither the amount nor what it was for.
+ */
+function shownDetailsOf(question: ExportQuestion): ExportQuestionDetail[] {
+  const only = question.details.length === 1 ? question.details[0] : null;
+  const saidAlready =
+    only !== null && only.shape === "money" && only.kind === undefined;
+  return saidAlready ? [] : question.details;
+}
+
+/**
+ * One recorded item in words — the dates off the calendar and the amounts off
+ * the payments screen, which is what makes the question a confirmation of the
+ * month rather than of a total (specs.md item 18, settled 2026-09-10).
+ *
+ * **The date is worded by `dateLabels`** and never here: a range inside a month
+ * reads "16–20 באוגוסט" and a range across one names both months, and that is
+ * already the calendar's own wording rather than a second one invented on this
+ * screen.
+ */
+function detailOf(detail: ExportQuestionDetail): string {
+  const words = he.beforeExport.questions.detail;
+  switch (detail.shape) {
+    case "days": {
+      const dates = rangeLabel(detail.from, detail.to);
+      const fraction = detail.fraction;
+      if (fraction === undefined || fraction === 1) return dates;
+      const part = fraction === 0.5 ? words.half : words.partOfDay(fraction);
+      return `${dates}${words.separator}${part}`;
+    }
+    case "holiday": {
+      const said = detail.worked ? words.worked : words.notWorked;
+      return `${dayLabel(detail.on)}${words.separator}${said}`;
+    }
+    case "money": {
+      const amount = formatAgorot(detail.agorot);
+      return detail.kind === undefined
+        ? amount
+        : `${he.sheet.thirdParty[detail.kind]}${words.separator}${amount}`;
+    }
   }
 }

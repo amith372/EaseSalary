@@ -30,7 +30,10 @@ import {
  *
  *  - The questions and what each is asked about are `specs.md` item 18's own
  *    list: an advance given, an instalment repaid, a free rest day, the
- *    holidays worked, the sick days.
+ *    holidays worked, the vacation days, the sick days, and the money paid to
+ *    somebody else.
+ *  - The dates each question lists are the dates written into its own case by
+ *    hand, which is the only way a list of dates can be checked at all.
  *  - The two blocks are item 18 ("a month is not exported over an unanswered
  *    open spell") and item 21 ("it can only be exported once it has ended").
  *  - The day counts below are read off the dates written into each case by
@@ -221,6 +224,128 @@ describe("the questions that open an export", () => {
     );
     // Clipped at the 6th, so 3.4 to 6.4 is four days.
     expect(question.counts.days).toBe(4);
+  });
+});
+
+/**
+ * The items behind each question — the dates off the calendar and the amounts
+ * off the payments screen (item 18, settled with the user on 2026-09-10).
+ *
+ * **Every date below is written into the case by hand and read back**, which is
+ * the whole property: a count can be right while the days sit on the wrong
+ * dates, and that is the month a family confirms and cannot afterwards
+ * reconcile against its own calendar.
+ */
+describe("the dates and amounts behind the questions", () => {
+  it("names the day of every stretch marked, in date order", () => {
+    const spans: MonthSpan[] = [
+      { id: "s2", kind: "sick", from: "2026-04-20", to: "2026-04-21" },
+      { id: "s1", kind: "sick", from: "2026-04-03", to: "2026-04-03" },
+    ];
+    const question = answerFor(exportQuestions(facts({ spans })), "sickDays");
+    // Stored the later spell first, so an unsorted list would come back
+    // reading 20 April above 3 April against a calendar read downwards.
+    expect(question.details).toEqual([
+      { shape: "days", from: "2026-04-03", to: "2026-04-03" },
+      { shape: "days", from: "2026-04-20", to: "2026-04-21" },
+    ]);
+  });
+
+  /**
+   * The dates and the count are one answer. 30.3 to 2.4 is four days to the
+   * balance and two of them are April's, so April names the 1st and the 2nd —
+   * a row reading "2 days" above "30 March – 2 April" is a contradiction the
+   * user is left to resolve herself.
+   */
+  it("names a crossing spell as the month's own days, and agrees with the count", () => {
+    const spans: MonthSpan[] = [
+      { id: "s", kind: "sick", from: "2026-03-30", to: "2026-04-02" },
+    ];
+    const question = answerFor(exportQuestions(facts({ spans })), "sickDays");
+    expect(question.details).toEqual([
+      { shape: "days", from: "2026-04-01", to: "2026-04-02" },
+    ]);
+    expect(question.counts.days).toBe(2);
+  });
+
+  /** Vacation may be taken as half a day and is drawn from the quota in the
+   * same proportion (item 10), so the part is carried to the screen: a half day
+   * listed as a whole one is the quota confirmed wrong by half a day. */
+  it("carries the part of a day a vacation was taken in", () => {
+    const spans: MonthSpan[] = [
+      { id: "v1", kind: "vacation", from: "2026-04-07", to: "2026-04-07", fraction: 0.5 },
+      { id: "v2", kind: "vacation", from: "2026-04-13", to: "2026-04-13" },
+    ];
+    const question = answerFor(exportQuestions(facts({ spans })), "vacationDays");
+    expect(question.recorded).toBe(true);
+    expect(question.counts.days).toBe(1.5);
+    expect(question.details).toEqual([
+      { shape: "days", from: "2026-04-07", to: "2026-04-07", fraction: 0.5 },
+      { shape: "days", from: "2026-04-13", to: "2026-04-13" },
+    ]);
+  });
+
+  /** Both the worked and the unworked, because the question is *which* of them
+   * she worked and a list of only the worked ones cannot be read against the
+   * calendar. */
+  it("names every holiday of the month and whether it was worked", () => {
+    const spans: MonthSpan[] = [
+      { id: "h2", kind: "holiday", from: "2026-04-09", to: "2026-04-09", worked: false },
+      { id: "h1", kind: "holiday", from: "2026-04-03", to: "2026-04-03", worked: true },
+    ];
+    const question = answerFor(
+      exportQuestions(facts({ spans })),
+      "holidaysWorked",
+    );
+    expect(question.details).toEqual([
+      { shape: "holiday", on: "2026-04-03", worked: true },
+      { shape: "holiday", on: "2026-04-09", worked: false },
+    ]);
+  });
+
+  it("names each payment to somebody else, and each advance's amount", () => {
+    const questions = exportQuestions(
+      facts({
+        advances: [
+          { number: 1, kind: "granted", agorot: 300000 },
+          { number: 2, kind: "repaid", agorot: 100000 },
+        ],
+        thirdPartyPayments: [
+          { kind: "medicalInsurance", agorot: 130000 },
+          { kind: "licenceFee", agorot: 30000 },
+        ],
+      }),
+    );
+    expect(answerFor(questions, "thirdParty").details).toEqual([
+      { shape: "money", agorot: 130000, kind: "medicalInsurance" },
+      { shape: "money", agorot: 30000, kind: "licenceFee" },
+    ]);
+    expect(answerFor(questions, "advanceGranted").details).toEqual([
+      { shape: "money", agorot: 300000 },
+    ]);
+    expect(answerFor(questions, "advanceRepaid").details).toEqual([
+      { shape: "money", agorot: 100000 },
+    ]);
+  });
+
+  /** The screen draws the list only where there is one, so an empty list and a
+   * recorded "no" have to mean the same thing — otherwise a month that recorded
+   * nothing would draw a row saying so twice, or a month that recorded
+   * something would draw the figure with nothing under it. */
+  it("holds an item exactly where the month recorded one", () => {
+    for (const question of exportQuestions(facts())) {
+      expect(question.details).toEqual([]);
+    }
+    const spans: MonthSpan[] = [
+      // 4.4.2026 is a Saturday, which is her own rest day.
+      { id: "r", kind: "freeRestDay", from: "2026-04-04", to: "2026-04-04" },
+    ];
+    const question = answerFor(
+      exportQuestions(facts({ spans })),
+      "freeRestDays",
+    );
+    expect(question.recorded).toBe(true);
+    expect(question.details).toHaveLength(1);
   });
 });
 

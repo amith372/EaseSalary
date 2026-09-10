@@ -1,13 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
+import { SATURDAY } from "../src/lib/dates";
+import { dayLabel, rangeLabel } from "../src/lib/dateLabels";
 
 /**
  * The questions that open an export, through the browser — `specs.md` items 18,
  * 4 and 15.
  *
  * **What this file checks that no unit test can.** The screen is a
- * conversation: six questions have to be answered before the export is offered
+ * conversation: seven questions have to be answered before the export is offered
  * at all, a month that has not ended refuses whatever is answered, and
  * confirming writes a wage onto the month that the month screen then draws
  * from. Every assertion below is about a *result* — a button's state, a
@@ -22,7 +24,7 @@ import { formatAgorot } from "../src/lib/money";
  *   exactly the case item 3 describes: a salary that has fallen below the
  *   minimum and is raised to it when the month is confirmed.
  * - August 2026 records one holiday worked, on the 20th, and nothing else
- *   (`seed.ts`). That is what the six questions are answered against.
+ *   (`seed.ts`). That is what the seven questions are answered against.
  * - September 2026 is the month the demo runs to and `today` sits inside it, so
  *   it is the month item 21 refuses; August 2026 is the last one that ended.
  * - July 2026 is the first worker's recuperation month (`seed.ts`), and six
@@ -110,10 +112,10 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
     await expect(exportButton).toBeDisabled();
     await expect(page.getByText(he.beforeExport.finish.unanswered)).toBeVisible();
 
-    // Six questions, each arriving with what the month already knows.
-    await expect(page.locator("[data-question]")).toHaveCount(6);
+    // Seven questions, each arriving with what the month already knows.
+    await expect(page.locator("[data-question]")).toHaveCount(7);
     await expect(page.locator('[data-question="advanceGranted"]')).toContainText(
-      he.beforeExport.questions.advanceGranted.from(null),
+      he.beforeExport.questions.advanceGranted.from(null, 0),
     );
 
     await answerEverything(page, AUGUST_AGREES);
@@ -154,6 +156,145 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
     await expect(page.locator('[data-question="holidaysWorked"]')).not.toContainText(
       "1 חגים",
     );
+  });
+
+  /**
+   * The item behind each question, which is what makes it a confirmation of the
+   * *month* rather than of a total (settled with the user on 2026-09-10, and
+   * written into item 18). A count agreed to is not a month checked: two sick
+   * days sitting on the wrong dates is a figure a family confirms, and the
+   * sheet it exports cannot afterwards be reconciled against the calendar.
+   *
+   * April 2026 is the month that carries both shapes (`seed.ts`): the spell
+   * running 30.3–2.4 leaves the 1st and the 2nd in April, and the holiday on
+   * the 3rd was worked. Both dates are written into the seed by hand and read
+   * back off the screen here.
+   */
+  test("lists the dates the month actually holds under each question", async ({
+    page,
+  }) => {
+    await useHousehold(page, "dates");
+    await page.goto("/month/export");
+    await backTo(page, 4);
+
+    const sick = page.locator('[data-question="sickDays"] [data-detail]');
+    await expect(sick).toHaveCount(1);
+    // The month's own two days and not the spell's four: the days that fell in
+    // March belong to March's own sheet.
+    await expect(sick).toHaveText(rangeLabel("2026-04-01", "2026-04-02"));
+
+    const holiday = page.locator('[data-question="holidaysWorked"] [data-detail]');
+    await expect(holiday).toHaveText(
+      `${dayLabel("2026-04-03")}${he.beforeExport.questions.detail.separator}${
+        he.beforeExport.questions.detail.worked
+      }`,
+    );
+
+    // A month that recorded nothing lists nothing, so the row does not draw an
+    // empty list under a sentence that already says "none".
+    await expect(
+      page.locator('[data-question="advanceGranted"] [data-detail]'),
+    ).toHaveCount(0);
+
+    await page.screenshot({
+      path: "test-results/before-export-dates.png",
+      fullPage: true,
+    });
+  });
+
+  /**
+   * The path the user walked on 2026-09-10, when this screen said no free rest
+   * day was recorded in a month whose calendar showed one.
+   *
+   * **The navigation is the test, and a `goto` is not it.** Every other spec
+   * here opens the screen fresh, which is the one way a user never reaches it:
+   * she arrives from the month she has just been marking, through the
+   * application's own links, and what she sees then is whatever the client
+   * already holds for this route. So this walks that path — the export screen,
+   * back to the month, the mark, and the export screen again through the home
+   * screen's link — and asserts the mark is there with its date.
+   *
+   * It passes today, and the disagreement the user met could not be reproduced
+   * on this path or with the browser's back button: the marks were not in the
+   * dev store by the time it was looked at, and that store lives only as long
+   * as the `next dev` process (`dev/store.ts`). What this test would catch is
+   * the version of it that is the application's fault — a screen answering out
+   * of anything but the month as the store holds it now.
+   *
+   * 8.8.2026 is a Saturday, which is the first worker's rest day and the only
+   * day this mark may fall on (item 5).
+   */
+  test("shows a mark made on the calendar, on the way back from it", async ({
+    page,
+  }) => {
+    await useHousehold(page, "stale");
+    const words = he.beforeExport.questions.freeRestDays;
+    const question = page.locator('[data-question="freeRestDays"]');
+
+    await page.goto("/month/export");
+    await expect(question).toContainText(words.from(SATURDAY, 0));
+
+    await page.getByRole("link", { name: he.beforeExport.finish.back }).click();
+    // Waited for, and not assumed: both screens carry a month stepper with the
+    // same two buttons, so a click sent before the navigation lands steps the
+    // screen being left instead of the one arriving.
+    await page.waitForURL("**/month");
+    // The month screen opens on the current month, which is September.
+    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
+    await page.locator('[data-date="2026-08-08"]').click();
+    await page.locator('[data-date="2026-08-08"]').click();
+    await page
+      .getByRole("button", {
+        name: he.calendar.marks(SATURDAY).freeRestDay,
+        exact: true,
+      })
+      .click();
+    await settled(page);
+
+    // And half a day of vacation, which is the seventh question and the one
+    // shape a date alone does not say: the quota is drawn on in the same
+    // proportion (item 10), so a half day listed as a whole one is the balance
+    // confirmed wrong by half a day.
+    await page.locator('[data-date="2026-08-19"]').click();
+    await page.locator('[data-date="2026-08-19"]').click();
+    await page
+      .getByRole("button", { name: he.calendar.picker.part.half, exact: true })
+      .click();
+    await page
+      .getByRole("button", {
+        name: he.calendar.marks(SATURDAY).vacation,
+        exact: true,
+      })
+      .click();
+    await settled(page);
+
+    await page.getByRole("link", { name: he.nav.home }).click();
+    await page
+      .getByRole("link", { name: he.home.paid.exportToExcel })
+      .click();
+    await page.waitForURL("**/month/export");
+
+    await expect(question).toContainText(words.from(SATURDAY, 1));
+    await expect(question.locator("[data-detail]")).toHaveText(
+      dayLabel("2026-08-08"),
+    );
+
+    const detail = he.beforeExport.questions.detail;
+    await expect(
+      page.locator('[data-question="vacationDays"] [data-detail]'),
+    ).toHaveText(
+      `${dayLabel("2026-08-19")}${detail.separator}${detail.half}`,
+    );
+
+    // And the truthful answer now agrees with the month, which is the half the
+    // user met: "yes" against a screen that had not noticed the mark warned
+    // about the very day she had marked.
+    await answerEverything(page, [
+      ...AUGUST_AGREES,
+      "freeRestDays",
+      "vacationDays",
+    ]);
+    await expect(page.locator("[data-mismatch]")).toHaveCount(0);
   });
 
   /**
