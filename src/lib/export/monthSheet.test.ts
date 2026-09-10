@@ -81,7 +81,9 @@ function inputFor(
       workerRole: "עובד/ת",
       employmentStart: "1 באפריל 2024",
     },
-    holidayDaysUsed: 0,
+    // Part 4's two holidays, which is what the year's entitlement is drawn
+    // against whether or not she worked them (item 10).
+    holidayDaysUsed: 2,
     freeRestDays: ["16 באוגוסט"],
     notes: {},
     showNotes: false,
@@ -195,9 +197,9 @@ describe("the August 2025 month tab, filled (specs.md Part 4, criterion 1)", () 
 
   it("draws the entitlement against the holidays taken off, not the ones worked", async () => {
     // The distinction the template's own two headings make: G1 counts what she
-    // worked and H1 counts what she used, and filling H from the worked count
-    // would tell a family her quota had been spent on days she was paid a
-    // premium for.
+    // worked and H1 counts what the entitlement was drawn against, and the two
+    // are different counts — a part day draws its own proportion, and a holiday
+    // inside a spell of sickness draws nothing at all.
     const sheet = await sheetOf(inputFor(result, { holidayDaysUsed: 1.5 }));
     expect(numberAt(sheet, "H2")).toBe(1.5);
   });
@@ -208,10 +210,10 @@ describe("the August 2025 month tab, filled (specs.md Part 4, criterion 1)", () 
     expect(numberAt(sheet, "E2")).toBe(26); // Part 4: 26 standard days
     expect(numberAt(sheet, "F2")).toBe(5); // five rest-eves worked
     expect(numberAt(sheet, "G2")).toBe(4); // Part 4: four rest days worked
-    // `ניצול יום חג` is what the yearly entitlement was drawn against, and both
-    // of Part 4's holidays were *worked* — a day of attendance draws nothing
-    // from the quota (item 10). The payment for them is row 8, ₪852.70 above.
-    expect(numberAt(sheet, "H2")).toBe(0);
+    // `ניצול יום חג` is what the yearly entitlement was drawn against, which is
+    // every holiday the month records (item 10) — Part 4's two, both of them
+    // worked. Their *payment* is a separate figure, ₪852.70 in F8 above.
+    expect(numberAt(sheet, "H2")).toBe(2);
     expect(sheet.getCell("G3").value).toBe("16 באוגוסט");
   });
 

@@ -90,11 +90,13 @@ export interface MonthSheetInput {
    * The holiday days this month drew from the yearly entitlement — the
    * template's own `ניצול יום חג בחודש זה` (specs.md item 10).
    *
-   * **It is not the holidays she worked**, which are a payment and not a
-   * utilisation: a holiday she took off is the one drawn from the quota, and a
-   * holiday she worked is a day of attendance. Computed by the caller through
-   * `holidayDaysOf`, which is the same function `calculateSeries` counts the
-   * year with, so the sheet and the replay can never disagree about it.
+   * **It is not the count of holidays she *worked***, which is what row 8 prices
+   * and what `G1` counts. The entitlement is drawn against every holiday the
+   * month records, worked or not, less any that fell inside a spell of sickness
+   * — `holidayDaysOf` owns that rule and states it, and it is the same function
+   * `calculateSeries` counts the year with, so the sheet and the replay can
+   * never disagree about it. Filling this from the worked count instead makes
+   * the two headings say one thing in a month where a holiday was taken off.
    */
   holidayDaysUsed: number;
   /** The user's notes on the month's actions, by the key of the line the action
@@ -248,8 +250,8 @@ function writeHeader(sheet: ExcelJS.Worksheet, input: MonthSheetInput): void {
   put(sheet, "E2", result.standardDays);
   put(sheet, "F2", units(lineKeys.restEveSupplement));
   put(sheet, "G2", units(lineKeys.restDays));
-  // `ניצול יום חג בחודש זה` — what the yearly entitlement was drawn against,
-  // which is the holidays she took off and not the ones she worked (item 10).
+  // `ניצול יום חג בחודש זה` — what the yearly entitlement was drawn against
+  // (item 10), which is not the same count as the holidays she worked in `G1`.
   put(sheet, "H2", input.holidayDaysUsed);
   put(sheet, "J2", usedOf(result, "sick"));
 
