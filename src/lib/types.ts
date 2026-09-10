@@ -380,9 +380,10 @@ export interface MonthResult {
    *
    * **It is not `net`.** `net` is criterion 1's fourth total, the sum actually
    * transferred, and the Hebrew word for it is סך הכל תשלום לעובד/ת. The
-   * sheet has a cell for the ברוטו (`A26`, ד) and for the transfer (`B29`) and
-   * none for this one, which is why it is named for what it is rather than for
-   * a column.
+   * sheet has a row for the ברוטו (labelled `A26`, ד, with the figure in `E26`)
+   * and one for the transfer (labelled `B29`, figure in `E29`, on a row that
+   * moves as the closing block grows) and none for this one, which is why it is
+   * named for what it is rather than for a column.
    *
    * With no income tax it equals `gross`, which is every month the family has
    * ever had and August 2025 among them; the month screen draws one row rather

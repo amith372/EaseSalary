@@ -580,8 +580,11 @@ export const he = {
        *
        * `gross` is the month's own total before anything is withheld —
        * ₪9,305.75 in the August 2025 case, the third of criterion 1's four
-       * figures, and `A26` of the month template. `net` is what is actually
-       * transferred, ₪7,305.75 there, the fourth figure and `B29`.
+       * figures, labelled at `A26` of the month template with the figure beside
+       * it in `E26`. `net` is what is actually transferred, ₪7,305.75 there,
+       * the fourth figure, labelled at `B29` with the figure in `E29` — and
+       * that row moves down as the closing block grows, so the export derives
+       * it (`layoutOf`) and nothing looks it up by number.
        *
        * **`afterWithholding` is the one the sheet has no cell for**, and it is
        * the Hebrew נטו — which the code's own `net` is *not*. A month with no

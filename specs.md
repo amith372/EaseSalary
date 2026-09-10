@@ -1340,7 +1340,16 @@ never the gross: the gross is what she earned, the net is what she is handed.
 
 **In Hebrew there are three figures and not two, and `net` is not נטו.** The user's own
 words are ברוטו for the month's total and סך הכל תשלום לעובד/ת for the figure actually
-transferred, which are the code's `gross` and `net` and the sheet's `A26` (ד) and `B29`.
+transferred, which are the code's `gross` and `net`. On the sheet those two are **labels
+in one cell and money in another**: `A26` (ד) and `B29` carry the Hebrew, and the figures
+they name are one column over in `E26` and `E29`. **Neither row number is fixed and the
+second one moves the most** — the block at the foot of the sheet grows by a row for every
+advance granted, every instalment repaid and every line the user added, so the transferred
+total sits at row 29 only in the simplest month and at row 31 in a month with two advances.
+It is therefore found **by its own label** and never by a row number, which is what
+`layoutOf` in `src/lib/export/layout.ts` derives and what the export's tests read. Corrected
+on 2026-09-10: the cells had been cited as `A26` and `B29` alone, which names the words
+rather than the numbers and fixes a row that moves.
 Between them stands the נטו — the ברוטו less what was **withheld from it**, today the
 income-tax line and nothing else — which the sheet has no cell for and the code therefore
 names `afterWithholding` rather than `net`. That the English `net` and the Hebrew נטו name
