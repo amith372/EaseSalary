@@ -126,7 +126,7 @@ page. A tab that 404s is worse than a tab that is not there.
 | `/payments` | `תשלומים` | 4 (pulled forward, step 6) + 5 | **built** for what it records (step 7); the artboard's two reminder sections are stage 5's |
 | `/workers` | `העובדות` | 3 in this table, **built by stage 4's step 9** | **built** on 2026-09-09, with `/workers/[id]` beside it |
 | `/settings` | `הגדרות` | 3 + 5 | 404 |
-| `/reports` | `דוחות` | 2 — the yearly balances file (item 23) | 404 |
+| `/reports` | `דוחות` | 2 — four report files, item 23 among them | **built** |
 | `/alerts` | `התראות` | 6 | 404 |
 | `/help` | none — stage 7 draws it | 7 | 404 |
 
@@ -185,7 +185,7 @@ that link to it.
 **Four of the five 404s remain, and `/workers` is not one of them.** Step 9 built it and
 `/workers/[id]` on 2026-09-09, which is the first of the five the nav promised to be
 answered; the dated table above is left as it was read, and this line is what says it has
-moved. `/settings`, `/reports`, `/alerts` and `/help` still 404, each against the step or
+moved. `/settings`, `/alerts` and `/help` still 404, each against the step or
 stage named two paragraphs above.
 
 **Nothing here reorders the stages.** The table is what each stage already owed, written
@@ -1081,11 +1081,80 @@ Hanna's file reading `יום שבת` where her workbook has always said `שבת`
 `F1` and `F3` still say Saturday and Friday for both workers, which is the decision
 above and not a defect.
 
-#### Step 3 — `/reports`, and the yearly balances file
+#### Step 3 — `/reports`, and the four files it offers · **done**
 
-Item 23's file, from `template_balances_yearly.xlsx`, and the screen that offers it —
-the `דוחות` artboard, with the per-year salary summary (item 29) and the `דמי הבראה`
-report job 3 reshaped onto it. It is the third of the four remaining 404s.
+The third of the four remaining 404s, closed. The nav has linked `דוחות` from every
+page since stage 0.
+
+**Four reports and not three, settled with the user on 2026-09-10.** The artboard
+draws four cards and this step named three; the fourth,
+`ביטוח לאומי לרבעונים`, has no numbered criterion and the question was put to her
+before any code. She chose all four, so it is built on the strength of that decision
+and of the card's own words — "מה שולם ומתי, לצורך הדיווח" — which is recorded in
+`reports.ts` and in `he.ts` beside the strings themselves.
+
+**One report is filled and three are built.** `חופשה ומחלה` is item 23 and has a
+committed template, so it goes through a filler in the idiom `monthSheet.ts` set: the
+bytes are injected and nothing reads a file. The other three have no template, and a
+fourth `.xlsx` committed for them would be a layout nobody asked for kept in step
+with nothing. What a built sheet loses that a filled one keeps is the reading
+direction, so `buildReport` sets `rightToLeft` and all three go through it (Part 5).
+
+**No report adds arithmetic of its own.** Every figure comes off one
+`calculateSeries`, and the whole history is replayed before a year is filtered out of
+it: a 2026 file built from 2026's months alone would open that January from zero,
+because balances are derived and never stored (item 13). Column E of the balances
+sheet — `סהכ ניצול השנה` — is the one figure the engine does not carry, since a
+`BalanceLine` knows its own month, and it is accumulated across the block rather than
+summed by a formula so a worker employed in June adds up from her first recorded
+month.
+
+**Two things the artboard drew that the code does not.**
+
+1. **The closing line promised storage the application does not have.** It read
+   "כל קובץ נשמר גם אצלנו", and item 23 produces the file on request; nothing is
+   stored. Put to the user on 2026-09-10 and reworded to what is true: the data is
+   kept and any file can be produced again, which is the reassurance the drawn
+   sentence was reaching for and one the application can actually keep.
+2. **A month that cannot be exported offers no link.** Not a design change so much
+   as the screen agreeing with the route — see below.
+
+**The defect the built screen turned up, and nothing else could have.** The hero's
+green button, `המשכורת של ספטמבר 2026 לאקסל`, pointed at a month that had not ended.
+`/month/export/file` answers **409** for it (item 21), so the largest control on the
+screen produced an error page rather than a file. The types were right, the lint was
+clean, and every unit test passed: the screen and the route simply disagreed about
+which months have a file. Both now read the same `blocksExport`, the hero offers the
+latest month that has *ended*, and a blocked row says why — in `beforeExport`'s own
+two sentences rather than a third wording of one fact.
+
+**What is deliberately not written.** `סיכום שנתי` carries no yearly total row. Item
+29 asks for "that year's months with their totals", and a figure no criterion names
+is one nobody has checked. Say so if it is wanted; it is a line of code.
+
+**What the tests prove, and what they would catch.** `balancesSheet.test.ts` derives
+three months on paper from items 7 and 8 — fourteen twelfths of vacation a month in
+Hanna's second employment year, 1.5 sick days — and asserts the two blocks separately,
+which is what catches a filler that wrote one block twice. `reports.test.ts` asserts
+item 15's ladder outright: two completed years, six days, ₪2,709.00, the figure this
+plan already records from the family's own confirmation screen. It also asserts the
+national-insurance report is **empty** when nothing was paid, because a report built
+off `nationalInsuranceEstimate` instead would print plausible figures nobody ever paid.
+`e2e/reports.spec.ts` walks the nav, presses each card, opens the downloaded workbook
+and compares its cells against the figures rendered on the page. The hero test was
+checked by mutation: pointing `latest` back at the last month recorded fails it with
+`unexpected value "המשכורת של ספטמבר 2026 לאקסל"`.
+
+**The check the user runs.** Open `דוחות` from the nav. The hero must say
+`המשכורת של אוגוסט 2026 לאקסל` and not September, and the September row must read
+`החודש עדיין לא הסתיים` where the other rows say `אקסל`. Press each of the four cards
+in `דוחות נוספים`. `דמי הבראה` must hold one row: יולי 2026, 2 years, 6 days,
+₪2,709.00. `חופשה ומחלה` must have sickness in the upper block and vacation in the
+lower, twelve rows apiece, with the vacation accrual displaying 1.17 — the cell holds
+the exact fourteen twelfths and the template's own `0.00` format is what rounds the
+display. `סיכום שנתי` must repeat the same ברוטו and נטו the rows on screen show. A
+failure looks like a card that downloads an error page, a balances file with 1.5 in
+both blocks, or a yearly file whose figures differ from the screen above it.
 
 #### Step 4 — `דף המשכורת`
 

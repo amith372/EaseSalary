@@ -155,6 +155,111 @@ export const he = {
     },
   },
 
+  /**
+   * The `דוחות` screen and the four files it offers — stage 2's step 3.
+   *
+   * **Four cards, settled with the user on 2026-09-10.** The artboard draws
+   * four and the build plan's step 3 named three; she chose all four, so the
+   * national-insurance report is here on the strength of that decision and of
+   * the card's own words rather than of a numbered criterion.
+   */
+  reports: {
+    title: "דוחות",
+    lead: "כל קובץ כאן מוכן להורדה — לשמירה אצלך, לרואה חשבון או לביטוח הלאומי.",
+
+    /**
+     * **The closing line says what is true, which is not what the artboard
+     * drew.** It drew "כל קובץ נשמר גם אצלנו", and no file is stored anywhere:
+     * item 23 says the file is produced on request. What survives is the data,
+     * and every file can be produced again from it — which is the reassurance
+     * the drawn sentence was reaching for, and it is one the application can
+     * actually keep. Reworded with the user on 2026-09-10.
+     */
+    closing:
+      "הנתונים נשמרים, וכל קובץ אפשר להפיק מחדש בכל עת — גם אחרי שנים.",
+
+    /** The month's own file, which `/month/export` produces. This screen links
+     * to it rather than producing it a second way. */
+    thisMonth: {
+      eyebrow: "הדוח שמבוקש הכי הרבה",
+      /** The heading reads "המשכורת של אוגוסט 2026 לאקסל", and the month sits
+       * inside it — so the sentence is kept as its two halves rather than as a
+       * template, and each half is its own element beside the `<bdi>` that
+       * isolates the month (`CLAUDE.md`, on Chrome's translation). */
+      before: "המשכורת של",
+      after: "לאקסל",
+      action: "לייצא לאקסל",
+      /** A worker with no months yet: the hero says so instead of offering a
+       * file that cannot be produced. */
+      none: "אין עדיין חודש לייצא.",
+    },
+
+    previousMonths: {
+      title: "חודשים קודמים",
+      all: "לכל החודשים",
+      gross: "ברוטו",
+      net: "שולם לעובד/ת",
+      excel: "אקסל",
+      payslip: "לדף המשכורת",
+      /** A worker with no confirmed month yet, which is every worker on her
+       * first day: an empty list with no sentence reads as a screen that
+       * failed to load. */
+      none: "עוד לא נשמר כאן אף חודש.",
+      /**
+       * Why a month offers no file — the same two blocks `/month/export`
+       * refuses on, worded in the same words.
+       *
+       * **The row says the reason instead of offering a link that fails.** The
+       * route answers 409 for either of these (item 18, item 21), and a green
+       * button that returns an error page is the defect the built screen turned
+       * up on 2026-09-10. These reuse `beforeExport`'s own sentences rather
+       * than adding a third wording for one fact.
+       */
+      blocked: {
+        monthNotEnded: "החודש עדיין לא הסתיים",
+        openSickSpell: "יש מחלה שעדיין פתוחה",
+      },
+    },
+
+    more: {
+      title: "דוחות נוספים",
+      /** Every one of the four is an `.xlsx` and none is a PDF — the spec
+       * exports `.xlsx` only, and the artboard offered PDF in three places
+       * until job 3 removed them. */
+      action: "לייצא לאקסל",
+    },
+
+    yearlySalary: {
+      title: "סיכום שנתי",
+      note: "כל מה ששולם לעובד/ת אחת בשנה, חודש אחרי חודש",
+      month: "חודש",
+      gross: "ברוטו",
+      net: "שולם לעובד/ת",
+    },
+
+    balances: {
+      title: "חופשה ומחלה",
+      note: "מה נוצל ומה נשאר, לפי תאריכים",
+    },
+
+    nationalInsurance: {
+      title: "ביטוח לאומי לרבעונים",
+      note: "מה שולם ומתי, לצורך הדיווח",
+      paidIn: "שולם בחודש",
+      covers: "בגין החודשים",
+      amount: "סכום",
+    },
+
+    recuperation: {
+      title: "דמי הבראה",
+      note: "מה שולם ומתי, לפי שנות הותק",
+      month: "חודש",
+      yearsCompleted: "שנות ותק שהושלמו",
+      days: "ימים",
+      amount: "סכום",
+    },
+  },
+
   header: {
     /** The bar carries the greeting, so the home screen needs no heading row of
      * its own — the row it saves is the one that made the page scroll. */
@@ -1446,6 +1551,9 @@ export const he = {
     /** What the exported file is called. */
     file: {
       month: "משכורת",
+      /** Item 23's file: the year's accrual, use and closing balance, kept
+       * separate for vacation and for sick days. */
+      balances: "חופשה ומחלה",
       /** The version that shows the workbook's helper column, said in the name:
        * two files with one name, one of which quietly carries the household's
        * notes, is how this pair goes wrong after it leaves the application. */
