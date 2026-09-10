@@ -208,6 +208,34 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     );
   });
 
+  test("draws a level only where something below it changes the figure", async ({
+    page,
+  }) => {
+    await useHousehold(page, "levels");
+
+    // August withholds income tax and also carries a line placed after the
+    // total, so all three levels are real and all three are drawn.
+    await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await expect(row(page, "gross")).toHaveCount(1);
+    await expect(row(page, "afterWithholding")).toHaveCount(1);
+    await expect(row(page, "net")).toHaveCount(1);
+
+    // April withholds nothing and repays an advance. **No ברוטו**: with nothing
+    // withheld it equals the נטו, and two identical figures under two headings
+    // read as an error the family then goes looking for.
+    await page.goto("/month/payslip?month=2026-04");
+    await expect(row(page, "gross")).toHaveCount(0);
+    await expect(row(page, "afterWithholding")).toHaveCount(1);
+    await expect(row(page, "net")).toHaveCount(1);
+
+    // January withholds nothing and transfers nothing, so the month closes on
+    // one figure.
+    await page.goto("/month/payslip?month=2026-01");
+    await expect(row(page, "gross")).toHaveCount(0);
+    await expect(row(page, "afterWithholding")).toHaveCount(0);
+    await expect(row(page, "net")).toHaveCount(1);
+  });
+
   test("shows the balance and the days that produced it (criterion 2)", async ({
     page,
   }) => {

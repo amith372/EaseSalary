@@ -1214,6 +1214,26 @@ month's advances and added lines: a hardcoded row reads a neighbouring figure on
 month with one more line, quietly and plausibly. Another test switches worker through
 the shell's own control and asserts the free-rest-day count follows her to Fridays.
 
+**Two corrections after the user read the built screens — 2026-09-10.**
+
+1. **Every label on both new screens was left-aligned inside its box**, in a
+   right-to-left layout, and it survived a screenshot because the text itself still
+   read correctly. The cause is worth the sentence it now has in `CLAUDE.md`:
+   `dir="auto"` on an element whose only child is a `<bdi>` resolves to **LTR**. The
+   `<bdi>` is an isolate, so from the parent it counts as a neutral object and the
+   parent sees no strong character at all. Measured rather than eyeballed — the month
+   names sat 30 to 70 pixels short of the right edge, raggedly, because the gap is the
+   label's own length. Dropping the attribute wherever a `<bdi>` is the only child put
+   every one of them flush right.
+2. **The payslip drew `ברוטו` on months that withheld nothing**, which is the rule
+   settled on 2026-09-03 got backwards: a level is drawn only when something below it
+   changes the figure, and the surviving upper row is the `נטו` rather than the
+   `ברוטו`. The user restated it from the other side — do not show `ברוטו` unless
+   income tax is on and not zero — and the two agree. August draws all three levels,
+   April draws `נטו` above its advance, January closes on one figure. The exported
+   file is untouched and keeps the row either way: `B20` stays labelled and `E20`
+   empty at zero, and `ד` is always present, which is what item 2's "same rows" asks.
+
 **The check the user runs.** From the home screen press `לצפייה בדף המשכורת המלא`. It
 must open `אוגוסט 2026` and not September, with the total in large type at the top and
 `ברוטו` beside it. Under `מה מרכיב את הסכום` the rows must be grouped as the sheet

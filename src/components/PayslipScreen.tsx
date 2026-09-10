@@ -125,7 +125,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
   if (shown === undefined) {
     return (
       <main className="flex flex-1 justify-center px-7 pt-3 pb-7">
-        <p dir="auto" className="text-[17px] font-light text-ink-soft">
+        <p className="text-[17px] font-light text-ink-soft">
           <Bidi>{he.payslip.none}</Bidi>
         </p>
       </main>
@@ -168,7 +168,6 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
         <section className="flex flex-wrap items-end justify-between gap-6.5">
           <div className="flex flex-col gap-1">
             <span
-              dir="auto"
               className="text-[14px] font-semibold tracking-[0.06em] text-ink-quiet"
             >
               <Bidi>{he.payslip.eyebrow}</Bidi>
@@ -198,7 +197,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
           className="flex flex-wrap items-end gap-8.5 px-8 py-6.5"
         >
           <div className="flex flex-col gap-1">
-            <span dir="auto" className="text-[17px] font-light text-ink-warm">
+            <span className="text-[17px] font-light text-ink-warm">
               <Bidi>{he.payslip.total}</Bidi>
             </span>
             <span data-payslip-total>
@@ -207,7 +206,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
           </div>
           <div className="flex flex-col gap-1.5 pb-1.5">
             <span className="flex items-baseline gap-2.5">
-              <span dir="auto" className="text-[16px] font-light text-ink-mute">
+              <span className="text-[16px] font-light text-ink-mute">
                 <Bidi>{he.month.preview.gross}</Bidi>
               </span>
               <MoneyValue agorot={result.gross} />
@@ -215,7 +214,6 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
             {withholds ? (
               <span className="flex items-baseline gap-2.5">
                 <span
-                  dir="auto"
                   className="text-[16px] font-light text-ink-mute"
                 >
                   <Bidi>{he.month.preview.afterWithholding}</Bidi>
@@ -227,7 +225,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
         </Card>
 
         <section className="flex flex-col gap-3.5">
-          <h2 dir="auto" className="text-[22px] font-semibold">
+          <h2 className="text-[22px] font-semibold">
             <Bidi>{he.payslip.composition}</Bidi>
           </h2>
           <Card radius="md" className="flex flex-col gap-0 px-6.5 pt-1.5 pb-5.5">
@@ -275,16 +273,18 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
             })}
 
             <div className="flex flex-col border-t-2 border-line-strong pt-1">
-              <div className="border-b border-line py-3.5">
-                <SummaryRow
-                  {...why}
-                  label={he.month.preview.gross}
-                  whyKey="gross"
-                  explanation={{ text: he.sheet.why.gross }}
-                  value={<MoneyValue agorot={result.gross} />}
-                  strong
-                />
-              </div>
+              {withholds ? (
+                <div className="border-b border-line py-3.5">
+                  <SummaryRow
+                    {...why}
+                    label={he.month.preview.gross}
+                    whyKey="gross"
+                    explanation={{ text: he.sheet.why.gross }}
+                    value={<MoneyValue agorot={result.gross} />}
+                    strong
+                  />
+                </div>
+              ) : null}
               {withholds
                 ? withholdingRows.map((row) => (
                     <div key={row.key} className="border-b border-line py-3.5">
@@ -300,7 +300,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                     </div>
                   ))
                 : null}
-              {withholds && transfers ? (
+              {transfers ? (
                 <div className="border-b border-line py-3.5">
                   <SummaryRow
                     {...why}
@@ -345,12 +345,11 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
             third party and never reaches the worker's own total (item 16). */}
         {thirdPartyLines.length > 0 ? (
           <section className="flex flex-col gap-3.5">
-            <h2 dir="auto" className="text-[22px] font-semibold">
+            <h2 className="text-[22px] font-semibold">
               <Bidi>{he.payslip.thirdParty}</Bidi>
             </h2>
             <Card radius="md" className="flex flex-col px-6.5 pt-3.5 pb-5">
               <p
-                dir="auto"
                 className="text-[15px] font-light text-pretty text-ink-mute"
               >
                 <Bidi>{he.payslip.thirdPartyNote}</Bidi>
@@ -386,7 +385,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
         ) : null}
 
         <section className="flex flex-col gap-3.5">
-          <h2 dir="auto" className="text-[22px] font-semibold">
+          <h2 className="text-[22px] font-semibold">
             <Bidi>{he.payslip.days.title}</Bidi>
           </h2>
           <div className="grid grid-cols-2 overflow-hidden rounded-card border border-line bg-surface">
@@ -430,7 +429,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
         </section>
 
         <section className="flex flex-col gap-3.5">
-          <h2 dir="auto" className="text-[22px] font-semibold">
+          <h2 className="text-[22px] font-semibold">
             <Bidi>{he.payslip.after.title}</Bidi>
           </h2>
           <div className="flex flex-col">
@@ -477,7 +476,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                 data-after="advance"
                 className="flex items-center justify-between gap-4 border-t border-line py-3.5"
               >
-                <span dir="auto" className="text-[17px] font-light text-ink-warm">
+                <span className="text-[17px] font-light text-ink-warm">
                   <Bidi>{he.workers.facts.advance}</Bidi>
                 </span>
                 <MoneyValue agorot={shown.advanceOwedAgorot} />
@@ -522,7 +521,7 @@ function DayStat({
       className="-mt-px -ms-px flex items-center gap-3 border-t border-s border-line px-5.5 py-4"
     >
       <span className={`size-2.75 flex-none rounded-full ${dot}`} />
-      <span dir="auto" className="flex-1 text-[17px] font-light text-ink-warm">
+      <span className="flex-1 text-[17px] font-light text-ink-warm">
         <Bidi>{label}</Bidi>
       </span>
       <span className="text-[18px] font-semibold">

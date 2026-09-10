@@ -106,11 +106,10 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
     <main className="flex flex-1 justify-center px-7 pt-5 pb-12">
       <div className="flex w-full max-w-[880px] flex-col gap-7.5">
         <section className="flex flex-col gap-1.5">
-          <h1 dir="auto" className="text-[34px] font-semibold tracking-tight">
+          <h1 className="text-[34px] font-semibold tracking-tight">
             <Bidi>{words.title}</Bidi>
           </h1>
           <p
-            dir="auto"
             className="max-w-[60ch] text-[18px] font-light text-pretty text-ink-soft"
           >
             <Bidi>{words.lead}</Bidi>
@@ -125,7 +124,6 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
         >
           <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-2">
             <span
-              dir="auto"
               className="self-start text-[13px] font-semibold tracking-[0.06em] text-ink-quiet"
             >
               <Bidi>{words.thisMonth.eyebrow}</Bidi>
@@ -156,12 +154,12 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
         </Card>
 
         <section className="flex flex-col gap-4">
-          <h2 dir="auto" className="text-[22px] font-semibold">
+          <h2 className="text-[22px] font-semibold">
             <Bidi>{words.previousMonths.title}</Bidi>
           </h2>
           <Card radius="md" className="overflow-hidden">
             {months.length === 0 ? (
-              <p dir="auto" className="px-6 py-5 text-[16px] font-light text-ink-soft">
+              <p className="px-6 py-5 text-[16px] font-light text-ink-soft">
                 <Bidi>{words.previousMonths.none}</Bidi>
               </p>
             ) : (
@@ -172,7 +170,6 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                   className="flex flex-wrap items-center gap-5 border-t border-line px-6 py-4.5 first:border-t-0"
                 >
                   <span
-                    dir="auto"
                     className="w-[130px] flex-none text-[18px] font-semibold"
                   >
                     <Bidi>{monthLabel(entry.month)}</Bidi>
@@ -213,7 +210,7 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h2 dir="auto" className="text-[22px] font-semibold">
+          <h2 className="text-[22px] font-semibold">
             <Bidi>{words.more.title}</Bidi>
           </h2>
           <div className="grid grid-cols-2 gap-4">
@@ -257,7 +254,6 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
         </section>
 
         <p
-          dir="auto"
           className="max-w-[66ch] text-[16px] font-light text-pretty text-ink-faint"
         >
           <Bidi>{words.closing}</Bidi>
@@ -280,13 +276,13 @@ function ReportCard({
 }) {
   const body = (
     <>
-      <span dir="auto" className="text-[19px] font-semibold">
+      <span className="text-[19px] font-semibold">
         <Bidi>{title}</Bidi>
       </span>
-      <span dir="auto" className="text-[16px] font-light text-pretty text-ink-soft">
+      <span className="text-[16px] font-light text-pretty text-ink-soft">
         <Bidi>{note}</Bidi>
       </span>
-      <span dir="auto" className="pt-1 text-[15px] font-medium text-forest">
+      <span className="pt-1 text-[15px] font-medium text-forest">
         <Bidi>{he.reports.more.action}</Bidi>
       </span>
     </>
