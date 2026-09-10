@@ -38,6 +38,14 @@
 // copy of the format here would agree with the first exactly until the day
 // somebody changed one of them, and the row already written would then be the
 // thing that could not be opened. Node strips the types on the way in.
+//
+// **It prints a `MODULE_TYPELESS_PACKAGE_JSON` warning on every run and that is
+// expected.** Node is saying that a `.ts` file has no module type declared for
+// it; it re-reads the file as an ES module and carries on, and nothing about
+// the check is affected. The fix Node suggests -- `"type": "module"` in
+// `package.json` -- is not taken, because in a Next project that also changes
+// how every `.js` config file in the repository is interpreted, which is a real
+// risk taken to silence a line of advice.
 import { keyFrom, openNumber, sealNumber } from "../src/lib/encryption.ts";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -611,4 +619,10 @@ try {
 }
 
 console.log(failures === 0 ? "\nALL CHECKS PASSED" : `\n${failures} CHECK(S) FAILED`);
-process.exit(failures === 0 ? 0 : 1);
+// `process.exitCode` rather than `process.exit()`, for the reason
+// `check-income-tax-pages.mjs` writes out at the same line: on Windows,
+// exiting while `fetch`'s sockets are still closing trips a libuv assertion
+// that prints under a passing report and looks like a crash. It fires on a
+// race rather than every time, which is worse -- a line that appears on one run
+// in five is one nobody can rule out.
+process.exitCode = failures === 0 ? 0 : 1;

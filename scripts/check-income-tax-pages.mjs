@@ -102,4 +102,14 @@ if (points.error) {
 }
 
 console.log(failures === 0 ? "\nALL CHECKS PASSED" : `\n${failures} CHECK(S) FAILED`);
-process.exit(failures === 0 ? 0 : 1);
+// **`process.exitCode` and not `process.exit()`**, which is not a style
+// preference here. On Windows, tearing the process down while `fetch`'s sockets
+// are still closing trips a libuv assertion --
+// `!(handle->flags & UV_HANDLE_CLOSING)` -- which prints *after* the report and
+// after the exit code is already decided. Nothing is wrong when it appears and
+// the report above it is complete, and that is exactly what makes it worth
+// removing: a crash-shaped line under a passing run is one somebody has to
+// investigate every time they see it. Setting the code and letting node close
+// its own handles ends the process the same way, with the same status, and
+// without the noise.
+process.exitCode = failures === 0 ? 0 : 1;
