@@ -16,7 +16,7 @@ import { WhyPanel } from "@/components/WhyDisclosure";
 import { sameMonth } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { dayLabel } from "@/lib/dateLabels";
-import { isUserLineKey, lineKeys } from "@/lib/engine/month";
+import { isUserLineKey, lineKeys, monthLevels } from "@/lib/engine/month";
 import type { SpanIntent } from "@/components/MonthCalendar";
 import type { MonthInSeries } from "@/lib/engine/series";
 import type { UserLinePlacement } from "@/lib/engine/types";
@@ -25,7 +25,6 @@ import { formatAgorot, formatDays } from "@/lib/money";
 import type { SkippedDay, SkipReason } from "@/lib/spans";
 import type {
   BalanceLine,
-  ClosingLine,
   IsoDate,
   MonthLine,
   MonthResult,
@@ -313,29 +312,11 @@ function MonthPreview({
   // ones placed before the total and one for the ones placed after it (item
   // 20). The itemisation is the payments screen's and the export's.
   const userBefore = result.lines.filter((line) => isUserLineKey(line.key));
-  const userAfter = result.closing.filter((row) => isUserLineKey(row.key));
-  // **The block below the columns has two halves and the נטו stands between
-  // them** (specs.md Part 5). Which half a row is in is the engine's answer and
-  // not a list of keys kept here: a screen that sorted them itself would put
-  // the next row the block grows into whichever half the `else` happened to be.
-  const closingRows = result.closing.filter((row) => !isUserLineKey(row.key));
-  const withholdingRows = closingRows.filter((row) => row.block === "withholding");
-  const transferRows = closingRows.filter((row) => row.block === "transfer");
-  // **A level is drawn only when something below it changes the figure**, which
-  // is one rule over both boundaries rather than a special case at each. With
-  // nothing withheld the נטו *is* the ברוטו, and with nothing transferred the
-  // סך הכל *is* the נטו — and two identical figures under two headings read
-  // as an error the user then goes looking for. So a month with no income tax
-  // and no advance closes on one figure, a month with an advance shows the נטו
-  // above it, and only a month that withholds something shows all three.
-  //
-  // Settled with the user on 2026-09-03: the collapse itself, and that the
-  // surviving upper row is the נטו rather than the ברוטו. The bottom row is
-  // always drawn, because it is the screen's answer.
-  const changesTheFigure = (rows: ClosingLine[]) =>
-    rows.some((row) => (row.amount ?? 0) !== 0);
-  const withholds = changesTheFigure(withholdingRows);
-  const transfers = changesTheFigure(transferRows) || changesTheFigure(userAfter);
+  // Which levels are real is one rule asked in one place, shared with the
+  // payslip and with `/reports` (`monthLevels`).
+  const { withholdingRows, transferRows, userAfter, withholds, transfers } =
+    monthLevels(result);
+
   // **Everything the engine emitted that the three groups above did not claim.**
   // The groups are keyed whitelists, so a line the engine grows later — the
   // recuperation payment is the next one (item 15) — would otherwise count in

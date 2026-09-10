@@ -12,11 +12,10 @@ import { ValueChip } from "@/components/ValueChip";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { monthLabel } from "@/lib/dateLabels";
 import type { RestDay } from "@/lib/dates";
-import { isUserLineKey } from "@/lib/engine/month";
+import { monthLevels } from "@/lib/engine/month";
 import { he } from "@/lib/i18n/he";
 import { formatAgorot, formatDays } from "@/lib/money";
 import type {
-  ClosingLine,
   MonthLine,
   MonthResult,
   SheetColumn,
@@ -145,22 +144,11 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
     (subtotal) => subtotal.column === "H",
   );
 
-  // **The block below the columns has two halves and the נטו stands between
-  // them** (Part 5), and which half a row is in is the engine's answer. A level
-  // is drawn only when something below it changes the figure — the rule settled
-  // with the user on 2026-09-03 for the month screen, and the same rule here
-  // because two identical figures under two headings read as an error.
-  const closingRows = result.closing.filter((row) => !isUserLineKey(row.key));
-  const userAfter = result.closing.filter((row) => isUserLineKey(row.key));
-  const withholdingRows = closingRows.filter(
-    (row) => row.block === "withholding",
-  );
-  const transferRows = closingRows.filter((row) => row.block === "transfer");
-  const changesTheFigure = (rows: ClosingLine[]) =>
-    rows.some((row) => (row.amount ?? 0) !== 0);
-  const withholds = changesTheFigure(withholdingRows);
-  const transfers =
-    changesTheFigure(transferRows) || changesTheFigure(userAfter);
+  // Which levels are real is the engine's answer and is asked in one place, so
+  // this screen, the month screen and the row per month on `/reports` cannot
+  // disagree about the same month (`monthLevels`).
+  const { withholdingRows, transferRows, userAfter, withholds, transfers } =
+    monthLevels(result);
 
   return (
     <main className="flex flex-1 justify-center px-7 pt-3 pb-7">

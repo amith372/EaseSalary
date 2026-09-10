@@ -197,7 +197,19 @@ export const he = {
     previousMonths: {
       title: "חודשים קודמים",
       all: "לכל החודשים",
+      /**
+       * The three figures a month can show, and **`נטו` is the one that is
+       * always drawn** (specs.md Part 5, and the user on 2026-09-10).
+       *
+       * `ברוטו` appears only where income tax was withheld, because with
+       * nothing withheld it equals the `נטו`; `שולם לעובד/ת` appears only where
+       * an advance or a line below the total moved the figure, because
+       * otherwise it equals the `נטו` too. A row that printed all three on an
+       * ordinary month would print one number three times under three headings,
+       * which reads as an error the family then goes looking for.
+       */
       gross: "ברוטו",
+      afterWithholding: "נטו",
       net: "שולם לעובד/ת",
       excel: "אקסל",
       payslip: "לדף המשכורת",

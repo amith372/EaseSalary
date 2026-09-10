@@ -38,7 +38,15 @@ import type { YearMonth } from "@/lib/types";
 export interface ReportMonth {
   month: YearMonth;
   grossAgorot: number | null;
+  /** The `נטו` — the `ברוטו` less what was withheld from it, which is the
+   * income tax and nothing else today (specs.md Part 5). */
+  afterWithholdingAgorot: number | null;
   netAgorot: number | null;
+  /** Whether income tax was actually withheld, and whether an advance or a line
+   * below the total moved the figure — `monthLevels`, so this row and the
+   * payslip cannot disagree about the same month. */
+  withholds: boolean;
+  transfers: boolean;
   /**
    * Why this month cannot be exported, empty where it can — `blocksExport`'s
    * own answer, which is what `/month/export/file` refuses on.
@@ -68,6 +76,40 @@ export interface WorkerReports {
 
 interface ReportsScreenProps {
   household: WorkerReports[];
+}
+
+/**
+ * The figures one month's row shows — settled with the user on 2026-09-10.
+ *
+ * **`נטו` is always drawn and the other two only when they say something
+ * different.** `ברוטו` appears where income tax was withheld, since with
+ * nothing withheld it equals the `נטו`; `שולם לעובד/ת` appears where an advance
+ * or a line below the total moved the figure, since otherwise it equals the
+ * `נטו` too. So an ordinary month shows one figure, a month with tax and an
+ * advance shows all three, and no row ever prints one number twice under two
+ * headings.
+ *
+ * It is the same rule the payslip draws its levels by, from the same
+ * `monthLevels` answer — the difference is only that a row has no room to walk
+ * down them, so it names what it shows.
+ */
+function figuresOf(
+  entry: ReportMonth,
+): { key: string; label: string; agorot: number | null }[] {
+  const words = he.reports.previousMonths;
+  const figures = [];
+  if (entry.withholds) {
+    figures.push({ key: "gross", label: words.gross, agorot: entry.grossAgorot });
+  }
+  figures.push({
+    key: "afterWithholding",
+    label: words.afterWithholding,
+    agorot: entry.afterWithholdingAgorot,
+  });
+  if (entry.transfers) {
+    figures.push({ key: "net", label: words.net, agorot: entry.netAgorot });
+  }
+  return figures;
 }
 
 function fileHref(
@@ -174,12 +216,22 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                   >
                     <Bidi>{monthLabel(entry.month)}</Bidi>
                   </span>
-                  <span className="min-w-0 flex-[1_1_200px] text-[16px] font-light text-ink-mute">
-                    <span dir="auto">{words.previousMonths.gross}</span>{" "}
-                    <MoneyValue agorot={entry.grossAgorot} />
-                    <span> · </span>
-                    <span dir="auto">{words.previousMonths.net}</span>{" "}
-                    <MoneyValue agorot={entry.netAgorot} />
+                  {/* One figure, two or three, by what the month actually did.
+                      Each label is its own element beside its own amount, which
+                      is the Chrome-translate rule and also what lets a figure
+                      drop out without disturbing its neighbours. */}
+                  <span className="flex min-w-0 flex-[1_1_200px] flex-wrap items-baseline gap-x-1.5 text-[16px] font-light text-ink-mute">
+                    {figuresOf(entry).map((figure, index) => (
+                      <span
+                        key={figure.key}
+                        data-figure={figure.key}
+                        className="flex items-baseline gap-1.5"
+                      >
+                        {index > 0 ? <span aria-hidden="true">· </span> : null}
+                        <span dir="auto">{figure.label}</span>
+                        <MoneyValue agorot={figure.agorot} />
+                      </span>
+                    ))}
                   </span>
                   <div className="flex items-center gap-4">
                     {entry.blocks[0] === undefined ? (

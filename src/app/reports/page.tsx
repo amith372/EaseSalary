@@ -3,6 +3,7 @@ import { ReportsScreen } from "@/components/ReportsScreen";
 import type { WorkerReports } from "@/components/ReportsScreen";
 import { getRepository } from "@/lib/dev/store";
 import { blocksExport } from "@/lib/engine/beforeExport";
+import { monthLevels } from "@/lib/engine/month";
 import { calculateSeries } from "@/lib/engine/series";
 import { todayInIsrael } from "@/lib/today";
 
@@ -46,16 +47,25 @@ export default async function ReportsPage() {
         ...new Set(series.map((month) => month.facts.month.year)),
       ].sort((a, b) => b - a);
 
-      const months = series.map((month) => ({
-        month: month.facts.month,
-        grossAgorot: month.result.gross,
-        netAgorot: month.result.net,
-        // The same function `/month/export` and `/month/export/file` use, so
-        // the screen and the route cannot disagree about which months have a
-        // file. They did on 2026-09-10, and the hero offered a month that had
-        // not ended.
-        blocks: blocksExport(month.facts, today),
-      }));
+      const months = series.map((month) => {
+        // Which of the three figures say something different — the same answer
+        // the payslip draws its levels by, so a month cannot read one way here
+        // and another way there.
+        const { withholds, transfers } = monthLevels(month.result);
+        return {
+          month: month.facts.month,
+          grossAgorot: month.result.gross,
+          afterWithholdingAgorot: month.result.afterWithholding,
+          netAgorot: month.result.net,
+          withholds,
+          transfers,
+          // The same function `/month/export` and `/month/export/file` use, so
+          // the screen and the route cannot disagree about which months have a
+          // file. They did on 2026-09-10, and the hero offered a month that had
+          // not ended.
+          blocks: blocksExport(month.facts, today),
+        };
+      });
 
       return {
         workerId: profile.id,

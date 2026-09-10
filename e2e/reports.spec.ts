@@ -98,6 +98,39 @@ test.describe("the reports screen (item 23, item 29)", () => {
     ).toHaveCount(0);
   });
 
+  test("shows a figure only where it says something the others do not", async ({
+    page,
+  }) => {
+    await useHousehold(page, "figures");
+    await page.goto("/reports");
+
+    const figures = async (month: string) =>
+      page
+        .locator(`[data-report-month="${month}"] [data-figure]`)
+        .evaluateAll((nodes) =>
+          nodes.map((node) => node.getAttribute("data-figure")),
+        );
+
+    // **`נטו` is always drawn and the other two only when they differ.** August
+    // withholds income tax and also carries a line below the total, so all
+    // three figures say something different and all three appear.
+    expect(await figures("2026-8")).toEqual([
+      "gross",
+      "afterWithholding",
+      "net",
+    ]);
+
+    // April withholds nothing and repays an advance: no `ברוטו`, because with
+    // nothing withheld it is the same number as the `נטו`.
+    expect(await figures("2026-4")).toEqual(["afterWithholding", "net"]);
+
+    // January does neither, so one figure. A row that printed all three here
+    // would print one number three times under three headings — the defect
+    // this test exists for, and one that reads as an error the family then
+    // goes looking for.
+    expect(await figures("2026-1")).toEqual(["afterWithholding"]);
+  });
+
   test("says the same yearly figures in the file as the screen shows", async ({
     page,
   }) => {

@@ -106,6 +106,54 @@ export function isUserLineKey(key: string): boolean {
 }
 
 /**
+ * Which of the month's three levels are real, and the rows that make them so.
+ *
+ * **In Hebrew there are three figures and not two** (specs.md Part 5): `ברוטו`
+ * is the month's total, `נטו` is what is left after anything **withheld from
+ * it** — the income tax — and `סך הכל תשלום לעובד/ת` is what is actually
+ * transferred, after the advances and after a line the user placed below the
+ * total. Which half a row belongs to is a fact about the row and the engine's
+ * answer, never a screen sorting rows by name.
+ *
+ * **A level is only real when something below it changes the figure.** With
+ * nothing withheld the `נטו` *is* the `ברוטו`, and with nothing transferred the
+ * total *is* the `נטו` — and two identical figures under two headings read as an
+ * error the family then goes looking for. Settled with the user on 2026-09-03
+ * for the month screen and restated by her on 2026-09-10 for the payslip and for
+ * `/reports`.
+ *
+ * **It lives here because three screens ask it and one of them is a list.** The
+ * month screen, the payslip and the row per month on `/reports` each decide what
+ * to draw from this, and three copies of the rule are three chances for one of
+ * them to answer differently about the same month.
+ */
+export function monthLevels(result: MonthResult): {
+  withholdingRows: ClosingLine[];
+  transferRows: ClosingLine[];
+  userAfter: ClosingLine[];
+  withholds: boolean;
+  transfers: boolean;
+} {
+  // A row of zero changes nothing, so it makes no level real: a month whose
+  // income tax is the zero it defaults to has no `נטו` to show.
+  const changes = (rows: ClosingLine[]) =>
+    rows.some((row) => (row.amount ?? 0) !== 0);
+
+  const own = result.closing.filter((row) => !isUserLineKey(row.key));
+  const withholdingRows = own.filter((row) => row.block === "withholding");
+  const transferRows = own.filter((row) => row.block === "transfer");
+  const userAfter = result.closing.filter((row) => isUserLineKey(row.key));
+
+  return {
+    withholdingRows,
+    transferRows,
+    userAfter,
+    withholds: changes(withholdingRows),
+    transfers: changes(transferRows) || changes(userAfter),
+  };
+}
+
+/**
  * How a line the user added is addressed, built in one place.
  *
  * The key is a stored value — `MonthFacts.overrides` is keyed by it (item 17) —

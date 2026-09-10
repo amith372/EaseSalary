@@ -1149,6 +1149,21 @@ and compares its cells against the figures rendered on the page. The hero test w
 checked by mutation: pointing `latest` back at the last month recorded fails it with
 `unexpected value "המשכורת של ספטמבר 2026 לאקסל"`.
 
+**The month rows show one figure, two or three — 2026-09-10.** They showed `ברוטו`
+and `שולם לעובד/ת` always, which on an ordinary month is one number printed twice
+under two headings. The rule the user gave is the one the payslip already draws its
+levels by, said for a row that has no room to walk down them: **`נטו` is always drawn,
+`ברוטו` only where income tax was withheld, and `שולם לעובד/ת` only where an advance
+or a line below the total moved the figure.** So August shows all three, April shows
+`נטו` above its advance, and January shows one.
+
+**`monthLevels` now answers that question for all three screens.** The rule had been
+written out twice — in the month screen and again in the payslip — and this row would
+have been a third copy. It lives in `src/lib/engine/month.ts` with the rest of the
+month's own vocabulary, returns the two halves of the closing block as well as the two
+booleans, and all three screens read it. Three copies of one rule are three chances for
+one screen to say something different about the same month.
+
 **The check the user runs.** Open `דוחות` from the nav. The hero must say
 `המשכורת של אוגוסט 2026 לאקסל` and not September, and the September row must read
 `החודש עדיין לא הסתיים` where the other rows say `אקסל`. Press each of the four cards
