@@ -1274,17 +1274,33 @@ export const he = {
      * its figures stop moving with the profile.
      */
     finish: {
-      /** The artboard's own words. The file itself is stage 2's, and this
-       * button is where it will be produced from. */
+      /** The artboard's own words, and the version the workbook itself asks
+       * for: cell I1 says the helper column is hidden before printing. */
       action: "לייצא לאקסל",
+      /**
+       * The second of item 2's two versions, as a button of equal weight beside
+       * the first — settled with the user on 2026-09-10.
+       *
+       * **Neither artboard draws a chooser**, so this is the one control stage 2
+       * adds that the design pass did not draw. The two differ in one thing
+       * only, and the name says which: a file that quietly carried the
+       * household's notes under the same name as one that did not is how this
+       * pair goes wrong after it leaves the application.
+       */
+      actionWithNotes: "לייצא עם ההערות",
+      /** Under both buttons, because a user reading the two needs to know what
+       * the difference actually is before she picks one. */
+      versions:
+        "שתי הגרסאות זהות בסכומים. הן נבדלות רק בכך שעמודת ההערות מוצגת או מוסתרת, וההערות נכתבות בשתיהן.",
       back: "לחזור לחודש",
-      /** Why the button is not pressable, in the order the screen resolves
+      /** Why the buttons are not pressable, in the order the screen resolves
        * them: the blocks first, because no answer makes them go away. */
       blocked: "כדי לייצא צריך קודם לטפל במה שמסומן למעלה.",
       unanswered: "אפשר לייצא אחרי שכל השאלות נענו.",
-      /** The export itself is stage 2's, so the screen says what it actually
-       * did rather than pretending a file appeared. */
-      done: "החודש אושר ונשמר עם שכר המינימום שאישרת.",
+      /** Said after the month was confirmed and the file was asked for, which
+       * are one gesture: confirming is what stops the month moving with the
+       * profile, and the file is what the user came for. */
+      done: "החודש אושר, והקובץ ירד למחשב.",
     },
   },
 
@@ -1344,6 +1360,27 @@ export const he = {
    * reading code.
    */
   sheet: {
+    /**
+     * How the sheet names the worker where a label needs a noun — the
+     * `{{worker_role}}` the template carries in four of its own sentences.
+     *
+     * **Part 3 asks for this to be filled from the profile so a sheet never
+     * calls a man a woman, and the profile has no gender field yet.** The
+     * inclusive form is what the rest of the application already writes, and it
+     * is correct rather than merely safe; it becomes a choice when the profile
+     * can hold one.
+     */
+    workerRole: "עובד/ת",
+
+    /** What the exported file is called. */
+    file: {
+      month: "משכורת",
+      /** The version that shows the workbook's helper column, said in the name:
+       * two files with one name, one of which quietly carries the household's
+       * notes, is how this pair goes wrong after it leaves the application. */
+      withNotes: "עם הערות",
+    },
+
     lines: {
       base: "שכר החודש",
       /**

@@ -176,6 +176,12 @@ lights in the nav — but `/settings` itself still 404s and is stage 3's to answ
 does, the way into the picker is a row on the worker's profile, settled with the user on
 2026-09-09 and recorded in stage 5's step 5.
 
+**`/month/export/file` was added on 2026-09-10** by stage 2's step 1. It is not in
+the table above and does not belong there: it answers with a file rather than a
+page, no nav tab points at it and no artboard draws it, so it is the export's own
+address and not a screen. The two buttons on `/month/export` are the only things
+that link to it.
+
 **Four of the five 404s remain, and `/workers` is not one of them.** Step 9 built it and
 `/workers/[id]` on 2026-09-09, which is the first of the five the nav promised to be
 answered; the dated table above is left as it was read, and this line is what says it has
@@ -724,6 +730,251 @@ standing would ship a stale rate to every family.
 rows nothing yet writes, and the four labels are strings only the export will read. It is
 recorded here rather than fixed in place because fixing it belongs to the export, and
 because item 2's "same labels" is checkable only against the file this stage produces.
+
+### The steps stage 2 is built in — settled 2026-09-10
+
+Four, ordered so each leaves something the user can open and read. The month file
+first, because it is what the button on `/month/export` has been waiting for since
+stage 5's step 7; the template's own rest-day wording second; `/reports` third,
+because it is the stage's other address and a nav tab that 404s today; `דף המשכורת`
+last, because it is the file's own layout seen on screen and reads best once the
+file it mirrors exists.
+
+**Three things were settled with the user on 2026-09-10, before any code**, each
+because the template and `specs.md` left them genuinely open and a guess would have
+looked like a decision:
+
+1. **Income tax is written at `E20`** — the row the template already labels
+   `מס הכנסה`, numbered 15. Part 5 says the tax "sits in the closing block and not
+   in column E", which is a statement about `MonthResult.closing` and not about a
+   cell: on the sheet the figure goes in the row the family's own workbook keeps for
+   it, and the family's sheets show that row present and empty because they chose not
+   to withhold, not because the row is unused. What keeps the tax out of the ברוטו is
+   therefore **the range and not the column**: `א` is `SUM(E6:E19)` and stops one row
+   short of it. A generated row below `ד` was the alternative and was refused, because
+   it prints the label `מס הכנסה` twice on one sheet — once empty and once with the
+   figure.
+2. **The two versions of item 2 are two equal buttons**, `לייצא לאקסל` and
+   `לייצא עם ההערות`, side by side. Both artboards draw one button and no chooser, so
+   this is a control the canvas does not hold; it is recorded here rather than left to
+   be re-derived, and it is the one place stage 2 adds a control the design pass did
+   not draw.
+3. **The block below `ד` keeps `ה` on the template's own row and letters nothing
+   else.** The user's rule is that the file must match the 2026 workbook's structure —
+   with a letter where it has one, without where it does not — and the committed files
+   answer it directly: `template_month_advance_given.xlsx` is the standard layout with
+   **one extra row that carries no letter, no label and no styling at all** (row 28
+   there, pushing `ה` to 29). So row 28's `ה` sentence stays exactly as the template
+   writes it and is the row a *repaid* advance is written on; every other row of the
+   block is an unlettered copy of it carrying the engine's own label. A month with no
+   repaid advance leaves row 28 labelled and empty, which is what rows 6 (pension) and
+   20 (tax) already do.
+
+#### Step 1 — the month file, and the two buttons that produce it · **done**
+
+`exceljs` on the server, filling `data/templates/template_month_standard.xlsx`.
+
+**The filler is a pure function over the template's bytes**, with the file read
+injected — the same idiom the scrapers use for HTML (Part 4), so the suite fills real
+templates and never touches the filesystem layout. It owns the map from the engine's
+line keys to the template's cells and there is no sheet model between them.
+
+**The cell map**, read out of the template on 2026-09-10. Rows 1–22 keep the
+template's own labels untouched; the filler writes figures into them and never a
+label, which is how item 2's "same Hebrew labels" is satisfied without `he.ts` and
+the template having to agree about anything.
+
+| Cell | What is written |
+|---|---|
+| `C1` | `{{month_year}}` |
+| `A2`, `A3`, `A4`, `C2`, `C3`, `C4`, `F29`, `F30`, `B10`, `B14` | the identity placeholders, and `{{worker_role}}` where a label carries it |
+| `D2` | the month's own day count |
+| `E2` | `standardDays` |
+| `F2` | the rest-eve supplement's units |
+| `G2` | the rest days worked |
+| `H2` | the holiday days used |
+| `J2` | the sick days used |
+| `G3` | the free rest day's date, as text |
+| `C6`–`C22`, `D6`–`D22` | each line's units and its unit price, at full precision |
+| `E`,`F`,`G`,`H` of 6–22 | each line's amount, in the column the engine gave it |
+| `C17` | the vacation days used — **units only**, price and amount left empty (item 7, and the finding above) |
+| `E20` | the income tax |
+| `J17`, `J19` | the vacation and the sick accrual for the month |
+| `E23` | `=SUM(E6:E19)` |
+| `F24` | `=SUM(F6:F22)` |
+| `G25` | `=SUM(G6:G22)` |
+| `E26` | `=E23+F24+G25` |
+| row 28 down | the block below `ד`, generated as decision 3 says |
+| the net row | `=E26+E20+SUM(<the block's rows>)` |
+| `C33`–`C38` | the six reporting figures, beside the labels the template puts in `B33`–`B38` |
+| `I6`–`I22` and the inserted rows | the user's own notes on the month's actions |
+
+**Four cells the template formats and step 1 leaves empty, each for a reason.** `D17`
+and `G17`, because item 7's finding says the vacation row carries units and no money;
+`E4` and `J4`, two unlabelled text cells whose meaning nothing in the workbook or the
+spec states — a figure written into a cell nobody can name is worse than an empty one.
+Row 11 (severance and pension) stays empty by the non-negotiable, and row 22 (hospital
+overtime) and row 15 (`ויזת עובד זר`) stay empty until an engine line exists for them.
+
+**`C33`–`C38` is a choice and not a reading**: the template puts the six reporting
+labels in `B33`–`B38` with no formatted cell beside them, so the column is the
+filler's to pick and `C` is the only neighbour. Written down because the next session
+would otherwise have to re-derive it from an empty cell.
+
+**The rows the user added grow the sheet, and the sums grow over them** (item 20). A
+line placed before the total is an inserted copy of a row the template already
+designed, in column `E` for a standing line and `G` for a one-off; a line placed after
+it joins the block below `ד`. The `SUM` ranges are then written from the row positions
+the filler tracked rather than from constants — **the trap is that a range one row
+short prints a total wrong by exactly one line and looks entirely ordinary.** The
+check chosen is that the range covers exactly the rows written, asserted against the
+filler's own layout on a month with added lines and a month without, because it is the
+one that fails loudly: reading the total back would need a calculating reader, and
+`exceljs` writes a formula without evaluating it, so a `result` read back from a file
+this application wrote would be a figure this application put there.
+
+**The two versions are one file and one flag.** Column `I` is written in both and
+`hidden` on the plain one, which is what cell `I1` instructs. A test asserts the two
+carry identical figures.
+
+**The agreement test drives the preview's lines and the filled cells from a single
+engine result** and asserts they say the same thing — the property this stage exists
+to protect, and one that a test sitting beside only the engine or only the filler
+cannot see.
+
+**The route is `/month/export/file`**, a `GET` route handler taking the worker, the
+month and the notes flag, so the browser downloads it the way it downloads any file
+and the two buttons are two links. The button confirms the month first, which is stage
+5's own settled decision.
+
+**What step 1 does not do, written down rather than left to be found.** The template's
+Saturday and Friday wording stays literal, so a worker whose rest day is not Saturday
+receives a sheet that counts her rest days correctly and *names* them Saturdays. That
+is step 2's whole subject. `worker-2` of the demo seed is a Friday worker, so the
+check below is run on `worker-1` and on the known seed, both of which rest on Saturday
+as Hanna does.
+
+**Landed on 2026-09-10.** `src/lib/export/` holds four modules — `layout.ts` the
+row map and every range derived from it, `monthSheet.ts` the filler as a pure
+function over the template's bytes, `notes.ts` the user's notes gathered by the
+row each action reaches, `template.ts` the one place that touches the
+filesystem — plus `monthExport.ts`, which assembles the filler's input out of the
+replay. The address is `/month/export/file`, a `GET` route handler, and the two
+buttons on `/month/export` are two links to it.
+
+**Three things the step turned up that were not on its list.**
+
+**1. `H2` is the holidays she took *off*, not the ones she worked.** The template
+heads `G1` `שבתות שעבדה` and `H1` `ניצול יום חג` — one counts attendance and the
+other counts utilisation — and the first draft filled both from the worked count.
+A holiday she worked is a day of attendance that draws nothing from the yearly
+quota (item 10); a holiday she took off is the one drawn from it. Filled from the
+worked count, a family would read that her quota had been spent on the very days
+she was paid a premium for. It is now `holidayDaysOf`, which is the same function
+`calculateSeries` counts the year's entitlement with, so the sheet and the replay
+cannot disagree about it. **Caught by reading the filled file, not by a test** —
+both figures are plausible and neither is a type error.
+
+**2. The browser test's first version compared two different months.** `/month`
+opens on the current month and the file is of the last one that ended, so the
+figure read off the screen was September's and the figure read out of the file was
+August's. It failed, which is the only reason it was noticed; a comparison made
+where the screen happens to land is not a comparison at all, and the spec now
+steps to the month it exported by reading the heading rather than by counting
+clicks.
+
+**3. August 2026 is the seeded month that exercises the whole sheet**, and the
+first version of the browser test asserted it withheld nothing. `seed.ts` gives it
+a ₪450 income tax and a ₪200 deduction the user wrote in her own words and placed
+after the total, so it is the one month that fills `E20` *and* a row of the block
+below `ד` at once — exactly the two regions decision 1 above separates. The
+assumption was written into the test as a comment and was simply wrong; the seed
+is the authority and the test now names both figures out of it.
+
+**What the suite covers.** 33 unit tests across
+`monthSheet.test.ts`, `notes.test.ts` and `agreement.test.ts`, and four browser
+tests in `e2e/month-export.spec.ts`. The agreement test drives the preview and the
+file from one `MonthInSeries` and compares them at the *rendered* figure through
+`formatAgorot`, which is what catches an agora lost on the way into a cell; the
+browser test compares the file against the figures the month screen actually
+printed. Both were checked against two deliberate defects — the base salary
+written one row off, and a `SUM` range one row short — and the two together fail
+eight tests, which is what says they are tests rather than demonstrations.
+
+**Two things found in the template while filling it.** `duplicateRow` copies a
+row's value and style but **does not move a merge** with the rows it shifts, so
+the `ד` label's `A26:D26` is unmerged before the sheet grows and merged again at
+the row the label ended on; without that a month with an added line carries a
+four-cell merge on the wrong row and reads as damaged. And the advance sample's
+extra row is unstyled and unlabelled, which is what settled decision 3.
+
+**The check to run before this is committed.**
+
+Run `npm run dev` and open `http://localhost:3000/month/export`. It opens on
+אוגוסט 2026 for the first worker. Answer all six questions — `כן` to
+`אילו חגים נעבדו` and `לא` to the rest, which is what August 2026 records — and
+confirm the wage. Two green buttons of equal weight then become pressable:
+`לייצא לאקסל` and `לייצא עם ההערות`, with a sentence under them saying the two
+files carry identical amounts and differ only in whether the notes column shows.
+
+Press `לייצא לאקסל`. A file called `משכורת - [שם] - אוגוסט 2026.xlsx` downloads and
+the screen says `החודש אושר, והקובץ ירד למחשב.` Open it beside a month tab of the
+family's own workbook. What to read:
+
+- It opens **right-to-left**, with the same seventeen numbered rows in the same
+  order and the same Hebrew labels. Nothing anywhere says `{{`.
+- `E6` is the base salary, `E7` the rest-eve supplement, `F9` the rest days.
+- `E20` beside `מס הכנסה` is **−450.00**, and row 28 below `ד` reads
+  `קניות שהעברתי לה במזומן` at **−200.00** — the two the seed gives August 2026.
+- The four total lines are **formulas and not typed figures**: click `E23`, `F24`,
+  `E26` and `E29` and the formula bar shows a `SUM` or a chain of cells. Editing
+  any line's amount should move all four.
+- `א` at `E23` reads `=SUM(E6:E19)+SUM(E21:E22)` — two ranges, stopping short of
+  the tax row, so a withheld figure reduces the נטו and never the ברוטו.
+- The reporting block at rows 33–38 carries both day counts and the two balances
+  in column `C`.
+- Column `I` is **hidden**. Unhide it and it is empty for this month, because the
+  seed's August note is on the deduction row of the block.
+
+Then press `לייצא עם ההערות`. The same figures, and column `I` visible.
+
+**What a failure looks like.** A total that is a typed number rather than a
+formula. A range that stops one row short, which prints a total wrong by exactly
+one line and looks entirely ordinary — `E23` reaching only `E18`, say. The `ד`
+label spanning four cells of the wrong row. A `{{token}}` anywhere. And the one
+that is not visible in the file at all: the figures in it disagreeing with what
+`/month` shows for אוגוסט 2026, so open that too and compare the ברוטו.
+
+**Two things this check cannot show, and both are known.** The template's
+Saturday and Friday wording is still literal, so switching to the second worker —
+who rests on Friday — exports a sheet that counts her Fridays correctly and calls
+them Saturdays; that is step 2. And nothing in the application can open a sick
+spell yet, so the file has never been produced for a month with one.
+
+#### Step 2 — the rest-day wording, made a placeholder
+
+Part 3 requires every label that names the rest day to become a placeholder filled
+from the month's stored rest day, and names nine cells. **The template holds eleven**
+— Part 3's list misses `F1` (`ימי שישי שעבדה בחודש זה`) and `F3`
+(`תאריך שבת חופשית`), both of which name a day the way the nine do. Extending the list
+is an edit to `specs.md` and is put to the user before it is made, not after.
+
+The edit is made inside the `.xlsx` rather than by rewriting the file through
+`exceljs`: the labels are shared strings, so the zip's own `sharedStrings.xml` is
+edited and every other part stays byte for byte, which is what keeps the formatting
+the family compares by eye out of the change.
+
+#### Step 3 — `/reports`, and the yearly balances file
+
+Item 23's file, from `template_balances_yearly.xlsx`, and the screen that offers it —
+the `דוחות` artboard, with the per-year salary summary (item 29) and the `דמי הבראה`
+report job 3 reshaped onto it. It is the third of the four remaining 404s.
+
+#### Step 4 — `דף המשכורת`
+
+The payslip as the family reads it, at `/month/payslip`. The address is stage 2's to
+choose and this is the choice: a sibling of `/month/export`, because it is the same
+month seen a third way and no nav tab owns it.
 
 ## Stage 3 — Accounts and storage
 

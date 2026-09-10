@@ -14,7 +14,7 @@ import { Card } from "@/components/Card";
 import { MonthStepper, openingMonthOf } from "@/components/MonthStepper";
 import { useWorkerScope } from "@/components/WorkerScope";
 import type { DatedRate } from "@/lib/datedRates";
-import { monthHasEnded, sameMonth } from "@/lib/dates";
+import { monthHasEnded, sameMonth, yearMonthText } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import type {
@@ -499,27 +499,40 @@ function MonthConfirmation({
 
       <div className="flex flex-col gap-2 border-t border-line pt-4">
         <div className="flex flex-wrap items-center gap-4">
-          <button
-            type="button"
-            data-finish=""
-            disabled={blocked || !answered || saving}
-            onClick={() =>
-              run(
-                () =>
-                  confirmMonth(workerId, shown.month, {
-                    minimumText: wageText,
-                    effectiveFrom,
-                    ...(shown.recuperation === null
-                      ? {}
-                      : { recuperationRateText: rateText }),
-                  }),
-                () => setDone(true),
-              )
-            }
-            className="rounded-card-sm bg-forest px-6 py-3 text-[17px] font-semibold text-surface transition-colors hover:bg-forest-deep disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            <span dir="auto">{words.finish.action}</span>
-          </button>
+          {/* Item 2's two versions, as two buttons of equal weight: neither
+              artboard draws a chooser, and the difference between the files is
+              one the user has to be able to see before she picks (settled
+              2026-09-10). Both confirm the month first, which is what stage 5's
+              step 7 settled the export button does. */}
+          {[false, true].map((withNotes) => (
+            <button
+              key={withNotes ? "notes" : "plain"}
+              type="button"
+              {...(withNotes ? { "data-finish-notes": "" } : { "data-finish": "" })}
+              disabled={blocked || !answered || saving}
+              onClick={() =>
+                run(
+                  () =>
+                    confirmMonth(workerId, shown.month, {
+                      minimumText: wageText,
+                      effectiveFrom,
+                      ...(shown.recuperation === null
+                        ? {}
+                        : { recuperationRateText: rateText }),
+                    }),
+                  () => {
+                    setDone(true);
+                    download(workerId, shown.month, withNotes);
+                  },
+                )
+              }
+              className="rounded-card-sm bg-forest px-6 py-3 text-[17px] font-semibold text-surface transition-colors hover:bg-forest-deep disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <span dir="auto">
+                {withNotes ? words.finish.actionWithNotes : words.finish.action}
+              </span>
+            </button>
+          ))}
           <Link
             href="/month"
             className="text-[16px] text-ink-mute transition-colors hover:text-forest"
@@ -537,6 +550,13 @@ function MonthConfirmation({
             {words.finish.unanswered}
           </p>
         ) : null}
+
+        {/* After the reason the buttons cannot be pressed, never before it: a
+            user who is blocked wants to know why, and an explanation of a
+            choice she cannot yet make is in the way of the answer. */}
+        <p dir="auto" className="text-[14px] font-light text-ink-quiet text-pretty">
+          {words.finish.versions}
+        </p>
 
         {refusal !== null ? (
           <p
@@ -561,6 +581,38 @@ function MonthConfirmation({
       </div>
     </div>
   );
+}
+
+/**
+ * The file itself, asked for once the month is confirmed.
+ *
+ * **The confirmation is a server action and the file is an address**, so the two
+ * are not one request: confirming writes the month, and the browser then fetches
+ * the file. Doing it in that order is what item 4 asks for — the wage confirmed
+ * *before* the export and never beside it.
+ *
+ * **An anchor clicked in code and not a navigation**, because this address
+ * answers with a file rather than a page: `router.push` would try to route to
+ * it and `location.href` would be a navigation the browser immediately cancels
+ * for the download. An anchor is the primitive the download actually is, which
+ * is also why the framework's rule against assigning `location` does not apply
+ * here rather than being switched off.
+ */
+function download(workerId: string, month: YearMonth, withNotes: boolean): void {
+  const query = new URLSearchParams({
+    worker: workerId,
+    month: yearMonthText(month),
+    ...(withNotes ? { notes: "1" } : {}),
+  });
+  const link = document.createElement("a");
+  link.href = `/month/export/file?${query.toString()}`;
+  // The name comes from the response's own `Content-Disposition`, which is
+  // where it belongs: a name written here as well would be a second copy to
+  // disagree with it.
+  link.rel = "noopener";
+  document.body.append(link);
+  link.click();
+  link.remove();
 }
 
 /** What the refusal was, as a sentence — never a code (specs.md item 25). The
