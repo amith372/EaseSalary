@@ -38,6 +38,7 @@ export const rateKeys = [
   "minimumWage",
   "nationalInsurance",
   "recuperationDayRate",
+  "creditPointValue",
 ] as const;
 
 export type RateKey = (typeof rateKeys)[number];
@@ -48,14 +49,16 @@ export type RateKey = (typeof rateKeys)[number];
  * **`value` is read in the unit its key names, and the keys do not share
  * one.** `minimumWage` and `recuperationDayRate` are integer agorot, as every
  * money figure in this application is; `nationalInsurance` is a fraction of the
- * month's gross — 0.036, not 3.6. There is no unit field, because a unit that
- * travels as data is a unit a caller can get wrong at run time; the key is the
- * unit, and each call site names its key.
+ * month's gross — 0.036, not 3.6; and `creditPointValue` is integer agorot **a
+ * year**, because that is the figure the statute states and the one the source
+ * page leads with. There is no unit field, because a unit that travels as data
+ * is a unit a caller can get wrong at run time; the key is the unit, and each
+ * call site names its key.
  */
 export interface DatedRate {
   key: RateKey;
-  /** Agorot for `minimumWage` and `recuperationDayRate`, a fraction for
-   * `nationalInsurance`. */
+  /** Agorot for `minimumWage` and `recuperationDayRate`, agorot a year for
+   * `creditPointValue`, a fraction for `nationalInsurance`. */
   value: number;
   /**
    * The official date of application — the תאריך תחולה the statute or the
@@ -107,11 +110,12 @@ export function rateInForce(
 /**
  * What the application ships knowing, before any fetch has run.
  *
- * **Four rows and no more.** Every figure here is one this repository can
+ * **Five rows and no more.** Every figure here is one this repository can
  * cite: two minimum wages read out of the committed workbooks, the
- * national-insurance percentage, and the recuperation day rate. Nothing is
- * seeded from memory — a figure with a date nobody can check is worse than an
- * absent row, because an absent row comes back as `null` and says so.
+ * national-insurance percentage, the recuperation day rate, and the value of an
+ * income-tax credit point. Nothing is seeded from memory — a figure with a date
+ * nobody can check is worse than an absent row, because an absent row comes
+ * back as `null` and says so.
  *
  * **The wage rises in April and not in January**, which is why a table keyed by
  * calendar year would get March 2026 wrong: it is still valued at the 2025
@@ -164,6 +168,26 @@ export const SEEDED_RATES: DatedRate[] = [
     value: 45150,
     effectiveFrom: "2025-07-01",
     source: "https://www.kolzchut.org.il/he/דמי_הבראה",
+  },
+  {
+    key: "creditPointValue",
+    // ₪2,904 a year, which is ₪242 a month. **The annual figure is stored and
+    // the monthly one derived**, for the reason the tax brackets store annual
+    // bounds: the statute states a year's worth, the page leads with it, and
+    // the monthly figure it prints beside it is exactly a twelfth of it.
+    //
+    // **One row covers 2024 through 2026**, which the source's own history
+    // table says outright: it lists 2025-2024 at ₪2,904 together, and the
+    // portal page states ₪2,904 for 2026 as well. A row per year would be
+    // three copies of one figure and three chances for one of them to be
+    // corrected alone.
+    //
+    // It steps in January, where the wage steps in April and the recuperation
+    // rate in July — which is the whole reason each figure in this table
+    // carries its own date rather than sharing a year with the others.
+    value: 290400,
+    effectiveFrom: "2024-01-01",
+    source: "https://www.kolzchut.org.il/he/נקודות_זיכוי_ממס_הכנסה",
   },
 ];
 
