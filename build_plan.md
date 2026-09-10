@@ -1252,6 +1252,37 @@ Supabase: Postgres, Auth, row-level security.
 - Schema: account, worker, month, **day spans**, advances, third-party payments,
   overrides, confirmed wages, cached holiday lists. Spans rather than per-day rows, and a
   sick span may run past the end of the month it started in.
+- **Income tax, calculated — approved 2026-09-10 and scheduled here.** Until that day
+  `specs.md` Part 1 and `CLAUDE.md` both said income tax is never calculated and its
+  line is simply typed; both now say the opposite, and the old wording is replaced
+  rather than qualified. It is scheduled in this stage and not in stage 2 because the
+  count of credit points turns on the worker's **gender**, and that is a profile field
+  this stage builds. Item 28's docblock has wanted the same field since stage 4 for an
+  unrelated reason — `he.sheet.workerRole` says `עובד/ת` precisely because the profile
+  cannot yet say which — so one field answers two things.
+  - **The law is settled and nothing here is a judgement call.** Kol Zchut's
+    `נקודות זיכוי ממס הכנסה לעובד זר`, read on 2026-09-10: a legally employed foreign
+    worker **in home care** gets 2.25 points, one in any other sector gets 1, and a
+    **woman gets half a point more** in either. So a female caregiver has 2.75 and a
+    male one 2.25. An asylum seeker on a 2א5 permit gets none. This application employs
+    only caregivers, so the gender is the whole of what the count turns on.
+  - **A scraper for the brackets and the point value**, in the idiom the others already
+    use: a pure function over an HTML string with the request injected, cached in the
+    dated-rates table stage 5 built. No year and no rate is hardcoded (item 3), and the
+    brackets are dated exactly as the minimum wage is, so a month is taxed at the table
+    that stood during it.
+  - **A fourth confirmation on the pre-export screen**, beside the minimum wage and the
+    recuperation day rate, and stored with the month for the same reason those are: it
+    is what lets a past month reproduce rather than recalculate.
+  - **Nothing about the exported sheet changes.** `B20` keeps its `מס הכנסה` label and
+    `E20` stays empty at zero, and `ד` is written either way — which is already true and
+    was checked on 2026-09-10 against a taxed month and an untaxed one.
+  - **The three Hebrew figures do not change either**, and this was confirmed against
+    the user's own words on 2026-09-10: `ברוטו` before the tax, `נטו` after it, and
+    `סך הכל תשלום לעובד/ת` after the transfer rows as well. Part 5 already defines them
+    that way and the engine already computes them that way, so this feature fills a line
+    that already has its place rather than moving any figure.
+
 - **Item 13's cascade is no longer an open question here.** It was written as a choice
   between balances derived on read and balances stored with an invalidation; it is now
   decided the first way, in stage 1 rather than in this schema. The engine replays a

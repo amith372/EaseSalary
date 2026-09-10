@@ -24,11 +24,26 @@ guided screens where the user supplies only facts about the month and never a fo
 or a rate. When a decision is not covered by this specification, choose the option that
 requires the user to know less.
 
-The application never calculates income tax. Its line defaults to zero, exactly as in the
-family's workbook, and the user can edit it from the actions on the worker's month if
-their own situation requires a figure there. The pension and severance provision stays
-out of scope: its row survives in the export template, empty and untouched, so the
-exported sheet keeps the layout and the row numbering of the family's workbook.
+The application works the income tax out and does not leave the family to. **This
+reverses the rule that stood until 2026-09-10**, which was that income tax is never
+calculated and its line is simply typed; the reason for reversing it is the reason
+everything else here is calculated — the arithmetic is a rate table and a count of credit
+points, and a family that has to look both up is a family that gets it wrong in the
+direction that underpays the state or the worker. The figure is derived from the month's
+wage, from the tax brackets in force during that month, and from the credit points the
+worker is entitled to. It is offered rather than imposed: the user confirms it before
+every export, exactly as she already confirms the minimum wage and the recuperation day
+rate, and the confirmed figure is stored with the month so a past month reproduces at its
+own rates. It can be overridden like any other computed amount, and a month that withholds
+nothing holds zero, which is what every month held before this changed. Nothing about it
+is hardcoded: the brackets and the value of a credit point are fetched per year and cached
+like the minimum wage. **The credit points are derived and never asked for** — a legally
+employed foreign worker in home care is entitled to 2.25, and a woman to half a point
+more, so the count turns on the worker's own gender and on nothing the family has to know.
+The pension and severance provision stays out of scope: its row survives in the export
+template, empty and untouched, so the exported sheet keeps the layout and the row
+numbering of the family's workbook. **It lands with the storage of Part 3** and not
+before, because the gender it turns on is a profile field and the profile is built there.
 
 ## Part 2 — Testable success criteria
 
@@ -595,13 +610,21 @@ Each of these is true or false at a glance.
     user types can disagree with the label beside it, and a tax entered negative would pay
     her instead. A figure of zero is not an entry but the absence of one, and it is what
     every month holds until the user says otherwise.
-    Income tax is never calculated and the intention is that it never will be. What the
-    user needs before typing a figure is therefore the rule and not an arithmetic: the
-    employer deducts income tax on the basis of the wage and of the credits the worker
-    is entitled to, and a foreign caregiver in home care receives 2.25 credit points —
-    more than a foreign worker in another sector. Someone who does not know that
-    deducts too much, so the line's own explanation says it and links the rule beside
-    it (items 25, 26). It is said there and enters no calculation.
+    Income tax **is** calculated, which it was not until 2026-09-10, and the
+    paragraph that said it never would be is replaced rather than qualified. The
+    employer deducts on the basis of the wage and of the credits the worker is
+    entitled to: the brackets in force during the month, less her credit points at
+    the value a point held that year. A legally employed foreign worker in home care
+    is entitled to 2.25 points and a woman to half a point more, so a female
+    caregiver has 2.75 and a male one 2.25; a foreign worker in another sector has
+    one, and an asylum seeker holding a 2א5 permit none, neither of whom this
+    application employs. The count is therefore read off the worker's own gender and
+    is never a number the family is asked for — someone who does not know the rule
+    deducts too much, which is the reason the figure moved out of her hands rather
+    than a reason to explain it to her better. The line's explanation still says the
+    rule and still links it (items 25, 26), because a figure the application worked
+    out is one it has to be able to justify. The derived figure is confirmed before
+    every export and is overridable afterwards like any other.
     **What may be overridden is what the application worked out, and what the
     month itself recorded is edited instead.** The two are different gestures and
     naming them apart is what keeps either usable. An override replaces a figure
