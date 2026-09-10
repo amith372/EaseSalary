@@ -588,12 +588,20 @@ Each of these is true or false at a glance.
     withholds something shows all three. The figure actually paid is always drawn, because
     it is the screen's answer. This is a rule about the screen and not about the sheet:
     the export prints the sheet's own rows whatever they come to.
-    **When two levels collapse, the lower name is the one that survives**, which is what
-    keeps the rule from needing a table of cases. A month with no tax shows נטו and not
-    ברוטו; a month that withholds a tax but transfers nothing shows ברוטו, the tax, and
-    then סך הכל תשלום לעובד/ת with no נטו between them — the figure below the tax is the
-    figure paid, and naming it twice is the thing being avoided. The name that goes is
-    always the name of a figure nothing has yet been taken off.
+    **When two levels collapse, the surviving name is the one that describes what
+    actually happened**, which is what keeps the rule from needing a table of cases. The
+    two lower names are not interchangeable: נטו is the ברוטו less what was withheld, and
+    סך הכל תשלום לעובד/ת is the name of a *difference* — what is left after the advances
+    and after a line placed below the total. **A month that transferred nothing has no
+    such difference, so its bottom figure is called נטו**, and the second name is not
+    borrowed to describe a step that did not happen. So a month with no tax shows נטו and
+    not ברוטו; a month that withholds a tax but transfers nothing shows ברוטו, the tax,
+    and then נטו; and only a month that actually transfers something carries סך הכל תשלום
+    לעובד/ת, where the two figures genuinely are two. Decided with the user on 2026-09-10,
+    replacing the earlier rule that the lower name always survived: under that rule the
+    same untransferred month was called סך הכל תשלום לעובד/ת on the payslip and נטו on
+    `/reports`, which is one figure under two names — the thing this criterion exists to
+    prevent, one screen further out.
     **Hiding the zero row moves the tax's explanation and does not delete it.** The rule a
     user needs before typing a figure — the 2.25 credit points below, with its link — is
     attached to the place the figure is *entered*, which this criterion already says is the

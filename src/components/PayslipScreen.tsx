@@ -13,7 +13,7 @@ import { useWorkerScope } from "@/components/WorkerScope";
 import { monthLabel } from "@/lib/dateLabels";
 import type { RestDay } from "@/lib/dates";
 import { monthLevels } from "@/lib/engine/month";
-import { he } from "@/lib/i18n/he";
+import { bottomFigure, he } from "@/lib/i18n/he";
 import { formatAgorot, formatDays } from "@/lib/money";
 import type {
   MonthLine,
@@ -186,24 +186,31 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
         >
           <div className="flex flex-col gap-1">
             <span className="text-[17px] font-light text-ink-warm">
-              <Bidi>{he.payslip.total}</Bidi>
+              <Bidi>{bottomFigure(transfers).label}</Bidi>
             </span>
             <span data-payslip-total>
               <MoneyValue agorot={result.net} size="xl" />
             </span>
           </div>
+          {/* The same rule the composition card below obeys, and it was
+              missed here: a level is drawn only where something below it
+              changes the figure. The headline is the month's bottom figure, so
+              the ברוטו beside it is worth drawing only when something was
+              withheld or transferred, and the נטו only when both happened —
+              otherwise the block prints one number twice under two headings,
+              which reads as an error the family goes looking for. */}
           <div className="flex flex-col gap-1.5 pb-1.5">
-            <span className="flex items-baseline gap-2.5">
-              <span className="text-[16px] font-light text-ink-mute">
-                <Bidi>{he.month.preview.gross}</Bidi>
-              </span>
-              <MoneyValue agorot={result.gross} />
-            </span>
-            {withholds ? (
+            {withholds || transfers ? (
               <span className="flex items-baseline gap-2.5">
-                <span
-                  className="text-[16px] font-light text-ink-mute"
-                >
+                <span className="text-[16px] font-light text-ink-mute">
+                  <Bidi>{he.month.preview.gross}</Bidi>
+                </span>
+                <MoneyValue agorot={result.gross} />
+              </span>
+            ) : null}
+            {withholds && transfers ? (
+              <span className="flex items-baseline gap-2.5">
+                <span className="text-[16px] font-light text-ink-mute">
                   <Bidi>{he.month.preview.afterWithholding}</Bidi>
                 </span>
                 <MoneyValue agorot={result.afterWithholding} />
@@ -318,9 +325,8 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               <div className="pt-4.5">
                 <SummaryRow
                   {...why}
-                  label={he.payslip.total}
+                  {...bottomFigure(transfers)}
                   whyKey="net"
-                  explanation={{ text: he.sheet.why.net }}
                   value={<MoneyValue agorot={result.net} size="lg" />}
                   strong
                 />

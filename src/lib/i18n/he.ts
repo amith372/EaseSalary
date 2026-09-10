@@ -1827,3 +1827,36 @@ export const he = {
     },
   },
 } as const;
+
+/**
+ * What the bottom figure of a month is **called**, which is not always the same
+ * name (settled with the user on 2026-09-10).
+ *
+ * The Hebrew `נטו` is the ברוטו less what was withheld from it, and
+ * `סך הכל תשלום לעובד/ת` is what is transferred after the advances and after a
+ * line the user placed below the total. **When nothing was transferred they are
+ * one figure, and it is called `נטו`** — the second name is the name of a
+ * difference, so a month that has no such difference should not be made to
+ * carry it. A month that does transfer keeps both names, each over its own
+ * figure, because there the two really are two.
+ *
+ * It is a function and not two constants because three screens draw that bottom
+ * figure — the month screen's preview, the payslip, and the row per month on
+ * `/reports` — and three ternaries are three chances for one of them to name the
+ * same month differently, which is the disagreement this replaces.
+ *
+ * The explanation moves with the name for the same reason: `why.net` describes
+ * a transfer, and on a month with none it would explain a step that did not
+ * happen.
+ */
+export function bottomFigure(transfers: boolean): {
+  label: string;
+  explanation: { text: string };
+} {
+  return transfers
+    ? { label: he.payslip.total, explanation: { text: he.sheet.why.net } }
+    : {
+        label: he.month.preview.afterWithholding,
+        explanation: { text: he.sheet.why.afterWithholding },
+      };
+}

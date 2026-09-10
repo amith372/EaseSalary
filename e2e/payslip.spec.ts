@@ -236,6 +236,59 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     await expect(row(page, "net")).toHaveCount(1);
   });
 
+  /**
+   * **The bottom figure's own name, which is not always the same name** (the
+   * user on 2026-09-10). `סך הכל תשלום לעובד/ת` is the name of a *difference* —
+   * what is left after the advances and after a line placed below the total —
+   * so a month with no such difference is not made to carry it and is called
+   * `נטו`, which is what `/reports` has always called it.
+   *
+   * **What it catches:** the disagreement it replaces. The payslip labelled
+   * every month's bottom figure `סך הכל תשלום לעובד/ת` unconditionally, so
+   * January appeared under one name here and under `נטו` on `/reports` while
+   * being one figure. A regression to the unconditional label fails on January;
+   * naming every month `נטו` instead fails on August, where the two figures are
+   * genuinely two.
+   */
+  test("names the bottom figure by whether anything was transferred", async ({
+    page,
+  }) => {
+    await useHousehold(page, "bottom");
+
+    // August transfers — it carries a line placed after the total — so both
+    // names are real, each over its own figure.
+    await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await expect(row(page, "net")).toContainText(he.payslip.total);
+    await expect(row(page, "afterWithholding")).toContainText(
+      he.month.preview.afterWithholding,
+    );
+
+    // The tint block at the head of the screen answers the same way, and it
+    // was the one place the levels rule had been missed: it drew a ברוטו on
+    // every month, so January printed one number twice under two headings.
+    const headline = page.locator("[data-payslip-total]").locator("xpath=..");
+    await expect(headline).toContainText(he.payslip.total);
+    const block = page.locator("[data-payslip-total]").locator("xpath=../..");
+    await expect(block).toContainText(he.month.preview.gross);
+
+    // April repays an advance, so it transfers too and keeps both names.
+    await page.goto("/month/payslip?month=2026-04");
+    await expect(row(page, "net")).toContainText(he.payslip.total);
+
+    // January transfers nothing. One figure, and its name is `נטו`.
+    await page.goto("/month/payslip?month=2026-01");
+    await expect(row(page, "net")).toContainText(
+      he.month.preview.afterWithholding,
+    );
+    await expect(row(page, "net")).not.toContainText(he.payslip.total);
+
+    const january = page.locator("[data-payslip-total]").locator("xpath=..");
+    await expect(january).toContainText(he.month.preview.afterWithholding);
+    await expect(
+      page.locator("[data-payslip-total]").locator("xpath=../.."),
+    ).not.toContainText(he.month.preview.gross);
+  });
+
   test("shows the balance and the days that produced it (criterion 2)", async ({
     page,
   }) => {

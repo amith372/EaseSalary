@@ -20,7 +20,7 @@ import { isUserLineKey, lineKeys, monthLevels } from "@/lib/engine/month";
 import type { SpanIntent } from "@/components/MonthCalendar";
 import type { MonthInSeries } from "@/lib/engine/series";
 import type { UserLinePlacement } from "@/lib/engine/types";
-import { he } from "@/lib/i18n/he";
+import { bottomFigure, he } from "@/lib/i18n/he";
 import { formatAgorot, formatDays } from "@/lib/money";
 import type { SkippedDay, SkipReason } from "@/lib/spans";
 import type {
@@ -467,9 +467,8 @@ function MonthPreview({
         <Card tone="tint" radius="tint" className="flex flex-col gap-2 px-3.5 py-2.5">
           <Row
             {...why}
-            label={he.month.preview.net}
+            {...bottomFigure(transfers)}
             whyKey="net"
-            explanation={{ text: he.sheet.why.net }}
             value={<MoneyValue agorot={result.net} size="lg" chip="plain" />}
             strong
             within="tint"
