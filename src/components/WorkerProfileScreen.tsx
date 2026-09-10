@@ -58,11 +58,12 @@ import type { YearMonth } from "@/lib/types";
  * invitation and belongs to stage 3. Each is an absence rather than an
  * invention, which is the choice `CLAUDE.md` rule 4 asks for.
  *
- * **The five identifying numbers are not here either, and that is the whole
+ * **The four identifying numbers are not here either, and that is the whole
  * reason the documents section holds dates alone** (items 22, 28): they are
- * encrypted at rest with a key held outside the database, there is no database,
- * and a field for one now would put a plaintext identifier into an in-memory
- * store.
+ * encrypted at rest with a key held outside the database, the running
+ * application is still on the in-memory store, and a field for one now would
+ * put a plaintext identifier into it. The columns and the sealing exist as of
+ * 2026-09-10; the fields arrive with the Postgres repository.
  *
  * It holds no arithmetic. Every change goes to a server action which parses the
  * amount, checks the choices and writes through the store, and the page then

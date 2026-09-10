@@ -887,9 +887,12 @@ Each of these is true or false at a glance.
     be exported once it has ended.
 22. Reading the identifying columns straight out of the database shows unreadable values;
     the real numbers appear only on the worker's own screen and in the export. The
-    columns are the passport number, the bank account number, and the numbers of the
-    three documents of criterion 28 — five in all. The expiry dates beside those document
-    numbers are deliberately **not** among them, for the reason criterion 28 gives.
+    columns are the passport number, the bank account number, the employment permit
+    number and the work visa number — **four in all**. This said five until 2026-09-10,
+    which counted the passport twice: it is one of the three documents of criterion 28
+    *and* the number written into the sheet's identity line, and a passport carries one
+    number for both. The expiry dates beside those document numbers are deliberately
+    **not** among them, for the reason criterion 28 gives.
 23. The balances can be exported on their own as a yearly table — a row per month with
     the accrual, what was used, and the closing balance, kept separate for vacation and
     for sick days — so whoever turns the sheet into a payslip can check the figures. It
@@ -962,9 +965,11 @@ Each of these is true or false at a glance.
     extension fee, belonging to the worker's visa, and cell **B16** is the licence fee,
     belonging to the employer's permit. The sheet always knew the distinction; it simply
     never wrote it down. Because the permit belongs to the employer and the visa to the
-    worker, a household with two workers holds one permit position and two visas. The
-    three **numbers** are encrypted at rest with the passport and bank account numbers
-    (item 22); the three **expiry dates are not**. A date identifies nobody, and the
+    worker, a household with two workers holds one permit position and two visas. Of
+    the three **numbers**, the permit's and the visa's are encrypted at rest beside the
+    passport and bank account numbers of item 22, and the passport's *is* that item's
+    passport number rather than a fourth one — so the encrypted columns are four and not
+    five. The three **expiry dates are not** encrypted. A date identifies nobody, and the
     warnings of item 27 have to find what is coming due — an encrypted date cannot be
     queried or indexed, so the bell would have to decrypt every worker's three dates on
     every load to discover it has nothing to say.

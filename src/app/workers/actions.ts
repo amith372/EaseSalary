@@ -31,12 +31,14 @@ import type { RestDay } from "@/lib/dates";
  * every balance in every month is replayed from (item 6); and the three
  * documents with their expiry dates (item 28).
  *
- * **The five identifying numbers are not here.** The passport, the bank
- * account and the three document *numbers* are encrypted at rest with a key
- * held outside the database, and there is no database (`CLAUDE.md`'s
- * non-negotiables, items 22 and 28). An action that took one now would put a
- * plaintext identifier into an in-memory store. They arrive in stage 3, on the
- * screen these actions already serve.
+ * **The four identifying numbers are not here.** The passport, bank account,
+ * employment permit and work visa *numbers* are encrypted at rest with a key
+ * held outside the database (`CLAUDE.md`'s non-negotiables, items 22 and 28).
+ * The columns and the sealing exist as of 2026-09-10; what does not yet exist
+ * is a store to put them in, because the running application is still on the
+ * in-memory one — and an action that took a number now would put a plaintext
+ * identifier into it. They arrive with the Postgres repository, on the screen
+ * these actions already serve.
  *
  * **The browser collects the gesture and the server decides what it means**
  * (Part 3), exactly as `month/actions.ts` does it: the amounts and the dates

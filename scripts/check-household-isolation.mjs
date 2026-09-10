@@ -34,6 +34,12 @@
 // It creates two throwaway users and deletes them at the end, which takes their
 // households, workers and memberships with them by cascade.
 
+// The application's own sealing, imported rather than reimplemented: a second
+// copy of the format here would agree with the first exactly until the day
+// somebody changed one of them, and the row already written would then be the
+// thing that could not be opened. Node strips the types on the way in.
+import { keyFrom, openNumber, sealNumber } from "../src/lib/encryption.ts";
+
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -531,6 +537,68 @@ try {
   check(
     secondMinimumWage.status >= 400,
     "one rate per key per effective date, so 'in force' is never ambiguous",
+  );
+
+  // -------------------------------------------------------------------------
+  // The other half of the stage's "done when": the identity columns are
+  // unreadable in the database (build_plan.md stage 3, specs.md item 22).
+  // -------------------------------------------------------------------------
+  //
+  // The unit tests beside `src/lib/encryption.ts` prove the sealing. This
+  // proves the *round trip through Postgres*, which is the part they cannot:
+  // that the bytes survive PostgREST and `bytea` unchanged, and that what
+  // comes back over the wire is bytes and not a number. A column that had been
+  // declared `text`, or a client that had helpfully decoded it, would pass
+  // every unit test and fail here.
+  //
+  // The key used here is a throwaway written into this file. The deployment's
+  // own `ENCRYPTION_KEY` is deliberately not read: this script creates and
+  // deletes fake people, and sealing their fake numbers under the real key
+  // would be the one place the real key touched throwaway data.
+  const passport = "P7654321Z";
+  const testKey = keyFrom("C".repeat(43) + "=");
+  const sealed = sealNumber(passport, testKey);
+
+  const stored = await rest(`workers?id=eq.${a.workerId}`, {
+    token: a.token,
+    method: "PATCH",
+    body: { passport_number_encrypted: `\\x${sealed.toString("hex")}` },
+    prefer: "return=representation",
+  });
+  check(stored.status === 200, "she may store a sealed passport number");
+
+  const readBack = await rest(
+    `workers?select=passport_number_encrypted&id=eq.${a.workerId}`,
+    { token: a.token },
+  );
+  const column = readBack.body?.[0]?.passport_number_encrypted ?? "";
+  check(
+    typeof column === "string" && column.startsWith("\\x"),
+    "and the column comes back as bytes, not as a string she could read",
+  );
+  check(
+    !column.includes(passport) &&
+      !Buffer.from(column.replace(/^\\x/, ""), "hex")
+        .toString("latin1")
+        .includes(passport),
+    "reading the column out of the database shows nothing of the number",
+  );
+  check(
+    openNumber(Buffer.from(column.replace(/^\\x/, ""), "hex"), testKey) ===
+      passport,
+    "and the key opens it back to exactly what was stored",
+  );
+
+  // The other household, asking for the bytes. They are useless without the
+  // key, and they are refused anyway: row-level security is a rule about rows,
+  // so whoever cannot reach the worker cannot reach her columns either.
+  const stolen = await rest(
+    `workers?select=passport_number_encrypted&id=eq.${a.workerId}`,
+    { token: b.token },
+  );
+  check(
+    Array.isArray(stolen.body) && stolen.body.length === 0,
+    "the other household does not even reach the sealed bytes",
   );
 } catch (error) {
   console.log("ERROR", error.message);
