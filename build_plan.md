@@ -1324,6 +1324,16 @@ Supabase: Postgres, Auth, row-level security.
   context is assembled from the engine's output rather than from the worker row, so an
   identity number cannot reach it.
 
+**The isolation is checked against the live database by hand**, with
+`node --env-file=.env scripts/check-household-isolation.mjs`, and never by the suite —
+the suite reads saved files and never the network (specs.md Part 4). It creates two
+throwaway users through the admin API, gives each a household and a worker, then asks
+each for the other's row by every route a request can take: listing the table, naming the
+row's id, filtering on the other household, reading the membership, writing to the row,
+and joining herself to the other household. It talks to PostgREST with the **publishable**
+key exactly as a browser would, never with the service-role key, which bypasses row-level
+security and would prove nothing. It deletes the two users at the end.
+
 **Run `/security-review` before this stage is committed**, and nowhere earlier — it is the
 only stage that introduces an authorisation boundary, encryption at rest, and data reachable
 by a request the user did not make. The stage's own "done when" is an adversarial property,

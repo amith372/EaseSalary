@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the one that carries names and no values, so a fresh clone learns
+# what it has to fill in without anyone having to remember to tell it.
+!.env.example
 
 # vercel
 .vercel
