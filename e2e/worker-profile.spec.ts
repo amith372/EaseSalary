@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { TEST_WORKER_ID, switchToTestWorker } from "./household";
 import { FRIDAY, SATURDAY } from "../src/lib/dates";
 import { fullDayLabel } from "../src/lib/dateLabels";
 import { he } from "../src/lib/i18n/he";
@@ -170,9 +171,10 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
     // Before: the month draws no summarised user-lines row at all, because the
     // demo household's September holds none.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await expect(row(page, "userLines-beforeGross")).toHaveCount(0);
 
-    await page.goto("/workers/worker-1");
+    await page.goto(`/workers/${TEST_WORKER_ID}`);
     const standing = page.locator('[data-terms="standing"]');
     await expect(standing.getByText(he.workers.profile.terms.standing.empty)).toBeVisible();
 
@@ -198,6 +200,7 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
     // sits before the month's total by default, which is where the summarised
     // row is drawn.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await expect(row(page, "userLines-beforeGross")).toContainText(
       formatAgorot(STANDING_AGOROT),
     );
@@ -206,6 +209,7 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
     // `overridable: prefix === "standing"` says: the amount came from the
     // profile, so a month that paid something else says so with an override.
     await page.goto("/payments");
+    await switchToTestWorker(page);
     const overrides = page.getByRole("button", {
       name: he.month.actions.overrides.changeLabel("דמי כיס"),
     });
@@ -253,7 +257,7 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
     // this is the case that made `ClosingLine.overridable` reachable, which it
     // had not been while no standing line could exist.
     await useHousehold(page, "demo", "standing-after");
-    await page.goto("/workers/worker-1");
+    await page.goto(`/workers/${TEST_WORKER_ID}`);
 
     const standing = page.locator('[data-terms="standing"]');
     await standing
@@ -278,6 +282,7 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
 
     // It reaches the month below the total, and the override control offers it.
     await page.goto("/payments");
+    await switchToTestWorker(page);
     await expect(
       page.getByRole("button", {
         name: he.month.actions.overrides.changeLabel("השתתפות בטלפון"),
@@ -295,9 +300,10 @@ test.describe("the opening position (specs.md item 6)", () => {
     // Before: the first worker's seeded advance is fully repaid across March,
     // April and May, so nothing is owed and no second advance exists.
     await page.goto("/payments");
+    await switchToTestWorker(page);
     await expect(page.locator('[data-advance="2"]')).toHaveCount(0);
 
-    await page.goto("/workers/worker-1");
+    await page.goto(`/workers/${TEST_WORKER_ID}`);
     const opening = page.locator('[data-terms="opening"]');
     await opening
       .getByRole("button", {
@@ -323,6 +329,7 @@ test.describe("the opening position (specs.md item 6)", () => {
     // one is 1, so this is 2. ₪2,000 given less ₪500 repaid is ₪1,500 still
     // owed, which is arithmetic and not a figure the engine produced.
     await page.goto("/payments");
+    await switchToTestWorker(page);
     const advance = page.locator('[data-advance="2"]');
     await expect(advance).toBeVisible();
     await expect(advance).toContainText(formatAgorot(OPENING_OUTSTANDING));

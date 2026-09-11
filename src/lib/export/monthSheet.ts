@@ -5,6 +5,7 @@ import {
   BLOCK_ROW,
   FIRST_LINE_ROW,
   LAST_LINE_ROW,
+  NATIONAL_INSURANCE_ROW,
   TAX_ROW,
   TEMPLATE_ROWS,
   VACATION_UNITS_ROW,
@@ -16,7 +17,8 @@ import {
   type SheetLayout,
 } from "@/lib/export/layout";
 import { VACATION_NOTES_KEY } from "@/lib/export/notes";
-import type { MonthLine, MonthResult } from "@/lib/types";
+import { prepareForExcel } from "@/lib/export/workbook";
+import type { MonthLine, MonthResult, SheetColumn } from "@/lib/types";
 
 /**
  * One month, as the family's own workbook writes it.
@@ -209,7 +211,7 @@ export async function fillMonthSheet(
   writeHeader(sheet, input);
   writeLines(sheet, input, layout, added);
   writeBlock(sheet, input, layout, block);
-  writeTotals(sheet, layout);
+  writeTotals(sheet, result, layout);
   writeReporting(sheet, result, layout);
   fillPlaceholders(sheet, identity, input.restDayWords);
 
@@ -217,6 +219,10 @@ export async function fillMonthSheet(
 
   // `Buffer.from` rather than the ArrayBuffer exceljs returns, so the route
   // hands the browser bytes it can length-check.
+  // Without this the worksheet exceljs writes is invalid and Excel opens an
+  // empty sheet -- see `workbook.ts` for what it repairs and why.
+  prepareForExcel(workbook);
+
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
@@ -336,6 +342,29 @@ function writeLines(
     sheet.getCell(`I${VACATION_UNITS_ROW}`).value = vacationNote;
   }
 
+  /**
+   * **The national-insurance estimate, in the unit-price cell of its own row,
+   * every month** (specs.md item 19).
+   *
+   * It is written *after* the lines and deliberately over what they left there.
+   * A national-insurance payment is a column H line like every other
+   * third-party payment, so `writeLineRow` puts its whole amount in `D` as the
+   * line's rate — and on this one row `D` is not a price but the month's own
+   * accrual, which is a different figure from the money that left the account.
+   * The family's own workbook keeps them in two cells for exactly that reason,
+   * and writing the payment into both would state the quarter's money as though
+   * it were the month's.
+   *
+   * **Nothing in the sheet sums column D**, which is what lets a reported figure
+   * live there without being paid a second time. It was absent from every
+   * exported month until 2026-09-11, when a family noticed the row was empty.
+   */
+  put(
+    sheet,
+    `D${NATIONAL_INSURANCE_ROW}`,
+    shekels(result.nationalInsuranceEstimate),
+  );
+
   // The accruals, under the template's own `צבירת ימי חופשה / מחלה`.
   put(sheet, `J${VACATION_UNITS_ROW}`, accruedOf(result, "vacation"));
   put(sheet, `J${TEMPLATE_ROWS[lineKeys.sickDeduction]}`, accruedOf(result, "sick"));
@@ -377,8 +406,9 @@ function writeBlock(
   );
   if (tax !== undefined) {
     // A month that withheld nothing leaves the row labelled and empty, which is
-    // what the family's own sheets show: the line defaults to zero and is never
-    // calculated, so a printed 0.00 would claim a figure somebody chose.
+    // what the family's own sheets show — and a calculated zero is the ordinary
+    // answer at the minimum wage, where the credit points exceed the tax. A
+    // printed 0.00 would read as a figure somebody chose.
     put(sheet, `E${TAX_ROW}`, tax.amount === 0 ? null : shekels(tax.amount));
     const note = input.notes[tax.key];
     if (note !== undefined) sheet.getCell(`I${TAX_ROW}`).value = note;
@@ -405,19 +435,90 @@ function writeBlock(
  * wrong the moment somebody edits a cell, and the family's own workbook is a
  * live spreadsheet today — handing them a dead one would be a step back from
  * what they already have.
+ *
+ * **Each formula also carries the engine's figure as its cached result**, which
+ * is not a second calculation path but the same figure written where the format
+ * keeps one. A formula cell in an `.xlsx` holds the formula *and* the value it
+ * last evaluated to; exceljs writes only the formula, so until something
+ * computes the sheet there is nothing in the cell — and on 2026-09-11 a family
+ * opened a month whose rows were all present and whose four totals were blank.
+ * `prepareForExcel` asks Excel to recompute on open, and this is what every
+ * other reader sees: a preview pane, a print, a viewer that evaluates nothing.
+ *
+ * **The two cannot disagree without the suite saying so.** The cached figure is
+ * the engine's and the formula is the sheet's own route to it, so a range that
+ * covered one row too few would now print a number that contradicts the value
+ * beside it rather than a plausible wrong one — and `agreement.test.ts` reads
+ * both.
  */
-function writeTotals(sheet: ExcelJS.Worksheet, layout: SheetLayout): void {
-  sheet.getCell(`E${layout.subtotalERow}`).value = {
-    formula: subtotalEFormula(layout),
+function writeTotals(
+  sheet: ExcelJS.Worksheet,
+  result: MonthResult,
+  layout: SheetLayout,
+): void {
+  /**
+   * A column's subtotal, and **a column with no lines in it sums to zero rather
+   * than to nothing**.
+   *
+   * `MonthResult.subtotals` holds one entry per column the month actually has
+   * lines in, so a month with no one-off payments has no `G` entry at all — and
+   * that is not a figure the engine failed to reach, it is a sum over nothing,
+   * which is zero and is what the formula beside it evaluates to. An entry that
+   * exists and carries `null` is the other case: lines the engine could not
+   * price, where a cached zero would be an answer nobody calculated.
+   */
+  const subtotal = (column: SheetColumn) => {
+    const found = result.subtotals.find((one) => one.column === column);
+    return found === undefined ? 0 : shekels(found.amount);
   };
-  sheet.getCell(`F${layout.subtotalFRow}`).value = {
-    formula: subtotalFormula("F", layout),
-  };
-  sheet.getCell(`G${layout.subtotalGRow}`).value = {
-    formula: subtotalFormula("G", layout),
-  };
-  sheet.getCell(`E${layout.grossRow}`).value = { formula: grossFormula(layout) };
-  sheet.getCell(`E${layout.netRow}`).value = { formula: netFormula(layout) };
+
+  putFormula(
+    sheet,
+    `E${layout.subtotalERow}`,
+    subtotalEFormula(layout),
+    subtotal("E"),
+  );
+  putFormula(
+    sheet,
+    `F${layout.subtotalFRow}`,
+    subtotalFormula("F", layout),
+    subtotal("F"),
+  );
+  putFormula(
+    sheet,
+    `G${layout.subtotalGRow}`,
+    subtotalFormula("G", layout),
+    subtotal("G"),
+  );
+  putFormula(
+    sheet,
+    `E${layout.grossRow}`,
+    grossFormula(layout),
+    shekels(result.gross),
+  );
+  putFormula(
+    sheet,
+    `E${layout.netRow}`,
+    netFormula(layout),
+    shekels(result.net),
+  );
+}
+
+/**
+ * One total: the formula the sheet adds it up with, and what the engine made it.
+ *
+ * A figure the engine could not reach is written as a formula alone rather than
+ * as a cached zero — a zero nobody calculated is the one kind of wrong answer
+ * that looks like an answer.
+ */
+function putFormula(
+  sheet: ExcelJS.Worksheet,
+  address: string,
+  formula: string,
+  cached: number | null,
+): void {
+  sheet.getCell(address).value =
+    cached === null ? { formula } : { formula, result: cached };
 }
 
 /**

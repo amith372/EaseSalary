@@ -1,3 +1,4 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import {
@@ -9,7 +10,7 @@ import {
   restDayUnitsOf,
 } from "@/lib/engine/leave";
 import { calculateMonth, lineKeys } from "@/lib/engine/month";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import { validateMonth } from "@/lib/engine/validate";
 import type { MonthResult, YearMonth } from "@/lib/types";
@@ -65,10 +66,12 @@ const vacation = (from: string, to: string, fraction?: number): ClosedSpan => ({
 function terms(employedSince = "2024-04-01"): WorkerTerms {
   return {
     employedSince,
+    gender: "female",
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     recuperationMonth: 7,
+    incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
     openingPosition: { vacationDays: 20, sickDays: 43.5, advances: [] },

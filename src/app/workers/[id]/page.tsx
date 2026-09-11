@@ -9,6 +9,7 @@ import { holidayAllowanceFor } from "@/lib/engine/leave";
 import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import { calculateSeries } from "@/lib/engine/series";
 import { fromIsoDate } from "@/lib/dates";
+import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
 import { todayInIsrael } from "@/lib/today";
 
 /**
@@ -93,6 +94,10 @@ export default async function WorkerPage({
       )}
       holidayDaysChosen={holidays.chosenDays}
       holidayAllowance={holidays.allowance}
+      // Resolved here and not in the browser: the names live in the shipped
+      // `data/holidays/*.json` files, and asking for one in a client component
+      // would pull all six lists into the bundle for a single word (Part 3).
+      countryName={countryNameHe(SEEDED_HOLIDAY_LISTS, profile.country)}
     />
   );
 }

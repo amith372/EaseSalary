@@ -1,7 +1,8 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { countMonth } from "@/lib/engine/counts";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import type { YearMonth } from "@/lib/types";
 
@@ -44,10 +45,12 @@ function facts(
 function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   return {
     employedSince: "2024-04-01",
+    gender: "female",
     baseMonthlySalaryAgorot: 624765,
     restDay: SATURDAY,
     restEveSupplementAgorot: 10000,
     recuperationMonth: 7,
+    incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
     openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },

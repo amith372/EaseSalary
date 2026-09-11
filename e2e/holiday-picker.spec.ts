@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { TEST_WORKER_ID, switchToTestWorker } from "./household";
 import { SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { weekdayDayLabel } from "../src/lib/dateLabels";
@@ -39,32 +40,50 @@ import { formatAgorot, formatDays } from "../src/lib/money";
 const SEEDED_CHOSEN = 3;
 const FULL_YEAR = 9;
 
-/** ₪426.35 for one worked holiday, and half of it. Both derived above. */
-const HOLIDAY_RATE = 42635;
-const HALF_HOLIDAY = 21318;
+/**
+ * ₪439.74 for one worked holiday, and half of it.
+ *
+ * Derived from the ₪6,443.85 in force from 1.4.2026 by item 3's own rule —
+ * (6,443.85 ÷ 25 + 6,443.85 ÷ 182) × 1.5 — and **printed independently** at
+ * `שכר_חודשי_להאנה2026.xlsx` → `חודש  8.26` → `D8`, so the figure has a source
+ * outside this code. Half of 43,974 is 21,987 exactly.
+ */
+const HOLIDAY_RATE = 43974;
+const HALF_HOLIDAY = 21987;
 
-/** Dates read off `data/holidays/PH-2026.json`. */
-const CANDIDATE_IN_JUNE = "2026-06-12";
-/** A candidate the demo household's sick spell of 30.3–2.4 already covers. */
-const CANDIDATE_INSIDE_SICKNESS = "2026-04-02";
-/** The worked holiday of the seed, which the source does not publish for that
- * date — it publishes the 21st — so it is also the screen's own case of a date
- * chosen that nobody published. */
+/**
+ * **Dates read off `data/holidays/IN-2026.json`**, because the worker the suite
+ * works on is from India (settled with the user on 2026-09-11: the worker from
+ * the Philippines carries the family's workbooks and is not edited by tests).
+ * They were Philippine dates until then, and every one of them is a different
+ * day here — which is the point of the candidate list being per country.
+ *
+ * None of the dates below falls on a Saturday, which is her rest day: a paid
+ * holiday there would be refused as the day being recorded twice (Part 4).
+ */
+const CANDIDATE_IN_JUNE = "2026-06-22";
+/** A candidate the demo household's sick spell of 30.3–2.4 already covers.
+ * Mahavir Jayanti, 31.3.2026, a Tuesday. */
+const CANDIDATE_INSIDE_SICKNESS = "2026-03-31";
+/** The worked holiday of the seed. India publishes Good Friday on that date, so
+ * unlike the Philippine list this one names it. */
 const WORKED_HOLIDAY = "2026-04-03";
+/** The seed's other worked holiday, which India does not publish at all — so it
+ * is the screen's own case of a date chosen that nobody published. */
 const CHOSEN_WITH_NO_NAME = "2026-08-20";
-/** Six more candidates, none of them covered by another mark, which take her
- * from three chosen days to the whole nine. */
+/** Six more candidates, none of them covered by another mark and none on a
+ * Saturday, which take her from three chosen days to the whole nine. */
 const SIX_MORE = [
-  "2026-02-25",
-  "2026-03-20",
-  "2026-04-04",
-  "2026-04-05",
-  "2026-04-09",
-  "2026-05-01",
+  "2026-01-13",
+  "2026-01-14",
+  "2026-01-19",
+  "2026-01-26",
+  "2026-02-26",
+  "2026-03-03",
 ];
 /** A date nobody published, typed by hand — item 12's own answer to a list that
  * could not be fetched. 27.7.2026 is a Monday, so it is neither her rest day
- * nor a day the seed already marks. */
+ * nor a day the seed already marks, and India publishes nothing on it. */
 const TYPED_BY_HAND = "2026-07-27";
 
 const RUN = Date.now().toString(36);
@@ -114,6 +133,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
   }) => {
     await useHousehold(page, "opens");
     await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
 
     // Three chosen of nine: the seed's own holidays against a full calendar
     // year's entitlement.
@@ -147,7 +167,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // The candidate list is the Philippines', because that is her country, and
     // the faiths are offered beside the countries (item 10).
-    await expect(page.locator('[data-source="PH"]')).toHaveAttribute(
+    await expect(page.locator('[data-source="IN"]')).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -172,12 +192,14 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     // Before: June's calendar carries no holiday on the 12th. The user never
     // marks a day as a holiday (item 9), so this is the only way one can appear.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await backTo(page, 3);
     await expect(page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`)).not.toContainText(
       he.calendar.marks(SATURDAY).holiday,
     );
 
     await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
     await tick(page, CANDIDATE_IN_JUNE);
     await expect(page.locator("[data-quota]")).toContainText(
       formatDays(SEEDED_CHOSEN + 1),
@@ -185,6 +207,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // After: the day is drawn on the month, and the profile's own row counts it.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await backTo(page, 3);
     await expect(page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`)).toContainText(
       he.calendar.marks(SATURDAY).holiday,
@@ -194,7 +217,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
       fullPage: true,
     });
 
-    await page.goto("/workers/worker-1");
+    await page.goto(`/workers/${TEST_WORKER_ID}`);
     await expect(page.locator("[data-holidays]")).toContainText(
       formatDays(SEEDED_CHOSEN + 1),
     );
@@ -208,6 +231,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     // Before: April's worked holiday is paid at the whole rest-day rate, which
     // is Part 4's ₪426.35.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await backTo(page, 5);
     await expect(page.locator(`[data-date="${WORKED_HOLIDAY}"]`)).toBeVisible();
     await expect(row(page, "holidaysWorked")).toContainText(
@@ -215,6 +239,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     );
 
     await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
     await holidayRow(page, WORKED_HOLIDAY)
       .locator('[data-part="0.5"]')
       .click();
@@ -230,6 +255,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     // rate, rounded at the end. That is the failure this catches: a part-day
     // the picker records and the sheet still pays whole.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await backTo(page, 5);
     await expect(row(page, "holidaysWorked")).toContainText(
       formatAgorot(HALF_HOLIDAY),
@@ -243,6 +269,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
   test("refuses a date another entry already covers", async ({ page }) => {
     await useHousehold(page, "clash");
     await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
 
     // 2.4.2026 is the last day of the seeded spell of sickness. A day carrying
     // two entries is what `validateMonth` refuses as `dayRecordedTwice`, and
@@ -264,6 +291,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
   test("refuses a tenth day once the nine are chosen", async ({ page }) => {
     await useHousehold(page, "limit");
     await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
 
     for (const date of SIX_MORE) await tick(page, date);
 
@@ -291,6 +319,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
   }) => {
     await useHousehold(page, "manual");
     await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
 
     await page
       .getByRole("button", { name: he.holidays.sources.manual })
@@ -311,6 +340,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // It reaches July's calendar like any other chosen date.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await backTo(page, 2);
     await expect(page.locator(`[data-date="${TYPED_BY_HAND}"]`)).toContainText(
       he.calendar.marks(SATURDAY).holiday,
@@ -322,6 +352,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
   }) => {
     await useHousehold(page, "move");
     await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
 
     // The gesture a family makes when a holiday falls inside a spell of
     // sickness: the date moves and the day is kept, which is why item 10
@@ -355,6 +386,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // April no longer pays a worked holiday, and July's calendar carries one.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await backTo(page, 5);
     await expect(row(page, "holidaysWorked")).toHaveCount(0);
   });

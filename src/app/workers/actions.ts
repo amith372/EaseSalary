@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import { getRepository } from "@/lib/dev/store";
 import { advanceLedger } from "@/lib/engine/advances";
 import {
+  isAllowedGender,
   isAllowedRestDay,
+  reviewIncomeTax,
   monthsFollowingProfile,
   reviewDocuments,
   reviewOpeningAdvance,
@@ -16,7 +18,7 @@ import {
   type OpeningRefusal,
 } from "@/lib/engine/profile";
 import type { WorkerProfile } from "@/lib/engine/repository";
-import type { UserLine } from "@/lib/engine/types";
+import type { Gender, UserLine } from "@/lib/engine/types";
 import { reviewUserLine, type UserLineDraft, type UserLineRefusal } from "@/lib/engine/userLines";
 import type { RestDay } from "@/lib/dates";
 
@@ -57,6 +59,9 @@ export type ProfileActionRefusal =
   | OpeningRefusal
   | UserLineRefusal
   | "restDay"
+  | "gender"
+  | "incomeTaxMode"
+  | "incomeTaxRate"
   | "recuperationMonth"
   | "date"
   | "entryUnknown";
@@ -144,6 +149,59 @@ export async function setRestDay(
   if (!isAllowedRestDay(restDay)) return { ok: false, reason: "restDay" };
   const profile = await profileOf(workerId);
   return saveProfile({ ...profile, restDay }, true);
+}
+
+/**
+ * The worker's gender (specs.md item 17).
+ *
+ * **It is on the profile because the income tax turns on it**, and on nothing
+ * else the user would have to know: a legally employed foreign caregiver holds
+ * 2.25 credit points and a woman holds half a point more, so this one answer
+ * settles the credit and the family is never asked for a number of points. It
+ * also settles the endings the sheet writes her role with, which is why item
+ * 28's `עובד/ת` carries both.
+ *
+ * Checked against `genders` rather than trusted from the chip that sent it, for
+ * the reason `setRestDay` gives: an action is reachable by a crafted request,
+ * and a value outside the two would sit on the profile and quietly credit her
+ * the smaller figure.
+ */
+export async function setGender(
+  workerId: string,
+  gender: Gender,
+): Promise<ProfileActionResult> {
+  if (!isAllowedGender(gender)) return { ok: false, reason: "gender" };
+  const profile = await profileOf(workerId);
+  return saveProfile({ ...profile, gender }, true);
+}
+
+/**
+ * How this worker's income tax is arrived at (specs.md item 17, settled with
+ * the user on 2026-09-11).
+ *
+ * **It is a term of the employment and lives on the profile**, so a family
+ * whose caregiver's tax is settled elsewhere says so once instead of typing a
+ * zero into every month for ever. It is snapshotted onto a month when the month
+ * is confirmed, so changing it now leaves every month already filed exactly as
+ * it was (Part 3).
+ *
+ * **A single month can still depart from it**, which is the other half of item
+ * 17: the payments screen's own field puts an amount over whatever this
+ * arrives at, and that is how a past month is corrected.
+ *
+ * The value is checked by `reviewIncomeTax` rather than trusted from the
+ * control, for the reason `setRestDay` gives, and with more at stake: this one
+ * carries a free number.
+ */
+export async function setIncomeTaxSetting(
+  workerId: string,
+  mode: string,
+  percentageText: string,
+): Promise<ProfileActionResult> {
+  const reviewed = reviewIncomeTax(mode, percentageText);
+  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+  const profile = await profileOf(workerId);
+  return saveProfile({ ...profile, incomeTax: reviewed.setting }, true);
 }
 
 /**

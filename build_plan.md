@@ -69,6 +69,17 @@ therefore the only one that can prove the engine (`CLAUDE.md`, on where a test's
 figure comes from). A seed month is for clicking; it proves nothing and must never be
 mistaken for a case.
 
+**The demo household is two workers answering two different questions, and mixing them
+costs both.** The first is seeded month by month from the family's own sheets, so what the
+application shows can be held against the tab it came from, and `seed-against-workbooks.test.ts`
+is what keeps that demo from quietly drifting into something else. The second worker is the
+one every browser test works on, and she therefore carries the *ordinary* terms: a test
+whose subject is unusual tests the unusual case twice and the ordinary one never. Everything
+awkward sits on her months rather than on her terms. **A browser test names the worker it
+acts on and never takes whichever one is first** — relying on the order is what turned one
+seed change into thirty failures, and the order is a presentation choice that was never a
+promise. Moved here from `specs.md` on 2026-09-11: it is fixture policy, not a salary rule.
+
 **The slice is production code, not a prototype.** Every part of it survives into the
 finished application; only the repository implementation is replaced, and that is the one
 thing already designed to be replaceable. A throwaway would answer a design question that
@@ -130,6 +141,7 @@ page. A tab that 404s is worse than a tab that is not there.
 | `/month/payslip` | `דף המשכורת` | 2 — the month seen a third way | **built** |
 | `/alerts` | `התראות` | 6 | 404 |
 | `/help` | none — stage 7 draws it | 7 | 404 |
+| `/sign-in` | none — settled with the user on 2026-09-11 that it is built from the design system rather than drawn | 3 | **added on 2026-09-11**, not built. The one row not in the 2026-09-04 snapshot, dated here rather than folded into it |
 
 **Two artboards were added on 2026-09-05 and both were given routes on 2026-09-09**, by
 stage 5's steps 5 and 7. The rows are kept because where each landed, and why, is the
@@ -1323,6 +1335,117 @@ Supabase: Postgres, Auth, row-level security.
 - Anything stage 7 stores is account-scoped under the same row-level security, and its
   context is assembled from the engine's output rather than from the worker row, so an
   identity number cannot reach it.
+
+### Step — the income tax, calculated · **done 2026-09-11**
+
+What the stage's own bullet above scheduled, built. The engine works the figure out and
+the pre-export confirmation that stores it is the step after this one.
+
+- **`src/lib/engine/incomeTax.ts`** — the credit points from the gender, the progressive
+  walk over the year's brackets, and the month as a twelfth of an annual calculation,
+  because the statute's brackets and its credit point are both annual. Floored at zero:
+  a credit reduces tax and never pays a refund.
+- **`gender` on the worker's profile**, and on `Employment` rather than on `MonthTerms` —
+  it is a fact about the worker like `employedSince`, so correcting it is *meant* to move
+  every month. What keeps a past month reproducible is the confirmed tax stored on the
+  month, which is the same argument `ConfirmedWage` makes for the salary. Two chips on the
+  profile, checked against `genders` on the server.
+- **`MonthFacts.incomeTaxAgorot` became optional** and changed meaning: it is now the
+  figure *confirmed* before an export, and a month without one is calculated. Three
+  sources in order — an override, then the confirmed figure, then the calculation —
+  and a year with no table leaves the line at zero and raises `taxBracketsMissing`.
+- **The payments screen's tax card became the tax's override control**, settled with the
+  user on 2026-09-11. It shows what the month settled on and stores an override; an empty
+  field now *clears* the correction where it used to mean zero. The row answers `false` to
+  the generic override control so that one amount does not get two controls on one screen.
+- **`lineKeys` moved from `month.ts` to `lines.ts`**, so `balances.ts` could name one
+  without importing the file that imports it. Re-exported from `month.ts`, which is where
+  every call site reads it from.
+
+**The three ways a tax is arrived at, added the same day.** The control the step above
+built had one box in which a typed zero meant "withhold nothing" and an empty box meant
+"work it out", a distinction nothing on the screen stated — so a family clearing the box
+to switch the tax off silently got the calculated figure back. The user asked for a named
+choice instead, and settled its shape on 2026-09-11:
+
+- **Three modes on the profile, because it is a term of the employment**: `אוטומטי`,
+  `לא מנוכה מס`, `אחוז קבוע`. A family whose caregiver's tax is settled elsewhere says so
+  once rather than typing a zero into every month for ever.
+- **A flat percentage is not how the tax works and is offered anyway**, because it is what
+  an accountant hands a family as one number. The reminder the user wrote —
+  `תזכורת: עפ"י החוק צריך לשלם מס הכנסה` — stands under the control in every state, and
+  under the payments card as well, so a family that only opens one screen still meets it.
+- **The rule text follows the mode.** The credit-point paragraph is the automatic mode's;
+  printing it beside a flat-rate month would be a sentence untrue of the amount above it.
+- **The percentage a month came to is reported on the payments card and nowhere else.**
+  The automatic mode reaches a different one every month, so the profile — which has no
+  month in front of it — would be stating a share of a month nobody worked.
+- **Migration 8** adds the mode and its rate to `workers` and to the month's term
+  snapshot, each with a check constraint tying the two halves together: a percentage mode
+  with no rate, or a rate left behind under a mode that does not use it, are refused by
+  the database and not only by `reviewIncomeTax`. Applied, and the isolation script
+  re-run with three checks of its own added for it.
+- **A single month still departs from the worker's setting** by the payments card's amount
+  field, which is how a past month is corrected and which a change of mode leaves alone.
+
+**What the browser caught and the unit suite could not.** The engine's own tests, the
+export agreement and 875 unit tests were all green while every screen showed a tax of
+zero: the demo seed wrote `incomeTaxAgorot: 0` onto every month, which used to mean
+"nothing typed yet" and now means "confirmed to withhold nothing". The calculation never
+ran anywhere a user could see it. `e2e/income-tax.spec.ts` is what found it and is what
+holds it — five flows, every figure worked by hand from the statute and the seed's own
+stated facts. January 2026 is now the demo's one month with a confirmed zero, because the
+collapsed one-figure shape needs a month that withholds nothing and no other seeded month
+is one any more.
+
+### Step — the sign-in, and the account item 11 already assumed · **added 2026-09-11**
+
+**It was missing from this file entirely, and that is the gap this step closes.** `specs.md`
+item 11 opens with "an account is a person who signs in", every row-level-security policy
+this stage writes rests on `auth.uid()`, and the two-worker trigger and
+`public.create_household()` both read a signed-in identity — yet no stage owned the screen,
+the routes table had no address for it, and the canvas has no artboard. Four migrations were
+written against an identity nothing in the application could produce. Found and settled with
+the user on 2026-09-11.
+
+- **The address is `/sign-in`**, and it is the one route that draws no nav tab: a person who
+  can see the shell is already signed in, so the shell is not around it. Everything else
+  redirects here when there is no session, which is what makes it the first screen the
+  application has.
+- **No artboard, settled with the user.** It is built out of the design system the shell
+  already carries — the same palette, type scale and controls — and this step names none.
+  It is the only screen in the application with no drawn source, and that is a decision
+  rather than an omission: one wordmark, two fields and a button.
+- **Email and password, with the address confirmed before the account works.** Settled with
+  the user on 2026-09-11 against a passwordless code, which was the other candidate. Supabase
+  Auth's own email/password provider with confirmation turned on, so an address nobody can
+  read does not become an account.
+- **One person is one address, and a sub-address is not a second person.** The user asked for
+  this outright: `paulk+1@gmail.com` must not become a second account beside `paulk@gmail.com`.
+  So sign-up stores a **normalised** form of the address beside the real one and the database
+  holds a unique index on it, not the application — the same division `reviewWageConfirmation`
+  already draws, where the server decides and the form never does, so a request crafted past
+  the screen meets the same refusal.
+  - **The normalisation is per domain and not one rule for all of them.** A `+` suffix is a
+    sub-address almost everywhere and is stripped for every domain; a **dot** is ignored by
+    Gmail and is significant at many other providers, so dots are stripped for `gmail.com`
+    and `googlemail.com` alone. Stripping dots everywhere would merge two real strangers at
+    a provider that distinguishes them, which is a worse failure than the duplicate it
+    prevents and one nobody would ever see reported.
+  - The real address is what Supabase authenticates and what the confirmation mail goes to.
+    The normalised one is only ever compared.
+- **The first sign-in creates the household silently**, by calling
+  `public.create_household()` — which migration 4 already made the only way in — and lands
+  the person on the home screen. A family employing one caregiver never meets the word
+  "household" at all, which is what item 11 describes and what nothing on the canvas draws.
+- **Blocked by nothing, and it blocks the repository.** Migrations 1-4 are applied and the
+  Auth provider is Supabase's own, so there is no upstream work. It has to land **before**
+  the Postgres repository substitutes at `getRepository()`, because every policy that
+  repository reads through answers `auth.uid()` and an unauthenticated request sees an empty
+  database rather than an error — which reads exactly like a repository that does not work.
+- **Done when** an unauthenticated request to any screen lands on `/sign-in`, a confirmed
+  address reaches the home screen with a household of its own, and a second sign-up at the
+  same address wearing a `+` suffix is refused by the database.
 
 **The isolation is checked against the live database by hand**, with
 `node --env-file=.env scripts/check-household-isolation.mjs`, and never by the suite —

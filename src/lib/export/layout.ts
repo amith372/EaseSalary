@@ -34,6 +34,20 @@ export const LAST_LINE_ROW = 22;
 export const VACATION_UNITS_ROW = 17;
 
 /**
+ * The national-insurance row — the one row of the sheet whose unit-price cell
+ * is a **reported figure and not a price** (specs.md item 19).
+ *
+ * The month's estimate goes in `D`, every month, and what actually left the
+ * account goes in `H`, only in the month a quarter was settled. They are two
+ * different figures and the family's own workbook keeps them in two cells:
+ * `חודש 8.25` has the estimate in D21 and an empty H21 because August settled
+ * no quarter, while `חודש 7.25` has the same monthly figure in D21 and the ₪936
+ * paid in H21. Nothing in the sheet sums column D, which is what makes the
+ * estimate reportable there without being paid twice.
+ */
+export const NATIONAL_INSURANCE_ROW = 21;
+
+/**
  * The numbered rows the template designs, by the engine's own line key.
  *
  * Rows 11 (severance and pension) and 22 (hospital overtime) and 15
@@ -56,7 +70,7 @@ export const TEMPLATE_ROWS: Readonly<Record<string, number>> = {
   [thirdPartyLineKey("licenceFee")]: 16,
   [lineKeys.recuperation]: 18,
   [lineKeys.sickDeduction]: 19,
-  [thirdPartyLineKey("nationalInsurance")]: 21,
+  [thirdPartyLineKey("nationalInsurance")]: NATIONAL_INSURANCE_ROW,
 };
 
 /**
@@ -71,6 +85,7 @@ export const TEMPLATE_ROWS: Readonly<Record<string, number>> = {
  * not one.
  */
 export const TAX_ROW = 20;
+
 
 /** The template's own rows below the numbered block, before anything is
  * inserted. `BLOCK_ROW` is the `ה` row — the one row the template designs for

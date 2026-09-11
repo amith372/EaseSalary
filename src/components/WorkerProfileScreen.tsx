@@ -8,6 +8,8 @@ import {
   removeOpeningAdvance,
   setDocuments,
   setOpeningDays,
+  setGender,
+  setIncomeTaxSetting,
   setRecuperationMonth,
   setRestDay,
   stopStandingLine,
@@ -17,6 +19,7 @@ import {
 } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { Chip } from "@/components/Chip";
 import { MoneyValue } from "@/components/MoneyValue";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import type { RestDay } from "@/lib/dates";
@@ -25,11 +28,16 @@ import { restDayChoices } from "@/lib/engine/profile";
 import type { WorkerProfile } from "@/lib/engine/repository";
 import {
   defaultPlacementFor,
+  genders,
+  incomeTaxModes,
   placementOf,
   userLineDirections,
   userLinePlacements,
 } from "@/lib/engine/types";
 import type {
+  Gender,
+  IncomeTaxMode,
+  IncomeTaxSetting,
   UserLine,
   UserLineDirection,
   UserLinePlacement,
@@ -99,6 +107,10 @@ interface WorkerProfileScreenProps {
   /** What is still owed on each advance, walked from the opening position
    * across every month (item 20). */
   ledger: AdvanceStanding[];
+  /** Her country of origin in Hebrew, resolved on the server from the shipped
+   * holiday lists (`countryNameHe`). The profile printed the two-letter filing
+   * code here until 2026-09-11, which is a key and not a country. */
+  countryName: string;
 }
 
 const TERMS_ID = "terms";
@@ -113,6 +125,7 @@ export function WorkerProfileScreen({
   vacationDays,
   sickDays,
   ledger,
+  countryName,
 }: WorkerProfileScreenProps) {
   const words = he.workers;
   const page = words.profile;
@@ -134,6 +147,16 @@ export function WorkerProfileScreen({
     (total, standing) => total + standing.outstandingAgorot,
     0,
   );
+
+  // What she has actually been paid, added up from the same `net` each row
+  // shows — one figure reached one way (Part 3). **Only the months that have a
+  // figure are counted**: a month still open has no net, and counting it as
+  // zero would report a total that quietly grows the day it closes without
+  // anything about the worker having changed. Where some month was skipped the
+  // sentence under the sum says how many it stands for, rather than the sum
+  // standing for a count nobody stated.
+  const paid = months.filter((one) => one.netAgorot !== null);
+  const paidSoFar = paid.reduce((total, one) => total + (one.netAgorot ?? 0), 0);
   const open = ledger.filter((standing) => standing.outstandingAgorot > 0);
 
   return (
@@ -151,7 +174,7 @@ export function WorkerProfileScreen({
             <Bidi>{fullDayLabel(profile.employedSince)}</Bidi>
             <span aria-hidden="true"> · </span>
             <span dir="auto">{words.country} </span>
-            <Bidi noTranslate>{profile.country}</Bidi>
+            <Bidi>{countryName}</Bidi>
           </p>
         </div>
         {/* The artboard's "פרטים והגדרות", pointed at the section below rather
@@ -219,6 +242,27 @@ export function WorkerProfileScreen({
               ))}
             </ul>
           )}
+          {paid.length === 0 ? null : (
+            <div
+              data-row="paid-so-far"
+              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 border-t-2 border-line pt-2.5"
+            >
+              <div className="flex min-w-0 flex-col">
+                <span dir="auto" className="text-[15px] font-semibold">
+                  {page.months.soFar}
+                </span>
+                {paid.length === months.length ? null : (
+                  <span
+                    dir="auto"
+                    className="text-[12px] font-light text-ink-quiet"
+                  >
+                    {page.months.soFarPartial(paid.length, months.length)}
+                  </span>
+                )}
+              </div>
+              <MoneyValue agorot={paidSoFar} />
+            </div>
+          )}
         </Card>
 
         <Card className="flex min-w-0 flex-col gap-2 px-4.5 py-3.5">
@@ -282,6 +326,18 @@ export function WorkerProfileScreen({
           <RestDayControl
             workerId={profile.id}
             restDay={profile.restDay}
+            onSubmit={handleAction}
+          />
+
+          <GenderControl
+            workerId={profile.id}
+            gender={profile.gender}
+            onSubmit={handleAction}
+          />
+
+          <IncomeTaxControl
+            workerId={profile.id}
+            setting={profile.incomeTax}
             onSubmit={handleAction}
           />
 
@@ -431,34 +487,6 @@ function TermRow({
   );
 }
 
-/** The chip these panels are built from — the calendar picker's own control, so
- * the profile and the month read as one mechanism (`MonthActions`). */
-function Chip({
-  selected,
-  onClick,
-  children,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-      className={[
-        "rounded-full border bg-surface px-3.25 py-1.75 text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
-        selected
-          ? "border-line-hover text-ink"
-          : "border-line text-day-ink hover:border-line-hover hover:text-ink",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}
-
 function Field({
   label,
   hint,
@@ -567,6 +595,163 @@ function RestDayControl({
       </div>
       <p dir="auto" className="text-[13px] font-light text-ink-quiet">
         {words.eveNote(restDay)}
+      </p>
+      {refusal ? <Refusal reason={refusal} /> : null}
+    </TermRow>
+  );
+}
+
+/**
+ * The worker's gender (specs.md item 17).
+ *
+ * **Two chips, in the idiom the rest day already uses**, and offering exactly
+ * the `genders` the server checks against — the offer is not the rule (Part 3),
+ * and the two must not be able to drift.
+ *
+ * **There is no unset state and no "prefer not to say".** The field decides how
+ * many credit points the worker is given, and a profile that declined to answer
+ * would have to be credited one way or the other anyway — silently, and by
+ * whichever the code happened to default to. Item 3's rule holds here as much
+ * as it does for a rate: the figure a month is calculated with is never a guess
+ * nobody made.
+ */
+function GenderControl({
+  workerId,
+  gender,
+  onSubmit,
+}: {
+  workerId: string;
+  gender: Gender;
+  onSubmit: Submit;
+}) {
+  const words = he.workers.profile.terms.gender;
+  const { refusal, run } = useProfileAction(onSubmit);
+
+  return (
+    <TermRow label={words.label} hint={words.hint}>
+      <div data-terms="gender" className="flex flex-wrap gap-2">
+        {genders.map((choice) => (
+          <Chip
+            key={choice}
+            selected={choice === gender}
+            onClick={() => run(() => setGender(workerId, choice))}
+          >
+            <Bidi>{words[choice]}</Bidi>
+          </Chip>
+        ))}
+      </div>
+      {refusal ? <Refusal reason={refusal} /> : null}
+    </TermRow>
+  );
+}
+
+/**
+ * How this worker's income tax is arrived at (specs.md item 17, settled with
+ * the user on 2026-09-11).
+ *
+ * **Three named chips rather than one box whose emptiness meant something.**
+ * The control this replaces held a single amount in which a typed zero meant
+ * "withhold nothing" and an empty field meant "work it out" — a distinction
+ * nothing on the screen stated, so a family that cleared the field to switch
+ * the tax off silently got the calculated figure back. Naming the three states
+ * is the whole of the fix, and it adds nothing to what is stored: automatic is
+ * the default, `ללא ניכוי` is a settled zero, and the percentage is the one
+ * mode that carries a number.
+ *
+ * **The rate field appears only under its own chip**, and the chip is not
+ * committed until the rate is: choosing `אחוז קבוע` and leaving the box empty
+ * would otherwise store a mode with no rate, which is a worker whose tax is a
+ * percentage of nothing.
+ *
+ * **The reminder stands under all three** and not only under `ללא ניכוי`. A
+ * rule that appears the moment you do the thing it warns against reads as an
+ * accusation; one that always stands is a rule.
+ */
+function IncomeTaxControl({
+  workerId,
+  setting,
+  onSubmit,
+}: {
+  workerId: string;
+  setting: IncomeTaxSetting;
+  onSubmit: Submit;
+}) {
+  const words = he.workers.profile.terms.incomeTax;
+  const { refusal, run } = useProfileAction(onSubmit);
+  const [mode, setMode] = useState<IncomeTaxMode>(setting.mode);
+  // The stored fraction shown back as a percentage, which is the unit the user
+  // types in: 0.025 is 2.5. The conversion happens here and on the server, and
+  // nowhere between them.
+  const [rate, setRate] = useState(
+    setting.percentage === undefined
+      ? ""
+      : String(Number((setting.percentage * 100).toFixed(4))),
+  );
+
+  const notes = {
+    automatic: words.automaticNote,
+    none: words.noneNote,
+    percentage: words.percentageNote,
+  };
+
+  function choose(next: IncomeTaxMode) {
+    setMode(next);
+    // A mode with nothing to say is saved at once; the percentage waits for its
+    // own number, which is what the field below is for.
+    if (next !== "percentage") {
+      run(() => setIncomeTaxSetting(workerId, next, ""));
+    }
+  }
+
+  return (
+    <TermRow label={words.label} hint={words.hint}>
+      <div data-terms="incomeTax" className="flex flex-wrap gap-2">
+        {incomeTaxModes.map((choice) => (
+          <Chip
+            key={choice}
+            selected={choice === mode}
+            onClick={() => choose(choice)}
+          >
+            <Bidi>{words[choice]}</Bidi>
+          </Chip>
+        ))}
+      </div>
+
+      {mode === "percentage" ? (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            run(() => setIncomeTaxSetting(workerId, "percentage", rate));
+          }}
+          className="flex items-end gap-2"
+        >
+          <div className="min-w-0 flex-1">
+            <Field label={words.rate} hint={words.rateHint}>
+              <input
+                type="text"
+                inputMode="decimal"
+                dir="ltr"
+                value={rate}
+                onChange={(event) => setRate(event.target.value)}
+                placeholder="0.0"
+                className={inputClass}
+              />
+            </Field>
+          </div>
+          <button
+            type="submit"
+            className="flex-none rounded-full border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          >
+            <span dir="auto">{words.save}</span>
+          </button>
+        </form>
+      ) : null}
+
+      <p dir="auto" className="text-[13px] font-light text-ink-quiet">
+        {notes[mode]}
+      </p>
+      <p dir="auto" className="text-[13px] font-medium text-ink">
+        {words.reminder}
       </p>
       {refusal ? <Refusal reason={refusal} /> : null}
     </TermRow>

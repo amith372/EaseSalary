@@ -547,6 +547,42 @@ try {
     "one rate per key per effective date, so 'in force' is never ambiguous",
   );
 
+  // **The income-tax mode and its rate are one value** (specs.md item 17,
+  // migration 8). Either half on its own is a state with no meaning: a
+  // percentage mode with no rate is a worker whose tax is a share of nothing,
+  // and a rate stored under any other mode is a number nobody can see that
+  // would take effect the day the mode changed. `reviewIncomeTax` refuses both,
+  // and the application is not the only thing that can write this table.
+  const percentageWithoutRate = await rest(`workers?id=eq.${a.workerId}`, {
+    token: a.token,
+    method: "PATCH",
+    body: { income_tax_mode: "percentage", income_tax_percentage: null },
+  });
+  check(
+    percentageWithoutRate.status >= 400,
+    "a percentage mode cannot be stored without the percentage",
+  );
+
+  const rateWithoutPercentageMode = await rest(`workers?id=eq.${a.workerId}`, {
+    token: a.token,
+    method: "PATCH",
+    body: { income_tax_mode: "automatic", income_tax_percentage: 0.025 },
+  });
+  check(
+    rateWithoutPercentageMode.status >= 400,
+    "and a rate cannot be left behind under a mode that does not use it",
+  );
+
+  const rateAboveEverything = await rest(`workers?id=eq.${a.workerId}`, {
+    token: a.token,
+    method: "PATCH",
+    body: { income_tax_mode: "percentage", income_tax_percentage: 1.5 },
+  });
+  check(
+    rateAboveEverything.status >= 400,
+    "nor a rate larger than the whole salary it is a share of",
+  );
+
   // -------------------------------------------------------------------------
   // The other half of the stage's "done when": the identity columns are
   // unreadable in the database (build_plan.md stage 3, specs.md item 22).

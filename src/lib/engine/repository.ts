@@ -1,5 +1,5 @@
 import { compareMonth } from "@/lib/dates";
-import { SEEDED_RATES, withFetchedRate } from "@/lib/datedRates";
+import { SEEDED_RATES, rateInForce, withFetchedRate } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { snapshotTerms } from "@/lib/engine/types";
 import type {
@@ -183,33 +183,52 @@ export function recordOf(facts: MonthFacts): MonthRecord {
 }
 
 /**
- * The wage position a month opened after the fact carries — the position last
- * confirmed nearest to it.
+ * The wage position a month opened after the fact carries.
  *
- * **A month the store has no record of has to get its wage from somewhere**
- * (specs.md item 4), and until stage 5 lands the dated-rates table there is
- * exactly one source in the application: the months the worker already has.
- * The latest month *before* the new one is the position that was standing when
- * it began, which is the answer for the ordinary case — a month filled in ahead
- * of time (item 21).
+ * **The minimum wage comes from the dated-rates table and not from the
+ * neighbouring month** (specs.md item 4: "a month is valued at the rate in
+ * force during it and never at the current one"). This used to read the nearest
+ * month's confirmed position, with a comment saying it did so only until the
+ * dated-rates table landed — and the table landed. A July 2026 opened by a mark
+ * was therefore valued at the wage of April 2025, which is below the wage in
+ * force during it, and nothing about the month said so (found by the user on
+ * 2026-09-11).
  *
- * **A month opened behind the whole history falls back to the earliest one**,
- * which is a family correcting a month from before they started using the
- * application. It is the closest figure that exists and it is not necessarily
- * the right one, because a minimum wage that rose since is not the one that was
- * in force then — and it does not have to be: the wage is confirmed by the user
- * before every export (item 4), which is where a carried figure is replaced by
- * a real one, and stage 5's dated-rates table is what answers this without
- * asking.
+ * **The base is floored at that minimum and never rewritten above it**, which
+ * is `baseForMonth`'s rule read here: a family paying above the minimum keeps
+ * their figure, and a profile still holding last year's cannot open a month
+ * that pays under the law. The profile itself is left alone — how far above the
+ * minimum this worker is paid stays the family's decision (item 3).
  *
- * `null` for a worker with no months at all, which is a worker who has nothing
- * to carry: there is no figure to invent one from, and inventing one is what
- * this returns `null` rather than doing.
+ * **A month the table cannot answer falls back to the nearest confirmed
+ * position**, which is the old behaviour kept for the case it was right for: a
+ * month earlier than every row has no minimum this application can cite, and
+ * item 4 says it guesses nothing. The carried figure is not necessarily the
+ * right one, and it does not have to be — the wage is confirmed before every
+ * export, which is where a carried figure is replaced by a real one.
+ *
+ * `null` for a worker with no months at all *and* no row in force: there is
+ * nothing to open from, and inventing one is what this returns `null` rather
+ * than doing.
  */
 export function wageToCarry(
   months: MonthFacts[],
   month: YearMonth,
+  profile: Pick<WorkerProfile, "baseMonthlySalaryAgorot">,
+  rates: DatedRate[],
 ): ConfirmedWage | null {
+  const inForce = rateInForce(rates, "minimumWage", month);
+  if (inForce !== null) {
+    return {
+      baseAgorot: Math.max(
+        profile.baseMonthlySalaryAgorot,
+        inForce.value,
+      ),
+      minimumAgorot: inForce.value,
+      effectiveFrom: inForce.effectiveFrom,
+    };
+  }
+
   const ordered = [...months].sort((a, b) => compareMonth(a.month, b.month));
   const before = ordered.filter((each) => compareMonth(each.month, month) < 0);
   const nearest = before.length > 0 ? before[before.length - 1] : ordered[0];

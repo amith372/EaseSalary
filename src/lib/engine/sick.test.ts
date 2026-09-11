@@ -1,3 +1,4 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { calculateMonth, lineKeys } from "@/lib/engine/month";
@@ -7,7 +8,7 @@ import {
   sickDeductionDays,
   spellsOf,
 } from "@/lib/engine/sick";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import type { MonthResult, YearMonth } from "@/lib/types";
 
@@ -64,10 +65,12 @@ const OPENING_SICK_DAYS = 43.5;
 function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   return {
     employedSince: "2024-04-01",
+    gender: "female",
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     recuperationMonth: 7,
+    incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
     openingPosition: {

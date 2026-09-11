@@ -67,8 +67,9 @@ function facts(overrides: Partial<MonthFacts> = {}): MonthFacts {
 
 const EMPLOYMENT = {
   employedSince: HANNA,
+  gender: "female",
   openingPosition: workbookWorker(0).openingPosition,
-};
+} as const;
 
 function answerFor(
   questions: ReturnType<typeof exportQuestions>,

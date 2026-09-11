@@ -1,3 +1,4 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
@@ -9,7 +10,7 @@ import {
   type MonthRecord,
   type WorkerProfile,
 } from "@/lib/engine/repository";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type { MonthSpan } from "@/lib/engine/types";
 import { SEEDED_RATES } from "@/lib/datedRates";
 import { SEEDED_HOLIDAY_LISTS } from "@/lib/holidayLists";
@@ -38,10 +39,12 @@ const HANNA: WorkerProfile = {
   name: "האנה",
   firstName: "האנה",
   employedSince: "2026-01-01",
+  gender: "female",
   baseMonthlySalaryAgorot: 624765,
   restDay: SATURDAY,
   restEveSupplementAgorot: 10000,
   recuperationMonth: 7,
+  incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [
     { id: "transport", label: "נסיעות", direction: "addition", agorot: 5000 },
   ],
@@ -399,31 +402,73 @@ describe("opening a month the store has no record of (specs.md item 21)", () => 
     { ...record(FEBRUARY), confirmedWage: NEW_WAGE },
   ].map((each) => ({ ...each, spans: [] }));
 
-  it("carries the wage from the latest month before it", async () => {
-    // A month filled in ahead of time opens on the position that was standing
-    // when it began — February's, not January's, and never the other way round
-    // (item 4).
-    expect(wageToCarry(history, APRIL)).toEqual(NEW_WAGE);
+  /**
+   * **The dated-rates table answers, and the neighbouring month does not.**
+   *
+   * `SEEDED_RATES` holds the minimum wage at 6,247.65 from 1.4.2025 and at
+   * 6,443.85 from 1.4.2026, both sourced to the family's own workbooks. April
+   * 2026 is on the second, so a month opened there is worth 6,443.85 however
+   * much the month before it was confirmed at.
+   *
+   * What it catches: the behaviour this repository actually had until
+   * 2026-09-11 — a July 2026 opened by a mark and valued at the wage of April
+   * 2025, below the minimum in force during it, with nothing saying so. The old
+   * test asserted that behaviour and passed, because the code and the test made
+   * the same assumption about where a wage comes from.
+   */
+  it("values a month at the minimum wage in force during it", async () => {
+    const opened = wageToCarry(history, APRIL, HANNA, SEEDED_RATES);
+    expect(opened).toEqual({
+      baseAgorot: 644385,
+      minimumAgorot: 644385,
+      effectiveFrom: "2026-04-01",
+    });
+  });
+
+  /**
+   * **A family paying above the minimum keeps their figure** (item 3): the
+   * floor settles only that a month cannot go below the law, and how far above
+   * it this worker is paid is theirs to decide.
+   */
+  it("keeps a salary that already sits above the minimum", async () => {
+    const generous = { ...HANNA, baseMonthlySalaryAgorot: 700000 };
+    expect(wageToCarry(history, APRIL, generous, SEEDED_RATES)).toEqual({
+      baseAgorot: 700000,
+      minimumAgorot: 644385,
+      effectiveFrom: "2026-04-01",
+    });
+  });
+
+  /**
+   * **A month the table cannot answer falls back to the nearest confirmed
+   * position**, which is the old behaviour kept for the case it was right for.
+   * Item 4 is explicit that a month earlier than every row gets no guess, so
+   * there is nothing to read but what the worker already has.
+   */
+  it("carries the wage from the latest month before it where no rate is in force", async () => {
+    expect(wageToCarry(history, APRIL, HANNA, [])).toEqual(NEW_WAGE);
   });
 
   it("carries the earliest month's wage to a month behind the whole history", async () => {
     // A family correcting a month from before they started using the
     // application. January's is the closest figure that exists; the user
     // confirms the real one before the export (item 4).
-    expect(wageToCarry(history, DECEMBER_2025)).toEqual(OLD_WAGE);
+    expect(wageToCarry(history, DECEMBER_2025, HANNA, [])).toEqual(OLD_WAGE);
   });
 
-  it("invents nothing for a worker with no months at all", async () => {
+  it("invents nothing for a worker with no months and no rate in force", async () => {
     // There is no figure to carry and no rate may be hardcoded (`CLAUDE.md`),
     // so the answer is that there is no answer.
-    expect(wageToCarry([], APRIL)).toBeNull();
+    expect(wageToCarry([], APRIL, HANNA, [])).toBeNull();
   });
 
   it("does not depend on the order the months arrive in", async () => {
     // The store promises date order and an unsorted array does not fail — it
     // merely carries the wrong wage, which is the class of mistake that looks
     // entirely ordinary afterwards.
-    expect(wageToCarry([...history].reverse(), APRIL)).toEqual(NEW_WAGE);
+    expect(wageToCarry([...history].reverse(), APRIL, HANNA, [])).toEqual(
+      NEW_WAGE,
+    );
   });
 
   it("opens a month holding nothing but the position it opens from", async () => {
@@ -467,7 +512,12 @@ describe("opening a month the store has no record of (specs.md item 21)", () => 
       from: "2026-04-15",
       to: "2026-04-15",
     });
-    const wage = wageToCarry(await repository.listMonths("hanna"), APRIL);
+    const wage = wageToCarry(
+      await repository.listMonths("hanna"),
+      APRIL,
+      HANNA,
+      await repository.listRates(),
+    );
     await repository.saveMonth("hanna", openMonthRecord(HANNA, APRIL, wage!));
 
     const april = await repository.getMonth("hanna", APRIL);

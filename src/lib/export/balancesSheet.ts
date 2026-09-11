@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { prepareForExcel } from "@/lib/export/workbook";
 import type { MonthInSeries } from "@/lib/engine/series";
 import type { BalanceKind, BalanceLine } from "@/lib/types";
 
@@ -114,6 +115,9 @@ export async function fillBalancesSheet(
   if (sheet.views[0]?.rightToLeft !== true) {
     throw new Error("The balances template is not right-to-left");
   }
+
+  // See `workbook.ts`: without it Excel refuses the worksheet outright.
+  prepareForExcel(workbook);
 
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }

@@ -1,9 +1,10 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { FRIDAY, SATURDAY, SUNDAY } from "@/lib/dates";
 import { countMonth } from "@/lib/engine/counts";
 import { calculateMonth } from "@/lib/engine/month";
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import type { MonthResult, YearMonth } from "@/lib/types";
 
@@ -84,10 +85,12 @@ const SUPPLEMENT = 10000;
 function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   return {
     employedSince: "2024-04-01",
+    gender: "female",
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
     restEveSupplementAgorot: SUPPLEMENT,
     recuperationMonth: 7,
+    incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
     openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },

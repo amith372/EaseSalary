@@ -1,6 +1,7 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { SATURDAY } from "@/lib/dates";
 import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type { MonthSpan } from "@/lib/engine/types";
 
 /**
@@ -64,10 +65,12 @@ const hanna: WorkerProfile = {
   name: "האנה",
   firstName: "האנה",
   employedSince: "2024-04-01",
+  gender: "female",
   baseMonthlySalaryAgorot: SALARY,
   restDay: SATURDAY,
   restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
   recuperationMonth: 7,
+  incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
   openingPosition: {

@@ -13,6 +13,7 @@ import type { AdvanceStanding } from "@/lib/engine/advances";
 import type { OrphanedOverride } from "@/lib/engine/overrides";
 import type { MonthRecord } from "@/lib/engine/repository";
 import { he } from "@/lib/i18n/he";
+import type { MonthIncomeTax } from "@/lib/engine/types";
 import type { IsoDate, OverrideCandidate, Worker, YearMonth } from "@/lib/types";
 
 /**
@@ -61,7 +62,17 @@ export interface MonthPayments {
    * kept out of sight, because a stored amount that will reappear and cannot be
    * seen is item 17's quietest failure. */
   orphanedOverrides: OrphanedOverride[];
+  /**
+   * The month's income tax as the card has to say it (specs.md item 17).
+   *
+   * **Assembled on the server from the one engine result** that drew the rows
+   * above, so the amount, the share of the ‏ברוטו‎ it came to and the badge
+   * cannot disagree with the sheet (`CLAUDE.md` rule 11). The client is handed
+   * figures and never a calculation.
+   */
+  incomeTax: MonthIncomeTax;
 }
+
 
 /** One worker as this screen needs her: who she is, each of her months, and
  * what is still owed on each advance. */
@@ -164,7 +175,12 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
             key={`${worker.id}-${month.year}-${month.month}`}
             workerId={worker.id}
             month={month}
-            incomeTaxAgorot={shown.record.incomeTaxAgorot}
+            /* **Assembled on the server from the engine's own row** (item
+               17): the amount the month settled on, whether it was typed by
+               hand, the setting it was calculated under and the share of the
+               ברוטו it came to. One engine result shown twice rather than a
+               second path that could disagree (`CLAUDE.md` rule 11). */
+            incomeTax={shown.incomeTax}
             userLines={shown.record.userLines}
             ledger={entry.advances}
             monthAdvances={shown.record.advances}

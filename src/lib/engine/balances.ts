@@ -2,6 +2,7 @@ import { daysInMonth, fromIsoDate, isoOf, monthHasEnded } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
+import { lineKeys } from "@/lib/engine/lines";
 import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import type {
   ClosedMonthFacts,
@@ -10,7 +11,10 @@ import type {
   Employment,
 } from "@/lib/engine/types";
 import { sickDaysIn } from "@/lib/engine/sick";
+import { formatAgorot } from "@/lib/money";
 import { he } from "@/lib/i18n/he";
+import { SEEDED_TAX_BRACKETS, bracketsForYear } from "@/lib/taxBrackets";
+import type { TaxYearBrackets } from "@/lib/taxBrackets";
 import { balanceDaysOf } from "@/lib/spans";
 import type {
   BalanceLine,
@@ -355,6 +359,78 @@ export function recuperationRateMissingWarning(
   };
 }
 
+/**
+ * The tax year this month has no bracket table for, or `null` where it has one.
+ *
+ * **It fires only where the application would otherwise withhold a number it
+ * cannot cite.** The tables are seeded for 2025 and 2026 and a fetch adds
+ * years; a month outside every table gets no tax, the line stays at zero, and
+ * this says so. A month whose gross is genuinely below the credit is a
+ * different thing entirely — that is a calculated zero and raises nothing.
+ *
+ * A month carrying a **confirmed** tax raises nothing either: the figure was
+ * settled before the export and stored, which is exactly the case the tables
+ * are not needed for (item 17).
+ */
+export function taxBracketsMissingWarning(
+  facts: ClosedMonthFacts,
+  rates: DatedRate[],
+  tables: TaxYearBrackets[],
+): Warning | null {
+  // Only the automatic mode needs a table. `none` is a settled zero and
+  // `percentage` is the figure an accountant handed the family, so neither has
+  // anything a missing bracket table could stop.
+  if (facts.terms.incomeTax.mode !== "automatic") return null;
+  if (facts.incomeTaxAgorot !== undefined) return null;
+  if (facts.overrides[lineKeys.incomeTax] !== undefined) return null;
+  const haveTable = bracketsForYear(tables, facts.month.year) !== null;
+  const havePoint = rateInForce(rates, "creditPointValue", facts.month) !== null;
+  if (haveTable && havePoint) return null;
+  return {
+    key: "taxBracketsMissing",
+    message: he.sheet.warnings.taxBracketsMissing(facts.month.year),
+    link: "incomeTax",
+  };
+}
+
+/**
+ * The month is paying less than the minimum wage that was in force during it,
+ * or `null` where it is not.
+ *
+ * **This is the one rule in the application that is not a preference**, and it
+ * was the one rule nothing on the month screen said (found by the user on
+ * 2026-09-11, looking at a July 2026 valued at the wage of 1.4.2025). The floor
+ * itself is applied in `baseForMonth`, at the pre-export confirmation — so a
+ * month reaches the family's hands correct, and a month sitting on screen
+ * beforehand was simply wrong with nothing to say so. A family checks the
+ * figure on the screen; the confirmation is a step they meet once, at the end.
+ *
+ * **A month is measured against the wage in force during *it*** (item 4), never
+ * against today's: a month filed before a rise is not underpaid because a rise
+ * happened afterwards, and a warning that said so would be the undated
+ * comparison the dated-rates table exists to remove.
+ *
+ * **The table not knowing the month raises nothing.** A month earlier than every
+ * row has no minimum this application can cite, and item 4 is explicit that it
+ * then says nothing rather than reaching for the earliest row.
+ */
+export function belowMinimumWageWarning(
+  facts: ClosedMonthFacts,
+  rates: DatedRate[],
+): Warning | null {
+  const inForce = rateInForce(rates, "minimumWage", facts.month);
+  if (inForce === null) return null;
+  if (facts.confirmedWage.baseAgorot >= inForce.value) return null;
+  return {
+    key: "belowMinimumWage",
+    message: he.sheet.warnings.belowMinimumWage(
+      formatAgorot(facts.confirmedWage.baseAgorot),
+      formatAgorot(inForce.value),
+    ),
+    link: "minimumWage",
+  };
+}
+
 /** Every warning the month raises. A list from the first commit, because a
  * second warning arriving later must not change the shape the screen reads. */
 export function buildWarnings(
@@ -365,8 +441,14 @@ export function buildWarnings(
 ): Warning[] {
   return [
     monthNotEndedWarning(facts, context),
+    belowMinimumWageWarning(facts, rates),
     vacationYearWarning(facts, context),
     recuperationRateMissingWarning(facts, employment, rates),
+    taxBracketsMissingWarning(
+      facts,
+      rates,
+      context.taxBrackets ?? SEEDED_TAX_BRACKETS,
+    ),
   ].filter(
     (warning): warning is Warning => warning !== null,
   );

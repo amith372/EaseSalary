@@ -1,5 +1,6 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { SATURDAY } from "@/lib/dates";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type { MonthFacts, MonthSpan, WorkerTerms } from "@/lib/engine/types";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
@@ -344,10 +345,12 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
 export function workbookWorker(salaryAgorot: number): WorkerTerms {
   return {
     employedSince: "2024-04-01",
+    gender: "female",
     baseMonthlySalaryAgorot: salaryAgorot,
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     recuperationMonth: 3,
+    incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
     openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },

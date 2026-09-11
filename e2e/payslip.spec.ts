@@ -1,5 +1,7 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
+import { switchToTestWorker } from "./household";
+import { FRIDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
@@ -36,11 +38,15 @@ const ENDED_QUERY = "2026-08";
 /** September has not ended, so it has no file (item 21). */
 const RUNNING_QUERY = "2026-09";
 
-async function useHousehold(page: Page, label: string): Promise<void> {
+async function useHousehold(
+  page: Page,
+  label: string,
+  seed: "demo" | "known" = "demo",
+): Promise<void> {
   await page.context().addCookies([
     {
       name: "household",
-      value: `demo-e2e-${RUN}-${label}`,
+      value: `${seed}-e2e-${RUN}-${label}`,
       url: "http://localhost:3000",
     },
   ]);
@@ -109,6 +115,10 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     await page.getByRole("link", { name: he.home.paid.fullSheet }).click();
     // It pointed at `/sheet`, an address nobody had chosen, and 404'd.
     await expect(page).toHaveURL(/\/month\/payslip/);
+    // On the worker the suite works on, whose months run past the workbooks the
+    // first worker is seeded from: hers end in July 2026, so a heading read off
+    // her would say July and prove nothing about the address.
+    await switchToTestWorker(page);
     await expect(
       page.getByRole("heading", { level: 1 }),
     ).toContainText(ENDED);
@@ -119,6 +129,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
   }) => {
     await useHousehold(page, "default");
     await page.goto("/month/payslip");
+    await switchToTestWorker(page);
     await expect(page.getByRole("heading", { level: 1 })).toContainText(ENDED);
     await expect(page.locator("[data-payslip-export]")).toHaveCount(1);
   });
@@ -128,6 +139,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
   }) => {
     await useHousehold(page, "running");
     await page.goto(`/month/payslip?month=${RUNNING_QUERY}`);
+    await switchToTestWorker(page);
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "ספטמבר 2026",
     );
@@ -141,6 +153,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
   }) => {
     await useHousehold(page, "totals");
     await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await switchToTestWorker(page);
 
     // Read the screen first, so the comparison is against what the user sees.
     const onScreen = {
@@ -168,6 +181,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
   }) => {
     await useHousehold(page, "groups");
     await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await switchToTestWorker(page);
 
     // The month screen groups by kind and the payslip by column (item 5), so
     // the subtotal names here are `he.sheet.subtotals` and not the preview's.
@@ -189,23 +203,41 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     );
   });
 
+  /**
+   * **The rest day is changed and the row follows it**, which is stronger than
+   * the two seeded rest days this used to compare: those proved a value was
+   * displayed, and this proves the term is what the row is drawn from.
+   *
+   * **On the known household, not the demo one.** Both demo workers rest on
+   * Saturday since 2026-09-11, when the first was reseeded from the family's
+   * workbooks and the second took her ordinary terms (`seed.ts`) — and the
+   * second also carries a free rest day marked on a Saturday, so moving her to
+   * Friday would leave a mark on a day that is no longer hers. Part 4's
+   * household holds one worker and no such mark, so the change is a change and
+   * nothing else.
+   */
   test("names her own rest day in the day counts (item 5)", async ({ page }) => {
-    await useHousehold(page, "restday");
-    await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
-    // Hanna rests on Saturday, so the free-rest-day count says Saturdays. The
-    // second worker rests on Friday, and the same row must follow her.
-    await expect(page.locator('[data-day-stat="freeRestDays"]')).toContainText(
-      "שבתות חופשיות",
-    );
+    await useHousehold(page, "restday", "known");
+    const freeRestDays = page.locator('[data-day-stat="freeRestDays"]');
 
-    // Switched with the shell's own control, which is how a user changes
-    // worker: the switcher is the one place that choice lives.
+    await page.goto("/month/payslip?month=2025-08");
+    await expect(freeRestDays).toContainText("שבתות חופשיות");
+
+    // Changed where a user changes it — the worker's own page — and never by
+    // reaching into the store (rule 9).
+    await page.goto("/workers/hanna");
     await page
-      .getByRole("button", { name: he.header.workerSwitcher.next })
+      .locator('[data-terms="restDay"]')
+      .getByRole("button", {
+        name: he.workers.profile.terms.restDay.day(FRIDAY),
+        exact: true,
+      })
       .click();
-    await expect(page.locator('[data-day-stat="freeRestDays"]')).toContainText(
-      "ימי שישי",
-    );
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+
+    await page.goto("/month/payslip?month=2025-08");
+    await expect(freeRestDays).toContainText("ימי שישי");
+    await expect(freeRestDays).not.toContainText("שבתות");
   });
 
   test("draws a level only where something below it changes the figure", async ({
@@ -216,21 +248,27 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     // August withholds income tax and also carries a line placed after the
     // total, so all three levels are real and all three are drawn.
     await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await switchToTestWorker(page);
     await expect(row(page, "gross")).toHaveCount(1);
     await expect(row(page, "afterWithholding")).toHaveCount(1);
     await expect(row(page, "net")).toHaveCount(1);
 
-    // April withholds nothing and repays an advance. **No ברוטו**: with nothing
-    // withheld it equals the נטו, and two identical figures under two headings
-    // read as an error the family then goes looking for.
+    // April withholds tax like every unconfirmed month and also repays an
+    // advance, so all three levels are real. **It expected no ברוטו until
+    // 2026-09-10**, when the tax stopped being typed and started being
+    // calculated: no seeded month withheld anything then, so April's ברוטו and
+    // נטו were one number under two headings.
     await page.goto("/month/payslip?month=2026-04");
-    await expect(row(page, "gross")).toHaveCount(0);
+    await switchToTestWorker(page);
+    await expect(row(page, "gross")).toHaveCount(1);
     await expect(row(page, "afterWithholding")).toHaveCount(1);
     await expect(row(page, "net")).toHaveCount(1);
 
-    // January withholds nothing and transfers nothing, so the month closes on
-    // one figure.
+    // January's tax was confirmed at nothing and it transfers nothing, so the
+    // month closes on one figure. It is the demo's only month that withholds
+    // nothing, which is what keeps the collapsed shape reachable.
     await page.goto("/month/payslip?month=2026-01");
+    await switchToTestWorker(page);
     await expect(row(page, "gross")).toHaveCount(0);
     await expect(row(page, "afterWithholding")).toHaveCount(0);
     await expect(row(page, "net")).toHaveCount(1);
@@ -258,6 +296,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     // August transfers — it carries a line placed after the total — so both
     // names are real, each over its own figure.
     await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await switchToTestWorker(page);
     await expect(row(page, "net")).toContainText(he.payslip.total);
     await expect(row(page, "afterWithholding")).toContainText(
       he.month.preview.afterWithholding,
@@ -273,10 +312,12 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
 
     // April repays an advance, so it transfers too and keeps both names.
     await page.goto("/month/payslip?month=2026-04");
+    await switchToTestWorker(page);
     await expect(row(page, "net")).toContainText(he.payslip.total);
 
     // January transfers nothing. One figure, and its name is `נטו`.
     await page.goto("/month/payslip?month=2026-01");
+    await switchToTestWorker(page);
     await expect(row(page, "net")).toContainText(
       he.month.preview.afterWithholding,
     );
@@ -294,6 +335,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
   }) => {
     await useHousehold(page, "balances");
     await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await switchToTestWorker(page);
     // A balance with no days behind it cannot be checked, which is why the
     // criterion asks for both.
     const vacation = page.locator('[data-after="vacation"]');

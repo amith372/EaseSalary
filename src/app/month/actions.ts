@@ -18,6 +18,12 @@ import {
 import type { OverrideDraft, OverrideRefusal } from "@/lib/engine/overrides";
 import { openMonthRecord, recordOf, wageToCarry } from "@/lib/engine/repository";
 import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
+import {
+  reviewTaxPercentage,
+  taxFromPercentage,
+} from "@/lib/engine/incomeTax";
+import type { TaxCorrectionUnit } from "@/lib/engine/incomeTax";
+import { lineKeys } from "@/lib/engine/lines";
 import { calculateSeries } from "@/lib/engine/series";
 import {
   reviewThirdPartyPayment,
@@ -35,6 +41,7 @@ import type {
 } from "@/lib/engine/types";
 import { reviewUserLine, withoutOneOffUserLine } from "@/lib/engine/userLines";
 import type { UserLineDraft, UserLineRefusal } from "@/lib/engine/userLines";
+import { he } from "@/lib/i18n/he";
 import { parseShekels } from "@/lib/money";
 import {
   applyMark,
@@ -116,7 +123,16 @@ async function openMonthIfMissing(
   const repository = await getRepository();
   if ((await repository.getMonth(workerId, month)) !== null) return true;
 
-  const wage = wageToCarry(await repository.listMonths(workerId), month);
+  // The dated-rates table first, and a neighbouring month only where the table
+  // cannot answer — see `wageToCarry`. The stored rates are read through the
+  // repository so a fetched wage counts, exactly as the pre-export screen reads
+  // them (item 4).
+  const wage = wageToCarry(
+    await repository.listMonths(workerId),
+    month,
+    profile,
+    await repository.listRates(),
+  );
   if (wage === null) return false;
 
   await repository.saveMonth(workerId, openMonthRecord(profile, month, wage));
@@ -247,7 +263,11 @@ export type MonthActionRefusal =
   | ThirdPartyRefusal
   | OverrideRefusal
   | "noMonth"
-  | "entryUnknown";
+  | "entryUnknown"
+  /** A percentage was typed against a month that has no ‏ברוטו‎ to take a
+   * percentage of. It is refused rather than stored as zero, because zero is a
+   * figure the user did not type. */
+  | "noGross";
 
 export type MonthActionResult =
   | { ok: true }
@@ -279,27 +299,91 @@ async function changeMonth(
 }
 
 /**
- * The income tax the user is withholding this month (specs.md item 17).
+ * The income tax corrected by hand (specs.md item 17).
  *
- * It is never calculated and never will be: this action is the whole of how the
- * figure gets in. **Zero is an ordinary answer here and not a refusal**, which
- * is where this differs from a line the user adds — zero is what every month
- * holds until she says otherwise, so setting it back is how a tax entered by
- * mistake is taken off. It is stored positive and signed by the engine, so a
- * tax can never be entered in a direction that pays her.
+ * **It stores an override and no longer a figure of its own**, which is the
+ * change of 2026-09-10: the engine works the tax out from the month's gross,
+ * the brackets in force during it and the worker's credit points, so a typed
+ * amount is now an amount put over a figure the application produced — exactly
+ * what an override is. It writes the same `overrides` entry the generic control
+ * writes, so the row's badge, its stored shape and its clearing are identical
+ * either way.
+ *
+ * **An empty field clears the override and does not mean zero.** It used to
+ * mean zero, because zero was what a month held until the user said otherwise
+ * and there was nothing underneath to go back to. Now there is, and the two
+ * gestures mean opposite things: an empty field says the application is right
+ * after all, while a typed zero says this month withholds nothing and stores
+ * that by hand for ever. `clearOverride`'s own docblock makes the same
+ * distinction and this is the second place it bites.
+ *
+ * **It does not go through `setOverride`**, which validates a draft against the
+ * engine's `overridable` — and the tax row answers `false` there on purpose, so
+ * that the generic control does not offer a second way to write this same
+ * amount. The reason lives beside the row in `month.ts`.
+ *
+ * The amount is stored positive and signed by the engine, so a tax can never be
+ * entered in a direction that pays her.
  */
 export async function setIncomeTax(
   workerId: string,
   month: YearMonth,
   amount: string,
+  unit: TaxCorrectionUnit = "amount",
 ): Promise<MonthActionResult> {
-  const agorot = parseShekels(amount);
-  if (agorot === null) return { ok: false, reason: "amount" };
+  if (amount.trim() === "") {
+    return clearOverride(workerId, month, lineKeys.incomeTax);
+  }
 
-  return changeMonth(workerId, month, (record) => ({
-    ...record,
-    incomeTaxAgorot: agorot,
-  }));
+  const agorot =
+    unit === "percentage"
+      ? await taxFromPercentageTyped(workerId, month, amount)
+      : parseShekels(amount);
+  if (agorot === null) return { ok: false, reason: "amount" };
+  if (agorot === "noGross") return { ok: false, reason: "noGross" };
+
+  return changeMonth(workerId, month, (record) =>
+    withOverride(record, lineKeys.incomeTax, {
+      agorot,
+      label: he.sheet.lines.incomeTax,
+    }),
+  );
+}
+
+/**
+ * A percentage the user typed against one month, turned into the amount that is
+ * actually stored (settled with the user on 2026-09-11).
+ *
+ * **The gross is read off the engine here and never taken from the browser.**
+ * The figure the field previews beside itself is the same arithmetic, but a
+ * percentage posted with a gross attached would let a stale screen — a month
+ * whose sick spell moved in another tab — write an amount against a gross that
+ * no longer exists. Part 3's rule is that the browser collects the gesture and
+ * the server decides what it means, and "2.5% of this month" is a gesture whose
+ * meaning is a month the server has to look at.
+ *
+ * **What is stored is the amount and never the percentage.** An override is an
+ * amount put over a calculated figure; a percentage that stayed a percentage
+ * would re-derive itself the next time anything about the month moved, which is
+ * the one thing item 17 says an override must never do.
+ *
+ * A month with no gross has no percentage to take — the answer is `"noGross"`
+ * rather than zero, because zero is a figure the user did not type and would be
+ * stored by hand for ever.
+ */
+async function taxFromPercentageTyped(
+  workerId: string,
+  month: YearMonth,
+  text: string,
+): Promise<number | null | "noGross"> {
+  const percentage = reviewTaxPercentage(text);
+  if (percentage === null) return null;
+
+  const inSeries = await linesOf(workerId, month);
+  const gross = inSeries?.result.gross ?? null;
+  if (gross === null || gross <= 0) return "noGross";
+
+  return taxFromPercentage(percentage, gross);
 }
 
 /** A line of the user's own, added to this month alone (specs.md item 20). The

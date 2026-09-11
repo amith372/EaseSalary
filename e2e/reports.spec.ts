@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
+import { switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
@@ -80,6 +81,7 @@ test.describe("the reports screen (item 23, item 29)", () => {
   }) => {
     await useHousehold(page, "hero");
     await page.goto("/reports");
+    await switchToTestWorker(page);
 
     // The defect this exists for: the hero pointed at September 2026 and its
     // button returned 409, because the month had not ended (item 21).
@@ -103,6 +105,7 @@ test.describe("the reports screen (item 23, item 29)", () => {
   }) => {
     await useHousehold(page, "figures");
     await page.goto("/reports");
+    await switchToTestWorker(page);
 
     const figures = async (month: string) =>
       page
@@ -120,11 +123,20 @@ test.describe("the reports screen (item 23, item 29)", () => {
       "net",
     ]);
 
-    // April withholds nothing and repays an advance: no `ברוטו`, because with
-    // nothing withheld it is the same number as the `נטו`.
-    expect(await figures("2026-4")).toEqual(["afterWithholding", "net"]);
+    // April withholds tax like every unconfirmed month and also repays an
+    // advance, so all three are real here too. **It read
+    // `["afterWithholding", "net"]` until 2026-09-10**, when the tax stopped
+    // being a figure the user typed and started being calculated: no seeded
+    // month withheld anything then, and April's ברוטו and נטו were one number.
+    expect(await figures("2026-4")).toEqual([
+      "gross",
+      "afterWithholding",
+      "net",
+    ]);
 
-    // January does neither, so one figure. A row that printed all three here
+    // January's tax was confirmed at nothing and it transfers nothing, so one
+    // figure. It is the demo's only month that withholds nothing, which is what
+    // keeps this case reachable at all. A row that printed all three here
     // would print one number three times under three headings — the defect
     // this test exists for, and one that reads as an error the family then
     // goes looking for.
@@ -136,6 +148,7 @@ test.describe("the reports screen (item 23, item 29)", () => {
   }) => {
     await useHousehold(page, "yearly");
     await page.goto("/reports");
+    await switchToTestWorker(page);
 
     // Read off the rendered page first, so the comparison is against what the
     // user sees and not against another call into the engine (rule 11).
@@ -162,6 +175,7 @@ test.describe("the reports screen (item 23, item 29)", () => {
   }) => {
     await useHousehold(page, "recuperation");
     await page.goto("/reports");
+    await switchToTestWorker(page);
 
     const [download] = await Promise.all([
       page.waitForEvent("download"),
@@ -182,6 +196,7 @@ test.describe("the reports screen (item 23, item 29)", () => {
   }) => {
     await useHousehold(page, "balances");
     await page.goto("/reports");
+    await switchToTestWorker(page);
 
     const [download] = await Promise.all([
       page.waitForEvent("download"),
@@ -212,6 +227,7 @@ test.describe("the reports screen (item 23, item 29)", () => {
   }) => {
     await useHousehold(page, "insurance");
     await page.goto("/reports");
+    await switchToTestWorker(page);
 
     const [download] = await Promise.all([
       page.waitForEvent("download"),

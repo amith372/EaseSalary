@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { TEST_WORKER_ID, switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot, formatDays } from "../src/lib/money";
 
@@ -79,7 +80,7 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
     page,
   }) => {
     await useHousehold(page, "pays");
-    await page.goto("/workers/worker-1");
+    await page.goto(`/workers/${TEST_WORKER_ID}`);
 
     // The days come from her seniority and are reported, never offered.
     await expect(page.locator("[data-recuperation]")).toContainText(
@@ -92,6 +93,7 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
 
     // And the month screen pays exactly them, at the article's day rate.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await backTo(page, 9 - SEEDED_MONTH);
     await expect(row(page, "recuperation")).toContainText(
       formatAgorot(PAYMENT),
@@ -105,6 +107,7 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
   test("draws no recuperation line in an ordinary month", async ({ page }) => {
     await useHousehold(page, "ordinary");
     await page.goto("/month");
+    await switchToTestWorker(page);
     // September is the month the demo opens on and is not the recuperation
     // month. A line drawn here would be a payment made twelve times a year.
     await expect(row(page, "recuperation")).toHaveCount(0);
@@ -120,10 +123,11 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
     page,
   }) => {
     await useHousehold(page, "moves");
-    await page.goto("/workers/worker-1");
+    await page.goto(`/workers/${TEST_WORKER_ID}`);
     await chooseMonth(page, MOVED_TO);
 
     await page.goto("/month");
+    await switchToTestWorker(page);
     await backTo(page, 9 - MOVED_TO);
     await expect(row(page, "recuperation")).toContainText(
       formatAgorot(PAYMENT),
@@ -131,23 +135,27 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
 
     // And it has left the month it used to be paid in.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await backTo(page, 9 - SEEDED_MONTH);
     await expect(row(page, "recuperation")).toHaveCount(0);
   });
 
   /**
-   * Nothing is due until a full working year has been completed. The second
-   * worker began on 1.9.2025 and the seed pays her in March, so her first
-   * recuperation month falls three months before her first year is out.
+   * **A worker inside her first employment year is no longer in the demo, and
+   * this file no longer checks that case through the browser.**
+   *
+   * It used to: the second worker began on 1.9.2025, so her recuperation month
+   * fell three months before her first year was out and the profile said so by
+   * simply being opened. She now begins on 1.4.2024, because every other test
+   * here needs a completed year to have anything to pay, and a household holds
+   * no more than two workers (item 11) — the other being Hanna, whose months
+   * come from the family's own workbooks and whose terms no test may edit.
+   *
+   * The rule itself is checked against the statute in `recuperation.test.ts`
+   * ("pays nothing in the recuperation month of the first employment year").
+   * What is *not* checked anywhere is that the profile says it in words rather
+   * than printing a bare zero — that is a real gap opened on 2026-09-11 and it
+   * is written down here rather than left to be rediscovered. It closes when
+   * the application can create a worker, which is stage 3's.
    */
-  test("owes nothing before the first employment year is out", async ({
-    page,
-  }) => {
-    await useHousehold(page, "notyet");
-    await page.goto("/workers/worker-2");
-
-    await expect(page.locator("[data-recuperation]")).toContainText(
-      he.workers.profile.terms.recuperation.notYet,
-    );
-  });
 });

@@ -1,3 +1,4 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
@@ -48,6 +49,7 @@ const facts: ClosedMonthFacts = {
     restDay: SATURDAY,
     restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
     recuperationMonth: 7,
+    incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
   },
   confirmedWage: {
@@ -69,10 +71,12 @@ const facts: ClosedMonthFacts = {
 const terms: WorkerTerms = {
   // Part 4: "employed since 1.4.2024".
   employedSince: "2024-04-01",
+  gender: "female",
   baseMonthlySalaryAgorot: AUGUST_2025_SALARY,
   restDay: SATURDAY,
   restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
   recuperationMonth: 7,
+  incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
   openingPosition: {

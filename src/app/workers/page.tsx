@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { WorkersList } from "@/components/WorkersList";
 import type { WorkerSummary } from "@/components/WorkersList";
 import { getRepository } from "@/lib/dev/store";
+import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
 import { advanceLedger } from "@/lib/engine/advances";
 import { calculateSeries } from "@/lib/engine/series";
 import { todayInIsrael } from "@/lib/today";
@@ -53,7 +54,7 @@ export default async function WorkersPage() {
           firstName: profile.firstName,
         },
         employedSince: profile.employedSince,
-        country: profile.country,
+        country: countryNameHe(SEEDED_HOLIDAY_LISTS, profile.country),
         baseMonthlySalaryAgorot: profile.baseMonthlySalaryAgorot,
         vacationDays: closing("vacation"),
         sickDays: closing("sick"),

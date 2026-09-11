@@ -6,6 +6,18 @@
 > that is not obvious, say so in the same sentence, so the reasoning survives here.
 > The application interface is Hebrew and right-to-left; this file and `CLAUDE.md` are
 > English.
+> **Nothing is written to this file — added, reworded, or deleted — without putting the
+> exact wording to the user first and getting a direct yes to it.** Silence is not a yes,
+> approving the code or the behavior is not a yes, and a yes to the last addition is not a
+> yes to this one. An agent that may write here can settle any disagreement by rewriting
+> the thing it was going to be judged against, and in a file this long nobody would see it
+> happen — so the asking comes before the writing and never after, and an edit already in
+> the file is one approved by default. Correcting a typo or a stale cross-reference does
+> not need asking; anything that changes what the application does or must prove does.
+> **Keep it general.** A rule is written as a rule. The family's own workbooks are an
+> example the specification was drawn from, not content it carries: no private file name,
+> tab, or cell reference belongs here. The one deliberate exception is Part 4's August 2025
+> case, whose four totals are the only figures a test may measure the engine against.
 
 ## Part 1 — Goal and reason
 
@@ -121,6 +133,23 @@ Each of these is true or false at a glance.
    estimate is a reporting figure that enters no subtotal (item 19), so its line simply
    shows nothing and the month still calculates, while a rate a payment depended on would
    refuse the month with its reason.
+   **A month opened after the fact is valued from the table and not from the month beside
+   it.** A month the store has no record of has to get its wage from somewhere, and until
+   the table existed the only source was the worker's own months — so it carried the
+   nearest confirmed position. That is the undated guess this item exists to remove, and
+   it produced a real one: a July 2026 opened by a mark was valued at the wage of April
+   2025, below the minimum in force during it (found by the user on 2026-09-11). The
+   table answers first; the nearest confirmed position is the fallback for a month earlier
+   than every row, which is the one case it was ever right for. The base is floored at
+   that minimum and the profile is not rewritten above it (item 3).
+   **A month already paying under the minimum in force during it says so on the month
+   screen.** The floor is applied when the wage is confirmed before an export, so a month
+   reaches the family's hands correct — but a month sitting on screen beforehand was
+   simply wrong with nothing to say so, and the family reads the screen. The warning names
+   what the month pays and what was in force, and says the confirmation will raise it. It
+   compares against the month's own rate and never today's, or a rise would retroactively
+   accuse every month correctly filed before it; and it is silent for a month the table
+   has no row for, as everything here is.
    **A month is valued at the rate in force during it and never at the current one**,
    which is the same sentence criterion 13 rests on from the other side: a month corrected
    years later moves every later month's balances precisely because nothing about it was
@@ -215,7 +244,14 @@ Each of these is true or false at a glance.
    repaid together with what has been repaid of it so far. From then on the application
    keeps them.
 7. Balances carry forward: month N+1 opens with the previous balance plus the monthly
-   accrual minus what was used in month N. A vacation day never changes the month's
+   accrual minus what was used in month N.
+   **The worker's own page adds up what she has actually been paid across every month it
+   lists** (asked for by the user on 2026-09-11), under the same name the months are
+   listed by, so the total and the column are one figure reached one way. Only months
+   that have a figure are counted: a month still open has no total, and counting it as
+   zero would report a sum that grew the day it closed without anything about the worker
+   having changed. Where some month was skipped, the row says how many it stands for
+   rather than letting the sum stand for a count nobody stated. A vacation day never changes the month's
    total: a monthly salary is paid in full for a month in which vacation was taken, and
    the day is drawn from the balance alone. The sheet carries no vacation payment line at
    all: the base is computed from the standard count and never shrinks, so a vacation line
@@ -404,7 +440,12 @@ Each of these is true or false at a glance.
    her.
 10. The worker's holidays for the year are shown in advance as her country of origin's
    full candidate list, with another country's list selectable instead, of which the
-   user marks the paid ones. **A religion's list may be chosen in place of a
+   user marks the paid ones. **The country is named wherever it is shown and never
+   printed as its two-letter code** (asked for by the user on 2026-09-11): the code is
+   how a list is filed and is nothing a family has any reason to read. The name comes
+   from the stored list itself, which publishes it, so no second table of country names
+   is kept; a country nothing is stored for falls back to its code, because inventing a
+   name for it would be a guess. **A religion's list may be chosen in place of a
    country's** (decided with the user on 2026-09-09): the candidate list is either the
    holidays of a country or the holidays of a faith — Jewish, Muslim, Christian or
    Druze — and the two are one choice with two kinds of answer rather than two separate
@@ -423,11 +464,8 @@ Each of these is true or false at a glance.
    **months employed in that calendar year**: nine days times those months over twelve,
    with the month employment began counted as a whole month. So a worker employed from
    1.4.2024 has 6.75 days for 2024 and nine from 2025 onward. That is the calculation the
-   family's workbook both states and pays. `שכר_חודשי_להאנה2024.xlsx` → `חודש  12.24`
-   → C9 holds 6.75 days and F9 pays 6.75 × 401.25, and the note in I9 gives the reasoning
-   behind them: "בגין חודשים 4-12/24 (9 חודשים) זכאית ל (9*9)/12 = 6.75 ימי חג". The
-   figure comes from the cells and the reasoning from the note, which is the order Part 5
-   requires. Criterion 1 is agreement with the workbook: a
+   family's workbook both states and pays, in the days it holds and the amount it pays for
+   them. Criterion 1 is agreement with the workbook: a
    day-by-day proration is arithmetically finer and gives 6.76, but it is not the figure
    the family uses. It is also the measure
    item 7 applies to vacation, so the two entitlements are reduced the same way rather
@@ -572,16 +610,54 @@ Each of these is true or false at a glance.
     is addressed by the row's own key, and one left behind is an amount waiting to reattach
     itself to a row that never asked for it.
 17. Any amount the application worked out for a month can be overridden by the user from
-    that month's actions, and the income-tax line is editable in the same way while
-    defaulting to zero. An overridden amount is visibly marked as manual and survives
+    that month's actions. An overridden amount is visibly marked as manual and survives
     every later recalculation of that month.
+    **The income tax is one of those amounts and is no longer typed.** **This reversed
+    on 2026-09-10**, before which this item said the line defaulted to zero and was the
+    user's to type.
+    **How it is arrived at is a term of the employment, chosen once on the profile**, and
+    there are three choices (settled with the user on 2026-09-11). *Automatic* works the
+    figure out from the month's ברוטו, the bracket table in force during that tax year and
+    the worker's credit points, which follow from the gender on her profile — 2.25 for a
+    foreign caregiver in home care and half a point more for a woman — and are never asked
+    for as a number; credit points reduce tax and never pay a refund, so the figure is
+    floored at zero, and at the minimum wage that is the ordinary answer rather than an
+    edge case. *Nothing withheld* is a decision the family states once rather than a zero
+    typed into every month, because a zero entered twelve times cannot be told apart from
+    twelve months nobody looked at. *A flat percentage of the ברוטו* is not how the tax
+    works and is offered because it is what an accountant hands a family as one number;
+    a reminder that the law requires income tax stands under the control in every state.
+    **The choice is snapshotted onto a month when the month is confirmed**, so a family
+    that stops withholding in June leaves January through May exactly as they were filed.
+    **Any single month still departs from it** by the field on the payments screen, which
+    stores an override like every other correction and is how a past month is fixed.
+    **That correction may be typed either as a sum or as a share of the ברוטו** (settled
+    with the user on 2026-09-11), because a family told "two and a half percent" by an
+    accountant would otherwise have to do the arithmetic against a ברוטו that moves every
+    month — which is the arithmetic this application exists to take off her. The unit is
+    the field's own and never the worker's setting: a month on the automatic mode may be
+    corrected by a share, and a month on a flat rate by a sum. **What is stored is the
+    amount either way**, and the conversion is made on the server against the month's own
+    ברוטו read there: a percentage that stayed a percentage would re-derive itself the
+    next time anything about the month moved, which is the one thing an override must
+    never do. The arithmetic is shown before it is saved, so what she agrees to is the
+    sum. A month with no ברוטו has no share to take and the correction is refused rather
+    than stored as a zero nobody typed.
+    The tax is also confirmed before an export and stored with the month like the minimum
+    wage is, so a past month reproduces rather than recalculates, and a year the
+    application holds no table for leaves the line at zero and says so.
+    **The percentage a month actually came to is reported beside its figure** on the
+    payments screen and nowhere else. The automatic mode reaches a different percentage
+    every month, because the brackets are progressive and the credit is a fixed sum, so
+    the profile — which has no month in front of it — would be stating a share of a month
+    nobody worked.
     **The income tax is withheld from the ברוטו and an advance is not**, and the month
     screen draws that difference rather than describing it: the tax comes off the month's
     total and what is left is the נטו, while an advance — and a line the user placed after
     the total (item 20) — comes off the נטו and changes only what is transferred. The
     three figures and the order they are drawn in are given in Part 5.
-    **A level is drawn only when something below it changes the figure.** With the tax at
-    zero the נטו is the ברוטו, and with nothing transferred the figure paid is the נטו;
+    **A level is drawn only when something below it changes the figure.** With nothing
+    withheld the נטו is the ברוטו, and with nothing transferred the figure paid is the נטו;
     the same number printed twice under two headings reads as an error and sends the user
     looking for a difference that is not there. So a month with neither closes on one
     figure, a month with an advance shows the נטו above it, and only a month that actually
@@ -733,11 +809,10 @@ Each of these is true or false at a glance.
     appears only in the month it was paid, together with the months it covers. These are
     two different figures in two different columns and not one figure written twice: the
     first is what the month accrued, the second is what left the account. The family's
-    workbook keeps them in two cells and the export follows it: in
-    `שכר_חודשי_להאנה2025.xlsx` → `חודש  8.25` the estimate is D21 and H21 is empty,
-    because August settled no quarter, while in `חודש  7.25` D21 carries the same
-    monthly figure and H21 the ₪936 paid on 20.7.25 for 4-6/25, with B21 naming those
-    months. So the estimate is a reported figure in the unit-price column and never a
+    workbook keeps them in two cells and the export follows it: the national-insurance row
+    carries the monthly estimate in the unit-price column in every month, and the amount
+    actually paid in the third-party column only in the month a quarter was settled, with
+    the months it covers named beside it. So the estimate is a reported figure and never a
     payment line — nothing in the sheet sums column D — and only what left the account
     is added into the third-party total.
     It is paid once a quarter and in arrears: the reminder
@@ -760,6 +835,12 @@ Each of these is true or false at a glance.
       until the user changes it or stops it. A standing line is a term of the employment
       and is snapshotted onto the month like every other term (Part 3), so stopping it in
       June leaves the earlier months exactly as they were.
+      **The screen where a one-off line is made says that the standing kind exists and
+      where it is set**, and links there (2026-09-11). The two are made in two places for
+      a reason this criterion already gives — one belongs to a month and the other to the
+      employment — but the user who wants a monthly deduction goes to the month, finds
+      only the one-off kind, and concludes the application cannot do it. It could, and
+      did. A capability nobody can find is not a capability the user has.
     - **Where it sits: before the month's total, or after it.** This is the user's own
       choice on every line, and it is not implied by the direction. A line placed
       *before* is part of what the month came to — it enters the month's total and with it
@@ -1050,8 +1131,8 @@ day counts `B33` and `B34` all say "not including Saturdays"; `G1`, `B9`, `B24` 
 total sentence in `A26` all say "Saturdays"; `F5` says "a holiday or a Saturday"; and `B7`
 names Fridays for the weekly supplement. Every one of those becomes a placeholder filled
 from the month's stored rest day, so a worker whose rest day is Friday receives a sheet
-that says Friday throughout and counts her Fridays, and Hanna's sheet is unchanged word
-for word. There is **one** template and not one per rest day: three templates would be
+that says Friday throughout and counts her Fridays, while a Saturday worker's sheet is
+unchanged word for word. There is **one** template and not one per rest day: three templates would be
 three copies of a layout that must not diverge, and the rule below that a layout change is
 a template change would then mean making it three times. The closing block is built from however many advance lines the month has — one for
 each advance granted and each instalment repaid, numbered as in the workbook — rather
@@ -1091,8 +1172,12 @@ They are decrypted on the server only at the moment they are shown to their own 
 or written into an export, and the key lives outside the database, so a copy of the
 database on its own reveals nothing. These values never appear in a log, in a URL, or in
 anything sent to the browser beyond the screen that needs them. Holiday lists are fetched per country and per year from
-the published caregiver holiday pages, whose addresses follow a fixed pattern of country
-code and year, and are cached once fetched; the files that ship with the application are
+the published caregiver holiday pages and are cached once fetched. **A new year's address
+is the address already stored with that country's list with the year changed in it, and is
+never rebuilt from the country code** — a stored address carries more than the code, and
+one country's list sits under a different path from the rest, so an assembled address
+returns nothing and reads exactly like a country that publishes no holidays at all. The
+files that ship with the application are
 seed data for years already gathered, not the only years it can ever know. A worker's
 own chosen dates are stored against the worker and are never overwritten by a later
 fetch.
@@ -1219,7 +1304,7 @@ among the refusals, and its absence is a decision rather than an omission. That 
 filtered from the calendar's own Saturdays rather than read from a number, so no stored
 data can produce one: the guarantee holds by construction and a check for it would be
 unreachable code pretending to be a safeguard. The failure mode is real in the family's
-workbook, where the figure is typed — G2 of `שכר_חודשי_להאנה2025.xlsx` → `חודש  8.25` —
+workbook, where the figure is typed by hand,
 and deriving it moved the danger rather than removing it, because the holiday count is
 the one the calendar does not bound. That is where the refusal above now sits.
 
@@ -1283,29 +1368,22 @@ separates a test from a demonstration.
 
 ## Part 5 — Known pitfalls
 
-A holiday list for a new year is found by taking the source address already stored with
-that country's list and changing the year in it, never by rebuilding the address from the
-country code. A stored address carries more than the code: Nepal's list is published under
-`/en/` while every other shipped list is under `/he/`, so an address assembled from the code
-would quietly change the path along with the year. It returns nothing, which reads exactly
-like a country that publishes no holidays at all, and the failure would surface half a year
-later, the first time someone adds a worker from that country.
+**An `.xlsx` file is checked against its own bytes, never against the library that wrote
+it.** A formula cell holds the formula *and* the figure it last evaluated to, so every
+total the export writes carries the engine's figure as its cached result and the workbook
+asks to recalculate on load; without the cached figure the sheet opens blank in every
+reader that computes nothing. And a file that parses is not a file Excel will open: the
+element order a schema declares is part of the format, and getting it wrong makes Excel
+discard the whole worksheet silently. A test that reads the output back with the same
+library watches it agree with itself about a file no spreadsheet would accept.
 
-The balances tab rounds inconsistently and should not be copied. In
-`שכר_חודשי_להאנה2026.xlsx` → `חישוב ימי מחלה וחופשה` the monthly vacation accrual is written as
-1.17 in January to March and as fourteen twelfths from April onward, in the same column.
-Use the fraction throughout, or a balance drifts by a hundredth of a day a year and the
-figures stop tying out against the workbook for reasons no one can find later.
-
-The helper column of notes is not a source for figures either, and the same workbook
-shows why. Cell I9 of `שכר_חודשי_להאנה2024.xlsx` → `חודש  12.24` works the holiday
-entitlement out correctly — "בגין חודשים 4-12/24 (9 חודשים) זכאית ל (9*9)/12 = 6.75 ימי
-חג" — and then, in the same sentence, says the payment is for 9.75 days. The note
-contradicts itself; the sheet paid 6.75, at 6.75 × 401.25 in F9. **Where a note and an
-amount disagree, the amount is what happened.** Those notes were written by hand and were
-never checked against the formulas beside them, so they are a good source for intent —
-why a figure was chosen, which rule it rests on, what was agreed — and a poor one for the
-figure itself. Read them for the reasoning and take the numbers from the cells.
+**Where a note and an amount disagree, the amount is what happened.** The source
+workbooks' helper column was written by hand and never checked against the formulas beside
+it, so it is a good source for intent — why a figure was chosen, which rule it rests on —
+and a poor one for the figure itself. Read the notes for the reasoning and take the
+numbers from the cells. For the same reason the balances tab's rounding is not copied:
+accrual is carried as an unrounded fraction, or a balance drifts by a hundredth of a day a
+year and stops tying out for reasons no one can find later.
 
 Right-to-left is not only a matter of alignment, and its failures are quiet. A browser
 reorders mixed runs of Hebrew and Latin text, so a month range, a passport number, or a

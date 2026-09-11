@@ -1,6 +1,9 @@
+import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { monthHasEnded, SATURDAY } from "@/lib/dates";
 import {
+  belowMinimumWageWarning,
   buildBalances,
   monthlySickAccrual,
   monthNotEndedWarning,
@@ -11,7 +14,7 @@ import {
   vacationYearWarning,
 } from "@/lib/engine/balances";
 import { calculateMonth } from "@/lib/engine/month";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type {
   MonthContext,
   ClosedMonthFacts,
@@ -44,13 +47,39 @@ function terms(
 ): WorkerTerms {
   return {
     employedSince,
+    gender: "female",
     baseMonthlySalaryAgorot: 624765,
     restDay: SATURDAY,
     restEveSupplementAgorot: 10000,
     recuperationMonth: 7,
+    incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
     openingPosition: { ...opening, advances: [] },
+  };
+}
+
+
+/**
+ * The confirmed wage position a month of these fixtures stands on: the minimum
+ * wage in force during that month, from the same seeded table the application
+ * reads (specs.md item 4). A fixture that stamped one figure on every month was
+ * below the minimum from April 2026 onward.
+ */
+function wageInForce(ym: YearMonth) {
+  // A month earlier than every row takes the earliest one. That is a fixture's
+  // convenience and not the engine's rule — the engine guesses nothing there
+  // (item 4), and `belowMinimumWageWarning` is silent for exactly that reason,
+  // so which figure such a month carries cannot change what is asserted.
+  const rate =
+    rateInForce(SEEDED_RATES, "minimumWage", ym) ??
+    SEEDED_RATES.filter((one) => one.key === "minimumWage").sort((a, b) =>
+      a.effectiveFrom < b.effectiveFrom ? -1 : 1,
+    )[0]!;
+  return {
+    baseAgorot: rate.value,
+    minimumAgorot: rate.value,
+    effectiveFrom: rate.effectiveFrom,
   };
 }
 
@@ -58,11 +87,11 @@ function facts(month: YearMonth, spans: ClosedSpan[] = []): ClosedMonthFacts {
   return {
     month,
     terms: snapshotTerms(terms()),
-    confirmedWage: {
-      baseAgorot: 624765,
-      minimumAgorot: 624765,
-      effectiveFrom: "2025-04-01",
-    },
+    // The wage in force during the month itself, and not one figure stamped on
+    // every month a fixture happens to cover (specs.md item 4). Stamping one
+    // put these fixtures below the minimum wage from April 2026 onward, which
+    // is the defect a family found on 2026-09-11.
+    confirmedWage: wageInForce(month),
     spans,
     advances: [],
     thirdPartyPayments: [],
@@ -497,5 +526,67 @@ describe("the month that has not ended yet (specs.md item 21)", () => {
         ended ? null : expect.objectContaining({ key: "monthNotEnded" }),
       );
     }
+  });
+});
+
+/**
+ * The month is paying under the minimum wage that was in force during it
+ * (specs.md item 4, and `CLAUDE.md`'s "may not be set below it").
+ *
+ * **Every figure is the seeded table's own**, which is sourced to the family's
+ * workbooks: ₪6,247.65 from 1.4.2025 and ₪6,443.85 from 1.4.2026.
+ *
+ * **What it would catch**: the state the application was actually in until
+ * 2026-09-11 — a July 2026 valued at the April 2025 wage, below the legal
+ * minimum, with nothing anywhere on the screen saying so; a warning that
+ * compared against *today's* minimum instead of the month's, which would
+ * retroactively accuse every correctly filed month the day a rise lands; and a
+ * warning that fired on a month the table cannot speak for, which is the
+ * undated guess the dated-rates table exists to remove.
+ */
+describe("a month paying under the minimum wage in force during it", () => {
+  function paying(ym: YearMonth, baseAgorot: number): ClosedMonthFacts {
+    const base = facts(ym);
+    return {
+      ...base,
+      confirmedWage: { ...base.confirmedWage, baseAgorot },
+    };
+  }
+
+  it("says so, naming what it pays and what was in force", () => {
+    const warning = belowMinimumWageWarning(
+      paying({ year: 2026, month: 7 }, 624765),
+      SEEDED_RATES,
+    );
+    expect(warning?.key).toBe("belowMinimumWage");
+    expect(warning?.message).toContain("6,247.65");
+    expect(warning?.message).toContain("6,443.85");
+    expect(warning?.link).toBe("minimumWage");
+  });
+
+  it("is silent on the same figure in a month it was the minimum for", () => {
+    // March 2026 is still on the 1.4.2025 row, so 6,247.65 is exactly right
+    // there and wrong four months later. That is the whole of item 4's rule.
+    expect(
+      belowMinimumWageWarning(
+        paying({ year: 2026, month: 3 }, 624765),
+        SEEDED_RATES,
+      ),
+    ).toBeNull();
+  });
+
+  it("is silent on a salary above the minimum", () => {
+    expect(
+      belowMinimumWageWarning(
+        paying({ year: 2026, month: 7 }, 700000),
+        SEEDED_RATES,
+      ),
+    ).toBeNull();
+  });
+
+  it("says nothing where the table has no row for the month", () => {
+    expect(
+      belowMinimumWageWarning(paying({ year: 2026, month: 7 }, 1), []),
+    ).toBeNull();
   });
 });

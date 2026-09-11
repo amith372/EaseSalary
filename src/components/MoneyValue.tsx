@@ -40,7 +40,9 @@ export function MoneyValue({ agorot, size = "md", chip, manual, className }: Mon
   const text = agorot === null ? he.placeholder.amount : formatAgorot(agorot);
 
   return (
-    <span className="inline-flex items-baseline gap-2">
+    // `data-money` names an amount for the browser suite, which otherwise has
+    // to find one by matching digits inside a row that also carries a year.
+    <span data-money={agorot ?? ""} className="inline-flex items-baseline gap-2">
       <Bidi
         noTranslate
         className={[

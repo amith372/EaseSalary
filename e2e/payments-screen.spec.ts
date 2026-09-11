@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { switchToTestWorker } from "./household";
 import { SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot, formatDays } from "../src/lib/money";
@@ -110,6 +111,7 @@ test.describe("a range is ordered by date and never by screen position", () => {
     // rest-eve falls inside — four whole days come off the balance (item 7).
     await useHousehold(page, "order-forward");
     await page.goto("/month");
+    await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
     await page.locator('[data-date="2026-10-05"]').click();
     await page.locator('[data-date="2026-10-08"]').click();
@@ -127,6 +129,7 @@ test.describe("a range is ordered by date and never by screen position", () => {
     // first sweep is not still there.
     await useHousehold(page, "order-backward");
     await page.goto("/month");
+    await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
     await page.locator('[data-date="2026-10-08"]').click();
     await page.locator('[data-date="2026-10-05"]').click();
@@ -159,6 +162,7 @@ test.describe("an advance given and repaid, walked across months (item 20)", () 
   test("owes the same figure whichever month is on screen", async ({ page }) => {
     await useHousehold(page, "advance");
     await page.goto("/payments");
+    await switchToTestWorker(page);
 
     // The demo household runs to September 2026 and the screen opens on the
     // month still running, so March is six steps back. The seed states the
@@ -204,7 +208,13 @@ test.describe("an advance given and repaid, walked across months (item 20)", () 
       .getByRole("button", { name: he.month.actions.advances.grant, exact: true })
       .click();
     await advances
-      .getByRole("textbox", { name: he.month.actions.advances.amount })
+      // `exact`, because the income-tax card beside this one is labelled
+      // "סכום אחר, אם חושב אחרת" and an accessible name matches by
+      // substring: without it this resolves to two fields.
+      .getByRole("textbox", {
+        name: he.month.actions.advances.amount,
+        exact: true,
+      })
       .fill(String(ADVANCE_INSTALMENT / 100));
     await advances
       .getByRole("button", {
@@ -236,6 +246,7 @@ test.describe("a payment to a third party, corrected in place (item 16)", () => 
   }) => {
     await useHousehold(page, "thirdparty");
     await page.goto("/payments");
+    await switchToTestWorker(page);
     await stepBack(page, 8); // September 2026 → January 2026
 
     const words = he.month.actions.thirdParty;
@@ -276,6 +287,7 @@ test.describe("a payment to a third party, corrected in place (item 16)", () => 
     // The amount travelled with the rename, which is what "corrected in place"
     // means: it is the same payment.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await stepBack(page, 8);
     await expect(row(page, "thirdParty.agencyFee")).toContainText(
       formatAgorot(MEDICAL_INSURANCE),
@@ -307,6 +319,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // is her rest-day work — a figure the application worked out from the wage
     // and therefore the kind of row an override may replace.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await stepBack(page, 8);
     // The derived figure, before anything is typed over it: five rest days at
     // Part 4's own rate. Worked out above and not read back off the screen.
@@ -316,6 +329,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     await expect(row(page, "restDays")).not.toContainText(he.money.manual);
 
     await page.goto("/payments");
+    await switchToTestWorker(page);
     await stepBack(page, 8);
     const group = page.locator('[data-group="overrides"]');
     await group.getByRole("button", { name: words.changeLabel(label) }).click();
@@ -331,6 +345,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // beside it** (items 17, 24). ₪1,234.56 is a figure no rate in the
     // application can produce, so it cannot have been arrived at by accident.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await stepBack(page, 8);
     await expect(row(page, "restDays")).toContainText(
       formatAgorot(OVERRIDE_AGOROT),
@@ -346,6 +361,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // checkable without anybody recalculating it by hand. The figure quoted
     // there is the derived one worked out at the top of this file.
     await page.goto("/payments");
+    await switchToTestWorker(page);
     await stepBack(page, 8);
     const replaced = page
       .locator('[data-group="overrides"] li')
@@ -358,6 +374,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // where it differs from a line the user adds, where zero is refused
     // (item 20).
     await page.goto("/payments");
+    await switchToTestWorker(page);
     await stepBack(page, 8);
     const again = page.locator('[data-group="overrides"]');
     await again.getByRole("button", { name: words.changeLabel(label) }).click();
@@ -371,6 +388,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     ).toHaveCount(0);
 
     await page.goto("/month");
+    await switchToTestWorker(page);
     await stepBack(page, 8);
     await expect(row(page, "restDays")).toContainText(formatAgorot(0));
     await expect(row(page, "restDays")).toContainText(he.money.manual);
@@ -379,6 +397,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // the calculated number back would store it by hand for ever; clearing
     // leaves the row derived, so a later correction to the wage moves it again.
     await page.goto("/payments");
+    await switchToTestWorker(page);
     await stepBack(page, 8);
     await page
       .locator('[data-group="overrides"]')
@@ -387,6 +406,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     await settled(page);
 
     await page.goto("/month");
+    await switchToTestWorker(page);
     await stepBack(page, 8);
     await expect(row(page, "restDays")).not.toContainText(he.money.manual);
     // And it is the derived figure again, worked out above rather than

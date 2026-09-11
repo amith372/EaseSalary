@@ -3,10 +3,14 @@ import { PaymentsScreen } from "@/components/PaymentsScreen";
 import type { WorkerPayments } from "@/components/PaymentsScreen";
 import { getRepository } from "@/lib/dev/store";
 import { advanceLedger } from "@/lib/engine/advances";
+import { effectiveTaxRate } from "@/lib/engine/incomeTax";
+import { lineKeys } from "@/lib/engine/lines";
 import { orphanedOverrides } from "@/lib/engine/overrides";
 import { recordOf } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
+import type { IncomeTaxSetting, MonthIncomeTax } from "@/lib/engine/types";
 import { todayInIsrael } from "@/lib/today";
+import type { MonthResult } from "@/lib/types";
 
 /**
  * The payments screen's route (specs.md item 5).
@@ -36,6 +40,38 @@ import { todayInIsrael } from "@/lib/today";
  * `connection()` keeps it out of the prerender: the store is a live value and
  * `today` is read from a clock.
  */
+/**
+ * The month's tax as the payments card needs it (specs.md item 17).
+ *
+ * **The share is rounded to two places for reading and is never a stored
+ * figure.** It answers "what percent is that", which the automatic mode gets to
+ * differently every month — progressive brackets against a fixed credit — and
+ * it is the one number a family would otherwise have to work out for itself
+ * before comparing the application against an accountant's advice.
+ */
+function incomeTaxOf(
+  result: MonthResult,
+  setting: IncomeTaxSetting,
+): MonthIncomeTax {
+  const row = result.closing.find((line) => line.key === lineKeys.incomeTax);
+  // The row's amount is negative, because it is withheld; the card works in
+  // magnitudes and the engine owns the sign.
+  const agorot = Math.abs(row?.amount ?? 0);
+  // A month with no ברוטו at all has no share to state, rather than a share
+  // of nothing — which is how a percentage sign ends up beside an infinity.
+  const share = effectiveTaxRate(agorot, result.gross ?? 0);
+  return {
+    agorot,
+    manual: row?.manual ?? false,
+    setting,
+    sharePercent: share === null ? null : (share * 100).toFixed(2),
+    // For the field's own preview of a percentage correction. The conversion
+    // that is actually stored is made on the server against the gross read
+    // again there.
+    grossAgorot: result.gross,
+  };
+}
+
 export default async function PaymentsPage() {
   await connection();
 
@@ -70,6 +106,12 @@ export default async function PaymentsPage() {
           // an amount that is stored, will reappear, and cannot be seen is the
           // one failure in item 17 that looks like nothing went wrong.
           orphanedOverrides: orphanedOverrides(result, facts.overrides),
+          // **The tax, said once here rather than worked out in the browser**
+          // (item 17, `CLAUDE.md` rule 11). The card shows an amount, a badge,
+          // the setting behind it and what share of the ברוטו it came to; every
+          // one of those comes off this same result, so none of them can drift
+          // from the row the sheet prints.
+          incomeTax: incomeTaxOf(result, facts.terms.incomeTax),
         })),
         // What is still owed on each advance — a fact about the whole
         // employment that no single month can see, so it is walked here from

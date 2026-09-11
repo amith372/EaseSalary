@@ -11,6 +11,7 @@ import {
   type HolidayActionResult,
 } from "@/app/settings/holidays/actions";
 import { Bidi } from "@/components/Bidi";
+import { Chip } from "@/components/Chip";
 import { Card } from "@/components/Card";
 import { Chevron } from "@/components/icons";
 import { useWorkerScope } from "@/components/WorkerScope";
@@ -436,26 +437,18 @@ function SourceChip({
   choice: HolidaySourceChoice;
   onPick: () => void;
 }) {
-  const { selected } = choice;
   return (
-    <button
-      type="button"
+    <Chip
+      selected={choice.selected}
+      onClick={onPick}
       data-source={
         choice.source.kind === "country"
           ? choice.source.code
           : choice.source.religion
       }
-      aria-pressed={selected}
-      onClick={onPick}
-      className={[
-        "rounded-full border bg-surface px-3.25 py-1.75 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
-        selected
-          ? "border-line-hover font-semibold text-ink"
-          : "border-line font-medium text-day-ink hover:border-line-hover hover:text-ink",
-      ].join(" ")}
     >
       <Bidi>{choice.nameHe}</Bidi>
-    </button>
+    </Chip>
   );
 }
 

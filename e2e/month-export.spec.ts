@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
+import { switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
@@ -147,6 +148,7 @@ async function exportAugust(
   which: "plain" | "notes",
 ): Promise<ExcelJS.Worksheet> {
   await page.goto("/month/export");
+  await switchToTestWorker(page);
   await expect(page.locator("h1")).toContainText(
     he.calendar.monthNames[ENDED_MONTH - 1],
   );
@@ -220,6 +222,7 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
     // where the screen happens to land is a comparison of two different months,
     // which is how this test first passed a figure it should have failed.
     await page.goto("/month");
+    await switchToTestWorker(page);
     await stepBackToAugust(page);
     const onScreen = async (key: string) =>
       (await page.locator(`[data-row="${key}"]`).innerText()).replace(

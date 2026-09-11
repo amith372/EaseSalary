@@ -1,3 +1,4 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
 import { SATURDAY } from "@/lib/dates";
@@ -6,7 +7,7 @@ import {
   nationalInsuranceEstimateOf,
   thirdPartyLineKey,
 } from "@/lib/engine/thirdParty";
-import { snapshotTerms, thirdPartyKinds } from "@/lib/engine/types";
+import { snapshotTerms, thirdPartyKinds} from "@/lib/engine/types";
 import type {
   ClosedMonthFacts,
   ClosedSpan,
@@ -84,10 +85,12 @@ const spans: ClosedSpan[] = [
 
 const terms: WorkerTerms = {
   employedSince: "2024-04-01",
+  gender: "female",
   baseMonthlySalaryAgorot: SALARY,
   restDay: SATURDAY,
   restEveSupplementAgorot: REST_EVE_SUPPLEMENT,
   recuperationMonth: 7,
+  incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
   openingPosition: {

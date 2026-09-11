@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import {
   addAdvance,
@@ -18,6 +19,7 @@ import {
 } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { Chip } from "@/components/Chip";
 import { CoveredMonths } from "@/components/CoveredMonths";
 import { MoneyValue } from "@/components/MoneyValue";
 import { addMonths, yearMonthText } from "@/lib/dates";
@@ -25,6 +27,13 @@ import { monthLabel } from "@/lib/dateLabels";
 import { whyRepaymentIsRefused } from "@/lib/engine/advances";
 import type { AdvanceStanding } from "@/lib/engine/advances";
 import type { OrphanedOverride } from "@/lib/engine/overrides";
+import {
+  reviewTaxPercentage,
+  taxCorrectionUnits,
+  taxFromPercentage,
+} from "@/lib/engine/incomeTax";
+import type { TaxCorrectionUnit } from "@/lib/engine/incomeTax";
+import type { MonthIncomeTax } from "@/lib/engine/types";
 import { offeredPeriodFor } from "@/lib/engine/thirdParty";
 import {
   defaultPlacementFor,
@@ -95,8 +104,10 @@ import type { OverrideCandidate, YearMonth } from "@/lib/types";
 interface MonthActionsProps {
   workerId: string;
   month: YearMonth;
-  /** As the month stores it: positive, and signed by the engine (item 17). */
-  incomeTaxAgorot: number;
+  /** The month's tax, assembled on the server from the engine's own row: the
+   * amount, whether it was typed by hand, the setting behind it and the share
+   * of the ברוטו it came to (item 17). */
+  incomeTax: MonthIncomeTax;
   /** This month's own lines. The standing ones are terms of the employment and
    * live on the profile, which stage 4's step 9 is the screen for — so they are
    * not listed here and are not corrected here: a month that paid something
@@ -133,34 +144,6 @@ interface MonthActionsProps {
   ) => void;
 }
 
-/** The chip these panels are built from — the calendar picker's own control, so
- * the two read as one mechanism (`MonthCalendar`). */
-function Chip({
-  selected,
-  onClick,
-  children,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-      className={[
-        "rounded-full border bg-surface px-3.25 py-1.75 text-[14px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
-        selected
-          ? "border-line-hover text-ink"
-          : "border-line text-day-ink hover:border-line-hover hover:text-ink",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}
-
 /** A labelled field. The input is `dir="ltr"` wherever it takes digits, so an
  * amount is typed left to right inside a right-to-left page (`CLAUDE.md`). */
 function Field({
@@ -193,7 +176,7 @@ const inputClass =
 export function MonthActions({
   workerId,
   month,
-  incomeTaxAgorot,
+  incomeTax,
   userLines,
   ledger,
   monthAdvances,
@@ -213,7 +196,7 @@ export function MonthActions({
       <IncomeTaxControl
         workerId={workerId}
         month={month}
-        incomeTaxAgorot={incomeTaxAgorot}
+        incomeTax={incomeTax}
         onSubmit={onSubmit}
       />
 
@@ -313,7 +296,19 @@ function useMonthAction(onSubmit: MonthActionsProps["onSubmit"]) {
 }
 
 /**
- * The income tax, entered and not calculated (specs.md item 17).
+ * The income tax, calculated and correctable (specs.md item 17).
+ *
+ * **It used to be the whole of how the figure got in, and since 2026-09-10 it
+ * is the way it is corrected.** The engine works the tax out from the month's
+ * gross, the year's brackets and the credit points the worker's gender gives
+ * her; this control shows that figure and stores an override over it. It is the
+ * tax's only control, which is why the row answers `false` to the generic
+ * override control's question — the reason sits beside the row in `month.ts`.
+ *
+ * **An empty field clears the correction and does not mean zero.** Clearing
+ * says the application's own figure stands; typing a zero says this month
+ * withholds nothing and stores that by hand. They produce the same number and
+ * mean opposite things, which is the distinction `clearOverride` already draws.
  *
  * **The rule stands under the field in words rather than behind the "?".** It
  * is what the user has to know before she types — a foreign caregiver in home
@@ -331,28 +326,89 @@ function useMonthAction(onSubmit: MonthActionsProps["onSubmit"]) {
 function IncomeTaxControl({
   workerId,
   month,
-  incomeTaxAgorot,
+  incomeTax,
   onSubmit,
-}: Pick<
-  MonthActionsProps,
-  "workerId" | "month" | "incomeTaxAgorot" | "onSubmit"
->) {
+}: Pick<MonthActionsProps, "workerId" | "month" | "incomeTax" | "onSubmit">) {
   const words = he.month.actions.incomeTax;
+  const { agorot: incomeTaxAgorot, manual: incomeTaxManual } = incomeTax;
+  // The field holds only what the *user* put there. A calculated figure is
+  // shown above, beside the heading, and leaving the field empty is how she
+  // says it stands — so an empty field is never an amount waiting to be saved.
   const [text, setText] = useState(
-    incomeTaxAgorot === 0 ? "" : formatAgorot(incomeTaxAgorot),
+    incomeTaxManual ? formatAgorot(incomeTaxAgorot) : "",
   );
   const { refusal, run } = useMonthAction(onSubmit);
   const link = legalLink("incomeTax");
 
-  // An empty field means zero, which is the figure a month holds until the user
-  // says otherwise — so clearing the field is how a tax is taken back off.
-  const parsed = text.trim() === "" ? 0 : parseShekels(text);
-  const changed = parsed !== null && parsed !== incomeTaxAgorot;
+  // **What produced the amount above**, said in the card rather than left to be
+  // inferred from a field that may be empty: a manual figure first, because it
+  // wins over everything, and otherwise whichever of the profile's three
+  // choices this month was calculated under (item 17).
+  const sourceWords = incomeTaxManual
+    ? words.from.manual
+    : incomeTax.setting.mode === "percentage"
+      ? words.from.percentage(
+          String(Number(((incomeTax.setting.percentage ?? 0) * 100).toFixed(4))),
+        )
+      : words.from[incomeTax.setting.mode];
+
+  // **The rule under the card is the rule that actually produced the figure.**
+  // The credit-point paragraph is the automatic mode's, and printing it beside
+  // a flat-rate month would be a sentence that is untrue of the amount above it
+  // — which is the worst kind of help, because it is the kind a family acts on.
+  const ruleWords =
+    incomeTax.setting.mode === "none"
+      ? words.ruleNone
+      : incomeTax.setting.mode === "percentage"
+        ? words.rulePercentage(
+            String(Number(((incomeTax.setting.percentage ?? 0) * 100).toFixed(4))),
+          )
+        : words.rule;
+
+  // **Which unit the correction is typed in** (asked for on 2026-09-11). It is
+  // the field's own state and never the worker's setting: a month on the
+  // automatic mode may still be corrected by a share, and a month on a flat
+  // rate may still be corrected by a sum. The stored value is an amount either
+  // way, so switching the unit changes how she says it and not what is kept.
+  const [unit, setUnit] = useState<TaxCorrectionUnit>("amount");
+  const percentage = unit === "percentage" ? reviewTaxPercentage(text) : null;
+  const gross = incomeTax.grossAgorot;
+
+  // The same arithmetic the server will do, shown before she commits to it —
+  // and shown *only* as a preview: what is saved is what the server works out
+  // against the gross it reads again, so a screen left open while the month
+  // moved cannot write an amount against a gross that has gone.
+  const converted =
+    percentage === null || gross === null || gross <= 0
+      ? null
+      : taxFromPercentage(percentage, gross);
+
+  const cleared = text.trim() === "";
+  const parsed = cleared
+    ? null
+    : unit === "percentage"
+      ? converted
+      : parseShekels(text);
+  // Empty is a *change* only where something is stored to clear, and a typed
+  // figure only where it differs from what the month already shows — which is
+  // how the button says "this is saved" without a message a user could miss.
+  const changed = cleared
+    ? incomeTaxManual
+    : parsed !== null && parsed !== incomeTaxAgorot;
   const shownRefusal: MonthActionRefusal | null =
-    parsed === null ? "amount" : refusal;
+    !cleared && parsed === null ? "amount" : refusal;
 
   function save() {
-    run(() => setIncomeTax(workerId, month, text.trim() === "" ? "0" : text));
+    run(() => setIncomeTax(workerId, month, text, unit));
+  }
+
+  /** Switching unit empties the field rather than carrying the digits across.
+   * "208.83" read as a percentage is a figure that withholds twice the salary,
+   * and it would look like an ordinary number the whole way. */
+  function chooseUnit(next: TaxCorrectionUnit) {
+    if (next === unit) return;
+    setUnit(next);
+    setText("");
   }
 
   return (
@@ -370,6 +426,40 @@ function IncomeTaxControl({
         )}
       </div>
 
+      {/* **Where the figure came from, and what share of the month it is.**
+          The share is the automatic mode's answer to "what percent is that",
+          which is a different number every month because the brackets are
+          progressive and the credit is a fixed sum — so it is stated here, on
+          a real month, rather than beside the profile's toggle, which has no
+          month in front of it. A month that withholds nothing has no share to
+          state. */}
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span dir="auto" className="text-[13px] font-light text-ink-quiet">
+          {sourceWords}
+        </span>
+        {incomeTax.sharePercent !== null && incomeTaxAgorot > 0 ? (
+          <span dir="auto" className="text-[13px] font-light text-ink-quiet">
+            <bdi>{words.share(incomeTax.sharePercent)}</bdi>
+          </span>
+        ) : null}
+      </div>
+
+      {/* Sum or share, chosen before the field is read. Two chips rather than a
+          suffix that changes under the cursor: the unit decides what the digits
+          mean, and that is not something to communicate with a symbol at the
+          end of a box. */}
+      <div className="flex flex-wrap gap-2">
+        {taxCorrectionUnits.map((candidate) => (
+          <Chip
+            key={candidate}
+            selected={unit === candidate}
+            onClick={() => chooseUnit(candidate)}
+          >
+            <span dir="auto">{words.unit[candidate]}</span>
+          </Chip>
+        ))}
+      </div>
+
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -378,14 +468,20 @@ function IncomeTaxControl({
         className="flex items-end gap-2"
       >
         <div className="min-w-0 flex-1">
-          <Field label={words.field}>
+          <Field
+            label={unit === "percentage" ? words.fieldPercentage : words.field}
+          >
             <input
               type="text"
               inputMode="decimal"
               dir="ltr"
               value={text}
               onChange={(event) => setText(event.target.value)}
-              placeholder={he.placeholder.amountInput}
+              placeholder={
+                unit === "percentage"
+                  ? he.placeholder.percentInput
+                  : he.placeholder.amountInput
+              }
               className={inputClass}
             />
           </Field>
@@ -407,6 +503,25 @@ function IncomeTaxControl({
         <Refusal reason={shownRefusal} amountText={words.notANumber} />
       ) : null}
 
+      {/* The arithmetic, written out, so a share is never a figure she has to
+          take on trust — and so the sum that is actually stored is the one she
+          agreed to. */}
+      {unit === "percentage" && percentage !== null ? (
+        <span dir="auto" className="text-[13px] font-light text-ink-warm">
+          {converted === null || gross === null ? (
+            words.noGross
+          ) : (
+            <bdi>
+              {words.worksOutTo(
+                String(Number((percentage * 100).toFixed(4))),
+                formatAgorot(gross),
+                formatAgorot(converted),
+              )}
+            </bdi>
+          )}
+        </span>
+      ) : null}
+
       <Card
         tone="inset"
         radius="panel"
@@ -416,7 +531,16 @@ function IncomeTaxControl({
           dir="auto"
           className="text-[13px] leading-[1.55] font-light text-ink-warm text-pretty"
         >
-          {words.rule}
+          {ruleWords}
+        </span>
+        {/* The reminder the user asked for on 2026-09-11, said on this screen
+            as well as beside the profile's toggle: a family that only ever
+            opens the payments screen still meets the rule. */}
+        <span
+          dir="auto"
+          className="text-[13px] leading-[1.55] font-medium text-ink text-pretty"
+        >
+          {words.reminder}
         </span>
         <a
           href={link.url}
@@ -646,9 +770,22 @@ function UserLinesControl({
       data-group="userLines"
       className="flex flex-col gap-2 border-t border-line pt-2.5"
     >
-      <h3 dir="auto" className="text-[15px] font-semibold">
-        {he.month.preview.userLines}
-      </h3>
+      <div className="flex flex-col gap-0.5">
+        <h3 dir="auto" className="text-[15px] font-semibold">
+          {he.month.preview.userLines}
+        </h3>
+        {/* **What this card can and cannot do, before she uses it.** A line
+            made here belongs to this month alone; the recurring kind is a term
+            of the employment and is set on the worker's page. Saying it here is
+            what keeps a family from recording the same deduction twelve times,
+            or from concluding the application cannot do it at all. */}
+        <p dir="auto" className="text-[13px] leading-[1.5] font-light text-ink-quiet text-pretty">
+          {words.oneOffOnly}{" "}
+          <Link href={`/workers/${workerId}#terms`} className="font-medium">
+            <span dir="auto">{words.standing}</span>
+          </Link>
+        </p>
+      </div>
 
       {userLines.length === 0 ? (
         <p dir="auto" className="text-[14px] font-light text-ink-quiet">

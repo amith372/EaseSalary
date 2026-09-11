@@ -27,8 +27,11 @@ import type { IsoDate, Worker } from "@/lib/types";
 export interface WorkerSummary {
   worker: Worker;
   employedSince: IsoDate;
-  /** The code her holiday list is filed under (item 10), not a country name —
-   * stage 5's country list is what names it. */
+  /** Her country of origin in Hebrew, resolved on the server by
+   * `countryNameHe` from the shipped holiday lists. This was the two-letter
+   * filing code until 2026-09-11, and a code is not something a family reads.
+   * A country nothing is stored for still falls back to its code, which stage
+   * 5's country list is what will name. */
   country: string;
   baseMonthlySalaryAgorot: number;
   /** Her last month's closing balances, or the opening position for a worker
@@ -89,7 +92,7 @@ export function WorkersList({ household }: { household: WorkerSummary[] }) {
                 {/* The code the application actually holds, isolated and never
                     translated: a translated identifier is a wrong identifier
                     (`CLAUDE.md`). */}
-                <Bidi noTranslate>{country}</Bidi>
+                <Bidi>{country}</Bidi>
               </p>
             </div>
 

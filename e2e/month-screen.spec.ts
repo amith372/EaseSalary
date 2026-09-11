@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot, formatDays } from "../src/lib/money";
 import { SATURDAY } from "../src/lib/dates";
@@ -46,6 +47,10 @@ const PLAIN_GROSS = 887940;
  * minimum wage August 2025 is valued at, the ₪500 across five rest-eves worked,
  * and the ₪426.35 a rest day and a worked holiday are each paid at. */
 const BASE = 624765;
+
+/** The minimum wage in force from 1.4.2026, sourced to the family's own 2026
+ * workbook in `datedRates.ts`. A month opened after that date takes it. */
+const IN_FORCE_2026 = 644385;
 const REST_EVE_TOTAL = 50000;
 const REST_DAY_RATE = 42635;
 
@@ -124,6 +129,7 @@ test.describe("a month that has not ended yet (specs.md item 21)", () => {
     // cannot be exported.
     await useHousehold(page, "demo", "item21");
     await page.goto("/month");
+    await switchToTestWorker(page);
 
     const warning = page.locator("#warning-monthNotEnded");
     await expect(warning).toBeVisible();
@@ -150,6 +156,7 @@ test.describe("a month that has not ended yet (specs.md item 21)", () => {
     // absence here is the assertion.
     await useHousehold(page, "demo", "ended");
     await page.goto("/month");
+    await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.previousMonth }).click();
     await expect(row(page, "net")).toBeVisible();
     await expect(page.locator("#warning-monthNotEnded")).toHaveCount(0);
@@ -165,6 +172,7 @@ test.describe("a month the store has no record of", () => {
     // of zeroes.
     await useHousehold(page, "demo", "open");
     await page.goto("/month");
+    await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
 
     await expect(page.getByText(he.month.empty.title)).toBeVisible();
@@ -183,15 +191,25 @@ test.describe("a month the store has no record of", () => {
 
     // **The wage the opened month carries is what this would catch.** No rate is
     // ever hardcoded (`CLAUDE.md`), so a month opened with an invented base
-    // would draw a plausible salary from nowhere. October's base is the position
-    // last confirmed before it — ₪6,247.65, the last minimum wage this
-    // repository has a source for and the figure the demo household's every
-    // month was confirmed at. The months' *totals* differ and legitimately so:
-    // October 2026 has five rest days and five rest-eves where September has
-    // four of each.
-    await expect(row(page, "base")).toContainText(formatAgorot(BASE));
+    // would draw a plausible salary from nowhere. October 2026 takes the
+    // minimum wage **in force during it** — ₪6,443.85, the row dated 1.4.2026
+    // and sourced to the family's own 2026 workbook — and not the position the
+    // month before it was confirmed at.
+    //
+    // **This assertion was the other way round until 2026-09-11**, and it
+    // passed: a month opened by a mark carried its neighbour's wage, so an
+    // October 2026 was valued at the wage of April 2025 and paid under the legal
+    // minimum. `wageToCarry`'s own comment said it worked that way only until
+    // the dated-rates table landed, and the table had landed. The test asserted
+    // the behaviour rather than the rule, which is how it kept the defect.
+    await expect(row(page, "base")).toContainText(formatAgorot(IN_FORCE_2026));
+
+    // And September, which the seed itself values at the same figure — since
+    // 2026-09-11 a seeded month carries the wage in force during it rather than
+    // one figure stamped across the year (`seed.ts`), so the month opened by a
+    // mark and the month beside it agree instead of differing by a rise.
     await page.getByRole("button", { name: he.calendar.previousMonth }).click();
-    await expect(row(page, "base")).toContainText(formatAgorot(BASE));
+    await expect(row(page, "base")).toContainText(formatAgorot(IN_FORCE_2026));
   });
 
   test("survives a reload, because the mark went to the store", async ({
@@ -202,11 +220,16 @@ test.describe("a month the store has no record of", () => {
     // thing no unit test does.
     await useHousehold(page, "demo", "reload");
     await page.goto("/month");
+    await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
     await sweep(page, "2026-10-05", "2026-10-08", "vacation");
     await expect(row(page, "balance-vacation")).toContainText(daysUsed(4));
 
     await page.reload();
+    // The reload also forgets which worker was on screen — the switcher holds
+    // that in the page and not in the store — so it is chosen again before the
+    // month is. The mark is what has to survive here, and it does.
+    await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
     await expect(row(page, "balance-vacation")).toContainText(daysUsed(4));
   });
@@ -284,7 +307,13 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     // By role, because "סכום" is also the word in every override button's label
     // and a label lookup alone matches five things.
     await page
-      .getByRole("textbox", { name: he.month.actions.advances.amount })
+      // `exact`, because the income-tax card beside this one is labelled
+      // "סכום אחר, אם חושב אחרת" and an accessible name matches by
+      // substring: without it this resolves to two fields.
+      .getByRole("textbox", {
+        name: he.month.actions.advances.amount,
+        exact: true,
+      })
       .fill(String(PART_4.instalment / 100));
     await page
       .getByRole("button", {
@@ -362,6 +391,7 @@ test.describe("half a day of vacation (specs.md items 5, 7)", () => {
     // worker a whole day on the screen she is looking at.
     await useHousehold(page, "demo", "halfday");
     await page.goto("/month");
+    await switchToTestWorker(page);
 
     const marks = he.calendar.marks(SATURDAY);
 
@@ -401,6 +431,9 @@ test.describe("half a day of vacation (specs.md items 5, 7)", () => {
     // And it went to the store rather than to the browser: the mark a reload
     // forgets is the one failure no unit test can see.
     await page.reload();
+    // The chosen worker does not survive a reload, so she is chosen again. What
+    // is being checked is the mark, and the mark does.
+    await switchToTestWorker(page);
     await expect(row(page, "workDays")).toContainText(
       `${formatDays(STANDARD - 0.5)} / ${formatDays(STANDARD)}`,
     );
@@ -417,6 +450,7 @@ test.describe("half a day of vacation (specs.md items 5, 7)", () => {
     // sick day, which the tiers count from the spell's own first day (item 8).
     await useHousehold(page, "demo", "halfrefused");
     await page.goto("/month");
+    await switchToTestWorker(page);
 
     const marks = he.calendar.marks(SATURDAY);
     const half = page.getByRole("button", {

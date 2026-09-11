@@ -1,9 +1,13 @@
 import { FRIDAY, SATURDAY, SUNDAY, fromIsoDate, toIsoDate } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import { reviewTaxPercentage } from "@/lib/engine/incomeTax";
 import { recordOf } from "@/lib/engine/repository";
 import type { MonthRecord } from "@/lib/engine/repository";
-import { snapshotTerms } from "@/lib/engine/types";
+import { genders, incomeTaxModes, snapshotTerms } from "@/lib/engine/types";
 import type {
+  Gender,
+  IncomeTaxMode,
+  IncomeTaxSetting,
   MonthFacts,
   OpeningAdvance,
   OpeningPosition,
@@ -47,6 +51,47 @@ export const restDayChoices = [SUNDAY, FRIDAY, SATURDAY] as const satisfies read
  * a value that reaches the server as data (item 5). */
 export function isAllowedRestDay(value: unknown): value is RestDay {
   return restDayChoices.some((day) => day === value);
+}
+
+/** Whether a value the browser sent is one of the genders (specs.md item 17).
+ * It reads `genders` rather than testing the two strings here, for the reason
+ * `isAllowedRestDay` reads `restDayChoices`: the offer, the check and the union
+ * are one list, and a third member added to it cannot be refused by a guard
+ * that never grew. */
+export function isAllowedGender(value: unknown): value is Gender {
+  return genders.some((gender) => gender === value);
+}
+
+/**
+ * An income-tax setting the browser sent, or why it cannot be stored (specs.md
+ * item 17, settled with the user on 2026-09-11).
+ *
+ * **The server decides and the form never does** (Part 3), which matters more
+ * here than on the other terms: this one carries a free number, and a rate that
+ * reached the profile past the control would quietly withhold the wrong amount
+ * from every month afterwards without anything on the sheet looking unusual.
+ *
+ * **Zero is refused rather than accepted as "nothing"**, because `none` is what
+ * says that and the whole reason there are three modes is so a family never has
+ * to express a decision as an amount. A rate above the whole salary is refused
+ * for the reason a negative one is: it cannot be meant, and it would pay her
+ * nothing while looking like an ordinary withholding.
+ */
+export function reviewIncomeTax(
+  mode: unknown,
+  percentageText: string,
+): { ok: true; setting: IncomeTaxSetting } | { ok: false; reason: "incomeTaxMode" | "incomeTaxRate" } {
+  if (!incomeTaxModes.some((known) => known === mode)) {
+    return { ok: false, reason: "incomeTaxMode" };
+  }
+  if (mode !== "percentage") {
+    return { ok: true, setting: { mode: mode as IncomeTaxMode } };
+  }
+  // The same parse the month's own percentage correction uses, so the profile
+  // and a single month cannot come to disagree about what "2.5" means.
+  const percentage = reviewTaxPercentage(percentageText);
+  if (percentage === null) return { ok: false, reason: "incomeTaxRate" };
+  return { ok: true, setting: { mode: "percentage", percentage } };
 }
 
 /**

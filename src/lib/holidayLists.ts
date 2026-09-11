@@ -189,3 +189,26 @@ export function withFetchedList(
 export function byDate(holidays: Holiday[]): Holiday[] {
   return [...holidays].sort((a, b) => compareIsoDate(a.date, b.date));
 }
+
+/**
+ * What a country of origin is called, in Hebrew.
+ *
+ * **The name is already here and was not being read**: every shipped list
+ * carries `country_name_he`, which is what the holiday picker's own chips are
+ * labelled with. The profile was printing the two-letter code beside
+ * `ארץ מוצא`, so one screen said `הפיליפינים` and another said `PH` about the
+ * same worker (found by the user on 2026-09-11). A code is a filing key and
+ * nothing a family employing a caregiver has any reason to read.
+ *
+ * **The code is the fallback and not a failure.** A country with no stored list
+ * has no name this application knows, and inventing one is exactly the guess
+ * `CLAUDE.md` rule 4 refuses — `holidaySourceChoices` already resolves the same
+ * case the same way, so the picker and the profile fall back alike. Stage 5's
+ * country list is what will name the rest.
+ */
+export function countryNameHe(lists: HolidayList[], code: string): string {
+  const named = lists.find(
+    (list) => list.source.kind === "country" && list.source.code === code,
+  );
+  return named?.nameHe ?? code;
+}

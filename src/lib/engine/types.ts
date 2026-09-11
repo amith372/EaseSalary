@@ -1,6 +1,7 @@
 import type { DatedRate } from "@/lib/datedRates";
 import { compareIsoDate, daysInMonth, isoOf } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import type { TaxYearBrackets } from "@/lib/taxBrackets";
 import type {
   DaySpan,
   HolidaySpan,
@@ -105,6 +106,71 @@ export interface OpeningAdvance {
 }
 
 /**
+ * The genders the profile distinguishes.
+ *
+ * **It is asked because the tax turns on it, and for nothing else.** A legally
+ * employed foreign caregiver holds 2.25 income-tax credit points and a woman
+ * holds half a point more (Kol Zchut, `נקודות זיכוי ממס הכנסה לעובד זר`, read
+ * 2026-09-10), so this one field is the whole of what the credit count depends
+ * on and the user is never asked for the points themselves. Item 28's docblock
+ * has wanted the same field since stage 4 for an unrelated reason — the sheet's
+ * `עובד/ת` is written with both endings precisely because the profile could not
+ * yet say which — so one field answers two things.
+ *
+ * **The list is the source and the union is derived from it**, as `rateKeys`
+ * and `advanceKinds` already are: a member added to a hand-kept union would
+ * compile clean against a hand-kept array that had not grown with it, and the
+ * control that offers the choice and the server check that refuses a value
+ * outside it read one list.
+ */
+export const genders = ["female", "male"] as const;
+
+export type Gender = (typeof genders)[number];
+
+/**
+ * How a worker's income tax is arrived at (specs.md item 17, settled with the
+ * user on 2026-09-11).
+ *
+ * **Three, because "nothing is withheld" is a decision and not an amount.** A
+ * family whose caregiver's tax is settled elsewhere says so once, on the
+ * profile, rather than typing a zero into every month for ever — and a zero
+ * typed twelve times is indistinguishable from twelve months nobody looked at.
+ *
+ * **`percentage` is not how the tax works and is offered anyway.** Israeli
+ * income tax is progressive brackets less credit points, which is what
+ * `automatic` does; a flat rate is what an accountant hands a family, and a
+ * family told "withhold 2.5%" has no way to enter that otherwise. The reminder
+ * under the control says the law requires the tax, so the choice is made with
+ * the rule in sight rather than around it.
+ *
+ * **The list is the source and the union is derived from it**, as `genders` and
+ * `rateKeys` already are.
+ */
+export const incomeTaxModes = ["automatic", "none", "percentage"] as const;
+
+export type IncomeTaxMode = (typeof incomeTaxModes)[number];
+
+/** The mode and, where the mode needs one, the rate it runs at. */
+export interface IncomeTaxSetting {
+  mode: IncomeTaxMode;
+  /**
+   * A fraction of the month's ברוטו — 0.025, not 2.5 — which is the unit
+   * `nationalInsurance` already uses in the dated-rates table, and it is read
+   * only when `mode` is `percentage`.
+   *
+   * Optional rather than defaulted to zero, because a rate of zero and no rate
+   * at all are different things: the first would withhold nothing under a mode
+   * that exists to withhold something, and `none` is what says that.
+   */
+  percentage?: number;
+}
+
+/** What a worker is set to before anyone has chosen: the tax the law asks for,
+ * worked out. Choosing *not* to withhold is a decision the family makes, so it
+ * is never where they start. */
+export const DEFAULT_INCOME_TAX: IncomeTaxSetting = { mode: "automatic" };
+
+/**
  * The worker's standing terms — what holds from month to month, as against
  * `MonthFacts`, which is one month alone.
  */
@@ -113,6 +179,18 @@ export interface WorkerTerms {
    * recuperation entitlement, and the year a holiday entitlement is prorated
    * over (specs.md items 7, 10, 15). */
   employedSince: IsoDate;
+  /**
+   * The worker's gender, which settles her income-tax credit points and the
+   * endings the sheet writes her role with (specs.md item 17, item 28).
+   *
+   * It is a fact about the worker rather than a term of one month, so it is
+   * **not** snapshotted onto the month by `snapshotTerms`: correcting it is
+   * meant to move every month, exactly as correcting `employedSince` is. What
+   * keeps a past month reproducible is not a snapshot of this field but the
+   * confirmed tax stored on the month itself, which is the same argument
+   * `ConfirmedWage` makes for the salary.
+   */
+  gender: Gender;
   /**
    * The salary on the profile. It defaults to the confirmed minimum wage and
    * may not be set below it, and it does not follow a rise on its own: when a
@@ -144,6 +222,13 @@ export interface WorkerTerms {
   /** 1-12. The month the recuperation payment falls in, set on the profile when
    * the worker is created (specs.md item 15). */
   recuperationMonth: number;
+  /**
+   * How this worker's income tax is arrived at (specs.md item 17). A term of
+   * the employment like the rest day, set once on the profile and changeable at
+   * any time, and snapshotted onto a month when the month is confirmed — so
+   * switching to `none` in June leaves every earlier month exactly as it was.
+   */
+  incomeTax: IncomeTaxSetting;
   /** Lines the user set once and that appear in every month afterwards, at the
    * same amount, until they are changed or stopped (specs.md item 20). */
   standingLines: UserLine[];
@@ -198,6 +283,16 @@ export interface MonthTerms {
   /** 1-12. The month the recuperation payment falls in (specs.md item 15). */
   recuperationMonth: number;
   /**
+   * How this month's income tax was arrived at (specs.md item 17).
+   *
+   * **Snapshotted for the reason the rest day is**, and it is the term where
+   * getting it wrong is most expensive: a family that stops withholding in June
+   * must not thereby restate January through May as months that withheld
+   * nothing, because those months were filed. Re-exporting a past month has to
+   * reproduce the sheet that was filed for it (Part 3).
+   */
+  incomeTax: IncomeTaxSetting;
+  /**
    * The standing lines this month was calculated with (specs.md item 20).
    *
    * A standing line is a term of the employment like the supplement and the
@@ -218,8 +313,48 @@ export function snapshotTerms(worker: WorkerTerms): MonthTerms {
     restDay: worker.restDay,
     restEveSupplementAgorot: worker.restEveSupplementAgorot,
     recuperationMonth: worker.recuperationMonth,
+    incomeTax: worker.incomeTax,
     standingLines: worker.standingLines,
   };
+}
+
+/**
+ * What the payments card says about one month's income tax (specs.md item 17).
+ *
+ * It lives here rather than beside the screen that draws it, because the route
+ * assembles it and the screen and the control both read it: a view model passed
+ * down two levels belongs where neither end owns it.
+ */
+export interface MonthIncomeTax {
+  /** A positive magnitude; the engine gives the row its sign. */
+  agorot: number;
+  /** Whether this is an amount typed over whatever the setting arrived at. */
+  manual: boolean;
+  /** The setting the month was calculated under, snapshotted onto it when it
+   * was confirmed and read from there (Part 3). */
+  setting: IncomeTaxSetting;
+  /**
+   * What share of this month's ‏ברוטו‎ was actually withheld, as a percentage
+   * already rounded for display, or `null` where the month has no gross to take
+   * a share of.
+   *
+   * **It is the automatic mode's answer to "what percent is that"**, which is a
+   * different number every month because the brackets are progressive and the
+   * credit is a fixed sum. Shown here and not beside the profile's toggle, for
+   * the plain reason that the profile has no month in front of it and any
+   * figure there would be a share of a month nobody worked.
+   */
+  sharePercent: string | null;
+  /**
+   * The month's ‏ברוטו‎ in agorot, or `null` where the month has none.
+   *
+   * **Here so a percentage correction can show its own arithmetic before it is
+   * saved** (2026-09-11): the field takes either a sum or a share, and a share
+   * typed blind is a number the user has no way to check. The conversion is
+   * still made on the server, against the same gross read again — this figure
+   * draws the sentence under the field and decides nothing.
+   */
+  grossAgorot: number | null;
 }
 
 /**
@@ -232,7 +367,10 @@ export function snapshotTerms(worker: WorkerTerms): MonthTerms {
  * - terms are read off the month, never off the profile - true by construction
  * rather than by everyone remembering it.
  */
-export type Employment = Pick<WorkerTerms, "employedSince" | "openingPosition">;
+export type Employment = Pick<
+  WorkerTerms,
+  "employedSince" | "gender" | "openingPosition"
+>;
 
 /**
  * The wage position confirmed for one month, stored with the month rather than
@@ -495,9 +633,25 @@ export interface MonthFacts {
    * ones are not here — they are terms, and live on `terms.standingLines`.
    */
   userLines: UserLine[];
-  /** Income tax is never calculated: the line defaults to zero and is the
-   * user's to edit (specs.md item 17, Part 1). */
-  incomeTaxAgorot: number;
+  /**
+   * The income tax confirmed for this month, held here for the reason
+   * `ConfirmedWage` holds the minimum wage and `recuperationDayRateAgorot`
+   * holds the recuperation rate: it is what lets a past month **reproduce**
+   * rather than recalculate (specs.md item 17, build_plan.md stage 3).
+   *
+   * **Optional, and absent until the month has been through the pre-export
+   * confirmation.** Absent, the engine works the figure out from the month's
+   * gross, the brackets in force during it and the worker's credit points; a
+   * year the application holds no table for leaves the line at zero and raises
+   * a warning rather than withholding a number nobody can cite.
+   *
+   * **It reversed on 2026-09-10.** Until that day this field was required, this
+   * comment said income tax is never calculated, and the figure was typed by
+   * the user and nothing else. Both `specs.md` and `CLAUDE.md` now say the
+   * opposite. It is still the user's to correct — an override on
+   * `lineKeys.incomeTax` does that, like every other computed row.
+   */
+  incomeTaxAgorot?: number;
   /**
    * What one day of recuperation was worth when this month was valued, held
    * here for the reason `ConfirmedWage` holds the minimum wage: the rate is not
@@ -599,6 +753,18 @@ export interface MonthContext {
    * calculation path.
    */
   rates?: DatedRate[];
+  /**
+   * The income-tax bracket tables the month is taxed against, one per tax year
+   * (specs.md item 17). Left out, the seeded tables are read, which is what the
+   * application ships knowing before any fetch has run.
+   *
+   * Handed in beside `rates` and for the same reason: the engine reads no store
+   * and a table it fetched for itself would be a second calculation path. It is
+   * a second field rather than a member of `rates` because the tables are keyed
+   * by tax year and the rates by effective date — `taxBrackets.ts` says why a
+   * bracket table is a year by definition and cannot honestly carry a date.
+   */
+  taxBrackets?: TaxYearBrackets[];
   /**
    * Vacation days drawn from the balance earlier in the same **calendar** year,
    * counted the way this month counts its own. The seven-day warning is a

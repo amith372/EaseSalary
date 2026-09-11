@@ -4,11 +4,18 @@ import type { RestDay } from "@/lib/dates";
 import { advanceKey } from "@/lib/engine/advances";
 import { buildBalances, buildWarnings } from "@/lib/engine/balances";
 import { countMonth, type MonthCounts } from "@/lib/engine/counts";
+import { taxForSetting } from "@/lib/engine/incomeTax";
 import {
   holidayDaysWorked,
   restDayUnitsOf,
 } from "@/lib/engine/leave";
-import { type LineDraft, toLine } from "@/lib/engine/lines";
+import { lineKeys, type LineDraft, toLine } from "@/lib/engine/lines";
+// **Re-exported, not redefined.** The keys moved to `lines.ts` on 2026-09-11
+// so that `balances.ts` could name one without importing this file, which
+// imports `balances.ts` — a cycle for the sake of one string. Every call site
+// still reads them from here, which is where they have always been imported
+// from and where the interface expects to find them.
+export { lineKeys };
 import { deriveRates } from "@/lib/engine/rates";
 import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import { sickDeductionDays } from "@/lib/engine/sick";
@@ -25,6 +32,7 @@ import type {
   Employment,
 } from "@/lib/engine/types";
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
+import { SEEDED_TAX_BRACKETS } from "@/lib/taxBrackets";
 import { he } from "@/lib/i18n/he";
 import type {
   ClosingBlock,
@@ -54,37 +62,6 @@ import type {
  * payment coming back.
  */
 
-/**
- * Explanation keys, stable from this commit so another screen can address one
- * figure without re-deriving it (specs.md item 24). An override replaces the
- * amount and sets `manual` without touching the key, so a manual figure is
- * still addressable and still says what it would otherwise have been (item 17).
- *
- * `sickDeduction` is emitted below, and `src/lib/engine/sick.ts` owns the
- * statutory tiers behind it: this file asks that module how many days the month
- * deducts and prices them, and restates none of the rule.
- *
- * **These are stored values as well as identifiers, and the string is the part
- * that is stored.** `MonthFacts.overrides` is keyed by them (item 17), so a key
- * that moves orphans the amount a user typed by hand and the line silently
- * reverts to the calculated figure — the one failure in this file that looks
- * like nothing went wrong. `restEveSupplement` was `fridaySupplement` until the
- * rest-day rename, and the rename is landed here rather than deferred for the
- * same reason `MarkKind`'s is: no override has ever been stored, because stage
- * 3 is what first writes one. After stage 3 the same change would mean reading
- * the old key alongside the new one and rewriting the stored `overrides` map on
- * the way past, keyed month by month. **This is the last commit in which a line
- * key is free to move**, which is what "stable by design" is asking for.
- */
-export const lineKeys = {
-  base: "base",
-  restEveSupplement: "restEveSupplement",
-  restDays: "restDays",
-  holidaysWorked: "holidaysWorked",
-  sickDeduction: "sickDeduction",
-  recuperation: "recuperation",
-  incomeTax: "incomeTax",
-} as const;
 
 /**
  * How a line the user added is addressed: `standing.<id>` for one set on the
@@ -436,17 +413,29 @@ function buildLines(
 /**
  * The block below the columns. It grows with the month's advances rather than
  * being chosen from a fixed set of shapes (Part 5), and it carries the
- * income-tax line, which is never calculated and defaults to zero (item 17).
+ * income-tax line, which the engine works out from the month's gross (item 17).
  *
  * The income-tax row belongs here and not in column E because the gross is what
  * she earned: tax is withheld from it on the way to what is actually
  * transferred, exactly as the advance instalment is.
  */
-function buildClosing(facts: MonthFacts): ClosingLine[] {
+function buildClosing(
+  facts: MonthFacts,
+  calculatedTax: number | null,
+): ClosingLine[] {
   const rows: ClosingLine[] = [];
 
   const taxOverride = facts.overrides[lineKeys.incomeTax];
-  const tax = taxOverride ? taxOverride.agorot : facts.incomeTaxAgorot;
+  // **Three sources, in the order a month settles them.** An override is the
+  // user's own correction and wins outright (item 17). Below it sits the figure
+  // confirmed before the export and stored with the month, which is what lets a
+  // past month reproduce rather than recalculate. Below *that* is what the
+  // engine works out now, and `null` there is a year the application holds no
+  // bracket table for — the line stays at zero and the month says so with a
+  // warning rather than withholding a number nobody can cite.
+  const tax = taxOverride
+    ? taxOverride.agorot
+    : (facts.incomeTaxAgorot ?? calculatedTax ?? 0);
   rows.push({
     key: lineKeys.incomeTax,
     label: he.sheet.lines.incomeTax,
@@ -455,22 +444,27 @@ function buildClosing(facts: MonthFacts): ClosingLine[] {
     // `|| 0` is not decoration: negating a rounded zero gives -0, which
     // `Object.is` — and so `toBe` — reports as different from 0.
     amount: -Math.abs(Math.round(tax)) || 0,
-    // **A typed tax is not a manual amount, and this row once said it was.**
-    // The badge means one thing everywhere else — an amount the user put over a
-    // figure the application worked out (item 17) — and the tax is never
-    // worked out at all: it is entered, and entering it is the only way it can
-    // exist. Marking every month that withholds anything as manual made the
-    // badge say "overridden" on five rows and "filled in" on this one, which is
-    // exactly the collision the override control puts on one screen.
+    // The badge means what it means everywhere else now that the tax is
+    // calculated: an amount the user put over a figure the application worked
+    // out (item 17). A *confirmed* tax is not one of those — confirming the
+    // engine's own figure, or correcting it in the pre-export conversation, is
+    // how the month is settled rather than an override of it, exactly as the
+    // confirmed minimum wage is not a manual line.
     manual: taxOverride !== undefined,
     // The one row taken out of the ברוטו rather than out of the transfer, and
     // so the only thing standing between the two figures (specs.md Part 5).
     block: "withholding",
-    // The figure is the user's own and there is nothing under it to replace: a
-    // tax entered by mistake is corrected where it was entered (item 17).
+    // **False, and not because the figure cannot be corrected.** It is
+    // corrected — the tax is a computed amount like any other and item 17 says
+    // every one of them can be overridden. What this flag settles is which rows
+    // the *generic* override control offers, and the tax already has a control
+    // of its own on the payments screen: the card that carries the credit-point
+    // rule in words beside it, which is the thing the user has to read before
+    // she changes the figure. Listing it in both places would put two controls
+    // on one screen writing one amount, which is the collision item 17's
+    // control was built to avoid. `setIncomeTax` stores the same override the
+    // generic control would, so the badge and the stored shape are identical.
     overridable: false,
-    // The application never calculates the tax, so the link is the whole of what
-    // it can give the user before she types a figure (specs.md items 17, 26).
     explanation: { text: he.sheet.why.incomeTax, link: "incomeTax" },
   });
 
@@ -588,11 +582,29 @@ export function calculateMonth(
   const rates = context.rates ?? SEEDED_RATES;
   const counts = countMonth(month);
   const lines = buildLines(month, counts, employment, rates);
-  const closing = buildClosing(month);
 
+  // **The gross is settled before the closing block is built**, because the tax
+  // is withheld from it. It used to be summed after `buildClosing`, which was
+  // free while the tax was a figure the user typed; the order is now part of
+  // the calculation rather than an accident of where the lines were needed.
   const gross = lines
     .filter((line) => COLUMNS_THAT_REACH_THE_WORKER.includes(line.column))
     .reduce((total, line) => total + (line.amount ?? 0), 0);
+
+  // **The setting is the month's own** (Part 3): it was snapshotted onto
+  // `terms` when the month was confirmed, so a family that stops withholding in
+  // June leaves January through May exactly as they were filed.
+  const closing = buildClosing(
+    month,
+    taxForSetting(
+      facts.terms.incomeTax,
+      gross,
+      facts.month,
+      employment.gender,
+      rates,
+      context.taxBrackets ?? SEEDED_TAX_BRACKETS,
+    ),
+  );
 
   // Two sums over one list rather than two lists, so a row cannot be counted
   // in the transfer and forgotten in the נטו or the other way round: every

@@ -1,3 +1,4 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { FRIDAY, SATURDAY, SUNDAY, THURSDAY } from "@/lib/dates";
 import {
@@ -7,6 +8,7 @@ import {
   restDayChoices,
   reviewDate,
   reviewDocuments,
+  reviewIncomeTax,
   reviewOpeningAdvance,
   reviewOpeningDays,
 } from "@/lib/engine/profile";
@@ -26,10 +28,12 @@ import type { MonthFacts, WorkerTerms } from "@/lib/engine/types";
 
 const TERMS: WorkerTerms = {
   employedSince: "2024-04-01",
+  gender: "female",
   baseMonthlySalaryAgorot: 624765,
   restDay: SATURDAY,
   restEveSupplementAgorot: 10000,
   recuperationMonth: 7,
+  incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
   openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
@@ -47,6 +51,7 @@ function facts(month: number, terms: WorkerTerms): MonthFacts {
       restDay: terms.restDay,
       restEveSupplementAgorot: terms.restEveSupplementAgorot,
       recuperationMonth: terms.recuperationMonth,
+      incomeTax: DEFAULT_INCOME_TAX,
       standingLines: terms.standingLines,
     },
     spans: [],
@@ -276,5 +281,72 @@ describe("a term changed on the profile reaches the months that follow it (Part 
     };
     const [record] = monthsFollowingProfile([withSpan], TERMS);
     expect("spans" in record).toBe(false);
+  });
+});
+
+describe("the income-tax setting the server accepts (specs.md item 17)", () => {
+  /** The two modes that carry no number are stored as they arrive, and the
+   * percentage field is ignored for them rather than smuggled in. */
+  it("stores automatic and none without a rate", () => {
+    expect(reviewIncomeTax("automatic", "")).toEqual({
+      ok: true,
+      setting: { mode: "automatic" },
+    });
+    expect(reviewIncomeTax("none", "9")).toEqual({
+      ok: true,
+      setting: { mode: "none" },
+    });
+  });
+
+  /** Typed as a percentage and held as a fraction, which is the unit
+   * `nationalInsurance` already uses: 2.5 becomes 0.025, and the division
+   * happens here and nowhere between here and the engine. */
+  it("holds a typed percentage as a fraction", () => {
+    expect(reviewIncomeTax("percentage", "2.5")).toEqual({
+      ok: true,
+      setting: { mode: "percentage", percentage: 0.025 },
+    });
+  });
+
+  /**
+   * **Zero is refused rather than accepted as "nothing".** `none` is what says
+   * that, and the whole reason there are three modes is so a family never has
+   * to express a decision as an amount — a stored rate of zero would be a
+   * worker whose tax is a percentage of nothing, which reads on every screen
+   * exactly like a worker nobody has set up.
+   */
+  it("refuses a rate of zero and points at the mode that means it", () => {
+    expect(reviewIncomeTax("percentage", "0")).toEqual({
+      ok: false,
+      reason: "incomeTaxRate",
+    });
+  });
+
+  /** The two that cannot be meant. A rate above the whole salary would pay her
+   * nothing while looking like an ordinary withholding. */
+  it("refuses a negative rate, a rate above 100, and an empty one", () => {
+    for (const text of ["-1", "101", "", "  ", "abc"]) {
+      expect(reviewIncomeTax("percentage", text)).toEqual({
+        ok: false,
+        reason: "incomeTaxRate",
+      });
+    }
+  });
+
+  /**
+   * **A crafted request is refused by the same check the control passes**
+   * (Part 3). The mode arrives as request data, which a union cannot check, and
+   * a fourth mode stored on a profile would leave a worker whose tax the engine
+   * has no branch for.
+   */
+  it("refuses a mode that is not one of the three", () => {
+    expect(reviewIncomeTax("whatever", "")).toEqual({
+      ok: false,
+      reason: "incomeTaxMode",
+    });
+    expect(reviewIncomeTax(undefined, "")).toEqual({
+      ok: false,
+      reason: "incomeTaxMode",
+    });
   });
 });

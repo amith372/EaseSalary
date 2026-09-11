@@ -1,5 +1,6 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { SATURDAY } from "@/lib/dates";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type { MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
 
 /**
@@ -42,10 +43,12 @@ export const PLAIN_GROSS = 887940;
 export function plainWorker(standingLines: UserLine[] = []): WorkerTerms {
   return {
     employedSince: "2024-04-01",
+    gender: "female",
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
     restEveSupplementAgorot: 10000,
     recuperationMonth: 7,
+    incomeTax: DEFAULT_INCOME_TAX,
     standingLines,
     country: "PH",
     openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },

@@ -347,6 +347,9 @@ export const he = {
      * the shape of the figure being asked for — but it is text the user reads,
      * and every such string lives in this file (`CLAUDE.md`). */
     amountInput: "0.00",
+    /** The same idea for a rate: decimals are allowed, so the shape shows one
+     * rather than a whole number the user would read as the only kind. */
+    percentInput: "0.0",
     count: "[מספר]",
     date: "[תאריך]",
     year: "[שנה]",
@@ -613,7 +616,33 @@ export const he = {
       title: "תשלומים נוספים",
       incomeTax: {
         title: "מס הכנסה",
-        field: "כמה נוכה החודש",
+        /** The field is a *correction* since 2026-09-10, not an entry: the
+         * figure beside the heading is the one the application worked out,
+         * and this is how the user puts another one over it. */
+        field: "סכום אחר, אם חושב אחרת",
+        /**
+         * **The correction can be typed as a share of the ‏ברוטו‎ and not only
+         * as a sum** (asked for by the user on 2026-09-11). A family told "2.5
+         * percent" by an accountant had to work the sum out for itself, against
+         * a ‏ברוטו‎ that moves every month — which is exactly the arithmetic
+         * this application exists to take off her.
+         *
+         * What is *stored* is the amount either way: an override is an amount
+         * put over a calculated figure, and a percentage left as a percentage
+         * would re-derive itself the next time anything about the month moved.
+         */
+        unit: {
+          amount: "סכום",
+          percentage: "אחוז",
+        },
+        fieldPercentage: "אחוז מהברוטו, אם חושב אחרת",
+        /** The arithmetic shown before it is saved, so a share is never a
+         * number the user has to take on trust. */
+        worksOutTo: (percent: string, gross: string, amount: string) =>
+          `${percent}% מ־${gross} = ${amount}`,
+        /** Said where the percentage cannot be turned into anything, so the
+         * empty preview is explained rather than simply absent. */
+        noGross: "אין לחודש הזה ברוטו שאפשר לחשב ממנו אחוז.",
         /**
          * **Shown in words beside the control and not behind the "?"**
          * (specs.md item 17). It is what the user has to know before she types,
@@ -621,11 +650,45 @@ export const he = {
          * merely reachable is reachable by the user who already suspects there
          * is something to find.
          */
-        rule: "מס הכנסה מנוכה לפי השכר ולפי נקודות הזיכוי שמגיעות לעובד/ת. עובד/ת זר/ה בסיעוד בבית המטופל/ת מקבל/ת 2.25 נקודות זיכוי — יותר מעובד/ת זר/ה בענף אחר, ומי שלא יודע/ת את זה מנכה יותר מדי.",
-        /** Zero is an ordinary answer and not an empty field: it is what every
-         * month holds until the user says otherwise, and typing it back is how
-         * a tax entered by mistake is taken off. */
-        none: "לא נוכה מס החודש",
+        rule: "הסכום מחושב מהברוטו של החודש לפי מדרגות המס של אותה שנה, פחות נקודות הזיכוי. עובד/ת זר/ה בסיעוד בבית המטופל/ת מקבל/ת 2.25 נקודות זיכוי ואישה מקבלת חצי נקודה נוספת — הן נגזרות מהפרופיל ואין צורך להזין אותן. בשכר המינימום הזיכוי גדול מהמס, ולכן לא מנוכה מס בכלל.",
+        /**
+         * **The rule said above is the *automatic* mode's rule, so it is not
+         * said under the other two** (settled with the user on 2026-09-11).
+         * A worker set to a flat 2.5% is not taxed by the brackets at all, and
+         * a paragraph explaining credit points beside her figure would be a
+         * sentence that is simply untrue of the amount above it — which is the
+         * worst kind of help, because it is the kind a family would act on.
+         */
+        ruleNone:
+            "לפי ההגדרה בפרופיל של העובד/ת לא מנוכה מס הכנסה בשום חודש. אפשר לשנות את זה בדף העובד/ת, ואפשר גם להזין כאן סכום לחודש הזה בלבד.",
+        rulePercentage: (percent: string) =>
+            `לפי ההגדרה בפרופיל של העובד/ת מנוכה ${percent}% מהברוטו בכל חודש, בלי קשר למדרגות המס ולנקודות הזיכוי. אפשר לשנות את זה בדף העובד/ת, ואפשר גם להזין כאן סכום לחודש הזה בלבד.`,
+        /** A calculated zero, which at the minimum wage is the ordinary
+         * answer and not a line nobody filled in (item 17). */
+        none: "לא מנוכה מס החודש",
+        /**
+         * What share of this month's ברוטו was actually withheld (settled with
+         * the user on 2026-09-11).
+         *
+         * **It is shown here and not on the profile**, because the automatic
+         * mode arrives at a different percentage every month — the brackets are
+         * progressive and the credit is a fixed sum — so this is the only place
+         * in the application where the figure is about a month that exists. A
+         * percentage beside the toggle would be a share of a month nobody
+         * worked.
+         */
+        share: (percent: string) => `${percent}% מהברוטו החודש`,
+        /** The same reminder the profile's control carries, so a family that
+         * only ever opens this screen still meets it (item 17). */
+        reminder: 'תזכורת: עפ"י החוק צריך לשלם מס הכנסה.',
+        /** Where the figure came from, so the card says which of the profile's
+         * three choices produced the amount above it. */
+        from: {
+          automatic: "חושב אוטומטית",
+          none: "לפי ההגדרה בפרופיל: לא מנוכה מס",
+          percentage: (percent: string) => `לפי ההגדרה בפרופיל: ${percent}% מהברוטו`,
+          manual: "סכום שהוזן ידנית לחודש הזה",
+        },
         save: "לשמור",
         /**
          * **This field's own version of the amount refusal, and it may not say
@@ -635,14 +698,25 @@ export const he = {
          * one it would tell her that the figure she is allowed to type is not
          * allowed.
          */
-        notANumber: "צריך להקליד סכום — מספר, בלי מינוס. שדה ריק או 0 פירושו שלא נוכה מס החודש.",
+        notANumber: "צריך להקליד סכום — מספר, בלי מינוס. שדה ריק מחזיר לסכום שהיישום חישב, ו־0 פירושו שהחלטת שלא לנכות מס החודש.",
       },
       lines: {
         /** The list carries the preview's own heading. One thing, one name:
          * a summarised row above and the lines it summarises below must not
          * read as two different things (specs.md Part 5). */
         empty: "לא הוספת שורות לחודש הזה.",
-        add: "להוסיף שורה",
+        add: "להוסיף שורה חד־פעמית",
+        /**
+         * **Both kinds of line exist and only one of them is made here**, said
+         * where the user is standing rather than left to be discovered: a
+         * recurring addition or deduction is a term of the employment and is
+         * set once on the worker's page, and a family that could not find it
+         * asked for it to be built (2026-09-11). It was already built. The
+         * sentence and the link are the fix, because a feature nobody can find
+         * is not a feature the user has.
+         */
+        oneOffOnly: "שורה שמופיעה בחודש הזה בלבד — תוספת או הורדה.",
+        standing: "שורה שחוזרת בכל חודש נקבעת פעם אחת בדף העובד/ת",
         label: "על מה",
         labelHint: "במילים שלך — כך זה יופיע בדף המשכורת",
         amount: "סכום",
@@ -812,14 +886,14 @@ export const he = {
        */
       overrides: {
         title: "סכומים שהיישום חישב",
-        lead: "אפשר להחליף כל אחד מהם בסכום אחר, והוא יישאר כך גם אחרי כל חישוב מחדש של החודש. סכום שהקלדת בעצמך — שורה משלך, מקדמה או תשלום לגורם שלישי — אינו כאן, ואותו מתקנים במקום שבו הוקלד.",
+        lead: "אפשר לשנות כל אחד מהם לסכום אחר, והוא יישאר כך גם אחרי כל חישוב מחדש של החודש. סכום שהקלדת בעצמך — שורה משלך, מקדמה או תשלום לגורם שלישי — אינו כאן, ואותו מתקנים במקום שבו הוקלד.",
         empty: "אין החודש סכומים מחושבים.",
         /** Said beside the manual figure, so the row still says what it would
          * otherwise have been (items 17, 24) — which is what makes the
          * replacement checkable without recalculating it by hand. */
         calculated: "היישום חישב",
-        change: "להחליף סכום",
-        changeLabel: (label: string) => `להחליף את הסכום של ${label}`,
+        change: "לשנות סכום",
+        changeLabel: (label: string) => `לשנות את הסכום של ${label}`,
         panelTitle: "סכום במקום החישוב",
         amount: "סכום",
         /** An override is a magnitude and the row gives it its sign (item 17),
@@ -828,7 +902,7 @@ export const he = {
           "בלי מינוס. אם השורה מורידה מהשכר, היישום ישאיר אותה שורה שמורידה.",
         note: "למה",
         noteHint: "לא חובה, אבל זה מה שיסביר את הסכום בעוד שנה",
-        save: "להחליף",
+        save: "לשנות",
         cancel: "ביטול",
         /**
          * **Clearing is its own gesture and never the typing back of the
@@ -873,6 +947,9 @@ export const he = {
         amount: "צריך סכום — מספר גדול מאפס, בלי מינוס.",
         shape: "משהו בבחירה לא נקלט. כדאי לבחור שוב ולנסות.",
         noMonth: "אין עדיין רישום לחודש הזה, ולכן אי אפשר להוסיף לו שורות.",
+        /** Refused rather than stored as zero: the user typed a percentage,
+         * and a month with no ‏ברוטו‎ has nothing to take a percentage of. */
+        noGross: "אין לחודש הזה ברוטו שאפשר לחשב ממנו אחוז. אפשר להזין סכום בשקלים.",
         /**
          * **One sentence for both halves of one question** (specs.md item 17):
          * a row this month does not draw, and a row carrying an amount the
@@ -881,7 +958,7 @@ export const he = {
          * her stale page had got wrong is nothing she can act on.
          */
         notOverridable:
-          "אי אפשר להחליף את הסכום הזה — הוא לא סכום שהיישום חישב. סכום שהוקלד ידנית מתקנים במקום שבו הוקלד.",
+          "אי אפשר לשנות את הסכום הזה — הוא לא סכום שהיישום חישב. סכום שהוקלד ידנית מתקנים במקום שבו הוקלד.",
         /** A page held open over an entry another tab has since removed. */
         entryUnknown:
           "הרישום הזה כבר לא קיים בחודש הזה. כדאי לרענן את הדף ולבדוק מה נשמר.",
@@ -970,6 +1047,15 @@ export const he = {
          * same nine words beside nine amounts is noise the eye has to step
          * over to reach the figure it came for. */
         total: "סך הכל תשלום לעובד/ת",
+        /** The column added up, asked for by the user on 2026-09-11. It says
+         * "so far" rather than "in total" because a month still open is
+         * counted the moment it closes, and a figure that reads as final
+         * while it is still moving is the one a family would quote. */
+        soFar: "שולם עד כה",
+        /** Said only where a month in the list has no figure yet, so the sum
+         * never silently stands for months it did not count. */
+        soFarPartial: (counted: number, listed: number) =>
+          `מתוך ${counted} מ־${listed} חודשים שנסגרו`,
       },
       advances: {
         title: "מקדמות פתוחות",
@@ -996,6 +1082,57 @@ export const he = {
            * rest day rather than being set beside it (item 14). */
           eveNote: (restDay: RestDay) =>
             `ערב המנוחה הוא ${eve(restDay).bare}, והתוספת השבועית משולמת עליו.`,
+        },
+        /**
+         * The worker's gender (specs.md item 17).
+         *
+         * **The hint says what it is for, and that is the whole of why it is
+         * asked.** A field on a profile that does not say what it changes reads
+         * as a form collecting what it feels like collecting; this one settles
+         * the income-tax credit points and the endings her role is written
+         * with, and saying so is what makes it an answerable question rather
+         * than a personal one.
+         */
+        gender: {
+          label: "מין",
+          hint: "קובע את נקודות הזיכוי במס הכנסה — עובד/ת זר/ה בסיעוד מקבל/ת 2.25 נקודות, ואישה מקבלת חצי נקודה נוספת — ואת לשון הפנייה בדף המשכורת.",
+          female: "אישה",
+          male: "גבר",
+        },
+        /**
+         * How this worker's income tax is arrived at (specs.md item 17,
+         * settled with the user on 2026-09-11).
+         *
+         * **Three named choices rather than a field whose emptiness means
+         * something.** The control this replaced had one box in which a typed
+         * zero meant "withhold nothing" and an empty box meant "work it out",
+         * a distinction nothing on the screen stated — so a family that
+         * cleared the box to switch the tax off got the calculated figure back
+         * instead. A name is the whole of the fix.
+         *
+         * **`reminder` says what the law asks**, and it is said under all three
+         * choices rather than only under `ללא ניכוי`: a rule that appears the
+         * moment you do the thing it warns against reads as an accusation,
+         * while a rule that always stands is a rule.
+         */
+        incomeTax: {
+          label: "מס הכנסה",
+          hint: "איך נקבע הניכוי בכל חודש. אפשר תמיד לתקן חודש בודד בדף התשלומים.",
+          automatic: "חישוב אוטומטי",
+          none: "לא מנוכה מס",
+          percentage: "אחוז קבוע",
+          /** Said under the chips, because it is the consequence the user is
+           * choosing — the same place item 14's rest-eve note stands. */
+          automaticNote:
+            "הסכום מחושב מהברוטו של כל חודש לפי מדרגות המס של אותה שנה, פחות נקודות הזיכוי שנגזרות מהמין שבפרופיל. האחוז שיוצא משתנה מחודש לחודש, והוא מוצג ליד הסכום בדף התשלומים.",
+          noneNote:
+            "לא ינוכה מס בשום חודש, עד שהבחירה כאן תשתנה. חודשים שכבר אושרו אינם משתנים.",
+          percentageNote:
+            "אותו אחוז מהברוטו בכל חודש, בלי קשר למדרגות המס ולנקודות הזיכוי. זה מה שרואה חשבון נותן לפעמים כמספר אחד.",
+          rate: "אחוז מהברוטו",
+          rateHint: "אפשר גם עם נקודה עשרונית, למשל 2.5",
+          save: "לשמור",
+          reminder: 'תזכורת: עפ"י החוק צריך לשלם מס הכנסה.',
         },
         /** The way in to `בחירת חגים` (`build_plan.md` stage 5). The artboard
          * is reached from `הגדרות` and from the home screen's own alert, and
@@ -1088,6 +1225,9 @@ export const he = {
          * it is about, because the panel that shows it holds several. */
         refused: {
           restDay: "אפשר לבחור רק שישי, שבת או ראשון.",
+          gender: "אפשר לבחור אישה או גבר.",
+          incomeTaxMode: "אפשר לבחור חישוב אוטומטי, ללא ניכוי, או אחוז קבוע.",
+          incomeTaxRate: "האחוז צריך להיות מספר גדול מאפס ולא יותר מ־100. אם לא מנוכה מס בכלל, אפשר לבחור \"לא מנוכה מס\".",
           recuperationMonth: "צריך לבחור אחד מחודשי השנה.",
           date: "אחד התאריכים אינו תאריך. הצורה היא שנה-חודש-יום, למשל 2027-03-31.",
           days: "מספר הימים צריך להיות מספר שאינו שלילי.",
@@ -1725,8 +1865,18 @@ export const he = {
        */
       recuperation: (days: number) =>
         `דמי הבראה משולמים פעם בשנה, בחודש שנקבע בפרופיל של העובד/ת. מספר הימים נקבע לפי הוותק: חמישה ימים על השנה הראשונה, שישה על השנייה והשלישית, שבעה מהרביעית עד העשירית, ואילך לפי הסולם שבחוק. השנה נמדדת מיום תחילת ההעסקה ועד יום השנה שאחריו — ולא לפי השנה הקלנדרית, שלפיה נמדדת החופשה — ואין זכאות עד שהושלמה שנת עבודה מלאה. החודש משולמים ${formatDays(days)} ימים. ערך יום ההבראה אינו נגזר מהשכר: הוא נקבע בחוק ומתעדכן בכל יולי, ולכן הוא מאושר ונשמר עם החודש שחושב לפיו.`,
+      /**
+       * Income tax (specs.md item 17). **Rewritten on 2026-09-10**, the day the
+       * rule reversed: the sentence used to open "היישום אינו מחשב מס הכנסה"
+       * and to tell the user to type a figure. It now says the three things she
+       * cannot see from the amount — that the brackets are annual and the month
+       * is a twelfth, that the credit points come from the gender on the
+       * profile and are never asked for, and that at the minimum wage the
+       * credit is larger than the tax, which is why an ordinary month shows
+       * zero and that zero is an answer rather than a line nobody filled in.
+       */
       incomeTax:
-        "היישום אינו מחשב מס הכנסה. השורה מתחילה באפס, והסכום מוזן ידנית על ידך. הכלל הוא שהמעסיק מנכה מס לפי גובה השכר ולפי הזיכויים שהעובד/ת זכאי/ת להם, ועובד/ת זר/ה בסיעוד מקבל/ת 2.25 נקודות זיכוי — יותר מעובד/ת זר/ה בענף אחר. מי שאינו יודע זאת מנכה יותר מדי, ולכן כדאי לקרוא את הכלל לפני הזנת הסכום.",
+        "מס ההכנסה מחושב מהברוטו של החודש לפי מדרגות המס של אותה שנה. המדרגות נקבעות בחוק על בסיס הכנסה שנתית, ולכן החישוב נעשה על השכר כפול שתים עשרה והתוצאה מחולקת בחזרה לחודש. מהסכום מופחתות נקודות הזיכוי: עובד/ת זר/ה בסיעוד בבית המטופל/ת מקבל/ת 2.25 נקודות, ואישה מקבלת חצי נקודה נוספת — הן נגזרות מהפרופיל ואין צורך להזין אותן. נקודות הזיכוי אינן מחזירות כסף, ולכן כשהן גדולות מהמס השורה היא אפס. בשכר המינימום זה המצב הרגיל: המס עומד על כ־644 ₪ והזיכוי של אישה שווה 665.50 ₪ בחודש, ולכן לא מנוכה מס עד שכר של כ־6,655 ₪ בחודש.",
       advanceGranted: (advanceNumber: number) =>
         `מקדמה מספר ${advanceNumber} שניתנה החודש ומתווספת לסכום המועבר. היא תיפרע בחודשים הבאים, לפי הסכום שיוזן בכל חודש.`,
       advanceRepaid: (advanceNumber: number) =>
@@ -1825,6 +1975,25 @@ export const he = {
       /** The recuperation month with nothing to price its days at (item 15).
        * It names the days, because that is the part the application does know
        * and the part the user would otherwise have to work out for herself. */
+      /** A month whose tax year the application holds no bracket table for
+       * (item 17). It names the year, because that is the part that says which
+       * table is missing and the part a fetch would fix. */
+        /**
+         * **The month is paying under the minimum wage that was in force during
+         * it** — the one figure in this application that is not the family's to
+         * choose (asked for by the user on 2026-09-11, who found a July 2026
+         * valued at the wage of April 2025).
+         *
+         * It names both figures rather than only the shortfall, because the
+         * family has to recognise the one they are looking at before the
+         * sentence means anything. It says where the correction happens, since
+         * the wage is not edited on this screen: the confirmation before the
+         * export raises the month by itself.
+         */
+        belowMinimumWage: (paid: string, minimum: string) =>
+          `החודש הזה מחושב לפי ${paid} לחודש, ושכר המינימום שהיה בתוקף בו הוא ${minimum}. באישור שכר המינימום לפני הייצוא החודש יעלה מעצמו לסכום הנכון.`,
+      taxBracketsMissing: (year: number) =>
+        `מדרגות מס ההכנסה לשנת ${year} אינן ידועות ליישום, ולכן שורת מס ההכנסה נשארת על אפס. אפשר לאשר סכום אחר לפני הייצוא.`,
       recuperationRateMissing: (days: number) =>
         `החודש הזה הוא חודש ההבראה, והעובד/ת זכאית ל־${formatDays(days)} ימי הבראה — אבל ערך יום ההבראה שהיה בתוקף בחודש הזה אינו ידוע ליישום, ולכן השורה אינה מופיעה. אפשר להוסיף אותה כשורה משלך עם הסכום הנכון.`,
     },

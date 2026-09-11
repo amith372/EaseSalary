@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 import { SATURDAY } from "../src/lib/dates";
@@ -101,6 +102,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
   }) => {
     await useHousehold(page, "gate");
     await page.goto("/month/export");
+    await switchToTestWorker(page);
 
     // It opens on the last month that ended, and not on the current one — a
     // month that has not ended could never be exported (item 21).
@@ -143,6 +145,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
   }) => {
     await useHousehold(page, "agreement");
     await page.goto("/month/export");
+    await switchToTestWorker(page);
     await backTo(page, 4);
 
     await expect(page.locator('[data-question="sickDays"]')).toContainText(
@@ -175,6 +178,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
   }) => {
     await useHousehold(page, "dates");
     await page.goto("/month/export");
+    await switchToTestWorker(page);
     await backTo(page, 4);
 
     const sick = page.locator('[data-question="sickDays"] [data-detail]');
@@ -232,6 +236,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
     const question = page.locator('[data-question="freeRestDays"]');
 
     await page.goto("/month/export");
+    await switchToTestWorker(page);
     await expect(question).toContainText(words.from(SATURDAY, 0));
 
     await page.getByRole("link", { name: he.beforeExport.finish.back }).click();
@@ -307,6 +312,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
   }) => {
     await useHousehold(page, "notended");
     await page.goto("/month/export");
+    await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
 
     await expect(page.locator("h1")).toContainText(
@@ -329,6 +335,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
   }) => {
     await useHousehold(page, "mismatch");
     await page.goto("/month/export");
+    await switchToTestWorker(page);
     await answerEverything(page, AUGUST_AGREES);
     await expect(page.locator("[data-mismatch]")).toHaveCount(0);
 
@@ -355,6 +362,7 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
   }) => {
     await useHousehold(page, "wage");
     await page.goto("/month/export");
+    await switchToTestWorker(page);
 
     const wage = page.locator("[data-wage]");
     await expect(wage).toContainText(formatAgorot(WAGE_IN_FORCE));
@@ -383,6 +391,7 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
   }) => {
     await useHousehold(page, "raised");
     await page.goto("/month/export");
+    await switchToTestWorker(page);
 
     await expect(page.locator("[data-raised]")).toContainText(
       he.beforeExport.wage.raised(SEEDED_SALARY, WAGE_IN_FORCE),
@@ -403,6 +412,7 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
   }) => {
     await useHousehold(page, "recuperation");
     await page.goto("/month/export");
+    await switchToTestWorker(page);
     // August is not the recuperation month.
     await expect(page.locator("[data-recuperation-rate]")).toHaveCount(0);
 
@@ -425,6 +435,7 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
   }) => {
     await useHousehold(page, "confirm");
     await page.goto("/month/export");
+    await switchToTestWorker(page);
     // July, and every question answered as July records it: nothing at all.
     await backTo(page, RECUPERATION_MONTH);
     await answerEverything(page);
@@ -442,6 +453,7 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
     // And July still pays the recuperation it was confirmed at, from the rate
     // the confirmation stored on the month rather than from the table.
     await page.goto("/month");
+    await switchToTestWorker(page);
     for (let step = 0; step < CURRENT_MONTH - RECUPERATION_MONTH; step += 1) {
       await page.getByRole("button", { name: he.calendar.previousMonth }).click();
     }

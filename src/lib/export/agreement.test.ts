@@ -7,7 +7,12 @@ import {
   plainAugustFacts,
   plainWorker,
 } from "@/lib/engine/august-2025.fixture";
-import { TAX_ROW, TEMPLATE_ROWS, layoutOf } from "@/lib/export/layout";
+import {
+  NATIONAL_INSURANCE_ROW,
+  TAX_ROW,
+  TEMPLATE_ROWS,
+  layoutOf,
+} from "@/lib/export/layout";
 import { monthSheetInputOf } from "@/lib/export/monthExport";
 import { fillMonthSheet } from "@/lib/export/monthSheet";
 import { MONTH_TEMPLATE, readTemplate } from "@/lib/export/template";
@@ -98,8 +103,9 @@ function busyMonth(): { worker: WorkerTerms; facts: MonthFacts } {
   return { worker, facts };
 }
 
-async function filled(showNotes: boolean) {
-  const { worker, facts } = busyMonth();
+async function filled(showNotes: boolean, over: Partial<MonthFacts> = {}) {
+  const { worker, facts: base } = busyMonth();
+  const facts = { ...base, ...over };
   // The replay, exactly as every screen and the route both take it: a month
   // calculated on its own would open from the wrong balances (item 13).
   const series = calculateSeries([facts], worker);
@@ -156,7 +162,33 @@ describe("the preview and the file, from one engine result", () => {
   it("says the income tax the same way in both, in the row the sheet keeps for it", async () => {
     const { sheet, result } = await filled(false);
     const tax = result.closing.find((row) => row.key === lineKeys.incomeTax);
-    expect(tax?.amount).toBe(-45000); // entered, never calculated (item 17)
+    // The month carries a confirmed figure, which is reproduced rather than
+    // recalculated (item 17, Part 3).
+    expect(tax?.amount).toBe(-45000);
+    expect(said(sheet, `E${TAX_ROW}`)).toBe(formatAgorot(tax?.amount ?? 0));
+  });
+
+  /**
+   * **The same row when the engine worked the figure out for itself** (item 17,
+   * approved 2026-09-10).
+   *
+   * The confirmed case above cannot catch a calculated tax that reaches the
+   * screen and not the sheet: the figure it checks was stored on the month, so
+   * a sheet filled from the stored record instead of from the engine would pass
+   * it. Clearing the confirmation is what makes the two paths distinguishable.
+   *
+   * The expectation is the **agreement** and not the amount, which is what an
+   * agreement test asserts (`CLAUDE.md`); the amount is checked to be non-zero
+   * so that two empty cells cannot agree their way past this.
+   */
+  it("says a calculated income tax the same way in both", async () => {
+    const { sheet, result } = await filled(false, {
+      incomeTaxAgorot: undefined,
+    });
+    const tax = result.closing.find((row) => row.key === lineKeys.incomeTax);
+
+    expect(tax?.amount).toBeLessThan(0);
+    expect(tax?.amount).not.toBe(-45000);
     expect(said(sheet, `E${TAX_ROW}`)).toBe(formatAgorot(tax?.amount ?? 0));
   });
 
@@ -214,6 +246,87 @@ describe("the preview and the file, from one engine result", () => {
     expect(formatAgorot(Math.round(evaluate(`E${layout.netRow}`) * 100))).toBe(
       formatAgorot(result.net ?? 0),
     );
+  });
+
+  /**
+   * **A formula with no value in it is a blank cell to everything but Excel.**
+   *
+   * An `.xlsx` formula cell holds the formula and the value it last evaluated
+   * to, and exceljs writes only the first. On 2026-09-11 a family opened a month
+   * whose seventeen rows were all present and whose four totals and transferred
+   * figure were empty, which is what a formula with nothing cached looks like
+   * anywhere that does not recalculate — a preview pane, a print, a viewer.
+   *
+   * **What it would catch**: every total losing its figure again the next time
+   * this file is touched, and a cached figure drifting from the formula beside
+   * it — the second being the risk the cache introduces, which is why the
+   * assertion is that the two say the same thing rather than that a number is
+   * present.
+   */
+  it("writes a figure into every total and not only a formula", async () => {
+    const { sheet, result } = await filled(false);
+    const layout = layoutOf(2, 3);
+    const subtotal = (column: string) =>
+      result.subtotals.find((one) => one.column === column)?.amount ?? 0;
+
+    const totals: [string, number][] = [
+      [`E${layout.subtotalERow}`, subtotal("E")],
+      [`F${layout.subtotalFRow}`, subtotal("F")],
+      [`G${layout.subtotalGRow}`, subtotal("G")],
+      [`E${layout.grossRow}`, result.gross ?? 0],
+      [`E${layout.netRow}`, result.net ?? 0],
+    ];
+
+    for (const [address, expected] of totals) {
+      const value = sheet.getCell(address).value;
+      expect(value, address).toMatchObject({ formula: expect.any(String) });
+      const cached = (value as { result?: number }).result;
+      expect(cached, address).toEqual(expect.any(Number));
+      expect(formatAgorot(Math.round((cached ?? 0) * 100)), address).toBe(
+        formatAgorot(expected),
+      );
+    }
+  });
+
+  /**
+   * **The national-insurance estimate reaches the sheet, and the quarter's
+   * money does not stand in for it** (specs.md item 19).
+   *
+   * The estimate is 3.6% of columns E, F and G together and belongs in the
+   * unit-price cell of row 21, every month, whether or not that month settled a
+   * quarter. The row was empty in every file this application ever produced
+   * until a family looked at one on 2026-09-11.
+   *
+   * **What it would catch**: the row going empty again, and — the subtler half —
+   * a month that *did* pay a quarter writing the payment into the estimate's
+   * cell. A third-party payment is a line whose rate is its whole amount, so the
+   * generic writer puts it in `D`; on this one row that would report the
+   * quarter's money as the month's accrual, and the two are different figures.
+   */
+  it("reports the national-insurance estimate beside the payment, not instead of it", async () => {
+    const paid = 93600;
+    const { sheet, result } = await filled(false, {
+      thirdPartyPayments: [
+        { kind: "agencyFee", agorot: 12000 },
+        {
+          kind: "nationalInsurance",
+          agorot: paid,
+          coversMonths: [
+            { year: 2025, month: 4 },
+            { year: 2025, month: 5 },
+            { year: 2025, month: 6 },
+          ],
+        },
+      ],
+    });
+
+    // The estimate the month screen prints, in the cell the workbook keeps it.
+    expect(said(sheet, `D${NATIONAL_INSURANCE_ROW}`)).toBe(
+      formatAgorot(result.nationalInsuranceEstimate ?? 0),
+    );
+    // And the quarter's money, in its own column, undisturbed.
+    expect(said(sheet, `H${NATIONAL_INSURANCE_ROW}`)).toBe(formatAgorot(paid));
+    expect(result.nationalInsuranceEstimate).not.toBe(paid);
   });
 
   it("says the balances the same way in both", async () => {

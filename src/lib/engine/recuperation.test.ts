@@ -184,7 +184,11 @@ function marchFacts(overrides: Partial<MonthFacts> = {}): MonthFacts {
   };
 }
 
-const EMPLOYMENT = { employedSince: HANNA, openingPosition: workbookWorker(0).openingPosition };
+const EMPLOYMENT = {
+  employedSince: HANNA,
+  gender: "female",
+  openingPosition: workbookWorker(0).openingPosition,
+} as const;
 
 describe("the line the month draws", () => {
   it("prices six days at ₪451.50 into column G", () => {

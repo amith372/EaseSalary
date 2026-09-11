@@ -1,3 +1,5 @@
+import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
@@ -11,7 +13,7 @@ import {
   DuplicateMonthError,
   type MonthInSeries,
 } from "@/lib/engine/series";
-import { snapshotTerms } from "@/lib/engine/types";
+import { snapshotTerms} from "@/lib/engine/types";
 import type { MonthFacts, MonthSpan } from "@/lib/engine/types";
 import { InvalidMonthError } from "@/lib/engine/validate";
 import type { BalanceKind, MonthResult, YearMonth } from "@/lib/types";
@@ -43,10 +45,12 @@ const HANNA: WorkerProfile = {
   name: "האנה",
   firstName: "האנה",
   employedSince: "2026-01-01",
+  gender: "female",
   baseMonthlySalaryAgorot: 624765,
   restDay: SATURDAY,
   restEveSupplementAgorot: 10000,
   recuperationMonth: 7,
+  incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
   openingPosition: { vacationDays: 5, sickDays: 10, advances: [] },
@@ -66,16 +70,40 @@ function month(year: number, monthNumber: number): YearMonth {
   return { year, month: monthNumber };
 }
 
+
+/**
+ * The confirmed wage position a month of these fixtures stands on: the minimum
+ * wage in force during that month, from the same seeded table the application
+ * reads (specs.md item 4). A fixture that stamped one figure on every month was
+ * below the minimum from April 2026 onward.
+ */
+function wageInForce(ym: YearMonth) {
+  // A month earlier than every row takes the earliest one. That is a fixture's
+  // convenience and not the engine's rule — the engine guesses nothing there
+  // (item 4), and `belowMinimumWageWarning` is silent for exactly that reason,
+  // so which figure such a month carries cannot change what is asserted.
+  const rate =
+    rateInForce(SEEDED_RATES, "minimumWage", ym) ??
+    SEEDED_RATES.filter((one) => one.key === "minimumWage").sort((a, b) =>
+      a.effectiveFrom < b.effectiveFrom ? -1 : 1,
+    )[0]!;
+  return {
+    baseAgorot: rate.value,
+    minimumAgorot: rate.value,
+    effectiveFrom: rate.effectiveFrom,
+  };
+}
+
 /** The month as the store holds it — no spans, because spans belong to the
  * worker and the store assembles them onto the months they touch. */
 function record(ym: YearMonth): MonthRecord {
   return {
     month: ym,
-    confirmedWage: {
-      baseAgorot: 624765,
-      minimumAgorot: 624765,
-      effectiveFrom: "2025-04-01",
-    },
+    // The wage in force during the month itself, and not one figure stamped on
+    // every month a fixture happens to cover (specs.md item 4). Stamping one
+    // put these fixtures below the minimum wage from April 2026 onward, which
+    // is the defect a family found on 2026-09-11.
+    confirmedWage: wageInForce(ym),
     terms: snapshotTerms(HANNA),
     advances: [],
     thirdPartyPayments: [],

@@ -1,7 +1,8 @@
+import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
-import { clipEndOf, snapshotTerms } from "@/lib/engine/types";
+import { clipEndOf, snapshotTerms} from "@/lib/engine/types";
 
 import type {
   ClosedMonthFacts,
@@ -64,10 +65,12 @@ const SALARY = 624765;
 
 const worker: WorkerTerms = {
   employedSince: "2024-04-01",
+  gender: "female",
   baseMonthlySalaryAgorot: SALARY,
   restDay: SATURDAY,
   restEveSupplementAgorot: 10000,
   recuperationMonth: 7,
+  incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
   // The spell draws four days from the balance — rest days included, since a

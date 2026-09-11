@@ -2,6 +2,38 @@ import type { LineOverride } from "@/lib/engine/types";
 import type { Explanation, MonthLine, SheetColumn, YearMonth } from "@/lib/types";
 
 /**
+ * Explanation keys, stable from this commit so another screen can address one
+ * figure without re-deriving it (specs.md item 24). An override replaces the
+ * amount and sets `manual` without touching the key, so a manual figure is
+ * still addressable and still says what it would otherwise have been (item 17).
+ *
+ * `sickDeduction` is emitted below, and `src/lib/engine/sick.ts` owns the
+ * statutory tiers behind it: this file asks that module how many days the month
+ * deducts and prices them, and restates none of the rule.
+ *
+ * **These are stored values as well as identifiers, and the string is the part
+ * that is stored.** `MonthFacts.overrides` is keyed by them (item 17), so a key
+ * that moves orphans the amount a user typed by hand and the line silently
+ * reverts to the calculated figure — the one failure in this file that looks
+ * like nothing went wrong. `restEveSupplement` was `fridaySupplement` until the
+ * rest-day rename, and the rename is landed here rather than deferred for the
+ * same reason `MarkKind`'s is: no override has ever been stored, because stage
+ * 3 is what first writes one. After stage 3 the same change would mean reading
+ * the old key alongside the new one and rewriting the stored `overrides` map on
+ * the way past, keyed month by month. **This is the last commit in which a line
+ * key is free to move**, which is what "stable by design" is asking for.
+ */
+export const lineKeys = {
+  base: "base",
+  restEveSupplement: "restEveSupplement",
+  restDays: "restDays",
+  holidaysWorked: "holidaysWorked",
+  sickDeduction: "sickDeduction",
+  recuperation: "recuperation",
+  incomeTax: "incomeTax",
+} as const;
+
+/**
  * A line before it is rounded, and the one place a rate becomes an amount.
  *
  * `units * rate` is the amount, always: the base salary is one month at the
