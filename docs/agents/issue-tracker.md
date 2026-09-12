@@ -17,6 +17,6 @@ Don't. Report the finding in the conversation instead, and ask before writing an
 
 ## Stages end with a check the user runs
 
-Working rule 7: before a stage is committed, write down what to open, type or click to confirm it
+Working rule 8: before a stage is committed, write down what to open, type or click to confirm it
 works and what a failure looks like. Nothing is pushed until the user confirms. A skill that would
 close out work on its own stops here and hands the check to the user.
