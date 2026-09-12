@@ -1,5 +1,21 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// The signed-in state the whole run starts from. It is written out here and in
+// `e2e/auth.setup.ts` rather than imported from there: the config imports the
+// setup file, Playwright loads the config before it knows about tests, and a
+// `test()` call reached that way is refused outright.
+const STATE_FILE = "e2e/.auth/state.json";
+
+// `next dev` reads `.env` for itself; this process does not, and the setup
+// project below needs the project's address and its service-role key to make
+// the account it signs in with. Missing is not fatal here — the setup project
+// is where it is reported, in a sentence that says which two names to fill in.
+try {
+  process.loadEnvFile(".env");
+} catch {
+  // No .env; the setup project says so when it runs.
+}
+
 /**
  * Browser verification of the important user-facing flows (`CLAUDE.md` rules
  * 9–12, `specs.md` Part 4, "Verifying through the browser").
@@ -40,9 +56,14 @@ export default defineConfig({
   },
 
   projects: [
+    // One sign-in for the whole run, through the real screen. Every spec below
+    // starts from the session it leaves behind, because the proxy sends an
+    // unauthenticated request to `/sign-in` from every address.
+    { name: "setup", testMatch: /auth\.setup\.ts/ },
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], storageState: STATE_FILE },
+      dependencies: ["setup"],
     },
   ],
 

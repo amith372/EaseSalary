@@ -75,6 +75,11 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
 
+  // `/sign-in` is the one route outside the shell: a person who can see this
+  // bar is already signed in, so drawing five nav tabs around a sign-in form
+  // would offer five links that redirect straight back to it.
+  if (pathname === "/sign-in") return <>{children}</>;
+
   return (
     /*
       One desktop screen that does not scroll: the page is locked to the

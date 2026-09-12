@@ -56,3 +56,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /.playwright/
+
+# playwright — the signed-in state the browser suite starts from
+/e2e/.auth/

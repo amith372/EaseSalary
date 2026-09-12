@@ -140,6 +140,49 @@ export const he = {
     description: "ניהול המשכורת החודשית של עובד/ת סיעוד — בלי אקסל ובלי נוסחאות.",
   },
 
+  /**
+   * The sign-in screen — the one screen in the application with no artboard,
+   * settled with the user on 2026-09-11 (build_plan.md stage 3). One wordmark,
+   * two fields and a button, built out of the design system the shell carries.
+   *
+   * **The word "household" appears nowhere here**, and that is item 11 as
+   * written: the first sign-in creates one silently, and a family employing one
+   * caregiver never meets the word at all.
+   */
+  signIn: {
+    /** Signing in and signing up are one screen with two modes, because a
+     * person arriving does not yet know which they are. */
+    signInTitle: "כניסה לחשבון",
+    signUpTitle: "פתיחת חשבון",
+    lead: "המשכורת החודשית, החישוב והייצוא — במקום אחד.",
+    email: "כתובת אימייל",
+    password: "סיסמה",
+    /** Supabase's own default, said here so that a refusal after the fact is
+     * not the first time the rule is seen. */
+    passwordHint: "לפחות שישה תווים.",
+    submitSignIn: "כניסה",
+    submitSignUp: "פתיחת חשבון",
+    working: "רגע…",
+    toSignUp: "אין לכם עדיין חשבון? לפתיחת חשבון",
+    toSignIn: "יש לכם כבר חשבון? לכניסה",
+    /** The confirmation the address has to pass before the account works. */
+    checkYourMail:
+      "שלחנו אליכם אימייל לאישור הכתובת. לוחצים על הקישור שבו, וחוזרים לכאן להיכנס.",
+    errors: {
+      /** Supabase answers a wrong pair and an unknown address with the same
+       * message on purpose, and so does this. */
+      badCredentials: "האימייל או הסיסמה אינם נכונים.",
+      unconfirmed: "הכתובת עדיין לא אושרה. הקישור שנשלח אליכם ממתין בתיבת הדואר.",
+      /** What the unique index refuses: a `+` suffix or, at Gmail, a dot. The
+       * sentence says what happened rather than naming a normalisation, because
+       * the person who typed it does not think of it as the same address. */
+      addressTaken: "כבר קיים חשבון עם הכתובת הזו. אפשר להיכנס אליו כאן.",
+      missingFields: "צריך למלא כתובת אימייל וסיסמה.",
+      /** Anything the two above do not name. */
+      unknown: "משהו השתבש. כדאי לנסות שוב.",
+    },
+  },
+
   nav: {
     home: "דף הבית",
     workers: "עובדים/ות",
