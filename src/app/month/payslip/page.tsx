@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { PayslipScreen } from "@/components/PayslipScreen";
 import type { WorkerPayslip } from "@/components/PayslipScreen";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import { advanceLedger } from "@/lib/engine/advances";
 import { blocksExport, exportQuestions } from "@/lib/engine/beforeExport";
 import { calculateSeries } from "@/lib/engine/series";

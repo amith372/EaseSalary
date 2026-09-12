@@ -3,6 +3,8 @@ import { createInMemoryRepository } from "@/lib/engine/repository";
 import type { SalaryRepository } from "@/lib/engine/repository";
 import { devSeed } from "@/lib/dev/seed";
 import { knownCaseSeed } from "@/lib/dev/known";
+import { createPostgresRepository } from "@/lib/supabase/repository";
+import { supabaseOnServer } from "@/lib/supabase/server";
 
 /**
  * The stores the running application talks to until stage 3 lands the real one
@@ -83,13 +85,33 @@ function seedOf(name: string): { seed: (typeof seeds)[SeedName]; key: string } {
 /**
  * The store this request's household is kept in.
  *
- * It is asynchronous because reading a cookie is, and because stage 3's answer —
- * the household the signed-in person belongs to — is a query. Every caller is
- * already in an async function, so the shape is the one that survives the
- * substitution rather than the one that is convenient now.
+ * **This is the substitution point stage 3 was shaped around**, and it is the
+ * only line in the application that names an implementation. Every caller
+ * awaits a `SalaryRepository` and none of them knows or can know which one it
+ * got, which is what made landing Postgres an edit to this function rather than
+ * to fifteen routes.
+ *
+ * **The signed-in person's household is the answer, and a seeded store is the
+ * exception.** A request with no `household` cookie reads and writes Postgres
+ * under that person's own session, so row-level security is what decides which
+ * rows exist. A request that carries the cookie gets an in-memory household
+ * built from a seed — which is how the browser suite works, since every spec in
+ * `e2e/` opens a store of its own by naming one (`e2e/household.ts`), and how
+ * the known case of `specs.md` Part 4 is reached.
+ *
+ * **The seeded stores are refused outside development**, and the check is the
+ * whole reason the cookie is safe: it is set by the browser and anyone can set
+ * it, so in production a person who set it would otherwise be handed a store
+ * that belongs to nobody and outlives no restart. There, the cookie is ignored
+ * and the household is the one the session says it is.
  */
 export async function getRepository(): Promise<SalaryRepository> {
-  const name = (await cookies()).get(HOUSEHOLD_COOKIE)?.value ?? DEFAULT_SEED;
+  const name = (await cookies()).get(HOUSEHOLD_COOKIE)?.value;
+
+  if (name === undefined || process.env.NODE_ENV === "production") {
+    return householdRepository();
+  }
+
   const { seed, key } = seedOf(name);
 
   const holder = globalThis as Global;
@@ -100,4 +122,67 @@ export async function getRepository(): Promise<SalaryRepository> {
   const created = createInMemoryRepository(seed);
   holder[STORES].set(key, created);
   return created;
+}
+
+/**
+ * The household the signed-in person belongs to, and the store that keeps it.
+ *
+ * **A person is in exactly one household here, though the schema allows more**
+ * (criterion 11: someone may keep their own caregiver and help with a parent's).
+ * Choosing between two of them is a control the application has not got, and the
+ * oldest is a stable answer rather than a chosen one — so the day the second
+ * household becomes reachable, what changes is this line and a switcher, and not
+ * the shape of anything below it.
+ */
+async function householdRepository(): Promise<SalaryRepository> {
+  const client = await supabaseOnServer();
+
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (user === null) throw new NotSignedInError();
+
+  const { data, error } = await client
+    .from("household_members")
+    .select("household_id")
+    .order("joined_at")
+    .limit(1)
+    .maybeSingle();
+  if (error !== null) {
+    throw new Error(`could not read the household: ${error.message}`);
+  }
+  if (data === null) throw new NoHouseholdError();
+
+  return createPostgresRepository(client, data.household_id as string);
+}
+
+/**
+ * Reached by a request the proxy should already have sent to `/sign-in`.
+ *
+ * It is thrown rather than answered with an empty household, because an empty
+ * household is a screen saying this family has no workers — which is a sentence
+ * about their data and not about their session, and is the wrong thing to tell
+ * someone whose session merely expired.
+ */
+export class NotSignedInError extends Error {
+  constructor() {
+    super("No session behind this request");
+    this.name = "NotSignedInError";
+  }
+}
+
+/**
+ * Signed in, and a member of no household.
+ *
+ * The sign-in screen creates one on the first sign-in and the database makes the
+ * creator its first member in the same transaction (migration 1), so this is a
+ * state the application does not produce. It is thrown rather than papered over
+ * for that reason: if it is ever seen, something upstream failed and the
+ * household the person then filled in would be one nobody could reach.
+ */
+export class NoHouseholdError extends Error {
+  constructor() {
+    super("Signed in, but a member of no household");
+    this.name = "NoHouseholdError";
+  }
 }

@@ -183,6 +183,22 @@ export const he = {
     },
   },
 
+  /**
+   * What a household that holds no worker yet is told.
+   *
+   * **A new account reaches this and not a calendar**, because every screen in
+   * the application is a screen about one worker: her month, her balances, her
+   * sheet. Until there is one, there is nothing for any of them to be about,
+   * and a blank calendar would be a screen quietly pretending otherwise.
+   */
+  emptyHousehold: {
+    title: "עוד אין כאן עובד/ת",
+    lead: "כל המסכים כאן מדברים על עובד/ת אחת — החודש שלה, היתרות שלה, הגיליון שלה. אחרי שמוסיפים אותה, הכול נפתח.",
+    /** The flow that fills this in is the next step of stage 3, so the sentence
+     * says where it is rather than offering a button that leads nowhere. */
+    comingSoon: "מסך הוספת עובד/ת עדיין בבנייה.",
+  },
+
   nav: {
     home: "דף הבית",
     workers: "עובדים/ות",

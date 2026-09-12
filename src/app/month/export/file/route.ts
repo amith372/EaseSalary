@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { parseYearMonth, sameMonth } from "@/lib/dates";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import { blocksExport } from "@/lib/engine/beforeExport";
 import { calculateSeries } from "@/lib/engine/series";
 import { monthFileOf } from "@/lib/export/monthExport";

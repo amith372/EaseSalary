@@ -113,6 +113,27 @@ test("a signed-in person is not shown the sign-in screen again", async ({ page }
 });
 
 /**
+ * **The one spec that reads the real household**, because it is the only one
+ * that sets no `household` cookie: every other file opens a seeded store of its
+ * own, and this account's Postgres household is empty until something creates a
+ * worker in it (`src/lib/store.ts`).
+ *
+ * What it would catch is the failure that landing the Postgres repository first
+ * produced: `workers[0]` of an empty list is `undefined`, so a screen about one
+ * worker crashed on the first render a new account ever saw.
+ */
+test("a household with no worker in it says so, rather than drawing a screen about nobody", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator('[data-role="empty-household"]')).toBeVisible();
+  await expect(page.getByRole("heading", { name: he.emptyHousehold.title })).toBeVisible();
+
+  // The bar stays: it is the frame and not a promise about data.
+  await expect(page.getByRole("navigation", { name: he.nav.landmark })).toBeVisible();
+});
+
+/**
  * An account that exists and is confirmed, made the one way a browser cannot:
  * the admin API, which skips the mail. The service-role key is read in
  * Playwright's own Node process and never reaches the page.

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Assistant } from "next/font/google";
 import { AppShell } from "@/components/AppShell";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository, NotSignedInError } from "@/lib/store";
+import type { Worker } from "@/lib/types";
 import { he } from "@/lib/i18n/he";
 import "./globals.css";
 
@@ -28,10 +29,30 @@ export const metadata: Metadata = {
  * value and `todayInIsrael()` is a clock, so a page rendered at build time
  * would show the household as it stood when the build ran.
  */
+/**
+ * The workers the bar's switcher offers, and none for a request with nobody
+ * behind it.
+ *
+ * **The layout wraps `/sign-in` too**, which is a route reached precisely when
+ * there is no session — so the store has no household to answer for, and it says
+ * so by raising rather than by handing back an empty list that would read as a
+ * family with no workers. Caught here and nowhere else: every other caller is on
+ * a screen the proxy has already refused an unauthenticated request to, so one
+ * arriving there is a fault and should be seen as one.
+ */
+async function workersInTheBar(): Promise<Worker[]> {
+  try {
+    return (await (await getRepository()).listWorkers()).map(
+      ({ id, name, firstName }) => ({ id, name, firstName }),
+    );
+  } catch (error) {
+    if (error instanceof NotSignedInError) return [];
+    throw error;
+  }
+}
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const workers = (await (await getRepository()).listWorkers()).map(
-    ({ id, name, firstName }) => ({ id, name, firstName }),
-  );
+  const workers = await workersInTheBar();
 
   return (
     // The whole document is Hebrew and right-to-left. Nothing below sets a

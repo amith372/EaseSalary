@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { WorkerProfileScreen } from "@/components/WorkerProfileScreen";
 import type { ProfileMonth } from "@/components/WorkerProfileScreen";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import { advanceLedger } from "@/lib/engine/advances";
 import { holidayYear } from "@/lib/engine/holidayYear";
 import { holidayAllowanceFor } from "@/lib/engine/leave";

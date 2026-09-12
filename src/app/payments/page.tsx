@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { PaymentsScreen } from "@/components/PaymentsScreen";
 import type { WorkerPayments } from "@/components/PaymentsScreen";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import { advanceLedger } from "@/lib/engine/advances";
 import { effectiveTaxRate } from "@/lib/engine/incomeTax";
 import { lineKeys } from "@/lib/engine/lines";

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import {
   baseForMonth,
   blocksExport,

@@ -108,6 +108,16 @@ Carried forward from finished steps. None of these is a defect.
 - **Six artboards draw the top bar without the worker switcher and without the greeting** —
   `דוחות`, `דף העובד`, `הגדרות`, `העובדות`, `התראות` and `תשלומים`. Transcription onto the
   canvas, owed by whichever stage next builds one of them.
+- **The four encrypted numbers are in the schema and not in the application.** `WorkerProfile`
+  carries the three document *dates* and no number, so the Postgres repository writes nothing
+  to the four `bytea` columns and `src/lib/encryption.ts` is reached by no screen. **Stage 3's**,
+  with the profile that would type them in.
+- **The seeded stores are still how the browser suite runs.** A request carrying the
+  `household` cookie gets an in-memory household outside production (`src/lib/store.ts`), which
+  is what keeps thirteen spec files working; the suite moves onto real households when there is
+  a flow that creates a worker to put in one.
+- **`SalaryRepository` has no `deleteWorker`**, because nothing in the application removes one.
+  The live check tidies up through the client instead.
 - **The browser suite is intermittently flaky under six workers** — `payments-screen`,
   `before-export` and `month-screen` among them — and each passes when its own file is run
   alone. Measured on 2026-09-12 against a tree with the sign-in step stashed, so the cause is
@@ -169,7 +179,13 @@ across four fields.
 
 **Landed so far:** the income tax calculated, with `gender` and the three tax modes on the
 profile (2026-09-11); the sign-in at `/sign-in`, the household created on first sign-in, and
-one person is one address (2026-09-12).
+one person is one address (2026-09-12); the Postgres repository substituting at
+`getRepository()` (2026-09-12).
+
+**The next step is the one that adds a worker.** A real household starts empty and the
+application has no flow that creates a profile, so every screen a new account reaches says
+there is no worker yet. `הוספת עובד` is the artboard, and the question under "What is still
+owed" about that artboard drawing no shell has to be answered before it is built.
 
 **Two things the stage's own tooling rests on.** The household isolation is checked against
 the live database by hand with `node --env-file=.env scripts/check-household-isolation.mjs`,
@@ -177,7 +193,10 @@ never by the suite, which reads saved files and never the network (Part 4); it t
 PostgREST with the **publishable** key exactly as a browser would, because the service-role key
 bypasses row-level security and would prove nothing. The sub-address rule is checked the same
 way, with `scripts/check-one-address-one-account.mjs`, because signing up sends mail that
-Supabase delivers only to the project's team and only twice an hour.
+Supabase delivers only to the project's team and only twice an hour. The Postgres repository
+is checked the same way and for the same reason, by
+`npx vitest run --config vitest.live.config.ts`: what it does is a mapping onto column names,
+and every way of getting one wrong type-checks.
 
 **Run `/security-review` before this stage is committed**, and nowhere earlier — it is the only
 stage that introduces an authorisation boundary, encryption at rest, and data reachable by a

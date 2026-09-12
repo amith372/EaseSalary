@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { MonthScreen } from "@/components/MonthScreen";
 import type { WorkerMonths } from "@/components/MonthScreen";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import { calculateSeries } from "@/lib/engine/series";
 import { todayInIsrael } from "@/lib/today";
 

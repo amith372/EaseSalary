@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import {
   advanceLedger,
   reviewAdvance,

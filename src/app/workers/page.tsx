@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { WorkersList } from "@/components/WorkersList";
 import type { WorkerSummary } from "@/components/WorkersList";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
 import { advanceLedger } from "@/lib/engine/advances";
 import { calculateSeries } from "@/lib/engine/series";

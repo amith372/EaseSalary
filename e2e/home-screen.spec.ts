@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { useHousehold } from "./household";
 import { he } from "../src/lib/i18n/he";
 
 /**
@@ -27,6 +28,15 @@ import { he } from "../src/lib/i18n/he";
  */
 
 test.describe("the opening screen", () => {
+  // **A seeded household of this file's own**, as every other spec here opens
+  // one. Since the Postgres repository landed, a request with no `household`
+  // cookie reads the signed-in account's real household — which holds no
+  // worker, so the screen this file is about is correctly not drawn at all
+  // (`src/lib/store.ts`).
+  test.beforeEach(async ({ page }) => {
+    await useHousehold(page, "home-screen", "the-opening-screen");
+  });
+
   test("renders right-to-left, in Hebrew, with the calendar's week starting on Sunday", async ({
     page,
   }) => {

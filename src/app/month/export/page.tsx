@@ -3,7 +3,7 @@ import { BeforeExportScreen } from "@/components/BeforeExportScreen";
 import type { WorkerBeforeExport } from "@/components/BeforeExportScreen";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import {
   blocksExport,
   exportQuestions,

@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { HolidayPickerScreen } from "@/components/HolidayPickerScreen";
 import type { WorkerHolidayYear } from "@/components/HolidayPickerScreen";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
 import { holidayYear } from "@/lib/engine/holidayYear";
 import { holidayAllowanceFor } from "@/lib/engine/leave";

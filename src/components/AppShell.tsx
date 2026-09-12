@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Bidi } from "@/components/Bidi";
+import { Card } from "@/components/Card";
 import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
 import { he } from "@/lib/i18n/he";
 import type { Worker } from "@/lib/types";
@@ -38,6 +39,30 @@ import type { Worker } from "@/lib/types";
 interface NavItem {
   href: string;
   label: string;
+}
+
+/**
+ * What a new account sees until its first worker exists.
+ *
+ * **It offers no button, and the missing button is the honest part.** The flow
+ * that adds a worker is the next step of stage 3 and the `הוספת עובד` artboard
+ * is what it builds; a control put here now would either lead nowhere or build
+ * that screen without the check its own step ends with (`CLAUDE.md` rule 8).
+ */
+function EmptyHousehold() {
+  return (
+    <Card radius="md" className="mt-6 px-6 py-8" data-role="empty-household">
+      <h1 dir="auto" className="text-[19px] font-semibold text-ink">
+        {he.emptyHousehold.title}
+      </h1>
+      <p dir="auto" className="mt-2.5 max-w-prose text-[15px] text-ink-mute">
+        {he.emptyHousehold.lead}
+      </p>
+      <p dir="auto" className="mt-4 text-[14px] text-ink-quiet">
+        {he.emptyHousehold.comingSoon}
+      </p>
+    </Card>
+  );
 }
 
 const navItems: NavItem[] = [
@@ -79,6 +104,13 @@ export function AppShell({
   // bar is already signed in, so drawing five nav tabs around a sign-in form
   // would offer five links that redirect straight back to it.
   if (pathname === "/sign-in") return <>{children}</>;
+
+  // A household with no worker in it yet, which is what every new account is
+  // until the first profile is created. Every screen below is a screen about
+  // one worker, so there is nothing for any of them to draw: the bar stays,
+  // because it is the frame and not a promise about data, and what would have
+  // been the screen says why it is empty.
+  const noWorkerYet = workers.length === 0;
 
   return (
     /*
@@ -162,7 +194,9 @@ export function AppShell({
       </header>
 
       <main className="flex min-h-0 flex-1 justify-center overflow-auto px-4 pt-3 pb-3 md:px-7">
-        <div className="flex w-full max-w-[1320px] min-w-0 flex-col gap-2.5">{children}</div>
+        <div className="flex w-full max-w-[1320px] min-w-0 flex-col gap-2.5">
+          {noWorkerYet ? <EmptyHousehold /> : children}
+        </div>
       </main>
     </div>
     </WorkerScopeProvider>

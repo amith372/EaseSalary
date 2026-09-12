@@ -25,7 +25,7 @@ import { SATURDAY } from "../src/lib/dates";
  *
  * **Each test gets its own store.** The dev repository is a module singleton
  * keyed by the `household` cookie, and a suffix after the seed name opens a
- * fresh one (`src/lib/dev/store.ts`) — so a spec that sweeps a range and opens a
+ * fresh one (`src/lib/store.ts`) — so a spec that sweeps a range and opens a
  * month leaves nothing behind in the household anybody else is looking at, and
  * can assert the *before* state on its second run as truthfully as on its first.
  */
@@ -58,7 +58,7 @@ const REST_DAY_RATE = 42635;
  * The run's own id, so a household name is never reused.
  *
  * **The store outlives the test run and not the server.** It is a module
- * singleton keyed by the cookie's value (`src/lib/dev/store.ts`), so a fixed
+ * singleton keyed by the cookie's value (`src/lib/store.ts`), so a fixed
  * name would hand the second run of this file the marks the first run made —
  * and the "before" assertions would then be asserting the previous run. The
  * dev server sheds every one of these on restart, which is the whole of their

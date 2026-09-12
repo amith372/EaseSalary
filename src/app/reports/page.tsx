@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { ReportsScreen } from "@/components/ReportsScreen";
 import type { WorkerReports } from "@/components/ReportsScreen";
-import { getRepository } from "@/lib/dev/store";
+import { getRepository } from "@/lib/store";
 import { blocksExport } from "@/lib/engine/beforeExport";
 import { monthLevels } from "@/lib/engine/month";
 import { calculateSeries } from "@/lib/engine/series";

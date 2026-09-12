@@ -221,7 +221,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
    * It passes today, and the disagreement the user met could not be reproduced
    * on this path or with the browser's back button: the marks were not in the
    * dev store by the time it was looked at, and that store lives only as long
-   * as the `next dev` process (`dev/store.ts`). What this test would catch is
+   * as the `next dev` process (`src/lib/store.ts`). What this test would catch is
    * the version of it that is the application's fault — a screen answering out
    * of anything but the month as the store holds it now.
    *
