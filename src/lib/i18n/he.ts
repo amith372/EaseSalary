@@ -354,6 +354,11 @@ export const he = {
     date: "[תאריך]",
     year: "[שנה]",
     name: "[שם]",
+    /** Who the medical insurance is paid through, where the family has not
+     * said. The seeds carry it rather than a real agency: the month template
+     * held one family's insurer until 2026-09-12, and moving that name into a
+     * seed file would have kept it in the repository under a new roof. */
+    insurer: "[חברת הביטוח]",
     workerName: "[שם העובד/ת]",
     description: "[תיאור]",
   },
@@ -851,6 +856,21 @@ export const he = {
         /** The empty option of each select, which is what "no period" reads as
          * in a control that otherwise lists months. */
         periodNone: "—",
+        /**
+         * The day the money left the account (the user on 2026-09-12).
+         *
+         * Required, and asked of every kind: the sheet's own
+         * national-insurance label ends "התשלום בוצע ב ______", a blank the
+         * family used to fill by hand.
+         */
+        paidOn: "מתי שולם",
+        paidOnHint:
+          "היום שבו הכסף יצא מהחשבון. הוא לא בהכרח החודש שבו התשלום נרשם — ביטוח לאומי משולם בדיעבד.",
+        /** When the cover runs out (item 27's "עומד לפוג"). Shown only for the
+         * medical insurance, the one kind that buys a period. */
+        expiresOn: "עד מתי הביטוח בתוקף",
+        expiresOnHint:
+          "לא חובה. בלי למלא, נחשב שנה מיום התשלום — וזה מה שרוב הפוליסות. אם הפוליסה שלכם לתקופה אחרת, כדאי לכתוב את התאריך שלה.",
         submit: "לרשום",
         /** Reopened with what it holds already in the fields, because
          * correcting a payment by removing it and recording it again is the
@@ -998,6 +1018,12 @@ export const he = {
          * decide, and a period silently flipped is one she will not check. */
         periodBackwards:
           "החודש האחרון מוקדם מהחודש הראשון. כדאי לבדוק את סדר החודשים.",
+        /** No day of payment. Every payment has one and the sheet asks for it,
+         * so an empty field is not an answer here (the user on 2026-09-12). */
+        paidOnMissing: "צריך לכתוב מתי התשלום בוצע — תאריך אמיתי, ביום-חודש-שנה.",
+        /** Cover that ran out before it was bought. */
+        expiryBeforePayment:
+          "תאריך התפוגה מוקדם מיום התשלום. כדאי לבדוק את שני התאריכים.",
       },
     },
   },
@@ -1194,6 +1220,20 @@ export const he = {
           submit: "להוסיף",
           remove: "להסיר",
           removeLabel: (number: number) => `להסיר את מקדמה ${number}`,
+        },
+        /**
+         * Who the medical-insurance premium is paid through (specs.md item 16).
+         *
+         * **The hint says what it changes**, as the gender hint does: this is a
+         * label printed on the salary sheet and nothing else, and a field that
+         * does not say where it goes reads as a form collecting what it feels
+         * like collecting.
+         */
+        insurer: {
+          label: "דרך מי משולם הביטוח הרפואי",
+          hint: "הסוכנות, חברת הביטוח וקופת החולים — במילים שלכם. מה שנכתב כאן מופיע בשורת הביטוח הרפואי בדף המשכורת.",
+          placeholder: "סוכנות, חברת ביטוח, קופת חולים",
+          save: "לשמור",
         },
         documents: {
           title: "המסמכים",
@@ -1994,6 +2034,10 @@ export const he = {
           `החודש הזה מחושב לפי ${paid} לחודש, ושכר המינימום שהיה בתוקף בו הוא ${minimum}. באישור שכר המינימום לפני הייצוא החודש יעלה מעצמו לסכום הנכון.`,
       taxBracketsMissing: (year: number) =>
         `מדרגות מס ההכנסה לשנת ${year} אינן ידועות ליישום, ולכן שורת מס ההכנסה נשארת על אפס. אפשר לאשר סכום אחר לפני הייצוא.`,
+      /** The medical-insurance row names who the premium was paid through, and
+       * the profile has nobody in it (specs.md item 16). */
+      insurerMissing:
+        "החודש שולם ביטוח רפואי, ואין בפרופיל דרך מי הוא משולם. בלי זה שורת הביטוח הרפואי בדף המשכורת תיגמר באמצע המשפט.",
       recuperationRateMissing: (days: number) =>
         `החודש הזה הוא חודש ההבראה, והעובד/ת זכאית ל־${formatDays(days)} ימי הבראה — אבל ערך יום ההבראה שהיה בתוקף בחודש הזה אינו ידוע ליישום, ולכן השורה אינה מופיעה. אפשר להוסיף אותה כשורה משלך עם הסכום הנכון.`,
     },

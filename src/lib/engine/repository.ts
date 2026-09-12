@@ -80,6 +80,29 @@ export interface WorkerProfile extends Worker, WorkerTerms {
    * what is coming due now and never what was due in a month already exported.
    */
   documents: WorkerDocuments;
+  /**
+   * Who the medical insurance premium is paid through — the agency, the
+   * insurer, the health fund, in the family's own words (specs.md item 16).
+   *
+   * **It exists because the template carried one family's arrangement.** Cell
+   * `B10` of both month templates read "שולם באמצעות סוכנות ביטוח …" with a
+   * real agency and a real insurer written into the binary, which is precisely
+   * what Part 3 forbids: a template may never carry one family's data into
+   * another's sheet. It survived because the names appeared in no text file, so
+   * no diff and no search ever showed them.
+   *
+   * **On the profile and not in `WorkerTerms`**, for the reason the documents
+   * and the holiday source are: it is not a term of a month and changes no
+   * figure. Nothing snapshots it, so a family that changes insurer re-exports
+   * an older month under the new name — the row is a label saying who the
+   * premium goes to, not a sum the month was calculated with.
+   *
+   * The empty string is "not entered yet" and is the state of every worker the
+   * family has not typed one for. A month that records a medical-insurance
+   * payment while this is empty raises the warning of item 27 rather than
+   * printing half a sentence.
+   */
+  insurer: string;
 }
 
 /**

@@ -100,6 +100,41 @@ test.describe("the reports screen (item 23, item 29)", () => {
     ).toHaveCount(0);
   });
 
+  /**
+   * **The month a family downloads from the list is the fuller file** (the user
+   * on 2026-09-12).
+   *
+   * The month flow draws the two versions side by side and the family picks;
+   * this screen has one link per month and no chooser, so the link hands over
+   * the version with the helper column. That is what keeps the two surfaces
+   * from producing different files for one month.
+   *
+   * **What it would catch**: the link falling back to the plain sheet, which is
+   * the state before this change and is invisible on screen — both versions
+   * carry identical figures and differ only in a column the plain file hides,
+   * so nothing short of opening the workbook can tell them apart.
+   */
+  test("hands over the version with the helper column, as the month flow's fuller file does", async ({
+    page,
+  }) => {
+    await useHousehold(page, "notes-default");
+    await page.goto("/reports");
+    await switchToTestWorker(page);
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page
+        .getByRole("link", { name: he.reports.previousMonths.excel })
+        .first()
+        .click(),
+    ]);
+    const sheet = await openDownload(download);
+
+    // Column I, the ninth: the workbook's own note to whoever prepares the
+    // salary, hidden before printing and hidden outright in the plain file.
+    expect(sheet.getColumn(9).hidden).toBe(false);
+  });
+
   test("shows a figure only where it says something the others do not", async ({
     page,
   }) => {

@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
-import { switchToTestWorker } from "./household";
+import { TEST_WORKER_ID, switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
@@ -164,6 +164,50 @@ async function exportAugust(
 }
 
 test.describe("the month's file (specs.md item 2, criterion 1)", () => {
+  /**
+   * **The insurer the family typed reaches the sheet, and no other household's does**
+   * (specs.md item 16, Part 3).
+   *
+   * Cell `B10` of both month templates named a real agency, a real insurer and
+   * a real health fund until 2026-09-12. They sat inside the committed .xlsx,
+   * where no search and no diff could find them, and every family that ever
+   * exported a month received another household's arrangements on their own
+   * salary sheet.
+   *
+   * **The whole path, as a user meets it**: open her profile, type the insurer,
+   * press save, then export the month and read the cell. A unit test can fill a
+   * template with a string; only this can show that the field on the screen is
+   * the string that arrives in the file.
+   *
+   * **What it would catch**: the names returning to the template; the profile
+   * field not reaching the export, so the sheet says nothing where the family
+   * typed something; and the token printing raw.
+   */
+  test("prints the insurer typed on the profile, and no template's own", async ({
+    page,
+  }) => {
+    const typed = "סוכנות כלשהי בחברה כלשהי";
+    await useHousehold(page, "insurer");
+
+    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    const field = page.locator('[data-terms="insurer"]');
+    await field.locator("input").fill(typed);
+    await field.getByRole("button").click();
+    // Saved, not merely typed: the value survives a reload of her own page.
+    await page.reload();
+    await expect(field.locator("input")).toHaveValue(typed);
+
+    const sheet = await exportAugust(page, "plain");
+    const label = sheet.getCell("B10").text;
+
+    expect(label).toContain(typed);
+    expect(label).not.toContain("{{");
+    // The names the template used to carry, written out because there is
+    // nowhere left to import them from.
+    expect(label).not.toContain("הילית");
+    expect(label).not.toContain("הראל");
+  });
+
   /**
    * The whole flow, as a user meets it: answer the questions, press the button,
    * get a file. The file is what is asserted and not the click.

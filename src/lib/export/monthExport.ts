@@ -1,5 +1,11 @@
-import { dayLabel, fullDayLabel, monthLabel } from "@/lib/dateLabels";
+import {
+  coveredMonthsLabel,
+  dayLabel,
+  fullDayLabel,
+  monthLabel,
+} from "@/lib/dateLabels";
 import { holidayDaysOf } from "@/lib/engine/leave";
+import { thirdPartyLineKey } from "@/lib/engine/thirdParty";
 import type { MonthInSeries } from "@/lib/engine/series";
 import { closeMonth } from "@/lib/engine/types";
 import type { WorkerTerms } from "@/lib/engine/types";
@@ -31,6 +37,15 @@ export interface MonthFileRequest {
   employment: Pick<WorkerTerms, "employedSince">;
   month: MonthInSeries;
   showNotes: boolean;
+  /**
+   * Who the medical-insurance premium is paid through (specs.md item 16).
+   *
+   * Beside `employment` rather than inside `worker`, for the reason `worker` is
+   * narrow in the first place: that shape is what a switcher shows, and it is
+   * not the place to reach the household's arrangements through. It is not a
+   * month's term either — no month snapshots it — so it travels as itself.
+   */
+  insurer: string;
 }
 
 export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
@@ -42,6 +57,9 @@ export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
       workerName: request.worker.name,
       workerRole: he.sheet.workerRole,
       employmentStart: fullDayLabel(request.employment.employedSince),
+      // Off the profile, which is where it lives: it names who the premium goes
+      // to and values nothing, so no month snapshots it (specs.md item 16).
+      insurer: request.insurer,
     },
     // The same count the replay draws the year's entitlement against, from the
     // same function: `closeMonth` is pure and idempotent, so resolving an open
@@ -59,6 +77,24 @@ export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
     // moves the rest day in June must not thereby relabel every earlier
     // month's sheet, which is the whole reason the terms are snapshotted.
     restDayWords: he.sheet.restDayTokens(facts.terms.restDay),
+    // The months the quarter's payment was for, read off the line that recorded
+    // it and empty in a month that settled none (specs.md item 19). The screen
+    // draws the same run through `CoveredMonths`, from the same wording, so the
+    // sheet and the payslip cannot name one period two ways (rule 11).
+    // The day the quarter's own payment left the account, read off the month's
+    // stored payment rather than off the line: a line carries what the sheet
+    // prices and the payment carries when it was made (specs.md item 16).
+    niPaidOn: (() => {
+      const payment = facts.thirdPartyPayments.find(
+        (one) => one.kind === "nationalInsurance",
+      );
+      return payment === undefined ? "" : fullDayLabel(payment.paidOn);
+    })(),
+    niMonths: coveredMonthsLabel(
+      result.lines.find(
+        (line) => line.key === thirdPartyLineKey("nationalInsurance"),
+      )?.coversMonths ?? [],
+    ),
     notes: notesOf(facts),
     showNotes: request.showNotes,
   };

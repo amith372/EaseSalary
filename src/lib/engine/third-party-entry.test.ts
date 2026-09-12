@@ -24,6 +24,10 @@ const draft = (over: Partial<ThirdPartyDraft> = {}): ThirdPartyDraft => ({
   amount: "500",
   coversFrom: "",
   coversTo: "",
+  // Every payment records the day it was made (specs.md item 16), so a draft
+  // without one is refused — which is what the tests below check separately.
+  paidOn: "2026-08-15",
+  expiresOn: "",
   note: "",
   ...over,
 });
@@ -39,6 +43,8 @@ describe("a draft becomes a payment, or says why not (specs.md item 16)", () => 
       payment: {
         kind: "medicalInsurance",
         agorot: 50000,
+        paidOn: "2026-08-15",
+        expiresOn: "2027-08-15",
         note: "הפוליסה השנתית",
       },
     });
@@ -49,7 +55,15 @@ describe("a draft becomes a payment, or says why not (specs.md item 16)", () => 
     const bare = reviewThirdPartyPayment(draft({ note: "   " }), []);
     expect(bare).toEqual({
       ok: true,
-      payment: { kind: "medicalInsurance", agorot: 50000 },
+      payment: {
+        kind: "medicalInsurance",
+        agorot: 50000,
+        paidOn: "2026-08-15",
+        // A year after the day it was paid, which is what the default gives a
+        // medical-insurance payment whose expiry the family did not type
+        // (specs.md item 16). Worked out by hand here and not from the helper.
+        expiresOn: "2027-08-15",
+      },
     });
   });
 
@@ -61,7 +75,12 @@ describe("a draft becomes a payment, or says why not (specs.md item 16)", () => 
     const reviewed = reviewThirdPartyPayment(draft({ amount: "1.005" }), []);
     expect(reviewed).toEqual({
       ok: true,
-      payment: { kind: "medicalInsurance", agorot: 101 },
+      payment: {
+        kind: "medicalInsurance",
+        agorot: 101,
+        paidOn: "2026-08-15",
+        expiresOn: "2027-08-15",
+      },
     });
   });
 
@@ -94,7 +113,7 @@ describe("a draft becomes a payment, or says why not (specs.md item 16)", () => 
     // The sheet holds one row per kind, and two rows under one key can be
     // neither overridden nor explained apart (items 16, 17, 24).
     const existing: ThirdPartyPayment[] = [
-      { kind: "medicalInsurance", agorot: 50000 },
+      { kind: "medicalInsurance", agorot: 50000, paidOn: "2026-08-15" },
     ];
     expect(
       reviewThirdPartyPayment(draft({ kind: "medicalInsurance" }), existing),
@@ -112,7 +131,7 @@ describe("a draft becomes a payment, or says why not (specs.md item 16)", () => 
     // `visaFee` covered both template rows, this pair was two payments of one
     // kind and the month was refused outright.
     const existing: ThirdPartyPayment[] = [
-      { kind: "visaExtensionFee", agorot: 19500 },
+      { kind: "visaExtensionFee", agorot: 19500, paidOn: "2026-08-15" },
     ];
     expect(
       reviewThirdPartyPayment(draft({ kind: "workerVisa" }), existing).ok,
@@ -297,8 +316,8 @@ describe("the quarter a national-insurance payment is offered (item 19)", () => 
 describe("removing a payment takes its override with it (items 16, 17)", () => {
   const month = {
     thirdPartyPayments: [
-      { kind: "medicalInsurance", agorot: 50000 },
-      { kind: "agencyFee", agorot: 30000 },
+      { kind: "medicalInsurance", agorot: 50000, paidOn: "2026-08-15" },
+      { kind: "agencyFee", agorot: 30000, paidOn: "2026-08-15" },
     ] satisfies ThirdPartyPayment[],
     overrides: {
       [thirdPartyLineKey("medicalInsurance")]: { agorot: 34816 },
@@ -310,7 +329,7 @@ describe("removing a payment takes its override with it (items 16, 17)", () => {
     const after = withoutThirdPartyPayment(month, "medicalInsurance");
 
     expect(after.thirdPartyPayments).toEqual([
-      { kind: "agencyFee", agorot: 30000 },
+      { kind: "agencyFee", agorot: 30000, paidOn: "2026-08-15" },
     ]);
     // The orphan is the whole point: an override is addressed by the row's own
     // key, so one left behind is an amount waiting to reattach itself to a row
@@ -331,5 +350,76 @@ describe("removing a payment takes its override with it (items 16, 17)", () => {
     withoutThirdPartyPayment(month, "medicalInsurance");
     expect(month.thirdPartyPayments).toHaveLength(2);
     expect(Object.keys(month.overrides)).toHaveLength(2);
+  });
+});
+
+/**
+ * The two dates a payment carries, settled with the user on 2026-09-12: every
+ * third-party payment records the day it was made, and a medical-insurance
+ * policy runs a year from that day unless the family says otherwise.
+ *
+ * Every expected date is worked out by hand here rather than taken from
+ * `coverExpiryOf`, which is the function under test (`CLAUDE.md`).
+ */
+describe("when it was paid, and when the cover runs out (specs.md item 16)", () => {
+  it("refuses a payment nobody dated", () => {
+    // **What it would catch**: the field going optional again. The sheet's own
+    // national-insurance label ends "התשלום בוצע ב ______", so a payment
+    // with no day is one the export cannot finish a sentence about.
+    const reviewed = reviewThirdPartyPayment(draft({ paidOn: "" }), []);
+
+    expect(reviewed).toEqual({ ok: false, reason: "paidOnMissing" });
+  });
+
+  it("refuses a day that is not a day", () => {
+    // 31 September does not exist, and a `Date` rolls it forward to 1 October
+    // rather than complaining — the class of quiet wrong Part 5 is about.
+    expect(reviewThirdPartyPayment(draft({ paidOn: "2026-09-31" }), [])).toEqual(
+      { ok: false, reason: "paidOnMissing" },
+    );
+  });
+
+  it("gives a medical-insurance policy a year from the day it was paid", () => {
+    const reviewed = reviewThirdPartyPayment(
+      draft({ kind: "medicalInsurance", paidOn: "2026-06-15" }),
+      [],
+    );
+
+    // 15 June 2026 plus a year, written out.
+    expect(reviewed.ok && reviewed.payment.expiresOn).toBe("2027-06-15");
+  });
+
+  it("keeps the family's own date over the default", () => {
+    // "Usually" is why the year is a default: a policy that ran fifteen months
+    // must keep the date the family typed, and must still keep it when she
+    // reopens the panel to correct something else.
+    const reviewed = reviewThirdPartyPayment(
+      draft({ paidOn: "2026-06-15", expiresOn: "2027-09-30" }),
+      [],
+    );
+
+    expect(reviewed.ok && reviewed.payment.expiresOn).toBe("2027-09-30");
+  });
+
+  it("refuses cover that ran out before it was bought", () => {
+    expect(
+      reviewThirdPartyPayment(
+        draft({ paidOn: "2026-06-15", expiresOn: "2026-06-14" }),
+        [],
+      ),
+    ).toEqual({ ok: false, reason: "expiryBeforePayment" });
+  });
+
+  it("gives no expiry to a kind that buys no period", () => {
+    // A quarter of national insurance covers months and expires in no useful
+    // sense; `coversMonths` already says which months those are (item 19). An
+    // expiry here would put a date on the reminder of item 27 that means
+    // nothing, and the family would be chased over it every year.
+    const reviewed = reviewThirdPartyPayment(
+      draft({ kind: "nationalInsurance", paidOn: "2026-06-15" }),
+      [],
+    );
+
+    expect(reviewed.ok && reviewed.payment.expiresOn).toBeUndefined();
   });
 });

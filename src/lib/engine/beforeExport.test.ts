@@ -200,8 +200,8 @@ describe("the questions that open an export", () => {
       facts({
         spans,
         thirdPartyPayments: [
-          { kind: "medicalInsurance", agorot: 130000 },
-          { kind: "licenceFee", agorot: 30000 },
+          { kind: "medicalInsurance", agorot: 130000, paidOn: "2026-08-15" },
+          { kind: "licenceFee", agorot: 30000, paidOn: "2026-08-15" },
         ],
       }),
     );
@@ -312,8 +312,8 @@ describe("the dates and amounts behind the questions", () => {
           { number: 2, kind: "repaid", agorot: 100000 },
         ],
         thirdPartyPayments: [
-          { kind: "medicalInsurance", agorot: 130000 },
-          { kind: "licenceFee", agorot: 30000 },
+          { kind: "medicalInsurance", agorot: 130000, paidOn: "2026-08-15" },
+          { kind: "licenceFee", agorot: 30000, paidOn: "2026-08-15" },
         ],
       }),
     );

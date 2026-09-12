@@ -230,6 +230,24 @@ export async function setRecuperationMonth(
 }
 
 /**
+ * Who the medical-insurance premium is paid through (specs.md item 16).
+ *
+ * **Free text, and trimmed rather than validated.** It is a name the family
+ * writes the way their own workbook wrote it — an agency, an insurer and a
+ * health fund in one phrase — and the application has no list to check it
+ * against. Empty is allowed and means "not entered": it is the state of every
+ * worker until someone types one, and the month that pays a premium without it
+ * is caught before the export rather than here.
+ */
+export async function setInsurer(
+  workerId: string,
+  insurer: string,
+): Promise<ProfileActionResult> {
+  const profile = await profileOf(workerId);
+  return saveProfile({ ...profile, insurer: insurer.trim() }, true);
+}
+
+/**
  * A line set once on the profile that appears in every month afterwards, at the
  * same amount, until the user changes it or stops it (specs.md item 20).
  *

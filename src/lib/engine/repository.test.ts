@@ -36,6 +36,7 @@ const MARCH: YearMonth = { year: 2026, month: 3 };
 
 const HANNA: WorkerProfile = {
   id: "hanna",
+  insurer: "",
   name: "האנה",
   firstName: "האנה",
   employedSince: "2026-01-01",
@@ -103,7 +104,7 @@ describe("a worker's facts written and read back", () => {
         },
       ],
       advances: [{ number: 1, kind: "granted", agorot: 100000 }],
-      thirdPartyPayments: [{ kind: "agencyFee", agorot: 30000 }],
+      thirdPartyPayments: [{ kind: "agencyFee", agorot: 30000, paidOn: "2026-03-15" }],
       incomeTaxAgorot: 4200,
       overrides: { restEveSupplement: { agorot: 40000, note: "סוכם" } },
     });

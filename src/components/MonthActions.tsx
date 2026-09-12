@@ -1219,6 +1219,11 @@ function ThirdPartyControl({
   const [note, setNote] = useState("");
   /** `null` until she chooses, which is what lets the period follow the kind and
    * then stop following it. */
+  const [paidOn, setPaidOn] = useState("");
+  // Empty takes the default `coverExpiryOf` gives the kind — a year for the
+  // medical insurance and nothing for anything else. The family types over it
+  // only where her own policy ran to some other day.
+  const [expiresOn, setExpiresOn] = useState("");
   const [chosenPeriod, setChosenPeriod] = useState<{
     from: string;
     to: string;
@@ -1244,6 +1249,8 @@ function ThirdPartyControl({
     setKind(null);
     setAmount("");
     setNote("");
+    setPaidOn("");
+    setExpiresOn("");
     setChosenPeriod(null);
     clear();
   }
@@ -1265,6 +1272,10 @@ function ThirdPartyControl({
     setKind(payment.kind);
     setAmount(formatAgorot(payment.agorot));
     setNote(payment.note ?? "");
+    setPaidOn(payment.paidOn);
+    // Put back as stored and never re-derived: a policy the family dated
+    // herself must not spring back to a year on the next correction.
+    setExpiresOn(payment.expiresOn ?? "");
     const covers = payment.coversMonths ?? [];
     setChosenPeriod(
       covers.length === 0
@@ -1286,6 +1297,8 @@ function ThirdPartyControl({
       amount,
       coversFrom: period.from,
       coversTo: period.to,
+      paidOn,
+      expiresOn,
       note,
     };
     run(
@@ -1372,6 +1385,31 @@ function ThirdPartyControl({
           {words.periodHint}
         </span>
       </div>
+
+      <Field label={words.paidOn} hint={words.paidOnHint}>
+        <input
+          type="date"
+          dir="ltr"
+          value={paidOn}
+          onChange={(event) => setPaidOn(event.target.value)}
+          className={`${inputClass} text-start`}
+        />
+      </Field>
+
+      {/* Only a kind that buys a period has one to run out. The medical
+          insurance is the one the family named, and item 27's reminder is what
+          reads the date (specs.md item 16). */}
+      {kind === "medicalInsurance" ? (
+        <Field label={words.expiresOn} hint={words.expiresOnHint}>
+          <input
+            type="date"
+            dir="ltr"
+            value={expiresOn}
+            onChange={(event) => setExpiresOn(event.target.value)}
+            className={`${inputClass} text-start`}
+          />
+        </Field>
+      ) : null}
 
       <Field label={words.note} hint={words.noteHint}>
         <input

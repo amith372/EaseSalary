@@ -28,6 +28,29 @@ export function monthLabel(ym: YearMonth): string {
   return `${he.calendar.monthNames[ym.month - 1]} ${ym.year}`;
 }
 
+/**
+ * "אוגוסט 2026 – אוקטובר 2026" — a run of covered months as its two ends.
+ *
+ * The period a payment is *for*, where that is not the month it appears in: a
+ * quarterly national-insurance payment is made in arrears (specs.md item 19).
+ * The run is contiguous by construction, so the two ends carry exactly what the
+ * list carries and stay readable at twelve months; a single month is drawn
+ * alone, because a range from a month to itself reads as an error.
+ *
+ * **The screen draws the same fact and must word it the same way.**
+ * `CoveredMonths` builds it in markup rather than as a string, because each end
+ * is a mixed run needing its own isolate (`CLAUDE.md`) and a joined string
+ * cannot give it one. The wording lives here so that the sheet and the screen
+ * cannot describe one period differently.
+ */
+export function coveredMonthsLabel(months: readonly YearMonth[]): string {
+  const first = months[0];
+  const last = months[months.length - 1];
+  if (first === undefined || last === undefined) return "";
+  if (months.length === 1) return monthLabel(first);
+  return `${monthLabel(first)} – ${monthLabel(last)}`;
+}
+
 /** "26 באוגוסט" — the same wording `rangeLabel` gives a range of one day. */
 export function dayLabel(iso: IsoDate): string {
   const date = fromIsoDate(iso);

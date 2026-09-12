@@ -80,6 +80,7 @@ function inputFor(
       workerName: "חנה",
       workerRole: "עובד/ת",
       employmentStart: "1 באפריל 2024",
+      insurer: "סוכנות ביטוח לדוגמה",
     },
     // Part 4's two holidays, which is what the year's entitlement is drawn
     // against whether or not she worked them (item 10).
@@ -94,6 +95,11 @@ function inputFor(
       rest_eve_days: "ימי שישי",
       rest_eve_days_definite: "ימי השישי",
     },
+    // August settled no quarter, which is the ordinary month (specs.md item
+    // 19): the row's blank stays blank and the sentence reads as the family's
+    // own workbook prints it.
+    niMonths: "",
+    niPaidOn: "",
     notes: {},
     showNotes: false,
     ...over,

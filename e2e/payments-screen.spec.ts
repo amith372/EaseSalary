@@ -241,6 +241,53 @@ test.describe("an advance given and repaid, walked across months (item 20)", () 
 });
 
 test.describe("a payment to a third party, corrected in place (item 16)", () => {
+  /**
+   * **A payment records the day it was made, and is refused without one** (the
+   * user on 2026-09-12).
+   *
+   * The sheet asks for it in so many words: the national-insurance label ends
+   * "התשלום בוצע ב ______", a blank the family used to fill by hand. A
+   * payment made in arrears appears in a month that is neither the months it
+   * covers nor the day it left the account, so a row naming one of the three
+   * cannot be reconciled against a bank statement.
+   *
+   * **What it would catch**: the field going optional, which puts the blank
+   * back on the sheet; and the refusal not reaching the screen, which is the
+   * worse half — a payment that looks saved and is not.
+   */
+  test("will not record a payment without the day it was made", async ({
+    page,
+  }) => {
+    await useHousehold(page, "paid-on");
+    await page.goto("/payments");
+    await switchToTestWorker(page);
+    await stepBack(page, 8); // September 2026 → January 2026
+
+    const words = he.month.actions.thirdParty;
+    const group = page.locator('[data-group="thirdParty"]');
+    const agency = he.sheet.thirdParty.agencyFee;
+
+    await group.getByRole("button", { name: words.add, exact: true }).click();
+    await group.getByRole("button", { name: agency, exact: true }).click();
+    await group.getByLabel(words.amount).fill("300");
+
+    // Recorded with the day left blank: refused, and said so on the screen.
+    await group
+      .getByRole("button", { name: words.submit, exact: true })
+      .click();
+    await expect(
+      page.getByText(he.month.actions.refused.paidOnMissing),
+    ).toBeVisible();
+
+    // The same payment with a day is accepted, and the row appears.
+    await group.getByLabel(words.paidOn).fill("2026-01-19");
+    await group
+      .getByRole("button", { name: words.submit, exact: true })
+      .click();
+    await settled(page);
+    await expect(group.getByText(agency, { exact: true }).first()).toBeVisible();
+  });
+
   test("renames rather than duplicating, and accepts an unchanged save", async ({
     page,
   }) => {

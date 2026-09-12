@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   addMonths,
+  addYears,
   compareIsoDate,
   daysBetween,
   daysInMonth,
@@ -134,5 +135,30 @@ describe("month arithmetic", () => {
   it("knows February in a leap year", () => {
     expect(daysInMonth({ year: 2028, month: 2 })).toBe(29);
     expect(daysInMonth({ year: 2026, month: 2 })).toBe(28);
+  });
+});
+
+describe("the same day a year later", () => {
+  it("keeps the day and the month, and moves the year", () => {
+    // A medical-insurance policy bought on 15 June 2026 runs to 15 June 2027
+    // (specs.md item 16). Written out rather than computed.
+    expect(addYears("2026-06-15", 1)).toBe("2027-06-15");
+  });
+
+  it("clamps a leap day rather than rolling it into March", () => {
+    // 29 February 2028 has no anniversary in 2029. `setUTCFullYear` alone
+    // gives 1 March, so a policy bought on a leap day would expire a day after
+    // the family believes it does — and nothing on screen would look wrong.
+    expect(addYears("2028-02-29", 1)).toBe("2029-02-28");
+  });
+
+  it("lands on the leap day where the year has one", () => {
+    expect(addYears("2027-02-28", 1)).toBe("2028-02-28");
+  });
+
+  it("crosses a daylight-saving boundary without moving a day", () => {
+    // Israel puts the clocks forward in late March. Built in UTC, so the day
+    // is the day (`CLAUDE.md`).
+    expect(addYears("2026-03-27", 1)).toBe("2027-03-27");
   });
 });

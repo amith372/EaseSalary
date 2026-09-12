@@ -230,7 +230,7 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
     const withPremium = calculateMonth(
       {
         ...facts,
-        thirdPartyPayments: [{ kind: "medicalInsurance", agorot: 50000 }],
+        thirdPartyPayments: [{ kind: "medicalInsurance", agorot: 50000, paidOn: "2025-08-15" }],
       },
       terms,
     );

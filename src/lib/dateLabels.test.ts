@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { dayLabel, fullDayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
+import {
+  coveredMonthsLabel,
+  dayLabel,
+  fullDayLabel,
+  monthLabel,
+  rangeLabel,
+} from "@/lib/dateLabels";
 
 /**
  * Every expected string is written out here in Hebrew rather than assembled from
@@ -83,5 +89,51 @@ describe("a date outside the month on screen", () => {
     expect(fullDayLabel("2026-08-26").startsWith(dayLabel("2026-08-26"))).toBe(
       true,
     );
+  });
+});
+
+/**
+ * The months a payment is for, which is the one label on the sheet that names a
+ * period rather than a day (specs.md item 19).
+ *
+ * Written out in Hebrew here for the reason at the top of this file: a test
+ * that joined `monthLabel` twice the way the function does would agree with it
+ * whatever separator it chose, including none.
+ */
+describe("a run of covered months", () => {
+  it("is drawn as its two ends", () => {
+    // The quarter a national-insurance payment settles, made in arrears.
+    expect(
+      coveredMonthsLabel([
+        { year: 2025, month: 4 },
+        { year: 2025, month: 5 },
+        { year: 2025, month: 6 },
+      ]),
+    ).toBe("אפריל 2025 – יוני 2025");
+  });
+
+  it("draws a single month alone", () => {
+    // A range from a month to itself reads as an error, which is the rule
+    // `CoveredMonths` already draws the same fact by on screen.
+    expect(coveredMonthsLabel([{ year: 2026, month: 8 }])).toBe("אוגוסט 2026");
+  });
+
+  it("says nothing at all when nothing is covered", () => {
+    // Most months settle no quarter, and their sheet must print the row's
+    // sentence exactly as the family's own workbook does — blank, not "–".
+    expect(coveredMonthsLabel([])).toBe("");
+  });
+
+  it("crosses a year end without losing either year", () => {
+    // The quarter that runs December to February is the one where a label
+    // taking its year from either end alone says the wrong thing — the same
+    // mistake the month-boundary range at the top of this file was written for.
+    expect(
+      coveredMonthsLabel([
+        { year: 2025, month: 12 },
+        { year: 2026, month: 1 },
+        { year: 2026, month: 2 },
+      ]),
+    ).toBe("דצמבר 2025 – פברואר 2026");
   });
 });

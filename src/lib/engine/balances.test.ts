@@ -590,3 +590,53 @@ describe("a month paying under the minimum wage in force during it", () => {
     ).toBeNull();
   });
 });
+
+describe("a premium paid to nobody named (specs.md item 16)", () => {
+  const premium = { kind: "medicalInsurance" as const, agorot: 130000, paidOn: "2025-08-15" };
+
+  /**
+   * Row 10 of the sheet reads "ביטוח רפואי לעובד/ת - שולם באמצעות …",
+   * and until 2026-09-12 the end of it was one family's own agency written into
+   * the template. It is filled from the profile now, so an empty profile ends
+   * the sentence mid-air.
+   *
+   * **What it would catch**: the warning never firing, which lets that sheet be
+   * exported; and the warning firing on a month that paid no premium, which is
+   * the noise that makes a warnings list stop being read.
+   */
+  it("warns when a month pays a premium and the profile names nobody", () => {
+    const month = { ...facts(AUGUST_2025), thirdPartyPayments: [premium] };
+    const warnings = calculateMonth(month, { ...terms(), insurer: "" }).warnings;
+
+    expect(warnings.map((one) => one.key)).toContain("insurerMissing");
+  });
+
+  it("says nothing once the profile names one", () => {
+    const month = { ...facts(AUGUST_2025), thirdPartyPayments: [premium] };
+    const named = { ...terms(), insurer: "סוכנות כלשהי" };
+
+    expect(calculateMonth(month, named).warnings).toEqual([]);
+  });
+
+  it("says nothing on a month that paid no premium, however empty the profile", () => {
+    // Most months pay none. A warning on every one of them is a warning nobody
+    // reads, which is the whole argument of the list being usually empty.
+    const warnings = calculateMonth(facts(AUGUST_2025), {
+      ...terms(),
+      insurer: "",
+    }).warnings;
+
+    expect(warnings).toEqual([]);
+  });
+
+  it("is not fooled by a profile holding only spaces", () => {
+    // A field the user pressed save on without typing is empty, and the sheet
+    // would print the same half sentence for it.
+    const month = { ...facts(AUGUST_2025), thirdPartyPayments: [premium] };
+    const blank = { ...terms(), insurer: "   " };
+
+    expect(calculateMonth(month, blank).warnings.map((one) => one.key)).toContain(
+      "insurerMissing",
+    );
+  });
+});

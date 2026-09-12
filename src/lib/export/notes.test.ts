@@ -49,7 +49,7 @@ describe("the notes the month's actions carry", () => {
           { id: "v", kind: "vacation", from: "2025-08-11", to: "2025-08-12", note: "נסעה" },
         ],
         thirdPartyPayments: [
-          { kind: "agencyFee", agorot: 12000, note: "חויב באיחור" },
+          { kind: "agencyFee", agorot: 12000, paidOn: "2025-08-15", note: "חויב באיחור" },
         ],
         advances: [],
       }),

@@ -94,6 +94,12 @@ const SEEDED_MONTHS: YearMonth[] = Array.from({ length: 9 }, (_, index) => ({
  */
 const firstWorker: WorkerProfile = {
   id: "worker-1",
+  // `I10` of `שכר_חודשי_להאנה2026.xlsx` names it, and this worker exists to
+  // replay those tabs: a demo whose medical-insurance row read "[חברת הביטוח]"
+  // could not be held against the sheet it is drawn from. It is the insurer and
+  // the health fund and no household's own detail — the template is where such
+  // a name may never live (Part 3), and it no longer does.
+  insurer: "קופ\"ח כללית במסגרת חברת הראל",
   // `B3` of every tab. The workbook's own figures are already pseudonymous —
   // the passport reads `P2222222B` and the account `11111111` — so this is the
   // family's test data and not a real worker's identity.
@@ -154,6 +160,7 @@ const firstWorker: WorkerProfile = {
  */
 const secondWorker: WorkerProfile = {
   id: "worker-2",
+  insurer: he.placeholder.insurer,
   name: "[שם העובד/ת השני/ה]",
   firstName: he.placeholder.name,
   // The same start as Hanna's, and for a reason rather than by copying: the
@@ -344,7 +351,13 @@ const workbookMonths: MonthRecord[] = WORKBOOK_SEED_MONTHS.map((m) => ({
     kind: a.kind,
     agorot: a.agorot,
   })),
-  thirdPartyPayments: [],
+  // The payments the tab records, with the day each was paid read out of the
+  // sentence in `I` beside it — the only place the workbook records it
+  // (specs.md item 16). Usually column `H`, but not always: `חודש  6.25` holds
+  // its premium in `C10`, which is why the fixture is built by reading the
+  // notes column rather than one money column. Empty on most tabs, which is the
+  // ordinary month.
+  thirdPartyPayments: m.thirdPartyPayments ?? [],
   userLines: [],
   overrides: {},
 }));
@@ -365,7 +378,11 @@ const devMonths: Record<string, MonthRecord[]> = {
     // to the insurer rather than to the worker: column H, and outside her own
     // total (specs.md item 16).
     1: {
-      thirdPartyPayments: [{ kind: "medicalInsurance", agorot: 130000 }],
+      // Paid on the 8th, and the policy runs the year `coverExpiryOf` gives it
+      // by default — the shape the family described (specs.md item 16).
+      thirdPartyPayments: [
+        { kind: "medicalInsurance", agorot: 130000, paidOn: "2026-01-08" },
+      ],
       // **The one month whose tax was confirmed, and confirmed at nothing**
       // (specs.md item 17, item 18). A figure here is the amount settled in the
       // pre-export conversation and stored with the month, reproduced ever
@@ -390,6 +407,8 @@ const devMonths: Record<string, MonthRecord[]> = {
         {
           kind: "nationalInsurance",
           agorot: 100000,
+          // In arrears: paid in April for the quarter that ended in March.
+          paidOn: "2026-04-15",
           coversMonths: [
             { year: 2026, month: 1 },
             { year: 2026, month: 2 },

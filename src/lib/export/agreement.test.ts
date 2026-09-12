@@ -16,6 +16,7 @@ import {
 import { monthSheetInputOf } from "@/lib/export/monthExport";
 import { fillMonthSheet } from "@/lib/export/monthSheet";
 import { MONTH_TEMPLATE, readTemplate } from "@/lib/export/template";
+import { monthLabel } from "@/lib/dateLabels";
 import { formatAgorot } from "@/lib/money";
 
 /**
@@ -88,7 +89,7 @@ function busyMonth(): { worker: WorkerTerms; facts: MonthFacts } {
       { number: 1, kind: "repaid", agorot: 200000 },
       { number: 2, kind: "granted", agorot: 150000 },
     ],
-    thirdPartyPayments: [{ kind: "agencyFee", agorot: 12000 }],
+    thirdPartyPayments: [{ kind: "agencyFee", agorot: 12000, paidOn: "2025-08-15" }],
     userLines: [
       {
         id: "bonus",
@@ -114,6 +115,7 @@ async function filled(showNotes: boolean, over: Partial<MonthFacts> = {}) {
 
   const input = monthSheetInputOf({
     worker: { id: "w", name: "חנה", firstName: "חנה" },
+    insurer: "סוכנות ביטוח לדוגמה",
     employment: { employedSince: worker.employedSince },
     month,
     showNotes,
@@ -307,9 +309,10 @@ describe("the preview and the file, from one engine result", () => {
     const paid = 93600;
     const { sheet, result } = await filled(false, {
       thirdPartyPayments: [
-        { kind: "agencyFee", agorot: 12000 },
+        { kind: "agencyFee", agorot: 12000, paidOn: "2025-08-15" },
         {
           kind: "nationalInsurance",
+          paidOn: "2025-07-15",
           agorot: paid,
           coversMonths: [
             { year: 2025, month: 4 },
@@ -327,6 +330,98 @@ describe("the preview and the file, from one engine result", () => {
     // And the quarter's money, in its own column, undisturbed.
     expect(said(sheet, `H${NATIONAL_INSURANCE_ROW}`)).toBe(formatAgorot(paid));
     expect(result.nationalInsuranceEstimate).not.toBe(paid);
+  });
+
+  /**
+   * **The months the quarter was for, named beside the money** (specs.md item
+   * 19: the payment appears "with the months it covers named beside it", and
+   * "the export carries the amount that was due, that tick, and the months the
+   * payment covers").
+   *
+   * The row's label is a sentence with a blank in it — the family types the
+   * quarter into "הפרשות בגין חודשים ____" by hand — so the blank is the
+   * template's `{{ni_months}}` and the export fills it. A figure alone in `H`
+   * says a quarter was settled and not *which* quarter, and a payment made in
+   * arrears is unreadable without that.
+   *
+   * **What it would catch**: the token left standing, which prints the literal
+   * "{{ni_months}}" onto a family's sheet; the months dropped, which is the
+   * blank the application exists to stop the user filling in herself; and the
+   * sheet naming a different run from the screen, which draws the same two ends
+   * through `CoveredMonths`. The ends are asserted through `monthLabel` for
+   * that last reason — it is the function the screen words each end with.
+   */
+  it("names the months the quarter's payment covers", async () => {
+    const covers = [
+      { year: 2025, month: 4 },
+      { year: 2025, month: 5 },
+      { year: 2025, month: 6 },
+    ];
+    const { sheet } = await filled(false, {
+      thirdPartyPayments: [
+        { kind: "nationalInsurance", agorot: 93600, paidOn: "2025-07-15", coversMonths: covers },
+      ],
+    });
+    const label = sheet.getCell(`B${NATIONAL_INSURANCE_ROW}`).text;
+
+    // Written out rather than built from the code under test: April to June
+    // 2025 is the quarter the fixture pays for, and this is how the family
+    // reads it.
+    expect(label).toContain("אפריל 2025 – יוני 2025");
+    // And the second blank of the same label: the day the money left the
+    // account. A quarter paid in arrears appears in a month that is neither
+    // the months it covers nor the day it was paid, so a row naming only one
+    // of the three cannot be reconciled against a bank statement.
+    expect(label).toContain("15 ביולי 2025");
+    // The same two ends the screen draws, worded by the same function.
+    expect(label).toContain(monthLabel(covers[0]!));
+    expect(label).toContain(monthLabel(covers[covers.length - 1]!));
+    expect(label).not.toContain("{{");
+  });
+
+  /**
+   * **The medical-insurance row names the family's own insurer and no
+   * template's** (specs.md item 16, Part 3: a template may never carry one
+   * family's data into another's sheet).
+   *
+   * Until 2026-09-12 cell `B10` read "שולם באמצעות סוכנות ביטוח הילית
+   * בחברת הראל - קופ\"ח כללית" — one household's agency, insurer and health
+   * fund, written into the committed binary where no diff could show them.
+   *
+   * **What it would catch**: the names coming back into the template, which is
+   * the whole defect and is invisible to every other check in this repository;
+   * and the token left standing, which prints "{{insurer}}" onto the sheet.
+   */
+  it("names the family's own insurer on the medical-insurance row", async () => {
+    const { sheet } = await filled(false);
+    const label = sheet.getCell("B10").text;
+
+    expect(label).toContain("סוכנות ביטוח לדוגמה");
+    expect(label).not.toContain("{{");
+    // The two names the template carried. Written out rather than imported,
+    // because there is nowhere left to import them from — which is the point.
+    expect(label).not.toContain("הילית");
+    expect(label).not.toContain("הראל");
+  });
+
+  /**
+   * **A month that settled no quarter leaves the sentence as the workbook
+   * prints it.** Most months settle nothing (item 19: it is paid once a
+   * quarter), so the ordinary sheet must not carry a half-filled sentence.
+   *
+   * **What it would catch**: the token surviving into every ordinary month's
+   * file, which is the failure mode of a placeholder nobody fills when the
+   * fact behind it is absent.
+   */
+  it("leaves the months blank in a month that settled no quarter", async () => {
+    const { sheet } = await filled(false);
+    const label = sheet.getCell(`B${NATIONAL_INSURANCE_ROW}`).text;
+
+    expect(label).not.toContain("{{");
+    expect(label).toContain("ביטוח לאומי");
+    // No payment, so the third-party column is empty too — the two go together,
+    // and a named quarter over an empty cell would be the real defect.
+    expect(sheet.getCell(`H${NATIONAL_INSURANCE_ROW}`).text).toBe("");
   });
 
   it("says the balances the same way in both", async () => {

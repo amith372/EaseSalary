@@ -94,6 +94,7 @@ async function filesOf() {
           name: worker.name,
           firstName: worker.firstName,
         },
+        insurer: "סוכנות ביטוח לדוגמה",
         employment: { employedSince: worker.employedSince },
         month,
         showNotes: false,

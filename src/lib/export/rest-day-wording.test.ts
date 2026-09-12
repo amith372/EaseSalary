@@ -85,6 +85,7 @@ async function sheetFor(restDay: RestDay): Promise<ExcelJS.Worksheet> {
     template,
     monthSheetInputOf({
       worker: { id: "w", name: "חנה", firstName: "חנה" },
+      insurer: "סוכנות ביטוח לדוגמה",
       employment: { employedSince: worker.employedSince },
       month,
       showNotes: false,

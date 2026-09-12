@@ -122,7 +122,18 @@ function fileHref(
   return `/reports/file?${query.toString()}`;
 }
 
-function monthHref(workerId: string, month: YearMonth, notes = false): string {
+/**
+ * One month's file, as `/דוחות` links it.
+ *
+ * **The helper column is on by default here** (the user on 2026-09-12). The
+ * month flow offers the two versions side by side and the family chooses; this
+ * screen offers one link per month and no chooser, so the one it hands over is
+ * the fuller file. The two surfaces then produce the same file for the same
+ * month, which is what "the exports match one another" asks for: a family that
+ * re-downloads March from the list must not get a thinner sheet than the one
+ * they filed in March.
+ */
+function monthHref(workerId: string, month: YearMonth, notes = true): string {
   const query = new URLSearchParams({
     worker: workerId,
     month: `${month.year}-${String(month.month).padStart(2, "0")}`,

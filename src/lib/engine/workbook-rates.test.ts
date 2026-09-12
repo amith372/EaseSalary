@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
 import { dailyRate, deriveRates, restDayRate } from "@/lib/engine/rates";
 import { WAGE_2025, WAGE_2026 } from "@/lib/engine/workbook.fixture";
 
@@ -83,5 +84,36 @@ describe("where the 2024 workbook is wrong, and by how much", () => {
     // later tabs as an authority.
     expect(Math.round(restDayRate(WAGE_2025))).toBe(42635);
     expect(Math.round(restDayRate(WAGE_2026))).toBe(43974);
+  });
+});
+
+describe("where the 2026 workbook is stale, and by how much", () => {
+  /**
+   * **The recuperation rate the 2026 workbook still pays, and the one in force
+   * when it paid it** (specs.md item 15).
+   *
+   * `I18` of `חודש  3.26` states the family's arithmetic outright — six days at
+   * ₪418 a day, ₪2,508 — and `G18` of that tab carries the ₪2,508. ₪418 is the
+   * rate that preceded 1.7.2025; the rate in force in March 2026 is ₪451.50, so
+   * the engine reaches ₪2,709 and is right to. The sheet is stale in the way
+   * Part 5 records for the national-insurance line that stayed at 2%.
+   *
+   * **What it would catch**: `חודש  3.25` or `חודש  3.26` being seeded or added
+   * to `WORKBOOK_MONTHS` on the strength of the ₪418 now being known — the
+   * demo would show a ברוטו the workbook disagrees with, and somebody would
+   * then "fix" the rate table to the family's stale figure and underpay every
+   * later recuperation by ₪33.50 a day.
+   */
+  it("holds ₪451.50 a day for March 2026, where `I18` of that tab says ₪418", () => {
+    const rate = rateInForce(SEEDED_RATES, "recuperationDayRate", {
+      year: 2026,
+      month: 3,
+    });
+    // ₪451.50 — the private sector's rate for the recuperation year running
+    // 1.7.2025 to 30.6.2026, from kolzchut via `datedRates.ts`.
+    expect(rate?.value).toBe(45150);
+    // And explicitly not the family's figure, which is the pre-July-2025 rate.
+    // Six days at each: ₪2,709 against the ₪2,508 the tab pays.
+    expect(rate?.value).not.toBe(41800);
   });
 });

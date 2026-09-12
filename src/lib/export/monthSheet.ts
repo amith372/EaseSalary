@@ -68,6 +68,16 @@ export interface MonthSheetIdentity {
   /** When the employment began, as text. */
   employmentStart: string;
   /**
+   * Who the medical-insurance premium is paid through, in the family's own
+   * words, or "" where the profile has none (specs.md item 16).
+   *
+   * Until 2026-09-12 `B10` named one family's agency, insurer and health fund
+   * in the template's own binary, which Part 3 forbids and which no diff could
+   * show. It is a placeholder now like every other detail, and the sentence
+   * introducing it stays in the template, where the wording belongs.
+   */
+  insurer: string;
+  /**
    * The employer of record, the passport line, the bank line and the account
    * number. **Each is empty until stage 3**, and empty is what is written: the
    * three identifying numbers are encrypted at rest with a key outside the
@@ -110,6 +120,32 @@ export interface MonthSheetInput {
    * counts her Fridays and calls them Saturdays.
    */
   restDayWords: Record<string, string>;
+  /**
+   * The months a national-insurance payment covers, already worded, or "" in a
+   * month that settled no quarter (specs.md item 19).
+   *
+   * The row's label carries the blank in the family's own workbook — "הפרשות
+   * בגין חודשים            " — and the spec requires the payment to appear
+   * "with the months it covers named beside it". So the blank became the
+   * template's {{ni_months}} token and this fills it; an empty string leaves
+   * the sentence reading exactly as the untouched workbook's does, which is
+   * what a month with no payment should print.
+   *
+   * Worded by the caller, like restDayWords and for the same reason: the
+   * Hebrew belongs to the translations file and the filler learns none.
+   */
+  niMonths: string;
+  /**
+   * The day the quarter's own payment was made, already worded, or "" in a
+   * month that settled none (specs.md items 16, 19).
+   *
+   * The row's label carries two blanks and this is the second: "התשלום
+   * בוצע ב ____", which the family filled by hand. A quarter paid in arrears
+   * appears in a month that is neither the months it covers nor the month it
+   * was paid, so all three dates have to be said or the row cannot be
+   * reconciled against a bank statement.
+   */
+  niPaidOn: string;
   /**
    * The holiday days this month drew from the yearly entitlement — the
    * template's own `ניצול יום חג בחודש זה` (specs.md item 10).
@@ -213,7 +249,13 @@ export async function fillMonthSheet(
   writeBlock(sheet, input, layout, block);
   writeTotals(sheet, result, layout);
   writeReporting(sheet, result, layout);
-  fillPlaceholders(sheet, identity, input.restDayWords);
+  fillPlaceholders(
+    sheet,
+    identity,
+    input.restDayWords,
+    input.niMonths,
+    input.niPaidOn,
+  );
 
   sheet.getColumn(NOTES_COLUMN).hidden = !input.showNotes;
 
@@ -563,13 +605,18 @@ function fillPlaceholders(
   sheet: ExcelJS.Worksheet,
   identity: MonthSheetIdentity,
   restDayWords: Record<string, string>,
+  niMonths: string,
+  niPaidOn: string,
 ): void {
   const values: Record<string, string> = {
     ...restDayWords,
+    ni_months: niMonths,
+    ni_paid_on: niPaidOn,
     month_year: identity.monthYear,
     worker_name: identity.workerName,
     worker_role: identity.workerRole,
     employment_start: identity.employmentStart,
+    insurer: identity.insurer,
     employer_line: identity.employerLine ?? "",
     passport_line: identity.passportLine ?? "",
     bank_line: identity.bankLine ?? "",

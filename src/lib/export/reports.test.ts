@@ -133,6 +133,7 @@ describe("the national insurance report (items 16, 19)", () => {
       thirdPartyPayments: [
         {
           kind: "nationalInsurance",
+          paidOn: "2026-07-15",
           agorot: 95000,
           coversMonths: [
             { year: 2025, month: 4 },

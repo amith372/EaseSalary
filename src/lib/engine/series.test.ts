@@ -42,6 +42,7 @@ import type { BalanceKind, MonthResult, YearMonth } from "@/lib/types";
 // vacation accrual is fourteen twelfths a month all year (item 7).
 const HANNA: WorkerProfile = {
   id: "hanna",
+  insurer: "",
   name: "האנה",
   firstName: "האנה",
   employedSince: "2026-01-01",

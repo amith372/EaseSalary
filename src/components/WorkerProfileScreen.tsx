@@ -7,6 +7,7 @@ import {
   addStandingLine,
   removeOpeningAdvance,
   setDocuments,
+  setInsurer,
   setOpeningDays,
   setGender,
   setIncomeTaxSetting,
@@ -359,6 +360,12 @@ export function WorkerProfileScreen({
           <OpeningPositionControl
             workerId={profile.id}
             profile={profile}
+            onSubmit={handleAction}
+          />
+
+          <InsurerControl
+            workerId={profile.id}
+            insurer={profile.insurer}
             onSubmit={handleAction}
           />
 
@@ -1251,6 +1258,56 @@ function OpeningPositionControl({
  * three numbers are encrypted at rest with the passport and bank account
  * (item 22), and the key that protects them arrives in stage 3.
  */
+/**
+ * Who the medical-insurance premium is paid through (specs.md item 16).
+ *
+ * **It is a field because the template stopped being one family's.** Cell `B10`
+ * of both month templates named a real agency, a real insurer and a real health
+ * fund until 2026-09-12, which Part 3 forbids; the sentence stayed in the
+ * template and the names became this.
+ *
+ * Saved on a press and not on every keystroke, like the documents beside it: a
+ * name is typed in pieces, and a store written on each of them would record a
+ * dozen half-written insurers for the one that was meant.
+ */
+function InsurerControl({
+  workerId,
+  insurer,
+  onSubmit,
+}: {
+  workerId: string;
+  insurer: string;
+  onSubmit: Submit;
+}) {
+  const words = he.workers.profile.terms.insurer;
+  const [value, setValue] = useState(insurer);
+  const { refusal, run } = useProfileAction(onSubmit);
+
+  return (
+    <TermRow label={words.label} hint={words.hint}>
+      <div data-terms="insurer" className="flex flex-col gap-2.5">
+        <input
+          type="text"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder={words.placeholder}
+          dir="auto"
+          className={inputClass}
+        />
+        {refusal ? <Refusal reason={refusal} /> : null}
+        <button
+          type="button"
+          onClick={() => run(() => setInsurer(workerId, value))}
+          disabled={value.trim() === insurer}
+          className={`${buttonClass} self-start`}
+        >
+          <span dir="auto">{words.save}</span>
+        </button>
+      </div>
+    </TermRow>
+  );
+}
+
 function DocumentsControl({
   workerId,
   documents,

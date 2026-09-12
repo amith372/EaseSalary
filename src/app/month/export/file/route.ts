@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
       firstName: worker.firstName,
     },
     employment: { employedSince: worker.employedSince },
+    insurer: worker.insurer,
     month: inSeries,
     showNotes,
   });

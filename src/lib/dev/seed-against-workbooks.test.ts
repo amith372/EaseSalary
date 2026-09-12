@@ -55,6 +55,95 @@ describe("the demo household is the workbooks", () => {
     }
   });
 
+  /**
+   * **The money that went to somebody other than the worker, tab by tab**
+   * (specs.md item 16).
+   *
+   * Seven tabs in the seeded range carry one, and the day each was paid is in
+   * the sentence in `I` beside it — the only place the workbook records it.
+   * Every one of them was missing from this demo until 2026-09-12: the fixture
+   * built each month with an empty list, so no month of Hanna's had ever shown
+   * a medical insurance, a quarter of national insurance or a licence fee.
+   *
+   * **Two of the seven were still missing after that**, and were found the same
+   * day by reading column `I` of all thirty-six tabs against this fixture
+   * rather than reading column `H`: the Q4/25 national insurance filed under
+   * `חודש  1.26`, and the 2025 medical-insurance premium of `חודש  6.25`, which
+   * the family typed into `C10` instead of `H10`. Both are asserted below, so
+   * the count here is seven and a scan down one column cannot make it five
+   * again.
+   *
+   * **What it would catch**: the payments dropping out of the seed again, which
+   * is a defect nothing else here would see — a third-party payment is column
+   * `H` and never reaches the ברוטו or the transfer (item 16), so the totals
+   * above stay correct with every one of these gone.
+   */
+  it("carries each tab's own third-party payment, with the day it was paid", async () => {
+    const series = await hanna();
+    const paid = (year: number, month: number) => {
+      const one = series.find(
+        (m) => m.facts.month.year === year && m.facts.month.month === month,
+      );
+      return one?.facts.thirdPartyPayments ?? [];
+    };
+
+    // `H21` of `חודש  7.25`, with `I21`: paid 20.7.25 for the months 4-6/25.
+    expect(paid(2025, 7)).toEqual([
+      {
+        kind: "nationalInsurance",
+        agorot: 93600,
+        paidOn: "2025-07-20",
+        coversMonths: [
+          { year: 2025, month: 4 },
+          { year: 2025, month: 5 },
+          { year: 2025, month: 6 },
+        ],
+      },
+    ]);
+
+    // `H10` of `חודש  6.26`, with `I10`: an annual policy paid on 28.5.26.
+    // The month it is filed under is not the month it was paid, which is the
+    // whole reason the payment carries its own day.
+    const june = paid(2026, 6);
+    expect(june[0]?.kind).toBe("medicalInsurance");
+    expect(june[0]?.agorot).toBe(348163);
+    expect(june[0]?.paidOn).toBe("2026-05-28");
+    expect(june[0]?.expiresOn).toBe("2027-05-28");
+
+    // `H16` of `חודש  7.26`, with `I16`: 205 ₪ paid on 29.6.26.
+    expect(paid(2026, 7)).toEqual([
+      { kind: "licenceFee", agorot: 20500, paidOn: "2026-06-29" },
+    ]);
+
+    // `H21` of `חודש  1.26`, with `I21`: 918 ₪ paid 20.1.26 for 10-12/25 — the
+    // quarter that sat between 10.25 and 4.26 and was absent while both of its
+    // neighbours were present.
+    expect(paid(2026, 1)).toEqual([
+      {
+        kind: "nationalInsurance",
+        agorot: 91800,
+        paidOn: "2026-01-20",
+        coversMonths: [
+          { year: 2025, month: 10 },
+          { year: 2025, month: 11 },
+          { year: 2025, month: 12 },
+        ],
+      },
+    ]);
+
+    // `C10` of `חודש  6.25` — not `H10`, which is empty — with `B10` and `I10`
+    // both naming the day and the figure: an annual policy of ₪3,415.05 paid on
+    // 15.6.25. The same policy a year before the one June 2026 records.
+    const june25 = paid(2025, 6);
+    expect(june25[0]?.kind).toBe("medicalInsurance");
+    expect(june25[0]?.agorot).toBe(341505);
+    expect(june25[0]?.paidOn).toBe("2025-06-15");
+    expect(june25[0]?.expiresOn).toBe("2026-06-15");
+
+    // And the ordinary month records none at all.
+    expect(paid(2026, 2)).toEqual([]);
+  });
+
   it("covers May 2025 to July 2026, the months the tabs allow", async () => {
     // Fourteen: the fifteen tabs `WORKBOOK_MONTHS` records, less `חודש 4.25`.
     // April is dropped because the 2025 tabs pay ten holidays against the

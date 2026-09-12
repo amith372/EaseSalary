@@ -79,6 +79,9 @@ Each of these is true or false at a glance.
    them cannot disagree. Hidden is not removed, and the plain version is not a
    redaction: anyone who opens it can unhide the column and read every note, so a note
    that must not travel is a note that is not written.
+   One month exported from two places is one file. The month flow offers the version with
+   the helper column beside the plain one and the family chooses; the reports screen offers
+   a single link per month and hands over the version with the helper column.
 3. Every derived rate — the daily rate, which is the monthly salary over twenty-five, and
    the rest-day and holiday rate — is computed from the worker's base monthly salary
    rather than stored as a constant, so changing that salary changes both. **The
@@ -609,6 +612,16 @@ Each of these is true or false at a glance.
     and 20 already give for a line the user added and for an advance movement: an override
     is addressed by the row's own key, and one left behind is an amount waiting to reattach
     itself to a row that never asked for it.
+    Who the premium is paid through — the agency, the insurer and the health fund — is a
+    detail of the household and not of a month: it is entered once on the worker's profile,
+    printed on the medical-insurance row of the sheet, and values nothing. A month that
+    records a premium while the profile names nobody raises a warning rather than exporting
+    a sentence that stops in the middle. Every third-party payment records the day it was
+    made, and is refused without one: the month a payment is filed under is not the month it
+    was paid, still less the months it covers, and the sheet asks for all three. A payment
+    that buys a period of cover records when that period ends; for the medical insurance
+    this is a year after the day it was paid unless the family says otherwise, and it is the
+    date the expiry reminder of item 27 reads.
 17. Any amount the application worked out for a month can be overridden by the user from
     that month's actions. An overridden amount is visibly marked as manual and survives
     every later recalculation of that month.

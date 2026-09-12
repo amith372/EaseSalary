@@ -431,6 +431,33 @@ export function belowMinimumWageWarning(
   };
 }
 
+/**
+ * A premium was paid and the profile names nobody to have paid it to, or
+ * `null` where it does (specs.md item 16).
+ *
+ * **It fires only where the sheet would otherwise print half a sentence.** Row
+ * 10 reads "ביטוח רפואי לעובד/ת - שולם באמצעות …", and until 2026-09-12 the
+ * end of that sentence was one family's own agency written into the template's
+ * binary. It is a placeholder now, so a month that pays a premium with an empty
+ * profile exports a sentence that stops mid-air — which is the state this asks
+ * the user to fix before she meets it in the file.
+ *
+ * A month that paid no premium raises nothing: the row is empty, the sentence
+ * is never reached, and chasing every month for a field most of them do not use
+ * is exactly the noise item 27's warnings are supposed not to be.
+ */
+export function insurerMissingWarning(
+  facts: ClosedMonthFacts,
+  employment: Employment,
+): Warning | null {
+  const paidAPremium = facts.thirdPartyPayments.some(
+    (payment) => payment.kind === "medicalInsurance",
+  );
+  if (!paidAPremium) return null;
+  if ((employment.insurer ?? "").trim() !== "") return null;
+  return { key: "insurerMissing", message: he.sheet.warnings.insurerMissing };
+}
+
 /** Every warning the month raises. A list from the first commit, because a
  * second warning arriving later must not change the shape the screen reads. */
 export function buildWarnings(
@@ -444,6 +471,7 @@ export function buildWarnings(
     belowMinimumWageWarning(facts, rates),
     vacationYearWarning(facts, context),
     recuperationRateMissingWarning(facts, employment, rates),
+    insurerMissingWarning(facts, employment),
     taxBracketsMissingWarning(
       facts,
       rates,

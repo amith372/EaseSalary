@@ -101,9 +101,21 @@ function transferred(sheet: ExcelJS.Worksheet): string {
   throw new Error("the sheet has no transferred total");
 }
 
-/** One row of the payslip, by the engine key it carries. */
+/**
+ * One row of the payslip, by the engine key it carries.
+ *
+ * **Only the row the user can see.** `[data-row="net"]` is written once per
+ * mounted screen and by one line of `PayslipScreen` — so when this file failed
+ * once on 2026-09-12 with two elements matching it, the second was a second
+ * payslip in the document and not a second row on one. The worker switcher
+ * moves React state under the `Suspense` boundary that `useSearchParams`
+ * forces (`src/app/month/payslip/page.tsx`), and while the new worker's screen
+ * resolves React keeps the previous one mounted and hidden rather than
+ * unmounting it. The hidden tree still answers a selector, and strict mode
+ * then fails on a race that reruns do not reproduce.
+ */
 function row(page: Page, key: string) {
-  return page.locator(`[data-row="${key}"]`);
+  return page.locator(`[data-row="${key}"]`).filter({ visible: true });
 }
 
 test.describe("the payslip (specs.md item 2, criterion 1)", () => {

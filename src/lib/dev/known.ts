@@ -62,6 +62,9 @@ const AUGUST_2025 = { year: 2025, month: 8 };
  */
 const hanna: WorkerProfile = {
   id: "hanna",
+  // Part 4 says nothing about an insurer and her case records no medical
+  // insurance, so an empty string is the honest value: not entered.
+  insurer: "",
   name: "האנה",
   firstName: "האנה",
   employedSince: "2024-04-01",

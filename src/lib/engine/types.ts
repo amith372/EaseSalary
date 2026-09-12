@@ -370,7 +370,20 @@ export interface MonthIncomeTax {
 export type Employment = Pick<
   WorkerTerms,
   "employedSince" | "gender" | "openingPosition"
->;
+> & {
+  /**
+   * Who the medical-insurance premium is paid through (specs.md item 16).
+   *
+   * **It values nothing and is here only to be missed.** No line reads it and
+   * no figure moves with it; the export prints it on the medical-insurance row
+   * and the one thing the engine does with it is notice that a month paid a
+   * premium while the profile names nobody. Optional, because it is not a term
+   * of a month and a caller reasoning about months alone has no business
+   * carrying it — every screen already passes its profile, so the value arrives
+   * without a call site changing.
+   */
+  insurer?: string;
+};
 
 /**
  * The wage position confirmed for one month, stored with the month rather than
@@ -574,9 +587,36 @@ export type ThirdPartyKind = (typeof thirdPartyKinds)[number];
 export interface ThirdPartyPayment {
   kind: ThirdPartyKind;
   agorot: number;
+  /**
+   * The day the money actually left the account (the user on 2026-09-12: every
+   * third-party payment records when it was paid).
+   *
+   * **Required, and on every kind rather than on the insurance alone.** The
+   * sheet already asks for it in so many words — the national-insurance row's
+   * label ends "התשלום בוצע ב ______", a blank the family filled by hand — and a
+   * payment made in arrears is unreadable without it: the month a payment
+   * appears in is not the month it was made, still less the months it covers.
+   * Those are three different dates and this is the one nothing held.
+   */
+  paidOn: IsoDate;
   /** The months this payment covers: the national insurance is paid once a
    * quarter and in arrears (specs.md item 19). */
   coversMonths?: YearMonth[];
+  /**
+   * The day the cover runs out, where the payment buys a period of it — the
+   * medical-insurance policy above all (specs.md item 27's "עומד לפוג").
+   *
+   * **A year after the payment is the default and not the rule** (the user on
+   * 2026-09-12: "usually its paid for a year"). `coverExpiryOf` derives it and
+   * the family may type another date over it, which is why it is stored rather
+   * than computed at every read: a policy that ran fifteen months would
+   * otherwise be re-derived back to twelve on the next render.
+   *
+   * Absent where the payment buys no period — a quarter of national insurance
+   * covers months and expires in no useful sense, and `coversMonths` already
+   * says which months those are.
+   */
+  expiresOn?: IsoDate;
   note?: string;
 }
 

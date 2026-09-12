@@ -111,6 +111,26 @@ export function addDays(iso: IsoDate, days: number): IsoDate {
   return toIsoDate(date);
 }
 
+/**
+ * The same day a year later, clamped where that day does not exist.
+ *
+ * 29 February has no anniversary in an ordinary year, and `setUTCFullYear`
+ * rolls it silently to 1 March — a policy bought on a leap day would then
+ * expire a day after the family thinks it does, which is precisely the quiet
+ * kind of wrong `specs.md` Part 5 keeps warning about. Clamping to the 28th
+ * keeps the expiry inside the month the family would name.
+ *
+ * Built in UTC like every other date here, so a daylight-saving boundary cannot
+ * move it (`CLAUDE.md`).
+ */
+export function addYears(iso: IsoDate, years: number): IsoDate {
+  const date = fromIsoDate(iso);
+  const day = date.getUTCDate();
+  date.setUTCFullYear(date.getUTCFullYear() + years);
+  if (date.getUTCDate() !== day) date.setUTCDate(0);
+  return toIsoDate(date);
+}
+
 export function addMonths(ym: YearMonth, months: number): YearMonth {
   const zeroBased = ym.year * 12 + (ym.month - 1) + months;
   return { year: Math.floor(zeroBased / 12), month: (zeroBased % 12) + 1 };

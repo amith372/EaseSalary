@@ -141,7 +141,7 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
     // Reading H as salary would overpay her. ₪500 of medical insurance must
     // move neither of Part 4's two totals.
     const withPremium = calculateMonth(
-      facts([{ kind: "medicalInsurance", agorot: 50000 }]),
+      facts([{ kind: "medicalInsurance", agorot: 50000, paidOn: "2025-08-15" }]),
       terms,
     );
     expect(withPremium.gross).toBe(GROSS); // Part 4: ₪9,305.75
@@ -154,7 +154,10 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
     // apart (שכר_חודשי_להאנה2025.xlsx -> חודש  7.25 -> E26, H25), so no kind
     // is an exception.
     for (const kind of ALL_KINDS) {
-      const result = calculateMonth(facts([{ kind, agorot: 100000 }]), terms);
+      const result = calculateMonth(
+        facts([{ kind, agorot: 100000, paidOn: "2025-07-15" }]),
+        terms,
+      );
       expect(result.gross).toBe(GROSS);
       expect(result.net).toBe(NET);
       expect(columnTotal(result, "H")).toBe(100000);
@@ -165,7 +168,7 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
 
   it("prints an H subtotal that no other total contains", () => {
     const result = calculateMonth(
-      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID }]),
+      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID, paidOn: "2025-08-15" }]),
       terms,
     );
     const h = result.subtotals.find((s) => s.column === "H");
@@ -182,7 +185,7 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
     // three months at ₪312, and inventing a per-month price would put a charge
     // in column D that Part 5 warns is read as a payment.
     const result = calculateMonth(
-      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID }]),
+      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID, paidOn: "2025-08-15" }]),
       terms,
     );
     const line = result.lines.find(
@@ -276,7 +279,7 @@ describe("the national-insurance estimate (specs.md item 19)", () => {
     // The base is E + F + G. A ₪936 quarter leaving the account this month is
     // not part of the cost this month accrued.
     const result = calculateMonth(
-      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID }]),
+      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID, paidOn: "2025-08-15" }]),
       terms,
     );
     expect(result.nationalInsuranceEstimate).toBe(ESTIMATE);
@@ -301,6 +304,7 @@ describe("the estimate and the payment are two figures, never one (item 19)", ()
       facts([
         {
           kind: "nationalInsurance",
+          paidOn: "2025-07-15",
           agorot: QUARTER_PAID,
           coversMonths: QUARTER_COVERED,
         },
@@ -323,6 +327,7 @@ describe("the estimate and the payment are two figures, never one (item 19)", ()
       facts([
         {
           kind: "nationalInsurance",
+          paidOn: "2025-07-15",
           agorot: QUARTER_PAID,
           coversMonths: QUARTER_COVERED,
         },
@@ -339,7 +344,7 @@ describe("the estimate and the payment are two figures, never one (item 19)", ()
     // A premium paid for the month it appears in has nothing to say about other
     // months, so it carries no list rather than a list repeating itself.
     const result = calculateMonth(
-      facts([{ kind: "medicalInsurance", agorot: 32559 }]),
+      facts([{ kind: "medicalInsurance", agorot: 32559, paidOn: "2025-08-15" }]),
       terms,
     );
     const paid = result.lines.find(
@@ -352,7 +357,7 @@ describe("the estimate and the payment are two figures, never one (item 19)", ()
     // Which is what makes it derived: every month carries its own estimate,
     // whether or not a quarter was settled in it.
     const withPayment = calculateMonth(
-      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID }]),
+      facts([{ kind: "nationalInsurance", agorot: QUARTER_PAID, paidOn: "2025-08-15" }]),
       terms,
     );
     const without = calculateMonth(facts(), terms);
@@ -370,8 +375,8 @@ describe("one row per kind, and a month with two is refused (item 16)", () => {
     // and an override could not reach one without reaching the other.
     const refusals = validateMonth(
       facts([
-        { kind: "medicalInsurance", agorot: 32559 },
-        { kind: "medicalInsurance", agorot: 34816 },
+        { kind: "medicalInsurance", agorot: 32559, paidOn: "2025-08-15" },
+        { kind: "medicalInsurance", agorot: 34816, paidOn: "2025-08-15" },
       ]),
       terms,
     );
@@ -388,8 +393,8 @@ describe("one row per kind, and a month with two is refused (item 16)", () => {
     expect(() =>
       calculateMonth(
         facts([
-          { kind: "visaExtensionFee", agorot: 19500 },
-          { kind: "visaExtensionFee", agorot: 21000 },
+          { kind: "visaExtensionFee", agorot: 19500, paidOn: "2025-08-15" },
+          { kind: "visaExtensionFee", agorot: 21000, paidOn: "2025-08-15" },
         ]),
         terms,
       ),
@@ -406,8 +411,8 @@ describe("one row per kind, and a month with two is refused (item 16)", () => {
     // reach column H.
     const result = calculateMonth(
       facts([
-        { kind: "visaExtensionFee", agorot: 19500 },
-        { kind: "workerVisa", agorot: 21000 },
+        { kind: "visaExtensionFee", agorot: 19500, paidOn: "2025-08-15" },
+        { kind: "workerVisa", agorot: 21000, paidOn: "2025-08-15" },
       ]),
       terms,
     );
@@ -434,8 +439,8 @@ describe("one row per kind, and a month with two is refused (item 16)", () => {
     // both — so this refusal must not stand in the way of an ordinary month.
     const result = calculateMonth(
       facts([
-        { kind: "nationalInsurance", agorot: QUARTER_PAID },
-        { kind: "medicalInsurance", agorot: 32559 },
+        { kind: "nationalInsurance", agorot: QUARTER_PAID, paidOn: "2025-08-15" },
+        { kind: "medicalInsurance", agorot: 32559, paidOn: "2025-08-15" },
       ]),
       terms,
     );
@@ -446,7 +451,13 @@ describe("one row per kind, and a month with two is refused (item 16)", () => {
   it("keeps every kind addressable under its own key", () => {
     // Which is the whole point of the refusal: one key, one line, one override.
     const result = calculateMonth(
-      facts(ALL_KINDS.map((kind) => ({ kind, agorot: 10000 }))),
+      facts(
+        ALL_KINDS.map((kind) => ({
+          kind,
+          agorot: 10000,
+          paidOn: "2025-07-15" as const,
+        })),
+      ),
       terms,
     );
     const keys = result.lines
@@ -460,7 +471,7 @@ describe("an H line can be overridden like any other (specs.md item 17)", () => 
   it("replaces the amount, marks it manual, and still moves no total", () => {
     const result = calculateMonth(
       {
-        ...facts([{ kind: "medicalInsurance", agorot: 50000 }]),
+        ...facts([{ kind: "medicalInsurance", agorot: 50000, paidOn: "2025-08-15" }]),
         overrides: { [thirdPartyLineKey("medicalInsurance")]: { agorot: 34816 } },
       },
       terms,

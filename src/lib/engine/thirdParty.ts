@@ -1,13 +1,17 @@
 import type { DatedRate } from "@/lib/datedRates";
 import { rateInForce } from "@/lib/datedRates";
 import {
+  addYears,
+  compareIsoDate,
   compareMonth,
   eachMonth,
   parseYearMonth,
   previousQuarter,
 } from "@/lib/dates";
 import { type LineDraft, toLine } from "@/lib/engine/lines";
+import { reviewDate } from "@/lib/engine/profile";
 import { thirdPartyKinds } from "@/lib/engine/types";
+import type { IsoDate } from "@/lib/types";
 import type {
   LineOverride,
   MonthFacts,
@@ -242,6 +246,23 @@ export interface ThirdPartyDraft {
    */
   coversFrom: string;
   coversTo: string;
+  /**
+   * The day the money left the account, as typed — `YYYY-MM-DD`, and never
+   * empty (the user on 2026-09-12).
+   *
+   * The one date of the three a payment carries that nothing held before: the
+   * month it appears in is the month the sheet files it under, `coversMonths`
+   * is the period it pays for, and this is when it was actually paid.
+   */
+  paidOn: string;
+  /**
+   * The day the cover runs out, as typed, or empty to take the default.
+   *
+   * Empty on a medical-insurance payment means a year from the day it was paid,
+   * which is what the family said these usually are; empty on anything else
+   * means the payment buys no period and the sheet says nothing about one.
+   */
+  expiresOn: string;
   note: string;
 }
 
@@ -257,7 +278,12 @@ export type ThirdPartyRefusal =
   | "shape"
   | "thirdPartyPaidTwice"
   | "periodIncomplete"
-  | "periodBackwards";
+  | "periodBackwards"
+  /** No day of payment, or not a real one. Required on every kind. */
+  | "paidOnMissing"
+  /** Cover that ran out before it was bought, which is a typo and not a
+   * policy. */
+  | "expiryBeforePayment";
 
 export type ReviewedThirdParty =
   | { ok: true; payment: ThirdPartyPayment }
@@ -345,16 +371,57 @@ export function reviewThirdPartyPayment(
   const covered = coveredMonths(draft);
   if (!covered.ok) return { ok: false, reason: covered.reason };
 
+  const paidOn = reviewDate(draft.paidOn);
+  // `null` is an empty field, which for this one is not an answer: a payment
+  // nobody can date is a payment the sheet cannot say was made.
+  if (paidOn === null || paidOn === "invalid") {
+    return { ok: false, reason: "paidOnMissing" };
+  }
+
+  const typedExpiry = reviewDate(draft.expiresOn);
+  if (typedExpiry === "invalid") return { ok: false, reason: "paidOnMissing" };
+  const expiresOn = typedExpiry ?? coverExpiryOf(kind, paidOn);
+  if (expiresOn !== null && compareIsoDate(expiresOn, paidOn) < 0) {
+    return { ok: false, reason: "expiryBeforePayment" };
+  }
+
   const note = draft.note.trim();
   return {
     ok: true,
     payment: {
       kind,
       agorot,
+      paidOn,
       ...(covered.months === undefined ? {} : { coversMonths: covered.months }),
+      ...(expiresOn === null ? {} : { expiresOn }),
       ...(note === "" ? {} : { note }),
     },
   };
+}
+
+/**
+ * When cover bought on a given day runs out, where the kind buys a period at
+ * all — or `null` where it does not.
+ *
+ * **A year, for the medical insurance alone** (the user on 2026-09-12: "usually
+ * its paid for a year"). "Usually" is why this is a default the family types
+ * over and not a rule: `reviewThirdPartyPayment` takes a typed expiry in
+ * preference to this, so a policy that ran fifteen months keeps its own date.
+ *
+ * **The anniversary itself and not the day before it.** A family that paid on
+ * 15 June says the policy is good until 15 June, and the reminder of item 27
+ * fires ahead of the date either way. The two readings differ by one day and
+ * the date is editable, so the one that matches how the family says it out loud
+ * is the one that is defaulted to.
+ *
+ * Every other kind returns `null`: a quarter of national insurance covers
+ * months rather than expiring, and `coversMonths` already carries which.
+ */
+export function coverExpiryOf(
+  kind: ThirdPartyKind,
+  paidOn: IsoDate,
+): IsoDate | null {
+  return kind === "medicalInsurance" ? addYears(paidOn, 1) : null;
 }
 
 /**
