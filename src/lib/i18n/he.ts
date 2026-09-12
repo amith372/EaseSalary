@@ -194,9 +194,133 @@ export const he = {
   emptyHousehold: {
     title: "עוד אין כאן עובד/ת",
     lead: "כל המסכים כאן מדברים על עובד/ת אחת — החודש שלה, היתרות שלה, הגיליון שלה. אחרי שמוסיפים אותה, הכול נפתח.",
-    /** The flow that fills this in is the next step of stage 3, so the sentence
-     * says where it is rather than offering a button that leads nowhere. */
-    comingSoon: "מסך הוספת עובד/ת עדיין בבנייה.",
+    /** The one thing there is to do on this screen, and now it leads somewhere.
+     * Same words as the `העובדות` list's own control, so a family meets one
+     * name for one flow. */
+    add: "הוספת עובד/ת",
+  },
+
+  /**
+   * The wizard that adds a worker — `EaseSalary - הוספת עובד`.
+   *
+   * **Four steps, and the fourth reports rather than asks.** Three collect and
+   * one confirms what was saved, which is why "לצאת בלי לשמור" is honest right
+   * up to the last button: nothing is written until it is pressed.
+   */
+  addWorker: {
+    title: "הוספת עובד/ת",
+    /** "שלב 2 מתוך 4". The numbers are substituted, so each is its own element
+     * and neither is translated. */
+    stepOf: { before: "שלב ", between: " מתוך ", total: "4" },
+    leave: "לצאת בלי לשמור",
+    back: "לשלב הקודם",
+    cancel: "לבטל",
+    next: "להמשיך",
+    optional: "לא חובה",
+
+    who: {
+      title: "מי העובד/ת?",
+      lead: "רק הפרטים ההכרחיים. אפשר להשלים את השאר אחר כך.",
+      name: "שם מלא",
+      nameHint: "כפי שמופיע בדרכון",
+      namePlaceholder: "שם פרטי ושם משפחה",
+      gender: "מין",
+      /** Asked because the income-tax credit points turn on it and on nothing
+       * else (item 17), so the reason is said rather than left to be guessed at.
+       */
+      /** The reason is said rather than left to be guessed at, in the short
+       * form; the profile's own row carries the full sentence and is the same
+       * choice, so the two labels come from there rather than being written
+       * twice. */
+      genderHint: "קובע את נקודות הזיכוי במס הכנסה, ואת הפנייה בגיליון.",
+      passport: "מספר דרכון",
+      passportHint: "נשמר מוצפן, ונפתח רק כדי להציג אותו לך או להכניס אותו לגיליון.",
+      passportPlaceholder: "מספר",
+      country: "מדינת מקור",
+      countryHint: "ממנה נלקחת רשימת החגים שלה.",
+    },
+
+    when: {
+      title: "מתי מתחילים?",
+      lead: "התאריך קובע ותק, ולפיו מחושבים ימי חופשה, הבראה והזכאויות.",
+      employedSince: "תחילת העסקה",
+      employedSinceHint: "היום הראשון של העבודה",
+      restDay: "יום המנוחה השבועי",
+      restDayHint: "היום שבו אין עבודה. שישי, שבת או ראשון.",
+      recuperationMonth: "חודש תשלום ההבראה",
+      /**
+       * **The twelve-month condition is said here, where the month is chosen.**
+       * Recuperation is owed only after a full working year has been completed
+       * (`specs.md` item 15; Kol Zchut, `דמי הבראה`, read 2026-09-12: "עובדים
+       * שהשלימו שנת עבודה אחת (12 חודשים) לפחות במקום עבודתם זכאים לדמי
+       * הבראה"). A family choosing a month without knowing that would read the
+       * first empty year as a payment the application forgot.
+       */
+      recuperationMonthHint:
+        "דמי הבראה משולמים פעם בשנה, ורק אחרי שהעובד/ת השלים/ה 12 חודשי עבודה. השנה נמדדת מיום תחילת ההעסקה ולא לפי השנה הקלנדרית.",
+      /** Said under the control, because it is the consequence of the choice and
+       * not a detail behind a "?": the month the employment began is the month
+       * the first year closes in, so choosing it pays at the anniversary instead
+       * of up to eleven months later. */
+      recuperationMonthAdvice:
+        "מומלץ לבחור את החודש שבו התחילה ההעסקה — כך התשלום הראשון מגיע מיד כשמלאו 12 חודשים.",
+    },
+
+    pay: {
+      title: "כמה משלמים?",
+      lead: "אפשר לשנות את הסכומים בכל שלב, גם אחרי שמתחילים.",
+      salary: "שכר בסיס לחודש",
+      /** The floor is shown rather than merely enforced: a refusal after the
+       * fact is a rule the family met by breaking it (item 3). */
+      salaryHint: { before: "לא פחות משכר המינימום, ", after: "." },
+      restEveSupplement: "תוספת לערב יום המנוחה",
+      restEveSupplementHint: "סכום לשבוע, אם סוכם כזה. אין חובה בחוק.",
+      insurer: "הביטוח הרפואי משולם דרך",
+      insurerHint: "הסוכנות, חברת הביטוח או קופת החולים — כפי שתרצו שיופיע בגיליון.",
+      insurerPlaceholder: "שם",
+      incomeTax: "מס הכנסה",
+      incomeTaxHint: "החוק מחייב לנכות מס הכנסה. אפשר לשנות את הבחירה בכל שלב.",
+      /** Three short notes under the three cards. The **names** of the modes
+       * are the profile's own, so a family meets one name for one choice; only
+       * the note is shortened here, because a wizard card cannot carry the
+       * profile's full paragraph. */
+      automaticNote: "לפי מדרגות המס שבתוקף ונקודות הזיכוי שלה.",
+      noneNote: "אם המס מוסדר במקום אחר.",
+      percentageNote: "אם רואה חשבון נקב באחוז אחד.",
+    },
+
+    done: {
+      title: "זהו, אפשר להתחיל",
+      lead: "שמרנו את הפרטים. אפשר לשנות כל דבר בדף שלה.",
+      whatNow: "מה יקרה עכשיו",
+      /** Three sentences, each about something the application actually does.
+       * Nothing here promises a screen that does not exist. */
+      steps: [
+        "החודש הנוכחי כבר מחכה בדף הבית — אפשר להתחיל לסמן בלוח.",
+        "היתרות של חופשה ומחלה מתחילות להצטבר מתאריך תחילת ההעסקה.",
+        "מספרי הדרכון והאשרה, התאריכים שלהם ויתרות פתיחה — הכול נוסף בדף שלה.",
+      ],
+      toWorker: "לדף שלה",
+    },
+
+    /** Why a step cannot be left, in the words shown under the field itself.
+     * One sentence each, because the wizard marks the field rather than
+     * printing a list at the foot of a four-step form. */
+    errors: {
+      name: "צריך למלא שם.",
+      gender: "צריך לבחור.",
+      country: "צריך לבחור מדינה.",
+      employedSince: "צריך תאריך תקין, למשל 01/04/2026.",
+      restDay: "צריך לבחור יום.",
+      recuperationMonth: "צריך לבחור חודש.",
+      salary: "צריך לכתוב סכום.",
+      belowMinimum: "השכר לא יכול להיות נמוך משכר המינימום.",
+      supplement: "הסכום לא תקין.",
+      incomeTaxMode: "צריך לבחור.",
+      incomeTaxRate: "צריך אחוז בין 0 ל-100, למשל 2.5.",
+      /** The save itself failed, which is not a field the user can correct. */
+      save: "לא הצלחנו לשמור. אפשר לנסות שוב.",
+    },
   },
 
   nav: {
@@ -1218,6 +1342,20 @@ export const he = {
           rateHint: "אפשר גם עם נקודה עשרונית, למשל 2.5",
           save: "לשמור",
           reminder: 'תזכורת: עפ"י החוק צריך לשלם מס הכנסה.',
+        },
+        /**
+         * Her passport number, beside the date it expires (items 22, 28).
+         *
+         * **The hint says where it is kept**, because a family typing an
+         * identifier into a web page is entitled to know: it is sealed with a
+         * key that is not in the database, and it is opened only to show it
+         * here and to write it into the sheet.
+         */
+        passportNumber: {
+          label: "מספר דרכון",
+          hint: "נשמר מוצפן במפתח שאינו בבסיס הנתונים, ונפתח רק כדי להציג אותו כאן ולהכניס אותו לגיליון.",
+          none: "לא הוזן",
+          save: "לשמור",
         },
         /** The way in to `בחירת חגים` (`build_plan.md` stage 5). The artboard
          * is reached from `הגדרות` and from the home screen's own alert, and

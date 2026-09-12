@@ -59,7 +59,22 @@ export default function Home() {
 
   const fixture = homeFixtures.find((f) => f.worker.id === worker.id) ?? homeFixtures[0];
   const { result, alerts } = fixture;
-  const spans = spansByWorker[worker.id];
+  /**
+   * **A worker the fixtures do not name falls back with the fixture she fell
+   * back to**, which is the pair the line above already makes for everything
+   * else on this screen.
+   *
+   * Without it the screen crashed outright — `spans` came back `undefined` and
+   * the calendar iterated it — for every worker whose id is not one of the two
+   * the fixtures were written with. That is a case that could not arise while
+   * the only households were the seeded ones, and arises for every real one:
+   * a worker created through `הוספת עובד` is given an id by the store
+   * (`workers/actions.ts`), so no household that a family actually made could
+   * open this screen.
+   *
+   * The screen is still drawn from fixtures, which is stage 6's to replace.
+   */
+  const spans = spansByWorker[worker.id] ?? fixture.spans;
 
   const toggleWhy = (key: string) =>
     setOpenWhy((current) => (current === key ? null : key));
@@ -72,7 +87,7 @@ export default function Home() {
     );
     setSpansByWorker((current) => ({
       ...current,
-      [worker.id]: [...current[worker.id], ...added],
+      [worker.id]: [...(current[worker.id] ?? fixture.spans), ...added],
     }));
     setSkipped({ workerId: worker.id, days: refused });
   }
@@ -83,7 +98,9 @@ export default function Home() {
   function handleClearRange(from: IsoDate, to: IsoDate) {
     setSpansByWorker((current) => ({
       ...current,
-      [worker.id]: current[worker.id].filter((span) => !touchesRange(span, from, to)),
+      [worker.id]: (current[worker.id] ?? []).filter(
+        (span) => !touchesRange(span, from, to),
+      ),
     }));
     setSkipped(null);
   }

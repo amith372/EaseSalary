@@ -36,6 +36,11 @@ import type { Worker } from "@/lib/types";
  * current route, which a layout cannot know on the server.
  */
 
+/** The wizard's address, named once: the shell steps aside for it and the empty
+ * household links to it, and a route spelt twice is a route that stops
+ * agreeing with itself. */
+export const ADD_WORKER = "/workers/new";
+
 interface NavItem {
   href: string;
   label: string;
@@ -44,10 +49,8 @@ interface NavItem {
 /**
  * What a new account sees until its first worker exists.
  *
- * **It offers no button, and the missing button is the honest part.** The flow
- * that adds a worker is the next step of stage 3 and the `הוספת עובד` artboard
- * is what it builds; a control put here now would either lead nowhere or build
- * that screen without the check its own step ends with (`CLAUDE.md` rule 8).
+ * The one control on it is the only thing there is to do here, and it now leads
+ * to the flow that does it (`ADD_WORKER`).
  */
 function EmptyHousehold() {
   return (
@@ -58,9 +61,12 @@ function EmptyHousehold() {
       <p dir="auto" className="mt-2.5 max-w-prose text-[15px] text-ink-mute">
         {he.emptyHousehold.lead}
       </p>
-      <p dir="auto" className="mt-4 text-[14px] text-ink-quiet">
-        {he.emptyHousehold.comingSoon}
-      </p>
+      <Link
+        href={ADD_WORKER}
+        className="mt-5 inline-flex rounded-card-sm bg-forest px-6 py-3 text-[16px] font-semibold text-white transition-colors hover:bg-forest-deep hover:text-white"
+      >
+        <span dir="auto">{he.emptyHousehold.add}</span>
+      </Link>
     </Card>
   );
 }
@@ -100,10 +106,20 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
 
-  // `/sign-in` is the one route outside the shell: a person who can see this
-  // bar is already signed in, so drawing five nav tabs around a sign-in form
-  // would offer five links that redirect straight back to it.
-  if (pathname === "/sign-in") return <>{children}</>;
+  // Two routes are outside the shell, and each for its own reason.
+  //
+  // `/sign-in`: a person who can see this bar is already signed in, so drawing
+  // five nav tabs around a sign-in form would offer five links that redirect
+  // straight back to it.
+  //
+  // `/workers/new`: the `הוספת עובד` artboard draws a wizard chrome of its own
+  // — the wordmark, a way out, and nothing else — and it is right to. The nav
+  // is a promise about a household that has a worker in it, and this is the
+  // flow reached precisely when that is not yet true; a family half-way through
+  // it would otherwise be offered five tabs into screens about nobody. Settled
+  // with the user on 2026-09-12, against `build_plan.md`'s open question about
+  // this artboard.
+  if (pathname === "/sign-in" || pathname === ADD_WORKER) return <>{children}</>;
 
   // A household with no worker in it yet, which is what every new account is
   // until the first profile is created. Every screen below is a screen about

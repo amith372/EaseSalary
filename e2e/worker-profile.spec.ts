@@ -341,7 +341,10 @@ test.describe("the opening position (specs.md item 6)", () => {
 });
 
 test.describe("the three documents and their expiry dates (specs.md item 28)", () => {
-  test("holds three separate dates and asks for no number", async ({ page }) => {
+  /** The dates alone, which is what this section holds: they are stored in the
+   * clear because item 27's warnings have to query them. The passport *number*
+   * is sealed and sits in its own row above, with its own check. */
+  test("holds three separate dates, apart from the sealed numbers", async ({ page }) => {
     await useHousehold(page, "known", "documents");
     await page.goto("/workers/hanna");
 

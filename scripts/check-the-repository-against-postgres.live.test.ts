@@ -1,7 +1,8 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { SEEDED_RATES } from "@/lib/datedRates";
+import { openNumber, sealNumber } from "@/lib/encryption";
 import { UnknownWorkerError } from "@/lib/engine/repository";
 import type { MonthRecord, SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
 import type { MonthSpan } from "@/lib/engine/types";
@@ -370,5 +371,98 @@ describe("what the household shares between its workers", () => {
     expect(lists).toContainEqual(list);
     // And the shipped lists are still there beside it.
     expect(lists.length).toBeGreaterThan(1);
+  });
+});
+
+/**
+ * The four identifying numbers, asked of Postgres (specs.md items 22 and 28).
+ *
+ * **This is where the encoding is actually checked.** A `bytea` crosses
+ * PostgREST as Postgres's own hex literal, and there is no type that catches a
+ * prefix written wrong: the bytes would go in, come back shorter or longer, and
+ * fail to open — which reads as a wrong key rather than as a wrong encoding.
+ * The unit suite runs the same sealing against the in-memory store and can say
+ * nothing about this.
+ *
+ * The numbers below are invented for this file and belong to nobody.
+ */
+describe("the identifying numbers", () => {
+  const key = randomBytes(32);
+
+  test("a sealed number goes into Postgres and comes back byte for byte", async () => {
+    const profile = await aStoredWorker();
+    const sealed = sealNumber("P7781234", key);
+
+    await repository.saveSealedNumbers(profile.id, { passport: sealed });
+    const read = await repository.sealedNumbers(profile.id);
+
+    expect(read.passport?.toString("hex")).toBe(sealed.toString("hex"));
+    // And it opens, which is the assertion that would fail on an encoding the
+    // round trip merely preserved the length of.
+    expect(openNumber(read.passport as Buffer, key)).toBe("P7781234");
+  });
+
+  /**
+   * **A write names what it changes.** The employment permit's number is the
+   * household's and two workers share it (item 28), so a save that rewrote every
+   * column would erase it the moment a second worker's passport was entered.
+   */
+  test("a partial write leaves the numbers it did not name", async () => {
+    const profile = await aStoredWorker();
+    await repository.saveSealedNumbers(profile.id, {
+      passport: sealNumber("P7781234", key),
+      employmentPermit: sealNumber("H-99887", key),
+    });
+    await repository.saveSealedNumbers(profile.id, {
+      bankAccount: sealNumber("12-345-6789", key),
+    });
+
+    const read = await repository.sealedNumbers(profile.id);
+    expect(openNumber(read.passport as Buffer, key)).toBe("P7781234");
+    expect(openNumber(read.employmentPermit as Buffer, key)).toBe("H-99887");
+    expect(openNumber(read.bankAccount as Buffer, key)).toBe("12-345-6789");
+  });
+
+  test("an explicit null clears the number, and a worker with none reads as none", async () => {
+    const profile = await aStoredWorker();
+    const fresh = await repository.sealedNumbers(profile.id);
+
+    // Her three, and not the household's fourth. The employment permit is the
+    // employer's position and survives the worker it was entered beside —
+    // `aStoredWorker` replaces the workers and leaves the household standing,
+    // which is the same thing that happens when a family's caregiver changes.
+    expect(fresh.passport).toBeNull();
+    expect(fresh.bankAccount).toBeNull();
+    expect(fresh.workVisa).toBeNull();
+
+    await repository.saveSealedNumbers(profile.id, {
+      workVisa: sealNumber("B1-4457", key),
+    });
+    await repository.saveSealedNumbers(profile.id, { workVisa: null });
+    expect((await repository.sealedNumbers(profile.id)).workVisa).toBeNull();
+  });
+
+  /**
+   * **Saving her profile does not erase her numbers**, which is the failure a
+   * wholesale upsert would produce: the columns are not on `WorkerProfile`, so a
+   * save that listed every column would write nulls into them every time a rest
+   * day changed.
+   */
+  test("the numbers survive a save of the profile", async () => {
+    const profile = await aStoredWorker();
+    await repository.saveSealedNumbers(profile.id, {
+      passport: sealNumber("P7781234", key),
+    });
+
+    await repository.saveWorker({ ...profile, restEveSupplementAgorot: 45000 });
+
+    const read = await repository.sealedNumbers(profile.id);
+    expect(openNumber(read.passport as Buffer, key)).toBe("P7781234");
+  });
+
+  test("a worker in no household of ours has no numbers to give", async () => {
+    await expect(
+      repository.sealedNumbers("00000000-0000-0000-0000-000000000000"),
+    ).rejects.toBeInstanceOf(UnknownWorkerError);
   });
 });

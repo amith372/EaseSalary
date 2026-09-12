@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Bidi } from "@/components/Bidi";
+import { ADD_WORKER } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { MoneyValue } from "@/components/MoneyValue";
 import { fullDayLabel } from "@/lib/dateLabels";
@@ -15,11 +16,12 @@ import type { IsoDate, Worker } from "@/lib/types";
  * The status chip on each card ("[חודש] ממתין לחישוב" / "הכול מעודכן") names
  * one of the month's four states, which are Part 5's and which nothing in the
  * application can yet set — a chip here would be a state invented to fill a
- * shape. The "משותף/ת עם [שם]" chip and the "להוסיף עובד/ת" card are item 11's
- * invitation and the `הוספת עובד` artboard, and both are stage 3's: a card
- * linking to a screen that does not exist is a 404 promised on every load,
- * which the routes table says is worse than an absence. The limit itself is
- * stated, in the sentence the artboard closes with.
+ * shape. The "משותף/ת עם [שם]" chip is item 11's invitation and is still
+ * stage 3's. The "להוסיף עובד/ת" card is here as of 2026-09-12, and it shows
+ * only while the household has room: two workers is item 11's limit and a
+ * trigger in the database refuses a third, so a card offering a wizard whose
+ * save would be refused is a promise the application cannot keep. The limit
+ * itself is stated either way, in the sentence the artboard closes with.
  *
  * It holds no state and no arithmetic: the four facts under each worker are
  * read from the same replay `/month` reads (item 13), on the server.
@@ -128,6 +130,23 @@ export function WorkersList({ household }: { household: WorkerSummary[] }) {
           </Card>
         ),
       )}
+
+      {/*
+        The artboard's "להוסיף עובד/ת" card, and it appears only while there is
+        room for one: item 11 holds a household to two workers, and the database
+        refuses a third on a trigger. A control that led to a wizard the save at
+        the end of it would refuse is a promise the application cannot keep, so
+        the sentence below stands alone at two.
+      */}
+      {household.length < 2 ? (
+        <Link
+          href={ADD_WORKER}
+          data-role="add-worker-link"
+          className="rounded-card border border-dashed border-line px-4.5 py-4 text-center text-[16px] font-semibold text-forest transition-colors hover:border-line-hover hover:text-forest-deep"
+        >
+          <span dir="auto">{he.emptyHousehold.add}</span>
+        </Link>
+      ) : null}
 
       <p
         dir="auto"

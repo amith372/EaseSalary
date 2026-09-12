@@ -10,6 +10,7 @@ import {
   setInsurer,
   setOpeningDays,
   setGender,
+  setPassportNumber,
   setIncomeTaxSetting,
   setRecuperationMonth,
   setRestDay,
@@ -67,12 +68,13 @@ import type { YearMonth } from "@/lib/types";
  * invitation and belongs to stage 3. Each is an absence rather than an
  * invention, which is the choice `CLAUDE.md` rule 4 asks for.
  *
- * **The four identifying numbers are not here either, and that is the whole
- * reason the documents section holds dates alone** (items 22, 28): they are
- * encrypted at rest with a key held outside the database, the running
- * application is still on the in-memory store, and a field for one now would
- * put a plaintext identifier into it. The columns and the sealing exist as of
- * 2026-09-10; the fields arrive with the Postgres repository.
+ * **One of the four identifying numbers is here and three are not** (items 22,
+ * 28). Her passport number is shown and set in its own row, opened on the
+ * server for this screen alone; it is not in the documents section below,
+ * because that section holds the three expiry *dates*, which are stored in the
+ * clear so that item 27's warnings can query them. The bank account, the work
+ * visa and the household's employment permit hold the same columns and the same
+ * sealing and have no control yet.
  *
  * It holds no arithmetic. Every change goes to a server action which parses the
  * amount, checks the choices and writes through the store, and the page then
@@ -112,6 +114,16 @@ interface WorkerProfileScreenProps {
    * holiday lists (`countryNameHe`). The profile printed the two-letter filing
    * code here until 2026-09-11, which is a key and not a country. */
   countryName: string;
+  /**
+   * Her passport number, already opened (items 22, 28), or `null` for a worker
+   * whose family has not entered one.
+   *
+   * **It is decrypted on the server and arrives here as the number**, which is
+   * the one place item 22 allows besides the export. It is a prop of this
+   * screen alone and is not on `WorkerProfile`: an identifier that travelled on
+   * the profile would reach the browser on every page that names a worker.
+   */
+  passportNumber: string | null;
 }
 
 const TERMS_ID = "terms";
@@ -127,6 +139,7 @@ export function WorkerProfileScreen({
   sickDays,
   ledger,
   countryName,
+  passportNumber,
 }: WorkerProfileScreenProps) {
   const words = he.workers;
   const page = words.profile;
@@ -366,6 +379,12 @@ export function WorkerProfileScreen({
           <InsurerControl
             workerId={profile.id}
             insurer={profile.insurer}
+            onSubmit={handleAction}
+          />
+
+          <PassportNumberControl
+            workerId={profile.id}
+            passportNumber={passportNumber}
             onSubmit={handleAction}
           />
 
@@ -1363,6 +1382,70 @@ function DocumentsControl({
         >
           <span dir="auto">{words.save}</span>
         </button>
+      </div>
+    </TermRow>
+  );
+}
+
+/**
+ * Her passport number — the first of the four identifying numbers to become
+ * reachable from the application (specs.md items 22 and 28).
+ *
+ * **It is opened on the server and rendered as text**, which is the whole of
+ * what item 22 permits: decrypted server-side for display and for the export,
+ * and never logged. What reaches this component is the number itself, because
+ * this is the screen that shows it; nothing else in the application receives
+ * one, and `WorkerProfile` — the object the switcher, the engine and every
+ * other screen pass around — carries none.
+ *
+ * **`translate="no"` and `dir="ltr"`, like every identifier here.** A
+ * translated identifier is a wrong identifier, and a passport number is Latin
+ * and digits inside a Hebrew line.
+ *
+ * The other three numbers have no control yet. The repository and the sealing
+ * hold all four; `build_plan.md` records what is left.
+ */
+function PassportNumberControl({
+  workerId,
+  passportNumber,
+  onSubmit,
+}: {
+  workerId: string;
+  passportNumber: string | null;
+  onSubmit: Submit;
+}) {
+  const words = he.workers.profile.terms.passportNumber;
+  const [typed, setTyped] = useState(passportNumber ?? "");
+  const { refusal, run } = useProfileAction(onSubmit);
+
+  return (
+    <TermRow label={words.label} hint={words.hint}>
+      <div data-terms="passportNumber" className="flex flex-wrap items-center gap-2.5">
+        <input
+          type="text"
+          value={typed}
+          onChange={(event) => setTyped(event.target.value)}
+          dir="ltr"
+          translate="no"
+          autoComplete="off"
+          data-field="passportNumber"
+          className={`${inputClass} max-w-48 text-start`}
+        />
+        <span className="text-[13px] font-light text-ink-quiet">
+          {passportNumber === null ? (
+            <span dir="auto">{words.none}</span>
+          ) : (
+            <Bidi noTranslate>{passportNumber}</Bidi>
+          )}
+        </span>
+        <button
+          type="button"
+          onClick={() => run(() => setPassportNumber(workerId, typed))}
+          className={buttonClass}
+        >
+          <span dir="auto">{words.save}</span>
+        </button>
+        {refusal ? <Refusal reason={refusal} /> : null}
       </div>
     </TermRow>
   );

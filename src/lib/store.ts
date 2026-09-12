@@ -35,17 +35,27 @@ import { supabaseOnServer } from "@/lib/supabase/server";
 /**
  * The households there are, by name.
  *
- * **Two, because one of them is the case the whole application is checked
- * against** (`specs.md` Part 4) and it cannot live inside the other: the demo
- * household is nine months of 2026 chosen to be clicked at, and August 2025 is
- * a month whose four totals come from the family's own sheet. Mixing them would
- * put the one month that means something into a store whose whole point is that
- * it means nothing, and an account holds no more than two workers anyway
- * (item 11) — so a third worker was never the shape.
+ * **Three, and two of them hold data.** The demo household is nine months of
+ * 2026 chosen to be clicked at; the known case is August 2025, whose four
+ * totals come from the family's own sheet (`specs.md` Part 4). They are kept
+ * apart because mixing them would put the one month that means something into a
+ * store whose whole point is that it means nothing — and an account holds no
+ * more than two workers anyway (item 11), so a third worker was never the
+ * shape. The third seed holds nobody, and why is said where it stands.
  */
 const seeds = {
   demo: devSeed,
   known: knownCaseSeed,
+  /**
+   * A household with nothing in it, which is what every new account is.
+   *
+   * **It is here so the browser suite can reach the state a real account starts
+   * in.** The flow that adds a worker begins on a screen that exists only while
+   * there is no worker, and the other two seeds both have one — so without this
+   * the only household that could be added to is the live Postgres one, and a
+   * spec that created a worker there would leave it behind on every run.
+   */
+  empty: {},
 } as const;
 
 type SeedName = keyof typeof seeds;

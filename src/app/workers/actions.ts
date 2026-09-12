@@ -4,6 +4,10 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getRepository } from "@/lib/store";
 import { advanceLedger } from "@/lib/engine/advances";
+import { rateInForce } from "@/lib/datedRates";
+import type { DatedRate } from "@/lib/datedRates";
+import { todayInIsrael } from "@/lib/today";
+import { saveIdentifyingNumbers } from "@/lib/identifyingNumbers";
 import {
   isAllowedGender,
   isAllowedRestDay,
@@ -11,15 +15,19 @@ import {
   monthsFollowingProfile,
   reviewDocuments,
   reviewOpeningAdvance,
+  reviewNewWorker,
   reviewOpeningDays,
   type DocumentsDraft,
   type OpeningAdvanceDraft,
+  type NewWorkerDraft,
+  type NewWorkerRefusal,
   type OpeningDaysDraft,
   type OpeningRefusal,
 } from "@/lib/engine/profile";
-import type { WorkerProfile } from "@/lib/engine/repository";
+import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
 import type { Gender, UserLine } from "@/lib/engine/types";
 import { reviewUserLine, type UserLineDraft, type UserLineRefusal } from "@/lib/engine/userLines";
+import { monthOf } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 
 /**
@@ -33,14 +41,14 @@ import type { RestDay } from "@/lib/dates";
  * every balance in every month is replayed from (item 6); and the three
  * documents with their expiry dates (item 28).
  *
- * **The four identifying numbers are not here.** The passport, bank account,
- * employment permit and work visa *numbers* are encrypted at rest with a key
- * held outside the database (`CLAUDE.md`'s non-negotiables, items 22 and 28).
- * The columns and the sealing exist as of 2026-09-10; what does not yet exist
- * is a store to put them in, because the running application is still on the
- * in-memory one — and an action that took a number now would put a plaintext
- * identifier into it. They arrive with the Postgres repository, on the screen
- * these actions already serve.
+ * **One of the four identifying numbers is here and three are not** (items 22,
+ * 28). The passport number arrived on 2026-09-12 with the flow that adds a
+ * worker, and it goes through `setPassportNumber` below rather than through
+ * `setDocuments`: the expiry dates are stored in the clear because item 27's
+ * warnings have to query them, and the number is sealed with a key held outside
+ * the database. The bank account, the work visa and the household's employment
+ * permit hold the same columns and the same sealing and have no control yet
+ * (`build_plan.md`, "What is still owed").
  *
  * **The browser collects the gesture and the server decides what it means**
  * (Part 3), exactly as `month/actions.ts` does it: the amounts and the dates
@@ -473,4 +481,121 @@ export async function setDocuments(
 
   const profile = await profileOf(workerId);
   return saveProfile({ ...profile, documents: reviewed.documents }, false);
+}
+
+/**
+ * Create the household's worker — the last step of `הוספת עובד`
+ * (`build_plan.md` stage 3).
+ *
+ * **Nothing is written until here**, which is what the artboard's "לצאת בלי
+ * לשמור" promises and what its fourth step's "שמרנו את הפרטים" reports. Three
+ * steps collect and one step saves, so a family that closes the tab half-way
+ * leaves no worker behind and no half-worker either.
+ *
+ * **The whole draft is reviewed again on the server**, not merely the parts the
+ * wizard could not check. The browser runs `reviewNewWorker` while the user
+ * types so a field can be marked as it is left, but a server action is reachable
+ * by a crafted request (Part 3), so what the form offered is never the rule:
+ * the rest day is checked against the three the law allows, the gender against
+ * the two the credit points have a value for, and the salary against the
+ * minimum wage in force.
+ *
+ * **The minimum wage is read from the household's own dated table**, at the
+ * month the employment is being set up in, and never hardcoded
+ * (`CLAUDE.md`'s non-negotiables). A household that has never fetched anything
+ * still has the seeded rows, so there is always a figure; a month earlier than
+ * every row would have none, and the salary is then refused as uncheckable
+ * rather than accepted against nothing.
+ *
+ * **The id is minted here.** It is the store's to give and never the browser's
+ * (`repository.ts`): an id that arrived in a request is an id that can name
+ * somebody else's worker.
+ *
+ * **The passport number never touches the profile.** It is sealed above the
+ * repository by `saveIdentifyingNumbers` and written as bytes, so the object
+ * this function saves — the one every screen and the switcher pass around —
+ * carries no identifier at all (items 22, 28).
+ */
+export async function createWorker(
+  draft: NewWorkerDraft,
+): Promise<
+  { ok: true; workerId: string } | { ok: false; reason: NewWorkerRefusal }
+> {
+  const repository = await getRepository();
+
+  const minimum = await minimumWageNow(repository);
+  if (minimum === null) return { ok: false, reason: "belowMinimum" };
+
+  const reviewed = reviewNewWorker(draft, minimum.value);
+  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+  const workerId = randomUUID();
+  await repository.saveWorker({ ...reviewed.profile, id: workerId });
+  await saveIdentifyingNumbers(repository, workerId, {
+    passport: draft.passportNumber,
+  });
+
+  revalidateWorker();
+  // The bar reads the household's workers, and until now it had none.
+  revalidatePath("/", "layout");
+  return { ok: true, workerId };
+}
+
+/**
+ * The minimum wage the salary is checked against: the one in force **now**, and
+ * not the one in force when the employment began.
+ *
+ * **The distinction is not academic and the other reading is a bug.** The floor
+ * item 3 sets is a floor on the salary being agreed today — a family adding a
+ * worker they have employed since 2019 is stating what they pay her now, not
+ * what the law allowed then — and the seeded table begins in April 2025, so
+ * checking against the start month would refuse every employment older than
+ * the table with a sentence about the minimum wage. What a *month* was valued
+ * at is a separate figure, stored on the month when it is confirmed
+ * (`ConfirmedWage`), and it is never read from here.
+ *
+ * `null` is a table with no row yet in force, which the seeded rows make
+ * unreachable in practice; a salary is then refused as uncheckable rather than
+ * accepted against nothing.
+ */
+async function minimumWageNow(
+  repository: SalaryRepository,
+): Promise<DatedRate | null> {
+  return rateInForce(
+    await repository.listRates(),
+    "minimumWage",
+    monthOf(todayInIsrael()),
+  );
+}
+
+/**
+ * Her passport number (specs.md items 22 and 28).
+ *
+ * **Its own action and not part of `setDocuments`**, which saves the three
+ * expiry dates. The dates are stored in the clear because item 27's warnings
+ * have to query them; the number is sealed with a key held outside the
+ * database. Putting both through one action would make a plaintext identifier
+ * and a queryable date look like two fields of one form, which is exactly the
+ * distinction that has to stay visible in the code.
+ *
+ * **The other three numbers are not here yet** — the bank account, the work
+ * visa and the household's employment permit. The repository and the sealing
+ * hold all four; what they lack is a control, and the wizard only ever asked
+ * for the passport (`build_plan.md`, "What is still owed").
+ */
+export async function setPassportNumber(
+  workerId: string,
+  passportNumber: string,
+): Promise<ProfileActionResult> {
+  const repository = await getRepository();
+  // Checked rather than assumed: an action is reachable by a crafted request,
+  // and a number written against an id nobody checked is a number written into
+  // somebody else's worker.
+  await profileOf(workerId);
+
+  await saveIdentifyingNumbers(repository, workerId, {
+    passport: passportNumber,
+  });
+  revalidateWorker();
+  return { ok: true };
 }

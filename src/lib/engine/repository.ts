@@ -14,6 +14,7 @@ import {
   type HolidayList,
   type HolidaySource,
 } from "@/lib/holidayLists";
+import type { SealedNumber } from "@/lib/encryption";
 import { overlapsMonth } from "@/lib/spans";
 import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
 
@@ -186,7 +187,56 @@ export interface SalaryRepository {
   /** Records the row, replacing any held for the same key and effective date
    * rather than being appended beside it (`withFetchedRate`). */
   saveRate(rate: DatedRate): Promise<void>;
+
+  /**
+   * The four identifying numbers, **as sealed bytes and never as numbers**
+   * (specs.md items 22 and 28).
+   *
+   * **The store holds a sealed box and cannot open it.** The key lives outside
+   * the database (Part 3), so the sealing happens above this interface, in
+   * `src/lib/identifyingNumbers.ts`; what crosses this boundary in either
+   * direction is bytes. That is what keeps the rule true of *both*
+   * implementations rather than of the Postgres one alone — an in-memory store
+   * holding plaintext identifiers would be exactly the thing item 22 forbids,
+   * and nothing about it would look wrong.
+   *
+   * **They are not on `WorkerProfile`**, which is the object every screen, the
+   * engine and the switcher pass around. A number that travelled on it would
+   * reach the browser on every page that names a worker, where item 22 allows
+   * it only on the screen that shows it and in the export.
+   */
+  sealedNumbers(workerId: string): Promise<SealedNumbers>;
+  /**
+   * Writes the numbers named and leaves the rest exactly as they were.
+   *
+   * **Partial and not wholesale**, unlike `saveWorker`, and the difference is
+   * load-bearing: the employment permit's number belongs to the *household*
+   * (item 28), so a second worker saved with a full record of nulls would erase
+   * the number the first worker's household already held. An absent key is "not
+   * mine to say"; an explicit `null` is "clear it".
+   */
+  saveSealedNumbers(workerId: string, numbers: SealedNumbers): Promise<void>;
 }
+
+/**
+ * The four numbers, keyed by what each one is.
+ *
+ * Three belong to the worker and one to the household — the employment permit
+ * is the employer's position, and a household with two workers holds one permit
+ * and two visas (item 28) — but they are one record here because they are one
+ * screen: the family types them in one place and reads them in one place, and
+ * which table each lands in is the repository's business and not the caller's.
+ *
+ * Every key is optional, which is what makes a partial write expressible. A key
+ * that is present and `null` is a number the family cleared; a key that is
+ * absent was not asked about.
+ */
+export type SealedNumbers = Partial<{
+  passport: SealedNumber | null;
+  bankAccount: SealedNumber | null;
+  workVisa: SealedNumber | null;
+  employmentPermit: SealedNumber | null;
+}>;
 
 /**
  * A month read back out of the store, on its way in again — `MonthFacts` less
@@ -304,6 +354,9 @@ interface WorkerRow {
   profile: WorkerProfile;
   spans: MonthSpan[];
   months: Map<string, MonthRecord>;
+  /** Sealed bytes, never numbers — this store cannot open them any more than
+   * Postgres can, which is what makes the rule the same rule in both. */
+  numbers: SealedNumbers;
 }
 
 /**
@@ -316,6 +369,16 @@ interface WorkerRow {
  * implementation *behave* like a database rather than merely satisfy its
  * signature.
  */
+/**
+ * A copy of a sealed value, so a caller holding one cannot reach back into the
+ * store through it — the same reason everything else here is cloned.
+ * `structuredClone` is not used: it turns a `Buffer` into a plain `Uint8Array`,
+ * and the difference would surface only where the bytes are opened.
+ */
+function copyOf(value: SealedNumber | null | undefined): SealedNumber | null {
+  return value === null || value === undefined ? null : Buffer.from(value);
+}
+
 export function createInMemoryRepository(
   seed: {
     workers?: WorkerProfile[];
@@ -329,6 +392,13 @@ export function createInMemoryRepository(
   } = {},
 ): SalaryRepository {
   const workers = new Map<string, WorkerRow>();
+  /**
+   * The household's employment-permit number, held here rather than on a worker
+   * because that is where it belongs: one permit position per household, and
+   * two workers share it (item 28). The Postgres store keeps it on the
+   * household row for the same reason.
+   */
+  let employmentPermitNumber: SealedNumber | null = null;
   let holidayLists = structuredClone(
     seed.holidayLists ?? SEEDED_HOLIDAY_LISTS,
   );
@@ -363,6 +433,10 @@ export function createInMemoryRepository(
         profile: structuredClone(profile),
         spans: existing?.spans ?? [],
         months: existing?.months ?? new Map(),
+        // Kept across a wholesale save of the profile: the numbers are not on
+        // it, so a save that dropped them would erase a passport every time a
+        // rest day changed.
+        numbers: existing?.numbers ?? {},
       });
     },
 
@@ -420,11 +494,34 @@ export function createInMemoryRepository(
     async saveRate(rate) {
       rates = withFetchedRate(rates, structuredClone(rate));
     },
+
+    async sealedNumbers(workerId) {
+      const row = rowOf(workerId);
+      return {
+        passport: copyOf(row.numbers.passport),
+        bankAccount: copyOf(row.numbers.bankAccount),
+        workVisa: copyOf(row.numbers.workVisa),
+        employmentPermit: copyOf(employmentPermitNumber),
+      };
+    },
+
+    async saveSealedNumbers(workerId, numbers) {
+      const row = rowOf(workerId);
+      // `in` and not a truthiness test: an explicit `null` clears a number and
+      // an absent key leaves it, and the two are different instructions.
+      for (const key of ["passport", "bankAccount", "workVisa"] as const) {
+        if (key in numbers) row.numbers[key] = copyOf(numbers[key] ?? null);
+      }
+      if ("employmentPermit" in numbers) {
+        employmentPermitNumber = copyOf(numbers.employmentPermit ?? null);
+      }
+    },
   };
 
   for (const profile of seed.workers ?? []) {
     workers.set(profile.id, {
       profile: structuredClone(profile),
+      numbers: {},
       spans: structuredClone(seed.spans?.[profile.id] ?? []),
       months: new Map(
         (seed.months?.[profile.id] ?? []).map((record) => [

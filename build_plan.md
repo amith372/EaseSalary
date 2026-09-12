@@ -102,25 +102,28 @@ Carried forward from finished steps. None of these is a defect.
   because the user chose Part 3's nine and not the thirteen the template holds (2026-09-10).
   So a Friday-resting worker's sheet says `ימי חמישי` in `A26` while `B23` above it still says
   `ימי שישי`. Reopening it is an edit to Part 3 and hers to ask for.
-- **`הוספת עובד` draws no shell at all** — a wizard chrome with no nav, which is the right
-  shape for an add-flow but is a decision nothing in this plan sanctions, since `AppShell`
-  wraps every route. It needs an answer from `AppShell`'s side before stage 3 builds it.
 - **Six artboards draw the top bar without the worker switcher and without the greeting** —
   `דוחות`, `דף העובד`, `הגדרות`, `העובדות`, `התראות` and `תשלומים`. Transcription onto the
   canvas, owed by whichever stage next builds one of them.
-- **The four encrypted numbers are in the schema and not in the application.** `WorkerProfile`
-  carries the three document *dates* and no number, so the Postgres repository writes nothing
-  to the four `bytea` columns and `src/lib/encryption.ts` is reached by no screen. **Stage 3's**,
-  with the profile that would type them in.
+- **Three of the four encrypted numbers still have no control.** The passport number is typed
+  into `הוספת עובד` and shown on her page as of 2026-09-12; the bank account, the work visa and
+  the household's employment permit hold the same `bytea` columns and go through the same
+  `saveIdentifyingNumbers`, and nothing asks for them. The bank account is the one the sheet
+  needs. **Stage 3's.**
 - **The seeded stores are still how the browser suite runs.** A request carrying the
   `household` cookie gets an in-memory household outside production (`src/lib/store.ts`), which
-  is what keeps thirteen spec files working; the suite moves onto real households when there is
-  a flow that creates a worker to put in one.
+  is what keeps fourteen spec files working. There are three seeds now: the demo, the known
+  case, and `empty`, which is the state a new account is in and the only one the add-worker
+  flow can start from.
+- **The home screen draws fixtures for whichever worker is showing**, including a real one, so
+  a family that has just created a worker sees somebody else's month under her name. The screen
+  falls back rather than crashing, which is what it did until 2026-09-12. **Stage 6's**, which
+  is the stage that replaces the fixtures.
 - **`SalaryRepository` has no `deleteWorker`**, because nothing in the application removes one.
   The live check tidies up through the client instead.
-- **The browser suite is intermittently flaky under six workers** — `payments-screen`,
-  `before-export` and `month-screen` among them — and each passes when its own file is run
-  alone. Measured on 2026-09-12 against a tree with the sign-in step stashed, so the cause is
+- **The browser suite is intermittently flaky under load** — `payments-screen`,
+  `before-export`, `month-screen` and `payslip` among them — and each passes when its own file
+  is run alone. Measured on 2026-09-12 against a tree with the sign-in step stashed, so the cause is
   the dev server compiling routes under load and not the proxy.
 
 ## Stage 0 — Repo, scaffold, design system · **done**
@@ -180,12 +183,11 @@ across four fields.
 **Landed so far:** the income tax calculated, with `gender` and the three tax modes on the
 profile (2026-09-11); the sign-in at `/sign-in`, the household created on first sign-in, and
 one person is one address (2026-09-12); the Postgres repository substituting at
-`getRepository()` (2026-09-12).
+`getRepository()` (2026-09-12); `הוספת עובד`, with the passport number sealed (2026-09-12).
 
-**The next step is the one that adds a worker.** A real household starts empty and the
-application has no flow that creates a profile, so every screen a new account reaches says
-there is no worker yet. `הוספת עובד` is the artboard, and the question under "What is still
-owed" about that artboard drawing no shell has to be answered before it is built.
+**The next step is `/settings`**, the last of the shell's five tabs that 404s and the one this
+stage owns. What goes on it is the yearly settings above, and the profile's two remaining
+terms — the standing line and the salary field — are listed under "What is still owed".
 
 **Two things the stage's own tooling rests on.** The household isolation is checked against
 the live database by hand with `node --env-file=.env scripts/check-household-isolation.mjs`,

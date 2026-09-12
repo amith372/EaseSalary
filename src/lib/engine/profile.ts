@@ -2,7 +2,7 @@ import { FRIDAY, SATURDAY, SUNDAY, fromIsoDate, toIsoDate } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { reviewTaxPercentage } from "@/lib/engine/incomeTax";
 import { recordOf } from "@/lib/engine/repository";
-import type { MonthRecord } from "@/lib/engine/repository";
+import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
 import { genders, incomeTaxModes, snapshotTerms } from "@/lib/engine/types";
 import type {
   Gender,
@@ -294,4 +294,185 @@ export function monthsFollowingProfile(
 ): MonthRecord[] {
   const terms = snapshotTerms(profile);
   return months.map((facts) => ({ ...recordOf(facts), terms }));
+}
+
+/**
+ * A worker as the `הוספת עובד` wizard hands her over — every field as the user
+ * typed or chose it, so the rule that reads them is the server's (Part 3).
+ *
+ * **The four steps of the artboard are three drafts and a summary**, and this
+ * is all three at once rather than one per step: nothing is written until the
+ * last step, so there is no half-saved worker to review. What the wizard shows
+ * while the user types is this same function run on what has been filled in so
+ * far, which is one rule read twice rather than two rules that agree today.
+ */
+export interface NewWorkerDraft {
+  name: string;
+  /** Unknown because a radio reaches the server as data and a union cannot
+   * check data (`isAllowedGender`). */
+  gender: unknown;
+  /**
+   * Her passport number, which is one of the four sealed at rest (items 22,
+   * 28).
+   *
+   * **Empty is "not entered yet" and is an ordinary answer**, exactly as an
+   * empty document date is: a family adding a worker in the middle of an
+   * employment may not have the passport to hand, and refusing the whole
+   * profile over it would send them away to find a document in order to record
+   * a salary. The artboard does not mark it optional; the departure is here
+   * because the alternative is a required field with no rule behind it.
+   *
+   * **It leaves this function as it arrived and is never stored by anything
+   * that called it.** Sealing happens above the repository, in
+   * `src/lib/identifyingNumbers.ts`, and no store ever sees the plaintext.
+   */
+  passportNumber: string;
+  /** A country *code*, from the holiday lists the household holds — the
+   * published pages are addressed by code (item 12). The artboard marks the
+   * field optional and it cannot be: it is what her year's holidays are drawn
+   * from, and a worker with no country would be offered no list at all. */
+  country: string;
+  employedSince: string;
+  restDay: unknown;
+  recuperationMonth: string;
+  baseMonthlySalary: string;
+  restEveSupplement: string;
+  insurer: string;
+  incomeTaxMode: unknown;
+  incomeTaxPercentage: string;
+}
+
+/** Why a draft is not yet a worker, in the words the wizard shows. Each names
+ * the field it belongs to, because the wizard marks that field rather than
+ * printing a sentence at the foot of a four-step form. */
+export type NewWorkerRefusal =
+  | "name"
+  | "gender"
+  | "country"
+  | "employedSince"
+  | "restDay"
+  | "recuperationMonth"
+  | "salary"
+  /** A salary below the confirmed minimum wage, which the profile may never be
+   * set to (`CLAUDE.md`'s non-negotiables, item 3). Its own refusal and not
+   * `salary`, because the two are different mistakes: one is not a number and
+   * the other is a number the family may not agree to. */
+  | "belowMinimum"
+  | "supplement"
+  | "incomeTaxMode"
+  | "incomeTaxRate";
+
+/**
+ * The first name alone, for "לדף של [שם]" (`Worker.firstName`).
+ *
+ * The wizard asks for one full-name field, as the artboard draws it, so the
+ * first name is read off it rather than asked for twice. The first
+ * whitespace-separated run, which is how a Hebrew name written "שם פרטי ושם
+ * משפחה" reads; a single-word name is its own first name.
+ */
+export function firstNameOf(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] ?? "";
+}
+
+export type ReviewedNewWorker =
+  | { ok: true; profile: Omit<WorkerProfile, "id"> }
+  | { ok: false; reason: NewWorkerRefusal };
+
+/**
+ * A new worker, or the first reason she is not one yet.
+ *
+ * **The id is not minted here**, for the reason `reviewOpeningAdvance`'s number
+ * is not: an id is the store's to give and never the caller's, and a function
+ * that minted one would be a function whose output cannot be asserted.
+ *
+ * **The minimum wage is a parameter and never looked up inside**, which is the
+ * rule the whole engine keeps: it is the wage in force during the month the
+ * employment is being set up in, read by the caller from the dated table, and a
+ * function that reached for it here could not be checked against a wage that
+ * was not today's.
+ *
+ * **What the wizard does not ask for opens empty rather than guessed** — no
+ * standing lines, no opening balances, no document dates, no holiday exception.
+ * Each has a control on the worker's own page already, and a default invented
+ * here would be a figure the family never stated (`CLAUDE.md` rule 4). The
+ * opening position in particular is item 6's and is zero for a worker whose
+ * employment the application has watched from its first day.
+ */
+export function reviewNewWorker(
+  draft: NewWorkerDraft,
+  minimumWageAgorot: number,
+): ReviewedNewWorker {
+  const name = draft.name.trim();
+  if (name === "") return { ok: false, reason: "name" };
+
+  if (!isAllowedGender(draft.gender)) return { ok: false, reason: "gender" };
+
+  const country = draft.country.trim();
+  if (country === "") return { ok: false, reason: "country" };
+
+  // A start date and not a document date, so an empty field is a refusal here
+  // where it is an ordinary answer there: seniority is counted from it, and
+  // every accrual tier, the recuperation entitlement and the proration of a
+  // holiday year rest on it (items 7, 10, 15).
+  const employedSince = reviewDate(draft.employedSince);
+  if (employedSince === null || employedSince === "invalid") {
+    return { ok: false, reason: "employedSince" };
+  }
+
+  if (!isAllowedRestDay(draft.restDay)) return { ok: false, reason: "restDay" };
+
+  const recuperationMonth = Number(draft.recuperationMonth.trim());
+  if (
+    !Number.isInteger(recuperationMonth) ||
+    recuperationMonth < 1 ||
+    recuperationMonth > 12
+  ) {
+    return { ok: false, reason: "recuperationMonth" };
+  }
+
+  const baseMonthlySalaryAgorot = parseShekels(draft.baseMonthlySalary);
+  if (baseMonthlySalaryAgorot === null || baseMonthlySalaryAgorot === 0) {
+    return { ok: false, reason: "salary" };
+  }
+  if (baseMonthlySalaryAgorot < minimumWageAgorot) {
+    return { ok: false, reason: "belowMinimum" };
+  }
+
+  // Nothing in law requires the rest-eve supplement (item 14), so a family that
+  // pays none says so by leaving the field empty and gets zero rather than a
+  // refusal.
+  const restEveSupplementAgorot =
+    draft.restEveSupplement.trim() === ""
+      ? 0
+      : parseShekels(draft.restEveSupplement);
+  if (restEveSupplementAgorot === null) {
+    return { ok: false, reason: "supplement" };
+  }
+
+  const tax = reviewIncomeTax(draft.incomeTaxMode, draft.incomeTaxPercentage);
+  if (!tax.ok) return { ok: false, reason: tax.reason };
+
+  return {
+    ok: true,
+    profile: {
+      name,
+      firstName: firstNameOf(name),
+      gender: draft.gender,
+      employedSince,
+      restDay: draft.restDay,
+      recuperationMonth,
+      baseMonthlySalaryAgorot,
+      restEveSupplementAgorot,
+      country,
+      incomeTax: tax.setting,
+      insurer: draft.insurer.trim(),
+      standingLines: [],
+      documents: {
+        employmentPermitExpiry: null,
+        workVisaExpiry: null,
+        passportExpiry: null,
+      },
+      openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
+    },
+  };
 }

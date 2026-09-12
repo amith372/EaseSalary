@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RestDay } from "@/lib/dates";
 import { SEEDED_RATES, withFetchedRate } from "@/lib/datedRates";
 import type { DatedRate, RateKey } from "@/lib/datedRates";
+import type { SealedNumber } from "@/lib/encryption";
 import { UnknownWorkerError } from "@/lib/engine/repository";
 import type {
   MonthRecord,
@@ -353,6 +354,32 @@ function rateOf(row: RateRow): DatedRate {
   };
 }
 
+/** Postgres's hex-literal prefix, written with `String.raw` so the one
+ * backslash in it cannot be read as an escape by anybody editing this line. */
+const BYTEA = String.raw`\x`;
+
+/**
+ * A `bytea` on its way to PostgREST, which carries one as Postgres's own hex
+ * literal -- a backslash, an x, and then two characters a byte. There is no
+ * binary JSON, so this is the format and not a choice.
+ */
+function hexOf(sealed: SealedNumber | null | undefined): string | null {
+  return sealed === null || sealed === undefined
+    ? null
+    : `${BYTEA}${Buffer.from(sealed).toString("hex")}`;
+}
+
+/**
+ * The same on the way back. A column that is null is a number the family has
+ * not entered, which is the ordinary state of every worker whose papers nobody
+ * has typed in.
+ */
+function bytesOf(value: string | null | undefined): SealedNumber | null {
+  if (value === null || value === undefined) return null;
+  const hex = value.startsWith(BYTEA) ? value.slice(BYTEA.length) : value;
+  return Buffer.from(hex, "hex");
+}
+
 /**
  * Every statement's failure is raised rather than swallowed.
  *
@@ -560,6 +587,82 @@ export function createPostgresRepository(
       const { data, error } = await client.from("dated_rates").select("*");
       raise(error, "could not read the rates");
       return ratesOver(((data ?? []) as RateRow[]).map(rateOf));
+    },
+
+    /**
+     * The four sealed numbers: three off the worker's row and one off the
+     * household's (item 28).
+     *
+     * Read through the caller's own client like everything else here, so a
+     * worker in another household comes back as no worker rather than as bytes
+     * somebody else's key opens.
+     */
+    async sealedNumbers(workerId) {
+      const [worker, household] = await Promise.all([
+        client
+          .from("workers")
+          .select(
+            "passport_number_encrypted,bank_account_number_encrypted,work_visa_number_encrypted",
+          )
+          .eq("id", workerId)
+          .maybeSingle(),
+        client
+          .from("households")
+          .select("employment_permit_number_encrypted")
+          .eq("id", householdId)
+          .maybeSingle(),
+      ]);
+      raise(worker.error, "could not read the identifying numbers");
+      raise(household.error, "could not read the employment permit number");
+      if (worker.data === null) throw new UnknownWorkerError(workerId);
+
+      const row = worker.data as Record<string, string | null>;
+      return {
+        passport: bytesOf(row.passport_number_encrypted),
+        bankAccount: bytesOf(row.bank_account_number_encrypted),
+        workVisa: bytesOf(row.work_visa_number_encrypted),
+        employmentPermit: bytesOf(
+          (household.data as Record<string, string | null> | null)
+            ?.employment_permit_number_encrypted ?? null,
+        ),
+      };
+    },
+
+    async saveSealedNumbers(workerId, numbers) {
+      await requireWorker(workerId);
+
+      // Built by `in` rather than by truthiness, because an explicit `null`
+      // clears a number and an absent key leaves it: an object assembled from
+      // "whatever is not undefined" would silently make those two the same
+      // instruction, and the household's permit number is shared, so the
+      // difference is somebody else's number being erased.
+      const onWorker: Record<string, string | null> = {};
+      if ("passport" in numbers) {
+        onWorker.passport_number_encrypted = hexOf(numbers.passport);
+      }
+      if ("bankAccount" in numbers) {
+        onWorker.bank_account_number_encrypted = hexOf(numbers.bankAccount);
+      }
+      if ("workVisa" in numbers) {
+        onWorker.work_visa_number_encrypted = hexOf(numbers.workVisa);
+      }
+      if (Object.keys(onWorker).length > 0) {
+        const { error } = await client
+          .from("workers")
+          .update(onWorker)
+          .eq("id", workerId);
+        raise(error, "could not save the identifying numbers");
+      }
+
+      if ("employmentPermit" in numbers) {
+        const { error } = await client
+          .from("households")
+          .update({
+            employment_permit_number_encrypted: hexOf(numbers.employmentPermit),
+          })
+          .eq("id", householdId);
+        raise(error, "could not save the employment permit number");
+      }
     },
 
     async saveRate(rate) {

@@ -10,6 +10,7 @@ import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import { calculateSeries } from "@/lib/engine/series";
 import { fromIsoDate } from "@/lib/dates";
 import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
+import { readIdentifyingNumbers } from "@/lib/identifyingNumbers";
 import { todayInIsrael } from "@/lib/today";
 
 /**
@@ -98,6 +99,12 @@ export default async function WorkerPage({
       // `data/holidays/*.json` files, and asking for one in a client component
       // would pull all six lists into the bundle for a single word (Part 3).
       countryName={countryNameHe(SEEDED_HOLIDAY_LISTS, profile.country)}
+      // Opened here, on the server, for the one screen that shows it (items 22,
+      // 28). It is read beside the profile rather than on it, so nothing that
+      // merely names a worker carries an identifier.
+      passportNumber={
+        (await readIdentifyingNumbers(repository, id)).passport ?? null
+      }
     />
   );
 }

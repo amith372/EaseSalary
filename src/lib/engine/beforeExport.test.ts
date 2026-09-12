@@ -429,6 +429,51 @@ describe("the two figures the month has to have confirmed", () => {
     expect(recuperationToConfirm(facts(), EMPLOYMENT, SEEDED_RATES)).toBeNull();
   });
 
+  /**
+   * **Nothing is asked and nothing is owed inside the first working year**
+   * (`specs.md` item 15; Kol Zchut, `דמי הבראה`, read 2026-09-12: "עובדים
+   * שהשלימו שנת עבודה אחת (12 חודשים) לפחות במקום עבודתם זכאים לדמי הבראה").
+   *
+   * The employment below begins on 1 June 2025 and the family named March as
+   * its recuperation month, so the first March falls nine months in and the year
+   * does not close until the end of 31 May 2026. March 2027 is therefore the
+   * first payment, and it pays the statute's first tier of five days.
+   *
+   * **March is deliberately not the start month here**, because a family that
+   * takes the wizard's suggestion never meets this case: a start month chosen as
+   * the recuperation month closes the year inside that very month, which is the
+   * whole reason the suggestion exists.
+   *
+   * **What this would catch is the pre-export screen asking a family to confirm
+   * a recuperation rate for a payment the law does not yet owe.** A question
+   * asked is a payment implied: a family told to confirm ₪451.50 a day in the
+   * first year would reasonably pay it, and the figure would then stand on a
+   * filed sheet. The engine answers zero days, and this asserts the question
+   * built on top of it is silent rather than merely showing a zero.
+   */
+  it("asks nothing before a full working year has been completed", () => {
+    const firstYear = { ...EMPLOYMENT, employedSince: "2025-06-01" as const };
+
+    // Nine months in: the first year closes at the end of 31 May 2026.
+    expect(
+      recuperationToConfirm(
+        facts({ month: { year: 2026, month: 3 } }),
+        firstYear,
+        SEEDED_RATES,
+      ),
+    ).toBeNull();
+
+    // And the March after it, once the year is out, asks for the first five
+    // days — the statute's own first tier.
+    expect(
+      recuperationToConfirm(
+        facts({ month: { year: 2027, month: 3 } }),
+        firstYear,
+        SEEDED_RATES,
+      )?.days,
+    ).toBe(5);
+  });
+
   /** The month's own stored rate is offered back, so a month confirmed once and
    * opened again shows what it was valued at rather than today's figure. */
   it("offers back the rate the month already carries", () => {

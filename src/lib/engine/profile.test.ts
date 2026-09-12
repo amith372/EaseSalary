@@ -11,6 +11,9 @@ import {
   reviewIncomeTax,
   reviewOpeningAdvance,
   reviewOpeningDays,
+  reviewNewWorker,
+  firstNameOf,
+  type NewWorkerDraft,
 } from "@/lib/engine/profile";
 import type { MonthFacts, WorkerTerms } from "@/lib/engine/types";
 
@@ -348,5 +351,186 @@ describe("the income-tax setting the server accepts (specs.md item 17)", () => {
       ok: false,
       reason: "incomeTaxMode",
     });
+  });
+});
+
+/**
+ * The worker the `הוספת עובד` wizard creates (`build_plan.md` stage 3).
+ *
+ * **The minimum wage below is April 2026's, ₪6,443.85, read out of the
+ * committed 2026 workbook and already seeded in `SEEDED_RATES` with that
+ * provenance** — not a figure this suite invented and not one the function
+ * returned. It is passed in rather than looked up, which is what lets the
+ * refusal below be asserted at all.
+ */
+describe("reviewNewWorker", () => {
+  /** April 2026's minimum wage, in agorot. */
+  const MINIMUM = 644385;
+
+  const draft = (over: Partial<NewWorkerDraft> = {}): NewWorkerDraft => ({
+    name: "מריה סנטוס",
+    gender: "female",
+    passportNumber: "P1234567",
+    country: "PH",
+    employedSince: "2026-04-01",
+    restDay: SATURDAY,
+    recuperationMonth: "7",
+    baseMonthlySalary: "6443.85",
+    restEveSupplement: "300",
+    insurer: "",
+    incomeTaxMode: "automatic",
+    incomeTaxPercentage: "",
+    ...over,
+  });
+
+  it("makes a profile whose every stated term is the one that was typed", () => {
+    const reviewed = reviewNewWorker(draft(), MINIMUM);
+    expect(reviewed.ok).toBe(true);
+    if (!reviewed.ok) return;
+
+    expect(reviewed.profile).toMatchObject({
+      name: "מריה סנטוס",
+      gender: "female",
+      employedSince: "2026-04-01",
+      restDay: SATURDAY,
+      recuperationMonth: 7,
+      baseMonthlySalaryAgorot: 644385,
+      restEveSupplementAgorot: 30000,
+      country: "PH",
+      insurer: "",
+    });
+  });
+
+  /**
+   * **What the wizard never asked for opens empty rather than guessed**
+   * (`CLAUDE.md` rule 4). This is the assertion that would catch a later
+   * session giving a new worker a plausible opening balance or a standing line
+   * nobody entered: item 6's position is the family's to state, and a figure
+   * invented here would be replayed into every month's balances for ever
+   * (item 13).
+   */
+  it("opens with nothing the family did not state", () => {
+    const reviewed = reviewNewWorker(draft(), MINIMUM);
+    expect(reviewed.ok).toBe(true);
+    if (!reviewed.ok) return;
+
+    expect(reviewed.profile.openingPosition).toEqual({
+      vacationDays: 0,
+      sickDays: 0,
+      advances: [],
+    });
+    expect(reviewed.profile.standingLines).toEqual([]);
+    expect(reviewed.profile.documents).toEqual({
+      employmentPermitExpiry: null,
+      workVisaExpiry: null,
+      passportExpiry: null,
+    });
+  });
+
+  /** The first name is read off the full name rather than asked for twice, so
+   * "לדף של [שם]" has something to say. A single-word name is its own. */
+  it("reads the first name off the full name", () => {
+    expect(firstNameOf("מריה סנטוס")).toBe("מריה");
+    expect(firstNameOf("  מריה   דה לה קרוס  ")).toBe("מריה");
+    expect(firstNameOf("מריה")).toBe("מריה");
+  });
+
+  /**
+   * **The salary may not be set below the confirmed minimum wage**
+   * (`CLAUDE.md`'s non-negotiables, item 3). One agora under April 2026's
+   * ₪6,443.85 is the boundary, and it is its own refusal rather than "not a
+   * number" because a family that typed it typed a number they may not agree
+   * to.
+   */
+  it("refuses a salary below the minimum wage, and accepts the minimum wage itself", () => {
+    expect(reviewNewWorker(draft({ baseMonthlySalary: "6443.84" }), MINIMUM)).toEqual({
+      ok: false,
+      reason: "belowMinimum",
+    });
+    expect(reviewNewWorker(draft({ baseMonthlySalary: "6443.85" }), MINIMUM).ok).toBe(true);
+  });
+
+  /** No supplement is a family that agreed none, not a refusal: nothing in law
+   * requires it (item 14). */
+  it("takes an empty rest-eve supplement as none", () => {
+    const reviewed = reviewNewWorker(draft({ restEveSupplement: "" }), MINIMUM);
+    expect(reviewed.ok).toBe(true);
+    if (reviewed.ok) expect(reviewed.profile.restEveSupplementAgorot).toBe(0);
+  });
+
+  /**
+   * **A crafted request is refused by the same check the control passes**
+   * (Part 3). Every one of these arrives as request data that a union cannot
+   * check, and each would leave a worker the engine has no branch for: a fourth
+   * rest day nothing counts against, a gender the credit points have no value
+   * for, a thirteenth recuperation month that never falls.
+   */
+  it("refuses what a control could not have sent", () => {
+    expect(reviewNewWorker(draft({ name: "   " }), MINIMUM)).toEqual({
+      ok: false,
+      reason: "name",
+    });
+    expect(reviewNewWorker(draft({ gender: "other" }), MINIMUM)).toEqual({
+      ok: false,
+      reason: "gender",
+    });
+    expect(reviewNewWorker(draft({ country: "" }), MINIMUM)).toEqual({
+      ok: false,
+      reason: "country",
+    });
+    expect(reviewNewWorker(draft({ restDay: THURSDAY }), MINIMUM)).toEqual({
+      ok: false,
+      reason: "restDay",
+    });
+    expect(reviewNewWorker(draft({ recuperationMonth: "13" }), MINIMUM)).toEqual({
+      ok: false,
+      reason: "recuperationMonth",
+    });
+    expect(reviewNewWorker(draft({ recuperationMonth: "0" }), MINIMUM)).toEqual({
+      ok: false,
+      reason: "recuperationMonth",
+    });
+  });
+
+  /**
+   * A start date is refused where a document date is accepted empty, and the
+   * difference is not an inconsistency: seniority is counted from this one, so
+   * a worker without it has no accrual tier, no recuperation entitlement and no
+   * year to prorate a holiday over (items 7, 10, 15).
+   *
+   * `2026-02-30` is the case a regular expression accepts and a `Date` rolls
+   * forward into March — `specs.md` Part 5's own class of mistake.
+   */
+  it("refuses a start date that is missing or is not a date", () => {
+    expect(reviewNewWorker(draft({ employedSince: "" }), MINIMUM)).toEqual({
+      ok: false,
+      reason: "employedSince",
+    });
+    expect(reviewNewWorker(draft({ employedSince: "2026-02-30" }), MINIMUM)).toEqual({
+      ok: false,
+      reason: "employedSince",
+    });
+  });
+
+  /** The flat rate travels as a fraction, which is the unit the dated-rates
+   * table already uses, so the profile and a month's own correction cannot come
+   * to disagree about what "2.5" means. */
+  it("stores a flat tax rate as a fraction and refuses one that is not a rate", () => {
+    const reviewed = reviewNewWorker(
+      draft({ incomeTaxMode: "percentage", incomeTaxPercentage: "2.5" }),
+      MINIMUM,
+    );
+    expect(reviewed.ok).toBe(true);
+    if (reviewed.ok) expect(reviewed.profile.incomeTax).toEqual({
+      mode: "percentage",
+      percentage: 0.025,
+    });
+
+    expect(
+      reviewNewWorker(
+        draft({ incomeTaxMode: "percentage", incomeTaxPercentage: "" }),
+        MINIMUM,
+      ),
+    ).toEqual({ ok: false, reason: "incomeTaxRate" });
   });
 });
