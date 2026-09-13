@@ -27,6 +27,18 @@ done
 # file should not fail on something already in history.
 added=$(git diff --cached -U0 --diff-filter=ACM -- . ':(exclude)package-lock.json' ':(exclude).env.example' | grep '^+' | grep -v '^+++' || true)
 
+# Spreadsheets. The family's workbooks carry her passport and bank numbers, and like a
+# key they cannot be taken back once pushed. Only the scrubbed templates may be committed;
+# this catches `git add -f`, which .gitignore does not.
+# quotePath=false and line-wise grep, so a Hebrew or spaced file name is still matched.
+sheets=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR \
+  | grep -iE '\.(xlsx|xlsm|xls|xlsb|ods|csv)"?$' \
+  | grep -vE '^data/templates/template_[^/]*\.xlsx$' || true)
+if [ -n "$sheets" ]; then
+  fail "a spreadsheet outside data/templates/ is staged. The family's workbooks must never be committed — unstage with git rm --cached:
+$sheets"
+fi
+
 if printf '%s' "$added" | grep -qE -- '-----BEGIN [A-Z ]*PRIVATE KEY-----'; then
   fail "a private key block is being committed."
 fi

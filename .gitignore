@@ -43,10 +43,18 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# data files — DO NOT ignore *.xlsx.
-# data/templates/*.xlsx are load-bearing: the .xlsx export is generated from them.
-# (The parent directory's repo ignores *.xlsx; this repo must not inherit that.)
-!*.xlsx
+# spreadsheets — every one is ignored except the scrubbed export templates.
+# The family's own workbooks hold names, passport and bank numbers and must never
+# reach GitHub; data/templates/template_*.xlsx are load-bearing (the export fills
+# them) and carry placeholders only. hooks/pre-commit refuses a forced add too.
+*.xlsx
+*.xlsm
+*.xls
+*.xlsb
+*.ods
+*.csv
+~$*
+!/data/templates/template_*.xlsx
 
 # agent skill scratch output — throwaway ticket files, never load-bearing
 /.scratch/
