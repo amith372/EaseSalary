@@ -4,6 +4,7 @@ import { getRepository } from "@/lib/store";
 import { blocksExport } from "@/lib/engine/beforeExport";
 import { calculateSeries } from "@/lib/engine/series";
 import { monthFileOf } from "@/lib/export/monthExport";
+import { readIdentifyingNumbers } from "@/lib/identifyingNumbers";
 import { todayInIsrael } from "@/lib/today";
 
 /**
@@ -68,6 +69,15 @@ export async function GET(request: NextRequest) {
     },
     employment: { employedSince: worker.employedSince },
     insurer: worker.insurer,
+    // Opened here, on the server, for the file and nothing else (item 22). The
+    // visa and permit numbers are not read: the month sheet does not print them.
+    numbers: await (async () => {
+      const { passport, bankAccount } = await readIdentifyingNumbers(
+        repository,
+        workerId,
+      );
+      return { passport, bankAccount };
+    })(),
     month: inSeries,
     showNotes,
   });

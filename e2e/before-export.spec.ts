@@ -3,7 +3,8 @@ import { switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 import { SATURDAY } from "../src/lib/dates";
-import { dayLabel, rangeLabel } from "../src/lib/dateLabels";
+import { dayLabel, fullDayLabel, rangeLabel } from "../src/lib/dateLabels";
+import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The questions that open an export, through the browser — `specs.md` items 18,
@@ -400,6 +401,19 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
     await page.locator("[data-finish]").click();
     await settled(page);
     await expect(page.locator("[data-confirmed]")).toBeVisible();
+
+    // **`דף המשכורת` says when** — the day of the confirmation just made, in
+    // Israel, and nothing on a month nobody confirmed. What this catches is a
+    // confirmation that stored no date, or a date printed on every month
+    // whether it was confirmed or not.
+    await page.goto("/month/payslip?month=2026-08");
+    await switchToTestWorker(page);
+    await expect(page.locator("[data-confirmed-on]")).toContainText(
+      fullDayLabel(todayInIsrael()),
+    );
+    await page.goto("/month/payslip?month=2026-07");
+    await switchToTestWorker(page);
+    await expect(page.locator("[data-confirmed-on]")).toHaveCount(0);
   });
 
   /**

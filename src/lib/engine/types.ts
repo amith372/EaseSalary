@@ -9,6 +9,7 @@ import type {
   MarkKind,
   YearMonth,
 } from "@/lib/types";
+import type { SalaryChange } from "./salary";
 
 /**
  * The engine's **inputs**: a worker's standing terms, and the facts of one
@@ -226,14 +227,24 @@ export interface WorkerTerms {
    */
   gender: Gender;
   /**
-   * The salary on the profile. It defaults to the confirmed minimum wage and
-   * may not be set below it, and it does not follow a rise on its own: when a
-   * fetch finds the minimum wage has changed, the application says so and
-   * leaves the decision to the user (specs.md item 3). A month copies it into
-   * `ConfirmedWage.baseAgorot` when it is confirmed, which is what keeps a past
-   * month reproducible after this figure has moved on.
+   * The salary the employment opened with. It defaults to the confirmed minimum
+   * wage and may not be set below it, and it does not follow a rise on its own:
+   * when a fetch finds the minimum wage has changed, the application says so and
+   * leaves the decision to the user (specs.md item 3). A month copies its salary
+   * into `ConfirmedWage.baseAgorot` when it is confirmed, which is what keeps a
+   * past month reproducible after this figure has moved on.
+   *
+   * **It is the salary before any change, and not the salary now** once
+   * `salaryChanges` holds one: read a month's salary through `salaryFor`,
+   * never off this field.
    */
   baseMonthlySalaryAgorot: number;
+  /**
+   * Changes of salary after the opening one, each from the first of a month,
+   * oldest first (`salary.ts`). Absent is none, which is every worker until a
+   * family records a raise.
+   */
+  salaryChanges?: SalaryChange[];
   /**
    * The weekly rest day, which is a term of the employment and not a constant
    * (specs.md item 5). Friday, Saturday or Sunday, whichever the worker holds
@@ -695,6 +706,17 @@ export interface LineOverride {
 export interface MonthFacts {
   month: YearMonth;
   confirmedWage: ConfirmedWage;
+  /**
+   * When the user last confirmed this month before an export, as an instant
+   * (an ISO timestamp), or absent for a month never confirmed.
+   *
+   * **It values nothing and the engine never reads it.** It is Part 5's
+   * *confirmed* event, the one fact about a month nothing else records, and it
+   * is what `דף המשכורת` prints as "אושר ב…". An instant rather than a day,
+   * because the column it is stored in is one: the Israeli calendar day is
+   * worked out where it is shown.
+   */
+  confirmedAt?: string;
   /** The employment's terms as they stood when this month was confirmed
    * (specs.md Part 3). Read from here and never from the profile. */
   terms: MonthTerms;

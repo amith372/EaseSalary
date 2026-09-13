@@ -1,9 +1,18 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { Bidi } from "@/components/Bidi";
 import { Chevron } from "@/components/icons";
 import { he } from "@/lib/i18n/he";
+import { WORKER_COOKIE } from "@/lib/workerCookie";
 import type { Worker } from "@/lib/types";
 
 /**
@@ -15,36 +24,87 @@ import type { Worker } from "@/lib/types";
  * though it moved only the calendar. An account holds no more than two workers
  * (specs.md item 11), so this is a step between them rather than a list.
  *
- * The workers themselves are handed in. Until Stage 3 they are the fixtures;
- * from Stage 3 they are the account's own, and only the source changes.
+ * **The choice survives a reload** (`build_plan.md` stage 3). It is kept in a
+ * cookie the layout reads, so the server renders the chosen worker from the
+ * first byte: a choice kept only in the browser would render the first worker
+ * and then jump, and the server and the browser would disagree about whose
+ * month the page is.
+ *
+ * **On a worker's own page the address decides**, because `/workers/[id]`
+ * takes its worker from it. The switcher there goes to the other worker's
+ * page rather than renaming the bar over a profile it no longer matches, and
+ * arriving on her page makes her the choice for the screens that follow.
  */
+
 
 interface WorkerScope {
   workers: Worker[];
   worker: Worker;
   /** Forward or back through the account's workers, wrapping at either end. */
   step: (by: number) => void;
+  /** Show this worker, as a link from her own page does. An id the household
+   * does not hold leaves the choice as it was. */
+  select: (id: string) => void;
 }
 
 const WorkerScopeContext = createContext<WorkerScope | null>(null);
 
+/** The worker a `/workers/<id>` address names, where it names one of these. */
+function workerOfAddress(pathname: string, workers: Worker[]): string | null {
+  const match = /^\/workers\/([^/]+)$/.exec(pathname);
+  if (match === null) return null;
+  const id = decodeURIComponent(match[1]);
+  return workers.some((one) => one.id === id) ? id : null;
+}
+
 export function WorkerScopeProvider({
   workers,
+  initialWorkerId,
   children,
 }: {
   workers: Worker[];
+  /** The choice as the cookie held it when the request arrived. */
+  initialWorkerId?: string;
   children: ReactNode;
 }) {
-  const [index, setIndex] = useState(0);
+  const pathname = usePathname();
+  const router = useRouter();
+  const addressed = workerOfAddress(pathname, workers);
 
-  const value = useMemo<WorkerScope>(
-    () => ({
-      workers,
-      worker: workers[index] ?? workers[0],
-      step: (by) => setIndex((current) => (current + by + workers.length) % workers.length),
-    }),
-    [workers, index],
+  const [chosenId, setChosenId] = useState<string | undefined>(() =>
+    workers.some((one) => one.id === initialWorkerId) ? initialWorkerId : undefined,
   );
+
+  // Arriving on her own page makes her the choice. Adjusted during render
+  // rather than in an effect, which is React's own pattern for state derived
+  // from a prop: an effect would paint the old worker for a frame first.
+  if (addressed !== null && addressed !== chosenId) setChosenId(addressed);
+
+  // The cookie follows the state and never leads it. Written in an effect
+  // because a render must not write anything.
+  useEffect(() => {
+    if (chosenId === undefined) return;
+    document.cookie = `${WORKER_COOKIE}=${encodeURIComponent(chosenId)}; path=/; max-age=31536000; samesite=lax`;
+  }, [chosenId]);
+
+  const value = useMemo<WorkerScope>(() => {
+    const worker =
+      workers.find((one) => one.id === (addressed ?? chosenId)) ?? workers[0];
+    return {
+      workers,
+      worker,
+      step: (by) => {
+        const at = Math.max(0, workers.indexOf(worker));
+        const next = workers[(at + by + workers.length) % workers.length];
+        if (next === undefined) return;
+        setChosenId(next.id);
+        if (addressed !== null) router.push(`/workers/${next.id}`);
+      },
+      select: (id) => {
+        if (workers.some((one) => one.id === id)) setChosenId(id);
+      },
+    };
+  }, [workers, addressed, chosenId, router]);
 
   return <WorkerScopeContext.Provider value={value}>{children}</WorkerScopeContext.Provider>;
 }

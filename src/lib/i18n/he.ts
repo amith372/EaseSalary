@@ -166,6 +166,11 @@ export const he = {
     toSignUp: "אין לכם עדיין חשבון? לפתיחת חשבון",
     toSignIn: "יש לכם כבר חשבון? לכניסה",
     /** The confirmation the address has to pass before the account works. */
+    /** A person who arrived by an invitation link (item 11) is signed in and
+     * has no password yet; this is asked once, before the household opens. */
+    choosePasswordTitle: "ברוכים הבאים — בוחרים סיסמה",
+    choosePasswordLead: "הוזמנתם לחשבון משפחתי. בוחרים סיסמה כדי שאפשר יהיה להיכנס שוב גם בלי הקישור.",
+    choosePasswordSubmit: "לשמור סיסמה ולהמשיך",
     checkYourMail:
       "שלחנו אליכם אימייל לאישור הכתובת. לוחצים על הקישור שבו, וחוזרים לכאן להיכנס.",
     errors: {
@@ -465,18 +470,17 @@ export const he = {
    * lines are grouped by the sheet's columns and carry the sheet's own subtotal
    * names, where the month screen groups them by kind (specs.md item 5).
    *
-   * **Two things the artboard draws are not here, and both were settled with
-   * the user on 2026-09-10.** `אושר ב[תאריך]` is omitted because no
-   * confirmation date is stored — a confirmed month is one that has a
-   * `confirmedWage`, and any date shown would be invented. `להוסיף הערה לחודש`
-   * is omitted because a note belongs to a mark or to a line the user added,
-   * and there is no note on a month as a whole.
+   * **`להוסיף הערה לחודש` is not here**, settled with the user on 2026-09-10:
+   * a note belongs to a mark or to a line the user added, and there is no note
+   * on a month as a whole.
    */
   payslip: {
     eyebrow: "דף המשכורת",
     /** "עבור חנה" — the name is its own element beside this one, never inside
      * a template, for the reason `CLAUDE.md` gives about Chrome's translation. */
     forWorker: "עבור",
+    /** "אושר ב־…", the artboard's own words; the date is its own element. */
+    confirmedOn: "אושר ב־",
     /** The tint block, and the bottom row of the composition card. It is the
      * money that actually reaches her — the code's `net` (Part 5). */
     total: "סך הכל תשלום לעובד/ת",
@@ -1218,15 +1222,80 @@ export const he = {
   },
 
   /**
+   * `/settings` — `EaseSalary - הגדרות`. The rows that change a term keep their
+   * words under `workers.profile.terms`, where they were written while the
+   * worker's page held them; this block is the screen's own frame and its
+   * read-only rows.
+   */
+  settings: {
+    title: "הגדרות",
+    lead: "הדברים שנקבעים פעם אחת ומשפיעים על כל החישובים. אין צורך לגעת בהם כל חודש.",
+    /** The badge on a row the user never sets (items 3, 7, 8, 19). */
+    derived: "מחושב לפי החוק",
+    /** A dated rate the table has no row in force for (`rateInForce`'s `null`). */
+    noRate: "אין נתון",
+    since: "מ־",
+    employment: {
+      title: "תנאי ההעסקה",
+      note: "לכל עובד/ת בנפרד — כרגע מוצג/ת",
+    },
+    leave: {
+      title: "חופשה, מחלה וחגים",
+      note: "מתוכם מחושבות היתרות שמוצגות בדף הבית",
+      vacation: {
+        label: "ימי חופשה בשנה",
+        hint: "נגזר מותק העובד/ת לפי חוק חופשה שנתית",
+      },
+      sick: {
+        label: "ימי מחלה בשנה",
+        hint: "נצברים 1.5 בחודש עד תקרה של תשעים ימים",
+      },
+    },
+    rates: {
+      title: "שערים ותשלומים קבועים",
+      note: "מה משולם מלבד המשכורת, ובאיזה קצב",
+      minimumWage: {
+        label: "שכר מינימום",
+        hint: "נקרא מכל זכות ונשמר עם התאריך שבו נכנס לתוקף — חודש מוערך לפי השער שהיה בתוקף בו",
+      },
+      nationalInsurance: {
+        label: "ביטוח לאומי",
+        hint: "אחוז שנקבע בחוק ומשתנה בתאריך. משולם פעם ברבעון, בדיעבד",
+      },
+    },
+    documents: {
+      title: "המסמכים של העובד/ת",
+      note: "שלושה מסמכים נפרדים, כל אחד עם תאריך תפוגה משלו. המספרים נשמרים מוצפנים ומוצגים רק כאן ובקובץ הייצוא",
+    },
+    account: {
+      title: "החשבון",
+      yearlySummary: "להוריד סיכום שנתי לעובד/ת",
+      signOut: "להתנתק",
+      /** Item 11: a second person joins by an invitation they accept, and
+       * becomes a member who sees the same workers, months and balances. */
+      share: {
+        title: "לשתף עם בן/בת משפחה",
+        lead: "מי שיוזמן/תוזמן יראה את אותם עובדים/ות, חודשים ויתרות, ויוכל/תוכל לעדכן אותם. ההזמנה נשלחת באימייל ומתקבלת בכניסה עם אותה כתובת.",
+        email: "כתובת האימייל של מי שמזמינים",
+        send: "לשלוח הזמנה",
+        sent: "ההזמנה נשלחה. היא תתקבל כשייכנסו עם הכתובת הזו.",
+        existingAccount: "לכתובת הזו כבר יש חשבון, ולכן לא נשלח אימייל. ההזמנה ממתינה ותתקבל בכניסה הבאה שלהם.",
+        mailFailed: "ההזמנה נשמרה, אבל האימייל לא נשלח — אולי הגענו למגבלת השליחה. ההזמנה עדיין תתקבל בכניסה עם הכתובת הזו.",
+        badEmail: "זו לא נראית כתובת אימייל.",
+        failed: "לא הצלחנו לשמור את ההזמנה. כדאי לנסות שוב.",
+        pending: "הזמנות שממתינות",
+        withdraw: "לבטל",
+      },
+    },
+  },
+
+  /**
    * The workers' list and the worker's own page — `EaseSalary - העובדות` and
    * `EaseSalary - דף העובד` (specs.md items 5, 6, 11, 14, 20, 28).
    *
-   * **The profile is where the terms of the employment are changed**, which is
-   * a departure from `דף העובד` as drawn: the artboard reads the worker and
-   * sends "פרטים והגדרות" to `הגדרות`, whose route belongs to two later
-   * stages. The section carries `הגדרות`'s own row vocabulary — a label, the
-   * hint under it, the value, and a link that changes it — so the two screens
-   * still read as one mechanism when `/settings` is built.
+   * `profile.terms` holds the words of the rows `/settings` draws: they were
+   * written while the worker's page changed her terms, and moved screens on
+   * 2026-09-13 without changing a word.
    */
   workers: {
     title: "עובדים/ות",
@@ -1285,6 +1354,21 @@ export const he = {
       terms: {
         title: "תנאי ההעסקה",
         note: "מה שנכון לכל חודש, עד שמשנים אותו. חודש שכבר אושר שומר על התנאים שאיתם חושב.",
+        /** The base salary and its changes (specs.md item 3; decided with the
+         * user on 2026-09-13 that a change holds from a month she names). */
+        salary: {
+          label: "שכר בסיס לחודש",
+          hint: "הסכום שהוסכם עליו, לפני תוספות. לא ניתן לרדת מתחת לשכר המינימום. העלאה חלה מהחודש שבוחרים והלאה, והחודשים שלפניו נשארים כפי שחושבו.",
+          now: "בתוקף החודש",
+          change: "לשנות את השכר",
+          amount: "השכר החדש",
+          from: "חל מחודש",
+          fromHint: "בצורה שנה-חודש",
+          save: "לשמור",
+          cancel: "ביטול",
+          /** A change already recorded, listed under the figure. */
+          changedFrom: "מ־",
+        },
         restDay: {
           label: "יום המנוחה השבועי",
           hint: "שישי, שבת או ראשון — לפי מה שמקובל על העובד/ת. הלוח סופר לפיו את ימי המנוחה ואת ערבי המנוחה.",
@@ -1357,10 +1441,43 @@ export const he = {
          * key that is not in the database, and it is opened only to show it
          * here and to write it into the sheet.
          */
+        /** The four sealed numbers (items 22, 28). Each row says whose number
+         * it is where that is not obvious, because the permit is the employer's
+         * and is one number for the household. */
         passportNumber: {
           label: "מספר דרכון",
           hint: "נשמר מוצפן במפתח שאינו בבסיס הנתונים, ונפתח רק כדי להציג אותו כאן ולהכניס אותו לגיליון.",
           none: "לא הוזן",
+          save: "לשמור",
+        },
+        workVisaNumber: {
+          label: "מספר אשרת עבודה",
+          hint: "של העובד/ת. נשמר מוצפן, ומוצג רק כאן ובקובץ הייצוא.",
+          none: "לא הוזן",
+          save: "לשמור",
+        },
+        employmentPermitNumber: {
+          label: "מספר היתר העסקה",
+          hint: "של המעסיק/ה, ולכן אחד לכל החשבון — בחשבון עם שני עובדים/ות זה אותו מספר. נשמר מוצפן.",
+          none: "לא הוזן",
+          save: "לשמור",
+        },
+        bankAccountNumber: {
+          label: "מספר חשבון בנק",
+          hint: "החשבון שאליו מועברת המשכורת. נשמר מוצפן, ומוצג רק כאן ובקובץ הייצוא.",
+          none: "לא הוזן",
+          save: "לשמור",
+        },
+        /** When the employment began: what seniority is counted from. */
+        employedSince: {
+          label: "תחילת העסקה",
+          hint: "משפיע על ותק, על הבראה ועל מכסת החופשה. תיקון התאריך מעדכן את כל החודשים, כי היתרות מחושבות מחדש מתחילת ההעסקה.",
+          save: "לשמור",
+        },
+        /** Item 14: an agreed term, changed or stopped when the agreement is. */
+        restEveSupplement: {
+          label: "תוספת לערב המנוחה",
+          hint: "הסכום שמשולם על כל ערב יום מנוחה בחודש, בלי קשר לשאלה אם עבדה בו. אם הוסכם להפסיק, משאירים ריק.",
           save: "לשמור",
         },
         /** The way in to `בחירת חגים` (`build_plan.md` stage 5). The artboard
@@ -1444,7 +1561,7 @@ export const he = {
            * and which of them belongs to whom. The numbers are named as absent
            * on purpose — a user who has typed three dates and no numbers should
            * be told why rather than left looking for the fields. */
-          note: "שלושה מסמכים נפרדים, כל אחד עם תאריך תפוגה משלו. המספרים עצמם יישמרו מוצפנים ועדיין לא נשמרים כאן.",
+          note: "שלושה מסמכים נפרדים, כל אחד עם תאריך תפוגה משלו. המספרים נשמרים מוצפנים בשורות שלהם, ותאריכי התפוגה כאן.",
           employmentPermit: "היתר העסקה",
           employmentPermitHint:
             "שייך למעסיק/ה ולא לעובד/ת, ומחודש בבקשה מקוונת לרשות האוכלוסין. בחשבון עם שני עובדים/ות זה אותו היתר.",
@@ -1468,6 +1585,11 @@ export const he = {
          * it is about, because the panel that shows it holds several. */
         refused: {
           restDay: "אפשר לבחור רק שישי, שבת או ראשון.",
+          salary: "צריך להקליד סכום — מספר גדול מאפס, בלי מינוס.",
+          supplement: "התוספת צריכה להיות סכום בלי מינוס. אם אין תוספת, אפשר להשאיר ריק.",
+          numberName: "המספר הזה אינו אחד מהמספרים שנשמרים כאן. כדאי לרענן את הדף ולנסות שוב.",
+          belowMinimum: "השכר לא יכול להיות נמוך משכר המינימום שהיה בתוקף בחודש שממנו הוא חל.",
+          salaryFrom: "צריך חודש בצורה שנה-חודש, ולא לפני תחילת ההעסקה.",
           gender: "אפשר לבחור אישה או גבר.",
           incomeTaxMode: "אפשר לבחור חישוב אוטומטי, ללא ניכוי, או אחוז קבוע.",
           incomeTaxRate: "האחוז צריך להיות מספר גדול מאפס ולא יותר מ־100. אם לא מנוכה מס בכלל, אפשר לבחור \"לא מנוכה מס\".",
@@ -1996,6 +2118,11 @@ export const he = {
      * can hold one.
      */
     workerRole: "עובד/ת",
+
+    /** The sheet's identity line, `{{passport_line}}` in `A4` — the passport
+     * number item 22 says is written into it. The account number beside it
+     * needs no words: `C3` already says "מס' חשבון:". */
+    passportLine: (number: string) => `מספר דרכון: ${number}`,
 
     /**
      * The rest day as the month template's own labels name it — the five

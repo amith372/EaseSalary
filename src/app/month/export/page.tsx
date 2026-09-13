@@ -4,6 +4,7 @@ import type { WorkerBeforeExport } from "@/components/BeforeExportScreen";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { getRepository } from "@/lib/store";
+import { salaryFor } from "@/lib/engine/salary";
 import {
   blocksExport,
   exportQuestions,
@@ -82,10 +83,10 @@ export default async function BeforeExportPage() {
           firstName: profile.firstName,
         },
         restDay: profile.restDay,
-        baseMonthlySalaryAgorot: profile.baseMonthlySalaryAgorot,
         months: months.map((facts) => ({
           month: facts.month,
           confirmedWage: facts.confirmedWage,
+          baseMonthlySalaryAgorot: salaryFor(profile, facts.month),
           questions: exportQuestions(facts, today),
           blocks: blocksExport(facts, today),
           openSpell: openSickSpellOf(facts),

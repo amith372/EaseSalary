@@ -103,7 +103,7 @@ test.describe("the worker's own page", () => {
    */
   test("fills the chosen chip so the choice is visible", async ({ page }) => {
     await useHousehold(page, "chip");
-    await page.goto("/workers/worker-1");
+    await page.goto("/settings");
     await settled(page);
 
     const chosen = page.locator('button[aria-pressed="true"]').first();

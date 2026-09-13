@@ -99,6 +99,7 @@ Each of these is true or false at a glance.
    rise on its own: when a fetch finds the minimum wage has changed, or when the salary
    on the profile sits below it, the application says so and leaves the decision to the
    user.
+   **A change of the base salary holds from a month the user names, and the months before it keep the salary they were calculated with** (decided with the user on 2026-09-13): a raise is agreed from some month on and is never a restatement of months already paid. It may not be set below the minimum wage in force during the month it starts; a month the application has not opened yet reads the salary in force during it when it is opened.
 4. Before every export the application shows the minimum wage it fetched from its
    source and requires the user to confirm it; if the fetch fails, the application says
    so plainly and lets the user enter the figure by hand.

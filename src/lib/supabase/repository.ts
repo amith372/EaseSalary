@@ -21,6 +21,7 @@ import type {
   ThirdPartyPayment,
   UserLine,
 } from "@/lib/engine/types";
+import type { SalaryChange } from "@/lib/engine/salary";
 import {
   SEEDED_HOLIDAY_LISTS,
   withFetchedList,
@@ -93,6 +94,7 @@ interface WorkerRow {
   opening_sick_days: number | string;
   opening_advances: OpeningAdvance[];
   standing_lines: UserLine[];
+  salary_changes: SalaryChange[];
   holiday_source_kind: "country" | "religion" | null;
   holiday_source_religion: Religion | null;
   income_tax_mode: IncomeTaxMode;
@@ -129,6 +131,7 @@ interface MonthRow {
   overrides: Record<string, LineOverride>;
   income_tax_agorot: number;
   recuperation_day_rate_agorot: number | null;
+  confirmed_at: string | null;
 }
 
 interface HolidayListRow {
@@ -194,6 +197,7 @@ function profileOf(row: WorkerRow, permitExpiry: IsoDate | null): WorkerProfile 
     insurer: row.insurer,
     incomeTax: incomeTaxOf(row.income_tax_mode, row.income_tax_percentage),
     standingLines: row.standing_lines,
+    salaryChanges: row.salary_changes,
     holidaySource: holidaySourceOf(row),
     openingPosition: {
       vacationDays: numberOf(row.opening_vacation_days),
@@ -231,6 +235,7 @@ function workerRowOf(profile: WorkerProfile, householdId: string) {
     opening_sick_days: profile.openingPosition.sickDays,
     opening_advances: profile.openingPosition.advances,
     standing_lines: profile.standingLines,
+    salary_changes: profile.salaryChanges ?? [],
     // **Her own country's list is stored as null and never as a copy of
     // `country`**, which is the interface's own rule: storing the exception is
     // what keeps one worker from having two fields that can disagree about
@@ -306,6 +311,7 @@ function recordOfRow(row: MonthRow): MonthRecord {
     ...(row.recuperation_day_rate_agorot === null
       ? {}
       : { recuperationDayRateAgorot: row.recuperation_day_rate_agorot }),
+    ...(row.confirmed_at === null ? {} : { confirmedAt: row.confirmed_at }),
   };
 }
 
@@ -329,6 +335,7 @@ function monthRowOf(workerId: string, record: MonthRecord) {
     overrides: record.overrides,
     income_tax_agorot: record.incomeTaxAgorot ?? 0,
     recuperation_day_rate_agorot: record.recuperationDayRateAgorot ?? null,
+    confirmed_at: record.confirmedAt ?? null,
   };
 }
 

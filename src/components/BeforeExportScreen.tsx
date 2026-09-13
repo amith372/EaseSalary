@@ -58,6 +58,10 @@ import type { IsoDate, Worker, YearMonth } from "@/lib/types";
 export interface MonthBeforeExport {
   month: YearMonth;
   confirmedWage: ConfirmedWage;
+  /** Her salary in force during *this* month (`salaryFor`). The screen says so
+   * when the confirmed minimum is above it, because the month is then confirmed
+   * at the minimum instead (specs.md item 3). */
+  baseMonthlySalaryAgorot: number;
   questions: ExportQuestion[];
   blocks: ExportBlockKey[];
   openSpell: { spanId: string; from: IsoDate } | null;
@@ -76,10 +80,6 @@ export interface MonthBeforeExport {
 export interface WorkerBeforeExport {
   worker: Worker;
   restDay: RestDay;
-  /** Her salary as the profile holds it now. The screen says so when the
-   * confirmed minimum is above it, because the month is then confirmed at the
-   * minimum instead (specs.md item 3). */
-  baseMonthlySalaryAgorot: number;
   /** Oldest first. */
   months: MonthBeforeExport[];
 }
@@ -174,7 +174,6 @@ export function BeforeExportScreen({
           key={`${entry.worker.id}-${month.year}-${month.month}`}
           workerId={entry.worker.id}
           restDay={entry.restDay}
-          baseMonthlySalaryAgorot={entry.baseMonthlySalaryAgorot}
           shown={shown}
           failure={failure}
           sourceUrl={sourceUrl}
@@ -204,14 +203,12 @@ export function BeforeExportScreen({
 function MonthConfirmation({
   workerId,
   restDay,
-  baseMonthlySalaryAgorot,
   shown,
   failure,
   sourceUrl,
 }: {
   workerId: string;
   restDay: RestDay;
-  baseMonthlySalaryAgorot: number;
   shown: MonthBeforeExport;
   failure: ScrapeFailureKind | null;
   sourceUrl: string;
@@ -238,6 +235,7 @@ function MonthConfirmation({
   // so the figure shown is the figure that would be stored and neither of them
   // ever passes through a float (`money.ts`).
   const typedWage = parseShekels(wageText);
+  const baseMonthlySalaryAgorot = shown.baseMonthlySalaryAgorot;
 
   const effectiveFrom =
     shown.offeredWage?.effectiveFrom ?? shown.confirmedWage.effectiveFrom;

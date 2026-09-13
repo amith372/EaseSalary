@@ -776,12 +776,13 @@ function UserLinesControl({
         </h3>
         {/* **What this card can and cannot do, before she uses it.** A line
             made here belongs to this month alone; the recurring kind is a term
-            of the employment and is set on the worker's page. Saying it here is
+            of the employment and is set on `/settings`, which shows the worker
+            this screen does. Saying it here is
             what keeps a family from recording the same deduction twelve times,
             or from concluding the application cannot do it at all. */}
         <p dir="auto" className="text-[13px] leading-[1.5] font-light text-ink-quiet text-pretty">
           {words.oneOffOnly}{" "}
-          <Link href={`/workers/${workerId}#terms`} className="font-medium">
+          <Link href="/settings" className="font-medium">
             <span dir="auto">{words.standing}</span>
           </Link>
         </p>

@@ -4,7 +4,9 @@ import type { WorkerSummary } from "@/components/WorkersList";
 import { getRepository } from "@/lib/store";
 import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
 import { advanceLedger } from "@/lib/engine/advances";
+import { salaryFor } from "@/lib/engine/salary";
 import { calculateSeries } from "@/lib/engine/series";
+import { monthOf } from "@/lib/dates";
 import { todayInIsrael } from "@/lib/today";
 
 /**
@@ -55,7 +57,8 @@ export default async function WorkersPage() {
         },
         employedSince: profile.employedSince,
         country: countryNameHe(SEEDED_HOLIDAY_LISTS, profile.country),
-        baseMonthlySalaryAgorot: profile.baseMonthlySalaryAgorot,
+        // The salary in force this month, not the one the employment opened with.
+        baseMonthlySalaryAgorot: salaryFor(profile, monthOf(today)),
         vacationDays: closing("vacation"),
         sickDays: closing("sick"),
         outstandingAgorot: advanceLedger(profile.openingPosition, months).reduce(

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { TEST_WORKER_ID, switchToTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker } from "./household";
 import { FRIDAY, SATURDAY } from "../src/lib/dates";
 import { fullDayLabel } from "../src/lib/dateLabels";
 import { he } from "../src/lib/i18n/he";
@@ -118,7 +118,7 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
       page.getByText(he.calendar.marks(SATURDAY).freeRestDay, { exact: true }),
     ).toBeVisible();
 
-    await page.goto("/workers/hanna");
+    await page.goto("/settings");
     await page.screenshot({
       path: "test-results/profile-before.png",
       fullPage: true,
@@ -174,7 +174,7 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
     await switchToTestWorker(page);
     await expect(row(page, "userLines-beforeGross")).toHaveCount(0);
 
-    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    await openSettingsForTestWorker(page);
     const standing = page.locator('[data-terms="standing"]');
     await expect(standing.getByText(he.workers.profile.terms.standing.empty)).toBeVisible();
 
@@ -257,7 +257,7 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
     // this is the case that made `ClosingLine.overridable` reachable, which it
     // had not been while no standing line could exist.
     await useHousehold(page, "demo", "standing-after");
-    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    await openSettingsForTestWorker(page);
 
     const standing = page.locator('[data-terms="standing"]');
     await standing
@@ -303,7 +303,7 @@ test.describe("the opening position (specs.md item 6)", () => {
     await switchToTestWorker(page);
     await expect(page.locator('[data-advance="2"]')).toHaveCount(0);
 
-    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    await openSettingsForTestWorker(page);
     const opening = page.locator('[data-terms="opening"]');
     await opening
       .getByRole("button", {
@@ -346,7 +346,7 @@ test.describe("the three documents and their expiry dates (specs.md item 28)", (
    * is sealed and sits in its own row above, with its own check. */
   test("holds three separate dates, apart from the sealed numbers", async ({ page }) => {
     await useHousehold(page, "known", "documents");
-    await page.goto("/workers/hanna");
+    await page.goto("/settings");
 
     const documents = page.locator('[data-terms="documents"]');
     const words = he.workers.profile.terms.documents;

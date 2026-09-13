@@ -1,7 +1,8 @@
-import { FRIDAY, SATURDAY, SUNDAY, fromIsoDate, toIsoDate } from "@/lib/dates";
+import { FRIDAY, SATURDAY, SUNDAY, compareMonth, fromIsoDate, toIsoDate } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { reviewTaxPercentage } from "@/lib/engine/incomeTax";
 import { recordOf } from "@/lib/engine/repository";
+import { salaryFor } from "@/lib/engine/salary";
 import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
 import { genders, incomeTaxModes, snapshotTerms } from "@/lib/engine/types";
 import type {
@@ -14,7 +15,7 @@ import type {
   WorkerTerms,
 } from "@/lib/engine/types";
 import { parseShekels } from "@/lib/money";
-import type { IsoDate, WorkerDocuments } from "@/lib/types";
+import type { IsoDate, WorkerDocuments, YearMonth } from "@/lib/types";
 
 /**
  * What the profile screen may change about a worker, and the rules that say
@@ -297,6 +298,47 @@ export function monthsFollowingProfile(
 }
 
 /**
+ * The stored months a change reaches, with the base they now carry.
+ *
+ * Only months from the change on, and each at the salary in force during it —
+ * which is not always the new one, because a later change already on the list
+ * still holds from its own month. The month keeps its confirmed minimum and is
+ * floored at it, exactly as confirming it does (`baseForMonth`), so a raise can
+ * never write a month that pays under its own minimum.
+ */
+export function monthsReachedBySalaryChange(
+  months: readonly MonthFacts[],
+  terms: Pick<WorkerTerms, "baseMonthlySalaryAgorot" | "salaryChanges">,
+  from: YearMonth,
+): MonthRecord[] {
+  return months
+    .filter((facts) => compareMonth(facts.month, from) >= 0)
+    .map((facts) => ({
+      ...recordOf(facts),
+      confirmedWage: {
+        ...facts.confirmedWage,
+        baseAgorot: Math.max(
+          salaryFor(terms, facts.month),
+          facts.confirmedWage.minimumAgorot,
+        ),
+      },
+    }));
+}
+
+/**
+ * The weekly rest-eve supplement as typed, in agorot, or `null` where it is not
+ * an amount (specs.md item 14).
+ *
+ * **Empty is zero and not a refusal.** Nothing in law requires the supplement,
+ * so a family that pays none — or that has stopped paying it — says so by
+ * leaving the field empty. One reader for the wizard and for `/settings`, so
+ * the two cannot disagree about what an empty field means.
+ */
+export function parseRestEveSupplement(text: string): number | null {
+  return text.trim() === "" ? 0 : parseShekels(text);
+}
+
+/**
  * A worker as the `הוספת עובד` wizard hands her over — every field as the user
  * typed or chose it, so the rule that reads them is the server's (Part 3).
  *
@@ -438,13 +480,7 @@ export function reviewNewWorker(
     return { ok: false, reason: "belowMinimum" };
   }
 
-  // Nothing in law requires the rest-eve supplement (item 14), so a family that
-  // pays none says so by leaving the field empty and gets zero rather than a
-  // refusal.
-  const restEveSupplementAgorot =
-    draft.restEveSupplement.trim() === ""
-      ? 0
-      : parseShekels(draft.restEveSupplement);
+  const restEveSupplementAgorot = parseRestEveSupplement(draft.restEveSupplement);
   if (restEveSupplementAgorot === null) {
     return { ok: false, reason: "supplement" };
   }

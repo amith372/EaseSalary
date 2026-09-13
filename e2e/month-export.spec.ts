@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
-import { TEST_WORKER_ID, switchToTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
@@ -189,12 +189,15 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
     const typed = "סוכנות כלשהי בחברה כלשהי";
     await useHousehold(page, "insurer");
 
-    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    await openSettingsForTestWorker(page);
     const field = page.locator('[data-terms="insurer"]');
     await field.locator("input").fill(typed);
     await field.getByRole("button").click();
-    // Saved, not merely typed: the value survives a reload of her own page.
-    await page.reload();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    // Saved, not merely typed: the value survives loading the screen again.
+    // Opened afresh rather than reloaded, because a load starts the switcher
+    // on the first worker.
+    await openSettingsForTestWorker(page);
     await expect(field.locator("input")).toHaveValue(typed);
 
     const sheet = await exportAugust(page, "plain");

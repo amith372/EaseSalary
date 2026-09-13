@@ -79,12 +79,13 @@ export interface MonthSheetIdentity {
   insurer: string;
   /**
    * The employer of record, the passport line, the bank line and the account
-   * number. **Each is empty until stage 3**, and empty is what is written: the
-   * three identifying numbers are encrypted at rest with a key outside the
-   * database and there is no database yet, and the employer of record is the
-   * person being cared for and has no field. A cell left blank is one the
-   * family fills, exactly as the template's own "בתאריך _________" is; a token
-   * left standing would print `{{passport_line}}` onto her sheet.
+   * number. The passport line and the account number are her sealed numbers,
+   * opened on the server for the export (specs.md item 22), and empty where the
+   * family has entered none. The employer of record — the person being cared
+   * for — and the bank's own name and branch have no field, so those two are
+   * always empty. A cell left blank is one the family fills, exactly as the
+   * template's own "בתאריך _________" is; a token left standing would print
+   * `{{passport_line}}` onto her sheet.
    */
   employerLine?: string;
   passportLine?: string;

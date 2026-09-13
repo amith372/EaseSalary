@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { TEST_WORKER_ID, switchToTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot, formatDays } from "../src/lib/money";
 
@@ -80,7 +80,7 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
     page,
   }) => {
     await useHousehold(page, "pays");
-    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    await openSettingsForTestWorker(page);
 
     // The days come from her seniority and are reported, never offered.
     await expect(page.locator("[data-recuperation]")).toContainText(
@@ -123,7 +123,7 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
     page,
   }) => {
     await useHousehold(page, "moves");
-    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    await openSettingsForTestWorker(page);
     await chooseMonth(page, MOVED_TO);
 
     await page.goto("/month");

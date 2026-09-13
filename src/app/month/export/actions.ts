@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getRepository } from "@/lib/store";
+import { salaryFor } from "@/lib/engine/salary";
 import {
   baseForMonth,
   blocksExport,
@@ -201,12 +202,15 @@ export async function confirmMonth(
 
   await repository.saveMonth(workerId, {
     ...recordOf(facts),
+    // Part 5's *confirmed* event, which `דף המשכורת` prints. Read from the
+    // clock here, in the action, and never in the engine or a render.
+    confirmedAt: new Date().toISOString(),
     confirmedWage: {
       // Item 3: a salary may never sit below the minimum wage, so a profile
       // still holding last year's figure is raised to the wage in force rather
       // than writing a month that pays under its own confirmed minimum. The
       // screen says so before the user presses.
-      baseAgorot: baseForMonth(profile.baseMonthlySalaryAgorot, minimumAgorot),
+      baseAgorot: baseForMonth(salaryFor(profile, facts.month), minimumAgorot),
       minimumAgorot,
       effectiveFrom,
     },

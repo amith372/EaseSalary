@@ -73,6 +73,12 @@ export default async function PayslipPage() {
             // debt, so the row is absent instead.
             advanceOwedAgorot: owed === 0 ? null : owed,
             canExport: blocksExport(month.facts, today).length === 0,
+            // The Israeli calendar day of the confirmation, worked out here so
+            // the screen reads no clock and no time zone (`CLAUDE.md`).
+            confirmedOn:
+              month.facts.confirmedAt === undefined
+                ? null
+                : todayInIsrael(new Date(month.facts.confirmedAt)),
           };
         }),
       };

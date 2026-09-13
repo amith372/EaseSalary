@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker } from "./household";
+import { TEST_WORKER_NAME, switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot, formatDays } from "../src/lib/money";
 import { SATURDAY } from "../src/lib/dates";
@@ -226,10 +226,13 @@ test.describe("a month the store has no record of", () => {
     await expect(row(page, "balance-vacation")).toContainText(daysUsed(4));
 
     await page.reload();
-    // The reload also forgets which worker was on screen — the switcher holds
-    // that in the page and not in the store — so it is chosen again before the
-    // month is. The mark is what has to survive here, and it does.
-    await switchToTestWorker(page);
+    // **The worker survives the reload as well** (`build_plan.md` stage 3):
+    // the switcher's choice is a cookie the layout reads, so the page comes
+    // back on her without being chosen again. Asserted and not stepped to —
+    // stepping here would pass whether or not the choice survived.
+    await expect(
+      page.getByRole("group", { name: he.header.workerSwitcher.showing }),
+    ).toContainText(TEST_WORKER_NAME);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
     await expect(row(page, "balance-vacation")).toContainText(daysUsed(4));
   });

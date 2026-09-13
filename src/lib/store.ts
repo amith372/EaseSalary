@@ -152,6 +152,18 @@ async function householdRepository(): Promise<SalaryRepository> {
   } = await client.auth.getUser();
   if (user === null) throw new NotSignedInError();
 
+  return createPostgresRepository(client, await householdIdOf(client));
+}
+
+/**
+ * The household a signed-in person is working in: the first they joined.
+ *
+ * Exported so the invitation actions invite into the same household every
+ * screen shows, rather than deciding "your household" a second way.
+ */
+export async function householdIdOf(
+  client: Awaited<ReturnType<typeof supabaseOnServer>>,
+): Promise<string> {
   const { data, error } = await client
     .from("household_members")
     .select("household_id")
@@ -162,8 +174,7 @@ async function householdRepository(): Promise<SalaryRepository> {
     throw new Error(`could not read the household: ${error.message}`);
   }
   if (data === null) throw new NoHouseholdError();
-
-  return createPostgresRepository(client, data.household_id as string);
+  return data.household_id as string;
 }
 
 /**

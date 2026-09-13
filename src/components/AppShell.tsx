@@ -92,6 +92,9 @@ interface AppShellProps {
    * from and nothing here.
    */
   workers: Worker[];
+  /** The worker the switcher was left on, as the layout read it from the
+   * cookie (`WorkerScope`). */
+  initialWorkerId?: string;
   /** Defaults to the canvas placeholders, so the shell renders before there is
    * an account behind it. */
   userName?: string;
@@ -101,6 +104,7 @@ interface AppShellProps {
 export function AppShell({
   children,
   workers,
+  initialWorkerId,
   userName = he.header.yourName,
   alertCount = he.placeholder.count,
 }: AppShellProps) {
@@ -135,7 +139,7 @@ export function AppShell({
       lock is released and the page stacks and scrolls, because a phone has no
       screen to fit (v3, and there is no narrow artboard).
     */
-    <WorkerScopeProvider workers={workers}>
+    <WorkerScopeProvider workers={workers} initialWorkerId={initialWorkerId}>
     <div className="flex min-h-screen flex-col bg-ground text-ink md:h-screen md:min-h-0 md:overflow-hidden">
       <header className="flex h-15.5 flex-none items-center justify-between gap-6 border-b border-line bg-surface px-4 md:px-7">
         <div className="flex min-w-0 flex-auto items-center gap-6">

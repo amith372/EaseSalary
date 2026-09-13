@@ -10,12 +10,13 @@ import { MoneyValue } from "@/components/MoneyValue";
 import { SummaryRow } from "@/components/SummaryRow";
 import { ValueChip } from "@/components/ValueChip";
 import { useWorkerScope } from "@/components/WorkerScope";
-import { monthLabel } from "@/lib/dateLabels";
+import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import type { RestDay } from "@/lib/dates";
 import { monthLevels } from "@/lib/engine/month";
 import { bottomFigure, he } from "@/lib/i18n/he";
 import { formatAgorot, formatDays } from "@/lib/money";
 import type {
+  IsoDate,
   MonthLine,
   MonthResult,
   SheetColumn,
@@ -36,12 +37,11 @@ import type {
  * same one the month screen and the export read, so the three cannot word the
  * month differently (Part 3, rule 11).
  *
- * **Two things the artboard draws are not built, both settled with the user on
- * 2026-09-10 and neither a gap.** `אושר ב[תאריך]` needs a confirmation date the
- * application does not store — a confirmed month is one with a `confirmedWage`
- * and no timestamp — so any date shown would be invented. `להוסיף הערה לחודש`
- * needs a note on the month as a whole, and notes belong to a mark or to a line
- * the user added.
+ * **`אושר ב[תאריך]` is the day the month was last confirmed before an export**,
+ * stored with the month since 2026-09-13 and absent for a month never
+ * confirmed, so no date is ever invented. **`להוסיף הערה לחודש` is not built**,
+ * settled with the user on 2026-09-10: it needs a note on the month as a whole,
+ * and notes belong to a mark or to a line the user added.
  */
 
 /** One month, ready to read. The counts come from `exportQuestions`, which is
@@ -64,6 +64,9 @@ export interface PayslipMonth {
   /** Whether the month has a file — `blocksExport`'s answer, so the button here
    * and the route behind it cannot disagree (the defect `/reports` had). */
   canExport: boolean;
+  /** The day the month was last confirmed before an export, in Israel, or
+   * `null` for a month never confirmed. */
+  confirmedOn: IsoDate | null;
 }
 
 export interface WorkerPayslip {
@@ -167,6 +170,12 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               <span dir="auto">{he.payslip.forWorker}</span>{" "}
               <Bidi>{mine.workerName}</Bidi>
             </p>
+            {shown.confirmedOn === null ? null : (
+              <p data-confirmed-on className="text-[15px] font-light text-ink-quiet">
+                <span dir="auto">{he.payslip.confirmedOn}</span>
+                <Bidi>{fullDayLabel(shown.confirmedOn)}</Bidi>
+              </p>
+            )}
           </div>
           {shown.canExport ? (
             <a

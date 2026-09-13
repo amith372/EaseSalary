@@ -179,8 +179,9 @@ test("adds the household's first worker, and every screen then has somebody to b
   await expect(page.getByRole("navigation", { name: he.nav.landmark })).toBeVisible();
   await expect(page.getByRole("heading", { name: NAME })).toBeVisible();
 
-  // The terms as they were typed, read back off the profile. The supplement is
-  // ₪300 a week and the recuperation month is July, both stated by this test.
+  // The terms as they were typed, read back where they are changed. She is the
+  // household's only worker, so `/settings` opens on her.
+  await page.goto("/settings");
   const terms = page.locator('[data-terms="restDay"]');
   await expect(terms).toContainText(he.workers.profile.terms.restDay.day(6));
 
@@ -215,7 +216,10 @@ test("the passport number survives the round trip", async ({ page }) => {
   await page.locator('[data-role="add-worker-finish"]').click();
 
   await expect(page.getByRole("heading", { name: NAME })).toBeVisible();
-  await expect(page.locator(`text=${PASSPORT}`).first()).toBeVisible();
+  // Opened where it is shown: `/settings`, since the terms moved there on
+  // 2026-09-13. She is the household's only worker, so it opens on her.
+  await page.goto("/settings");
+  await expect(page.locator('[data-terms="passportNumber"]')).toContainText(PASSPORT);
 });
 
 async function fillWho(page: Page): Promise<void> {

@@ -7,12 +7,18 @@ import { advanceLedger } from "@/lib/engine/advances";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { todayInIsrael } from "@/lib/today";
-import { saveIdentifyingNumbers } from "@/lib/identifyingNumbers";
+import {
+  saveIdentifyingNumbers,
+  type IdentifyingNumbers,
+} from "@/lib/identifyingNumbers";
 import {
   isAllowedGender,
   isAllowedRestDay,
   reviewIncomeTax,
   monthsFollowingProfile,
+  monthsReachedBySalaryChange,
+  parseRestEveSupplement,
+  reviewDate,
   reviewDocuments,
   reviewOpeningAdvance,
   reviewNewWorker,
@@ -27,7 +33,12 @@ import {
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
 import type { Gender, UserLine } from "@/lib/engine/types";
 import { reviewUserLine, type UserLineDraft, type UserLineRefusal } from "@/lib/engine/userLines";
-import { monthOf } from "@/lib/dates";
+import { monthOf, parseYearMonth } from "@/lib/dates";
+import {
+  reviewSalaryChange,
+  withSalaryChange,
+  type SalaryChangeRefusal,
+} from "@/lib/engine/salary";
 import type { RestDay } from "@/lib/dates";
 
 /**
@@ -72,7 +83,10 @@ export type ProfileActionRefusal =
   | "incomeTaxRate"
   | "recuperationMonth"
   | "date"
-  | "entryUnknown";
+  | "entryUnknown"
+  | SalaryChangeRefusal
+  | "supplement"
+  | "numberName";
 
 export type ProfileActionResult =
   | { ok: true }
@@ -90,6 +104,7 @@ export type ProfileActionResult =
  * failure a change this wide can produce.
  */
 function revalidateWorker(): void {
+  revalidatePath("/settings");
   revalidatePath("/workers", "layout");
   revalidatePath("/month");
   revalidatePath("/payments");
@@ -157,6 +172,48 @@ export async function setRestDay(
   if (!isAllowedRestDay(restDay)) return { ok: false, reason: "restDay" };
   const profile = await profileOf(workerId);
   return saveProfile({ ...profile, restDay }, true);
+}
+
+/**
+ * The weekly rest-eve supplement (specs.md item 14): an agreed term, changed or
+ * stopped whenever the agreement is.
+ *
+ * **It is a term a month snapshots**, so it reaches the months that follow the
+ * profile exactly as the rest day does, through `saveProfile`. Empty is zero —
+ * the family has stopped paying it — and anything else that is not an amount is
+ * refused (`parseRestEveSupplement`).
+ */
+export async function setRestEveSupplement(
+  workerId: string,
+  amountText: string,
+): Promise<ProfileActionResult> {
+  const agorot = parseRestEveSupplement(amountText);
+  if (agorot === null) return { ok: false, reason: "supplement" };
+  const profile = await profileOf(workerId);
+  return saveProfile({ ...profile, restEveSupplementAgorot: agorot }, true);
+}
+
+/**
+ * When the employment began — the `הגדרות` artboard's "תחילת העסקה".
+ *
+ * **Everything that counts seniority reads it**: the vacation ladder (item 7),
+ * the recuperation entitlement and its anniversary (item 15), and the share of
+ * a year's nine holidays (item 10). None of them is stored — balances are
+ * replayed (item 13) — so a corrected date moves every month by construction,
+ * and nothing is re-snapshotted: it is a fact about the employment and not a
+ * term a month copies (`WorkerTerms.employedSince`).
+ *
+ * The date is required and checked by building it and reading it back
+ * (`reviewDate`), so 2026-02-30 is refused rather than rolled into March.
+ */
+export async function setEmployedSince(
+  workerId: string,
+  dateText: string,
+): Promise<ProfileActionResult> {
+  const date = reviewDate(dateText);
+  if (date === null || date === "invalid") return { ok: false, reason: "date" };
+  const profile = await profileOf(workerId);
+  return saveProfile({ ...profile, employedSince: date }, false);
 }
 
 /**
@@ -253,6 +310,58 @@ export async function setInsurer(
 ): Promise<ProfileActionResult> {
   const profile = await profileOf(workerId);
   return saveProfile({ ...profile, insurer: insurer.trim() }, true);
+}
+
+/**
+ * A change of her base salary, from a month the family names (specs.md item 3,
+ * decided with the user on 2026-09-13).
+ *
+ * **The months before it keep the salary they were calculated with**, and the
+ * months from it on carry the new one — a raise is agreed from some month and
+ * is never a restatement of months already paid. The stored months it reaches
+ * are rewritten here, each at the salary in force during it and floored at its
+ * own confirmed minimum (`monthsReachedBySalaryChange`); a month the store has
+ * not opened yet reads the change when it is opened (`wageToCarry`).
+ *
+ * **The amount and the month travel as typed and are read here**, for the reason
+ * every action in this file gives: the floor is the minimum wage in force in the
+ * month the change starts, read from the household's own dated table and never
+ * trusted from the form.
+ */
+export async function setSalaryChange(
+  workerId: string,
+  amountText: string,
+  fromText: string,
+): Promise<ProfileActionResult> {
+  const repository = await getRepository();
+  const profile = await profileOf(workerId);
+  const from = parseYearMonth(fromText.trim());
+  const rates = await repository.listRates();
+
+  const reviewed = reviewSalaryChange(amountText, from, profile.employedSince, {
+    atFrom:
+      from === null ? null : (rateInForce(rates, "minimumWage", from)?.value ?? null),
+    now: (await minimumWageNow(repository))?.value ?? null,
+  });
+  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+  const updated: WorkerProfile = {
+    ...profile,
+    salaryChanges: withSalaryChange(profile.salaryChanges, reviewed.change),
+  };
+  await repository.saveWorker(updated);
+
+  const months = await repository.listMonths(workerId);
+  for (const record of monthsReachedBySalaryChange(
+    months,
+    updated,
+    reviewed.change.from,
+  )) {
+    await repository.saveMonth(workerId, record);
+  }
+
+  revalidateWorker();
+  return { ok: true };
 }
 
 /**
@@ -568,34 +677,46 @@ async function minimumWageNow(
   );
 }
 
+/** The four sealed numbers, by name (specs.md items 22 and 28). */
+const identifyingNumberNames = [
+  "passport",
+  "bankAccount",
+  "workVisa",
+  "employmentPermit",
+] as const satisfies readonly (keyof IdentifyingNumbers)[];
+
 /**
- * Her passport number (specs.md items 22 and 28).
+ * One of the four identifying numbers: the passport, the bank account, the
+ * work visa or the employment permit (specs.md items 22 and 28).
  *
- * **Its own action and not part of `setDocuments`**, which saves the three
- * expiry dates. The dates are stored in the clear because item 27's warnings
- * have to query them; the number is sealed with a key held outside the
- * database. Putting both through one action would make a plaintext identifier
- * and a queryable date look like two fields of one form, which is exactly the
- * distinction that has to stay visible in the code.
+ * **Not part of `setDocuments`**, which saves the three expiry dates. The dates
+ * are stored in the clear because item 27's warnings have to query them; the
+ * numbers are sealed with a key held outside the database. Putting both through
+ * one action would make a plaintext date and a sealed identifier look like two
+ * fields of one form, which is exactly the distinction that has to stay visible.
  *
- * **The other three numbers are not here yet** — the bank account, the work
- * visa and the household's employment permit. The repository and the sealing
- * hold all four; what they lack is a control, and the wizard only ever asked
- * for the passport (`build_plan.md`, "What is still owed").
+ * **The name is checked against the four and not trusted**, for the reason
+ * `setRestDay` gives: an action is reachable by a crafted request, and a key
+ * outside the four would reach the repository as a column nobody wrote down.
+ *
+ * **The employment permit is the employer's** (item 28), so a household holds
+ * one: the repository writes it to the household, and saving it beside either
+ * worker sets it for both.
  */
-export async function setPassportNumber(
+export async function setIdentifyingNumber(
   workerId: string,
-  passportNumber: string,
+  name: string,
+  value: string,
 ): Promise<ProfileActionResult> {
+  const known = identifyingNumberNames.find((one) => one === name);
+  if (known === undefined) return { ok: false, reason: "numberName" };
+
   const repository = await getRepository();
-  // Checked rather than assumed: an action is reachable by a crafted request,
-  // and a number written against an id nobody checked is a number written into
-  // somebody else's worker.
+  // Checked rather than assumed: a number written against an id nobody checked
+  // is a number written into somebody else's worker.
   await profileOf(workerId);
 
-  await saveIdentifyingNumbers(repository, workerId, {
-    passport: passportNumber,
-  });
+  await saveIdentifyingNumbers(repository, workerId, { [known]: value });
   revalidateWorker();
   return { ok: true };
 }

@@ -1,4 +1,5 @@
 import { compareMonth } from "@/lib/dates";
+import { salaryFor } from "@/lib/engine/salary";
 import { SEEDED_RATES, rateInForce, withFetchedRate } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { snapshotTerms } from "@/lib/engine/types";
@@ -287,16 +288,15 @@ export function recordOf(facts: MonthFacts): MonthRecord {
 export function wageToCarry(
   months: MonthFacts[],
   month: YearMonth,
-  profile: Pick<WorkerProfile, "baseMonthlySalaryAgorot">,
+  profile: Pick<WorkerProfile, "baseMonthlySalaryAgorot" | "salaryChanges">,
   rates: DatedRate[],
 ): ConfirmedWage | null {
   const inForce = rateInForce(rates, "minimumWage", month);
   if (inForce !== null) {
     return {
-      baseAgorot: Math.max(
-        profile.baseMonthlySalaryAgorot,
-        inForce.value,
-      ),
+      // The salary in force during this month and not the latest one: a raise
+      // from September does not reach a June opened after it (`salary.ts`).
+      baseAgorot: Math.max(salaryFor(profile, month), inForce.value),
       minimumAgorot: inForce.value,
       effectiveFrom: inForce.effectiveFrom,
     };

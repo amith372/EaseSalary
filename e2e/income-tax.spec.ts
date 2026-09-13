@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { TEST_WORKER_ID, switchToTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker } from "./household";
 import { SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
@@ -156,10 +156,10 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
       formatAgorot(-TAX_FEMALE),
     );
 
-    // Her own page, named rather than taken as whichever link comes first: the
-    // list's first worker is Hanna, whose months come from the workbooks and
-    // whose terms no test may edit (`household.ts`).
-    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    // Her terms, with the switcher stepped across rather than left on the
+    // first worker: Hanna's months come from the workbooks and her terms no
+    // test may edit (`household.ts`).
+    await openSettingsForTestWorker(page);
     await settled(page);
     await page
       .locator('[data-terms="gender"]')
@@ -308,10 +308,10 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
  */
 test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
   async function openProfile(page: Page): Promise<void> {
-    // Her own page, named rather than taken as whichever link comes first: the
-    // list's first worker is Hanna, whose months come from the workbooks and
-    // whose terms no test may edit (`household.ts`).
-    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    // Her terms, with the switcher stepped across rather than left on the
+    // first worker: Hanna's months come from the workbooks and her terms no
+    // test may edit (`household.ts`).
+    await openSettingsForTestWorker(page);
     await settled(page);
   }
 

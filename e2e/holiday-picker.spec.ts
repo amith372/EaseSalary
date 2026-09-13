@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { TEST_WORKER_ID, switchToTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker } from "./household";
 import { SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { weekdayDayLabel } from "../src/lib/dateLabels";
@@ -219,7 +219,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
       fullPage: true,
     });
 
-    await page.goto(`/workers/${TEST_WORKER_ID}`);
+    await openSettingsForTestWorker(page);
     await expect(page.locator("[data-holidays]")).toContainText(
       formatDays(SEEDED_CHOSEN + 1),
     );

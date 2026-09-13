@@ -35,6 +35,9 @@ export function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  /** Set once a person who arrived by invitation is signed in and still has no
+   * password: the screen asks for one before sending them on (item 11). */
+  const [choosingPassword, setChoosingPassword] = useState(false);
 
   /**
    * **One place decides what happens once somebody is signed in**, and it is
@@ -51,6 +54,13 @@ export function SignInScreen() {
      * exist that nobody is able to read.
      */
     async function ensureHousehold() {
+      // **Invitations first** (specs.md item 11). A person invited into a
+      // household joins it here, before the check below — otherwise their first
+      // sign-in would create an empty household of their own and every screen
+      // would show that one instead. The function accepts only invitations
+      // addressed to the caller's own confirmed address.
+      await supabase.rpc("accept_household_invitations");
+
       const { data: memberships } = await supabase
         .from("household_members")
         .select("household_id")
@@ -66,12 +76,57 @@ export function SignInScreen() {
 
       void (async () => {
         await ensureHousehold();
+        const metadata = session.user.user_metadata ?? {};
+        if (metadata.invited === true && metadata.password_set !== true) {
+          setChoosingPassword(true);
+          return;
+        }
         router.replace("/");
       })();
     });
 
+    // **An invitation link carries its session in the fragment**, not as the
+    // `?code=` a confirmation link carries: the admin API that sends it has no
+    // PKCE verifier to pair with a code. This client exchanges codes and nothing
+    // else, so the two tokens are handed to it here; Supabase checks them on
+    // the next request like any other session.
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    const accessToken = fragment.get("access_token");
+    const refreshToken = fragment.get("refresh_token");
+    if (accessToken && refreshToken) {
+      window.history.replaceState(null, "", window.location.pathname);
+      void supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+    }
+
     return () => data.subscription.unsubscribe();
   }, [router, supabase]);
+
+  /** The invited person's first password, and then on into the household. */
+  async function choosePassword(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+    if (password.length < 6) {
+      setError(he.signIn.passwordHint);
+      return;
+    }
+    setWorking(true);
+    try {
+      const { error: failure } = await supabase.auth.updateUser({
+        password,
+        data: { password_set: true },
+      });
+      if (failure) {
+        setError(he.signIn.errors.unknown);
+        return;
+      }
+      router.replace("/");
+    } finally {
+      setWorking(false);
+    }
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -143,16 +198,26 @@ export function SignInScreen() {
     }
   }
 
-  const title = mode === "signIn" ? he.signIn.signInTitle : he.signIn.signUpTitle;
+  const title = choosingPassword
+    ? he.signIn.choosePasswordTitle
+    : mode === "signIn"
+      ? he.signIn.signInTitle
+      : he.signIn.signUpTitle;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-ground px-4 py-10">
       <div className="w-full max-w-92">
         <div className="flex items-center justify-center gap-2.25 text-ink">
-          <span translate="no" className="text-[22px] font-bold tracking-[-0.02em]">
+          <span
+            translate="no"
+            className="text-[22px] font-bold tracking-[-0.02em]"
+          >
             {he.app.name}
           </span>
-          <span aria-hidden="true" className="size-5 flex-none rounded-mark bg-clay" />
+          <span
+            aria-hidden="true"
+            className="size-5 flex-none rounded-mark bg-clay"
+          />
         </div>
 
         <p dir="auto" className="mt-2.5 text-center text-[15px] text-ink-mute">
@@ -164,21 +229,32 @@ export function SignInScreen() {
             {title}
           </h1>
 
-          <form className="mt-5 flex flex-col gap-4" onSubmit={submit}>
-            <label className="flex flex-col gap-1.5">
-              <span dir="auto" className="text-[14px] text-ink-warm">
-                {he.signIn.email}
-              </span>
-              <input
-                type="email"
-                autoComplete="email"
-                dir="ltr"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className={`${inputClass} text-start`}
-                data-field="email"
-              />
-            </label>
+          {choosingPassword ? (
+            <p dir="auto" className="mt-2 text-[14px] text-ink-mute">
+              {he.signIn.choosePasswordLead}
+            </p>
+          ) : null}
+
+          <form
+            className="mt-5 flex flex-col gap-4"
+            onSubmit={choosingPassword ? choosePassword : submit}
+          >
+            {choosingPassword ? null : (
+              <label className="flex flex-col gap-1.5">
+                <span dir="auto" className="text-[14px] text-ink-warm">
+                  {he.signIn.email}
+                </span>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  dir="ltr"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className={`${inputClass} text-start`}
+                  data-field="email"
+                />
+              </label>
+            )}
 
             <label className="flex flex-col gap-1.5">
               <span dir="auto" className="text-[14px] text-ink-warm">
@@ -186,14 +262,18 @@ export function SignInScreen() {
               </span>
               <input
                 type="password"
-                autoComplete={mode === "signIn" ? "current-password" : "new-password"}
+                autoComplete={
+                  mode === "signIn" && !choosingPassword
+                    ? "current-password"
+                    : "new-password"
+                }
                 dir="ltr"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 className={`${inputClass} text-start`}
                 data-field="password"
               />
-              {mode === "signUp" ? (
+              {mode === "signUp" || choosingPassword ? (
                 <span dir="auto" className="text-[13px] text-ink-quiet">
                   {he.signIn.passwordHint}
                 </span>
@@ -230,25 +310,31 @@ export function SignInScreen() {
               <span dir="auto">
                 {working
                   ? he.signIn.working
-                  : mode === "signIn"
-                    ? he.signIn.submitSignIn
-                    : he.signIn.submitSignUp}
+                  : choosingPassword
+                    ? he.signIn.choosePasswordSubmit
+                    : mode === "signIn"
+                      ? he.signIn.submitSignIn
+                      : he.signIn.submitSignUp}
               </span>
             </button>
           </form>
         </Card>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === "signIn" ? "signUp" : "signIn");
-            setError(null);
-            setNotice(null);
-          }}
-          className="mt-4 w-full text-center text-[14px] text-forest transition-colors hover:text-forest-deep"
-        >
-          <span dir="auto">{mode === "signIn" ? he.signIn.toSignUp : he.signIn.toSignIn}</span>
-        </button>
+        {choosingPassword ? null : (
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === "signIn" ? "signUp" : "signIn");
+              setError(null);
+              setNotice(null);
+            }}
+            className="mt-4 w-full text-center text-[14px] text-forest transition-colors hover:text-forest-deep"
+          >
+            <span dir="auto">
+              {mode === "signIn" ? he.signIn.toSignUp : he.signIn.toSignIn}
+            </span>
+          </button>
+        )}
       </div>
     </main>
   );

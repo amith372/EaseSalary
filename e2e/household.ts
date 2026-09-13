@@ -46,15 +46,51 @@ export async function useHousehold(
  * it re-render from the household already in the page, so an assertion made in
  * the same tick reads the *first* worker's month and passes or fails for
  * reasons that have nothing to do with the test.
+ *
+ * **It steps only when she is not already showing.** Since 2026-09-13 the
+ * choice survives a reload and a navigation (a cookie the layout reads), so a
+ * second call in the same test would otherwise step past her and back to the
+ * first worker.
  */
 export async function switchToTestWorker(page: Page): Promise<void> {
-  await page
-    .getByRole("button", { name: he.header.workerSwitcher.next })
-    .click();
-  await expect(
-    page.getByRole("group", { name: he.header.workerSwitcher.showing }),
-  ).toContainText(TEST_WORKER_NAME);
+  await stepUntilShowing(page, TEST_WORKER_NAME);
 }
+
+/** The reverse, for a test that has switched and now asks about the first
+ * worker. Stepping "next" wraps, so with two workers it reaches her. */
+export async function switchToFirstWorker(page: Page): Promise<void> {
+  await stepUntilShowing(page, FIRST_WORKER_NAME);
+}
+
+async function stepUntilShowing(page: Page, name: string): Promise<void> {
+  const group = page.getByRole("group", {
+    name: he.header.workerSwitcher.showing,
+  });
+  await expect(group).toBeVisible();
+  if (!(await group.innerText()).includes(name)) {
+    await page
+      .getByRole("button", { name: he.header.workerSwitcher.next })
+      .click();
+  }
+  await expect(group).toContainText(name);
+}
+
+/**
+ * `/settings` showing the test worker — the only screen her terms are changed on
+ * since 2026-09-13.
+ *
+ * **The address names no worker**: the screen shows whoever the switcher holds.
+ * A spec on the one-worker known case just opens `/settings`; a spec in the
+ * demo household that has switched and wants the first worker calls
+ * `switchToFirstWorker`.
+ */
+export async function openSettingsForTestWorker(page: Page): Promise<void> {
+  await page.goto("/settings");
+  await switchToTestWorker(page);
+}
+
+/** As `seed.ts` names the first worker — Hanna, seeded from the workbooks. */
+export const FIRST_WORKER_NAME = "האנה מונטנה Hanna Montana";
 
 /** As `seed.ts` names her. */
 export const TEST_WORKER_NAME = "[שם העובד/ת השני/ה]";

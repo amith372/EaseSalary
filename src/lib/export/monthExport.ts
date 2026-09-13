@@ -46,6 +46,14 @@ export interface MonthFileRequest {
    * month's term either — no month snapshots it — so it travels as itself.
    */
   insurer: string;
+  /**
+   * Her passport and bank account numbers, already opened on the server
+   * (specs.md item 22: the real numbers appear on her screen and in the export,
+   * and nowhere else). Only the two the month sheet prints; the visa and permit
+   * numbers are not on it. A number never entered is absent, and its cell is
+   * written empty for the family to fill.
+   */
+  numbers?: { passport?: string; bankAccount?: string };
 }
 
 export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
@@ -60,6 +68,11 @@ export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
       // Off the profile, which is where it lives: it names who the premium goes
       // to and values nothing, so no month snapshots it (specs.md item 16).
       insurer: request.insurer,
+      passportLine:
+        request.numbers?.passport === undefined
+          ? ""
+          : he.sheet.passportLine(request.numbers.passport),
+      accountNumber: request.numbers?.bankAccount ?? "",
     },
     // The same count the replay draws the year's entitlement against, from the
     // same function: `closeMonth` is pure and idempotent, so resolving an open

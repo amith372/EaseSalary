@@ -4,13 +4,8 @@ import { WorkerProfileScreen } from "@/components/WorkerProfileScreen";
 import type { ProfileMonth } from "@/components/WorkerProfileScreen";
 import { getRepository } from "@/lib/store";
 import { advanceLedger } from "@/lib/engine/advances";
-import { holidayYear } from "@/lib/engine/holidayYear";
-import { holidayAllowanceFor } from "@/lib/engine/leave";
-import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import { calculateSeries } from "@/lib/engine/series";
-import { fromIsoDate } from "@/lib/dates";
 import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
-import { readIdentifyingNumbers } from "@/lib/identifyingNumbers";
 import { todayInIsrael } from "@/lib/today";
 
 /**
@@ -42,26 +37,9 @@ export default async function WorkerPage({
   if (profile === null) notFound();
 
   const today = todayInIsrael();
-  const year = fromIsoDate(today).getUTCFullYear();
   const months = await repository.listMonths(id);
   const series = calculateSeries(months, profile, today);
   const closing = series[series.length - 1]?.result.balances;
-
-  // The picker's own two figures, worked out here rather than in the row that
-  // shows them: the entitlement and what is drawn against it are one
-  // calculation, and the profile row and `/settings/holidays` must not be able
-  // to disagree about how much of her year is chosen (specs.md item 10). The
-  // candidate list is left empty because this row reports only what is chosen:
-  // the candidates are what the picker offers, and fetching a year's list to
-  // draw one line of a profile would put a live scrape behind a page that does
-  // not show it.
-  const holidays = holidayYear(
-    [],
-    await repository.listSpans(id),
-    holidayAllowanceFor(profile.employedSince, year),
-    year,
-    profile.restDay,
-  );
 
   const listed: ProfileMonth[] = series.map(({ result }) => ({
     month: result.month,
@@ -84,28 +62,7 @@ export default async function WorkerPage({
         profile.openingPosition.sickDays
       }
       ledger={advanceLedger(profile.openingPosition, months)}
-      year={year}
-      // The days this calendar year's recuperation payment will pay, worked out
-      // here for the reason the holiday figures are: the row reports the
-      // entitlement and never chooses it, and one calculation serves the row,
-      // the month's line and the export (specs.md item 15).
-      recuperationDays={recuperationDaysFor(
-        profile.employedSince,
-        profile.recuperationMonth,
-        { year, month: profile.recuperationMonth },
-      )}
-      holidayDaysChosen={holidays.chosenDays}
-      holidayAllowance={holidays.allowance}
-      // Resolved here and not in the browser: the names live in the shipped
-      // `data/holidays/*.json` files, and asking for one in a client component
-      // would pull all six lists into the bundle for a single word (Part 3).
       countryName={countryNameHe(SEEDED_HOLIDAY_LISTS, profile.country)}
-      // Opened here, on the server, for the one screen that shows it (items 22,
-      // 28). It is read beside the profile rather than on it, so nothing that
-      // merely names a worker carries an identifier.
-      passportNumber={
-        (await readIdentifyingNumbers(repository, id)).passport ?? null
-      }
     />
   );
 }

@@ -235,9 +235,9 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     await page.goto("/month/payslip?month=2025-08");
     await expect(freeRestDays).toContainText("שבתות חופשיות");
 
-    // Changed where a user changes it — the worker's own page — and never by
-    // reaching into the store (rule 9).
-    await page.goto("/workers/hanna");
+    // Changed where a user changes it — `/settings` — and never by reaching
+    // into the store (rule 9).
+    await page.goto("/settings");
     await page
       .locator('[data-terms="restDay"]')
       .getByRole("button", {

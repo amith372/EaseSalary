@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Assistant } from "next/font/google";
+import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
+import { WORKER_COOKIE } from "@/lib/workerCookie";
 import { getRepository, NotSignedInError } from "@/lib/store";
 import type { Worker } from "@/lib/types";
 import { he } from "@/lib/i18n/he";
@@ -53,6 +55,9 @@ async function workersInTheBar(): Promise<Worker[]> {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const workers = await workersInTheBar();
+  // The switcher's choice, read here so the first render is already the
+  // chosen worker (`WorkerScope`).
+  const initialWorkerId = (await cookies()).get(WORKER_COOKIE)?.value;
 
   return (
     // The whole document is Hebrew and right-to-left. Nothing below sets a
@@ -61,7 +66,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     // left-to-right without the layout moving.
     <html lang="he" dir="rtl" className={`${assistant.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <AppShell workers={workers}>{children}</AppShell>
+        <AppShell workers={workers} initialWorkerId={initialWorkerId}>{children}</AppShell>
       </body>
     </html>
   );
