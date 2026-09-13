@@ -503,8 +503,11 @@ Each of these is true or false at a glance.
     no more than two workers. Every member of a household sees the same workers, the same
     months and the same balances, and reaches nothing outside the households it belongs
     to. A second person joins by an invitation they accept, which makes them a member
-    rather than handing them a copy of a worker — so there is no owner whose leaving
-    strands a worker, and no second limit to count a shared worker against. One person
+    rather than handing them a copy of a worker. The invitation is a link the member passes
+    on; nothing creates the invited person's account, which they open themselves with the
+    invited address, or sign in with if they already have one. Membership rather than a copy
+    means there is no owner whose leaving strands a worker, and no second limit to count a
+    shared worker against. One person
     may belong to more than one household, which is what lets someone keep their own
     caregiver and help with a parent's without either household's limit of two counting
     the other's workers.
