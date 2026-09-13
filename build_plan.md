@@ -62,15 +62,16 @@ is its record.
 
 ## The routes — what is still unanswered
 
-`src/components/AppShell.tsx` links five tabs plus the "?" and the bell on every screen, so
-every one of them is a promise made on every page. A tab that 404s is worse than a tab that
-is not there. Every address is built except these three:
+`src/components/AppShell.tsx` links five tabs and the bell on every screen, so every one of
+them is a promise made on every page. A tab that 404s is worse than a tab that is not there,
+which is why the "?" v3 draws beside the bell is left out until stage 7 (the user,
+2026-09-13). Every address is built except these three:
 
 | Route | Artboard | Owed by |
 |---|---|---|
 | `/settings` | `הגדרות` | Stage 3's yearly settings. The holiday picker already answers at `/settings/holidays`, reached from the worker's profile until `/settings` exists |
 | `/alerts` | `התראות` | Stage 6 |
-| `/help` | none — stage 7 draws it | Stage 7 |
+| `/help` | none — stage 7 draws it | Stage 7, which also puts the "?" back in the bar |
 
 ## What is still owed
 
@@ -182,6 +183,10 @@ Supabase: Postgres, Auth, row-level security. **The stage in progress.**
 - The profile's remaining terms: the standing line and the salary field, both listed under
   "What is still owed".
 - `/settings` — the last of the shell's 404s this stage owns.
+- **The worker switcher moves every screen, `/workers/[id]` included.** That page takes its
+  worker from the address, so switching today changes the name in the bar and leaves the
+  other worker's profile on screen; switching there goes to the other worker's page. The
+  choice is page state only, so a reload returns to the first worker — it should survive one.
 - Anything stage 7 stores is account-scoped under the same row-level security, and its context
   is assembled from the engine's output rather than from the worker row, so an identity number
   cannot reach it.

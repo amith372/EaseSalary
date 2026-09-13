@@ -16,9 +16,9 @@ import type { Worker } from "@/lib/types";
  * rebuilt rather than forked — a sidebar surviving on one route would be a
  * second shell to keep in step with the first.
  *
- * Help is the circular "?" in the bar rather than a card at the foot of the
- * sidebar: it is then in view on every screen by construction, which is the
- * whole of what pinning the card was trying to buy.
+ * The circular "?" v3 draws in the bar, linking `/help`, is left out until
+ * Stage 7 decides whether that screen is built (the user, 2026-09-13): a link
+ * on every screen to an address that 404s is a promise the bar cannot keep.
  *
  * The greeting and the worker switcher sit here too, where v3 draws them as a
  * row of their own at the top of the home screen. That row cost about seventy
@@ -171,17 +171,6 @@ export function AppShell({
 
         <div className="flex flex-none items-center gap-3.5 ps-2">
           <WorkerSwitcher className="hidden sm:flex" />
-
-          <Link
-            href="/help"
-            aria-label={he.nav.help.title}
-            className="flex size-8 flex-none items-center justify-center rounded-full border border-line text-[15px] font-semibold text-ink-quiet transition-colors hover:border-ask-line-hover hover:text-forest"
-          >
-            {/* Not translatable text: a question mark is a question mark. */}
-            <span aria-hidden="true" translate="no">
-              ?
-            </span>
-          </Link>
 
           <Link
             href="/alerts"

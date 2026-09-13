@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { useHousehold } from "./household";
 import { he } from "../src/lib/i18n/he";
+import { monthLabel } from "../src/lib/dateLabels";
+import { monthOf } from "../src/lib/dates";
+import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The opening screen, through the browser.
@@ -60,6 +63,16 @@ test.describe("the opening screen", () => {
     expect(sundayBox, "the weekday header row should be visible").not.toBeNull();
     expect(saturdayBox).not.toBeNull();
     expect(sundayBox!.x).toBeGreaterThan(saturdayBox!.x);
+  });
+
+  test("opens the calendar on the month today falls in", async ({ page }) => {
+    await page.goto("/");
+    // Today is worked out here from the clock and not read off the screen, so a
+    // calendar pinned to a fixed month — which it was, to August 2026 — fails
+    // on every day outside that month.
+    const today = todayInIsrael();
+    await expect(page.locator(`[data-date="${today}"]`)).toBeVisible();
+    await expect(page.getByText(monthLabel(monthOf(today))).first()).toBeVisible();
   });
 
   test("never lets the page scroll sideways", async ({ page }) => {

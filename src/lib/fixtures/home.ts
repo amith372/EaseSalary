@@ -25,10 +25,6 @@ import type {
  * Part 5 warns about. */
 export const fixtureMonth: YearMonth = { year: 2026, month: 8 };
 
-/** The day the fixtures treat as today, so nothing reads the clock during a
- * render and server and browser agree. */
-export const fixtureToday = "2026-08-27";
-
 /**
  * The account's workers, handed to the shell's worker scope. Until Stage 3
  * these are the store's seeded household; from Stage 3 they are the account's
@@ -202,8 +198,8 @@ export interface HomeFixture {
  * legend beside her calendar reads "יום שישי חופשי" rather than "שבת חופשית" —
  * the term is derived from her own rest day and is not fixed in the wording.
  * Her sickness is recorded the way item 8 says one normally is: from the day
- * she fell ill, with no return date, so it is drawn from the 26th to
- * `fixtureToday` and no further.
+ * she fell ill, with no return date, so it is drawn from the 26th to today and
+ * no further.
  */
 const otherSpans: DaySpan[] = [
   // Friday the 7th of August 2026 — her rest day, and a Saturday for the first
