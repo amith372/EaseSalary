@@ -68,8 +68,8 @@ interface SettingsScreenProps {
   sickDaysPerYear: number;
   minimumWage: DatedRate | null;
   nationalInsurance: DatedRate | null;
-  /** The household's invitations not yet accepted (item 11). */
-  invitations: { id: string; email: string }[];
+  /** The household's invitations, pending and accepted (item 11). */
+  invitations: Invitation[];
 }
 
 export function SettingsScreen({
@@ -288,32 +288,61 @@ export function SettingsScreen({
   );
 }
 
+/** One of the household's invitations, as `/settings` lists it. */
+export interface Invitation {
+  id: string;
+  email: string;
+  accepted: boolean;
+}
+
 /**
- * `לשתף עובד/ת עם בן/בת משפחה` — an invitation by email (specs.md item 11).
- *
- * It holds no rule. The address is sent as typed; whether this person may
- * invite, and into which household, is the server's and the database's, and
- * the sentence shown afterwards reports which of the three ways the mail went.
+ * The address an invited person opens: the sign-up form with their address
+ * already in it. It carries nothing secret — acceptance is by confirmed address
+ * (migration `invitations_to_a_household`), so the link only saves typing.
+ * Built in a click handler and never during a render, because the origin is
+ * the browser's and the server does not know it.
  */
-function ShareSection({
-  invitations,
-}: {
-  invitations: { id: string; email: string }[];
-}) {
+function invitationLink(email: string): string {
+  return `${window.location.origin}/sign-in?invite=${encodeURIComponent(email)}`;
+}
+
+/**
+ * `לשתף עובד/ת עם בן/בת משפחה` — an invitation passed on by the member (specs.md
+ * item 11).
+ *
+ * **Nothing is sent from here** (the user, 2026-09-13). The member copies a
+ * message with the link and sends it however the family talks; the person
+ * invited opens their own account with that address, and the row reads
+ * "accepted" from then on.
+ *
+ * It holds no rule. Whether this person may invite, and into which household,
+ * is the server's and the database's.
+ */
+function ShareSection({ invitations }: { invitations: Invitation[] }) {
   const words = he.settings.account.share;
   const [email, setEmail] = useState("");
   const [result, setResult] = useState<InvitationResult | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const [sending, startSending] = useTransition();
+
+  async function copyInvitation(address: string) {
+    try {
+      await navigator.clipboard.writeText(
+        words.message(address, invitationLink(address)),
+      );
+      setCopied(address);
+    } catch {
+      setCopied(null);
+    }
+  }
 
   const message =
     result === null
       ? null
       : result.ok
-        ? result.mail === "sent"
-          ? words.sent
-          : result.mail === "existingAccount"
-            ? words.existingAccount
-            : words.mailFailed
+        ? copied === result.email
+          ? words.copied
+          : words.created
         : result.reason === "email"
           ? words.badEmail
           : words.failed;
@@ -350,7 +379,10 @@ function ShareSection({
             startSending(async () => {
               const outcome = await inviteToHousehold(email);
               setResult(outcome);
-              if (outcome.ok) setEmail("");
+              if (outcome.ok) {
+                setEmail("");
+                await copyInvitation(outcome.email);
+              }
             })
           }
           className="rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep disabled:opacity-50"
@@ -366,19 +398,46 @@ function ShareSection({
       {invitations.length === 0 ? null : (
         <div className="flex flex-col gap-1">
           <span dir="auto" className="text-[13px] font-medium text-ink-warm">
-            {words.pending}
+            {words.invitations}
           </span>
           <ul className="flex flex-col gap-1">
             {invitations.map((invitation) => (
-              <li key={invitation.id} className="flex flex-wrap items-center gap-3 text-[14px]">
+              <li
+                key={invitation.id}
+                data-invitation={invitation.accepted ? "accepted" : "pending"}
+                className="flex flex-wrap items-center gap-3 text-[14px]"
+              >
                 <Bidi noTranslate>{invitation.email}</Bidi>
-                <button
-                  type="button"
-                  onClick={() => startSending(() => withdrawInvitation(invitation.id))}
-                  className="text-[13px] font-medium text-ink-mute transition-colors hover:text-ink"
+                <span
+                  dir="auto"
+                  className={`rounded-full px-2 py-0.5 text-[12px] font-medium ${
+                    invitation.accepted
+                      ? "bg-sage-soft text-sage-ink"
+                      : "bg-chip text-ink-mute"
+                  }`}
                 >
-                  <span dir="auto">{words.withdraw}</span>
-                </button>
+                  {invitation.accepted ? words.accepted : words.pending}
+                </span>
+                {invitation.accepted ? null : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void copyInvitation(invitation.email)}
+                      className="text-[13px] font-medium text-forest transition-colors hover:text-forest-deep"
+                    >
+                      <span dir="auto">
+                        {copied === invitation.email ? words.copiedShort : words.copy}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => startSending(() => withdrawInvitation(invitation.id))}
+                      className="text-[13px] font-medium text-ink-mute transition-colors hover:text-ink"
+                    >
+                      <span dir="auto">{words.withdraw}</span>
+                    </button>
+                  </>
+                )}
               </li>
             ))}
           </ul>

@@ -69,5 +69,10 @@ export default async function WorkersPage() {
     }),
   );
 
-  return <WorkersList household={household} />;
+  return (
+    <WorkersList
+      household={household}
+      hasRoom={await repository.hasRoomForWorker()}
+    />
+  );
 }

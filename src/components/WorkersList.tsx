@@ -44,7 +44,16 @@ export interface WorkerSummary {
   outstandingAgorot: number;
 }
 
-export function WorkersList({ household }: { household: WorkerSummary[] }) {
+export function WorkersList({
+  household,
+  hasRoom,
+}: {
+  household: WorkerSummary[];
+  /** Whether the person's own household holds fewer than two workers. Not
+   * `household.length < 2`: a worker shared from another household is shown
+   * here and not counted (item 11). */
+  hasRoom: boolean;
+}) {
   const words = he.workers;
 
   return (
@@ -138,7 +147,7 @@ export function WorkersList({ household }: { household: WorkerSummary[] }) {
         the end of it would refuse is a promise the application cannot keep, so
         the sentence below stands alone at two.
       */}
-      {household.length < 2 ? (
+      {hasRoom ? (
         <Link
           href={ADD_WORKER}
           data-role="add-worker-link"

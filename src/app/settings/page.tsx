@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { SettingsScreen } from "@/components/SettingsScreen";
-import type { WorkerSettings } from "@/components/SettingsScreen";
+import type { Invitation, WorkerSettings } from "@/components/SettingsScreen";
 import { getRepository } from "@/lib/store";
 import { rateInForce } from "@/lib/datedRates";
 import {
@@ -34,24 +34,27 @@ import { supabaseOnServer } from "@/lib/supabase/server";
  * **Two of the artboard's rows are absent on purpose.** The medical-insurance
  * premium and the agency fee are payments, recorded on the month they were paid
  * on `/payments` (specs.md items 15, 16); a standing amount here would be a
- * second figure for one payment. Sharing is item 11's invitation and is not
- * built yet.
+ * second figure for one payment.
  */
 /**
- * The household's invitations nobody has accepted yet (item 11), read through
- * the member's own session so the policies decide what is visible. Empty where
- * there is no session to read with, which is the in-memory store of the
- * browser suite, rather than an error on a screen that has more to show.
+ * The household's invitations, pending and accepted (item 11), read through the
+ * member's own session so the policies decide what is visible. An accepted one
+ * stays listed so the member can see the person joined. Empty where there is no
+ * session to read with, which is the in-memory store of the browser suite,
+ * rather than an error on a screen that has more to show.
  */
-async function pendingInvitations(): Promise<{ id: string; email: string }[]> {
+async function householdInvitations(): Promise<Invitation[]> {
   try {
     const supabase = await supabaseOnServer();
     const { data } = await supabase
       .from("household_invitations")
-      .select("id, email")
-      .is("accepted_at", null)
+      .select("id, email, accepted_at")
       .order("created_at");
-    return data ?? [];
+    return (data ?? []).map((row) => ({
+      id: row.id as string,
+      email: row.email as string,
+      accepted: row.accepted_at !== null,
+    }));
   } catch {
     return [];
   }
@@ -103,7 +106,7 @@ export default async function SettingsPage() {
 
   return (
     <SettingsScreen
-      invitations={await pendingInvitations()}
+      invitations={await householdInvitations()}
       household={household}
       year={year}
       month={month}

@@ -140,6 +140,10 @@ export interface SalaryRepository {
   getWorker(workerId: string): Promise<WorkerProfile | null>;
   /** Creates the worker or replaces her wholesale, keyed by `id`. */
   saveWorker(profile: WorkerProfile): Promise<void>;
+  /** Whether the person's own household holds fewer than two workers (item
+   * 11). A worker shared from another household is not counted, so this is
+   * not the same question as `listWorkers().length < 2`. */
+  hasRoomForWorker(): Promise<boolean>;
 
   /** Every span the worker has, whichever month each falls in. */
   listSpans(workerId: string): Promise<MonthSpan[]>;
@@ -425,6 +429,11 @@ export function createInMemoryRepository(
     async getWorker(workerId) {
       const row = workers.get(workerId);
       return row === undefined ? null : structuredClone(row.profile);
+    },
+
+    async hasRoomForWorker() {
+      // A seeded store is one household with nothing shared into it.
+      return workers.size < 2;
     },
 
     async saveWorker(profile) {

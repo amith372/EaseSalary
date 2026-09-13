@@ -60,6 +60,7 @@ const address = `repository-check-${Date.now()}@easesalary.test`;
 let userId: string;
 let client: SupabaseClient;
 let repository: SalaryRepository;
+let ownHouseholdId: string;
 
 /** A worker whose every field carries a value, so a column silently dropped on
  * the way in comes back as a difference rather than as a default that happens
@@ -184,7 +185,8 @@ beforeAll(async () => {
   const { data: householdId, error } = await client.rpc("create_household");
   if (error !== null) throw error;
 
-  repository = createPostgresRepository(client, householdId as string);
+  ownHouseholdId = householdId as string;
+  repository = createPostgresRepository(client, ownHouseholdId);
 });
 
 afterAll(async () => {
@@ -464,5 +466,149 @@ describe("the identifying numbers", () => {
     await expect(
       repository.sealedNumbers("00000000-0000-0000-0000-000000000000"),
     ).rejects.toBeInstanceOf(UnknownWorkerError);
+  });
+});
+
+/**
+ * **A worker shared from another household stays that household's** (criterion
+ * 11). Someone who accepted an invitation reaches the other family's workers
+ * beside their own, and the repository they hold was opened on their *own*
+ * household — the one they joined first. Until 2026-09-13 a save of her profile
+ * wrote that household's id onto her row, which moved her out of the family
+ * that employs her, and put the family's permit onto the wrong household.
+ *
+ * Last in the file on purpose: `aStoredWorker` clears every worker the account
+ * can reach, and from here on that includes the other family's.
+ */
+describe("a worker shared from another household", () => {
+  const familyAddress = `repository-family-${Date.now()}@easesalary.test`;
+  let familyUserId: string;
+  let familyClient: SupabaseClient;
+  let family: SalaryRepository;
+  let familyHouseholdId: string;
+
+  beforeAll(async () => {
+    const created = await fetch(`${url}/auth/v1/admin/users`, {
+      method: "POST",
+      headers: {
+        apikey: serviceRole,
+        Authorization: `Bearer ${serviceRole}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: familyAddress, password, email_confirm: true }),
+    });
+    if (!created.ok) throw new Error(`could not create the family: ${created.status}`);
+    familyUserId = (await created.json()).id as string;
+
+    familyClient = createClient(url, publishable);
+    const { error: signInFailure } = await familyClient.auth.signInWithPassword({
+      email: familyAddress,
+      password,
+    });
+    if (signInFailure !== null) throw signInFailure;
+    const { data, error } = await familyClient.rpc("create_household");
+    if (error !== null) throw error;
+    familyHouseholdId = data as string;
+    family = createPostgresRepository(familyClient, familyHouseholdId);
+
+    // One worker of our own before anything is shared, so the limit below is
+    // counted against a household that is not empty.
+    await aStoredWorker();
+
+    const { error: inviteFailure } = await familyClient
+      .from("household_invitations")
+      .insert({ household_id: familyHouseholdId, email: address });
+    if (inviteFailure !== null) throw inviteFailure;
+    const { data: joined, error: acceptFailure } = await client.rpc(
+      "accept_household_invitations",
+    );
+    if (acceptFailure !== null) throw acceptFailure;
+    expect(joined).toBe(1);
+  });
+
+  afterAll(async () => {
+    await fetch(`${url}/auth/v1/admin/users/${familyUserId}`, {
+      method: "DELETE",
+      headers: { apikey: serviceRole, Authorization: `Bearer ${serviceRole}` },
+    });
+  });
+
+  test("is saved back into her own household, with the permit on it and not on ours", async () => {
+    const shared: WorkerProfile = {
+      ...aWorker(),
+      name: "העובדת של המשפחה",
+      documents: {
+        employmentPermitExpiry: "2027-06-30",
+        workVisaExpiry: null,
+        passportExpiry: null,
+      },
+    };
+    await family.saveWorker(shared);
+
+    // Read by the person it was shared with: the permit expiry is the family
+    // household's, not whatever ours holds.
+    const seen = await repository.getWorker(shared.id);
+    expect(seen?.documents.employmentPermitExpiry).toBe("2027-06-30");
+
+    await repository.saveWorker({
+      ...shared,
+      restEveSupplementAgorot: 7000,
+      documents: { ...shared.documents, employmentPermitExpiry: "2028-01-31" },
+    });
+
+    const { data: row } = await familyClient
+      .from("workers")
+      .select("household_id, rest_eve_supplement_agorot")
+      .eq("id", shared.id)
+      .single();
+    expect(row).toEqual({
+      household_id: familyHouseholdId,
+      rest_eve_supplement_agorot: 7000,
+    });
+
+    const { data: households } = await client
+      .from("households")
+      .select("id, employment_permit_expiry")
+      .in("id", [ownHouseholdId, familyHouseholdId]);
+    const expiryOf = (id: string) =>
+      households?.find((household) => household.id === id)?.employment_permit_expiry;
+    expect(expiryOf(familyHouseholdId)).toBe("2028-01-31");
+    expect(expiryOf(ownHouseholdId)).not.toBe("2028-01-31");
+  });
+
+  test("its permit number is sealed onto its own household", async () => {
+    const shared = { ...aWorker(), name: "עובדת שנייה של המשפחה" };
+    await family.saveWorker(shared);
+
+    // Ours as the earlier tests left it, so what is asserted is that it did
+    // not move rather than that it happens to be empty.
+    const ourPermit = async () =>
+      (
+        await client
+          .from("households")
+          .select("employment_permit_number_encrypted")
+          .eq("id", ownHouseholdId)
+          .single()
+      ).data?.employment_permit_number_encrypted;
+    const before = await ourPermit();
+
+    const key = randomBytes(32);
+    const sealed = sealNumber("EP-555", key);
+    await repository.saveSealedNumbers(shared.id, { employmentPermit: sealed });
+
+    const theirs = await family.sealedNumbers(shared.id);
+    expect(openNumber(theirs.employmentPermit as Buffer, key)).toBe("EP-555");
+
+    const after = await ourPermit();
+    expect(after).toEqual(before);
+    expect(after).not.toBe(`\\x${sealed.toString("hex")}`);
+  });
+
+  test("does not count against our own limit of two", async () => {
+    // One worker of ours and two of the family's are all reachable, and there
+    // is still room for our second.
+    expect((await repository.listWorkers()).length).toBe(3);
+    expect(await repository.hasRoomForWorker()).toBe(true);
+    expect(await family.hasRoomForWorker()).toBe(false);
   });
 });

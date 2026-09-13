@@ -101,18 +101,24 @@ Carried forward from finished steps. None of these is a defect.
   (`he.sheet.passportLine`); the template carries only `{{passport_line}}` and nothing states
   the words. `C2` (bank name and branch) and `A2` (employer of record) stay empty: no field
   holds either.
-- **A person in two households always opens the first they joined.** Accepting an invitation
-  makes them a member (item 11), but `householdIdOf` picks by `joined_at` and there is no
-  household picker, so a family that already had its own household never sees the shared one.
-- **An invited person who leaves before choosing a password is not asked again.** The step
-  lives on the sign-in screen, which a signed-in session is redirected away from.
-- **The invitation flow has not been run end to end.** Nothing in the suite sends mail, and no
-  live check like `scripts/check-household-isolation.mjs` covers `household_invitations` yet.
+- **An invited person with no account cannot confirm one unless Supabase can mail them.**
+  They sign up themselves, and Supabase's built-in mail reaches only the project's team, twice
+  an hour. Custom SMTP in the Supabase dashboard is what opens sign-up to anyone.
+- **Signing up from an invitation link is not driven by the suite**, for that same mail; the
+  link's screen and an existing account's acceptance are (`e2e/invitation.spec.ts`). The live
+  isolation check cannot ask that an unconfirmed address accepts nothing — it has no session
+  for one.
+- **A person in two households puts what is new into the first they joined** — a worker they
+  create, a fetched rate. Shared workers appear beside their own and are written back to their
+  own household.
 - **`household_members_write` lets a member add any user to their household** without an
   invitation. It exposes nothing of the added person's, and tightening it now that invitations
   exist is the user's call.
 - **The holiday picker's button still goes to the worker's page**, not back to `/settings`,
   which is where the picker is now reached from.
+- **The live repository test "comes back exactly as she was saved" fails on a clean tree** —
+  the profile read back has seventeen fields and the fixture sixteen. Measured 2026-09-13 with
+  that day's changes stashed. Not investigated.
 - **The Part 4 browser test fails on a clean tree** — "reaches ₪9,305.75 and ₪7,305.75 from
   three gestures" in `month-screen.spec.ts`, measured on 2026-09-13 with that day's changes
   stashed. Not investigated.
@@ -200,11 +206,12 @@ one person is one address (2026-09-12); the Postgres repository substituting at
 `getRepository()` (2026-09-12); `הוספת עובד`, with the passport number sealed (2026-09-12);
 `/settings` with every term moved onto it, the salary changed from a named month, the four
 identifying numbers and the export's identity lines, the switcher surviving a reload, the
-payslip's confirmation date, sign-out, and sharing by email invitation (2026-09-13).
+payslip's confirmation date, sign-out, and sharing by email invitation (2026-09-13); the live
+isolation check extended to invitations (2026-09-13); invitations passed on as a link with no
+account created for anyone, accepted on any signed-in request (2026-09-13).
 
-**The next step is proving the invitation flow**: run it once with two real addresses, then
-extend the live isolation check to `household_invitations` and `accept_household_invitations`,
-so the stage's "done when" covers the new way into a household before `/security-review`.
+**The next step is running the invitation flow once with two real addresses**, which needs the
+user, and then `/security-review`.
 
 **Two things the stage's own tooling rests on.** The household isolation is checked against
 the live database by hand with `node --env-file=.env scripts/check-household-isolation.mjs`,

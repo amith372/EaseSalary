@@ -31,8 +31,14 @@
 // Run it from the repository root, with .env filled in:
 //   node --env-file=.env scripts/check-household-isolation.mjs
 //
-// It creates two throwaway users and deletes them at the end, which takes their
-// households, workers and memberships with them by cascade.
+// It creates three throwaway users -- the third is the one invited -- and
+// deletes them at the end, which takes their households, workers, memberships
+// and invitations with them by cascade.
+//
+// **One route to an invitation is not asked: an unconfirmed address.** The
+// acceptance refuses one, but a user whose address is unconfirmed cannot sign
+// in with a password to get a token, so this script has no session to ask it
+// with.
 
 // The application's own sealing, imported rather than reimplemented: a second
 // copy of the format here would agree with the first exactly until the day
@@ -643,6 +649,216 @@ try {
   check(
     Array.isArray(stolen.body) && stolen.body.length === 0,
     "the other household does not even reach the sealed bytes",
+  );
+
+  // -------------------------------------------------------------------------
+  // The invitation: the one way into a household that is not creating it
+  // (specs.md item 11, migration `invitations_to_a_household`).
+  // -------------------------------------------------------------------------
+  //
+  // Every refusal above holds only while membership is closed, so the way a
+  // membership is opened is asked the same questions. A third person is
+  // created with no household of her own, so whatever she reaches afterwards
+  // she reaches through the invitation and nothing else. She is invited under
+  // a `+` suffix of her address, because acceptance compares the normalised
+  // form and an invitation typed that way must still find her.
+  const c = { label: "third", email: `isolation-c-${stamp}@example.com` };
+  const invitee = await admin("admin/users", {
+    body: { email: c.email, password: PASSWORD, email_confirm: true },
+  });
+  if (!invitee.body?.id) {
+    throw new Error(`could not create ${c.email}: ${JSON.stringify(invitee.body)}`);
+  }
+  c.userId = invitee.body.id;
+  created.push(c.userId);
+  c.token = await signIn(c.email, PASSWORD);
+
+  const invited = await rest("household_invitations", {
+    token: a.token,
+    method: "POST",
+    body: {
+      household_id: a.householdId,
+      email: `isolation-c-${stamp}+family@example.com`,
+    },
+    prefer: "return=representation",
+  });
+  check(
+    invited.status === 201 && invited.body?.[0]?.invited_by === a.userId,
+    "a member may invite an address into her household, in her own name",
+  );
+  const invitationId = invited.body?.[0]?.id;
+
+  // Before accepting, the invited person reaches nothing -- not the worker and
+  // not the invitation, which names the household she would be joining.
+  const beforeAccepting = await rest(`workers?select=id&id=eq.${a.workerId}`, {
+    token: c.token,
+  });
+  check(
+    Array.isArray(beforeAccepting.body) && beforeAccepting.body.length === 0,
+    "an invited person reaches nothing before accepting",
+  );
+  const invitationSeenByInvitee = await rest(
+    "household_invitations?select=id",
+    { token: c.token },
+  );
+  check(
+    Array.isArray(invitationSeenByInvitee.body) &&
+      invitationSeenByInvitee.body.length === 0,
+    "and cannot read the invitation addressed to her",
+  );
+
+  // The other household, by every route to the invitation.
+  const invitationsListed = await rest("household_invitations?select=id", {
+    token: b.token,
+  });
+  check(
+    Array.isArray(invitationsListed.body) && invitationsListed.body.length === 0,
+    "another household cannot list the invitations",
+  );
+  const invitationNamed = await rest(
+    `household_invitations?select=email&household_id=eq.${a.householdId}`,
+    { token: b.token },
+  );
+  check(
+    Array.isArray(invitationNamed.body) && invitationNamed.body.length === 0,
+    "nor read them by naming the household",
+  );
+
+  // The walk-in: inviting her own address into somebody else's household and
+  // then accepting it. This is the crafted request the table exists to refuse,
+  // because acceptance would honour an invitation that had been allowed in.
+  const walkIn = await rest("household_invitations", {
+    token: b.token,
+    method: "POST",
+    body: { household_id: a.householdId, email: b.email },
+  });
+  check(
+    walkIn.status >= 400,
+    "she cannot invite herself into a household she is not in",
+  );
+
+  // Inviting in somebody else's name, which would put a member's name on an
+  // invitation that member never sent.
+  const forgedInviter = await rest("household_invitations", {
+    token: b.token,
+    method: "POST",
+    body: {
+      household_id: b.householdId,
+      email: `forged-${stamp}@example.com`,
+      invited_by: a.userId,
+    },
+  });
+  check(
+    forgedInviter.status >= 400,
+    "nor send an invitation in another person's name",
+  );
+
+  // Withdrawing somebody else's invitation, and marking it accepted by hand.
+  const withdrawnByStranger = await rest(
+    `household_invitations?id=eq.${invitationId}`,
+    { token: b.token, method: "DELETE", prefer: "return=representation" },
+  );
+  check(
+    !Array.isArray(withdrawnByStranger.body) ||
+      withdrawnByStranger.body.length === 0,
+    "another household cannot withdraw the invitation",
+  );
+  const forgedAcceptance = await rest(
+    `household_invitations?id=eq.${invitationId}`,
+    {
+      token: c.token,
+      method: "PATCH",
+      body: { accepted_at: new Date().toISOString(), accepted_by: c.userId },
+      prefer: "return=representation",
+    },
+  );
+  check(
+    !Array.isArray(forgedAcceptance.body) || forgedAcceptance.body.length === 0,
+    "and nobody can mark an invitation accepted except by accepting it",
+  );
+
+  // Accepting as somebody the invitation was not addressed to. The function
+  // reads the address from the session, so there is nothing to craft.
+  const acceptedByStranger = await rest("rpc/accept_household_invitations", {
+    token: b.token,
+    method: "POST",
+    body: {},
+  });
+  check(
+    acceptedByStranger.status === 200 && acceptedByStranger.body === 0,
+    "accepting as a different address joins nothing",
+  );
+  const strangerStillOut = await rest(`workers?select=id&id=eq.${a.workerId}`, {
+    token: b.token,
+  });
+  check(
+    Array.isArray(strangerStillOut.body) && strangerStillOut.body.length === 0,
+    "and she still cannot reach the worker",
+  );
+
+  const acceptedAnonymously = await rest("rpc/accept_household_invitations", {
+    method: "POST",
+    body: {},
+  });
+  check(
+    acceptedAnonymously.status >= 400,
+    "an unauthenticated request cannot call the acceptance at all",
+  );
+
+  // The invited person accepts, and is then a member like any other: she
+  // reaches the worker, and the invitation records who took it up.
+  const accepted = await rest("rpc/accept_household_invitations", {
+    token: c.token,
+    method: "POST",
+    body: {},
+  });
+  check(
+    accepted.status === 200 && accepted.body === 1,
+    "the invited address accepts, through its '+' form, into one household",
+  );
+  const afterAccepting = await rest(`workers?select=id&id=eq.${a.workerId}`, {
+    token: c.token,
+  });
+  check(
+    afterAccepting.body?.length === 1,
+    "and then reaches the household's worker",
+  );
+  const recorded = await rest(
+    `household_invitations?select=accepted_by&id=eq.${invitationId}`,
+    { token: a.token },
+  );
+  check(
+    recorded.body?.[0]?.accepted_by === c.userId,
+    "and the invitation records who accepted it",
+  );
+
+  const acceptedAgain = await rest("rpc/accept_household_invitations", {
+    token: c.token,
+    method: "POST",
+    body: {},
+  });
+  check(
+    acceptedAgain.status === 200 && acceptedAgain.body === 0,
+    "accepting again joins nothing more",
+  );
+
+  // An accepted invitation is history, not something a member withdraws.
+  const withdrawnAfter = await rest(
+    `household_invitations?id=eq.${invitationId}`,
+    { token: a.token, method: "DELETE", prefer: "return=representation" },
+  );
+  check(
+    !Array.isArray(withdrawnAfter.body) || withdrawnAfter.body.length === 0,
+    "an accepted invitation cannot be withdrawn",
+  );
+
+  // Membership through an invitation is membership of that household only.
+  const onlyThatOne = await rest("households?select=id", { token: c.token });
+  check(
+    Array.isArray(onlyThatOne.body) &&
+      onlyThatOne.body.length === 1 &&
+      onlyThatOne.body[0].id === a.householdId,
+    "and the person who accepted sees that household and no other",
   );
 } catch (error) {
   console.log("ERROR", error.message);

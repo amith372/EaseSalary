@@ -137,12 +137,12 @@ export async function getRepository(): Promise<SalaryRepository> {
 /**
  * The household the signed-in person belongs to, and the store that keeps it.
  *
- * **A person is in exactly one household here, though the schema allows more**
- * (criterion 11: someone may keep their own caregiver and help with a parent's).
- * Choosing between two of them is a control the application has not got, and the
- * oldest is a stable answer rather than a chosen one — so the day the second
- * household becomes reachable, what changes is this line and a switcher, and not
- * the shape of anything below it.
+ * **A person in two households sees both households' workers side by side**
+ * (criterion 11: someone may keep their own caregiver and help with a parent's),
+ * because row-level security returns every worker they can reach and the
+ * switcher lists them all. The oldest household is only where something new is
+ * put — a worker they create, a fetched rate — and each existing worker is
+ * written back to her own household (`createPostgresRepository`).
  */
 async function householdRepository(): Promise<SalaryRepository> {
   const client = await supabaseOnServer();
@@ -151,6 +151,14 @@ async function householdRepository(): Promise<SalaryRepository> {
     data: { user },
   } = await client.auth.getUser();
   if (user === null) throw new NotSignedInError();
+
+  // **Invitations are accepted on every signed-in request, not only at
+  // sign-in** (specs.md item 11). Someone who already has an account and is
+  // signed in never sees the sign-in screen again — the proxy sends them past
+  // it — so an invitation to them would otherwise wait for a sign-out that may
+  // never come. The call accepts only invitations to the caller's own confirmed
+  // address, and with none pending it matches no row.
+  await client.rpc("accept_household_invitations");
 
   return createPostgresRepository(client, await householdIdOf(client));
 }

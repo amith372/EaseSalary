@@ -439,39 +439,68 @@ export function createPostgresRepository(
     if (data === null) throw new UnknownWorkerError(workerId);
   }
 
-  async function permitExpiry(): Promise<IsoDate | null> {
+  /**
+   * The household a worker belongs to, or `null` for a worker not yet created.
+   *
+   * **A worker's household is her own and not the viewer's.** A person who
+   * accepted an invitation reaches the other household's workers beside their
+   * own (item 11), so the household `householdId` names — the one the person
+   * joined first — is where a *new* worker goes and nothing more. Writing a
+   * shared worker back under it would move her out of the family that employs
+   * her, and put the household-level permit on the wrong household.
+   */
+  async function householdOf(workerId: string): Promise<string | null> {
+    const { data, error } = await client
+      .from("workers")
+      .select("household_id")
+      .eq("id", workerId)
+      .maybeSingle();
+    raise(error, "could not read the worker");
+    return (data?.household_id as string | undefined) ?? null;
+  }
+
+  /** Every reachable household's permit expiry, by household id. */
+  async function permitExpiries(): Promise<Map<string, IsoDate | null>> {
     const { data, error } = await client
       .from("households")
-      .select("employment_permit_expiry")
-      .eq("id", householdId)
-      .maybeSingle();
+      .select("id, employment_permit_expiry");
     raise(error, "could not read the household");
-    return (data?.employment_permit_expiry as IsoDate | null) ?? null;
+    return new Map(
+      (data ?? []).map((row) => [
+        row.id as string,
+        (row.employment_permit_expiry as IsoDate | null) ?? null,
+      ]),
+    );
   }
 
   return {
     async listWorkers() {
-      const [{ data, error }, permit] = await Promise.all([
+      const [{ data, error }, permits] = await Promise.all([
         client.from("workers").select("*").order("created_at"),
-        permitExpiry(),
+        permitExpiries(),
       ]);
       raise(error, "could not read the workers");
-      return ((data ?? []) as WorkerRow[]).map((row) => profileOf(row, permit));
+      return ((data ?? []) as WorkerRow[]).map((row) =>
+        profileOf(row, permits.get(row.household_id) ?? null),
+      );
     },
 
     async getWorker(workerId) {
-      const [{ data, error }, permit] = await Promise.all([
+      const [{ data, error }, permits] = await Promise.all([
         client.from("workers").select("*").eq("id", workerId).maybeSingle(),
-        permitExpiry(),
+        permitExpiries(),
       ]);
       raise(error, "could not read the worker");
-      return data === null ? null : profileOf(data as WorkerRow, permit);
+      if (data === null) return null;
+      const row = data as WorkerRow;
+      return profileOf(row, permits.get(row.household_id) ?? null);
     },
 
     async saveWorker(profile) {
+      const household = (await householdOf(profile.id)) ?? householdId;
       const { error } = await client
         .from("workers")
-        .upsert(workerRowOf(profile, householdId));
+        .upsert(workerRowOf(profile, household));
       raise(error, "could not save the worker");
 
       // The permit is the employer's, so saving her profile saves it on the
@@ -483,8 +512,19 @@ export function createPostgresRepository(
         .update({
           employment_permit_expiry: profile.documents.employmentPermitExpiry,
         })
-        .eq("id", householdId);
+        .eq("id", household);
       raise(onHousehold, "could not save the employment permit");
+    },
+
+    async hasRoomForWorker() {
+      // Counted in the person's own household only: a worker shared from
+      // another household is that household's and not counted here (item 11).
+      const { count, error } = await client
+        .from("workers")
+        .select("id", { count: "exact", head: true })
+        .eq("household_id", householdId);
+      raise(error, "could not count the workers");
+      return (count ?? 0) < 2;
     },
 
     async listSpans(workerId) {
@@ -605,25 +645,23 @@ export function createPostgresRepository(
      * somebody else's key opens.
      */
     async sealedNumbers(workerId) {
-      const [worker, household] = await Promise.all([
-        client
-          .from("workers")
-          .select(
-            "passport_number_encrypted,bank_account_number_encrypted,work_visa_number_encrypted",
-          )
-          .eq("id", workerId)
-          .maybeSingle(),
-        client
-          .from("households")
-          .select("employment_permit_number_encrypted")
-          .eq("id", householdId)
-          .maybeSingle(),
-      ]);
+      const worker = await client
+        .from("workers")
+        .select(
+          "household_id,passport_number_encrypted,bank_account_number_encrypted,work_visa_number_encrypted",
+        )
+        .eq("id", workerId)
+        .maybeSingle();
       raise(worker.error, "could not read the identifying numbers");
-      raise(household.error, "could not read the employment permit number");
       if (worker.data === null) throw new UnknownWorkerError(workerId);
 
       const row = worker.data as Record<string, string | null>;
+      const household = await client
+        .from("households")
+        .select("employment_permit_number_encrypted")
+        .eq("id", row.household_id as string)
+        .maybeSingle();
+      raise(household.error, "could not read the employment permit number");
       return {
         passport: bytesOf(row.passport_number_encrypted),
         bankAccount: bytesOf(row.bank_account_number_encrypted),
@@ -636,7 +674,8 @@ export function createPostgresRepository(
     },
 
     async saveSealedNumbers(workerId, numbers) {
-      await requireWorker(workerId);
+      const household = await householdOf(workerId);
+      if (household === null) throw new UnknownWorkerError(workerId);
 
       // Built by `in` rather than by truthiness, because an explicit `null`
       // clears a number and an absent key leaves it: an object assembled from
@@ -667,7 +706,7 @@ export function createPostgresRepository(
           .update({
             employment_permit_number_encrypted: hexOf(numbers.employmentPermit),
           })
-          .eq("id", householdId);
+          .eq("id", household);
         raise(error, "could not save the employment permit number");
       }
     },

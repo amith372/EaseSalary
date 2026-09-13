@@ -166,11 +166,10 @@ export const he = {
     toSignUp: "אין לכם עדיין חשבון? לפתיחת חשבון",
     toSignIn: "יש לכם כבר חשבון? לכניסה",
     /** The confirmation the address has to pass before the account works. */
-    /** A person who arrived by an invitation link (item 11) is signed in and
-     * has no password yet; this is asked once, before the household opens. */
-    choosePasswordTitle: "ברוכים הבאים — בוחרים סיסמה",
-    choosePasswordLead: "הוזמנתם לחשבון משפחתי. בוחרים סיסמה כדי שאפשר יהיה להיכנס שוב גם בלי הקישור.",
-    choosePasswordSubmit: "לשמור סיסמה ולהמשיך",
+    /** Shown above the form to someone who opened an invitation link (item
+     * 11): the form is already on sign-up with their address in it. */
+    invited:
+      "הוזמנתם להצטרף לחשבון משפחתי. פותחים חשבון עם הכתובת שהוזמנה — או נכנסים, אם כבר יש לכם חשבון עם הכתובת הזו.",
     checkYourMail:
       "שלחנו אליכם אימייל לאישור הכתובת. לוחצים על הקישור שבו, וחוזרים לכאן להיכנס.",
     errors: {
@@ -1275,15 +1274,22 @@ export const he = {
        * becomes a member who sees the same workers, months and balances. */
       share: {
         title: "לשתף עם בן/בת משפחה",
-        lead: "מי שיוזמן/תוזמן יראה את אותם עובדים/ות, חודשים ויתרות, ויוכל/תוכל לעדכן אותם. ההזמנה נשלחת באימייל ומתקבלת בכניסה עם אותה כתובת.",
+        lead: "מי שיוזמן/תוזמן יראה את אותם עובדים/ות, חודשים ויתרות, ויוכל/תוכל לעדכן אותם. יוצרים הזמנה ושולחים את הקישור בוואטסאפ או בכל דרך אחרת. מי שמקבל/ת אותו פותח/ת חשבון עם אותה כתובת — או נכנס/ת, אם כבר יש לו/ה חשבון — ומצטרף/ת.",
         email: "כתובת האימייל של מי שמזמינים",
-        send: "לשלוח הזמנה",
-        sent: "ההזמנה נשלחה. היא תתקבל כשייכנסו עם הכתובת הזו.",
-        existingAccount: "לכתובת הזו כבר יש חשבון, ולכן לא נשלח אימייל. ההזמנה ממתינה ותתקבל בכניסה הבאה שלהם.",
-        mailFailed: "ההזמנה נשמרה, אבל האימייל לא נשלח — אולי הגענו למגבלת השליחה. ההזמנה עדיין תתקבל בכניסה עם הכתובת הזו.",
+        send: "ליצור הזמנה ולהעתיק קישור",
+        /** Copied to the clipboard and sent by the member; the address is the
+         * one the account has to be opened with. */
+        message: (email: string, link: string) =>
+          `הוזמנת להצטרף לחשבון המשפחתי ב־EaseSalary. פותחים את הקישור ונרשמים עם הכתובת ${email} (או נכנסים, אם כבר יש חשבון): ${link}`,
+        created: "ההזמנה נוצרה, אבל לא הצלחנו להעתיק את הקישור. אפשר ללחוץ על ״להעתיק״ ברשימה.",
+        copied: "ההזמנה נוצרה וההודעה עם הקישור הועתקה. שולחים אותה למי שהזמנתם.",
         badEmail: "זו לא נראית כתובת אימייל.",
         failed: "לא הצלחנו לשמור את ההזמנה. כדאי לנסות שוב.",
-        pending: "הזמנות שממתינות",
+        invitations: "הזמנות",
+        pending: "ממתינה",
+        accepted: "התקבלה",
+        copy: "להעתיק",
+        copiedShort: "הועתק",
         withdraw: "לבטל",
       },
     },

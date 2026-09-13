@@ -1,10 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { householdIdOf } from "@/lib/store";
-import { sendInvitationMail, type InvitationMail } from "@/lib/supabase/admin";
 import { supabaseOnServer } from "@/lib/supabase/server";
 
 /**
@@ -22,30 +20,29 @@ export async function signOut(): Promise<void> {
 }
 
 export type InvitationResult =
-  | { ok: true; mail: InvitationMail }
+  | { ok: true; email: string }
   | { ok: false; reason: "email" | "failed" };
 
 /**
- * Invite a second person into the household (specs.md item 11; by email,
- * decided with the user on 2026-09-13).
+ * Invite a second person into the household (specs.md item 11).
  *
- * **The row comes first and the mail second.** The invitation is inserted by the
- * member's own session, so the policies decide whether they may invite into
- * this household at all; only then is Supabase Auth asked to send mail. The row
- * is what is accepted, so a mail that failed or was never sent — an address that
- * already has an account gets none — still leaves an invitation waiting for the
- * next sign-in, and the screen says which of the three happened.
+ * **Nothing is sent and no account is made** (decided with the user on
+ * 2026-09-13). The invitation is a row, and the member passes the link on
+ * themselves; the person invited opens an account of their own with the invited
+ * address — or signs in, if they already have one — and the row is accepted
+ * then. Supabase's own invitation mail was tried first and dropped: it created
+ * the account itself, with a password nobody chose, and refused to send
+ * anything to an address that already had one.
  *
- * Inviting an address already invited is sending again: the one-pending index
- * refuses a second row, and that refusal is read as "already there" rather than
- * as a failure.
+ * The row is inserted by the member's own session, so the policies decide
+ * whether they may invite into this household at all. Inviting an address
+ * already invited is not a failure: the one-pending index refuses a second row,
+ * and the same link still works.
  */
 export async function inviteToHousehold(
   emailText: string,
 ): Promise<InvitationResult> {
   const email = emailText.trim();
-  // The shape Auth will accept, checked before a row is written for it. The
-  // real check is the mail arriving and the address being confirmed.
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, reason: "email" };
   }
@@ -61,11 +58,8 @@ export async function inviteToHousehold(
     return { ok: false, reason: "failed" };
   }
 
-  const origin = (await headers()).get("origin") ?? "";
-  const mail = await sendInvitationMail(email, origin);
-
   revalidatePath("/settings");
-  return { ok: true, mail };
+  return { ok: true, email };
 }
 
 /** A pending invitation withdrawn. The policy refuses one already accepted, and
