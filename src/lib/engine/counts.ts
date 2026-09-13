@@ -5,6 +5,7 @@ import {
   isRestDay,
   orderDates,
 } from "@/lib/dates";
+import { countsAsWorked } from "@/lib/engine/types";
 import type { ClosedMonthFacts, ClosedSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
 
@@ -74,8 +75,11 @@ function spansCovering(spans: ClosedSpan[], date: IsoDate): ClosedSpan[] {
 function notWorkedFraction(spans: ClosedSpan[], date: IsoDate): number {
   let lost = 0;
   for (const span of spansCovering(spans, date)) {
-    // A holiday she worked is a working day like any other.
-    if (span.kind === "holiday" && span.worked) continue;
+    // A holiday she worked is a working day like any other, and so is one
+    // nobody has answered for: the preview reads an unanswered holiday as
+    // worked (item 9), and the count has to agree with the money or the month
+    // pays for a day it also counted as not worked.
+    if (span.kind === "holiday" && countsAsWorked(span)) continue;
     // Vacation, sickness, an unworked holiday, and the rest day she had off are
     // all days not worked. A span cannot legally overlap another (`spans.ts`
     // refuses the day as `alreadyMarked`), so the max is the one that covers it.

@@ -1,12 +1,7 @@
-import {
-  compareIsoDate,
-  eachDate,
-  fromIsoDate,
-  isRestDay,
-  orderDates,
-} from "@/lib/dates";
+import { eachDate, fromIsoDate, orderDates } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import { spellsOf } from "@/lib/engine/sick";
+import { holidayDatesCounted } from "@/lib/engine/holidayDates";
+import { countsAsWorked } from "@/lib/engine/types";
 import type { ClosedSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
 
@@ -49,15 +44,25 @@ interface HolidayDay {
  * for three must not weigh the same against that allowance, and counting spans
  * is the arrangement in which they do.
  */
-function holidayDaysIn(spans: ClosedSpan[], onlyWorked: boolean): HolidayDay[] {
+function holidayDaysIn(
+  spans: ClosedSpan[],
+  restDay: RestDay,
+  onlyWorked: boolean,
+): HolidayDay[] {
+  const counted = holidayDatesCounted(spans, restDay);
   return spans
-    .filter((span) => span.kind === "holiday" && (!onlyWorked || span.worked))
+    .filter(
+      (span) =>
+        span.kind === "holiday" && (!onlyWorked || countsAsWorked(span)),
+    )
     .flatMap((span) => {
       const { from, to } = orderDates(span.from, span.to);
-      return eachDate(from, to).map((date) => ({
-        date,
-        fraction: span.fraction ?? 1,
-      }));
+      return eachDate(from, to)
+        // A holiday on her weekly rest day is not a holiday (item 9): the day
+        // is paid as a rest day, worked or not, and spends nothing from the
+        // year's nine.
+        .filter((date) => counted.has(date))
+        .map((date) => ({ date, fraction: span.fraction ?? 1 }));
     });
 }
 
@@ -70,82 +75,52 @@ function totalFraction(days: HolidayDay[]): number {
  * is drawn against (specs.md item 10). A part day draws its own proportion, so
  * this is not always a whole number and the remainder is displayed as it falls.
  *
- * **A holiday falling inside a spell of sickness is a sick day and is not drawn
- * from here** (item 10). A day cannot be both taken as a holiday and spent ill,
- * and drawing it from both quotas would charge her twice for one day. The
- * entitlement is not lost by it: the year's holidays are chosen in advance and a
- * date can be edited, so the holiday moves and the day is kept — which is why
- * this resolves in favour of the sick balance and not the other way round. The
- * holiday is the one of the two that can be moved.
+ * **A holiday inside a spell of sickness is a holiday and is drawn from here**
+ * (item 10, reversed with the user on 2026-09-12). It pays the ordinary salary
+ * like any holiday she did not work and draws nothing from the sick balance —
+ * `sick.ts` is the other half of that — because charging it to the sick quota
+ * would spend a day of illness on a day she was not going to be working anyway.
  *
- * Only an unworked holiday can be inside a spell at all: a holiday she worked is
- * a day of attendance and ends the spell (item 8). The filter is written over
- * every holiday day rather than over the unworked ones, because the rule is
- * "inside a spell" and stating it that way keeps it true if the other ever
- * changes.
+ * **A holiday on her weekly rest day is not drawn from here either**, and for
+ * the opposite reason (item 9): that day is her rest day and is paid as one, so
+ * nothing about it is a holiday except how the calendar draws it.
  */
 export function holidayDaysOf(
   spans: ClosedSpan[],
   restDay: RestDay,
 ): number {
-  const spells = spellsOf(spans, restDay);
-  const insideASpell = (date: IsoDate) =>
-    spells.some(
-      (spell) =>
-        compareIsoDate(date, spell.from) >= 0 &&
-        compareIsoDate(date, spell.to) <= 0,
-    );
-  return totalFraction(
-    holidayDaysIn(spans, false).filter((day) => !insideASpell(day.date)),
-  );
+  return totalFraction(holidayDaysIn(spans, restDay, false));
 }
 
 /**
  * Holiday days she worked — the ones that are paid, at the rest-day rate
- * (specs.md item 9). A holiday she does not work changes nothing: the monthly
+ * (specs.md item 9). **A holiday nobody has answered for is among them**, which
+ * is `countsAsWorked`'s whole subject: the preview leans towards paying her, and
+ * the export refuses to proceed while the question is still open. A holiday she does not work changes nothing: the monthly
  * salary is paid in full on it and no vacation day is drawn, so it produces no
  * line at all rather than a line worth nothing.
  */
-export function holidayDaysWorked(spans: ClosedSpan[]): number {
-  return totalFraction(holidayDaysIn(spans, true));
-}
-
-/**
- * The worked-holiday days that fall on a weekly rest day.
- *
- * A holiday on a rest day she works is **paid once, not twice** (specs.md
- * item 9), and both would otherwise be paid at the same rest-day rate off the
- * same date: `countMonth` sees a rest day carrying no absence and counts it as
- * a rest day worked, while the holiday line counts it again. The day is left
- * with the holiday line — a holiday is also what draws the yearly entitlement,
- * so the fact that makes the day special is the one that should carry it — and
- * `restDayUnitsOf` takes it back out of the rest days.
- */
-function holidayRestDaysWorked(
+export function holidayDaysWorked(
   spans: ClosedSpan[],
   restDay: RestDay,
 ): number {
-  return totalFraction(
-    holidayDaysIn(spans, true).filter((day) => isRestDay(day.date, restDay)),
-  );
+  return totalFraction(holidayDaysIn(spans, restDay, true));
 }
 
 /**
- * The rest days paid on the rest-day line: the rest days she worked, less the
- * part of them a worked holiday is already paying for.
+ * The rest days paid on the rest-day line.
  *
- * `restDaysWorked` stays the true count of rest days she attended — it is a
- * fact about the month and is reported as one — and the subtraction happens
- * here, where the question is what to pay rather than what happened. A half-day
- * holiday worked on a rest day leaves half a rest day on this line and half a
- * day on the holiday line, which is one day paid once between them.
+ * **It is the count itself as of 2026-09-12, and the subtraction it used to make
+ * is gone with the rule that needed it** (item 9). A holiday on the weekly rest
+ * day was once paid on the holiday line, with this taking it back out of the
+ * rest days so the day was paid once rather than twice; such a day is now not a
+ * holiday at all, so it is paid on this line like any other rest day she worked
+ * and there is nothing to take out. The money is unchanged. The function stays
+ * so the call site goes on naming the rule it obeys, and because the rate this
+ * feeds is the rest-day rate whether or not a holiday is involved.
  */
-export function restDayUnitsOf(
-  spans: ClosedSpan[],
-  restDaysWorked: number,
-  restDay: RestDay,
-): number {
-  return Math.max(0, restDaysWorked - holidayRestDaysWorked(spans, restDay));
+export function restDayUnitsOf(restDaysWorked: number): number {
+  return restDaysWorked;
 }
 
 /** Nine days for a full year (specs.md item 10). */

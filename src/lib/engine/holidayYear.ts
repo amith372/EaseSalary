@@ -1,4 +1,5 @@
-import { compareIsoDate, eachDate, fromIsoDate, orderDates } from "@/lib/dates";
+import { compareIsoDate, eachDate, fromIsoDate, isRestDay, orderDates } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
 import type { MonthSpan } from "@/lib/engine/types";
 import type { Holiday } from "@/lib/holidayLists";
 import { dayParts, touchesRange } from "@/lib/spans";
@@ -47,6 +48,17 @@ export interface HolidayRow {
    * makes room, so a chosen row is never blocked.
    */
   blocked: boolean;
+  /**
+   * The date is her weekly rest day (item 9, settled with the user on
+   * 2026-09-12).
+   *
+   * **It can still be chosen and is explained rather than refused.** A holiday
+   * there is drawn on the calendar as a holiday and treated as one for nothing
+   * else: the day is paid as the rest day it is, and it spends nothing from the
+   * nine. A family choosing it without being told would read the quota not
+   * moving as a mistake, so the row says why.
+   */
+  onRestDay: boolean;
 }
 
 export interface HolidayYear {
@@ -68,6 +80,10 @@ export interface HolidayYear {
   incomplete: boolean;
   /** Ordered by date, which is the order a year is read in. */
   rows: HolidayRow[];
+  /** Her weekly rest day, carried so the screen can name it where it explains a
+   * holiday that falls on it (item 5: it is a term of the employment, never
+   * assumed to be Saturday). */
+  restDay: RestDay;
 }
 
 /** The smallest a day can be taken in (`dayParts`), and therefore the smallest
@@ -112,12 +128,16 @@ export function holidayYear(
   spans: MonthSpan[],
   allowance: number,
   year: number,
+  restDay: RestDay,
 ): HolidayYear {
   const chosen = chosenDaysOf(spans, year);
-  const chosenDays = [...chosen.values()].reduce(
-    (total, choice) => total + choice.fraction,
-    0,
-  );
+  // A chosen date on her weekly rest day spends nothing from the nine (item
+  // 9), so it is left out of what has been spent — otherwise the quota would
+  // fill with dates that can never be paid as holidays, and the family would be
+  // refused a ninth they are still entitled to.
+  const chosenDays = [...chosen.entries()]
+    .filter(([date]) => !isRestDay(date, restDay))
+    .reduce((total, [, choice]) => total + choice.fraction, 0);
   const remaining = Math.max(0, allowance - chosenDays);
   const full = remaining < SMALLEST_PART;
 
@@ -135,6 +155,7 @@ export function holidayYear(
     allowance,
     chosenDays,
     remaining,
+    restDay,
     incomplete: !full,
     rows: dates.map((date) => {
       const choice = chosen.get(date) ?? null;
@@ -142,7 +163,10 @@ export function holidayYear(
         date,
         name: names.get(date) ?? null,
         chosen: choice,
-        blocked: choice === null && full,
+        // Never blocked on the rest day: choosing it spends nothing, so a full
+        // quota is no reason to refuse it.
+        blocked: choice === null && full && !isRestDay(date, restDay),
+        onRestDay: isRestDay(date, restDay),
       };
     }),
   };
@@ -173,15 +197,28 @@ export type HolidayReview =
   | { ok: true; fraction: number }
   | { ok: false; reason: HolidayRefusal };
 
-/** Whether some span already covers the date. An open spell is closed at the
- * date itself, which is the window this question is asked in (`touchesRange`). */
+/**
+ * Whether some span already covers the date. An open spell is closed at the
+ * date itself, which is the window this question is asked in (`touchesRange`).
+ *
+ * **On her weekly rest day only another holiday counts** (item 9, settled with
+ * the user on 2026-09-12). A holiday there is treated as a holiday for nothing,
+ * so a free rest day or a sick day already recorded on that Saturday is not a
+ * second entry beside it — the day is the rest day either way. Two holidays on
+ * one date are still two, because the calendar would draw both.
+ */
 function alreadyCovered(
   spans: MonthSpan[],
   date: IsoDate,
+  restDay: RestDay,
   exceptSpanId?: string,
 ): boolean {
+  const onRestDay = isRestDay(date, restDay);
   return spans.some(
-    (span) => span.id !== exceptSpanId && touchesRange(span, date, date),
+    (span) =>
+      span.id !== exceptSpanId &&
+      (!onRestDay || span.kind === "holiday") &&
+      touchesRange(span, date, date),
   );
 }
 
@@ -205,9 +242,16 @@ export function reviewHolidayDate(
   year: number,
   spans: MonthSpan[],
   state: HolidayYear,
+  restDay: RestDay,
 ): HolidayReview {
   if (!inYear(date, year)) return { ok: false, reason: "date" };
-  if (alreadyCovered(spans, date)) return { ok: false, reason: "alreadyMarked" };
+  if (alreadyCovered(spans, date, restDay)) {
+    return { ok: false, reason: "alreadyMarked" };
+  }
+  // A date on her rest day spends nothing (item 9), so a full quota is no
+  // reason to refuse it, and it is taken whole: there is no entitlement to take
+  // a part of.
+  if (isRestDay(date, restDay)) return { ok: true, fraction: 1 };
   if (state.remaining < SMALLEST_PART) {
     return { ok: false, reason: "holidayLimit" };
   }
@@ -215,9 +259,7 @@ export function reviewHolidayDate(
 }
 
 /**
- * A chosen holiday moved to another date (specs.md item 10) — the gesture that
- * keeps the day when a holiday falls inside a spell of sickness, and the reason
- * that case resolves in favour of the sick balance.
+ * A chosen holiday moved to another date (specs.md item 10).
  *
  * Its own span is excluded from the collision check: a date is not already
  * marked by the very holiday being moved off it, which is what a move of one
@@ -228,9 +270,10 @@ export function reviewHolidayMove(
   year: number,
   spans: MonthSpan[],
   spanId: string,
+  restDay: RestDay,
 ): { ok: true } | { ok: false; reason: HolidayRefusal } {
   if (!inYear(date, year)) return { ok: false, reason: "date" };
-  if (alreadyCovered(spans, date, spanId)) {
+  if (alreadyCovered(spans, date, restDay, spanId)) {
     return { ok: false, reason: "alreadyMarked" };
   }
   // The quota is untouched by a move: the same fraction of the same one day is

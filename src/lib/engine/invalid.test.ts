@@ -60,47 +60,46 @@ const holiday = (date: string, worked = true): ClosedSpan => ({
   worked,
 });
 
-describe("a paid holiday on a free rest day (specs.md Part 4)", () => {
+/**
+ * **A holiday on a Saturday she had off is not refused** (specs.md item 9 and
+ * Part 4, settled with the user on 2026-09-12).
+ *
+ * This was Part 4's deliberately invalid case until then, refused because the
+ * day would have been paid at both the rest-day rate and the holiday rate. It
+ * cannot be any more: a holiday on her weekly rest day is not a holiday at all,
+ * so there is only one rate for the day to be paid at, and a calendar is not a
+ * mistake.
+ *
+ * **What this would catch is the refusal coming back by a side door.** The pair
+ * is two spans on one date, which is exactly the shape the general double-entry
+ * refusal looks for — so removing the specific refusal alone leaves the pair
+ * refused as `dayRecordedTwice` instead, and the family is stopped all the same.
+ */
+describe("a holiday on a free rest day (specs.md item 9, Part 4)", () => {
   // The 16th of August 2025 is a Saturday, recorded as one the worker had off,
-  // and then claimed as a paid holiday.
-  const clashing = facts([
+  // and it is also one of her chosen holidays.
+  const onTheRestDay = facts([
     { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
     holiday("2025-08-16"),
   ]);
 
-  it("is refused rather than calculated", () => {
-    expect(() => calculateMonth(clashing, terms)).toThrow(InvalidMonthError);
+  it("is not refused, by name or as a double entry", () => {
+    expect(validateMonth(onTheRestDay, terms)).toEqual([]);
   });
 
-  it("states a reason, and names the date it is about", () => {
-    // Refused with a reason and not silently dropped: the sentence has to say
-    // why the day cannot be both.
-    const [refusal, ...rest] = validateMonth(clashing, terms);
-    expect(rest).toHaveLength(0);
-    expect(refusal.code).toBe("restDayHoliday");
-    expect(refusal.message.length).toBeGreaterThan(0);
-    expect(refusal.dates).toEqual(["2025-08-16"]);
-  });
-
-  it("never pays the day at both the rest-day rate and the holiday rate", () => {
-    // The whole point of the refusal. Nothing comes back at all, so there is no
-    // figure that could carry the double payment.
-    let result: unknown = "the engine returned a month";
-    try {
-      result = calculateMonth(clashing, terms);
-    } catch (error) {
-      result = error;
-    }
-    expect(result).toBeInstanceOf(InvalidMonthError);
-  });
-
-  it("calculates the same month once the clash is removed", () => {
-    // The refusal is about the pair, not about either mark on its own.
+  /**
+   * **And it is the same month as the free rest day alone**, which is the whole
+   * of what "not a holiday at all" means: the holiday adds no pay, and the
+   * figure is the one Part 4 already held for that month without it —
+   * ₪6,747.65 of salary items and ₪1,705.40 for four worked Saturdays.
+   */
+  it("comes to exactly the month the free rest day makes on its own", () => {
     const justTheFreeRestDay = facts([
       { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
     ]);
     expect(validateMonth(justTheFreeRestDay, terms)).toEqual([]);
     expect(calculateMonth(justTheFreeRestDay, terms).gross).toBe(674765 + 170540);
+    expect(calculateMonth(onTheRestDay, terms).gross).toBe(674765 + 170540);
   });
 });
 
@@ -196,14 +195,6 @@ describe("every refusal carries the rule it rests on (specs.md item 25)", () => 
   const cases: { spans: ClosedSpan[]; code: string; link: string }[] = [
     {
       spans: [
-        { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
-        holiday("2025-08-16"),
-      ],
-      code: "restDayHoliday",
-      link: "holidayWork",
-    },
-    {
-      spans: [
         { id: "free-18", kind: "freeRestDay", from: "2025-08-18", to: "2025-08-18" },
       ],
       code: "freeRestDayNotRestDay",
@@ -211,8 +202,13 @@ describe("every refusal carries the rule it rests on (specs.md item 25)", () => 
     },
     {
       // Ten holidays against an allowance of nine (item 10).
-      spans: Array.from({ length: 10 }, (_, i) =>
-        holiday(`2025-08-${String(i + 1).padStart(2, "0")}`, false),
+      //
+      // **None of them is a Saturday**, which is her rest day: a holiday that
+      // lands there is not a holiday at all and spends nothing from the nine
+      // (item 9, 2026-09-12), so a run of ten consecutive dates would have
+      // carried only eight and never reached the limit.
+      spans: ["01", "03", "04", "05", "06", "07", "08", "10", "11", "12"].map(
+        (day) => holiday(`2025-08-${day}`, false),
       ),
       code: "holidayLimit",
       link: "holidayWork",
@@ -237,10 +233,12 @@ describe("every refusal carries the rule it rests on (specs.md item 25)", () => 
   }
 
   it("gives every refusal a link, whichever ones a month produces", () => {
+    // Two refusals at once: a day that is both sick and a worked holiday, and a
+    // sick balance the opening position cannot fund.
     const refusals = validateMonth(
       facts([
-        { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
-        holiday("2025-08-16"),
+        { id: "sick-13", kind: "sick", from: "2025-08-13", to: "2025-08-13" },
+        holiday("2025-08-13", true),
         { id: "sick", kind: "sick", from: "2025-08-04", to: "2025-08-05" },
       ]),
       terms,
@@ -265,19 +263,23 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
   const REST_DAY_RATE = 42635;
 
   it("refuses a day recorded as both sick and worked as a holiday", () => {
-    // The 16th of August 2025 is a Saturday inside a spell running 14-17, and
+    // The 13th of August 2025 is a Wednesday inside a spell running 12-14, and
     // is also marked as a holiday she worked. She cannot have been absent ill
     // and at work on the same day, and the engine has no way to know which
     // happened.
+    //
+    // **A weekday and not the Saturday this used**, because a holiday on her
+    // rest day is not a holiday at all since 2026-09-12 (item 9): on the 16th
+    // there would be nothing but a sick Saturday, and no contradiction to find.
     const spans: ClosedSpan[] = [
-      { id: "sick", kind: "sick", from: "2025-08-14", to: "2025-08-17" },
-      holiday("2025-08-16"),
+      { id: "sick", kind: "sick", from: "2025-08-12", to: "2025-08-14" },
+      holiday("2025-08-13", true),
     ];
     const refusal = validateMonth(facts(spans), stocked).find(
       (r) => r.code === "dayRecordedTwice",
     );
     expect(refusal).toBeDefined();
-    expect(refusal?.dates).toEqual(["2025-08-16"]);
+    expect(refusal?.dates).toEqual(["2025-08-13"]);
     expect(refusal?.link).toBe("holidayWork");
   });
 
@@ -286,8 +288,8 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
     // that ignores them cannot receive a number instead. The calendar is one
     // caller; the repository and the export are others.
     const spans: ClosedSpan[] = [
-      { id: "sick", kind: "sick", from: "2025-08-14", to: "2025-08-17" },
-      holiday("2025-08-16"),
+      { id: "sick", kind: "sick", from: "2025-08-12", to: "2025-08-14" },
+      holiday("2025-08-13", true),
     ];
     expect(() => calculateMonth(facts(spans), stocked)).toThrow(InvalidMonthError);
   });
@@ -324,19 +326,20 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
     ).toBe(false);
   });
 
-  it("gives the holiday-on-a-free-rest-day pair its own reason, not two", () => {
-    // Part 4 names that case, and a specific reason is worth more to the user
-    // than a general one — so the date is left to `restDayHoliday` and is not
-    // reported a second time as an overlap.
+  /**
+   * Part 4's deliberately invalid case since 2026-09-12: she cannot have been
+   * absent ill and at work on the same day, and choosing one reading silently
+   * would produce a figure that looks entirely ordinary.
+   */
+  it("refuses a day recorded as both sick and a holiday she worked", () => {
     const codes = validateMonth(
       facts([
-        { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
-        holiday("2025-08-16"),
+        { id: "sick-13", kind: "sick", from: "2025-08-13", to: "2025-08-13" },
+        holiday("2025-08-13", true),
       ]),
       stocked,
     ).map((r) => r.code);
-    expect(codes).toContain("restDayHoliday");
-    expect(codes).not.toContain("dayRecordedTwice");
+    expect(codes).toContain("dayRecordedTwice");
   });
 });
 

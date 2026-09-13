@@ -4,8 +4,10 @@ import {
   isRestDay,
   orderDates,
 } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
 import { duplicateAdvanceMovements } from "@/lib/engine/advances";
 import { daysUsedIn, sickDaysAvailable } from "@/lib/engine/balances";
+import { holidayDatesCounted } from "@/lib/engine/holidayDates";
 import { holidayAllowanceFor, holidayDaysOf } from "@/lib/engine/leave";
 import {
   duplicateThirdPartyKinds,
@@ -32,16 +34,14 @@ import type { IsoDate, SpanKind, YearMonth } from "@/lib/types";
  * A month that cannot be calculated correctly is refused with a reason and
  * never calculated wrongly in silence.
  *
- * **`restDayHoliday` is now refused here and nowhere else.** The user cannot
- * mark a holiday at all (item 9), so the only thing that can put one on a free
- * rest day is the year's chosen dates — a caller the calendar's own refusals
- * never see, and the reason this rule had to move rather than be duplicated.
+ * **A holiday on a free rest day is refused nowhere, since 2026-09-12** (item
+ * 9, Part 4). It was refused here as `restDayHoliday`; such a day is now not a
+ * holiday at all but the rest day it is, paid once and spending nothing from
+ * the year's nine, so there is no second rate for it to be paid at. The general
+ * double-entry check below skips it for the same reason.
  */
 
 export type RefusalCode =
-  /** A paid holiday on a date already recorded as a free rest day. The day
-   * would be paid at both the rest-day rate and the holiday rate (Part 4). */
-  | "restDayHoliday"
   /** More paid holidays in the year than the entitlement allows (item 10). */
   | "holidayLimit"
   /** A free rest day recorded on a day that is not the worker's rest day
@@ -117,7 +117,6 @@ const LINK_FOR: Record<
   Exclude<RefusalCode, "dayRecordedTwice" | "thirdPartyPaidTwice">,
   LegalLinkKey
 > = {
-  restDayHoliday: "holidayWork",
   holidayLimit: "holidayWork",
   freeRestDayNotRestDay: "restDayWork",
   sickBalanceExhausted: "sickPay",
@@ -142,11 +141,6 @@ const LINK_FOR_KIND: Record<SpanKind, LegalLinkKey> = {
   holiday: "holidayWork",
   freeRestDay: "restDayWork",
 };
-
-function coversDate(span: ClosedSpan, date: IsoDate): boolean {
-  const { from, to } = orderDates(span.from, span.to);
-  return compareIsoDate(date, from) >= 0 && compareIsoDate(date, to) <= 0;
-}
 
 /**
  * Every date each span covers, whichever month it falls in. A spell of sickness
@@ -185,11 +179,20 @@ function datesOf(span: ClosedSpan): IsoDate[] {
  * this can now only arrive from the year's chosen dates, which is a caller the
  * calendar's own refusals never see.
  */
-function datesRecordedTwice(spans: ClosedSpan[]): Map<IsoDate, SpanKind> {
+function datesRecordedTwice(
+  spans: ClosedSpan[],
+  restDay: RestDay,
+): Map<IsoDate, SpanKind> {
+  // A holiday on her weekly rest day is not an entry on that date at all (item
+  // 9, 2026-09-12): the day is the rest day it is, so a free rest day marked on
+  // it is the only thing recorded there. Without this the pair Part 4 no longer
+  // refuses would be refused anyway, here, as two entries on one date.
+  const counted = holidayDatesCounted(spans, restDay);
   const seen = new Map<IsoDate, SpanKind>();
   const twice = new Map<IsoDate, SpanKind>();
   for (const span of spans) {
     for (const date of datesOf(span)) {
+      if (span.kind === "holiday" && !counted.has(date)) continue;
       if (seen.has(date)) twice.set(date, span.kind);
       else seen.set(date, span.kind);
     }
@@ -215,35 +218,14 @@ export function validateMonth(
   // disagree with itself (specs.md item 8).
   const { spans } = closeMonth(facts, context.today);
 
-  // A paid holiday landing on a free rest day: the deliberately invalid case of
-  // Part 4. Refused rather than paid at both rates.
-  const clashes = spans
-    .filter((span) => span.kind === "holiday")
-    .flatMap((holiday) =>
-      spans
-        .filter(
-          (other) =>
-            other.kind === "freeRestDay" && coversDate(other, holiday.from),
-        )
-        .map(() => holiday.from),
-    );
-  if (clashes.length > 0) {
-    refusals.push({
-      code: "restDayHoliday",
-      link: LINK_FOR.restDayHoliday,
-      message: he.sheet.refusals.restDayHoliday(facts.terms.restDay),
-      dates: [...new Set(clashes)],
-    });
-  }
-
-  // A date carrying more than one entry. Reported after `restDayHoliday` and
-  // with its dates removed, so the holiday-on-a-free-rest-day pair gets the
-  // reason Part 4 names for it rather than two refusals for one mistake: a
-  // specific reason is worth more to the user than a general one.
-  const alreadyRefused = new Set(clashes);
-  const twice = [...datesRecordedTwice(spans)].filter(
-    ([date]) => !alreadyRefused.has(date),
-  );
+  // **A holiday on her weekly rest day is no longer refused** (item 9, settled
+  // with the user on 2026-09-12). It was: a paid holiday landing on a free rest
+  // day was Part 4's deliberately invalid case, because the day would have been
+  // paid at both rates. It cannot be now — such a day is not a holiday at all,
+  // it is paid once as the rest day it is, and it spends nothing from the
+  // year's nine. A calendar is not a mistake, so what was a refusal is an
+  // explanation on the picker, where the date is chosen.
+  const twice = [...datesRecordedTwice(spans, facts.terms.restDay)];
   if (twice.length > 0) {
     refusals.push({
       code: "dayRecordedTwice",

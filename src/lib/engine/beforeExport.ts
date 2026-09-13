@@ -10,7 +10,8 @@ import {
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { recuperationDaysFor } from "@/lib/engine/recuperation";
-import { closeMonth } from "@/lib/engine/types";
+import { holidayDatesCounted } from "@/lib/engine/holidayDates";
+import { closeMonth, unansweredHolidays } from "@/lib/engine/types";
 import type {
   ClosedSpan,
   Employment,
@@ -129,7 +130,10 @@ export type ExportQuestionDetail =
    * it (specs.md item 9). Both the worked and the unworked are listed: the
    * question is which of them was worked, and a list of only the worked ones
    * cannot be checked against the calendar. */
-  | { shape: "holiday"; on: IsoDate; worked: boolean }
+  /** `worked` carries all three of item 9's states: `null` is a holiday nobody
+   * has answered for, and it is the one the screen has to name, because it is
+   * the reason the month cannot be exported. */
+  | { shape: "holiday"; on: IsoDate; worked: boolean | null }
   /** Money. `kind` is the third-party payment's own kind, and absent on an
    * advance, which has no kinds. */
   | { shape: "money"; agorot: number; kind?: ThirdPartyKind };
@@ -244,8 +248,12 @@ export function exportQuestions(
       }));
 
   const holidays = spansOf("holiday");
+  // Answered *and* worked, not `countsAsWorked`: the question asks what the
+  // month records, and a holiday nobody has answered for records nothing. The
+  // preview pays for it and the sentence must not therefore claim the family
+  // said she worked it.
   const holidaysWorked = holidays.filter(
-    (span) => span.kind === "holiday" && span.worked,
+    (span) => span.kind === "holiday" && span.worked === true,
   );
 
   const freeRestDays = daysOf("freeRestDay");
@@ -284,7 +292,7 @@ export function exportQuestions(
         .map((span) => ({
           shape: "holiday",
           on: span.from,
-          worked: span.kind === "holiday" && span.worked,
+          worked: span.kind === "holiday" ? span.worked : false,
         })),
     },
     {
@@ -333,7 +341,11 @@ export function exportQuestions(
  * and answered for is a month she is entitled to export; what item 18 buys is
  * that she was asked, not that the application overrules her.
  */
-export const exportBlockKeys = ["monthNotEnded", "openSickSpell"] as const;
+export const exportBlockKeys = [
+  "monthNotEnded",
+  "openSickSpell",
+  "unansweredHoliday",
+] as const;
 
 export type ExportBlockKey = (typeof exportBlockKeys)[number];
 
@@ -362,6 +374,23 @@ export function blocksExport(
   const blocks: ExportBlockKey[] = [];
   if (!monthHasEnded(facts.month, today)) blocks.push("monthNotEnded");
   if (openSickSpellOf(facts) !== null) blocks.push("openSickSpell");
+  // Item 9, settled with the user on 2026-09-12. The preview reads an
+  // unanswered holiday as one she worked and pays for it, and this is what
+  // stops that lean reaching a filed sheet: the figure on the screen has to say
+  // something, and the export does not.
+  //
+  // Only a holiday that counts as one. A holiday on her weekly rest day is
+  // treated as a holiday for nothing (item 9), so whether she "worked" it is
+  // already answered by the rest day itself — unmarked is a rest day worked, a
+  // free rest day mark is one she had off — and holding the export for a
+  // question whose answer changes nothing would be a question for its own sake.
+  const counted = holidayDatesCounted(
+    closeMonth(facts, today).spans,
+    facts.terms.restDay,
+  );
+  if (unansweredHolidays(facts.spans).some((span) => counted.has(span.from))) {
+    blocks.push("unansweredHoliday");
+  }
   return blocks;
 }
 

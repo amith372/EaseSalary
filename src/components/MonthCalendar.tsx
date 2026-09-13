@@ -179,20 +179,43 @@ const dotClass: Record<MarkKind, string> = {
  */
 const HOLIDAY_WORKED = "bg-holiday text-ink";
 const HOLIDAY_NOT_WORKED = "bg-day text-day-ink border-2 border-holiday";
+/** Item 9's third weight: dashed, so it reads as a question rather than as
+ * either answer. One colour throughout, because all three are answers about one
+ * kind of day. */
+const HOLIDAY_UNANSWERED =
+  "bg-day text-day-ink border-2 border-dashed border-holiday";
 
-/** Whether a span is a holiday she worked. Written once because the cell, its
- * label and the legend all ask it, and a holiday with no answer yet must read
- * as *not worked* nowhere — item 9 leaves that to the pre-export questions. */
-function isWorkedHoliday(span: DaySpan): boolean {
-  return span.kind === "holiday" && (span as HolidaySpan).worked;
+const HOLIDAY_FACE = {
+  worked: HOLIDAY_WORKED,
+  notWorked: HOLIDAY_NOT_WORKED,
+  unanswered: HOLIDAY_UNANSWERED,
+} as const;
+
+/**
+ * Which of item 9's three states a holiday is in, or `null` for a span that is
+ * not a holiday.
+ *
+ * **Written once because the cell, its label and the legend all ask it**, and
+ * because the question has three answers: a predicate returning a boolean is
+ * exactly the shape that reads "nobody has said yet" as "she did not work it".
+ */
+function holidayStateOf(
+  span: DaySpan,
+): "worked" | "notWorked" | "unanswered" | null {
+  if (span.kind !== "holiday") return null;
+  const worked = (span as HolidaySpan).worked;
+  if (worked === null) return "unanswered";
+  return worked ? "worked" : "notWorked";
 }
 
 /**
- * Six entries. "יום עבודה" is a day she worked, which is every unmarked day
+ * Seven entries. "יום עבודה" is a day she worked, which is every unmarked day
  * including an unmarked rest day — so there is no entry for the weekly rest day
- * and no separate fill for it. The holiday takes two, because its two weights
+ * and no separate fill for it. The holiday takes three, because its weights
  * are the whole of what the month records about one and a month read back later
- * has to be tellable apart at a glance (specs.md item 9).
+ * has to be tellable apart at a glance (specs.md item 9). Three of them since
+ * 2026-09-12: a holiday nobody has answered for is its own state and not a
+ * quiet no.
  *
  * Built per render rather than held as a module constant, because one entry
  * names her own rest day (item 5).
@@ -207,6 +230,11 @@ function legendFor(restDay: RestDay): { label: string; swatch: string }[] {
     // The outline, drawn as an outline: a ring of the same hue around the
     // page's own day colour, which is what the cell does two sizes up.
     { label: he.calendar.holiday.notWorked, swatch: "bg-day border-2 border-holiday" },
+    // The third state, drawn as the question it is (item 9).
+    {
+      label: he.calendar.holiday.unanswered,
+      swatch: "bg-day border-2 border-dashed border-holiday",
+    },
     { label: marks.freeRestDay, swatch: "bg-rest" },
   ];
 }
@@ -466,15 +494,13 @@ export function MonthCalendar({
           // A holiday is a state and not a mark, so its cell is not looked up in
           // `markClass` at all: the two weights say which answer the month
           // holds, and the words say it to a reader who cannot see them.
-          const holiday = span?.kind === "holiday";
-          const worked = span !== undefined && isWorkedHoliday(span);
+          const holidayState = span === undefined ? null : holidayStateOf(span);
+          const holiday = holidayState !== null;
           // Half a day is a fill in the cell and words in the label, because a
           // reader who cannot see the fill is told nothing by it.
           const partly = span !== undefined && (span.fraction ?? 1) < 1;
-          const stateName = holiday
-            ? worked
-              ? he.calendar.holiday.worked
-              : he.calendar.holiday.notWorked
+          const stateName = holidayState !== null
+            ? he.calendar.holiday[holidayState]
             : span
               ? `${marks[span.kind as MarkKind]}${
                   partly ? `, ${he.calendar.picker.part.half}` : ""
@@ -485,8 +511,8 @@ export function MonthCalendar({
           }`;
           const face = [
             "flex flex-col items-center justify-center gap-px rounded-day text-[17px] transition-colors",
-            holiday
-              ? `font-semibold ${worked ? HOLIDAY_WORKED : HOLIDAY_NOT_WORKED}`
+            holidayState !== null
+              ? `font-semibold ${HOLIDAY_FACE[holidayState]}`
               : span
                 ? `font-semibold ${markClass[span.kind as MarkKind]}`
                 : "bg-day font-normal text-day-ink",

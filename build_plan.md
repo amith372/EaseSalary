@@ -119,6 +119,17 @@ Carried forward from finished steps. None of these is a defect.
   a family that has just created a worker sees somebody else's month under her name. The screen
   falls back rather than crashing, which is what it did until 2026-09-12. **Stage 6's**, which
   is the stage that replaces the fixtures.
+- **A chosen holiday can be moved freely, and the user wants it to be a contract amendment.**
+  The regulator's position is that the list is set at the start of the employment and does not
+  change month to month; employer and worker may still agree to amend it. So the move becomes an
+  explicit profile-level action with an effective date, regenerating only months after it and
+  never a closed one, with the change kept as an audit trail. Today `moveHoliday` rewrites the
+  date in place with no record. Asked for by the user on 2026-09-12 and not yet built.
+- **Whether an unworked holiday should leave "ימי עבודה בפועל" is unsettled.** It does today
+  (item 5), and her pay is unaffected either way, because the salary comes from the standard
+  count. The user asked for the family's workbooks to settle it, and they cannot: the workbooks
+  are not in this repository, and `workbook.fixture.ts`, which records them, says every holiday
+  in those months was worked, so there is no unworked holiday to compare against.
 - **`SalaryRepository` has no `deleteWorker`**, because nothing in the application removes one.
   The live check tidies up through the client instead.
 - **The browser suite is intermittently flaky under load** — `payments-screen`,

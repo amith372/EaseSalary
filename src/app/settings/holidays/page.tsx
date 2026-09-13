@@ -103,6 +103,7 @@ export default async function HolidaysPage({
           spans,
           holidayAllowanceFor(profile.employedSince, year),
           year,
+          profile.restDay,
         ),
       };
     }),

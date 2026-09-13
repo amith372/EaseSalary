@@ -407,6 +407,20 @@ function MonthConfirmation({
         </Card>
       ) : null}
 
+      {shown.blocks.includes("unansweredHoliday") ? (
+        <Card
+          data-block="unansweredHoliday"
+          className="flex flex-col gap-1.5 border border-line-strong bg-tint px-5 py-4"
+        >
+          <span dir="auto" className="text-[17px] font-semibold text-clay-deep">
+            {words.unansweredHoliday.title}
+          </span>
+          <p dir="auto" className="text-[15px] leading-[1.55] font-light text-ink-mute">
+            {words.unansweredHoliday.note}
+          </p>
+        </Card>
+      ) : null}
+
       {/* Item 15: the days come from her seniority and are reported; the day
           rate is the figure the application cannot derive, so it is confirmed
           here the way the minimum wage is. */}
@@ -880,7 +894,15 @@ function detailOf(detail: ExportQuestionDetail): string {
       return `${dates}${words.separator}${part}`;
     }
     case "holiday": {
-      const said = detail.worked ? words.worked : words.notWorked;
+      // Three states and not two (item 9): `null` is the holiday nobody has
+      // answered for, and it is the one that stops the export, so it is said in
+      // its own words rather than folded into "לא נעבד".
+      const said =
+        detail.worked === null
+          ? words.unanswered
+          : detail.worked
+            ? words.worked
+            : words.notWorked;
       return `${dayLabel(detail.on)}${words.separator}${said}`;
     }
     case "money": {

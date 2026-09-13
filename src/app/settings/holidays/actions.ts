@@ -99,6 +99,7 @@ async function stateOf(
       spans,
       holidayAllowanceFor(profile.employedSince, year),
       year,
+      profile.restDay,
     ),
   };
 }
@@ -118,10 +119,14 @@ export async function setHolidaySource(
 /**
  * A date chosen as a paid holiday (specs.md items 9 and 10).
  *
- * `worked: false` is not a default and not an assumption about the month: it is
- * what an *unanswered* holiday looks like, and the pre-export questions are
- * what ask (item 18). The one fact a month records about a holiday is whether
- * she worked it, and it is clicked on the day.
+ * **`worked: null` is the state and not a placeholder for one.** The one fact a
+ * month records about a holiday is whether she worked it, and it is clicked on
+ * the day — so a date chosen here has had nobody answer for it yet, which is a
+ * third state and not a quiet no (item 9, settled with the user on 2026-09-12).
+ * It was `false` until then, and `false` is what the engine pays nothing for:
+ * a family who never opened the month was silently taken to have said she did
+ * not work it. Now the preview reads it as worked and pays, and the month
+ * cannot be exported until somebody says (item 18).
  */
 export async function chooseHoliday(
   workerId: string,
@@ -132,7 +137,13 @@ export async function chooseHoliday(
   const profile = await profileOf(repository, workerId);
   const state = await stateOf(repository, profile, year);
 
-  const reviewed = reviewHolidayDate(date, year, state.spans, state.year);
+  const reviewed = reviewHolidayDate(
+    date,
+    year,
+    state.spans,
+    state.year,
+    profile.restDay,
+  );
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   const span: MonthSpan = {
@@ -140,7 +151,7 @@ export async function chooseHoliday(
     kind: "holiday",
     from: date,
     to: date,
-    worked: false,
+    worked: null,
     ...(reviewed.fraction === 1 ? {} : { fraction: reviewed.fraction }),
   };
   await repository.saveSpan(profile.id, span);
@@ -183,7 +194,13 @@ export async function moveHoliday(
     return { ok: false, reason: "entryUnknown" };
   }
 
-  const reviewed = reviewHolidayMove(date, year, state.spans, spanId);
+  const reviewed = reviewHolidayMove(
+    date,
+    year,
+    state.spans,
+    spanId,
+    profile.restDay,
+  );
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   await repository.saveSpan(profile.id, { ...span, from: date, to: date });

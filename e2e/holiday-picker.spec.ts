@@ -85,6 +85,8 @@ const SIX_MORE = [
  * could not be fetched. 27.7.2026 is a Monday, so it is neither her rest day
  * nor a day the seed already marks, and India publishes nothing on it. */
 const TYPED_BY_HAND = "2026-07-27";
+/** Independence Day on her Indian list, a Saturday — her rest day. */
+const SATURDAY_HOLIDAY = "2026-08-15";
 
 const RUN = Date.now().toString(36);
 
@@ -220,6 +222,102 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     await page.goto(`/workers/${TEST_WORKER_ID}`);
     await expect(page.locator("[data-holidays]")).toContainText(
       formatDays(SEEDED_CHOSEN + 1),
+    );
+  });
+
+  /**
+   * **A chosen holiday arrives unanswered, and the month cannot be exported
+   * until somebody says whether she worked it** (specs.md items 9 and 18,
+   * settled with the user on 2026-09-12).
+   *
+   * Monday 22 June 2026 is chosen here, so it reaches the calendar with nobody
+   * having answered for it. What this would catch is the one failure that
+   * matters for the change: the export going through on the preview's lean.
+   * The preview pays an unanswered holiday as worked so the figure never quietly
+   * underpays her, and that lean is only safe because the export refuses to
+   * proceed on it.
+   */
+  test("a chosen holiday arrives unanswered, and blocks the export until answered", async ({
+    page,
+  }) => {
+    await useHousehold(page, "unanswered");
+
+    await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
+    await tick(page, CANDIDATE_IN_JUNE);
+
+    // On the calendar it is the third state, named for the question nobody
+    // answered rather than drawn as either answer.
+    await page.goto("/month");
+    await switchToTestWorker(page);
+    await backTo(page, 3);
+    const cell = page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`);
+    await expect(cell).toHaveAttribute(
+      "aria-label",
+      new RegExp(he.calendar.holiday.unanswered),
+    );
+
+    // Before export: held, with the finish button disabled.
+    await page.goto("/month/export");
+    await switchToTestWorker(page);
+    await backTo(page, 2);
+    await expect(page.locator("h1")).toContainText(he.calendar.monthNames[5]);
+    await expect(page.locator('[data-block="unansweredHoliday"]')).toBeVisible();
+    await expect(page.locator("[data-finish]")).toBeDisabled();
+    await page.screenshot({
+      path: "test-results/holiday-unanswered-blocks-export.png",
+      fullPage: true,
+    });
+
+    // Answered on the calendar, where the one fact a month records about a
+    // holiday is recorded (item 9).
+    await page.goto("/month");
+    await switchToTestWorker(page);
+    await backTo(page, 3);
+    await page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`).click();
+    await page
+      .getByRole("button", { name: he.calendar.holiday.no, exact: true })
+      .click();
+    await settled(page);
+
+    // After: the block is gone. "She did not work it" clears it as well as
+    // "she did" — what is required is an answer, not a particular one.
+    await page.goto("/month/export");
+    await switchToTestWorker(page);
+    await backTo(page, 2);
+    await expect(page.locator("h1")).toContainText(he.calendar.monthNames[5]);
+    await expect(page.locator('[data-block="unansweredHoliday"]')).toHaveCount(0);
+  });
+
+  /**
+   * **A holiday on her rest day is explained where it is chosen, and spends
+   * nothing from the nine** (specs.md item 9, settled with the user on
+   * 2026-09-12).
+   *
+   * Independence Day, Saturday 15 August 2026, is on her Indian list and her
+   * rest day is Saturday. What this would catch is the family watching the
+   * quota not move with no reason given, and reading it as a broken screen.
+   */
+  test("a holiday on her rest day is explained, and the quota does not move", async ({
+    page,
+  }) => {
+    await useHousehold(page, "restday");
+    await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
+
+    const saturday = holidayRow(page, SATURDAY_HOLIDAY);
+    await expect(saturday.locator('[data-role="holiday-on-rest-day"]')).toContainText(
+      he.holidays.row.onRestDay(SATURDAY),
+    );
+
+    await tick(page, SATURDAY_HOLIDAY);
+    await expect(page.locator("[data-quota]")).toContainText(
+      formatDays(SEEDED_CHOSEN),
+    );
+    // Chosen, and still no more of the nine spent than before it.
+    await expect(saturday.getByRole("checkbox")).toHaveAttribute(
+      "aria-checked",
+      "true",
     );
   });
 

@@ -60,6 +60,7 @@ export default async function WorkerPage({
     await repository.listSpans(id),
     holidayAllowanceFor(profile.employedSince, year),
     year,
+    profile.restDay,
   );
 
   const listed: ProfileMonth[] = series.map(({ result }) => ({

@@ -114,7 +114,26 @@ export interface HolidaySpan extends DaySpan {
   /** A holiday is one day or a run of them and is never open: the dates arrive
    * from the year's chosen list (specs.md item 9), so its end is always known. */
   to: IsoDate;
-  worked: boolean;
+  /**
+   * Whether she worked it, in **three** states and not two (specs.md item 9,
+   * settled with the user on 2026-09-12).
+   *
+   * `null` is *nobody has said yet*, and it is a state of its own rather than a
+   * quiet no. It has to be, because a holiday's date arrives on the calendar
+   * from the year's chosen list rather than from anything the family did in
+   * that month — so unlike every other mark, a holiday can sit there having
+   * been looked at by no one. With a boolean an unanswered holiday and one she
+   * genuinely did not work are the same value, which is exactly the silence
+   * item 9 forbids: the month paid nothing for it and nothing on the screen
+   * said a question had gone unasked.
+   *
+   * **The preview leans towards paying her and the export refuses to lean.** An
+   * unanswered holiday is calculated as one she worked, because a figure on a
+   * screen has to say something and the cheaper reading is the one that costs
+   * her money; and the month cannot be exported while one is unanswered, which
+   * is what stops the lean ever reaching a filed sheet.
+   */
+  worked: boolean | null;
 }
 
 /**

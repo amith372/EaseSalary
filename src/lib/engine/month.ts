@@ -285,11 +285,7 @@ function buildLines(
   // with the holiday line and taken out of the rest days here, because both
   // lines pay the same rate off the same date and item 9 says the day is paid
   // once. `counts.restDaysWorked` stays the true count of rest days attended.
-  const restDayUnits = restDayUnitsOf(
-    facts.spans,
-    counts.restDaysWorked,
-    facts.terms.restDay,
-  );
+  const restDayUnits = restDayUnitsOf(counts.restDaysWorked);
   if (restDayUnits > 0) {
     drafts.push({
       key: lineKeys.restDays,
@@ -309,7 +305,7 @@ function buildLines(
   // earns nothing extra, because the monthly salary is paid on it in full
   // (item 9). Counted in days and not in spans, and a part day is paid in its
   // own proportion (item 10).
-  const holidaysWorked = holidayDaysWorked(facts.spans);
+  const holidaysWorked = holidayDaysWorked(facts.spans, facts.terms.restDay);
   if (holidaysWorked > 0) {
     drafts.push({
       key: lineKeys.holidaysWorked,

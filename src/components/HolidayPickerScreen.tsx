@@ -17,6 +17,8 @@ import { Chevron } from "@/components/icons";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { WhyPanel } from "@/components/WhyDisclosure";
 import { weekdayDayLabel } from "@/lib/dateLabels";
+import type { RestDay } from "@/lib/dates";
+import { legalLink } from "@/lib/links";
 import type { HolidayRow, HolidayYear } from "@/lib/engine/holidayYear";
 import type { HolidaySourceChoice } from "@/lib/holidaySources";
 import { he } from "@/lib/i18n/he";
@@ -320,6 +322,7 @@ export function HolidayPickerScreen({
                 >
                   <HolidayRowView
                     row={row}
+                    restDay={state.restDay}
                     year={year}
                     workerId={entry.worker.id}
                     moving={
@@ -456,6 +459,7 @@ function SourceChip({
  * the day it is and where it can be moved to. */
 function HolidayRowView({
   row,
+  restDay,
   year,
   workerId,
   moving,
@@ -464,6 +468,7 @@ function HolidayRowView({
   act,
 }: {
   row: HolidayRow;
+  restDay: RestDay;
   year: number;
   workerId: string;
   moving: boolean;
@@ -518,6 +523,33 @@ function HolidayRowView({
             )}
           </span>
           <Bidi className="text-[14px] font-light text-ink-quiet">{label}</Bidi>
+          {/*
+            Item 9: a holiday on her rest day is explained where it falls rather
+            than refused, with the rule it rests on beside it (item 25). Shown
+            before it is chosen as well as after, so the family decides knowing
+            the date will cost nothing from the nine.
+          */}
+          {row.onRestDay ? (
+            <span className="flex flex-col gap-0.5" data-role="holiday-on-rest-day">
+              <span
+                dir="auto"
+                className="text-[13px] leading-[1.5] font-light text-pretty text-ink-soft"
+              >
+                {words.onRestDay(restDay)}
+              </span>
+              <a
+                href={legalLink("holidayWork").url}
+                target="_blank"
+                rel="noopener noreferrer"
+                dir="auto"
+                className="text-[13px] font-medium text-forest hover:underline hover:underline-offset-[3px]"
+              >
+                <span>{legalLink("holidayWork").label}</span>
+                <span> — </span>
+                <span>{he.why.linkSuffix}</span>
+              </a>
+            </span>
+          ) : null}
         </span>
 
         {chosen !== null ? (

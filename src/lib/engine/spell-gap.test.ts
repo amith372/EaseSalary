@@ -4,7 +4,7 @@ import { SATURDAY } from "@/lib/dates";
 import { daysUsedIn } from "@/lib/engine/balances";
 import { holidayDaysOf } from "@/lib/engine/leave";
 import { calculateMonth, lineKeys } from "@/lib/engine/month";
-import { spellsOf } from "@/lib/engine/sick";
+import { sickDeductionDays, spellsOf } from "@/lib/engine/sick";
 import { snapshotTerms} from "@/lib/engine/types";
 import type {
   ClosedMonthFacts,
@@ -170,28 +170,50 @@ describe("a holiday she did not work sits inside the period", () => {
     ]);
   });
 
-  it("prices the holiday as an ordinary day of the spell", () => {
-    // Mon 11 is day 1 -> 1 taken back.
-    // Tue 12 is day 2. It is *not* a rest day, so it stands inside the standard
-    //        count and the base paid for it; the tier gives half, so half is
-    //        taken back. This is where it differs from a Saturday.
-    // Wed 13 is day 3 -> 0.5 taken back.
-    // 1 + 0.5 + 0.5 = 2 days -> 49,981.
-    expect(deduction([...marked, holiday("2025-08-12", false)])).toBe(-49981);
+  /**
+   * **The holiday pays the ordinary salary and takes nothing back** (item 10,
+   * reversed with the user on 2026-09-12).
+   *
+   * The deduction is asserted in *days* and not in agorot, because the days are
+   * what can be worked out by hand from the tiers and the money is one rounding
+   * away from them:
+   *
+   *   Mon 11 is day 1 of the spell -> 1 day taken back.
+   *   Tue 12 is a holiday -> nothing taken back, and nothing drawn.
+   *   Wed 13 is day 3 -> half a day taken back.
+   *
+   * 1 + 0.5 = 1.5. **Day 3 stays day 3**, which is the part worth holding on
+   * to: the spell is an unbroken run of calendar days (item 8), so the holiday
+   * is dropped from the deduction after the tiers are counted and not before —
+   * dropping it first would move Wednesday into the more expensive second tier.
+   */
+  it("takes nothing back for the holiday, and does not renumber the days after it", () => {
+    const spans = [...marked, holiday("2025-08-12", false)];
+    expect(sickDeductionDays(spans, AUGUST_2025, SATURDAY)).toBe(1.5);
+
+    // Two days where the whole run was sick, so the holiday is genuinely
+    // cheaper and the assertion above is not passing against a no-op.
+    expect(
+      sickDeductionDays([sick("2025-08-11", "2025-08-13")], AUGUST_2025, SATURDAY),
+    ).toBe(2);
+    expect(deduction(spans)).toBeGreaterThan(
+      deduction([sick("2025-08-11", "2025-08-13")]) as number,
+    );
   });
 
-  it("draws it from the sick balance and not from the yearly holiday allowance", () => {
-    // A day cannot be both taken as a holiday and spent ill, and drawing it from
-    // both quotas would charge her twice for one day (item 10). The entitlement
-    // is not lost — the holiday is the one of the two that can be moved.
+  it("draws it from the yearly holiday allowance and not from the sick balance", () => {
+    // A day cannot be both, and charging it to the sick quota would spend a day
+    // of illness on a day she was not going to be working anyway (item 10).
     const spans = [...marked, holiday("2025-08-12", false)];
-    expect(sickDrawn(spans)).toBe(3);
-    expect(holidayDaysOf(spans, SATURDAY)).toBe(0);
+    expect(sickDrawn(spans)).toBe(2);
+    expect(holidayDaysOf(spans, SATURDAY)).toBe(1);
   });
 
   it("does not bridge a holiday she worked, because she was at work", () => {
     // Two spells, so the balance draws only the two days marked, and the holiday
-    // is drawn from the yearly allowance as usual.
+    // is drawn from the yearly allowance as usual. The balance is the same two
+    // days as the unworked case above, and the difference is the spell count:
+    // one bridged run against two separate ones.
     const spans = [...marked, holiday("2025-08-12", true)];
     expect(spellsOf(spans, SATURDAY)).toHaveLength(2);
     expect(sickDrawn(spans)).toBe(2);

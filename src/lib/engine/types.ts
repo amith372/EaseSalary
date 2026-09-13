@@ -40,6 +40,40 @@ export type MonthSpan =
   | HolidaySpan;
 
 /**
+ * Whether a holiday is calculated as one she worked — **which an unanswered
+ * holiday is** (specs.md item 9, settled with the user on 2026-09-12).
+ *
+ * **One function, because the alternative is `span.worked` read as a truth
+ * value in five places.** `worked` has three states, and `null` is falsy: every
+ * `if (span.worked)` written against the old boolean goes on compiling and
+ * silently reads *nobody has said yet* as *she did not work it*, which is the
+ * one reading item 9 forbids. That is a change no type can catch, so the rule
+ * is given a name and every caller asks it by name.
+ *
+ * The lean is towards paying her: a figure on a screen has to say something,
+ * and of the two readings the cheaper one is the one that costs her money. It
+ * never reaches a filed sheet, because `unansweredHolidays` below stops the
+ * export while any holiday is unanswered.
+ */
+export function countsAsWorked(span: { worked: boolean | null }): boolean {
+  return span.worked !== false;
+}
+
+/**
+ * The holidays nobody has answered for — what stops an export (specs.md items 9
+ * and 18).
+ *
+ * Generic over the span shape because a holiday is the one kind that is never
+ * open, so it reads the same before and after `closeMonth` and neither caller
+ * should have to close a month to ask this.
+ */
+export function unansweredHolidays<
+  T extends { kind: string; worked?: boolean | null },
+>(spans: readonly T[]): T[] {
+  return spans.filter((span) => span.kind === "holiday" && span.worked === null);
+}
+
+/**
  * A span whose end is settled — an open spell resolved to the last day the
  * month counts it to. **Everything inside the engine works on these**, so no
  * counting rule, tier or balance has to carry the open case: the resolution

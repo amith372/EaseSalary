@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SATURDAY, isRestDay } from "@/lib/dates";
 
 import {
   holidayYear,
@@ -27,6 +28,21 @@ const PH = { kind: "country", code: "PH" } as const;
 
 /** The shipped list: the Philippines' twenty-four holidays for 2026. */
 const SHIPPED = holidayListFor(SEEDED_HOLIDAY_LISTS, PH, 2026)!;
+
+/**
+ * The shipped dates that are not Saturdays, which is her rest day in every case
+ * below.
+ *
+ * **The quota cases fill the year from these and not from the whole list**,
+ * because the shipped list carries Black Saturday, 4 April 2026, and since
+ * 2026-09-12 a holiday on her rest day spends nothing from the nine (item 9).
+ * Filling the nine from the full list would leave the quota a day short of full
+ * and every one of these cases would test the rest-day rule by accident rather
+ * than the arithmetic it names. The rest-day rule has its own case at the end.
+ */
+const WEEKDAYS: Holiday[] = SHIPPED.holidays.filter(
+  (holiday) => !isRestDay(holiday.date, SATURDAY),
+);
 
 /** Its first three dates, which is all most of these cases need. */
 const CANDIDATES: Holiday[] = SHIPPED.holidays.slice(0, 3);
@@ -62,7 +78,7 @@ describe("the entitlement the picker counts against", () => {
 
 describe("the year's rows", () => {
   it("are the source's own dates and names, ordered by date", () => {
-    const year = holidayYear(CANDIDATES, [], FULL_YEAR, 2026);
+    const year = holidayYear(CANDIDATES, [], FULL_YEAR, 2026, SATURDAY);
 
     expect(year.rows.map((row) => row.date)).toEqual([
       "2026-01-01",
@@ -83,6 +99,7 @@ describe("the year's rows", () => {
       [holiday("a", "2026-02-17", 0.5)],
       FULL_YEAR,
       2026,
+      SATURDAY,
     );
 
     expect(year.rows[1].chosen).toEqual({ spanId: "a", fraction: 0.5 });
@@ -101,6 +118,7 @@ describe("the year's rows", () => {
       [holiday("a", "2026-06-12")],
       FULL_YEAR,
       2026,
+      SATURDAY,
     );
 
     const added = year.rows.find((row) => row.date === "2026-06-12");
@@ -124,6 +142,7 @@ describe("the year's rows", () => {
       [holiday("a", "2025-12-25"), holiday("b", "2026-01-01")],
       FULL_YEAR,
       2026,
+      SATURDAY,
     );
 
     expect(year.rows.map((row) => row.date)).toEqual([
@@ -148,6 +167,7 @@ describe("what the year has left", () => {
       ],
       FULL_YEAR,
       2026,
+      SATURDAY,
     );
 
     expect(year.chosenDays).toBe(2);
@@ -160,24 +180,27 @@ describe("what the year has left", () => {
   it("counts every day of a span that covers several", () => {
     const year = holidayYear(
       [],
-      [{ id: "a", kind: "holiday", from: "2026-05-01", to: "2026-05-03", worked: false }],
+      // Monday to Wednesday, so none of the three is her rest day.
+      [{ id: "a", kind: "holiday", from: "2026-05-04", to: "2026-05-06", worked: false }],
       FULL_YEAR,
       2026,
+      SATURDAY,
     );
 
     expect(year.chosenDays).toBe(3);
     expect(year.rows.map((row) => row.date)).toEqual([
-      "2026-05-01",
-      "2026-05-02",
-      "2026-05-03",
+      "2026-05-04",
+      "2026-05-05",
+      "2026-05-06",
     ]);
   });
 
   it("never falls below zero, because the month is what refuses a tenth day", () => {
-    const spans = Array.from({ length: 10 }, (_, index) =>
-      holiday(`h${index}`, `2026-01-0${index + 1}`.replace("-010", "-10")),
+    // Ten weekdays of January 2026, skipping the Saturdays of the 3rd and 10th.
+    const spans = ["01", "02", "05", "06", "07", "08", "09", "12", "13", "14"].map(
+      (day, index) => holiday(`h${index}`, `2026-01-${day}`),
     );
-    const year = holidayYear([], spans, FULL_YEAR, 2026);
+    const year = holidayYear([], spans, FULL_YEAR, 2026, SATURDAY);
 
     expect(year.chosenDays).toBe(10);
     expect(year.remaining).toBe(0);
@@ -188,27 +211,30 @@ describe("whether another day can be chosen", () => {
   /** Catches a picker that blocked a row already chosen: unchoosing is what
    * makes room, so a full year would become a year nothing could be undone in. */
   it("blocks every unchosen row once the entitlement is spent, and no chosen one", () => {
-    const spans = SHIPPED.holidays
+    const spans = WEEKDAYS
       .slice(0, 9)
       .map((candidate, index) => holiday(`h${index}`, candidate.date));
-    const year = holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026);
+    const year = holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026, SATURDAY);
 
     expect(year.remaining).toBe(0);
     expect(year.rows.filter((row) => row.chosen !== null)).toHaveLength(9);
-    expect(year.rows.every((row) => row.blocked === (row.chosen === null))).toBe(
-      true,
-    );
+    // A row on her rest day is never blocked: choosing it spends nothing.
+    expect(
+      year.rows
+        .filter((row) => !row.onRestDay)
+        .every((row) => row.blocked === (row.chosen === null)),
+    ).toBe(true);
   });
 
   /** Half a day still fits in half a day left, and the tick is what takes it —
    * so the row is not blocked. Catches "blocked when less than a whole day
    * remains", which would leave the last half of an entitlement unspendable. */
   it("leaves a row open while half a day is left", () => {
-    const spans = SHIPPED.holidays
+    const spans = WEEKDAYS
       .slice(0, 8)
       .map((candidate, index) => holiday(`h${index}`, candidate.date));
     spans.push(holiday("half", "2026-06-12", 0.5));
-    const year = holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026);
+    const year = holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026, SATURDAY);
 
     expect(year.remaining).toBe(0.5);
     expect(year.rows.find((row) => row.chosen === null)?.blocked).toBe(false);
@@ -232,35 +258,36 @@ describe("the part the next choice takes", () => {
 
 describe("choosing a date", () => {
   const state = (spans: MonthSpan[], allowance = FULL_YEAR) =>
-    holidayYear(CANDIDATES, spans, allowance, 2026);
+    holidayYear(CANDIDATES, spans, allowance, 2026, SATURDAY);
 
   it("takes a whole day where the year has room", () => {
-    const reviewed = reviewHolidayDate("2026-01-01", 2026, [], state([]));
+    const reviewed = reviewHolidayDate("2026-01-01", 2026, [], state([]), SATURDAY);
     expect(reviewed).toEqual({ ok: true, fraction: 1 });
   });
 
   /** A year begun in April with six whole days chosen has 0.75 left, and the
    * choice is the half that fits it. */
   it("takes a half day where only a part of one is left", () => {
-    const spans = SHIPPED.holidays
+    const spans = WEEKDAYS
       .slice(0, 6)
       .map((candidate, index) => holiday(`h${index}`, candidate.date));
     const reviewed = reviewHolidayDate(
       "2026-06-12",
       2026,
       spans,
-      holidayYear(SHIPPED.holidays, spans, PART_YEAR, 2026),
+      holidayYear(SHIPPED.holidays, spans, PART_YEAR, 2026, SATURDAY),
+      SATURDAY,
     );
 
     expect(reviewed).toEqual({ ok: true, fraction: 0.5 });
   });
 
   it("refuses a date outside the year on screen", () => {
-    expect(reviewHolidayDate("2027-01-01", 2026, [], state([]))).toEqual({
+    expect(reviewHolidayDate("2027-01-01", 2026, [], state([]), SATURDAY)).toEqual({
       ok: false,
       reason: "date",
     });
-    expect(reviewHolidayDate("not a date", 2026, [], state([]))).toEqual({
+    expect(reviewHolidayDate("not a date", 2026, [], state([]), SATURDAY)).toEqual({
       ok: false,
       reason: "date",
     });
@@ -281,7 +308,7 @@ describe("choosing a date", () => {
       from: "2026-02-16",
       to: "2026-02-18",
     };
-    expect(reviewHolidayDate("2026-02-17", 2026, [sick], state([sick]))).toEqual(
+    expect(reviewHolidayDate("2026-02-17", 2026, [sick], state([sick]), SATURDAY)).toEqual(
       { ok: false, reason: "alreadyMarked" },
     );
   });
@@ -289,20 +316,21 @@ describe("choosing a date", () => {
   /** An open spell has no end, and a date inside it is still inside it. */
   it("refuses a date inside a spell that has not ended", () => {
     const open: MonthSpan = { id: "s", kind: "sick", from: "2026-02-16", to: null };
-    expect(reviewHolidayDate("2026-02-17", 2026, [open], state([open]))).toEqual(
+    expect(reviewHolidayDate("2026-02-17", 2026, [open], state([open]), SATURDAY)).toEqual(
       { ok: false, reason: "alreadyMarked" },
     );
   });
 
   it("refuses a tenth day when the nine are spent", () => {
-    const spans = SHIPPED.holidays
+    const spans = WEEKDAYS
       .slice(0, 9)
       .map((candidate, index) => holiday(`h${index}`, candidate.date));
     const reviewed = reviewHolidayDate(
       "2026-06-12",
       2026,
       spans,
-      holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026),
+      holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026, SATURDAY),
+      SATURDAY,
     );
 
     expect(reviewed).toEqual({ ok: false, reason: "holidayLimit" });
@@ -313,25 +341,25 @@ describe("moving a chosen date", () => {
   const spans = [holiday("a", "2026-01-01"), holiday("b", "2026-02-17")];
 
   it("is allowed onto a free date, and draws nothing more from the year", () => {
-    expect(reviewHolidayMove("2026-06-12", 2026, spans, "a")).toEqual({ ok: true });
+    expect(reviewHolidayMove("2026-06-12", 2026, spans, "a", SATURDAY)).toEqual({ ok: true });
   });
 
   /** Catches a collision check that did not exclude the span being moved: a
    * holiday could then never be moved onto its own date, and a date form opened
    * with the date already in it would refuse the first press. */
   it("is allowed onto the date it already holds", () => {
-    expect(reviewHolidayMove("2026-01-01", 2026, spans, "a")).toEqual({ ok: true });
+    expect(reviewHolidayMove("2026-01-01", 2026, spans, "a", SATURDAY)).toEqual({ ok: true });
   });
 
   it("is refused onto a date another entry already covers", () => {
-    expect(reviewHolidayMove("2026-02-17", 2026, spans, "a")).toEqual({
+    expect(reviewHolidayMove("2026-02-17", 2026, spans, "a", SATURDAY)).toEqual({
       ok: false,
       reason: "alreadyMarked",
     });
   });
 
   it("is refused onto another year", () => {
-    expect(reviewHolidayMove("2025-12-25", 2026, spans, "a")).toEqual({
+    expect(reviewHolidayMove("2025-12-25", 2026, spans, "a", SATURDAY)).toEqual({
       ok: false,
       reason: "date",
     });
@@ -343,10 +371,10 @@ describe("taking a chosen day in part", () => {
    * fits: only the increase is judged. Catches a check against the whole
    * fraction, which would refuse the very gesture that makes room. */
   it("allows halving a day even with nothing left", () => {
-    const spans = SHIPPED.holidays
+    const spans = WEEKDAYS
       .slice(0, 9)
       .map((candidate, index) => holiday(`h${index}`, candidate.date));
-    const year = holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026);
+    const year = holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026, SATURDAY);
 
     expect(
       reviewHolidayPart(0.5, { spanId: "h0", fraction: 1 }, year),
@@ -356,11 +384,11 @@ describe("taking a chosen day in part", () => {
   /** Six whole days and a half of a 6.75 entitlement leave a quarter, and
    * restoring the half to a whole day would take another half. */
   it("refuses restoring a half day to a whole one when only a quarter is left", () => {
-    const spans = SHIPPED.holidays
+    const spans = WEEKDAYS
       .slice(0, 6)
       .map((candidate, index) => holiday(`h${index}`, candidate.date));
     spans.push(holiday("half", "2026-06-12", 0.5));
-    const year = holidayYear(SHIPPED.holidays, spans, PART_YEAR, 2026);
+    const year = holidayYear(SHIPPED.holidays, spans, PART_YEAR, 2026, SATURDAY);
 
     expect(year.remaining).toBe(0.25);
     expect(
@@ -369,7 +397,7 @@ describe("taking a chosen day in part", () => {
   });
 
   it("refuses a part the application does not offer", () => {
-    const year = holidayYear(CANDIDATES, [], FULL_YEAR, 2026);
+    const year = holidayYear(CANDIDATES, [], FULL_YEAR, 2026, SATURDAY);
     expect(
       reviewHolidayPart(0.37, { spanId: "a", fraction: 1 }, year),
     ).toEqual({ ok: false, reason: "part" });
@@ -379,14 +407,14 @@ describe("taking a chosen day in part", () => {
 describe("whether the selection is incomplete", () => {
   /** Item 10 asks that an incomplete selection be visible at a glance. */
   it("is true while a day can still be chosen", () => {
-    expect(holidayYear([], [], FULL_YEAR, 2026).incomplete).toBe(true);
+    expect(holidayYear([], [], FULL_YEAR, 2026, SATURDAY).incomplete).toBe(true);
   });
 
   it("is false once the entitlement is spent", () => {
-    const spans = SHIPPED.holidays
+    const spans = WEEKDAYS
       .slice(0, 9)
       .map((candidate, index) => holiday(`h${index}`, candidate.date));
-    expect(holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026).incomplete).toBe(
+    expect(holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026, SATURDAY).incomplete).toBe(
       false,
     );
   });
@@ -398,14 +426,113 @@ describe("whether the selection is incomplete", () => {
    * remains".
    */
   it("is false once what is left is smaller than half a day", () => {
-    const spans = SHIPPED.holidays
+    const spans = WEEKDAYS
       .slice(0, 6)
       .map((candidate, index) => holiday(`h${index}`, candidate.date));
     spans.push(holiday("half", "2026-06-12", 0.5));
-    const year = holidayYear(SHIPPED.holidays, spans, PART_YEAR, 2026);
+    const year = holidayYear(SHIPPED.holidays, spans, PART_YEAR, 2026, SATURDAY);
 
     expect(year.chosenDays).toBe(6.5);
     expect(year.remaining).toBe(0.25);
     expect(year.incomplete).toBe(false);
+  });
+});
+
+/**
+ * **A holiday on her weekly rest day can be chosen, spends nothing, and says
+ * so** (specs.md item 9, settled with the user on 2026-09-12).
+ *
+ * Black Saturday, 4 April 2026, is on the shipped Philippine list and falls on
+ * a Saturday, which is her rest day here. It is drawn on the calendar as a
+ * holiday and treated as one for nothing else: the day is paid as the rest day
+ * it is, and the nine are untouched.
+ *
+ * **What this would catch is the family being refused a ninth date they are
+ * owed.** Counted against the quota, a Saturday holiday would fill a slot that
+ * can never be paid as a holiday, and a full quota would then block a weekday
+ * the worker is still entitled to.
+ */
+describe("a holiday on her weekly rest day", () => {
+  const BLACK_SATURDAY = "2026-04-04";
+
+  it("is marked as her rest day, and spends nothing from the nine", () => {
+    const year = holidayYear(
+      SHIPPED.holidays,
+      [holiday("sat", BLACK_SATURDAY)],
+      FULL_YEAR,
+      2026,
+      SATURDAY,
+    );
+
+    const row = year.rows.find((each) => each.date === BLACK_SATURDAY);
+    expect(row?.onRestDay).toBe(true);
+    expect(row?.chosen).not.toBeNull();
+    expect(year.chosenDays).toBe(0);
+    expect(year.remaining).toBe(9);
+  });
+
+  it("leaves room for all nine weekdays beside it", () => {
+    const spans = [
+      holiday("sat", BLACK_SATURDAY),
+      ...WEEKDAYS.slice(0, 9).map((candidate, index) =>
+        holiday(`h${index}`, candidate.date),
+      ),
+    ];
+    const year = holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026, SATURDAY);
+
+    // Nine weekdays spent, the Saturday free, and the quota exactly full.
+    expect(year.chosenDays).toBe(9);
+    expect(year.remaining).toBe(0);
+  });
+
+  it("is never blocked by a full quota, because choosing it costs nothing", () => {
+    const spans = WEEKDAYS.slice(0, 9).map((candidate, index) =>
+      holiday(`h${index}`, candidate.date),
+    );
+    const year = holidayYear(SHIPPED.holidays, spans, FULL_YEAR, 2026, SATURDAY);
+
+    expect(year.remaining).toBe(0);
+    expect(year.rows.find((each) => each.date === BLACK_SATURDAY)?.blocked).toBe(
+      false,
+    );
+  });
+
+  /**
+   * **The server agrees with the picker**, which is the half a crafted request
+   * would otherwise reach. A full quota refuses a weekday and not her rest day,
+   * and a Saturday already recorded as one she had off is not a second entry
+   * beside the holiday — the day is her rest day either way (item 9).
+   */
+  it("is accepted by the server even with the nine spent, and beside a free rest day", () => {
+    const full = WEEKDAYS.slice(0, 9).map((candidate, index) =>
+      holiday(`h${index}`, candidate.date),
+    );
+    const state = holidayYear(SHIPPED.holidays, full, FULL_YEAR, 2026, SATURDAY);
+
+    expect(reviewHolidayDate(BLACK_SATURDAY, 2026, full, state, SATURDAY)).toEqual({
+      ok: true,
+      fraction: 1,
+    });
+    // A weekday is still refused by the same full quota.
+    expect(reviewHolidayDate("2026-06-12", 2026, full, state, SATURDAY)).toEqual({
+      ok: false,
+      reason: "holidayLimit",
+    });
+
+    const freeSaturday: MonthSpan = {
+      id: "free",
+      kind: "freeRestDay",
+      from: BLACK_SATURDAY,
+      to: BLACK_SATURDAY,
+    };
+    expect(
+      reviewHolidayDate(
+        BLACK_SATURDAY,
+        2026,
+        [freeSaturday],
+        holidayYear(SHIPPED.holidays, [freeSaturday], FULL_YEAR, 2026, SATURDAY),
+        SATURDAY,
+      ),
+    ).toEqual({ ok: true, fraction: 1 });
   });
 });

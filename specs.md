@@ -429,18 +429,29 @@ Each of these is true or false at a glance.
    return corrects the months it touched and carries their balances forward, which is
    criterion 13 and needs nothing built for it here.
 9. A holiday the worker does not work changes nothing: a monthly salary is paid in full
-   and no vacation day is drawn. A holiday she works is paid at the rest-day rate, and a
-   holiday falling on a rest day she works is paid once, not twice.
+   and no vacation day is drawn. A holiday she works is paid at the rest-day rate.
+   **A holiday that falls on her weekly rest day is drawn on the calendar as a holiday and
+   is treated as one for nothing else**: the day is her weekly rest day, it is paid as one
+   whether she works it or not, and it draws nothing from the yearly entitlement, so
+   nothing is spent on it and another date may be chosen in its place. The money is the
+   same as under the rule this replaces, which paid such a day once rather than twice;
+   what changed is that the day is no longer one of the nine. Choosing it is not refused,
+   because a calendar is not a mistake — the clash is explained where it falls, with the
+   link to the rule beside it (item 25).
    The user never marks a day as a holiday on the month's calendar. The year's holidays
    are chosen in advance from the country's candidate list (item 10), so the dates arrive
    on the calendar already drawn, and the only thing the month records about one is
-   whether she worked it. That single fact is shown as one colour in two weights: a
-   holiday she did not work is an outline, and one she worked is filled, so the state that
-   costs money is the louder of the two. Both appear in the calendar's legend, because a
-   month read back later has to be tellable apart at a glance. A holiday nobody has
-   answered for yet is caught by the pre-export questions (item 18) rather than counted as
-   one she did not work, which is what keeps a silent default from quietly underpaying
-   her.
+   whether she worked it. That has three answers and not two: *nobody has said yet* is a
+   state of its own, and not a quiet no. The state is shown as one colour in three
+   weights — a holiday nobody has answered for is dashed, one she did not work is an
+   outline, and one she worked is filled — and all three appear in the calendar's legend,
+   because a month read back later has to be tellable apart at a glance. An unanswered
+   holiday is previewed as one she worked, and paid for, so the figure on the screen is
+   never the cheaper of two readings taken on her behalf; and a month is not exported
+   while any holiday in it is unanswered (item 18), which is what makes the question an
+   answer rather than a notice. Neither reading is a default: the preview leans towards
+   paying her because a figure has to say something, and the export refuses to proceed on
+   a lean.
 10. The worker's holidays for the year are shown in advance as her country of origin's
    full candidate list, with another country's list selectable instead, of which the
    user marks the paid ones. **The country is named wherever it is shown and never
@@ -477,15 +488,15 @@ Each of these is true or false at a glance.
    be edited, a day beyond the entitlement is refused, and an incomplete selection is
    visible at a glance.
 
-   **A holiday that falls inside a spell of sickness is a sick day and not a holiday.**
-   It is drawn from the sick balance with the rest of the spell and is **not** drawn from
-   the yearly entitlement, because a day cannot be both taken as a holiday and spent ill,
-   and drawing it twice would charge the worker for one day out of two separate quotas.
-   The entitlement is not lost by it: the year's holidays are chosen in advance and a date
-   can be edited (above), so a family whose holiday fell in the middle of an illness moves
-   it to another date and keeps the day. That is the reason this resolves in favour of the
-   sick balance rather than the other way round — the holiday is the one of the two that
-   can be moved.
+   **A holiday that falls inside a spell of sickness is a holiday and not a sick day.**
+   The day pays the ordinary monthly salary like any holiday she did not work, it is drawn
+   from the yearly entitlement, and it draws **nothing** from the sick balance: a day
+   cannot be both, and charging it to the sick quota would spend a day of illness on a day
+   she was not going to be working anyway. It does not break the spell around it, for the
+   same reason the weekly rest day does not — a day she owed no attendance on says nothing
+   about whether she was still ill (Part 5). This reversed on 2026-09-12; before then the
+   day was drawn from the sick balance and the holiday was kept to be moved to another
+   date.
 11. A worker belongs to a household, never to a person. An account is a person who signs
     in; a household is the group of people who look after the same workers, and it holds
     no more than two workers. Every member of a household sees the same workers, the same
@@ -803,6 +814,10 @@ Each of these is true or false at a glance.
     Where the month holds a spell of sickness still open (item 8), the question is the
     specific one: has she returned, and on what day. A month is not exported over an unanswered open spell, because the one
     thing an open spell can get wrong is counting days for a worker who was already back.
+    A month is likewise not exported while any holiday in it is unanswered (item 9): those
+    dates arrive on the calendar from the year's chosen list rather than from anything the
+    family did in that month, so an unanswered holiday is the one thing on the month
+    nobody has necessarily looked at.
 19. The national-insurance contribution is 3.6% of the month's full cost, taken before
     anything to do with advances. Kol Zchut settles what that cost is, so it is no
     longer inferred from the workbook: the base is the gross wage including sick pay,
@@ -1299,13 +1314,14 @@ facts must produce a base of ₪6,247.65 plus a Friday supplement of ₪500, giv
 ₪9,305.75; and ₪7,305.75 after the advance instalment. Every figure must match to the
 agora, with no tolerance.
 
-The deliberately invalid case is a paid holiday landing on a free Saturday: the user
-records the 16th as a Saturday the worker had off, then tries to mark the same date as
-one of her paid holidays. The application must refuse the second entry and explain why,
-rather than paying both the rest-day rate and the holiday rate for a single day. The
-same refusal covers a tenth paid holiday within a year, and a date carrying more than
-one entry at all — a day recorded as both sick and worked as a holiday, or recorded
-twice over. The second of those is a contradiction the application cannot resolve: she
+The deliberately invalid case is a date carrying more than one entry: the user records a
+day as one the worker was absent ill, and the same day as a holiday she worked. The
+application must refuse it and explain why, because she cannot have been absent ill and
+at work on the same day. The same refusal covers a tenth paid holiday within a year, and
+a day recorded twice over. A holiday landing on a Saturday she had off is **not** among
+them, and was until 2026-09-12: such a day is not a holiday at all but the rest day it
+is, paid once and spending nothing from the nine (item 9), so there is no second rate
+for it to be paid at. The sick-and-worked day is a contradiction the application cannot resolve: she
 cannot have been absent ill and at work on the same day, and choosing one reading
 silently would produce a figure that looks entirely ordinary. Left unrefused it costs a
 rest day — a spell of sickness covering a Saturday that is also marked as a holiday

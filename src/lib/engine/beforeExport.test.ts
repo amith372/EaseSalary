@@ -370,6 +370,88 @@ describe("what stops a month being exported", () => {
   });
 
   /**
+   * **A month is not exported while any holiday in it is unanswered** (specs.md
+   * items 9 and 18, settled with the user on 2026-09-12).
+   *
+   * This is the half that makes the lean safe. The preview reads an unanswered
+   * holiday as one she worked and pays for it, because a figure on a screen has
+   * to say something; the block is what stops that reading ever reaching a filed
+   * sheet, so the family answers rather than inherits an answer.
+   *
+   * **What it would catch is the block quietly not firing** — which is the only
+   * failure that matters here, because without it the new default is simply an
+   * overpayment nobody was asked about. Both answers clear it, including "she
+   * did not work it": what is required is an answer and not a particular one.
+   */
+  it("refuses a month holding a holiday nobody has answered for, and allows it once answered", () => {
+    const holiday = (worked: boolean | null): MonthSpan => ({
+      id: "h",
+      kind: "holiday",
+      from: "2026-04-14",
+      to: "2026-04-14",
+      worked,
+    });
+
+    expect(blocksExport(facts({ spans: [holiday(null)] }), "2026-05-01")).toEqual([
+      "unansweredHoliday",
+    ]);
+    expect(blocksExport(facts({ spans: [holiday(true)] }), "2026-05-01")).toEqual([]);
+    expect(blocksExport(facts({ spans: [holiday(false)] }), "2026-05-01")).toEqual([]);
+  });
+
+  /**
+   * **A holiday on her weekly rest day does not hold the export**, even
+   * unanswered (item 9). It is treated as a holiday for nothing, so whether she
+   * worked it is already answered by the rest day — and a block on a question
+   * whose answer changes no figure is a question asked for its own sake.
+   *
+   * 18 April 2026 is a Saturday, and the fixture's rest day is Saturday.
+   */
+  it("does not hold the export for an unanswered holiday on her rest day", () => {
+    expect(
+      blocksExport(
+        facts({
+          spans: [
+            { id: "h", kind: "holiday", from: "2026-04-18", to: "2026-04-18", worked: null },
+          ],
+        }),
+        "2026-05-01",
+      ),
+    ).toEqual([]);
+  });
+
+  /**
+   * **The question does not claim she worked it.** The preview pays for an
+   * unanswered holiday, but the sentence the family is asked to confirm reports
+   * what the month *records*, and an unanswered holiday records nothing — so it
+   * is listed with its date and named as unanswered rather than counted among
+   * the worked ones. A question that answered itself would be the silence item
+   * 18 exists to remove.
+   */
+  it("lists an unanswered holiday without counting it as one she worked", () => {
+    const question = exportQuestions(
+      facts({
+        spans: [
+          {
+            id: "h",
+            kind: "holiday",
+            from: "2026-04-14",
+            to: "2026-04-14",
+            worked: null,
+          },
+        ],
+      }),
+      "2026-05-01",
+    ).find((each) => each.key === "holidaysWorked");
+
+    expect(question?.recorded).toBe(false);
+    expect(question?.counts).toEqual({ items: 1, of: 0 });
+    expect(question?.details).toEqual([
+      { shape: "holiday", on: "2026-04-14", worked: null },
+    ]);
+  });
+
+  /**
    * A spell nobody closed goes on drawing sick days month after month, so it
    * blocks every month it reaches and not only the one it began in — which is
    * exactly the case an unclosed spell produces.

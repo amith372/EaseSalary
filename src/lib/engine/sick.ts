@@ -8,6 +8,8 @@ import {
   sameMonth,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import { holidayDatesCounted } from "@/lib/engine/holidayDates";
+import { countsAsWorked } from "@/lib/engine/types";
 import type { ClosedSpan } from "@/lib/engine/types";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
@@ -88,7 +90,11 @@ export interface SickSpell {
 function owesNoAttendance(spans: ClosedSpan[], restDay: RestDay) {
   const holidaysOff = new Set(
     spans
-      .filter((span) => span.kind === "holiday" && !span.worked)
+      // Only a holiday she actually did not work owes no attendance. One
+      // nobody has answered for is read as worked (item 9), so it ends a spell
+      // like any other day of attendance — the same reading the money and the
+      // counts take, rather than a third one here.
+      .filter((span) => span.kind === "holiday" && !countsAsWorked(span))
       .flatMap((span) => {
         const { from, to } = orderDates(span.from, span.to);
         return eachDate(from, to);
@@ -179,14 +185,25 @@ export interface SickDay {
  * even where most of it falls outside the month, because the position of a day
  * inside this month depends on how many days of the spell came before it. */
 function sickDaysOf(spans: ClosedSpan[], restDay: RestDay): SickDay[] {
+  // **A holiday inside a spell is a holiday and not a sick day** (item 10,
+  // reversed with the user on 2026-09-12): it pays the ordinary salary and
+  // draws nothing from the sick balance, because charging it to the sick quota
+  // would spend a day of illness on a day she was not going to be working
+  // anyway. It is dropped *after* the numbering rather than before it, because
+  // the spell is an unbroken run of calendar days (item 8) and the tier a later
+  // day falls in is counted over that run — removing it first would shift every
+  // day after it into a cheaper tier.
+  const holidays = holidayDatesCounted(spans, restDay);
   return spellsOf(spans, restDay).flatMap((spell) =>
-    eachDate(spell.from, spell.to).map((date, index) => ({
-      date,
-      dayOfSpell: index + 1,
-      unpaidDays: isRestDay(date, restDay)
-        ? 0
-        : unpaidFractionOfSpellDay(index + 1),
-    })),
+    eachDate(spell.from, spell.to)
+      .map((date, index) => ({
+        date,
+        dayOfSpell: index + 1,
+        unpaidDays: isRestDay(date, restDay)
+          ? 0
+          : unpaidFractionOfSpellDay(index + 1),
+      }))
+      .filter((day) => !holidays.has(day.date)),
   );
 }
 

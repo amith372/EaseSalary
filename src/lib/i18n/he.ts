@@ -413,6 +413,9 @@ export const he = {
       blocked: {
         monthNotEnded: "החודש עדיין לא הסתיים",
         openSickSpell: "יש מחלה שעדיין פתוחה",
+        /** Item 9: the preview pays for an unanswered holiday, and this is what
+         * stops that reaching a filed sheet. */
+        unansweredHoliday: "יש חג שעדיין לא נענה אם נעבד",
       },
     },
 
@@ -617,6 +620,9 @@ export const he = {
     holiday: {
       worked: "חג שנעבד",
       notWorked: "חג שלא נעבד",
+      /** Item 9's third state. Named for the question nobody answered rather
+       * than for a guess about the day, because that is what it is. */
+      unanswered: "חג שטרם נענה",
       question: "עבדה בחג?",
       yes: "כן, עבדה",
       no: "לא עבדה",
@@ -1549,6 +1555,14 @@ export const he = {
       /** The refusal said where it happened, rather than in a message
        * elsewhere (item 25). */
       blocked: "המכסה נוצלה במלואה",
+      /**
+       * A holiday that falls on her weekly rest day (item 9, 2026-09-12). Said
+       * on the row itself, because a family choosing it and watching the quota
+       * not move would otherwise read that as a mistake. The rest day is named
+       * rather than assumed, since it is a term of the employment (item 5).
+       */
+      onRestDay: (restDay: RestDay) =>
+        `החג נופל ב${day(restDay).bare}, יום המנוחה השבועי שלה. הוא יופיע בלוח כחג, אבל ישולם כיום מנוחה רגיל ולא ינוצל מתשעת ימי החג — אפשר לבחור תאריך אחר במקומו.`,
       move: "להעביר תאריך",
       moveLabel: (date: string) => `להעביר את החג מ-${date} לתאריך אחר`,
       /** A date nobody published: she typed it herself, or moved a holiday onto
@@ -1712,6 +1726,16 @@ export const he = {
       title: "החודש עדיין לא הסתיים",
       note: "אפשר להמשיך למלא אותו, ואפשר לייצא אותו אחרי שיסתיים.",
     },
+    /**
+     * Item 9, settled with the user on 2026-09-12. The figure on this screen
+     * already pays an unanswered holiday as worked, so the note says so: a
+     * family reading a total that includes holiday pay should know it is a
+     * lean and not an answer they gave.
+     */
+    unansweredHoliday: {
+      title: "יש חג שעדיין לא נענה",
+      note: "בחודש הזה יש חג שעוד לא סומן אם העובד/ת עבד/ה בו. בינתיים הוא מחושב כאילו עבד/ה, כדי שהסכום לא יהיה נמוך מדי — אבל אי אפשר לייצא את החודש עד שמסמנים בלוח אם עבד/ה בו או לא.",
+    },
 
     /**
      * The seven questions. Each `ask` is what the user answers, each `from` is
@@ -1758,6 +1782,10 @@ export const he = {
          * against the calendar. */
         worked: "נעבד",
         notWorked: "לא נעבד",
+        /** Item 9's third state, said beside the date on the pre-export list.
+         * It is the reason the month cannot be exported, so it is named rather
+         * than shown as one of the two answers. */
+        unanswered: "עדיין לא נענה",
         /** Between a date and what is said about it. A middot and not a comma:
          * the two halves are separate facts and neither is a clause. */
         separator: " · ",
@@ -2167,8 +2195,6 @@ export const he = {
      * it on the refusal itself, so the interface names them isolated rather
      * than inside a Hebrew sentence (specs.md Part 5). */
     refusals: {
-      restDayHoliday: (restDay: RestDay) =>
-        `אי אפשר לסמן חג בתאריך שכבר סומן בו ${day(restDay).bare} ${agrees(day(restDay)).free}. היום היה משולם פעמיים — גם בתעריף המנוחה השבועית וגם כחג — ולכן צריך לבחור אחד מהשניים.`,
       holidayLimit: (allowed: number) =>
         `המכסה היא ${allowed} ימי חג בשנה, והרישום הזה חורג ממנה. אפשר להסיר חג אחר שנבחר לשנה הזו במקומו.`,
       /** Her own day, not everyone's: item 5 says the rest day is a term of
