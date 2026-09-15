@@ -515,12 +515,15 @@ describe("a worker shared from another household", () => {
     // counted against a household that is not empty.
     await aStoredWorker();
 
-    const { error: inviteFailure } = await familyClient
+    const { data: invitation, error: inviteFailure } = await familyClient
       .from("household_invitations")
-      .insert({ household_id: familyHouseholdId, email: address });
+      .insert({ household_id: familyHouseholdId, email: address })
+      .select("token")
+      .single();
     if (inviteFailure !== null) throw inviteFailure;
     const { data: joined, error: acceptFailure } = await client.rpc(
-      "accept_household_invitations",
+      "accept_household_invitation",
+      { invitation_token: invitation.token },
     );
     if (acceptFailure !== null) throw acceptFailure;
     expect(joined).toBe(1);

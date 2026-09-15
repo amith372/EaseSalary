@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { acceptInvitation } from "@/app/sign-in/actions";
 import { Card } from "@/components/Card";
 import { he } from "@/lib/i18n/he";
 import { supabaseInBrowser } from "@/lib/supabase/client";
@@ -62,12 +63,13 @@ export function SignInScreen({
      * exist that nobody is able to read.
      */
     async function ensureHousehold() {
-      // **Invitations first** (specs.md item 11). A person invited into a
-      // household joins it here, before the check below — otherwise their first
-      // sign-in would create an empty household of their own and every screen
-      // would show that one instead. The function accepts only invitations
-      // addressed to the caller's own confirmed address.
-      await supabase.rpc("accept_household_invitations");
+      // **Invitations first** (specs.md item 11). A person who opened an
+      // invitation link joins that household here, before the check below —
+      // otherwise their first sign-in would create an empty household of their
+      // own and every screen would show that one instead. Only the link's token
+      // accepts, and only for the address it was sent to; signing in without
+      // the link joins nothing.
+      await acceptInvitation();
 
       const { data: memberships } = await supabase
         .from("household_members")

@@ -20,7 +20,7 @@ export async function signOut(): Promise<void> {
 }
 
 export type InvitationResult =
-  | { ok: true; email: string }
+  | { ok: true; email: string; token: string }
   | { ok: false; reason: "email" | "failed" };
 
 /**
@@ -30,7 +30,7 @@ export type InvitationResult =
  * 2026-09-13). The invitation is a row, and the member passes the link on
  * themselves; the person invited opens an account of their own with the invited
  * address — or signs in, if they already have one — and the row is accepted
- * then. Supabase's own invitation mail was tried first and dropped: it created
+ * then, through the token only the link carries. Supabase's own invitation mail was tried first and dropped: it created
  * the account itself, with a password nobody chose, and refused to send
  * anything to an address that already had one.
  *
@@ -50,16 +50,31 @@ export async function inviteToHousehold(
   const supabase = await supabaseOnServer();
   const householdId = await householdIdOf(supabase);
 
-  const { error } = await supabase
+  const inserted = await supabase
     .from("household_invitations")
-    .insert({ household_id: householdId, email });
-  // 23505 is a unique violation: this address is already invited here.
-  if (error !== null && error.code !== "23505") {
-    return { ok: false, reason: "failed" };
+    .insert({ household_id: householdId, email })
+    .select("token")
+    .single();
+
+  let token = inserted.data?.token as string | undefined;
+  // 23505 is a unique violation: this address is already invited here, so the
+  // link is the one already pending. Matched as typed, case aside; a different
+  // spelling of the same address is refused rather than guessed at.
+  if (inserted.error?.code === "23505") {
+    const { data: pending } = await supabase
+      .from("household_invitations")
+      .select("token")
+      .eq("household_id", householdId)
+      .ilike("email", email.replace(/[\\%_]/g, "\\$&"))
+      .is("accepted_at", null)
+      .limit(1)
+      .maybeSingle();
+    token = pending?.token as string | undefined;
   }
+  if (token === undefined) return { ok: false, reason: "failed" };
 
   revalidatePath("/settings");
-  return { ok: true, email };
+  return { ok: true, email, token };
 }
 
 /** A pending invitation withdrawn. The policy refuses one already accepted, and

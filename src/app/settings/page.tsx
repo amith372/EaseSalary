@@ -48,11 +48,12 @@ async function householdInvitations(): Promise<Invitation[]> {
     const supabase = await supabaseOnServer();
     const { data } = await supabase
       .from("household_invitations")
-      .select("id, email, accepted_at")
+      .select("id, email, token, accepted_at")
       .order("created_at");
     return (data ?? []).map((row) => ({
       id: row.id as string,
       email: row.email as string,
+      token: row.token as string,
       accepted: row.accepted_at !== null,
     }));
   } catch {

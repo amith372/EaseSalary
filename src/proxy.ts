@@ -1,5 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  INVITATION_COOKIE,
+  INVITATION_COOKIE_MAX_AGE,
+  INVITATION_TOKEN_PARAM,
+  invitationToken,
+} from "@/lib/invitationCookie";
 import { supabaseEnv } from "@/lib/supabase/env";
 
 /**
@@ -51,6 +57,13 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // An invitation link's token is kept until its person is signed in, whichever
+  // of the redirects below the link meets (`invitationCookie.ts`).
+  const token =
+    request.nextUrl.pathname === "/sign-in"
+      ? invitationToken(request.nextUrl.searchParams.get(INVITATION_TOKEN_PARAM))
+      : null;
+
   if (!user && request.nextUrl.pathname !== "/sign-in") {
     const signIn = request.nextUrl.clone();
     signIn.pathname = "/sign-in";
@@ -64,14 +77,28 @@ export async function proxy(request: NextRequest) {
   }
 
   // Somebody signed in has no reason to be here, and the screen draws no nav to
-  // leave by: it is the one route outside the shell.
-  if (user && request.nextUrl.pathname === "/sign-in") {
+  // leave by: it is the one route outside the shell. A page load only: the
+  // screen's own server action posts here once the person is signed in.
+  if (user && request.nextUrl.pathname === "/sign-in" && request.method === "GET") {
     const home = request.nextUrl.clone();
     home.pathname = "/";
     home.search = "";
-    return NextResponse.redirect(home);
+    return keepInvitation(NextResponse.redirect(home), token);
   }
 
+  return keepInvitation(response, token);
+}
+
+function keepInvitation(response: NextResponse, token: string | null): NextResponse {
+  if (token !== null) {
+    response.cookies.set(INVITATION_COOKIE, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: INVITATION_COOKIE_MAX_AGE,
+    });
+  }
   return response;
 }
 

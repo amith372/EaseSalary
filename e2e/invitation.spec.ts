@@ -150,11 +150,22 @@ test("an existing account joins through a copied link, and the invitation then r
   await expect(pending).toContainText(invitee.email);
   await expect(pending).toContainText(words.pending);
 
-  // What was copied is the message with the link in it, naming the address.
+  // What was copied is the message with the link in it, naming the address and
+  // carrying the token that alone accepts it.
   const copied = await inviterPage.evaluate(() => navigator.clipboard.readText());
-  const link = `/sign-in?invite=${encodeURIComponent(invitee.email)}`;
   expect(copied).toContain(invitee.email);
-  expect(copied).toContain(link);
+  const copiedLink = new URL(copied.match(/https?:\/\/\S+/)?.[0] ?? "");
+  expect(copiedLink.pathname).toBe("/sign-in");
+  expect(copiedLink.searchParams.get("invite")).toBe(invitee.email);
+  expect(copiedLink.searchParams.get("token")).toMatch(/^[0-9a-f-]{36}$/);
+  const link = `${copiedLink.pathname}${copiedLink.search}`;
+
+  // --- Signed in, but the link not yet opened: nothing is joined -----------
+  // Signing in is not accepting. Otherwise any member could invite a stranger's
+  // address and the stranger's next page would put them in that household.
+  await inviteePage.goto("/workers");
+  await expect(inviteePage.getByText(he.workers.toProfile(invitee.firstName))).toBeVisible();
+  await expect(inviteePage.getByText(he.workers.toProfile(inviter.firstName))).toHaveCount(0);
 
   // --- Someone new opens it -------------------------------------------------
   // The sign-up form, already holding the address, and saying why.

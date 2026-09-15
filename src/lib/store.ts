@@ -3,6 +3,7 @@ import { createInMemoryRepository } from "@/lib/engine/repository";
 import type { SalaryRepository } from "@/lib/engine/repository";
 import { devSeed } from "@/lib/dev/seed";
 import { knownCaseSeed } from "@/lib/dev/known";
+import { INVITATION_COOKIE, invitationToken } from "@/lib/invitationCookie";
 import { createPostgresRepository } from "@/lib/supabase/repository";
 import { supabaseOnServer } from "@/lib/supabase/server";
 
@@ -152,15 +153,29 @@ async function householdRepository(): Promise<SalaryRepository> {
   } = await client.auth.getUser();
   if (user === null) throw new NotSignedInError();
 
-  // **Invitations are accepted on every signed-in request, not only at
-  // sign-in** (specs.md item 11). Someone who already has an account and is
-  // signed in never sees the sign-in screen again — the proxy sends them past
-  // it — so an invitation to them would otherwise wait for a sign-out that may
-  // never come. The call accepts only invitations to the caller's own confirmed
-  // address, and with none pending it matches no row.
-  await client.rpc("accept_household_invitations");
+  // **An invitation link opened while signed in is accepted here** (specs.md
+  // item 11). The proxy sends a signed-in person past the sign-in screen, so the
+  // first page after the link is where they join. Only the link's own token
+  // accepts — signing in alone joins nothing, or any member could pull a
+  // stranger's address into their household.
+  await acceptInvitationFromCookie(client);
 
   return createPostgresRepository(client, await householdIdOf(client));
+}
+
+/**
+ * Accept the invitation whose link this browser opened, if any
+ * (`invitationCookie.ts`). The database matches the token against the caller's
+ * own confirmed address, so a token that is not theirs accepts nothing. The
+ * cookie is left for `acceptInvitation` to clear, since a server component
+ * cannot write one; accepting it twice joins nothing more.
+ */
+export async function acceptInvitationFromCookie(
+  client: Awaited<ReturnType<typeof supabaseOnServer>>,
+): Promise<void> {
+  const token = invitationToken((await cookies()).get(INVITATION_COOKIE)?.value);
+  if (token === null) return;
+  await client.rpc("accept_household_invitation", { invitation_token: token });
 }
 
 /**

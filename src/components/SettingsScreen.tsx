@@ -12,6 +12,7 @@ import type { ProfileActionResult } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { useWorkerScope } from "@/components/WorkerScope";
+import { INVITATION_TOKEN_PARAM } from "@/lib/invitationCookie";
 import {
   DocumentsControl,
   EmployedSinceControl,
@@ -292,18 +293,21 @@ export function SettingsScreen({
 export interface Invitation {
   id: string;
   email: string;
+  /** What the link carries and acceptance requires. */
+  token: string;
   accepted: boolean;
 }
 
 /**
  * The address an invited person opens: the sign-up form with their address
- * already in it. It carries nothing secret — acceptance is by confirmed address
- * (migration `invitations_to_a_household`), so the link only saves typing.
- * Built in a click handler and never during a render, because the origin is
- * the browser's and the server does not know it.
+ * already in it, and the invitation's token, which is the only thing that
+ * accepts it (migration `an_invitation_is_accepted_through_its_link`). Built in
+ * a click handler and never during a render, because the origin is the
+ * browser's and the server does not know it.
  */
-function invitationLink(email: string): string {
-  return `${window.location.origin}/sign-in?invite=${encodeURIComponent(email)}`;
+function invitationLink(email: string, token: string): string {
+  const query = new URLSearchParams({ invite: email, [INVITATION_TOKEN_PARAM]: token });
+  return `${window.location.origin}/sign-in?${query}`;
 }
 
 /**
@@ -325,10 +329,10 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
   const [copied, setCopied] = useState<string | null>(null);
   const [sending, startSending] = useTransition();
 
-  async function copyInvitation(address: string) {
+  async function copyInvitation(address: string, token: string) {
     try {
       await navigator.clipboard.writeText(
-        words.message(address, invitationLink(address)),
+        words.message(address, invitationLink(address, token)),
       );
       setCopied(address);
     } catch {
@@ -381,7 +385,7 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
               setResult(outcome);
               if (outcome.ok) {
                 setEmail("");
-                await copyInvitation(outcome.email);
+                await copyInvitation(outcome.email, outcome.token);
               }
             })
           }
@@ -422,7 +426,7 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
                   <>
                     <button
                       type="button"
-                      onClick={() => void copyInvitation(invitation.email)}
+                      onClick={() => void copyInvitation(invitation.email, invitation.token)}
                       className="text-[13px] font-medium text-forest transition-colors hover:text-forest-deep"
                     >
                       <span dir="auto">

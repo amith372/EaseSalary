@@ -101,9 +101,10 @@ Carried forward from finished steps. None of these is a defect.
   (`he.sheet.passportLine`); the template carries only `{{passport_line}}` and nothing states
   the words. `C2` (bank name and branch) and `A2` (employer of record) stay empty: no field
   holds either.
-- **An invited person with no account cannot confirm one unless Supabase can mail them.**
-  They sign up themselves, and Supabase's built-in mail reaches only the project's team, twice
-  an hour. Custom SMTP in the Supabase dashboard is what opens sign-up to anyone.
+- **An invited person with no account cannot confirm one**, because Supabase's built-in mail
+  reaches only the project's team. The user chose on 2026-09-15 to set up no custom SMTP and to
+  invite only people who already have an account; SMTP in the Supabase dashboard is what
+  reopens sign-up to anyone, and needs no code.
 - **Signing up from an invitation link is not driven by the suite**, for that same mail; the
   link's screen and an existing account's acceptance are (`e2e/invitation.spec.ts`). The live
   isolation check cannot ask that an unconfirmed address accepts nothing — it has no session
@@ -208,10 +209,10 @@ one person is one address (2026-09-12); the Postgres repository substituting at
 identifying numbers and the export's identity lines, the switcher surviving a reload, the
 payslip's confirmation date, sign-out, and sharing by email invitation (2026-09-13); the live
 isolation check extended to invitations (2026-09-13); invitations passed on as a link with no
-account created for anyone, accepted on any signed-in request (2026-09-13).
+account created for anyone, accepted only through the link's token, after `/security-review` (2026-09-15).
 
-**The next step is running the invitation flow once with two real addresses**, which needs the
-user, and then `/security-review`.
+**The next step is the user running the invitation flow once with two real addresses**, both
+already holding an account, and then closing the stage.
 
 **Two things the stage's own tooling rests on.** The household isolation is checked against
 the live database by hand with `node --env-file=.env scripts/check-household-isolation.mjs`,

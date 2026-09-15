@@ -777,12 +777,39 @@ try {
     "and nobody can mark an invitation accepted except by accepting it",
   );
 
-  // Accepting as somebody the invitation was not addressed to. The function
-  // reads the address from the session, so there is nothing to craft.
-  const acceptedByStranger = await rest("rpc/accept_household_invitations", {
+  const invitationToken = invited.body?.[0]?.token;
+
+  // The invited address, without the link's token. Signing in is not consent:
+  // otherwise any member could invite a stranger's address and the stranger's
+  // next sign-in would put them, and whatever they add, in that household.
+  for (const [body, label] of [
+    [{ invitation_token: null }, "no token"],
+    [{ invitation_token: crypto.randomUUID() }, "a token that is not the link's"],
+  ]) {
+    const withoutLink = await rest("rpc/accept_household_invitation", {
+      token: c.token,
+      method: "POST",
+      body,
+    });
+    check(
+      withoutLink.status === 200 && withoutLink.body === 0,
+      `the invited address with ${label} joins nothing`,
+    );
+  }
+  const stillOutWithoutLink = await rest(`workers?select=id&id=eq.${a.workerId}`, {
+    token: c.token,
+  });
+  check(
+    Array.isArray(stillOutWithoutLink.body) && stillOutWithoutLink.body.length === 0,
+    "and still reaches nothing",
+  );
+
+  // Accepting as somebody the invitation was not addressed to, with the link's
+  // own token: a forwarded link joins nobody else.
+  const acceptedByStranger = await rest("rpc/accept_household_invitation", {
     token: b.token,
     method: "POST",
-    body: {},
+    body: { invitation_token: invitationToken },
   });
   check(
     acceptedByStranger.status === 200 && acceptedByStranger.body === 0,
@@ -796,9 +823,9 @@ try {
     "and she still cannot reach the worker",
   );
 
-  const acceptedAnonymously = await rest("rpc/accept_household_invitations", {
+  const acceptedAnonymously = await rest("rpc/accept_household_invitation", {
     method: "POST",
-    body: {},
+    body: { invitation_token: invitationToken },
   });
   check(
     acceptedAnonymously.status >= 400,
@@ -807,10 +834,10 @@ try {
 
   // The invited person accepts, and is then a member like any other: she
   // reaches the worker, and the invitation records who took it up.
-  const accepted = await rest("rpc/accept_household_invitations", {
+  const accepted = await rest("rpc/accept_household_invitation", {
     token: c.token,
     method: "POST",
-    body: {},
+    body: { invitation_token: invitationToken },
   });
   check(
     accepted.status === 200 && accepted.body === 1,
@@ -832,10 +859,10 @@ try {
     "and the invitation records who accepted it",
   );
 
-  const acceptedAgain = await rest("rpc/accept_household_invitations", {
+  const acceptedAgain = await rest("rpc/accept_household_invitation", {
     token: c.token,
     method: "POST",
-    body: {},
+    body: { invitation_token: invitationToken },
   });
   check(
     acceptedAgain.status === 200 && acceptedAgain.body === 0,
