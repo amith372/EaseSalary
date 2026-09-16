@@ -1,6 +1,6 @@
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
-import { SATURDAY } from "@/lib/dates";
+import { SATURDAY, monthOf } from "@/lib/dates";
 import {
   HOLIDAYS_PER_YEAR,
   holidayAllowanceFor,
@@ -70,6 +70,7 @@ const vacation = (from: string, to: string, fraction?: number): ClosedSpan => ({
 function terms(employedSince = "2024-04-01"): WorkerTerms {
   return {
     employedSince,
+    firstMonth: monthOf(employedSince),
     gender: "female",
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
@@ -78,7 +79,7 @@ function terms(employedSince = "2024-04-01"): WorkerTerms {
     incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
-    openingPosition: { vacationDays: 20, sickDays: 43.5, advances: [] },
+    openingPosition: { vacationDays: 20, sickDays: 43.5, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
   };
 }
 

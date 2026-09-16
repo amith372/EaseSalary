@@ -19,6 +19,7 @@ import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 
 const terms: WorkerTerms = {
   employedSince: "2024-04-01",
+  firstMonth: { year: 2024, month: 4 },
   gender: "female",
   baseMonthlySalaryAgorot: 624765,
   restDay: SATURDAY,
@@ -27,7 +28,7 @@ const terms: WorkerTerms = {
   incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
-  openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
+  openingPosition: { vacationDays: 0, sickDays: 0, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
 };
 
 function facts(
@@ -256,7 +257,7 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
    */
   const stocked: WorkerTerms = {
     ...terms,
-    openingPosition: { vacationDays: 20, sickDays: 43.5, advances: [] },
+    openingPosition: { vacationDays: 20, sickDays: 43.5, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
   };
 
   /** Part 4's rest-day rate, ₪426.35 — what each of these mistakes was worth. */

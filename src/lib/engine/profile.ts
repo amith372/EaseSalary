@@ -1,4 +1,14 @@
-import { FRIDAY, SATURDAY, SUNDAY, compareMonth, fromIsoDate, toIsoDate } from "@/lib/dates";
+import {
+  FRIDAY,
+  SATURDAY,
+  SUNDAY,
+  compareIsoDate,
+  compareMonth,
+  daysInMonth,
+  fromIsoDate,
+  isoOf,
+  toIsoDate,
+} from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { reviewTaxPercentage } from "@/lib/engine/incomeTax";
 import { recordOf } from "@/lib/engine/repository";
@@ -118,6 +128,41 @@ export function reviewDate(text: string): IsoDate | null | "invalid" {
   const date = fromIsoDate(trimmed);
   if (Number.isNaN(date.getTime())) return "invalid";
   return toIsoDate(date) === trimmed ? trimmed : "invalid";
+}
+
+/** The earliest date an employment may have begun (specs.md item 6). */
+export const EARLIEST_EMPLOYMENT: IsoDate = "2020-01-01";
+
+/**
+ * The last date an employment may have begun: one year after today (specs.md
+ * item 6). The 29th of February has no anniversary, so it
+ * falls back to the last day of February rather than rolling into March.
+ */
+export function latestEmployment(today: IsoDate): IsoDate {
+  const [year, month, day] = today.split("-").map(Number);
+  const next = { year: year + 1, month };
+  return isoOf(next, Math.min(day, daysInMonth(next)));
+}
+
+/**
+ * The date the employment began, or why it is refused (specs.md item 6):
+ * `"invalid"` for no date at all and `"range"` for a date before 2020 or more
+ * than a year after `today`. The same rule serves the wizard and a later
+ * correction, so the two cannot disagree.
+ */
+export function reviewEmployedSince(
+  text: string,
+  today: IsoDate,
+): IsoDate | "invalid" | "range" {
+  const date = reviewDate(text);
+  if (date === null || date === "invalid") return "invalid";
+  if (
+    compareIsoDate(date, EARLIEST_EMPLOYMENT) < 0 ||
+    compareIsoDate(date, latestEmployment(today)) > 0
+  ) {
+    return "range";
+  }
+  return date;
 }
 
 /** The three documents as the form hands them over — each as typed, so the
@@ -250,20 +295,21 @@ export function reviewOpeningAdvance(
  * The vacation and sick days the employment opened with, or the reason they
  * are not a position (item 6).
  *
- * The advances are not reviewed here and are carried through: they are added
- * and removed one at a time, each through `reviewOpeningAdvance`, so a screen
- * correcting a balance never restates a debt.
+ * The rest of the position is not reviewed here and is carried through: the
+ * advances are added and removed one at a time, each through
+ * `reviewOpeningAdvance`, so a screen correcting a balance never restates a
+ * debt or a count.
  */
 export function reviewOpeningDays(
   draft: OpeningDaysDraft,
-  advances: OpeningAdvance[],
+  current: OpeningPosition,
 ): { ok: true; position: OpeningPosition } | { ok: false; reason: "days" } {
   const vacationDays = parseDays(draft.vacationDays);
   const sickDays = parseDays(draft.sickDays);
   if (vacationDays === null || sickDays === null) {
     return { ok: false, reason: "days" };
   }
-  return { ok: true, position: { vacationDays, sickDays, advances } };
+  return { ok: true, position: { ...current, vacationDays, sickDays } };
 }
 
 /**
@@ -392,6 +438,8 @@ export type NewWorkerRefusal =
   | "gender"
   | "country"
   | "employedSince"
+  /** A start date before 2020 or more than a year ahead (item 6). */
+  | "employedSinceRange"
   | "restDay"
   | "recuperationMonth"
   | "salary"
@@ -417,7 +465,9 @@ export function firstNameOf(fullName: string): string {
 }
 
 export type ReviewedNewWorker =
-  | { ok: true; profile: Omit<WorkerProfile, "id"> }
+  // The first month is the caller's: it depends on today, and nothing here
+  // reads a clock.
+  | { ok: true; profile: Omit<WorkerProfile, "id" | "firstMonth"> }
   | { ok: false; reason: NewWorkerRefusal };
 
 /**
@@ -443,6 +493,7 @@ export type ReviewedNewWorker =
 export function reviewNewWorker(
   draft: NewWorkerDraft,
   minimumWageAgorot: number,
+  today: IsoDate,
 ): ReviewedNewWorker {
   const name = draft.name.trim();
   if (name === "") return { ok: false, reason: "name" };
@@ -456,9 +507,10 @@ export function reviewNewWorker(
   // where it is an ordinary answer there: seniority is counted from it, and
   // every accrual tier, the recuperation entitlement and the proration of a
   // holiday year rest on it (items 7, 10, 15).
-  const employedSince = reviewDate(draft.employedSince);
-  if (employedSince === null || employedSince === "invalid") {
-    return { ok: false, reason: "employedSince" };
+  const employedSince = reviewEmployedSince(draft.employedSince, today);
+  if (employedSince === "invalid") return { ok: false, reason: "employedSince" };
+  if (employedSince === "range") {
+    return { ok: false, reason: "employedSinceRange" };
   }
 
   if (!isAllowedRestDay(draft.restDay)) return { ok: false, reason: "restDay" };
@@ -508,7 +560,14 @@ export function reviewNewWorker(
         workVisaExpiry: null,
         passportExpiry: null,
       },
-      openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
+      openingPosition: {
+        vacationDays: 0,
+        sickDays: 0,
+        vacationUsedThisYear: 0,
+        holidayUsedThisYear: 0,
+        recuperationPaidIn: null,
+        advances: [],
+      },
     },
   };
 }

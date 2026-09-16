@@ -46,6 +46,7 @@ const HANNA: WorkerProfile = {
   name: "האנה",
   firstName: "האנה",
   employedSince: "2026-01-01",
+  firstMonth: { year: 2026, month: 1 },
   gender: "female",
   baseMonthlySalaryAgorot: 624765,
   restDay: SATURDAY,
@@ -54,7 +55,7 @@ const HANNA: WorkerProfile = {
   incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
-  openingPosition: { vacationDays: 5, sickDays: 10, advances: [] },
+  openingPosition: { vacationDays: 5, sickDays: 10, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
   // Three empty dates: these fixtures check the store and the replay, and item
   // 28's documents reach neither.
   documents: {
@@ -255,7 +256,7 @@ describe("the calendar year's own totals carry, and reset at January", () => {
   function december(januarySpans: MonthSpan[]) {
     const series = calculateSeries(
       [facts(month(2026, 1), januarySpans), facts(month(2026, 12))],
-      { ...HANNA, openingPosition: { vacationDays: 20, sickDays: 10, advances: [] } },
+      { ...HANNA, openingPosition: { vacationDays: 20, sickDays: 10, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] } },
     );
     return series[1].result.warnings.map((warning) => warning.key);
   }
@@ -281,7 +282,7 @@ describe("the calendar year's own totals carry, and reset at January", () => {
         facts(month(2026, 12)),
         facts(month(2027, 12)),
       ],
-      { ...HANNA, openingPosition: { vacationDays: 20, sickDays: 10, advances: [] } },
+      { ...HANNA, openingPosition: { vacationDays: 20, sickDays: 10, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] } },
     );
     expect(series[1].result.warnings).toEqual([]);
     expect(series[2].result.warnings.map((w) => w.key)).toEqual([

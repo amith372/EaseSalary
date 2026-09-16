@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { RestDay } from "@/lib/dates";
+import { isoOf, monthOf, type RestDay } from "@/lib/dates";
 import { SEEDED_RATES, withFetchedRate } from "@/lib/datedRates";
 import type { DatedRate, RateKey } from "@/lib/datedRates";
 import type { SealedNumber } from "@/lib/encryption";
@@ -84,6 +84,7 @@ interface WorkerRow {
   first_name: string;
   gender: Gender;
   employed_since: IsoDate;
+  first_month: IsoDate;
   base_monthly_salary_agorot: number;
   rest_eve_supplement_agorot: number;
   rest_day: RestDay;
@@ -92,6 +93,9 @@ interface WorkerRow {
   insurer: string;
   opening_vacation_days: number | string;
   opening_sick_days: number | string;
+  opening_vacation_used_this_year: number | string;
+  opening_holiday_used_this_year: number | string;
+  opening_recuperation_paid_in: IsoDate | null;
   opening_advances: OpeningAdvance[];
   standing_lines: UserLine[];
   salary_changes: SalaryChange[];
@@ -189,6 +193,7 @@ function profileOf(row: WorkerRow, permitExpiry: IsoDate | null): WorkerProfile 
     firstName: row.first_name,
     gender: row.gender,
     employedSince: row.employed_since,
+    firstMonth: monthOf(row.first_month),
     baseMonthlySalaryAgorot: row.base_monthly_salary_agorot,
     restEveSupplementAgorot: row.rest_eve_supplement_agorot,
     restDay: row.rest_day,
@@ -202,6 +207,12 @@ function profileOf(row: WorkerRow, permitExpiry: IsoDate | null): WorkerProfile 
     openingPosition: {
       vacationDays: numberOf(row.opening_vacation_days),
       sickDays: numberOf(row.opening_sick_days),
+      vacationUsedThisYear: numberOf(row.opening_vacation_used_this_year),
+      holidayUsedThisYear: numberOf(row.opening_holiday_used_this_year),
+      recuperationPaidIn:
+        row.opening_recuperation_paid_in === null
+          ? null
+          : monthOf(row.opening_recuperation_paid_in),
       advances: row.opening_advances,
     },
     documents: {
@@ -225,6 +236,7 @@ function workerRowOf(profile: WorkerProfile, householdId: string) {
     first_name: profile.firstName,
     gender: profile.gender,
     employed_since: profile.employedSince,
+    first_month: isoOf(profile.firstMonth, 1),
     base_monthly_salary_agorot: profile.baseMonthlySalaryAgorot,
     rest_eve_supplement_agorot: profile.restEveSupplementAgorot,
     rest_day: profile.restDay,
@@ -233,6 +245,13 @@ function workerRowOf(profile: WorkerProfile, householdId: string) {
     insurer: profile.insurer,
     opening_vacation_days: profile.openingPosition.vacationDays,
     opening_sick_days: profile.openingPosition.sickDays,
+    opening_vacation_used_this_year:
+      profile.openingPosition.vacationUsedThisYear,
+    opening_holiday_used_this_year: profile.openingPosition.holidayUsedThisYear,
+    opening_recuperation_paid_in:
+      profile.openingPosition.recuperationPaidIn === null
+        ? null
+        : isoOf(profile.openingPosition.recuperationPaidIn, 1),
     opening_advances: profile.openingPosition.advances,
     standing_lines: profile.standingLines,
     salary_changes: profile.salaryChanges ?? [],

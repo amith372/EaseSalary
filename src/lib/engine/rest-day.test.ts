@@ -85,6 +85,7 @@ const SUPPLEMENT = 10000;
 function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   return {
     employedSince: "2024-04-01",
+    firstMonth: { year: 2024, month: 4 },
     gender: "female",
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
@@ -93,7 +94,7 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
     incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
-    openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
+    openingPosition: { vacationDays: 0, sickDays: 0, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
     ...overrides,
   };
 }
@@ -231,7 +232,14 @@ describe("a rest day inside a spell is not deducted for (specs.md item 8)", () =
   const spell: ClosedSpan[] = [
     { id: "sick-13-17", kind: "sick", from: "2025-08-13", to: "2025-08-17" },
   ];
-  const opening = { vacationDays: 0, sickDays: 30, advances: [] };
+  const opening = {
+    vacationDays: 0,
+    sickDays: 30,
+    vacationUsedThisYear: 0,
+    holidayUsedThisYear: 0,
+    recuperationPaidIn: null,
+    advances: [],
+  };
 
   function deduction(worker: WorkerTerms): { units: number; amount: number } {
     const line = calculateMonth(

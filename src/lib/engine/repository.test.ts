@@ -40,6 +40,7 @@ const HANNA: WorkerProfile = {
   name: "האנה",
   firstName: "האנה",
   employedSince: "2026-01-01",
+  firstMonth: { year: 2026, month: 1 },
   gender: "female",
   baseMonthlySalaryAgorot: 624765,
   restDay: SATURDAY,
@@ -50,7 +51,7 @@ const HANNA: WorkerProfile = {
     { id: "transport", label: "נסיעות", direction: "addition", agorot: 5000 },
   ],
   country: "PH",
-  openingPosition: { vacationDays: 5, sickDays: 10, advances: [] },
+  openingPosition: { vacationDays: 5, sickDays: 10, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
   // Three empty dates: these fixtures check the store and the replay, and item
   // 28's documents reach neither.
   documents: {

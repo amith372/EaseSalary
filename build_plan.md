@@ -131,9 +131,10 @@ Carried forward from finished steps. None of these is a defect.
   add-worker wizard when the employment began earlier — including vacation and holiday days
   used that calendar year and whether this employment year's recuperation was paid — and the
   replay walks every month from the first month, an unopened one as an ordinary month (Part
-  3). Today the profile has no first month, the opening days are entered on the worker's page,
-  the replay skips unopened months, and an unopened month shows `he.month.empty` and cannot be
-  exported. Existing workers take their earliest recorded month as their first.
+  3). The schema and profile hold the first month and the whole opening position (existing
+  workers took their earliest recorded month); nothing reads them yet. The wizard does not ask
+  them, the replay skips unopened months, and an unopened month shows `he.month.empty` and
+  cannot be exported.
 - **The home screen's blocker strip is three fixed cards** (`src/lib/fixtures/home.ts`), the
   same for every household, with placeholders where a date or a sum belongs. **Stage 6's**,
   with the action list.

@@ -85,6 +85,7 @@ const spans: ClosedSpan[] = [
 
 const terms: WorkerTerms = {
   employedSince: "2024-04-01",
+  firstMonth: { year: 2024, month: 4 },
   gender: "female",
   baseMonthlySalaryAgorot: SALARY,
   restDay: SATURDAY,
@@ -96,6 +97,9 @@ const terms: WorkerTerms = {
   openingPosition: {
     vacationDays: 0,
     sickDays: 0,
+    vacationUsedThisYear: 0,
+    holidayUsedThisYear: 0,
+    recuperationPaidIn: null,
     advances: [{ number: 1, principalAgorot: 1000000, repaidAgorot: 0 }],
   },
 };

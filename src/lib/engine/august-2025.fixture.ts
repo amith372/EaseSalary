@@ -43,6 +43,7 @@ export const PLAIN_GROSS = 887940;
 export function plainWorker(standingLines: UserLine[] = []): WorkerTerms {
   return {
     employedSince: "2024-04-01",
+    firstMonth: { year: 2025, month: 8 },
     gender: "female",
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
@@ -51,7 +52,7 @@ export function plainWorker(standingLines: UserLine[] = []): WorkerTerms {
     incomeTax: DEFAULT_INCOME_TAX,
     standingLines,
     country: "PH",
-    openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
+    openingPosition: { vacationDays: 0, sickDays: 0, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
   };
 }
 

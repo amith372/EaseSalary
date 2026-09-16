@@ -68,6 +68,8 @@ const hanna: WorkerProfile = {
   name: "האנה",
   firstName: "האנה",
   employedSince: "2024-04-01",
+  // Part 4 gives her position as August opens.
+  firstMonth: { year: 2025, month: 8 },
   gender: "female",
   baseMonthlySalaryAgorot: SALARY,
   restDay: SATURDAY,
@@ -79,6 +81,9 @@ const hanna: WorkerProfile = {
   openingPosition: {
     vacationDays: 0,
     sickDays: 0,
+    vacationUsedThisYear: 0,
+    holidayUsedThisYear: 0,
+    recuperationPaidIn: null,
     // Part 4: a ₪10,000 advance from an earlier month, repaid at ₪2,000 a
     // month. The advance is in the opening position because it did not
     // originate inside the application (item 6); the instalment is August's and

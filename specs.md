@@ -246,7 +246,10 @@ Each of these is true or false at a glance.
 6. **Each worker has a first month: the month the application starts calculating her from.**
    It is chosen once when the worker is added — the month she is added in, or the month
    before it, so a family registering early in a month can still pay the month that just
-   ended — and no month before it can be opened or viewed. When the employment began
+   ended — and no month before it can be opened or viewed. The date the employment began
+   is on or after 1 January 2020 and no later than one year after the current
+   date; any other date is refused, when the worker is added and when the date is
+   corrected later. When the employment began
    before the first month, the same step asks for the opening position, which the
    application cannot know: the vacation and sick balances already accrued; the vacation
    days and holiday days already used in the first month's calendar year before it;

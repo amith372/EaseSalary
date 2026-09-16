@@ -55,6 +55,10 @@ export default async function AddWorkerPage() {
   }
 
   return (
-    <AddWorkerScreen countries={countries} minimumWageAgorot={minimum.value} />
+    <AddWorkerScreen
+      countries={countries}
+      minimumWageAgorot={minimum.value}
+      today={todayInIsrael()}
+    />
   );
 }

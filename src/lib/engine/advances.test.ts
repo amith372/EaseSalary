@@ -36,6 +36,9 @@ const april: YearMonth = { year: 2026, month: 4 };
 const opening = (advances: OpeningPosition["advances"] = []): OpeningPosition => ({
   vacationDays: 0,
   sickDays: 0,
+  vacationUsedThisYear: 0,
+  holidayUsedThisYear: 0,
+  recuperationPaidIn: null,
   advances,
 });
 

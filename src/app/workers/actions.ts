@@ -18,9 +18,9 @@ import {
   monthsFollowingProfile,
   monthsReachedBySalaryChange,
   parseRestEveSupplement,
-  reviewDate,
   reviewDocuments,
   reviewOpeningAdvance,
+  reviewEmployedSince,
   reviewNewWorker,
   reviewOpeningDays,
   type DocumentsDraft,
@@ -83,6 +83,7 @@ export type ProfileActionRefusal =
   | "incomeTaxRate"
   | "recuperationMonth"
   | "date"
+  | "employedSinceRange"
   | "entryUnknown"
   | SalaryChangeRefusal
   | "supplement"
@@ -204,15 +205,17 @@ export async function setRestEveSupplement(
  * term a month copies (`WorkerTerms.employedSince`).
  *
  * The date is required and checked by building it and reading it back
- * (`reviewDate`), so 2026-02-30 is refused rather than rolled into March.
+ * (`reviewDate`), so 2026-02-30 is refused rather than rolled into March, and
+ * it must fall between 2020 and a year from today (item 6).
  */
 export async function setEmployedSince(
   workerId: string,
   dateText: string,
 ): Promise<ProfileActionResult> {
-  const date = reviewDate(dateText);
-  if (date === null || date === "invalid") return { ok: false, reason: "date" };
   const profile = await profileOf(workerId);
+  const date = reviewEmployedSince(dateText, todayInIsrael());
+  if (date === "invalid") return { ok: false, reason: "date" };
+  if (date === "range") return { ok: false, reason: "employedSinceRange" };
   return saveProfile({ ...profile, employedSince: date }, false);
 }
 
@@ -480,7 +483,7 @@ export async function setOpeningDays(
   draft: OpeningDaysDraft,
 ): Promise<ProfileActionResult> {
   const profile = await profileOf(workerId);
-  const reviewed = reviewOpeningDays(draft, profile.openingPosition.advances);
+  const reviewed = reviewOpeningDays(draft, profile.openingPosition);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   return saveProfile({ ...profile, openingPosition: reviewed.position }, false);
@@ -635,11 +638,16 @@ export async function createWorker(
   const minimum = await minimumWageNow(repository);
   if (minimum === null) return { ok: false, reason: "belowMinimum" };
 
-  const reviewed = reviewNewWorker(draft, minimum.value);
+  const today = todayInIsrael();
+  const reviewed = reviewNewWorker(draft, minimum.value, today);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   const workerId = randomUUID();
-  await repository.saveWorker({ ...reviewed.profile, id: workerId });
+  await repository.saveWorker({
+    ...reviewed.profile,
+    id: workerId,
+    firstMonth: monthOf(today),
+  });
   await saveIdentifyingNumbers(repository, workerId, {
     passport: draft.passportNumber,
   });

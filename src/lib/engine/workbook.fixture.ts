@@ -508,6 +508,8 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
 export function workbookWorker(salaryAgorot: number): WorkerTerms {
   return {
     employedSince: "2024-04-01",
+    // The first tab is April 2025.
+    firstMonth: { year: 2025, month: 4 },
     gender: "female",
     baseMonthlySalaryAgorot: salaryAgorot,
     restDay: SATURDAY,
@@ -516,7 +518,7 @@ export function workbookWorker(salaryAgorot: number): WorkerTerms {
     incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
-    openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
+    openingPosition: { vacationDays: 0, sickDays: 0, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
   };
 }
 

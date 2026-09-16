@@ -74,6 +74,9 @@ function busyMonth(): { worker: WorkerTerms; facts: MonthFacts } {
     openingPosition: {
       vacationDays: 3,
       sickDays: 9,
+      vacationUsedThisYear: 0,
+      holidayUsedThisYear: 0,
+      recuperationPaidIn: null,
       advances: [{ number: 1, principalAgorot: 1000000, repaidAgorot: 0 }],
     },
   };

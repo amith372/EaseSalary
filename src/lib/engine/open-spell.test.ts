@@ -65,6 +65,7 @@ const SALARY = 624765;
 
 const worker: WorkerTerms = {
   employedSince: "2024-04-01",
+  firstMonth: { year: 2024, month: 4 },
   gender: "female",
   baseMonthlySalaryAgorot: SALARY,
   restDay: SATURDAY,
@@ -77,7 +78,7 @@ const worker: WorkerTerms = {
   // rest day inside a spell is drawn from it though it is not paid (item 8) —
   // and the balance is a floor that never falls below zero, so a month drawing
   // more than it holds is refused rather than calculated.
-  openingPosition: { vacationDays: 0, sickDays: 30, advances: [] },
+  openingPosition: { vacationDays: 0, sickDays: 30, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
 };
 
 function facts(spans: MonthSpan[]): MonthFacts {

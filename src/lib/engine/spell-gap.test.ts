@@ -71,6 +71,7 @@ const vacation = (date: string): ClosedSpan => ({
  * checked, and the floor has its own tests in `balances.test.ts`. */
 const worker: WorkerTerms = {
   employedSince: "2024-04-01",
+  firstMonth: { year: 2024, month: 4 },
   gender: "female",
   baseMonthlySalaryAgorot: SALARY,
   restDay: SATURDAY,
@@ -79,7 +80,7 @@ const worker: WorkerTerms = {
   incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
-  openingPosition: { vacationDays: 10, sickDays: 43.5, advances: [] },
+  openingPosition: { vacationDays: 10, sickDays: 43.5, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
 };
 
 function facts(spans: ClosedSpan[]): ClosedMonthFacts {

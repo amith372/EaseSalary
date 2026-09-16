@@ -14,6 +14,7 @@ import {
   reviewNewWorker,
   firstNameOf,
   type NewWorkerDraft,
+  reviewEmployedSince,
 } from "@/lib/engine/profile";
 import type { MonthFacts, WorkerTerms } from "@/lib/engine/types";
 
@@ -31,6 +32,7 @@ import type { MonthFacts, WorkerTerms } from "@/lib/engine/types";
 
 const TERMS: WorkerTerms = {
   employedSince: "2024-04-01",
+  firstMonth: { year: 2024, month: 4 },
   gender: "female",
   baseMonthlySalaryAgorot: 624765,
   restDay: SATURDAY,
@@ -39,7 +41,7 @@ const TERMS: WorkerTerms = {
   incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "PH",
-  openingPosition: { vacationDays: 0, sickDays: 0, advances: [] },
+  openingPosition: { vacationDays: 0, sickDays: 0, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
 };
 
 function facts(month: number, terms: WorkerTerms): MonthFacts {
@@ -155,17 +157,22 @@ describe("the opening position (specs.md item 6)", () => {
     expect(parseDays("שלושה")).toBeNull();
   });
 
-  it("carries the advances through when only the days change", () => {
-    const advances = [
-      { number: 1, principalAgorot: 1000000, repaidAgorot: 0 },
-    ];
+  it("carries the rest of the position through when only the days change", () => {
+    const current = {
+      vacationDays: 1,
+      sickDays: 2,
+      vacationUsedThisYear: 3,
+      holidayUsedThisYear: 1.5,
+      recuperationPaidIn: { year: 2026, month: 3 },
+      advances: [{ number: 1, principalAgorot: 1000000, repaidAgorot: 0 }],
+    };
     const reviewed = reviewOpeningDays(
       { vacationDays: "9", sickDays: "24" },
-      advances,
+      current,
     );
     expect(reviewed).toEqual({
       ok: true,
-      position: { vacationDays: 9, sickDays: 24, advances },
+      position: { ...current, vacationDays: 9, sickDays: 24 },
     });
   });
 
@@ -363,9 +370,28 @@ describe("the income-tax setting the server accepts (specs.md item 17)", () => {
  * returned. It is passed in rather than looked up, which is what lets the
  * refusal below be asserted at all.
  */
+describe("the start date's range (specs.md item 6)", () => {
+  it("counts the year from the day it is given", () => {
+    expect(reviewEmployedSince("2025-03-10", "2024-03-10")).toBe("2025-03-10");
+    expect(reviewEmployedSince("2025-03-11", "2024-03-10")).toBe("range");
+  });
+
+  it("gives 29 February the last day of the next February", () => {
+    expect(reviewEmployedSince("2029-02-28", "2028-02-29")).toBe("2029-02-28");
+    expect(reviewEmployedSince("2029-03-01", "2028-02-29")).toBe("range");
+  });
+
+  it("tells a date that is not a date from one out of range", () => {
+    expect(reviewEmployedSince("", "2026-09-16")).toBe("invalid");
+    expect(reviewEmployedSince("2026-02-30", "2026-09-16")).toBe("invalid");
+    expect(reviewEmployedSince("2019-06-01", "2026-09-16")).toBe("range");
+  });
+});
+
 describe("reviewNewWorker", () => {
   /** April 2026's minimum wage, in agorot. */
   const MINIMUM = 644385;
+  const TODAY = "2026-09-16";
 
   const draft = (over: Partial<NewWorkerDraft> = {}): NewWorkerDraft => ({
     name: "מריה סנטוס",
@@ -384,7 +410,7 @@ describe("reviewNewWorker", () => {
   });
 
   it("makes a profile whose every stated term is the one that was typed", () => {
-    const reviewed = reviewNewWorker(draft(), MINIMUM);
+    const reviewed = reviewNewWorker(draft(), MINIMUM, TODAY);
     expect(reviewed.ok).toBe(true);
     if (!reviewed.ok) return;
 
@@ -410,13 +436,16 @@ describe("reviewNewWorker", () => {
    * (item 13).
    */
   it("opens with nothing the family did not state", () => {
-    const reviewed = reviewNewWorker(draft(), MINIMUM);
+    const reviewed = reviewNewWorker(draft(), MINIMUM, TODAY);
     expect(reviewed.ok).toBe(true);
     if (!reviewed.ok) return;
 
     expect(reviewed.profile.openingPosition).toEqual({
       vacationDays: 0,
       sickDays: 0,
+      vacationUsedThisYear: 0,
+      holidayUsedThisYear: 0,
+      recuperationPaidIn: null,
       advances: [],
     });
     expect(reviewed.profile.standingLines).toEqual([]);
@@ -443,17 +472,17 @@ describe("reviewNewWorker", () => {
    * to.
    */
   it("refuses a salary below the minimum wage, and accepts the minimum wage itself", () => {
-    expect(reviewNewWorker(draft({ baseMonthlySalary: "6443.84" }), MINIMUM)).toEqual({
+    expect(reviewNewWorker(draft({ baseMonthlySalary: "6443.84" }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "belowMinimum",
     });
-    expect(reviewNewWorker(draft({ baseMonthlySalary: "6443.85" }), MINIMUM).ok).toBe(true);
+    expect(reviewNewWorker(draft({ baseMonthlySalary: "6443.85" }), MINIMUM, TODAY).ok).toBe(true);
   });
 
   /** No supplement is a family that agreed none, not a refusal: nothing in law
    * requires it (item 14). */
   it("takes an empty rest-eve supplement as none", () => {
-    const reviewed = reviewNewWorker(draft({ restEveSupplement: "" }), MINIMUM);
+    const reviewed = reviewNewWorker(draft({ restEveSupplement: "" }), MINIMUM, TODAY);
     expect(reviewed.ok).toBe(true);
     if (reviewed.ok) expect(reviewed.profile.restEveSupplementAgorot).toBe(0);
   });
@@ -466,27 +495,27 @@ describe("reviewNewWorker", () => {
    * for, a thirteenth recuperation month that never falls.
    */
   it("refuses what a control could not have sent", () => {
-    expect(reviewNewWorker(draft({ name: "   " }), MINIMUM)).toEqual({
+    expect(reviewNewWorker(draft({ name: "   " }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "name",
     });
-    expect(reviewNewWorker(draft({ gender: "other" }), MINIMUM)).toEqual({
+    expect(reviewNewWorker(draft({ gender: "other" }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "gender",
     });
-    expect(reviewNewWorker(draft({ country: "" }), MINIMUM)).toEqual({
+    expect(reviewNewWorker(draft({ country: "" }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "country",
     });
-    expect(reviewNewWorker(draft({ restDay: THURSDAY }), MINIMUM)).toEqual({
+    expect(reviewNewWorker(draft({ restDay: THURSDAY }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "restDay",
     });
-    expect(reviewNewWorker(draft({ recuperationMonth: "13" }), MINIMUM)).toEqual({
+    expect(reviewNewWorker(draft({ recuperationMonth: "13" }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "recuperationMonth",
     });
-    expect(reviewNewWorker(draft({ recuperationMonth: "0" }), MINIMUM)).toEqual({
+    expect(reviewNewWorker(draft({ recuperationMonth: "0" }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "recuperationMonth",
     });
@@ -502,14 +531,29 @@ describe("reviewNewWorker", () => {
    * forward into March — `specs.md` Part 5's own class of mistake.
    */
   it("refuses a start date that is missing or is not a date", () => {
-    expect(reviewNewWorker(draft({ employedSince: "" }), MINIMUM)).toEqual({
+    expect(reviewNewWorker(draft({ employedSince: "" }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "employedSince",
     });
-    expect(reviewNewWorker(draft({ employedSince: "2026-02-30" }), MINIMUM)).toEqual({
+    expect(reviewNewWorker(draft({ employedSince: "2026-02-30" }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "employedSince",
     });
+  });
+
+  // Item 6: from 1 January 2020 to one year after the day she was added.
+  // TODAY is 2026-09-16, so the last accepted day is 2027-09-16.
+  it.each([
+    ["2020-01-01", true],
+    ["2019-12-31", false],
+    ["2027-09-16", true],
+    ["2027-09-17", false],
+    ["1901-01-01", false],
+  ])("takes %s as a start date: %s", (employedSince, accepted) => {
+    const reviewed = reviewNewWorker(draft({ employedSince }), MINIMUM, TODAY);
+    expect(reviewed.ok ? true : reviewed.reason).toBe(
+      accepted ? true : "employedSinceRange",
+    );
   });
 
   /** The flat rate travels as a fraction, which is the unit the dated-rates
@@ -519,6 +563,7 @@ describe("reviewNewWorker", () => {
     const reviewed = reviewNewWorker(
       draft({ incomeTaxMode: "percentage", incomeTaxPercentage: "2.5" }),
       MINIMUM,
+      TODAY,
     );
     expect(reviewed.ok).toBe(true);
     if (reviewed.ok) expect(reviewed.profile.incomeTax).toEqual({
@@ -530,6 +575,7 @@ describe("reviewNewWorker", () => {
       reviewNewWorker(
         draft({ incomeTaxMode: "percentage", incomeTaxPercentage: "" }),
         MINIMUM,
+        TODAY,
       ),
     ).toEqual({ ok: false, reason: "incomeTaxRate" });
   });

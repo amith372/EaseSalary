@@ -8,6 +8,7 @@ import { Bidi } from "@/components/Bidi";
 import { Chip } from "@/components/Chip";
 import { LogoMark } from "@/components/icons";
 import type { RestDay } from "@/lib/dates";
+import type { IsoDate } from "@/lib/types";
 import {
   restDayChoices,
   reviewNewWorker,
@@ -65,6 +66,7 @@ const STEP_OF: Record<NewWorkerRefusal, number> = {
   gender: 0,
   country: 0,
   employedSince: 1,
+  employedSinceRange: 1,
   restDay: 1,
   recuperationMonth: 1,
   salary: 2,
@@ -89,11 +91,15 @@ export interface AddWorkerScreenProps {
   /** The minimum wage in force now, which the salary may not be set below and
    * which the field opens at (`CLAUDE.md`'s non-negotiables, item 3). */
   minimumWageAgorot: number;
+  /** Today in Israel, read on the server: the start date may be at most a
+   * year after it (specs.md item 6), and nothing reads a clock in a render. */
+  today: IsoDate;
 }
 
 export function AddWorkerScreen({
   countries,
   minimumWageAgorot,
+  today,
 }: AddWorkerScreenProps) {
   const words = he.addWorker;
   const router = useRouter();
@@ -153,8 +159,8 @@ export function AddWorkerScreen({
   const [shown, setShown] = useState(false);
 
   const reviewed = useMemo(
-    () => reviewNewWorker(draft, minimumWageAgorot),
-    [draft, minimumWageAgorot],
+    () => reviewNewWorker(draft, minimumWageAgorot, today),
+    [draft, minimumWageAgorot, today],
   );
 
   /** The refusal this step is responsible for, or none. A refusal belonging to
@@ -586,7 +592,7 @@ function WhenStep({
         <Field
           label={words.employedSince}
           hint={words.employedSinceHint}
-          refusal={refusalFor("employedSince")}
+          refusal={refusalFor("employedSince", "employedSinceRange")}
         >
           <input
             type="date"
@@ -594,7 +600,7 @@ function WhenStep({
             value={draft.employedSince}
             onChange={(event) => change({ employedSince: event.target.value })}
             className={`${INPUT} text-start`}
-            aria-invalid={refusalFor("employedSince") !== null}
+            aria-invalid={refusalFor("employedSince", "employedSinceRange") !== null}
             data-field="employedSince"
           />
         </Field>

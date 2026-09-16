@@ -50,6 +50,9 @@ function knownWorker(): WorkerTerms {
     openingPosition: {
       vacationDays: 0,
       sickDays: 0,
+      vacationUsedThisYear: 0,
+      holidayUsedThisYear: 0,
+      recuperationPaidIn: null,
       advances: [{ number: 1, principalAgorot: 1000000, repaidAgorot: 0 }],
     },
   };

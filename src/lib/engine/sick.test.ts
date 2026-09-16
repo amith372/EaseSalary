@@ -65,6 +65,7 @@ const OPENING_SICK_DAYS = 43.5;
 function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
   return {
     employedSince: "2024-04-01",
+    firstMonth: { year: 2024, month: 4 },
     gender: "female",
     baseMonthlySalaryAgorot: SALARY,
     restDay: SATURDAY,
@@ -76,6 +77,9 @@ function terms(overrides: Partial<WorkerTerms> = {}): WorkerTerms {
     openingPosition: {
       vacationDays: 0,
       sickDays: OPENING_SICK_DAYS,
+      vacationUsedThisYear: 0,
+      holidayUsedThisYear: 0,
+      recuperationPaidIn: null,
       advances: [],
     },
     ...overrides,

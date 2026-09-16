@@ -106,6 +106,8 @@ const firstWorker: WorkerProfile = {
   name: "האנה מונטנה Hanna Montana",
   firstName: "האנה",
   employedSince: "2024-04-01",
+  // The seeded months begin in May 2025 (`WORKBOOK_SEED_MONTHS`).
+  firstMonth: { year: 2025, month: 5 },
   gender: "female",
   baseMonthlySalaryAgorot: WAGE_2025,
   restDay: SATURDAY,
@@ -117,6 +119,9 @@ const firstWorker: WorkerProfile = {
   openingPosition: {
     vacationDays: 4.676666666666667,
     sickDays: 19.5,
+    vacationUsedThisYear: 0,
+    holidayUsedThisYear: 0,
+    recuperationPaidIn: null,
     advances: [
       // ₪10,000 of 21.4.25. April's own ₪2,000 instalment is already off it,
       // because the seeded months begin in May — see `WORKBOOK_SEED_MONTHS`.
@@ -169,6 +174,8 @@ const secondWorker: WorkerProfile = {
   // at all — and the tests that check the payment, the day count and the rate
   // would each be checking an absence.
   employedSince: "2024-04-01",
+  // Her months begin in January 2026 (`SEEDED_MONTHS`).
+  firstMonth: { year: 2026, month: 1 },
   gender: "female",
   baseMonthlySalaryAgorot: WAGE_2025,
   restDay: SATURDAY,
@@ -177,7 +184,7 @@ const secondWorker: WorkerProfile = {
   incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "IN",
-  openingPosition: { vacationDays: 9, sickDays: 24, advances: [] },
+  openingPosition: { vacationDays: 9, sickDays: 24, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
   // Her permit date is the first worker's, and deliberately: the employment
   // permit belongs to the *employer* and a household holds one of them
   // (item 28). Until stage 3 gives the household a record of its own, each

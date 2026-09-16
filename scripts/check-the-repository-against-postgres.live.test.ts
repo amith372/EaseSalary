@@ -72,6 +72,7 @@ function aWorker(): WorkerProfile {
     firstName: "בדיקה",
     gender: "female",
     employedSince: "2024-03-01",
+    firstMonth: { year: 2026, month: 1 },
     baseMonthlySalaryAgorot: 624765,
     restEveSupplementAgorot: 5000,
     restDay: 5,
@@ -91,6 +92,9 @@ function aWorker(): WorkerProfile {
     openingPosition: {
       vacationDays: 4.5,
       sickDays: 2.25,
+      vacationUsedThisYear: 1.5,
+      holidayUsedThisYear: 1,
+      recuperationPaidIn: { year: 2025, month: 3 },
       advances: [
         { number: 1, principalAgorot: 300000, repaidAgorot: 50000, note: "מקדמה" },
       ],

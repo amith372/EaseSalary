@@ -1,7 +1,7 @@
 import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
-import { SATURDAY } from "@/lib/dates";
+import { SATURDAY, monthOf } from "@/lib/dates";
 import {
   belowMinimumWageWarning,
   buildBalances,
@@ -46,6 +46,7 @@ function terms(
 ): WorkerTerms {
   return {
     employedSince,
+    firstMonth: monthOf(employedSince),
     gender: "female",
     baseMonthlySalaryAgorot: 624765,
     restDay: SATURDAY,
@@ -54,7 +55,13 @@ function terms(
     incomeTax: DEFAULT_INCOME_TAX,
     standingLines: [],
     country: "PH",
-    openingPosition: { ...opening, advances: [] },
+    openingPosition: {
+      ...opening,
+      vacationUsedThisYear: 0,
+      holidayUsedThisYear: 0,
+      recuperationPaidIn: null,
+      advances: [],
+    },
   };
 }
 

@@ -127,6 +127,22 @@ export interface OpeningPosition {
   vacationDays: number;
   /** Sick days already accrued and not yet used. */
   sickDays: number;
+  /**
+   * Vacation days already used in the first month's calendar year before the
+   * first month. The seven-day question is asked of the year's total, and the
+   * months before the first are months the replay never walks.
+   */
+  vacationUsedThisYear: number;
+  /** Holiday days already used in the first month's calendar year before the
+   * first month, drawn against the yearly entitlement (item 10). */
+  holidayUsedThisYear: number;
+  /**
+   * The month the recuperation payment for the employment year running at the
+   * first month was paid in, or `null` when it has not been paid (item 15).
+   * Always before the first month: a payment the application made is a month it
+   * holds, not an opening figure.
+   */
+  recuperationPaidIn: YearMonth | null;
   /** An advance still being repaid, and what has been repaid of it so far. */
   advances: OpeningAdvance[];
 }
@@ -214,6 +230,13 @@ export interface WorkerTerms {
    * recuperation entitlement, and the year a holiday entitlement is prorated
    * over (specs.md items 7, 10, 15). */
   employedSince: IsoDate;
+  /**
+   * The month the application starts calculating her from (specs.md item 6):
+   * the month she was added in or the one before it. No month before it can be
+   * opened or viewed. A fact about the employment like `employedSince`, so it
+   * is not snapshotted onto a month.
+   */
+  firstMonth: YearMonth;
   /**
    * The worker's gender, which settles her income-tax credit points and the
    * endings the sheet writes her role with (specs.md item 17, item 28).
