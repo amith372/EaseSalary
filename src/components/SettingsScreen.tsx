@@ -11,6 +11,7 @@ import {
 import type { ProfileActionResult } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { FoldSection } from "@/components/FoldSection";
 import { TwoToneIcon } from "@/components/icons";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { INVITATION_TOKEN_PARAM } from "@/lib/invitationCookie";
@@ -379,7 +380,7 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
             dir="ltr"
             translate="no"
             autoComplete="off"
-            className="w-72 max-w-full rounded-card-sm border border-line bg-surface px-3 py-2 text-start text-[15px] text-ink"
+            className="w-72 max-w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-start text-[15px] text-ink transition-colors hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
           />
         </label>
         <button
@@ -466,6 +467,11 @@ function percentOf(fraction: number): string {
   return `${Math.round(fraction * 10000) / 100}%`;
 }
 
+/**
+ * One of the four groups, folded until its heading is pressed (the user,
+ * 2026-09-16), as the payments screen's sections are. Its own state, inside the
+ * list keyed by worker, so a worker switch folds every group again.
+ */
 function Group({
   id,
   title,
@@ -477,28 +483,21 @@ function Group({
   note: ReactNode;
   children: ReactNode;
 }) {
+  const [open, setOpen] = useState(false);
   return (
-    <section
-      data-group={id}
-      aria-labelledby={`settings-${id}`}
+    <FoldSection
+      group={id}
+      title={title}
+      fold={{ open, onToggle: () => setOpen((current) => !current) }}
       className="flex min-w-0 flex-col gap-2.5"
     >
-      <div className="flex flex-col gap-0.5">
-        <h2
-          id={`settings-${id}`}
-          dir="auto"
-          className="text-[19px] font-semibold"
-        >
-          {title}
-        </h2>
-        <p className="text-[14px] font-light text-ink-quiet text-pretty">
-          {typeof note === "string" ? <span dir="auto">{note}</span> : note}
-        </p>
-      </div>
-      <Card className="flex min-w-0 flex-col gap-3.5 px-4.5 py-3.5">
+      <p className="text-[14px] font-light text-ink-quiet text-pretty">
+        {typeof note === "string" ? <span dir="auto">{note}</span> : note}
+      </p>
+      <Card className="flex min-w-0 flex-col px-4 sm:px-6">
         {children}
       </Card>
-    </section>
+    </FoldSection>
   );
 }
 

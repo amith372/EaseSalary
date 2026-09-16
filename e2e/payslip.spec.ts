@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
-import { switchToTestWorker } from "./household";
+import { openSettingsGroups, switchToTestWorker } from "./household";
 import { FRIDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
@@ -243,6 +243,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     // Changed where a user changes it — `/settings` — and never by reaching
     // into the store (rule 9).
     await page.goto("/settings");
+    await openSettingsGroups(page);
     await page
       .locator('[data-terms="restDay"]')
       .getByRole("button", {

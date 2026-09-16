@@ -87,6 +87,7 @@ async function stepUntilShowing(page: Page, name: string): Promise<void> {
 export async function openSettingsForTestWorker(page: Page): Promise<void> {
   await page.goto("/settings");
   await switchToTestWorker(page);
+  await openSettingsGroups(page);
 }
 
 /** As `seed.ts` names the first worker — Hanna, seeded from the workbooks. */
@@ -99,14 +100,15 @@ export const TEST_WORKER_NAME = "[שם העובד/ת השני/ה]";
 export const TEST_WORKER_ID = "worker-2";
 
 /**
- * Unfolds every section of the payments card, which all start folded. Each is
+ * Unfolds every folded section on the screen, which all start folded. Each is
  * retried until its heading says it is open, because a press before hydration
- * is dropped. The open set survives stepping months, not a worker switch or a navigation.
+ * is dropped. The open set survives stepping months, not a worker switch or a
+ * navigation.
  */
-export async function openPaymentSections(page: Page): Promise<void> {
+async function openFoldedSections(page: Page, count: number): Promise<void> {
   const toggles = page.locator("[data-group] h2 button[aria-expanded]");
-  await expect(toggles).toHaveCount(5);
-  for (let index = 0; index < 5; index += 1) {
+  await expect(toggles).toHaveCount(count);
+  for (let index = 0; index < count; index += 1) {
     const toggle = toggles.nth(index);
     // Pressed only while it still reads folded, so a press React replays after
     // hydration cannot be followed by a second one that folds it again.
@@ -119,4 +121,14 @@ export async function openPaymentSections(page: Page): Promise<void> {
       });
     }).toPass({ timeout: 15000 });
   }
+}
+
+/** The payments card's five sections. */
+export async function openPaymentSections(page: Page): Promise<void> {
+  await openFoldedSections(page, 5);
+}
+
+/** The four groups of `/settings`; the account section below them does not fold. */
+export async function openSettingsGroups(page: Page): Promise<void> {
+  await openFoldedSections(page, 4);
 }

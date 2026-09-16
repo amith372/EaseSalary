@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { useHousehold } from "./household";
+import { openSettingsGroups, useHousehold } from "./household";
 import { he } from "../src/lib/i18n/he";
 
 /**
@@ -182,6 +182,7 @@ test("adds the household's first worker, and every screen then has somebody to b
   // The terms as they were typed, read back where they are changed. She is the
   // household's only worker, so `/settings` opens on her.
   await page.goto("/settings");
+  await openSettingsGroups(page);
   const terms = page.locator('[data-terms="restDay"]');
   await expect(terms).toContainText(he.workers.profile.terms.restDay.day(6));
 
@@ -219,6 +220,7 @@ test("the passport number survives the round trip", async ({ page }) => {
   // Opened where it is shown: `/settings`, since the terms moved there on
   // 2026-09-13. She is the household's only worker, so it opens on her.
   await page.goto("/settings");
+  await openSettingsGroups(page);
   await expect(page.locator('[data-terms="passportNumber"]')).toContainText(PASSPORT);
 });
 

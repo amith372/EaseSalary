@@ -181,7 +181,7 @@ export function HolidayPickerScreen({
                   current?.kind === "quota" ? null : { kind: "quota" },
                 )
               }
-              className="text-[15px] font-medium text-forest transition-colors hover:underline hover:underline-offset-[3px]"
+              className={textButtonClass}
             >
               <span dir="auto">{words.quota.why}</span>
             </button>
@@ -241,7 +241,7 @@ export function HolidayPickerScreen({
                   current?.kind === "add" ? null : { kind: "add" },
                 )
               }
-              className="text-[15px] font-medium text-forest transition-colors hover:underline hover:underline-offset-[3px]"
+              className={textButtonClass}
             >
               <span dir="auto">{words.sources.manual}</span>
             </button>
@@ -303,11 +303,11 @@ export function HolidayPickerScreen({
           </Card>
         ) : null}
 
-        <Card className="flex min-w-0 flex-col px-1.5 py-1">
+        <Card className="flex min-w-0 flex-col py-1">
           {state.rows.length === 0 ? (
             <p
               dir="auto"
-              className="px-3 py-3 text-[14px] font-light text-ink-quiet"
+              className="px-4 py-3.5 text-[14px] font-light text-ink-quiet sm:px-5.5"
             >
               {words.row.empty}
             </p>
@@ -318,7 +318,7 @@ export function HolidayPickerScreen({
                   key={row.date}
                   data-holiday={row.date}
                   data-chosen={row.chosen !== null}
-                  className="flex min-w-0 flex-col gap-1.5 border-t border-line px-3 py-2.5 first:border-t-0"
+                  className="flex min-w-0 flex-col gap-1.5 border-t border-line-soft px-4 py-3.5 first:border-t-0 sm:px-5.5"
                 >
                   <HolidayRowView
                     row={row}
@@ -348,7 +348,7 @@ export function HolidayPickerScreen({
           )}
           <p
             dir="auto"
-            className="max-w-[62ch] px-3 py-2 text-[13px] leading-[1.5] font-light text-ink-quiet text-pretty"
+            className="max-w-[62ch] px-4 py-2.5 text-[13px] leading-[1.5] font-light text-ink-quiet text-pretty sm:px-5.5"
           >
             {words.row.part.rule}
           </p>
@@ -357,7 +357,7 @@ export function HolidayPickerScreen({
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pb-2">
           <Link
             href={`/workers/${entry.worker.id}`}
-            className="rounded-card-sm bg-forest px-5 py-2.5 text-[16px] font-semibold text-surface transition-colors hover:bg-forest-deep hover:text-surface"
+            className="rounded-card-sm bg-forest px-5 py-2.5 text-[16px] font-semibold text-surface transition-colors hover:bg-forest-deep hover:text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
           >
             <span dir="auto">
               {he.workers.toProfile(entry.worker.firstName)}
@@ -375,6 +375,11 @@ export function HolidayPickerScreen({
   );
 }
 
+/** A bare text action. The padding widens what a finger can hit to about 44px
+ * and the negative margin gives the space back, so the line keeps its layout. */
+const textButtonClass =
+  "-my-3 py-3 text-[15px] font-medium text-forest transition-colors hover:underline hover:underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
+
 /** A year forward or back. A link and not a button: the year is in the address,
  * so stepping it is navigation and the browser's own back works on it. */
 function YearStep({
@@ -390,7 +395,7 @@ function YearStep({
     <Link
       href={`/settings/holidays?year=${to}`}
       aria-label={label}
-      className="flex size-8 items-center justify-center rounded-tab border border-line text-ink-quiet transition-colors hover:bg-hover hover:text-ink"
+      className="flex size-8 items-center justify-center rounded-tab border border-line text-ink-quiet transition-colors hover:bg-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
     >
       <Chevron towards={towards} />
     </Link>
@@ -581,7 +586,7 @@ function HolidayRowView({
               type="button"
               aria-label={words.moveLabel(label)}
               onClick={onMove}
-              className="ps-1.5 text-[14px] font-medium text-forest whitespace-nowrap transition-colors hover:underline hover:underline-offset-[3px]"
+              className="-my-3 ps-1.5 pe-1 py-3 text-[14px] font-medium text-forest whitespace-nowrap transition-colors hover:underline hover:underline-offset-[3px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
             >
               <span dir="auto">{words.move}</span>
             </button>
@@ -691,21 +696,21 @@ function DateForm({
             min={`${year}-01-01`}
             max={`${year}-12-31`}
             onChange={(event) => setDate(event.target.value)}
-            className="rounded-card-sm border border-line bg-surface px-3 py-2 text-[15px] text-ink transition-colors hover:border-line-hover focus-visible:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
+            className="rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
           />
         </label>
         <button
           type="button"
           disabled={date === ""}
           onClick={() => onSubmit(date as IsoDate)}
-          className="rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep disabled:opacity-50"
+          className="rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:opacity-50"
         >
           <span dir="auto">{submit}</span>
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="py-2 text-[14px] font-medium text-ink-mute transition-colors hover:text-ink"
+          className="-mx-1 px-1 py-3 text-[14px] font-medium text-ink-mute transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
         >
           <span dir="auto">{he.holidays.add.cancel}</span>
         </button>
@@ -718,8 +723,11 @@ function DateForm({
  * reason it was refused (specs.md item 25). */
 function Refusal({ reason }: { reason: keyof typeof he.holidays.refused }): ReactNode {
   return (
+    /* `role="alert"` rather than `aria-live`: the paragraph is mounted with its
+       sentence already in it, and a live region is only announced reliably
+       when its content changes after it exists. */
     <p
-      aria-live="polite"
+      role="alert"
       dir="auto"
       className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
     >

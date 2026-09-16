@@ -2,6 +2,7 @@
 import {
   TEST_WORKER_NAME,
   openSettingsForTestWorker,
+  openSettingsGroups,
   switchToFirstWorker,
   switchToTestWorker,
   useHousehold,
@@ -60,6 +61,7 @@ test.describe("the settings screen", () => {
   test("is about the worker the switcher holds", async ({ page }) => {
     await useHousehold(page, "settings", "switch");
     await page.goto("/settings");
+    await openSettingsGroups(page);
 
     const employment = page.locator('[data-group="employment"]');
     await expect(employment).not.toContainText(TEST_WORKER_NAME);

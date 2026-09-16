@@ -6,7 +6,6 @@ import {
   useId,
   useState,
   type ReactElement,
-  type ReactNode,
 } from "react";
 import {
   addAdvance,
@@ -27,7 +26,7 @@ import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { CoveredMonths } from "@/components/CoveredMonths";
-import { Chevron } from "@/components/icons";
+import { FoldSection, type Fold } from "@/components/FoldSection";
 import { MoneyValue } from "@/components/MoneyValue";
 import { addMonths, yearMonthText } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
@@ -158,68 +157,17 @@ export type MonthSection =
   | "thirdParty"
   | "overrides";
 
-type FoldProps = {
-  fold: { open: boolean; onToggle: () => void };
-};
+type FoldProps = { fold: Fold };
 
-/**
- * One of the card's five sections, folded until its heading is pressed (the
- * user, 2026-09-16: five open forms are too much to meet at once). The body is
- * hidden rather than unmounted, so a half-typed field survives a fold.
- * `data-group` is the browser suite's handle on the section: the word "סכום"
- * labels a field in four of the five, so a lookup by label alone matches
- * several.
- */
-function FoldSection({
-  group,
-  title,
-  aside,
-  fold,
-  children,
-}: FoldProps & {
+/** A section of the card, divided from the one above it by a hairline. */
+function MonthFold(props: Omit<Parameters<typeof FoldSection>[0], "className"> & {
   group: MonthSection;
-  title: string;
-  aside?: ReactNode;
-  children: ReactNode;
 }) {
-  const bodyId = useId();
   return (
-    <section
-      data-group={group}
+    <FoldSection
+      {...props}
       className="flex flex-col gap-2.5 border-t border-line-soft py-4 first:border-t-0"
-    >
-      <div className="flex items-center justify-between gap-3">
-        {/* The heading takes the row, so the whole line opens the section and
-            not only its words. */}
-        <h2 className="min-w-0 flex-1 text-[19px] font-semibold">
-          <button
-            type="button"
-            aria-expanded={fold.open}
-            aria-controls={bodyId}
-            onClick={fold.onToggle}
-            className="flex w-full items-center gap-2 rounded-chip text-start transition-colors hover:text-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
-          >
-            {/* Points towards the inline end when folded and down when open.
-                The turn is on a wrapper, since the icon already rotates itself
-                for the page's direction. */}
-            <span
-              aria-hidden="true"
-              className={[
-                "flex flex-none text-ink-quiet transition-transform",
-                fold.open ? "rotate-90 rtl:-rotate-90" : "",
-              ].join(" ")}
-            >
-              <Chevron towards="next" />
-            </span>
-            <span dir="auto">{title}</span>
-          </button>
-        </h2>
-        {fold.open ? aside : null}
-      </div>
-      <div id={bodyId} hidden={!fold.open} className="flex flex-col gap-2.5">
-        {children}
-      </div>
-    </section>
+    />
   );
 }
 
@@ -528,7 +476,7 @@ function IncomeTaxControl({
   }
 
   return (
-    <FoldSection
+    <MonthFold
       group="incomeTax"
       title={words.title}
       fold={fold}
@@ -671,7 +619,7 @@ function IncomeTaxControl({
           <span>{he.why.linkSuffix}</span>
         </a>
       </Card>
-    </FoldSection>
+    </MonthFold>
   );
 }
 
@@ -876,7 +824,7 @@ function UserLinesControl({
   );
 
   return (
-    <FoldSection
+    <MonthFold
       group="userLines"
       title={he.month.preview.userLines}
       fold={fold}
@@ -972,7 +920,7 @@ function UserLinesControl({
           each branch instead, it was the same element written twice and two
           places for its wording to drift. */}
       {refusal ? <Refusal reason={refusal} /> : null}
-    </FoldSection>
+    </MonthFold>
   );
 }
 
@@ -1092,7 +1040,7 @@ function AdvancesControl({
   );
 
   return (
-    <FoldSection
+    <MonthFold
       group="advances"
       title={words.title}
       fold={fold}
@@ -1260,7 +1208,7 @@ function AdvancesControl({
       )}
 
       {refusal ? <Refusal reason={refusal} /> : null}
-    </FoldSection>
+    </MonthFold>
   );
 }
 
@@ -1549,7 +1497,7 @@ function ThirdPartyControl({
   );
 
   return (
-    <FoldSection group="thirdParty" title={words.title} fold={fold}>
+    <MonthFold group="thirdParty" title={words.title} fold={fold}>
       <p
         dir="auto"
         className="text-[13px] leading-[1.5] font-light text-ink-mute text-pretty"
@@ -1642,7 +1590,7 @@ function ThirdPartyControl({
       ) : null}
 
       {refusal ? <Refusal reason={refusal} /> : null}
-    </FoldSection>
+    </MonthFold>
   );
 }
 
@@ -1781,7 +1729,7 @@ function OverridesControl({
   );
 
   return (
-    <FoldSection group="overrides" title={words.title} fold={fold}>
+    <MonthFold group="overrides" title={words.title} fold={fold}>
       <p
         dir="auto"
         className="text-[13px] leading-[1.5] font-light text-ink-mute text-pretty"
@@ -1900,7 +1848,7 @@ function OverridesControl({
       ) : null}
 
       {refusal ? <Refusal reason={refusal} /> : null}
-    </FoldSection>
+    </MonthFold>
   );
 }
 

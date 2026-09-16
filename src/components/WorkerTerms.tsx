@@ -18,7 +18,13 @@
  */
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import {
+  cloneElement,
+  useId,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import {
   addOpeningAdvance,
   addStandingLine,
@@ -130,7 +136,7 @@ export function TermRow({
   children: ReactNode;
 }) {
   return (
-    <section className="flex min-w-0 flex-col gap-1.5 border-t border-line pt-3 first:border-t-0 first:pt-0">
+    <section className="flex min-w-0 flex-col gap-1.5 border-t border-line-soft py-4 first:border-t-0 sm:py-4.5">
       <div className="flex flex-col gap-0.5">
         <h3 dir="auto" className="text-[15px] font-semibold">
           {label}
@@ -149,6 +155,8 @@ export function TermRow({
   );
 }
 
+/** A labelled field. The hint sits outside the label and is attached as the
+ * input's description, so a screen reader names the field by its label alone. */
 function Field({
   label,
   hint,
@@ -156,38 +164,52 @@ function Field({
 }: {
   label: string;
   hint?: string;
-  children: ReactNode;
+  children: ReactElement<{ "aria-describedby"?: string }>;
 }) {
+  const hintId = useId();
   return (
-    <label className="flex min-w-0 flex-col gap-1">
-      <span dir="auto" className="text-[13px] font-medium text-ink-warm">
-        {label}
-      </span>
-      {children}
+    <div className="flex min-w-0 flex-col gap-1">
+      <label className="flex min-w-0 flex-col gap-1">
+        <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+          {label}
+        </span>
+        {hint
+          ? cloneElement(children, { "aria-describedby": hintId })
+          : children}
+      </label>
       {hint ? (
-        <span dir="auto" className="text-[12px] font-light text-ink-quiet">
+        <span
+          id={hintId}
+          dir="auto"
+          className="text-[12px] font-light text-ink-quiet"
+        >
           {hint}
         </span>
       ) : null}
-    </label>
+    </div>
   );
 }
 
 const inputClass =
-  "w-full rounded-card-sm border border-line bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-line-hover focus-visible:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
+  "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
 
 const buttonClass =
-  "rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep disabled:opacity-50";
+  "rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:opacity-50";
 
+/** A bare text action. The padding widens what a finger can hit to about 44px
+ * and the negative margin gives the space back, so the row keeps its layout. */
 const quietButtonClass =
-  "text-[14px] font-medium text-ink-mute transition-colors hover:text-ink";
+  "-mx-1 -my-3 px-1 py-3 text-[14px] font-medium text-ink-mute transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
 
 /** What the refusal was, as a sentence. Never a code: a refusal carries the
  * reason it was refused (specs.md item 25). */
 function Refusal({ reason }: { reason: ProfileActionRefusal }) {
   return (
+    /* `role="alert"` rather than `aria-live`: the paragraph is mounted with its
+       sentence already in it, and a live region is only announced reliably
+       when its content changes after it exists. */
     <p
-      aria-live="polite"
+      role="alert"
       dir="auto"
       className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
     >

@@ -1,5 +1,5 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, openPaymentSections } from "./household";
+import { switchToTestWorker, openPaymentSections, openSettingsGroups } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
@@ -105,6 +105,7 @@ test.describe("the worker's own page", () => {
     await useHousehold(page, "chip");
     await page.goto("/settings");
     await settled(page);
+    await openSettingsGroups(page);
 
     const chosen = page.locator('button[aria-pressed="true"]').first();
     const others = page.locator('button[aria-pressed="false"]').first();

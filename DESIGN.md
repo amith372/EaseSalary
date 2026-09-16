@@ -112,12 +112,21 @@ folded sheet.
   five forms at once were too much to take in on arrival. What is open stays
   open while the month is stepped. A heading's side item — the tax amount, the
   `לתת מקדמה` button — shows only while its section is open.
-- A text field's border is `line-field`, far firmer than the artboard's
+
+### The forms on payments, settings and the holiday picker
+
+- A text field's border is `line-field`, far firmer than the artboards'
   hairline: the border is the field's only outline, and the hairline held
   1.24:1 against the white card, under WCAG's 3:1 for a control's boundary.
-- The bare text actions in a row are padded out to a finger's height and
-  give the space back with a negative margin, so the rows are drawn as the
-  artboard has them.
+- The bare text actions are padded out to a finger's height and give the
+  space back with a negative margin, so the rows are drawn as the artboards
+  have them.
+
+### The settings screen
+
+- The four groups start folded, each opened from its heading as the payments
+  screen's sections are; the group's note is inside the fold. The account
+  section below them does not fold. A worker switch folds them again.
 
 ### Still owed to the canvas
 

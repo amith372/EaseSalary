@@ -1,5 +1,5 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections, openSettingsGroups } from "./household";
 import { FRIDAY, SATURDAY, monthOf } from "../src/lib/dates";
 import { fullDayLabel } from "../src/lib/dateLabels";
 import { he } from "../src/lib/i18n/he";
@@ -168,6 +168,7 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
     ).toBeVisible();
 
     await page.goto("/settings");
+    await openSettingsGroups(page);
     await page.screenshot({
       path: "test-results/profile-before.png",
       fullPage: true,
@@ -402,6 +403,7 @@ test.describe("the three documents and their expiry dates (specs.md item 28)", (
   test("holds three separate dates, apart from the sealed numbers", async ({ page }) => {
     await useHousehold(page, "known", "documents");
     await page.goto("/settings");
+    await openSettingsGroups(page);
 
     const documents = page.locator('[data-terms="documents"]');
     const words = he.workers.profile.terms.documents;
