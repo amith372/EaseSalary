@@ -386,7 +386,7 @@ describe("the sheet names her own rest day (specs.md item 5)", () => {
       friday,
     );
     expect(herRefusal.message).toBe(
-      "יום שישי חופשי נרשם על יום שאינו יום שישי. יום המנוחה השבועית של העובד/ת הוא יום שישי, ולכן הרישום הזה לא יכול להיות נכון.",
+      "שישי חופשי נרשם על יום שאינו יום שישי. יום המנוחה השבועית של העובד/ת הוא יום שישי, ולכן הרישום הזה לא יכול להיות נכון.",
     );
 
     const hanna = terms({ restDay: SATURDAY });

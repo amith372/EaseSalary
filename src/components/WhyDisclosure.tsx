@@ -35,7 +35,9 @@ export function WhyButton({ open, onToggle, label, controls }: WhyButtonProps) {
       aria-expanded={open}
       aria-controls={controls}
       aria-label={label ?? he.why.amountLabel}
-      className="flex size-5 flex-none items-center justify-center rounded-full border border-ask-line text-[12px] font-semibold text-ask-ink transition-colors hover:border-ask-line-hover hover:text-ask-ink-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+      // Drawn at 20px and pressed at 40: the `after` square is an invisible
+      // hit area, so a thumb finds the "?" without the row growing to fit it.
+      className="relative flex size-5 flex-none after:absolute after:-inset-2.5 after:content-[''] items-center justify-center rounded-full border border-ask-line text-[12px] font-semibold text-ask-ink transition-colors hover:border-ask-line-hover hover:text-ask-ink-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
     >
       {/* Not translatable text: a question mark is a question mark. */}
       <span aria-hidden="true" translate="no">

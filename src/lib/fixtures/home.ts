@@ -158,7 +158,7 @@ const alerts: HomeAlert[] = [
     key: "medical-insurance",
     title: "הביטוח הרפואי עומד לפוג",
     note: `הפוליסה בתוקף עד ${he.placeholder.date}`,
-    action: "לפרטים",
+    action: "לרשום חידוש",
     explanation: { text: he.explanations.medicalInsurance, link: "medicalInsurance" },
   },
   {
@@ -195,7 +195,7 @@ export interface HomeFixture {
  * the suite.
  *
  * She rests on **Friday**, so her free rest day falls on Friday the 7th and the
- * legend beside her calendar reads "יום שישי חופשי" rather than "שבת חופשית" —
+ * legend beside her calendar reads "שישי חופשי" rather than "שבת חופשית" —
  * the term is derived from her own rest day and is not fixed in the wording.
  * Her sickness is recorded the way item 8 says one normally is: from the day
  * she fell ill, with no return date, so it is drawn from the 26th to today and

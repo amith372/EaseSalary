@@ -95,6 +95,13 @@ function daysUsed(count: number): string {
   return `${he.sheet.reporting.daysUsed}: ${formatDays(count)}`;
 }
 
+/** Unfold the picker's second row — part of a day and a note. */
+async function openSecondRow(page: Page): Promise<void> {
+  await page
+    .getByRole("button", { name: new RegExp(`^${he.calendar.picker.more.noteOnly}`) })
+    .click();
+}
+
 /** Sweep a range on the calendar and answer the picker: click the first day,
  * click the last, choose what the range means. Both ends are ISO dates, because
  * a range is ordered by date and never by screen position (`CLAUDE.md`). */
@@ -110,6 +117,9 @@ async function sweep(
 ): Promise<void> {
   await page.locator(`[data-date="${from}"]`).click();
   await page.locator(`[data-date="${to}"]`).click();
+  // The second row starts folded behind one button, and is opened only when
+  // the sweep chooses something on it.
+  if (second !== undefined) await openSecondRow(page);
   if (second?.half) {
     await page
       .getByRole("button", { name: he.calendar.picker.part.half, exact: true })
@@ -472,6 +482,7 @@ test.describe("half a day of vacation (specs.md items 5, 7)", () => {
     // that are whole days. The rule says so in words beside them.
     await page.locator(`[data-date="${HALF_DAY}"]`).click();
     await page.locator(`[data-date="${HALF_DAY}"]`).click();
+    await openSecondRow(page);
     await expect(half).toBeVisible();
     await expect(
       page.getByRole("button", { name: marks.vacation, exact: true }),

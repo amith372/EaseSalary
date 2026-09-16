@@ -144,16 +144,16 @@ test.describe("a range is ordered by date and never by screen position", () => {
     );
 
     // And the days themselves, not only their count: each of the four carries
-    // the mark and the day outside the range does not.
+    // the mark and the day outside the range does not. The mark is read off the
+    // day's name, which is where a screen reader hears it.
+    const vacation = he.calendar.marks(SATURDAY).vacation;
     for (const date of ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08"]) {
-      await expect(page.locator(`[data-date="${date}"]`)).toHaveAttribute(
-        "aria-pressed",
-        "true",
+      await expect(page.locator(`[data-date="${date}"]`)).toHaveAccessibleName(
+        new RegExp(`, ${vacation}$`),
       );
     }
-    await expect(page.locator('[data-date="2026-10-09"]')).toHaveAttribute(
-      "aria-pressed",
-      "false",
+    await expect(page.locator('[data-date="2026-10-09"]')).not.toHaveAccessibleName(
+      new RegExp(vacation),
     );
   });
 });

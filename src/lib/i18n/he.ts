@@ -29,6 +29,10 @@ import { formatAgorot, formatDays } from "@/lib/money";
 interface DayWords {
   /** "שבת", "יום שישי" — the day as a bare noun phrase. */
   bare: string;
+  /** "שבת", "שישי" — the day before חופשי/ת, where the יום is dropped
+   * ("שישי חופשי", the user, 2026-09-15). Everywhere else the full form reads
+   * better: "עבודה ביום שישי", not "עבודה בשישי". */
+  short: string;
   /** "שבתות", "ימי שישי" — what follows a number. */
   plural: string;
   /** "השבתות", "ימי השישי" — the definite plural. */
@@ -40,24 +44,28 @@ interface DayWords {
 const DAY_WORDS: Record<number, DayWords> = {
   [SUNDAY]: {
     bare: "יום ראשון",
+    short: "ראשון",
     plural: "ימי ראשון",
     pluralDefinite: "ימי הראשון",
     feminine: false,
   },
   [THURSDAY]: {
     bare: "יום חמישי",
+    short: "חמישי",
     plural: "ימי חמישי",
     pluralDefinite: "ימי החמישי",
     feminine: false,
   },
   [FRIDAY]: {
     bare: "יום שישי",
+    short: "שישי",
     plural: "ימי שישי",
     pluralDefinite: "ימי השישי",
     feminine: false,
   },
   [SATURDAY]: {
     bare: "שבת",
+    short: "שבת",
     plural: "שבתות",
     pluralDefinite: "השבתות",
     feminine: true,
@@ -575,6 +583,9 @@ export const he = {
 
   calendar: {
     hint: "לחיצה על יום, ואז על יום נוסף, מסמנת טווח",
+    /** Said once a first day is pressed, because nothing else on the screen
+     * says the second press is what finishes it (the user, 2026-09-15). */
+    secondClick: "לחצו על היום האחרון, או שוב על אותו יום",
     /** The third of the navigation trio, and it moves the calendar by a month
      * like the other two: it jumps to the month containing today, never to a
      * day. It read "היום" until someone pressed it. */
@@ -599,7 +610,7 @@ export const he = {
     ],
     /** A function of her rest day, because one of the four names it: a
      * Saturday-resting worker reads "שבת חופשית" and a Friday-resting one
-     * "יום שישי חופשי" (specs.md item 5). */
+     * "שישי חופשי" (specs.md item 5). */
     marks: (restDay: RestDay) => ({
       vacation: "חופשה",
       sick: "מחלה",
@@ -612,10 +623,7 @@ export const he = {
       holiday: "חג",
       /** The weekly rest day the worker had off — an exception the user
        * recorded, not an entitlement. */
-      freeRestDay: `${day(restDay).bare} ${agrees(day(restDay)).free}`,
-      /** A day she worked, which is every day carrying no mark at all — an
-       * unmarked rest day included. It labels the legend and marks nothing. */
-      workDay: "יום עבודה",
+      freeRestDay: `${day(restDay).short} ${agrees(day(restDay)).free}`,
     }),
     /**
      * The one fact a month records about a holiday: whether she worked it
@@ -672,10 +680,18 @@ export const he = {
         whole: "יום מלא",
         half: "חצי יום",
         rule: (restDay: RestDay) =>
-          `חופשה אפשר לקחת גם כחצי יום, והיא נגרעת מהמכסה באותו יחס. מחלה ו${day(restDay).bare} ${agrees(day(restDay)).free} הם ימים שלמים.`,
+          `חופשה אפשר לקחת גם כחצי יום, והיא נגרעת מהמכסה באותו יחס. מחלה ו${day(restDay).short} ${agrees(day(restDay)).free} הם ימים שלמים.`,
       },
       /** Every action can carry a free-text note (specs.md item 5). It is
        * optional, and the placeholder says so rather than a label doing it. */
+      /** The button the second row folds behind. It names both halves as
+       * actions, because "+ חצי יום · הערה" read as a half day that already
+       * carried a note (the user, 2026-09-16); a range, which cannot be taken in
+       * part, is offered only the note. */
+      more: {
+        withPart: "להוספת הערה / שינוי לחצי יום",
+        noteOnly: "להוספת הערה",
+      },
       note: {
         label: "הערה",
         placeholder: "במילים שלך — לא חובה",
@@ -689,7 +705,7 @@ export const he = {
     skipped: (restDay: RestDay) => ({
       title: "ימים שלא סומנו",
       weeklyRest: `${day(restDay).bare} ${agrees(day(restDay)).pronoun} כבר יום המנוחה השבועי, ולכן ${agrees(day(restDay)).isntSubtracted} ממכסת החופשה`,
-      notRestDay: `רק ${day(restDay).bare} ${agrees(day(restDay)).can} להיות ${agrees(day(restDay)).marked} כ${day(restDay).bare} ${agrees(day(restDay)).free}`,
+      notRestDay: `רק ${day(restDay).bare} ${agrees(day(restDay)).can} להיות ${agrees(day(restDay)).marked} כ${day(restDay).short} ${agrees(day(restDay)).free}`,
       /** A holiday is one of the marks a day can already carry: the year's
        * dates arrive drawn and are not the user's to sweep over (item 9). */
       alreadyMarked: "היום כבר מסומן",
@@ -703,10 +719,33 @@ export const he = {
   },
 
   home: {
-    hero: {
-      readyToCalculate: "מוכן לחישוב",
-      body: "נעבור יחד על הימים, החגים והמקדמה — ואז נפיק את דף המשכורת.",
-      action: "להמשיך לחודש",
+    band: {
+      slogan: "כל יום נחשב",
+    },
+    /** The side rail of דף הבית v4: what is left of each worker's balances,
+     * and the way out to the export. */
+    rail: {
+      balances: "יתרות חופשה ומחלה",
+      balancesNote: "נכון לסוף החודש הזה",
+      exportNote: "גיליון השכר של החודש",
+    },
+    /** The panel beside the calendar, which reads back the day last pressed. */
+    day: {
+      part: "חלק מהיום",
+      note: "הערה",
+      edit: "עריכת היום",
+      previous: "ליום הקודם",
+      next: "ליום הבא",
+      /** One line under the kind, saying what the day does to the month. An
+       * ordinary work day is not described at all. */
+      notes: {
+        vacation: "נגרע מיתרת החופשה",
+        sick: "לא עובד/ת",
+        freeRestDay: "יום המנוחה השבועי",
+        holidayWorked: "חג שנעבד — משולמת תוספת",
+        holidayNotWorked: "חג שלא נעבד",
+        holidayUnanswered: "חג שטרם נענה",
+      },
     },
     paid: {
       title: "מה שולם החודש",
@@ -1957,7 +1996,7 @@ export const he = {
             return `לא סומנו ${words.plural} ${agreement.freePlural} בלוח`;
           }
           if (days === 1) {
-            return `${agreement.wasMarkedOne} בלוח ${words.bare} ${agreement.free} ${agreement.one}`;
+            return `${agreement.wasMarkedOne} בלוח ${words.short} ${agreement.free} ${agreement.one}`;
           }
           return `סומנו בלוח ${formatDays(days)} ${words.plural} ${agreement.freePlural}`;
         },
@@ -2337,7 +2376,7 @@ export const he = {
        * the employment, so the sentence names the day this employment holds
        * rather than telling a Friday-resting worker that Saturday is hers. */
       freeRestDayNotRestDay: (restDay: RestDay) =>
-        `${day(restDay).bare} ${agrees(day(restDay)).free} ${agrees(day(restDay)).wasRecorded} על יום שאינו ${day(restDay).bare}. יום המנוחה השבועית של העובד/ת הוא ${day(restDay).bare}, ולכן הרישום הזה לא יכול להיות נכון.`,
+        `${day(restDay).short} ${agrees(day(restDay)).free} ${agrees(day(restDay)).wasRecorded} על יום שאינו ${day(restDay).bare}. יום המנוחה השבועית של העובד/ת הוא ${day(restDay).bare}, ולכן הרישום הזה לא יכול להיות נכון.`,
       dayRecordedTwice:
         "בתאריך הזה נרשמו שני סימונים. יום אחד לא יכול להיות גם יום שנעבד וגם יום שלא נעבד, ואי אפשר לספור אותו פעמיים. היישום אינו יודע מה מבין השניים קרה, ולכן הוא עוצר ומבקש שתחליט/י — במקום לבחור לבד ולהראות סכום שנראה רגיל לגמרי.",
       thirdPartyPaidTwice: (paymentType: string) =>

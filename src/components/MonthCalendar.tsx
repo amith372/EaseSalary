@@ -17,7 +17,9 @@ import {
 import type { RestDay } from "@/lib/dates";
 import { dayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
 import { clipEndOf } from "@/lib/engine/types";
+import { CalendarBand } from "@/components/CalendarBand";
 import { MonthStepper } from "@/components/MonthStepper";
+import { TwoToneIcon, type TwoToneName } from "@/components/icons";
 import { he } from "@/lib/i18n/he";
 import { dayParts, endOf, partIsAllowed, type MarkIntent } from "@/lib/spans";
 import type {
@@ -56,7 +58,7 @@ interface MonthCalendarProps {
    * Her weekly rest day, which is a term of the employment and not a constant
    * (specs.md item 5). The calendar needs it for the words alone — a
    * Saturday-resting worker reads שבת חופשית and a Friday-resting one
-   * יום שישי חופשי — since what a swept range *means* is decided by
+   * שישי חופשי — since what a swept range *means* is decided by
    * `spans.ts`, which the caller reaches through `onSelectRange`.
    */
   restDay: RestDay;
@@ -91,14 +93,36 @@ interface MonthCalendarProps {
   /**
    * Draw the month's name as the page's `h1` rather than as a plain label.
    *
-   * **The two artboards differ on this and neither is wrong.** `חישוב החודש`
-   * has nothing else to head the page, so the name in this header *is* its
-   * `h1`; `דף הבית v3` heads itself with the hero card and draws the same name
-   * here as a `span`. Both carry it at 24px bold, so what the prop changes is
-   * the element and never the look — and a screen that drew it as an `h1`
-   * unconditionally would give the home screen two.
+   * **Both screens that draw a month now set it**, and the prop survives
+   * because the screens that embed a calendar without heading the page with it
+   * must not. `חישוב החודש` has nothing else to head the page; the home screen
+   * had the hero card of v3 until v4 cut it, and went from 2026-09-15 to
+   * 2026-09-16 as the one screen in the application starting at `h2` — found
+   * by an audit, and the screen the skip link lands on. It carries the same
+   * 24px bold either way, so what the prop changes is the element and never
+   * the look.
    */
   asPageHeading?: boolean;
+  /**
+   * Draws the header as v4's illustrated band (`CalendarBand`), bled to the edges
+   * of a card padded `px-5 pt-3.5` — the home screen's. The month screen keeps
+   * the plain header, because its artboard draws no band.
+   */
+  decorated?: boolean;
+  /**
+   * The day a panel beside the calendar is showing, ringed in the grid. The
+   * calendar reports every day it is pressed on through `onSelectDay`, and
+   * holds no selected day of its own.
+   */
+  selectedDay?: IsoDate;
+  onSelectDay?: (date: IsoDate) => void;
+  /**
+   * Open the picker on one day from outside the grid — the day panel's
+   * "עריכת היום". It is the picker a second click on that day opens, and
+   * nothing else: a request with a new `seq` opens it, the same `seq` again
+   * does nothing.
+   */
+  editRequest?: { date: IsoDate; seq: number };
   className?: string;
 }
 
@@ -113,9 +137,18 @@ const pickerKinds: MarkKind[] = ["vacation", "sick", "freeRestDay"];
 
 /** The fill a marked day takes, and the ink that stays legible on it. */
 const markClass: Record<MarkKind, string> = {
-  vacation: "bg-vacation text-day-ink",
-  sick: "bg-sick text-ink",
-  freeRestDay: "bg-rest text-day-ink",
+  vacation: "bg-vacation text-vacation-ink",
+  sick: "bg-sick text-sick-ink",
+  freeRestDay: "bg-rest text-rest-ink",
+};
+
+/** Each kind's shape, drawn beside its name in the cell, the legend and the
+ * picker, so a mark is never told apart by its colour alone. */
+const markIcon: Record<MarkKind | "holiday", TwoToneName> = {
+  vacation: "sun",
+  sick: "cross",
+  freeRestDay: "home",
+  holiday: "star",
 };
 
 /**
@@ -165,25 +198,19 @@ function chipClass({
  */
 const PART_DAY = "bg-[linear-gradient(to_top,transparent_50%,var(--color-day)_50%)]";
 
-const dotClass: Record<MarkKind, string> = {
-  vacation: "bg-vacation",
-  sick: "bg-sick",
-  freeRestDay: "bg-rest",
-};
-
 /**
  * A holiday, in the two weights item 9 asks for: **an outline for one she did
  * not work and a fill for one she did**, so the state that costs money is the
  * louder of the two. One colour, two weights — the same hue in both, because
  * they are two answers about one kind of day and not two kinds.
  */
-const HOLIDAY_WORKED = "bg-holiday text-ink";
-const HOLIDAY_NOT_WORKED = "bg-day text-day-ink border-2 border-holiday";
+const HOLIDAY_WORKED = "bg-holiday text-holiday-ink";
+const HOLIDAY_NOT_WORKED = "bg-day text-holiday-ink border-2 border-holiday-outline";
 /** Item 9's third weight: dashed, so it reads as a question rather than as
  * either answer. One colour throughout, because all three are answers about one
  * kind of day. */
 const HOLIDAY_UNANSWERED =
-  "bg-day text-day-ink border-2 border-dashed border-holiday";
+  "bg-day text-holiday-ink border-2 border-dashed border-holiday-dot";
 
 const HOLIDAY_FACE = {
   worked: HOLIDAY_WORKED,
@@ -220,22 +247,28 @@ function holidayStateOf(
  * Built per render rather than held as a module constant, because one entry
  * names her own rest day (item 5).
  */
-function legendFor(restDay: RestDay): { label: string; swatch: string }[] {
+function legendFor(
+  restDay: RestDay,
+): { label: string; swatch: string; icon: TwoToneName }[] {
   const marks = he.calendar.marks(restDay);
   return [
-    { label: marks.workDay, swatch: "bg-workday-dot" },
-    { label: marks.vacation, swatch: "bg-vacation" },
-    { label: marks.sick, swatch: "bg-sick" },
-    { label: he.calendar.holiday.worked, swatch: "bg-holiday" },
-    // The outline, drawn as an outline: a ring of the same hue around the
-    // page's own day colour, which is what the cell does two sizes up.
-    { label: he.calendar.holiday.notWorked, swatch: "bg-day border-2 border-holiday" },
+    { label: marks.vacation, swatch: "bg-vacation", icon: markIcon.vacation },
+    { label: marks.sick, swatch: "bg-sick", icon: markIcon.sick },
+    { label: he.calendar.holiday.worked, swatch: "bg-holiday", icon: "star" },
+    // The outline, drawn as an outline: a ring of the same hue around a white
+    // chip, which is what the cell does two sizes up.
+    {
+      label: he.calendar.holiday.notWorked,
+      swatch: "bg-surface border-[1.5px] border-holiday-dot",
+      icon: "star",
+    },
     // The third state, drawn as the question it is (item 9).
     {
       label: he.calendar.holiday.unanswered,
-      swatch: "bg-day border-2 border-dashed border-holiday",
+      swatch: "bg-surface border-[1.5px] border-dashed border-holiday-dot",
+      icon: "star",
     },
-    { label: marks.freeRestDay, swatch: "bg-rest" },
+    { label: marks.freeRestDay, swatch: "bg-rest", icon: markIcon.freeRestDay },
   ];
 }
 
@@ -250,6 +283,10 @@ export function MonthCalendar({
   onSetHolidayWorked,
   readOnly = false,
   asPageHeading = false,
+  decorated = false,
+  selectedDay,
+  onSelectDay,
+  editRequest,
   className,
 }: MonthCalendarProps) {
   const marks = he.calendar.marks(restDay);
@@ -291,6 +328,26 @@ export function MonthCalendar({
   const [part, setPart] = useState<number>(1);
   const [note, setNote] = useState("");
   const firstChip = useRef<HTMLButtonElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  // The picker's second row — part of a day and a note — starts folded, so the
+  // decision the picker asks first is only the kind (the user, 2026-09-15).
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  // A new edit request opens the picker on its day. Adjusted while rendering,
+  // against the last request seen, rather than in an effect that would draw the
+  // grid once without the picker the user just asked for.
+  const [seenEdit, setSeenEdit] = useState(editRequest?.seq);
+  if (editRequest && editRequest.seq !== seenEdit) {
+    setSeenEdit(editRequest.seq);
+    setFocused(editRequest.date);
+    setAsking(null);
+    setAnchor(editRequest.date);
+    setCursor(editRequest.date);
+    setPicking(true);
+    setPart(1);
+    setNote("");
+    setMoreOpen(false);
+  }
 
   // The single tab stop follows the month when the month changes under it.
   // Derived while rendering rather than corrected afterwards in an effect,
@@ -323,6 +380,18 @@ export function MonthCalendar({
     // note left standing would attach itself to the next range the user drew.
     setPart(1);
     setNote("");
+    setMoreOpen(false);
+  }
+
+  /** Escape closes whichever question is open, from the grid or from inside
+   * the picker that took the focus, and hands the focus back to the day. */
+  function handleEscape(event: React.KeyboardEvent) {
+    if (event.key !== "Escape" || (anchor === null && asking === null)) return;
+    event.preventDefault();
+    reset();
+    gridRef.current
+      ?.querySelector<HTMLButtonElement>(`[data-date="${focused}"]`)
+      ?.focus();
   }
 
   /**
@@ -338,6 +407,7 @@ export function MonthCalendar({
    */
   function pressDay(date: IsoDate) {
     setFocused(date);
+    onSelectDay?.(date);
     const covering = coverage.get(date);
     if (covering?.kind === "holiday" && anchor === null) {
       setAsking(covering as HolidaySpan);
@@ -350,6 +420,7 @@ export function MonthCalendar({
       setPicking(false);
       setPart(1);
       setNote("");
+      setMoreOpen(false);
       return;
     }
     setCursor(date);
@@ -386,12 +457,6 @@ export function MonthCalendar({
   }
 
   function handleKeyDown(event: React.KeyboardEvent) {
-    if (event.key === "Escape" && anchor !== null) {
-      event.preventDefault();
-      reset();
-      return;
-    }
-
     // The document is right-to-left, so the earlier days of a week sit to the
     // right: ArrowRight steps back in time and ArrowLeft steps forward.
     const step =
@@ -435,39 +500,63 @@ export function MonthCalendar({
   const kindTakesPart = (kind: MarkKind) =>
     selection !== null && partIsAllowed({ kind, ...selection, fraction: part });
 
-  return (
-    <div className={["flex min-h-0 flex-col gap-2", className ?? ""].filter(Boolean).join(" ")}>
-      <div className="flex flex-wrap items-start justify-between gap-4.5">
-        <div className="flex flex-col gap-0.5">
-          {asPageHeading ? (
-            <h1 dir="auto" className="text-[24px] font-bold tracking-[-0.02em]">
-              <Bidi>{monthLabel(month)}</Bidi>
-            </h1>
-          ) : (
-            <span className="text-[24px] font-bold tracking-[-0.02em]">
-              <Bidi>{monthLabel(month)}</Bidi>
-            </span>
-          )}
-          {readOnly ? null : (
-            <span dir="auto" className="text-[15px] font-light text-ink-quiet">
-              {he.calendar.hint}
-            </span>
-          )}
-        </div>
-        {/* The same stepper the payments screen carries. Moving between months
-            is one question and it is answered in one place — which matters most
-            under right-to-left, where the arrow meaning *forward in time* is the
-            one on the left. */}
-        <MonthStepper
-          month={month}
-          today={today}
-          onMonthChange={(next) => onMonthChange?.(next)}
-        />
-      </div>
+  const heading = asPageHeading ? (
+    <h1 dir="auto" className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
+      <Bidi>{monthLabel(month)}</Bidi>
+    </h1>
+  ) : (
+    <span className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
+      <Bidi>{monthLabel(month)}</Bidi>
+    </span>
+  );
 
-      <div className="grid flex-none grid-cols-7 gap-1.5">
+  return (
+    <div
+      className={["flex min-h-0 flex-col gap-2", className ?? ""].filter(Boolean).join(" ")}
+      onKeyDown={handleEscape}
+    >
+      {decorated ? (
+        <>
+          {/* v4 puts the controls first and the month beside them, so the
+              drawing can take the far end of the band. */}
+          <CalendarBand className="-mx-4.5 -mt-3.5 mb-1">
+            <MonthStepper
+              month={month}
+              today={today}
+              onMonthChange={(next) => onMonthChange?.(next)}
+              label={heading}
+            />
+          </CalendarBand>
+        </>
+      ) : (
+        <div className="flex flex-wrap items-start justify-between gap-4.5">
+          <div className="flex flex-col gap-0.5">
+            {heading}
+            {readOnly ? null : (
+              <span dir="auto" className="text-[15px] font-light text-ink-quiet">
+                {he.calendar.hint}
+              </span>
+            )}
+          </div>
+          {/* The same stepper the payments screen carries. Moving between months
+              is one question and it is answered in one place — which matters most
+              under right-to-left, where the arrow meaning *forward in time* is the
+              one on the left. */}
+          <MonthStepper
+            month={month}
+            today={today}
+            onMonthChange={(next) => onMonthChange?.(next)}
+          />
+        </div>
+      )}
+
+      <div className={`grid flex-none grid-cols-7 ${decorated ? "gap-1 sm:gap-1.75" : "gap-1.5"}`}>
         {he.calendar.dayNames.map((name) => (
-          <span key={name} dir="auto" className="pb-0.5 text-center text-[14px] text-ink-quiet">
+          <span
+            key={name}
+            dir="auto"
+            className="truncate pb-0.5 text-center text-[12px] font-medium text-ink-quiet sm:text-[14px]"
+          >
             {name}
           </span>
         ))}
@@ -477,7 +566,13 @@ export function MonthCalendar({
           roving tabindex keeps the whole month to one tab stop, and the arrow
           keys move between days inside it. */}
       <div
-        className="grid min-h-44 flex-1 auto-rows-[minmax(28px,1fr)] grid-cols-7 gap-1.25"
+        className={[
+          "grid flex-1 grid-cols-7",
+          decorated
+            ? "min-h-64 auto-rows-[minmax(48px,1fr)] gap-1 sm:auto-rows-[minmax(58px,1fr)] sm:gap-1.75"
+            : "min-h-44 auto-rows-[minmax(28px,1fr)] gap-1.25",
+        ].join(" ")}
+        ref={gridRef}
         onKeyDown={handleKeyDown}
       >
         {cells.map((date, index) => {
@@ -510,13 +605,16 @@ export function MonthCalendar({
             stateName ? `, ${stateName}` : ""
           }`;
           const face = [
-            "flex flex-col items-center justify-center gap-px rounded-day text-[17px] transition-colors",
+            "flex min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[10px] text-[15px] transition-colors sm:rounded-day sm:text-[17px]",
             holidayState !== null
               ? `font-semibold ${HOLIDAY_FACE[holidayState]}`
               : span
                 ? `font-semibold ${markClass[span.kind as MarkKind]}`
-                : "bg-day font-normal text-day-ink",
+                : "border border-day-line bg-day font-normal text-day-ink",
             partly ? PART_DAY : "",
+            date === selectedDay && !inSelection
+              ? "shadow-[inset_0_0_0_2px_var(--color-selected-day)]"
+              : "",
           ].filter(Boolean);
           const content = (
             <>
@@ -524,8 +622,18 @@ export function MonthCalendar({
                 {String(dayNumber)}
               </Bidi>
               {span ? (
-                <span dir="auto" className="text-[10px] leading-[1.1] font-semibold opacity-75">
-                  {holiday ? marks.holiday : marks[span.kind as MarkKind]}
+                <span className="flex items-center gap-1 leading-none">
+                  <TwoToneIcon
+                    name={holiday ? markIcon.holiday : markIcon[span.kind as MarkKind]}
+                  />
+                  {/* The word goes on a phone, where the cell is too narrow to
+                      hold it; the icon and the cell's label still say it. */}
+                  <span
+                    dir="auto"
+                    className="hidden text-[11px] leading-[1.1] font-medium sm:inline"
+                  >
+                    {holiday ? marks.holiday : marks[span.kind as MarkKind]}
+                  </span>
                 </span>
               ) : null}
             </>
@@ -549,7 +657,6 @@ export function MonthCalendar({
               data-date={date}
               tabIndex={date === focused ? 0 : -1}
               aria-label={label}
-              aria-pressed={span !== undefined}
               onClick={() => pressDay(date)}
               onMouseEnter={() => previewTo(date)}
               onFocus={() => setFocused(date)}
@@ -566,6 +673,16 @@ export function MonthCalendar({
           );
         })}
       </div>
+
+      {/* The range's second press is otherwise learned by accident. Polite, so
+          a screen reader hears it after the day's own label. */}
+      <span aria-live="polite" className="contents">
+        {!readOnly && anchor !== null && !picking && asking === null ? (
+          <span dir="auto" className="flex-none text-[14px] font-medium text-ink-warm">
+            {he.calendar.secondClick}
+          </span>
+        ) : null}
+      </span>
 
       {/* The holiday's one question, asked where the range picker would be and
           in the same shape, so the two do not read as two different mechanisms.
@@ -589,7 +706,7 @@ export function MonthCalendar({
               {
                 worked: false,
                 label: he.calendar.holiday.no,
-                swatch: "bg-day border-2 border-holiday",
+                swatch: "bg-day border-2 border-holiday-dot",
               },
             ].map((answer, index) => (
               <button
@@ -653,10 +770,7 @@ export function MonthCalendar({
                   onClick={() => applyKind(kind)}
                   className={chipClass({ disabled: refused })}
                 >
-                  <span
-                    aria-hidden="true"
-                    className={`size-2.75 flex-none rounded-full ${dotClass[kind]}`}
-                  />
+                  <TwoToneIcon name={markIcon[kind]} className="size-3.75" />
                   <span dir="auto">{marks[kind]}</span>
                 </button>
               );
@@ -683,6 +797,7 @@ export function MonthCalendar({
               and the note every action can carry (item 5). Both are chosen
               before a kind chip commits the mark, because the kind chip is what
               commits it — so they sit under the kinds and not beside them. */}
+          {moreOpen ? (
           <div className="flex flex-wrap items-center gap-4 border-t border-line pt-2.75">
             {partOffered ? (
               <span className="flex flex-wrap items-center gap-2">
@@ -723,8 +838,22 @@ export function MonthCalendar({
               />
             </label>
           </div>
+          ) : (
+            <button
+              type="button"
+              aria-expanded={false}
+              onClick={() => setMoreOpen(true)}
+              className="flex items-center gap-1.5 self-start border-t border-line pt-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
+            >
+              <span aria-hidden="true">+</span>
+              <span dir="auto">
+                {partOffered ? he.calendar.picker.more.withPart : he.calendar.picker.more.noteOnly}
+              </span>
+            </button>
+          )}
 
-          {partOffered ? (
+          {/* Why sickness went grey, said only once a half day is what made it. */}
+          {moreOpen && partOffered && part < 1 ? (
             <span dir="auto" className="text-[13px] font-light text-ink-quiet text-pretty">
               {he.calendar.picker.part.rule(restDay)}
             </span>
@@ -732,13 +861,18 @@ export function MonthCalendar({
         </div>
       ) : null}
 
-      <div className="flex flex-none flex-wrap items-center gap-4">
+      <div className="flex flex-none flex-wrap items-center gap-x-4 gap-y-2 pt-0.5">
         {legendFor(restDay).map((entry) => (
           <span
             key={entry.label}
-            className="flex items-center gap-2.25 text-[15px] font-light text-ink-mute"
+            className="flex items-center gap-1.75 text-[14px] font-light text-ink-mute"
           >
-            <span aria-hidden="true" className={`size-3.25 flex-none rounded-full ${entry.swatch}`} />
+            <span
+              aria-hidden="true"
+              className={`flex size-5.25 flex-none items-center justify-center rounded-[7px] ${entry.swatch}`}
+            >
+              <TwoToneIcon name={entry.icon} />
+            </span>
             <span dir="auto">{entry.label}</span>
           </span>
         ))}

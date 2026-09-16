@@ -263,6 +263,10 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
     // confirmed wrong by half a day.
     await page.locator('[data-date="2026-08-19"]').click();
     await page.locator('[data-date="2026-08-19"]').click();
+    // The part of a day sits on the picker's second row, folded until asked for.
+    await page
+      .getByRole("button", { name: new RegExp(`^${he.calendar.picker.more.noteOnly}`) })
+      .click();
     await page
       .getByRole("button", { name: he.calendar.picker.part.half, exact: true })
       .click();
