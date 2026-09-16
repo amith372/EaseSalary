@@ -121,9 +121,6 @@ Carried forward from finished steps. None of these is a defect.
 - **The live repository test "comes back exactly as she was saved" fails on a clean tree** —
   the profile read back has seventeen fields and the fixture sixteen. Measured 2026-09-13 with
   that day's changes stashed. Not investigated.
-- **The Part 4 browser test fails on a clean tree** — "reaches ₪9,305.75 and ₪7,305.75 from
-  three gestures" in `month-screen.spec.ts`, measured on 2026-09-13 with that day's changes
-  stashed. Not investigated.
 - **The seeded stores are still how the browser suite runs.** A request carrying the
   `household` cookie gets an in-memory household outside production (`src/lib/store.ts`), which
   is what keeps fourteen spec files working. There are three seeds now: the demo, the known

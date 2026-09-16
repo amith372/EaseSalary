@@ -24,6 +24,10 @@ import { he } from "../src/lib/i18n/he";
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
+// Two accounts signing in and out against the live project outlast the default
+// thirty seconds.
+test.describe.configure({ timeout: 120_000 });
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const publishable = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
