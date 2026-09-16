@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { MonthActionResult } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { TwoToneIcon } from "@/components/icons";
 import { MonthActions } from "@/components/MonthActions";
 import { MonthStepper, openingMonthOf } from "@/components/MonthStepper";
 import { useWorkerScope } from "@/components/WorkerScope";
@@ -132,12 +133,19 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
     <div className="mx-auto flex w-full max-w-[860px] min-w-0 flex-col gap-4">
       <div className="flex flex-none flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <h1
-            dir="auto"
-            className="text-[24px] leading-[1.2] font-bold tracking-[-0.02em]"
-          >
-            {he.payments.title}
-          </h1>
+          {/* The tab's own icon, repeated on the screen it leads to (the user,
+              2026-09-16). It sits beside the heading and not inside it: an svg
+              as the first child of a `dir="auto"` element leaves it with no
+              strong character to read and silently resolves it left-to-right. */}
+          <div className="flex items-center gap-2">
+            <TwoToneIcon name="coin" className="size-5.5" />
+            <h1
+              dir="auto"
+              className="text-[24px] leading-[1.2] font-bold tracking-[-0.02em]"
+            >
+              {he.payments.title}
+            </h1>
+          </div>
           <p
             dir="auto"
             className="max-w-[62ch] text-[15px] leading-[1.55] font-light text-ink-mute text-pretty"

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { TwoToneIcon } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { monthLabel } from "@/lib/dateLabels";
@@ -156,12 +157,20 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
   const months = [...mine.months].reverse();
 
   return (
-    <main className="flex flex-1 justify-center px-7 pt-5 pb-12">
+    /* A `div` and not a `main`: the shell already provides the page's one main
+       landmark, and a second one nested inside it leaves a screen reader with
+       two "main content" regions and the skip link pointing at the outer. */
+    <div className="flex flex-1 justify-center px-7 pt-5 pb-12">
       <div className="flex w-full max-w-[880px] flex-col gap-7.5">
         <section className="flex flex-col gap-1.5">
-          <h1 className="text-[34px] font-semibold tracking-tight">
-            <Bidi>{words.title}</Bidi>
-          </h1>
+          {/* The tab's own icon, beside the heading rather than inside it — see
+              `PaymentsScreen` for why that matters under `dir="auto"`. */}
+          <div className="flex items-center gap-2.5">
+            <TwoToneIcon name="doc" className="size-7" />
+            <h1 className="text-[34px] font-semibold tracking-tight">
+              <Bidi>{words.title}</Bidi>
+            </h1>
+          </div>
           <p
             className="max-w-[60ch] text-[18px] font-light text-pretty text-ink-soft"
           >
@@ -322,7 +331,7 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
           <Bidi>{words.closing}</Bidi>
         </p>
       </div>
-    </main>
+    </div>
   );
 }
 

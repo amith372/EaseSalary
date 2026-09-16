@@ -11,6 +11,7 @@ import {
 import type { ProfileActionResult } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { TwoToneIcon } from "@/components/icons";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { INVITATION_TOKEN_PARAM } from "@/lib/invitationCookie";
 import {
@@ -104,12 +105,17 @@ export function SettingsScreen({
   return (
     <div className="mx-auto flex w-full max-w-[820px] min-w-0 flex-col gap-6">
       <div className="flex flex-col gap-1.5">
-        <h1
-          dir="auto"
-          className="text-[24px] leading-[1.2] font-bold tracking-[-0.02em]"
-        >
-          {words.title}
-        </h1>
+        {/* The tab's own icon, beside the heading rather than inside it — see
+            `PaymentsScreen` for why the distinction matters under `dir="auto"`. */}
+        <div className="flex items-center gap-2">
+          <TwoToneIcon name="gear" className="size-5.5" />
+          <h1
+            dir="auto"
+            className="text-[24px] leading-[1.2] font-bold tracking-[-0.02em]"
+          >
+            {words.title}
+          </h1>
+        </div>
         <p
           dir="auto"
           className="max-w-[60ch] text-[15px] font-light text-ink-mute text-pretty"

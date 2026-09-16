@@ -67,3 +67,9 @@ next-env.d.ts
 
 # playwright — the signed-in state the browser suite starts from
 /e2e/.auth/
+
+# impeccable — the critique and audit snapshots the skill writes. They describe
+# the code at one moment and go stale the next time a screen changes, so they
+# are working notes rather than a record: what a review found belongs in the
+# code, the tests, or the commit that acted on it.
+/.impeccable/

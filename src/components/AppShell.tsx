@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { LogoMark, TwoToneIcon, type TwoToneName } from "@/components/icons";
 import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
 import { he } from "@/lib/i18n/he";
 import type { Worker } from "@/lib/types";
@@ -41,9 +42,18 @@ import type { Worker } from "@/lib/types";
  * agreeing with itself. */
 export const ADD_WORKER = "/workers/new";
 
+/** What the skip link points at and `<main>` answers to. Named once: an
+ * anchor that stops agreeing with its target skips to nowhere, silently. */
+const MAIN_ID = "main";
+
 interface NavItem {
   href: string;
   label: string;
+  /** The shape beside the label, one per screen (the user, 2026-09-16). It is
+   * recognised before the label is read, and on a phone — where the tabs
+   * scroll sideways — it is what a half-scrolled tab still shows. Decorative:
+   * the label is what names the tab, so the icon is `aria-hidden`. */
+  icon: TwoToneName;
 }
 
 /**
@@ -72,11 +82,11 @@ function EmptyHousehold() {
 }
 
 const navItems: NavItem[] = [
-  { href: "/", label: he.nav.home },
-  { href: "/workers", label: he.nav.workers },
-  { href: "/payments", label: he.nav.payments },
-  { href: "/settings", label: he.nav.settings },
-  { href: "/reports", label: he.nav.reports },
+  { href: "/", label: he.nav.home, icon: "home" },
+  { href: "/workers", label: he.nav.workers, icon: "people" },
+  { href: "/payments", label: he.nav.payments, icon: "coin" },
+  { href: "/settings", label: he.nav.settings, icon: "gear" },
+  { href: "/reports", label: he.nav.reports, icon: "doc" },
 ];
 
 interface AppShellProps {
@@ -110,6 +120,65 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
 
+  // The tab strip scrolls sideways below `xl`, which raises two questions a
+  // static row never had: which tab is current when it is outside the visible
+  // part, and whether there is anything outside it at all. Both are answered
+  // here rather than by a second, taller bar.
+  //
+  // These sit above the early returns because hooks must: the two routes below
+  // render no bar, and a hook that ran only sometimes is a hook that runs in a
+  // different order between renders.
+  const navRef = useRef<HTMLElement>(null);
+  const activeTabRef = useRef<HTMLAnchorElement>(null);
+  const [edges, setEdges] = useState({ start: false, end: false });
+
+  /** Whether anything is hidden behind either edge of the strip. */
+  const readEdges = useCallback(() => {
+    const nav = navRef.current;
+    if (nav === null) return;
+    const hidden = nav.scrollWidth - nav.clientWidth;
+    // Chrome reports `scrollLeft` as 0 at the start of a right-to-left strip
+    // and counts *down* from there, so what has been travelled is its
+    // magnitude and never its sign.
+    const travelled = Math.abs(nav.scrollLeft);
+    const next = {
+      start: hidden > 1 && travelled > 1,
+      end: hidden > 1 && travelled < hidden - 1,
+    };
+    // Compared before it is set, because this runs on every scroll event and a
+    // state write per frame would re-render the whole shell while a thumb is
+    // still moving.
+    setEdges((was) =>
+      was.start === next.start && was.end === next.end ? was : next,
+    );
+  }, []);
+
+  // Bring the current tab into view when the route changes, and re-measure.
+  // Without it a phone lands on `/reports` with `דוחות` 150px outside the
+  // strip and nothing on screen saying which of the five it is on.
+  useEffect(() => {
+    const nav = navRef.current;
+    const tab = activeTabRef.current;
+    if (nav !== null && tab !== null) {
+      const strip = nav.getBoundingClientRect();
+      const current = tab.getBoundingClientRect();
+      if (current.left < strip.left || current.right > strip.right) {
+        // Moved by hand rather than with `scrollIntoView`, which scrolls every
+        // ancestor that can scroll and would take the page with it.
+        nav.scrollLeft +=
+          current.left + current.width / 2 - (strip.left + strip.width / 2);
+      }
+    }
+    readEdges();
+  }, [pathname, readEdges]);
+
+  // A window that grows past `xl` leaves nothing hidden, and the fades have to
+  // hear about it — nothing scrolls, so the scroll handler never fires.
+  useEffect(() => {
+    window.addEventListener("resize", readEdges);
+    return () => window.removeEventListener("resize", readEdges);
+  }, [readEdges]);
+
   // Two routes are outside the shell, and each for its own reason.
   //
   // `/sign-in`: a person who can see this bar is already signed in, so drawing
@@ -141,16 +210,69 @@ export function AppShell({
     */
     <WorkerScopeProvider workers={workers} initialWorkerId={initialWorkerId}>
     <div className="flex min-h-screen flex-col bg-ground text-ink md:h-screen md:min-h-0 md:overflow-hidden">
-      <header className="flex h-15.5 flex-none items-center justify-between gap-6 border-b border-line bg-surface px-4 md:px-7">
-        <div className="flex min-w-0 flex-auto items-center gap-6">
-          <Link href="/" className="flex flex-none items-center gap-2.25 text-ink hover:text-ink">
-            <span translate="no" className="text-[19px] font-bold tracking-[-0.02em]">
-              {he.app.name}
-            </span>
-            <span aria-hidden="true" className="size-4.75 flex-none rounded-mark bg-clay" />
-          </Link>
+      {/*
+        The first thing a keyboard reaches on every screen, and seen only while
+        it holds focus. It sits above the header rather than inside it so that
+        what it skips is the whole bar — the five tabs, the switcher and the
+        alerts pill — which is otherwise walked past once per screen.
+      */}
+      <a
+        href={`#${MAIN_ID}`}
+        className="sr-only focus:not-sr-only focus:absolute focus:z-10 focus:m-2 focus:rounded-card-sm focus:bg-forest focus:px-4 focus:py-2 focus:text-[15px] focus:font-semibold focus:text-white"
+      >
+        <span dir="auto">{he.nav.skip}</span>
+      </a>
 
-          <nav aria-label={he.nav.landmark} className="flex min-w-0 items-center gap-1 overflow-x-auto">
+      {/*
+        One row on a wide screen and two below it, from one set of elements:
+        the header wraps, and the nav takes a full row of its own while the
+        logo and the controls share the row above it. The alternative — a
+        second nav hidden at the other width — is two lists of tabs to keep in
+        step with each other.
+
+        The two rows begin at `xl` and not at `md`, which was measured rather
+        than chosen: five Hebrew tabs, the switcher, the alerts pill and the
+        greeting need about 1200px in one line, and at 768 and 1024 four of the
+        five tabs sat outside the scroll with nothing to say so. Below that the
+        tabs scroll sideways instead of shrinking; the clipped `דף הב` this
+        replaced was the first thing a critique found.
+      */}
+      <header className="flex flex-none flex-wrap items-center gap-x-4 border-b border-line bg-surface px-4 pb-2 md:px-7 xl:h-15.5 xl:flex-nowrap xl:gap-x-5 xl:pb-0">
+        <Link
+          href="/"
+          className="order-1 flex h-15.5 flex-none items-center gap-2.25 text-ink hover:text-ink"
+        >
+          {/* First in the row, so the mark stands in the top right corner. */}
+          <LogoMark />
+          {/*
+            On a phone the mark stands alone and the name is read but not
+            drawn. The two together are 123px of a 400px bar, which was what
+            pushed the switcher onto a third row of chrome; the mark is the
+            distinctive half, and the link is still named `EaseSalary` for a
+            screen reader.
+          */}
+          <span
+            translate="no"
+            className="sr-only text-[19px] font-bold tracking-[-0.02em] sm:not-sr-only"
+          >
+            {he.app.name}
+          </span>
+        </Link>
+
+        {/* The negative inline margin lets the scrolled row run to both edges
+            of the phone, so the last tab is not hidden under the padding. The
+            wrapper exists to hang the two fades on; the nav itself is the
+            thing that scrolls. */}
+        {/* `min-w-0` is load-bearing: without it this flex item takes its
+            content's full 527px, the nav inside it never clips, and the page
+            itself scrolls sideways instead of the tab strip. */}
+        <div className="relative order-3 -mx-4 min-w-0 basis-full md:-mx-7 xl:order-2 xl:mx-0 xl:basis-auto">
+          <nav
+            ref={navRef}
+            onScroll={readEdges}
+            aria-label={he.nav.landmark}
+            className="flex min-w-0 items-center gap-1 overflow-x-auto px-4 md:px-7 xl:px-0"
+          >
             {navItems.map((item) => {
               const active =
                 item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -158,23 +280,51 @@ export function AppShell({
                 <Link
                   key={item.href}
                   href={item.href}
+                  ref={active ? activeTabRef : undefined}
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "flex-none rounded-tab px-3.5 py-2 text-[16px] whitespace-nowrap transition-colors",
+                    "flex flex-none items-center gap-1.75 rounded-tab px-3 py-2 text-[16px] whitespace-nowrap transition-colors",
                     active
                       ? "bg-chip font-semibold text-ink"
                       : "font-normal text-ink-mute hover:bg-hover hover:text-ink",
                   ].join(" ")}
                 >
+                  <TwoToneIcon name={item.icon} className="size-4" />
                   <span dir="auto">{item.label}</span>
                 </Link>
               );
             })}
           </nav>
+
+          {/*
+            What says there are more tabs than the phone is showing. Each fade
+            appears only while there is something behind that edge, so a bar
+            with nothing hidden carries none.
+
+            The gradients are named by physical direction because a gradient
+            has no logical form, and this document is `dir="rtl"` from the
+            `<html>` element down: `start` is the right edge and fades leftward.
+
+            Driven by overflow alone and not by a breakpoint, because the one
+            row is a near thing at exactly 1280 and a strip that clips there
+            should say so too.
+          */}
+          {edges.start ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 start-0 w-8 bg-gradient-to-l from-surface to-transparent"
+            />
+          ) : null}
+          {edges.end ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 end-0 w-8 bg-gradient-to-r from-surface to-transparent"
+            />
+          ) : null}
         </div>
 
-        <div className="flex flex-none items-center gap-3.5 ps-2">
-          <WorkerSwitcher className="hidden sm:flex" />
+        <div className="order-2 ms-auto flex h-15.5 flex-none items-center gap-2.5 ps-2 sm:gap-3.5 xl:order-3">
+          <WorkerSwitcher />
 
           <Link
             href="/alerts"
@@ -190,7 +340,14 @@ export function AppShell({
           </Link>
 
           <Link href="/settings" className="flex items-center gap-2.5 text-ink hover:text-forest">
-            <span className="hidden text-[15px] font-medium whitespace-nowrap lg:inline">
+            {/*
+              Below `lg` the greeting is read but not drawn, rather than not
+              rendered: hiding it outright left the link with an aria-hidden
+              circle for its only child and so with no name at all for a screen
+              reader, which is what a critique found. What is announced is the
+              same words that are visible where there is room for them.
+            */}
+            <span className="sr-only text-[15px] font-medium whitespace-nowrap lg:not-sr-only">
               <span dir="auto">{he.header.greeting} </span>
               <Bidi>{userName}</Bidi>
             </span>
@@ -202,7 +359,11 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="flex min-h-0 flex-1 justify-center overflow-auto px-4 pt-3 pb-3 md:px-7">
+      <main
+        id={MAIN_ID}
+        tabIndex={-1}
+        className="flex min-h-0 flex-1 justify-center overflow-auto px-4 pt-3 pb-3 md:px-7"
+      >
         <div className="flex w-full max-w-[1320px] min-w-0 flex-col gap-2.5">
           {noWorkerYet ? <EmptyHousehold /> : children}
         </div>

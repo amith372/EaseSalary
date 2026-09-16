@@ -115,6 +115,19 @@ export function useWorkerScope(): WorkerScope {
   return scope;
 }
 
+/**
+ * One of the switcher's two arrows.
+ *
+ * **The drawn button is 26px and the thing a thumb hits is 44px.** The square
+ * stays small because the bar is 62px tall and the two arrows sit either side
+ * of a name; the `after` pseudo-element carries the rest of the target, which
+ * is the same trick `WhyButton` uses. It matters more here than anywhere else
+ * in the bar: this is the control that decides *whose* salary every screen is
+ * about, and on a phone it was the smallest thing on it.
+ */
+const arrow =
+  "relative flex size-6.5 items-center justify-center rounded-chip text-ink-quiet transition-colors after:absolute after:-inset-2.25 after:content-[''] hover:bg-hover hover:text-ink";
+
 /** The control in the top bar: two arrows and the name between them. The
  * caption v3 draws above the name ("מוצג/ת כרגע") becomes the group's label,
  * because a bar 62px tall has room for the name and not for both. */
@@ -137,16 +150,21 @@ export function WorkerSwitcher({ className }: { className?: string }) {
         type="button"
         aria-label={he.header.workerSwitcher.previous}
         onClick={() => step(-1)}
-        className="flex size-6.5 items-center justify-center rounded-chip text-ink-quiet transition-colors hover:bg-hover hover:text-ink"
+        className={arrow}
       >
         <Chevron towards="previous" />
       </button>
-      <Bidi className="max-w-40 truncate px-1 text-[15px] font-medium">{worker.name}</Bidi>
+      {/* Narrower on a phone, where the whole bar is 400px: the name truncates
+          rather than pushing the switcher onto a row of its own, which cost
+          the screen a third row of chrome. */}
+      <Bidi className="max-w-24 truncate px-1 text-[15px] font-medium sm:max-w-40">
+        {worker.name}
+      </Bidi>
       <button
         type="button"
         aria-label={he.header.workerSwitcher.next}
         onClick={() => step(1)}
-        className="flex size-6.5 items-center justify-center rounded-chip text-ink-quiet transition-colors hover:bg-hover hover:text-ink"
+        className={arrow}
       >
         <Chevron towards="next" />
       </button>

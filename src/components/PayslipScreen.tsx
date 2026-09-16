@@ -126,11 +126,11 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
 
   if (shown === undefined) {
     return (
-      <main className="flex flex-1 justify-center px-7 pt-3 pb-7">
+      <div className="flex flex-1 justify-center px-7 pt-3 pb-7">
         <p className="text-[17px] font-light text-ink-soft">
           <Bidi>{he.payslip.none}</Bidi>
         </p>
-      </main>
+      </div>
     );
   }
 
@@ -154,7 +154,10 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
     monthLevels(result);
 
   return (
-    <main className="flex flex-1 justify-center px-7 pt-3 pb-7">
+    /* A `div` and not a `main`: the shell already provides the page's one main
+       landmark, and a second nested inside it leaves a screen reader with two
+       "main content" regions and the skip link pointing at the outer. */
+    <div className="flex flex-1 justify-center px-7 pt-3 pb-7">
       <div className="flex w-full max-w-[820px] flex-col gap-6.5">
         <section className="flex flex-wrap items-end justify-between gap-6.5">
           <div className="flex flex-col gap-1">
@@ -500,7 +503,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
           </Link>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
 

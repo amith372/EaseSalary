@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Bidi } from "@/components/Bidi";
 import { ADD_WORKER } from "@/components/AppShell";
 import { Card } from "@/components/Card";
+import { TwoToneIcon } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
 import { fullDayLabel } from "@/lib/dateLabels";
 import { he } from "@/lib/i18n/he";
@@ -62,12 +63,17 @@ export function WorkersList({
        the way back. */
     <div className="mx-auto flex w-full max-w-[860px] min-w-0 flex-col gap-4">
       <div className="flex min-w-0 flex-col gap-1.5">
-        <h1
-          dir="auto"
-          className="text-[24px] leading-[1.2] font-bold tracking-[-0.02em]"
-        >
-          {words.title}
-        </h1>
+        {/* The tab's own icon, beside the heading rather than inside it — see
+            `PaymentsScreen` for why the distinction matters under `dir="auto"`. */}
+        <div className="flex items-center gap-2">
+          <TwoToneIcon name="people" className="size-5.5" />
+          <h1
+            dir="auto"
+            className="text-[24px] leading-[1.2] font-bold tracking-[-0.02em]"
+          >
+            {words.title}
+          </h1>
+        </div>
         <p
           dir="auto"
           className="max-w-[62ch] text-[15px] leading-[1.55] font-light text-ink-mute text-pretty"

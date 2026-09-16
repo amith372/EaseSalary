@@ -2,7 +2,7 @@
 
 /* Design tokens, read from the canvas at
    https://claude.ai/design/p/b11cf323-ac11-490d-994d-3145e8e07a6b
-   where `EaseSalary - דף הבית v3 לוח במרכז` is the canonical artboard. This file
+   where `EaseSalary - דף הבית v4` is the canonical artboard. This file
    is the only place a colour, a radius or a shadow of the system is written
    down; nothing else in the app may state a hex value.
 
@@ -15,9 +15,9 @@
   --color-ink: #33291f; /* headings, and a day number on a light mark */
   --color-ink-soft: #7b6a59; /* the alerts pill in the top bar */
   --color-ink-faint: #9a8874; /* the line under the greeting */
-  --color-ink-mute: #8c7a67; /* the legend, an alert's note, an inactive tab */
+  --color-ink-mute: #786858; /* the legend, an alert's note, an inactive tab */
   --color-ink-warm: #6e5d4d; /* body copy in a panel, and a summary label */
-  --color-ink-quiet: #a2907c; /* eyebrows, chevrons, day names, hints */
+  --color-ink-quiet: #76695a; /* eyebrows, chevrons, day names, hints */
   --color-day-ink: #4a3d31; /* a day number, and the mark's name inside it */
 
   /* Surfaces and rules */
@@ -40,16 +40,22 @@
   --color-sage-ink: #33513b;
   --color-sage-ink-hover: #24402c;
 
-  /* The sprout drawn beside "צריך לטפל" */
-  --color-leaf: #8fa98b;
-  --color-leaf-mid: #c9d9c3;
-  --color-leaf-soft: #dde7d8;
+  /* The illustrated band over the home calendar (דף הבית v4) */
+  --color-band: #fbf6ee; /* the band's cream ground */
+  --color-band-wave: #e8f0eb; /* the sage wave behind the month controls */
+  --color-band-ink: #3a322a; /* the slogan and its heart */
+  --color-band-underline: #d8664e;
+  --color-band-sun: #fcebc8;
+  --color-band-stem: #8aa798;
+  --color-band-leaf: #7fa393;
+  --color-band-leaf-light: #86a99a;
+  --color-band-leaf-deep: #779c8b;
 
   /* Clay — the accent that says "this needs you" */
   --color-clay: #c9663c; /* the wordmark's square, and the alerts dot */
-  --color-clay-ink: #b0663c; /* the alert count */
+  --color-clay-ink: #9c5a35; /* the alert count */
   --color-clay-soft: #d19a6a; /* the dot on an alert card */
-  --color-clay-deep: #a65a3a; /* a deduction, and clearing a mark */
+  --color-clay-deep: #a15738; /* a deduction, and clearing a mark */
 
   /* Avatars */
   --color-shell: #f2e3d2;
@@ -57,24 +63,69 @@
 
   /* The "?" disclosure button */
   --color-ask-line: #eae0d2;
-  --color-ask-ink: #b49b7a;
+  --color-ask-ink: #76695a;
   --color-ask-line-hover: #c08a5e;
   --color-ask-ink-hover: #8a6a45;
 
-  /* Day marks. A marked day is filled solid and carries the mark's name; an
-     unmarked Saturday is drawn exactly like an unmarked weekday, because
-     "יום עבודה" names a day she worked and an unmarked Saturday is one of them
-     (specs.md item 5). `*-dot` is the saturated value the balance row's dot
-     uses — only the two kinds that carry a balance need one, and the fill and
-     the dot are deliberately two values. */
-  --color-day: #f7f3ed;
-  --color-workday-dot: #f0eae1;
-  --color-vacation: #f7d08a;
-  --color-vacation-dot: #d9a441;
-  --color-sick: #c6cfe8;
-  --color-sick-dot: #8394c4;
-  --color-holiday: #efc0c2;
-  --color-rest: #dcd3c4;
+  /* The four text colours above that sit on a tint were darkened on
+     2026-09-15 to reach 4.5:1 on the palest surface they meet (`chip`), the
+     same values the canvas carries since its contrast pass. */
+
+  /* Day marks, as דף הבית v4 draws them: amber for vacation, dusty pink for
+     sickness, dusty purple for a holiday, blue-grey for the free rest day.
+     Each kind has a fill, an ink that stays legible on it, and a saturated
+     `*-dot` for the small swatches — three values, because a fill dark enough
+     to carry a dot's weight is too dark to read a day number on. Every marked
+     day also carries its icon, so no mark rests on colour alone. An unmarked
+     rest day is drawn like any weekday: "יום עבודה" names a day she worked
+     and an unmarked rest day is one of them (specs.md item 5). */
+  --color-day: #fffdfa;
+  --color-day-line: #f3ede4; /* the hairline round an unmarked day */
+  --color-workday-dot: #f7f3ed;
+  --color-vacation: #fbeacb;
+  --color-vacation-ink: #6b4e1e;
+  --color-vacation-dot: #e3b35c;
+  --color-sick: #f8dedf;
+  --color-sick-ink: #7a3e43;
+  --color-sick-dot: #de8c92;
+  --color-holiday: #e6dff3;
+  --color-holiday-ink: #4a3b6b;
+  --color-holiday-dot: #a08fd0;
+  --color-holiday-outline: #ddd3f0; /* a holiday she did not work */
+  --color-rest: #e3ebf3;
+  --color-rest-ink: #3c4c5e;
+  --color-rest-dot: #8fa9c2;
+  --color-selected-day: #c9a985; /* the ring round the day the panel shows */
+
+  /* Two-tone icons: the shape in one colour and its detail in a second, as
+     the artboard draws them, rather than grey outlines. */
+  --color-icon-sun: #f2a93b;
+  --color-icon-sun-2: #f7c85f;
+  --color-icon-cross: #e2606c;
+  --color-icon-star: #9077d4;
+  --color-icon-star-2: #b7a4e6;
+  --color-icon-home: #5c87bc;
+  --color-icon-calendar: #b08e63;
+  --color-icon-calendar-2: #f1e2cc;
+  --color-icon-calc: #c9853f;
+  --color-icon-calc-2: #fbe6c8;
+  /* Darkened from #c99457 on 2026-09-16: against the white bar that measured
+     2.56:1, the only one of the five tab icons under 3:1, and it read as a
+     fainter icon rather than a different one. This is 3.36:1. */
+  --color-icon-person: #b8813f;
+  --color-icon-person-2: #d8ab74; /* the second figure of the workers tab */
+  --color-icon-coin: #4f8a63; /* the payments tab */
+  --color-icon-coin-2: #bfdcc9;
+  --color-icon-gear: #8d8071; /* the settings tab */
+  --color-icon-gear-2: #efe7dc;
+  --color-icon-doc: #9077d4; /* the reports tab, the star's purple */
+  --color-icon-doc-2: #ddd3f2;
+  --color-icon-sage: #6e8e68; /* the balances and export tiles */
+  --color-tile-amber: #faeddc; /* the square an icon sits in */
+  --color-tile-sage: #e6efe2;
+  --color-tile-purple: #e6dff3;
+  --color-row-hover: #fcf6ee; /* a row inside a card under the cursor */
+  --color-chevron-soft: #c6b49e; /* the chevron at the end of a link row */
 
   /* Radii, named for what they belong to rather than by size: the artboard
      uses eight, and a scale of xs/sm/md/lg would say nothing about which. */
@@ -93,6 +144,8 @@
    the utilities rather than referenced through another var(). */
 @theme inline {
   --font-sans: var(--font-assistant), "Segoe UI", system-ui, sans-serif;
+  /* The hand-written slogan in the calendar band, and nothing else */
+  --font-hand: var(--font-gveret-levin), var(--font-assistant), sans-serif;
 }
 
 @layer base {
@@ -115,5 +168,18 @@
 
   a:hover {
     color: var(--color-forest-deep);
+  }
+
+  /* The focus ring, said once for everything that takes focus. Two dozen
+     controls already spell out `focus-visible:outline-2 outline-offset-2
+     outline-forest`; the top bar spelt out nothing and fell back to Chrome's
+     own ring, which belongs to no design system. Written with `:where` so it
+     carries no specificity at all — every control that wants a different
+     offset still wins by saying so. `tabindex="-1"` is excluded because the
+     one element carrying it is `<main>`, the skip link's target, and a ring
+     round the whole page is not what arriving there means. */
+  :where(a, button, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--color-forest);
+    outline-offset: 2px;
   }
 }

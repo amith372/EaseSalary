@@ -335,6 +335,9 @@ export const he = {
     reports: "דוחות",
     /** Read by a screen reader in place of the nav itself. */
     landmark: "ניווט ראשי",
+    /** The first thing the keyboard reaches, and visible only while focused:
+     * without it every screen begins with five tabs to walk past. */
+    skip: "דילוג לתוכן",
     help: {
       /** The circular "?" in the top bar shows no text, so this is its whole
        * meaning to a screen reader. */

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Assistant } from "next/font/google";
+import { Assistant, Gveret_Levin } from "next/font/google";
 import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
 import { WORKER_COOKIE } from "@/lib/workerCookie";
@@ -13,6 +13,32 @@ const assistant = Assistant({
   subsets: ["hebrew", "latin"],
   weight: ["300", "400", "500", "600", "700"],
   display: "swap",
+});
+
+/**
+ * The hand-written face of the home calendar's slogan (`CalendarBand`).
+ *
+ * `adjustFontFallback` is off because Next ships a table of precalculated
+ * fallback metrics that has no entry for this family, so asking for them can
+ * only fail. The slogan is one short line, so the swap it falls back through
+ * shifts nothing around it.
+ *
+ * **It does not silence `Failed to find font override values for font 'Gveret
+ * Levin'`, and nothing passed here will.** Next 16 serves `next dev` through
+ * Turbopack, whose font loader is the Rust one in
+ * `next_font/google/stylesheet.rs`, and that one logs the line before it
+ * consults the option — verified by comparing the stylesheets Turbopack
+ * generated with the flag on and off, neither of which carries a fallback
+ * `@font-face`. The flag is kept because it states what this font wants of
+ * whichever loader reads it. The warning is cosmetic; self-hosting the face
+ * through `next/font/local` is what would end it.
+ */
+const gveretLevin = Gveret_Levin({
+  variable: "--font-gveret-levin",
+  subsets: ["hebrew"],
+  weight: "400",
+  display: "swap",
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
@@ -64,7 +90,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     // direction of its own: layout uses logical properties, and a leaf whose
     // text may arrive translated carries dir="auto" so English resolves
     // left-to-right without the layout moving.
-    <html lang="he" dir="rtl" className={`${assistant.variable} h-full antialiased`}>
+    <html lang="he" dir="rtl" className={`${assistant.variable} ${gveretLevin.variable} h-full antialiased`}>
       <body className="min-h-full">
         <AppShell workers={workers} initialWorkerId={initialWorkerId}>{children}</AppShell>
       </body>

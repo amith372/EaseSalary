@@ -32,8 +32,9 @@ Thirteen artboards sharing one design system, on the Claude Design canvas — pr
 `b11cf323-ac11-490d-994d-3145e8e07a6b`:
 https://claude.ai/design/p/b11cf323-ac11-490d-994d-3145e8e07a6b
 
-`דף הבית v3 לוח במרכז` is canonical; `v2` and `v2 layout A` are superseded and kept so the
-layouts that were weighed against each other can be looked at rather than described.
+`דף הבית v4` is canonical, and the other twelve artboards are restyled to match it;
+`v3 לוח במרכז`, `v2` and `v2 layout A` are superseded and kept so the layouts that were
+weighed against each other can be looked at rather than described.
 
 The canvas is the source for how a screen looks; this table says only which stage consumes
 which artboard. Nothing of the design is copied here — the tokens are in
@@ -41,7 +42,7 @@ which artboard. Nothing of the design is copied here — the tokens are in
 
 | Artboard | Consumed by |
 |---|---|
-| `דף הבית v3 לוח במרכז` | Stage 6 — built in stage 0 against fixtures |
+| `דף הבית v4` | Stage 6 — built in stage 0 against fixtures, restyled to v4 |
 | `חישוב החודש`, `החודשים` | Stage 4 |
 | `דף המשכורת` | Stages 2 + 4 |
 | `העובדות`, `דף העובד`, `הוספת עובד` | Stage 3 |
@@ -64,7 +65,7 @@ is its record.
 
 `src/components/AppShell.tsx` links five tabs and the bell on every screen, so every one of
 them is a promise made on every page. A tab that 404s is worse than a tab that is not there,
-which is why the "?" v3 draws beside the bell is left out until stage 7 (the user,
+which is why the "?" the home artboard draws beside the bell is left out until stage 7 (the user,
 2026-09-13). Every address is built except these two:
 
 | Route | Artboard | Owed by |
@@ -94,9 +95,6 @@ Carried forward from finished steps. None of these is a defect.
   because the user chose Part 3's nine and not the thirteen the template holds (2026-09-10).
   So a Friday-resting worker's sheet says `ימי חמישי` in `A26` while `B23` above it still says
   `ימי שישי`. Reopening it is an edit to Part 3 and hers to ask for.
-- **Six artboards draw the top bar without the worker switcher and without the greeting** —
-  `דוחות`, `דף העובד`, `הגדרות`, `העובדות`, `התראות` and `תשלומים`. Transcription onto the
-  canvas, owed by whichever stage next builds one of them.
 - **The sheet's identity line wording is unconfirmed.** `A4` prints `מספר דרכון: <number>`
   (`he.sheet.passportLine`); the template carries only `{{passport_line}}` and nothing states
   the words. `C2` (bank name and branch) and `A2` (employer of record) stay empty: no field
