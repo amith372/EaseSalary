@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { LogoMark, TwoToneIcon, type TwoToneName } from "@/components/icons";
 import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
 import { he } from "@/lib/i18n/he";
+import { partOfDay } from "@/lib/partOfDay";
 import type { Worker } from "@/lib/types";
 
 /**
@@ -105,20 +113,24 @@ interface AppShellProps {
   /** The worker the switcher was left on, as the layout read it from the
    * cookie (`WorkerScope`). */
   initialWorkerId?: string;
-  /** Defaults to the canvas placeholders, so the shell renders before there is
-   * an account behind it. */
+  /** The greeting names the user only when there is a name to give: the
+   * canvas's bracketed placeholder read as a broken screen. */
   userName?: string;
-  alertCount?: string;
 }
 
-export function AppShell({
-  children,
-  workers,
-  initialWorkerId,
-  userName = he.header.yourName,
-  alertCount = he.placeholder.count,
-}: AppShellProps) {
+// The hour is the browser's, never the server's, so the greeting is read through
+// an external store: the server snapshot is null, hydration matches it, and the
+// browser's own hour follows without a render ever reading the clock itself.
+function subscribeToMinutes(onChange: () => void) {
+  const id = setInterval(onChange, 60_000);
+  return () => clearInterval(id);
+}
+const currentPartOfDay = () => partOfDay(new Date().getHours());
+const noPartOfDay = () => null;
+
+export function AppShell({ children, workers, initialWorkerId, userName }: AppShellProps) {
   const pathname = usePathname();
+  const part = useSyncExternalStore(subscribeToMinutes, currentPartOfDay, noPartOfDay);
 
   // The tab strip scrolls sideways below `xl`, which raises two questions a
   // static row never had: which tab is current when it is outside the visible
@@ -326,18 +338,9 @@ export function AppShell({
         <div className="order-2 ms-auto flex h-15.5 flex-none items-center gap-2.5 ps-2 sm:gap-3.5 xl:order-3">
           <WorkerSwitcher />
 
-          <Link
-            href="/alerts"
-            className="flex items-center gap-2 rounded-full border border-line px-3.25 py-1.75 text-[15px] text-ink-soft transition-colors hover:border-line-hover hover:text-ink"
-          >
-            <span aria-hidden="true" className="size-1.75 flex-none rounded-full bg-clay" />
-            <span dir="auto" className="hidden sm:inline">
-              {he.header.alerts}
-            </span>
-            <span className="font-semibold text-clay-ink">
-              <Bidi noTranslate>{alertCount}</Bidi>
-            </span>
-          </Link>
+          {/* The alerts pill is drawn once `/alerts` exists (Stage 6), with a
+              count read from the store; until then it led to a 404 under a
+              placeholder count. */}
 
           <Link href="/settings" className="flex items-center gap-2.5 text-ink hover:text-forest">
             {/*
@@ -348,8 +351,13 @@ export function AppShell({
               same words that are visible where there is room for them.
             */}
             <span className="sr-only text-[15px] font-medium whitespace-nowrap lg:not-sr-only">
-              <span dir="auto">{he.header.greeting} </span>
-              <Bidi>{userName}</Bidi>
+              {part !== null ? (
+                <span dir="auto">
+                  {he.header.greeting[part]}
+                  {userName ? ", " : ""}
+                </span>
+              ) : null}
+              {userName ? <Bidi>{userName}</Bidi> : null}
             </span>
             <span
               aria-hidden="true"

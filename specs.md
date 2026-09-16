@@ -243,10 +243,17 @@ Each of these is true or false at a glance.
     Hebrew interface a Saturday-resting worker still reads "שבת חופשית"; the term is
     derived from her rest day and is no longer fixed in the wording. No action asks the
     user for a rate or a formula.
-6. A worker created in the middle of an employment starts from an opening position given
-   once: the vacation and sick balances already accrued, and any advance still being
-   repaid together with what has been repaid of it so far. From then on the application
-   keeps them.
+6. **Each worker has a first month: the month the application starts calculating her from.**
+   It is chosen once when the worker is added — the month she is added in, or the month
+   before it, so a family registering early in a month can still pay the month that just
+   ended — and no month before it can be opened or viewed. When the employment began
+   before the first month, the same step asks for the opening position, which the
+   application cannot know: the vacation and sick balances already accrued; the vacation
+   days and holiday days already used in the first month's calendar year before it;
+   whether the recuperation payment for the employment year running at the first month
+   has already been paid, and in which month; and any advance still being repaid together
+   with what has been repaid of it so far. Each of these questions links to the rule it
+   asks about. From then on the application keeps them.
 7. Balances carry forward: month N+1 opens with the previous balance plus the monthly
    accrual minus what was used in month N.
    **The worker's own page adds up what she has actually been paid across every month it
@@ -1135,9 +1142,11 @@ walks them, opening each month with the closing figures of the month before it a
 into it what the calendar year has already spent — the vacation days the seven-day question
 is asked of, and the holiday days the yearly entitlement is drawn against. Both of those
 reset at January and neither is visible to a month looking only at itself, which is the
-whole reason the walk exists. It walks the months the store holds and invents none: a month
-that was never recorded accrued nothing, because the accrual is a fact about a month that
-happened and not about a gap in a list. A month asked for on its own is still calculable
+whole reason the walk exists. It walks every month from the worker's first month (item 6)
+to the month asked for: a month nobody has opened is an ordinary month — no marks, no
+advances, the terms on the profile and the wage in force during it — and accrues like any
+other. Opening it, by a mark, an advance or its export, records it without changing what it
+was. A month after the current one is not valued. A month asked for on its own is still calculable
 and is read as the worker's and the year's first, which is what keeps a single month's
 preview honest before any history exists.
 

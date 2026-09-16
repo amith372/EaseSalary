@@ -528,8 +528,13 @@ export const he = {
   header: {
     /** The bar carries the greeting, so the home screen needs no heading row of
      * its own — the row it saves is the one that made the page scroll. */
-    greeting: "בוקר טוב,",
-    yourName: "[השם שלך]",
+    /** By the hour on the user's own clock, keyed by `PartOfDay`. */
+    greeting: {
+      morning: "בוקר טוב",
+      noon: "צהריים טובים",
+      evening: "ערב טוב",
+      night: "לילה טוב",
+    },
     alerts: "התראות",
     avatarAlt: "התמונה שלך",
     /** Which worker every screen is about. The caption labels the group rather
