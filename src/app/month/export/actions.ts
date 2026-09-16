@@ -49,7 +49,7 @@ export type BeforeExportResult =
 function revalidateMonth(): void {
   // Confirming writes the month's wage, and every screen that draws a month
   // derives its figures from it.
-  revalidatePath("/month");
+  revalidatePath("/");
   revalidatePath("/month/export");
   revalidatePath("/payments");
 }

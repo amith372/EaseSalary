@@ -42,8 +42,8 @@ which artboard. Nothing of the design is copied here — the tokens are in
 
 | Artboard | Consumed by |
 |---|---|
-| `דף הבית v4` | Stage 6 — built in stage 0 against fixtures, restyled to v4 |
-| `חישוב החודש`, `החודשים` | Stage 4 |
+| `דף הבית v4` | Stage 6 — on the engine since 2026-09-16; the blocker strip is still fixtures |
+| `חישוב החודש`, `החודשים` | Stage 4 — `חישוב החודש` is the home screen since 2026-09-16 |
 | `דף המשכורת` | Stages 2 + 4 |
 | `העובדות`, `דף העובד`, `הוספת עובד` | Stage 3 |
 | `תשלומים` | Stage 4 |
@@ -126,10 +126,9 @@ Carried forward from finished steps. None of these is a defect.
   is what keeps fourteen spec files working. There are three seeds now: the demo, the known
   case, and `empty`, which is the state a new account is in and the only one the add-worker
   flow can start from.
-- **The home screen draws fixtures for whichever worker is showing**, including a real one, so
-  a family that has just created a worker sees somebody else's month under her name. The screen
-  falls back rather than crashing, which is what it did until 2026-09-12. **Stage 6's**, which
-  is the stage that replaces the fixtures.
+- **The home screen's blocker strip is three fixed cards** (`src/lib/fixtures/home.ts`), the
+  same for every household, with placeholders where a date or a sum belongs. **Stage 6's**,
+  with the action list.
 - **A chosen holiday can be moved freely, and the user wants it to be a contract amendment.**
   The regulator's position is that the list is set at the start of the employment and does not
   change month to month; employer and worker may still agree to amend it. So the move becomes an
@@ -255,8 +254,8 @@ and the seed was put back. A browser test lands with the gesture that opens a sp
 
 ## Stage 6 — The opening screen
 
-Same stack. The screen was built in stage 0 against fixtures; this stage replaces the fixtures
-with what the earlier stages produce and adds nothing to the layout.
+Same stack. The calendar, the figures and the balances run on the engine since 2026-09-16;
+what remains is the action list, which replaces the last fixture and adds nothing to the layout.
 
 - **`/alerts` is this stage's address.** The bell links `התראות` from every screen and it
   404s. The action list below is its content at full length: the home screen shows the list and
@@ -267,7 +266,6 @@ with what the earlier stages produce and adds nothing to the layout.
   new seniority year.
 - The `תשלומים` artboard's two reminder sections, which are the same clock read from the
   payments screen.
-- The current month's calendar, its totals and the balances beside that list (item 27).
 - The national-insurance tick, with the months it covers.
 
 **Done when** an account with nothing outstanding shows an opening screen whose action list is

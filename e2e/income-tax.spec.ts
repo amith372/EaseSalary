@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { switchToTestWorker, openSettingsForTestWorker } from "./household";
 import { SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
@@ -100,7 +100,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
     page,
   }) => {
     await useHousehold(page, "figure");
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
 
@@ -149,7 +149,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
     page,
   }) => {
     await useHousehold(page, "gender");
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
     await expect(row(page, "incomeTax")).toContainText(
@@ -167,7 +167,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
       .click();
     await settled(page);
 
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
     await expect(row(page, "incomeTax")).toContainText(formatAgorot(-TAX_MALE));
@@ -209,7 +209,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
     page,
   }) => {
     await useHousehold(page, "zero");
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
 
@@ -272,7 +272,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
       .click();
     await settled(page);
 
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
     await expect(row(page, "incomeTax")).toContainText(formatAgorot(-50000));
@@ -286,7 +286,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
       .click();
     await settled(page);
 
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
     await expect(row(page, "incomeTax")).toContainText(
@@ -345,7 +345,7 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
     ).toBeVisible();
     await settled(page);
 
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
     await expect(row(page, "incomeTax")).toHaveCount(0);
@@ -410,7 +410,7 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
       .click();
     await settled(page);
 
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
     await expect(row(page, "incomeTax")).toContainText(formatAgorot(-21507));
@@ -457,7 +457,7 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
     ).toBeVisible();
 
     // And nothing was stored: the month is still taxed by the brackets.
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
     await expect(row(page, "incomeTax")).toContainText(
@@ -499,7 +499,7 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
     ).toBeVisible();
     await settled(page);
 
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
     // The correction stands, and it is still marked as the user's own.

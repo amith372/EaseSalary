@@ -1,9 +1,10 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { switchToTestWorker, openSettingsForTestWorker } from "./household";
-import { SATURDAY } from "../src/lib/dates";
+import { addMonths, monthOf, SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { weekdayDayLabel } from "../src/lib/dateLabels";
 import { formatAgorot, formatDays } from "../src/lib/money";
+import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The year's holidays chosen in advance, through the browser — `בחירת חגים`
@@ -122,11 +123,28 @@ function row(page: Page, key: string) {
   return page.locator(`[data-row="${key}"]`);
 }
 
-/** Step the month screen back to April 2026 from the month it opens on. */
+/** Step the calendar back to April 2026 from the month it opens on. */
 async function backTo(page: Page, months: number): Promise<void> {
   for (let step = 0; step < months; step += 1) {
     await page.getByRole("button", { name: he.calendar.previousMonth }).click();
   }
+}
+
+/**
+ * The payslip for the month `backTo` would have reached, showing this spec's
+ * worker.
+ *
+ * **What a worked holiday pays is read off the sheet** (specs.md item 5): it is
+ * a line of column F behind the ‏ברוטו‎, and the card beside the calendar
+ * summarises rather than itemising. Both were drawn on `/month` until
+ * 2026-09-16. The month is derived from today for the same reason `backTo`
+ * counts from the month the screen opens on.
+ */
+async function openPayslipMonthsBack(page: Page, months: number): Promise<void> {
+  const month = addMonths(monthOf(todayInIsrael()), -months);
+  const label = `${month.year}-${String(month.month).padStart(2, "0")}`;
+  await page.goto(`/month/payslip?month=${label}`);
+  await switchToTestWorker(page);
 }
 
 test.describe("the year's holidays, chosen in advance (specs.md item 10)", () => {
@@ -193,7 +211,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // Before: June's calendar carries no holiday on the 12th. The user never
     // marks a day as a holiday (item 9), so this is the only way one can appear.
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await backTo(page, 3);
     await expect(page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`)).not.toContainText(
@@ -208,7 +226,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     );
 
     // After: the day is drawn on the month, and the profile's own row counts it.
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await backTo(page, 3);
     await expect(page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`)).toContainText(
@@ -248,7 +266,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // On the calendar it is the third state, named for the question nobody
     // answered rather than drawn as either answer.
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await backTo(page, 3);
     const cell = page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`);
@@ -271,7 +289,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // Answered on the calendar, where the one fact a month records about a
     // holiday is recorded (item 9).
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await backTo(page, 3);
     await page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`).click();
@@ -328,10 +346,11 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // Before: April's worked holiday is paid at the whole rest-day rate, which
     // is Part 4's ₪426.35.
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await backTo(page, 5);
     await expect(page.locator(`[data-date="${WORKED_HOLIDAY}"]`)).toBeVisible();
+    await openPayslipMonthsBack(page, 5);
     await expect(row(page, "holidaysWorked")).toContainText(
       formatAgorot(HOLIDAY_RATE),
     );
@@ -352,9 +371,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     // **And the money follows.** Half a day of a worked holiday is half the
     // rate, rounded at the end. That is the failure this catches: a part-day
     // the picker records and the sheet still pays whole.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await backTo(page, 5);
+    await openPayslipMonthsBack(page, 5);
     await expect(row(page, "holidaysWorked")).toContainText(
       formatAgorot(HALF_HOLIDAY),
     );
@@ -437,7 +454,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     );
 
     // It reaches July's calendar like any other chosen date.
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await backTo(page, 2);
     await expect(page.locator(`[data-date="${TYPED_BY_HAND}"]`)).toContainText(
@@ -483,9 +500,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     );
 
     // April no longer pays a worked holiday, and July's calendar carries one.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await backTo(page, 5);
+    await openPayslipMonthsBack(page, 5);
     await expect(row(page, "holidaysWorked")).toHaveCount(0);
   });
 });

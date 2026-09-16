@@ -77,14 +77,19 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  *
  * **Every action revalidates both, whichever screen called it**, because the
  * two screens are one month seen from its two ends (specs.md item 5): a figure
- * is entered on `/payments` and what it comes to is drawn on `/month`, and a
- * page left holding the figures from before the change is the one failure the
- * split can produce. Which of the two the user is looking at is not this file's
- * to know, and an action that revalidated only its caller's route would leave
- * the other stale until something else happened to touch it.
+ * is entered on `/payments` and what it comes to is drawn on the opening
+ * screen, and a page left holding the figures from before the change is the one
+ * failure the split can produce. Which of the two the user is looking at is not
+ * this file's to know, and an action that revalidated only its caller's route
+ * would leave the other stale until something else happened to touch it.
+ *
+ * **The month is drawn at `/` since 2026-09-16**, when the calendar and the
+ * calculation moved onto the opening screen and `/month` went. A path that no
+ * longer exists is a silent no-op, so a stale `"/month"` here would save a day
+ * and never show it.
  */
 function revalidateMonth(): void {
-  revalidatePath("/month");
+  revalidatePath("/");
   revalidatePath("/payments");
 }
 

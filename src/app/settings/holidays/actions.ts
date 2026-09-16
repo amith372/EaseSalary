@@ -58,7 +58,7 @@ export type HolidayActionResult =
 function revalidateHolidays(): void {
   revalidatePath("/settings/holidays");
   revalidatePath("/workers", "layout");
-  revalidatePath("/month");
+  revalidatePath("/");
 }
 
 /** Asked to change a worker the store does not have. Actions are reachable by a

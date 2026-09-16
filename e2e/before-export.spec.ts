@@ -1,8 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
-import { SATURDAY } from "../src/lib/dates";
+import { monthOf, SATURDAY } from "../src/lib/dates";
 import { dayLabel, fullDayLabel, rangeLabel } from "../src/lib/dateLabels";
 import { todayInIsrael } from "../src/lib/today";
 
@@ -244,8 +244,11 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
     // Waited for, and not assumed: both screens carry a month stepper with the
     // same two buttons, so a click sent before the navigation lands steps the
     // screen being left instead of the one arriving.
-    await page.waitForURL("**/month");
-    // The month screen opens on the current month, which is September.
+    // A predicate and not a glob: the calendar is at `/` since 2026-09-16, and
+    // `"**/"` matches every address there is — it would pass without leaving
+    // the export screen at all.
+    await page.waitForURL((url) => url.pathname === "/");
+    // The calendar opens on the current month, which is September.
     await page.getByRole("button", { name: he.calendar.previousMonth }).click();
     await page.locator('[data-date="2026-08-08"]').click();
     await page.locator('[data-date="2026-08-08"]').click();
@@ -278,7 +281,13 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
       .click();
     await settled(page);
 
-    await page.getByRole("link", { name: he.nav.home }).click();
+    // Scoped to the bar's own nav, and exact: since 2026-09-16 the month
+    // screen carries its own way back (`לדף הבית`), whose name contains this
+    // one, so an unscoped substring match resolves to two links.
+    await page
+      .getByRole("navigation", { name: he.nav.landmark })
+      .getByRole("link", { name: he.nav.home, exact: true })
+      .click();
     await page
       .getByRole("link", { name: he.home.paid.exportToExcel })
       .click();
@@ -469,12 +478,14 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
     });
 
     // And July still pays the recuperation it was confirmed at, from the rate
-    // the confirmation stored on the month rather than from the table.
-    await page.goto("/month");
+    // the confirmation stored on the month rather than from the table. Read off
+    // the payslip, which is where a month is laid out line by line (specs.md
+    // item 5) — the opening screen summarises and draws no recuperation row.
+    const { year } = monthOf(todayInIsrael());
+    await page.goto(
+      `/month/payslip?month=${year}-${String(RECUPERATION_MONTH).padStart(2, "0")}`,
+    );
     await switchToTestWorker(page);
-    for (let step = 0; step < CURRENT_MONTH - RECUPERATION_MONTH; step += 1) {
-      await page.getByRole("button", { name: he.calendar.previousMonth }).click();
-    }
     await expect(page.locator('[data-row="recuperation"]')).toContainText(
       formatAgorot(RECUPERATION_PAYMENT),
     );

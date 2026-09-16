@@ -119,13 +119,18 @@ function row(page: Page, key: string) {
 }
 
 test.describe("the payslip (specs.md item 2, criterion 1)", () => {
-  test("is where the home screen's link has always pointed", async ({
+  test("is one link from the home screen, and it does not 404", async ({
     page,
   }) => {
     await useHousehold(page, "home");
     await page.goto("/");
+    // **Walked rather than addressed.** This link has been wrong twice: it
+    // pointed at `/sheet`, an address nobody had chosen, and it 404'd; and
+    // between 2026-09-15 and 2026-09-16 it led to `חישוב החודש` instead, which
+    // left the payslip one hop further out. The calculation is on the home
+    // screen since then, so the chain is one hop again — and a broken link on
+    // a route is a fault no unit test can see.
     await page.getByRole("link", { name: he.home.paid.fullSheet }).click();
-    // It pointed at `/sheet`, an address nobody had chosen, and 404'd.
     await expect(page).toHaveURL(/\/month\/payslip/);
     // On the worker the suite works on, whose months run past the workbooks the
     // first worker is seeded from: hers end in July 2026, so a heading read off

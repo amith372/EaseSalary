@@ -547,7 +547,7 @@ function MonthConfirmation({
             </button>
           ))}
           <Link
-            href="/month"
+            href="/"
             className="text-[16px] text-ink-mute transition-colors hover:text-forest"
           >
             <span dir="auto">{words.finish.back}</span>

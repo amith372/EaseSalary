@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { switchToTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
@@ -171,7 +171,7 @@ test.describe("the payments screen", () => {
 
     // And the month itself says the same thing, because the preview and the
     // payments screen are one engine result shown twice (rule 11).
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
     await expect(page.locator('[data-row="incomeTax"]')).toContainText(

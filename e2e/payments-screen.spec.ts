@@ -1,8 +1,9 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { switchToTestWorker } from "./household";
-import { SATURDAY } from "../src/lib/dates";
+import { addMonths, monthOf, SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot, formatDays } from "../src/lib/money";
+import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The rest of stage 4's browser verification (`build_plan.md` step 10, and
@@ -97,6 +98,27 @@ async function stepBack(page: Page, times: number): Promise<void> {
   }
 }
 
+/**
+ * The payslip for the month `stepBack` would have reached, addressed rather
+ * than stepped to.
+ *
+ * **An itemised row is read here and not on the opening screen** (specs.md item
+ * 5): the screen beside the calendar summarises what the month came to, and the
+ * sheet is where a month is laid out line by line. Until 2026-09-16 both were
+ * drawn on `/month`, which is why these assertions used to be made one screen
+ * earlier.
+ *
+ * The month is derived from today for the same reason `stepBack` counted from
+ * the month the screen opens on — a literal here would be a fixed month, and
+ * this file would start failing on a date nobody changed.
+ */
+async function openPayslipMonthsBack(page: Page, times: number): Promise<void> {
+  const month = addMonths(monthOf(todayInIsrael()), -times);
+  const label = `${month.year}-${String(month.month).padStart(2, "0")}`;
+  await page.goto(`/month/payslip?month=${label}`);
+  await switchToTestWorker(page);
+}
+
 test.describe("a range is ordered by date and never by screen position", () => {
   test("sweeps the same days whichever end is clicked first", async ({
     page,
@@ -110,7 +132,7 @@ test.describe("a range is ordered by date and never by screen position", () => {
     // 5.10.2026 is a Monday and 8.10.2026 a Thursday, so no rest day and no
     // rest-eve falls inside — four whole days come off the balance (item 7).
     await useHousehold(page, "order-forward");
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
     await page.locator('[data-date="2026-10-05"]').click();
@@ -121,14 +143,14 @@ test.describe("a range is ordered by date and never by screen position", () => {
         exact: true,
       })
       .click();
-    await expect(row(page, "balance-vacation")).toContainText(
+    await expect(row(page, "worker-2-vacation-balance")).toContainText(
       `${he.sheet.reporting.daysUsed}: ${formatDays(4)}`,
     );
 
     // The same range swept from its later end, in a store of its own so the
     // first sweep is not still there.
     await useHousehold(page, "order-backward");
-    await page.goto("/month");
+    await page.goto("/");
     await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
     await page.locator('[data-date="2026-10-08"]').click();
@@ -139,7 +161,7 @@ test.describe("a range is ordered by date and never by screen position", () => {
         exact: true,
       })
       .click();
-    await expect(row(page, "balance-vacation")).toContainText(
+    await expect(row(page, "worker-2-vacation-balance")).toContainText(
       `${he.sheet.reporting.daysUsed}: ${formatDays(4)}`,
     );
 
@@ -333,9 +355,7 @@ test.describe("a payment to a third party, corrected in place (item 16)", () => 
 
     // The amount travelled with the rename, which is what "corrected in place"
     // means: it is the same payment.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await stepBack(page, 8);
+    await openPayslipMonthsBack(page, 8);
     await expect(row(page, "thirdParty.agencyFee")).toContainText(
       formatAgorot(MEDICAL_INSURANCE),
     );
@@ -365,9 +385,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // January 2026 for the first worker, whose rest day is Saturday, so the row
     // is her rest-day work — a figure the application worked out from the wage
     // and therefore the kind of row an override may replace.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await stepBack(page, 8);
+    await openPayslipMonthsBack(page, 8);
     // The derived figure, before anything is typed over it: five rest days at
     // Part 4's own rate. Worked out above and not read back off the screen.
     await expect(row(page, "restDays")).toContainText(
@@ -391,9 +409,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // **The figure is the one typed, marked manual, with what it replaced
     // beside it** (items 17, 24). ₪1,234.56 is a figure no rate in the
     // application can produce, so it cannot have been arrived at by accident.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await stepBack(page, 8);
+    await openPayslipMonthsBack(page, 8);
     await expect(row(page, "restDays")).toContainText(
       formatAgorot(OVERRIDE_AGOROT),
     );
@@ -434,9 +450,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
       page.getByText(he.month.actions.refused.amount),
     ).toHaveCount(0);
 
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await stepBack(page, 8);
+    await openPayslipMonthsBack(page, 8);
     await expect(row(page, "restDays")).toContainText(formatAgorot(0));
     await expect(row(page, "restDays")).toContainText(he.money.manual);
 
@@ -452,9 +466,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
       .click();
     await settled(page);
 
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await stepBack(page, 8);
+    await openPayslipMonthsBack(page, 8);
     await expect(row(page, "restDays")).not.toContainText(he.money.manual);
     // And it is the derived figure again, worked out above rather than
     // remembered from earlier in this test: clearing leaves the row derived, so

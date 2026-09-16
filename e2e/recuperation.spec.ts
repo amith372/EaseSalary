@@ -1,7 +1,9 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { switchToTestWorker, openSettingsForTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot, formatDays } from "../src/lib/money";
+import { monthOf } from "../src/lib/dates";
+import { todayInIsrael } from "../src/lib/today";
 
 /**
  * Recuperation through the browser — `specs.md` item 15.
@@ -59,11 +61,25 @@ function row(page: Page, key: string) {
   return page.locator(`[data-row="${key}"]`);
 }
 
-/** Step the month screen back from the month it opens on. */
-async function backTo(page: Page, months: number): Promise<void> {
-  for (let step = 0; step < months; step += 1) {
-    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
-  }
+/**
+ * The payslip for one month of the current year, showing the worker this spec
+ * works on.
+ *
+ * **The recuperation line is read off the sheet and not off the opening screen**
+ * (specs.md item 5): it is a column G line behind the ‏ברוטו‎, and the card
+ * beside the calendar summarises rather than itemising. Both were drawn on
+ * `/month` until 2026-09-16, which is why this used to be one screen.
+ *
+ * The year comes from today rather than being written here, for the reason
+ * every spec that opens on "the current month" gives — the demo household holds
+ * the current year's months.
+ */
+async function openPayslip(page: Page, month: number): Promise<void> {
+  const { year } = monthOf(todayInIsrael());
+  await page.goto(
+    `/month/payslip?month=${year}-${String(month).padStart(2, "0")}`,
+  );
+  await switchToTestWorker(page);
 }
 
 /** Press one of the twelve month chips on the profile's recuperation row. */
@@ -92,9 +108,7 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
     });
 
     // And the month screen pays exactly them, at the article's day rate.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await backTo(page, 9 - SEEDED_MONTH);
+    await openPayslip(page, SEEDED_MONTH);
     await expect(row(page, "recuperation")).toContainText(
       formatAgorot(PAYMENT),
     );
@@ -106,8 +120,7 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
 
   test("draws no recuperation line in an ordinary month", async ({ page }) => {
     await useHousehold(page, "ordinary");
-    await page.goto("/month");
-    await switchToTestWorker(page);
+    await openPayslip(page, monthOf(todayInIsrael()).month);
     // September is the month the demo opens on and is not the recuperation
     // month. A line drawn here would be a payment made twelve times a year.
     await expect(row(page, "recuperation")).toHaveCount(0);
@@ -126,17 +139,13 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
     await openSettingsForTestWorker(page);
     await chooseMonth(page, MOVED_TO);
 
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await backTo(page, 9 - MOVED_TO);
+    await openPayslip(page, MOVED_TO);
     await expect(row(page, "recuperation")).toContainText(
       formatAgorot(PAYMENT),
     );
 
     // And it has left the month it used to be paid in.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await backTo(page, 9 - SEEDED_MONTH);
+    await openPayslip(page, SEEDED_MONTH);
     await expect(row(page, "recuperation")).toHaveCount(0);
   });
 

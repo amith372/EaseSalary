@@ -97,7 +97,7 @@ export type ProfileActionResult =
  *
  * **A change to the profile reaches four screens and not one**, which is what
  * makes this a list rather than a call to `revalidatePath` at each site: the
- * profile itself and the list beside it draw the terms, `/month` draws the
+ * profile itself and the list beside it draw the terms, `/` draws the
  * calendar and the figures that follow from them, and `/payments` draws the
  * debt the opening position opens and the standing lines it offers to
  * override. A page left holding the figures from before the change is the one
@@ -106,7 +106,7 @@ export type ProfileActionResult =
 function revalidateWorker(): void {
   revalidatePath("/settings");
   revalidatePath("/workers", "layout");
-  revalidatePath("/month");
+  revalidatePath("/");
   revalidatePath("/payments");
 }
 

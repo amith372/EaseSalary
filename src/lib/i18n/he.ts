@@ -749,11 +749,26 @@ export const he = {
     },
     paid: {
       title: "מה שולם החודש",
-      /** The same figure the month screen closes with, so it carries the same
-       * word: one number, one name (specs.md Part 5). */
-      total: "סך הכל תשלום לעובד/ת",
-      totalExplanation: "השכר של החודש והתוספות עליו, פחות המקדמה שנפרעת החודש.",
       exportToExcel: "לייצא לאקסל",
+      /**
+       * Where the money card leads, and the saga behind one link (the user,
+       * 2026-09-16).
+       *
+       * **This card carries one link and it has to be the working one.** v4
+       * draws two — this one, and a `לחישוב` in the header that led to
+       * `חישוב החודש`. On 2026-09-15 the header's was cut as a duplicate, on
+       * the strength of two names that read alike; they never led to the same
+       * place, and the cut left the calculation reachable only through the
+       * payslip and back out of it. So on 2026-09-16 this link was pointed at
+       * `חישוב החודש` instead — and then that screen turned out to be the one
+       * that worked while this one was a fixture of it, so the calculation
+       * moved here and the screen went. The cut was right after all: there is
+       * one screen further in, and it is the payslip.
+       *
+       * The bottom figure of the card above is not named here — three screens
+       * draw it and `bottomFigure` names it once, because a month with nothing
+       * transferred calls it `נטו` and not `סך הכל תשלום לעובד/ת`.
+       */
       fullSheet: "לצפייה בדף המשכורת המלא",
     },
     balances: {
@@ -770,25 +785,28 @@ export const he = {
     },
   },
 
-  /** The month screen: the calendar, and the preview of what the month comes
-   * to. The preview and the export are one engine's output shown twice, so
-   * nothing here names a figure — only the rows it is shown in. */
   /**
    * The payments screen (specs.md item 5). It is where everything that *records*
    * a payment lives — the additional payments and, in its own step, the payments
-   * to third parties — while the month screen answers what the month came to.
+   * to third parties — while the opening screen answers what the month came to.
    *
    * The lead says what the screen is for rather than what is on it, because a
-   * user arrives here from a summarised row on the month screen and the first
+   * user arrives here from a summarised row beside the calendar and the first
    * thing she needs to know is that this is where that row is made.
    */
   payments: {
     title: "תשלומים",
-    lead: "כאן נרשם כל מה שאינו נגזר מהלוח — מקדמות, מס הכנסה, ותוספות והורדות משלך. החישוב עצמו נמצא בדף החודש, והשורות האלה נכנסות אליו.",
+    lead: "כאן נרשם כל מה שאינו נגזר מהלוח — מקדמות, מס הכנסה, ותוספות והורדות משלך. השורות האלה נכנסות לחישוב החודש, ומופיעות בפירוט בדף המשכורת.",
     /** The screen records one month at a time, so it says which (item 5). */
     forMonth: "החודש שנרשם",
   },
 
+  /**
+   * What a month comes to, wherever it is drawn. The calendar and these figures
+   * live on the opening screen since 2026-09-16; the keys keep their `month`
+   * name because what they describe is a month and not a screen, and the payslip
+   * and `/reports` read several of them too.
+   */
   month: {
     /** A month the store has no record of. It is not an error and not an empty
      * result — nothing has been entered yet, which for a month ahead of the
@@ -798,15 +816,6 @@ export const he = {
       body: "לא נרשם בו דבר, ולכן אין עדיין מה לחשב.",
     },
     preview: {
-      title: "החישוב של החודש",
-      /**
-       * The heading over the three lines the days of the week added, and **it
-       * names her own two days** (specs.md items 5 and 14): "ימי שישי, שבתות
-       * וחגים" for a Saturday-resting worker and "ימי חמישי, ימי שישי וחגים" for
-       * one who rests on Friday.
-       */
-      dayAdditions: (restDay: RestDay) =>
-        `${eve(restDay).plural}, ${day(restDay).plural} וחגים`,
       /**
        * The lines the user added, summed. One heading covers both directions,
        * so the sum may come out either way and the wording may not name only
@@ -816,17 +825,18 @@ export const he = {
       userLinesWhy:
         "סיכום השורות שהוספת. הפירוט המלא — שורה־שורה, עם הסיבה שרשמת לכל אחת — נמצא במסך התשלומים ובקובץ האקסל, כי בתלוש כל תשלום חייב להופיע בנפרד.",
       /**
-       * The three figures the block closes with, in the order it draws them,
-       * and **the user's own words for the first and the last** (specs.md
-       * Part 5).
+       * The two figures a month can show above its bottom one, and **the
+       * user's own words for the first** (specs.md Part 5).
        *
        * `gross` is the month's own total before anything is withheld —
        * ₪9,305.75 in the August 2025 case, the third of criterion 1's four
        * figures, labelled at `A26` of the month template with the figure beside
-       * it in `E26`. `net` is what is actually transferred, ₪7,305.75 there,
-       * the fourth figure, labelled at `B29` with the figure in `E29` — and
-       * that row moves down as the closing block grows, so the export derives
-       * it (`layoutOf`) and nothing looks it up by number.
+       * it in `E26`. What is actually transferred is ₪7,305.75 there, the
+       * fourth figure, labelled at `B29` with the figure in `E29` — and that
+       * row moves down as the closing block grows, so the export derives it
+       * (`layoutOf`) and nothing looks it up by number. It is named by
+       * `bottomFigure` rather than here, because what it is called depends on
+       * whether the month transferred anything at all.
        *
        * **`afterWithholding` is the one the sheet has no cell for**, and it is
        * the Hebrew נטו — which the code's own `net` is *not*. A month with no
@@ -835,9 +845,9 @@ export const he = {
        */
       gross: "ברוטו",
       afterWithholding: "נטו",
-      net: "סך הכל תשלום לעובד/ת",
-      thirdParty: "תשלומים לגורמים שלישיים",
-      balances: "יתרות אחרי החודש הזה",
+      /** What is worth knowing about this month, drawn under the money card on
+       * the opening screen and nowhere else: the payslip lays the figures out
+       * and says nothing about what they imply. */
       warnings: "כדאי לדעת",
     },
 

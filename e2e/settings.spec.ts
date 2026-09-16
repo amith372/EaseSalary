@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+﻿import { expect, test } from "@playwright/test";
 import {
   TEST_WORKER_NAME,
   openSettingsForTestWorker,
@@ -9,8 +9,9 @@ import {
 import { he } from "../src/lib/i18n/he";
 import { fullDayLabel } from "../src/lib/dateLabels";
 import { formatAgorot, formatDays } from "../src/lib/money";
-import { monthOf, yearMonthText } from "../src/lib/dates";
+import { addMonths, monthOf, yearMonthText } from "../src/lib/dates";
 import { todayInIsrael } from "../src/lib/today";
+import type { YearMonth } from "../src/lib/types";
 
 /**
  * `/settings` — `EaseSalary - הגדרות`, the one screen a worker's terms are
@@ -31,6 +32,23 @@ import { todayInIsrael } from "../src/lib/today";
 const MINIMUM_WAGE_2026 = 644385;
 /** A raise this spec invents, above every minimum wage the table holds. */
 const RAISED_TO = 700000;
+
+/**
+ * One month's payslip, showing the worker this spec works on.
+ *
+ * **A term's effect is read off the sheet and not off the opening screen**
+ * (specs.md item 5): the base and the rest-eve supplement are lines behind the
+ * ‏ברוטו‎, and the card beside the calendar summarises rather than itemising.
+ * Addressed rather than stepped to, because this sheet carries no stepper.
+ */
+async function openPayslip(
+  page: import("@playwright/test").Page,
+  month: YearMonth,
+): Promise<void> {
+  const label = `${month.year}-${String(month.month).padStart(2, "0")}`;
+  await page.goto(`/month/payslip?month=${label}`);
+  await switchToTestWorker(page);
+}
 
 test.describe("the settings screen", () => {
   /**
@@ -124,10 +142,14 @@ test.describe("the settings screen", () => {
  * before it keep the salary they were calculated with (specs.md item 3, decided
  * with the user on 2026-09-13).
  *
- * The raise is recorded from the month `/month` opens on, so the month before it
- * is one step back. What the earlier month showed is read before the change and
- * held against what it shows after: this test is not checking what that month
- * came to, only that the raise did not reach it.
+ * The raise is recorded from the month the calendar opens on, so the month
+ * before it is the one before today's. What the earlier month showed is read
+ * before the change and held against what it shows after: this test is not
+ * checking what that month came to, only that the raise did not reach it.
+ *
+ * **The base is read off the payslip** (specs.md item 5): it is one of the lines
+ * behind the ‏ברוטו‎, and the screen beside the calendar summarises rather than
+ * itemising. Both were on `/month` until 2026-09-16.
  *
  * What it catches: a raise written onto every month the worker has — which is
  * what "every month not yet confirmed" did to the other terms — restating months
@@ -138,9 +160,7 @@ test.describe("a change of salary (specs.md item 3)", () => {
     await useHousehold(page, "settings", "raise");
     const today = todayInIsrael();
 
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
+    await openPayslip(page, addMonths(monthOf(today), -1));
     const before = (await page.locator('[data-row="base"]').textContent()) ?? "";
     expect(before).not.toContain(formatAgorot(RAISED_TO));
 
@@ -167,13 +187,12 @@ test.describe("a change of salary (specs.md item 3)", () => {
       fullPage: true,
     });
 
-    await page.goto("/month");
-    await switchToTestWorker(page);
+    await openPayslip(page, monthOf(today));
     await expect(page.locator('[data-row="base"]')).toContainText(
       formatAgorot(RAISED_TO),
     );
 
-    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
+    await openPayslip(page, addMonths(monthOf(today), -1));
     await expect(page.locator('[data-row="base"]')).toHaveText(before);
   });
 
@@ -207,7 +226,7 @@ test.describe("a change of salary (specs.md item 3)", () => {
  * month.
  *
  * The expected figure is counted here by hand: the test worker rests on
- * Saturday, so her rest-eves are the Fridays of the month `/month` opens on,
+ * Saturday, so her rest-eves are the Fridays of the month the calendar opens on,
  * each paid the ₪150 this test sets.
  *
  * What it catches: a supplement saved on the profile that no month reads —
@@ -234,8 +253,7 @@ test.describe("the rest-eve supplement (specs.md item 14)", () => {
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
     await expect(supplement).toContainText(formatAgorot(15000));
 
-    await page.goto("/month");
-    await switchToTestWorker(page);
+    await openPayslip(page, month);
     await expect(page.locator('[data-row="restEveSupplement"]')).toContainText(
       formatAgorot(fridays * 15000),
     );

@@ -1,8 +1,10 @@
-import ExcelJS from "exceljs";
+﻿import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
 import { switchToTestWorker, openSettingsForTestWorker } from "./household";
 import { he } from "../src/lib/i18n/he";
+import { monthOf } from "../src/lib/dates";
 import { formatAgorot } from "../src/lib/money";
+import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The export, through the browser — `specs.md` item 2, criterion 1 and
@@ -127,19 +129,22 @@ function evaluate(sheet: ExcelJS.Worksheet, address: string): number {
 }
 
 /**
- * Step the month screen back until it is showing the month the file is of.
+ * The payslip for the month the file is of, showing this spec's worker.
  *
- * The heading is what is read rather than a count of clicks, because how far
- * back August is depends on where the screen opened, which depends on the
- * clock.
+ * **Addressed rather than stepped to**, because the payslip carries no stepper
+ * and opens on the last month that *ended* — which is this one, but naming it
+ * is what keeps the comparison honest when the clock moves. The year comes from
+ * today, as every count that starts at "the month the screen opens on" does.
  */
-async function stepBackToAugust(page: Page): Promise<void> {
-  const august = he.calendar.monthNames[ENDED_MONTH - 1];
-  for (let step = 0; step < 12; step += 1) {
-    if ((await page.locator("h1").innerText()).includes(august)) return;
-    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
-  }
-  throw new Error(`The month screen never reached ${august}`);
+async function openPayslipForAugust(page: Page): Promise<void> {
+  const { year } = monthOf(todayInIsrael());
+  await page.goto(
+    `/month/payslip?month=${year}-${String(ENDED_MONTH).padStart(2, "0")}`,
+  );
+  await switchToTestWorker(page);
+  await expect(page.locator("h1")).toContainText(
+    he.calendar.monthNames[ENDED_MONTH - 1],
+  );
 }
 
 /** Confirm the month and take the file the button produces. */
@@ -254,23 +259,22 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
   });
 
   /**
-   * Rule 11, at the level only a browser reaches: the figures the month screen
+   * Rule 12, at the level only a browser reaches: the figures the payslip
    * printed and the figures inside the file, compared as text.
    */
-  test("says the same figures in the file as the month screen shows", async ({
+  test("says the same figures in the file as the payslip shows", async ({
     page,
   }) => {
     await useHousehold(page, "agree");
     const sheet = await exportAugust(page, "plain");
 
-    // Read the preview off the screen the user would compare the file against —
-    // **stepped to the month that was exported.** `/month` opens on the current
-    // month and the file is of the last one that ended, so a comparison made
-    // where the screen happens to land is a comparison of two different months,
+    // Read the sheet off the screen the user would compare the file against —
+    // **the payslip, and the month that was exported.** It is the screen that
+    // lays a month out row by row, which is what the file does (specs.md item
+    // 5); the opening screen summarises and draws no `base` at all. The month is
+    // named in the address, or the comparison is of two different months —
     // which is how this test first passed a figure it should have failed.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await stepBackToAugust(page);
+    await openPayslipForAugust(page);
     const onScreen = async (key: string) =>
       (await page.locator(`[data-row="${key}"]`).innerText()).replace(
         /\s+/g,
@@ -314,7 +318,7 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
       2,
     );
 
-    // And the ברוטו the month screen prints is that same figure.
+    // And the ברוטו the payslip prints is that same figure.
     const grossOnScreen = await page
       .getByText(formatAgorot(Math.round(totals.gross * 100)))
       .first();

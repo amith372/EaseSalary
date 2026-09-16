@@ -1,54 +1,83 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
+import { clearRange, markRange, setHolidayWorked } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chevron, RailIcon, TwoToneIcon, type TwoToneName } from "@/components/icons";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { MoneyValue } from "@/components/MoneyValue";
+import { openingMonthOf } from "@/components/MonthStepper";
 import { SpanOverflowNotes } from "@/components/SpanOverflow";
+import { ValueChip } from "@/components/ValueChip";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { WhyButton, WhyPanel } from "@/components/WhyDisclosure";
-import { homeFixtures } from "@/lib/fixtures/home";
+import { homeAlerts } from "@/lib/fixtures/home";
 import { dayLabel } from "@/lib/dateLabels";
 import { addDays, compareIsoDate, fromIsoDate, isoOf, monthOf, sameMonth } from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
+import { monthLevels } from "@/lib/engine/month";
+import type { MonthInSeries } from "@/lib/engine/series";
 import { clipEndOf } from "@/lib/engine/types";
-import { he } from "@/lib/i18n/he";
+import { bottomFigure, he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
-import {
-  applyMark,
-  endOf,
-  touchesRange,
-  type SkippedDay,
-  type SkipReason,
-} from "@/lib/spans";
-import type { DaySpan, HolidaySpan, IsoDate, MarkKind, YearMonth } from "@/lib/types";
+import { endOf, type SkippedDay, type SkipReason } from "@/lib/spans";
+import type {
+  Explanation,
+  HolidaySpan,
+  IsoDate,
+  MarkKind,
+  MonthResult,
+  Worker,
+  YearMonth,
+} from "@/lib/types";
 import type { SpanIntent } from "@/components/MonthCalendar";
 
 /**
  * The opening screen, built as `EaseSalary - דף הבית v4` draws it: a rail of the
  * household's workers and their balances, the month's calendar under its
- * illustrated band, and beside it the day last pressed and what the month paid.
- * The month is marked where the application opens, rather than one screen
- * further in (specs.md item 27).
+ * illustrated band, and beside it the day last pressed and what the month came
+ * to. The month is marked and calculated where the application opens, rather
+ * than one screen further in (specs.md item 27).
+ *
+ * **Everything on it arrives already worked out.** The engine ran on the server
+ * (Part 3) over the whole of the worker's history, because a month's opening
+ * balances are the previous month's closing ones and the only way to know them
+ * is to walk the months before it (item 13). So this screen holds no calculation
+ * at all: it chooses which of the months it was handed to show, and draws it.
+ * The preview and the export are the same engine's output shown twice, and this
+ * is one of the two.
+ *
+ * **Marking writes through the store** — `markRange`, `clearRange` and
+ * `setHolidayWorked` in `app/month/actions.ts`, which decide on the server which
+ * days inside a swept range may take the mark (items 5, 8) and revalidate this
+ * route so the figures beside the calendar are the answer to what was saved.
+ * Until 2026-09-16 this screen marked into `useState` against a fixture whose
+ * every amount was `null`, while a separate `/month` did the real work; the
+ * wiring moved here and that screen went.
  *
  * **What blocks a correct salary still leads the screen.** v4 draws no such
  * list; item 27 says the opening screen leads with it, so a strip of those
  * cards sits above the columns whenever there is one, and is not drawn at all
- * when there is none (the user, 2026-09-15).
+ * when there is none (the user, 2026-09-15). Those cards are the one thing here
+ * still standing in — see `lib/fixtures/home.ts`.
  *
- * It is the one screen that computes nothing: every amount and count arrives in
- * the calculation engine's own types with a fixture standing in, so the contract
- * is fixed now and stage 6 fills it in without this file changing. What it does
- * own is the marking of days — the merge of a chosen range into what is already
- * stored. The entitlement rules behind that merge live in `src/lib/spans.ts`,
- * because which days inside a range take the mark is calculation rather than
- * interaction. Marks are client state only.
- *
- * **The calendar opens on the month `today` falls in**, and `today` is handed
- * down by the route rather than read here, so server and browser agree on it.
+ * **Nothing reads a clock**: `today` is handed down by the route, so server and
+ * browser agree on it.
  */
+
+/** One worker as this screen needs her: who she is, the day she rests, and
+ * every month she has, oldest first. */
+export interface WorkerMonths {
+  worker: Worker;
+  /** Her weekly rest day *as the profile currently holds it* — the calendar's
+   * shading and its labels. A month's own figures were calculated against the
+   * rest day stored on that month, which may differ for a family that moved it
+   * (specs.md Part 3), and that one is read off `facts.terms` below. */
+  restDay: RestDay;
+  months: MonthInSeries[];
+}
 
 /** What the day panel says about one day, in the day's own colours. */
 const dayFace: Record<
@@ -76,9 +105,25 @@ function numericDate(iso: IsoDate): string {
 const railLink =
   "flex items-center gap-2.75 rounded-card-sm px-2.75 py-2.5 text-ink transition-colors hover:bg-row-hover hover:text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-forest";
 
-export function HomeScreen({ today }: { today: IsoDate }) {
+export function HomeScreen({
+  household,
+  today,
+}: {
+  household: WorkerMonths[];
+  /** Today, read once on the server and handed down, so nothing here reads a
+   * clock during a render (`CLAUDE.md`). */
+  today: IsoDate;
+}) {
   const { worker, workers } = useWorkerScope();
-  const [month, setMonth] = useState<YearMonth>(() => monthOf(today));
+  // The current month where anybody has a record of it, and otherwise the last
+  // month anybody has — `openingMonthOf` says why, and the payments screen asks
+  // the same question so the two never open on different months.
+  const [month, setMonth] = useState<YearMonth>(() =>
+    openingMonthOf(
+      household.flatMap((entry) => entry.months.map((m) => m.facts.month)),
+      today,
+    ),
+  );
   const [selected, setSelected] = useState<IsoDate>(today);
   const [editRequest, setEditRequest] = useState<{ date: IsoDate; seq: number }>();
   const [openWhy, setOpenWhy] = useState<string | null>(null);
@@ -86,20 +131,22 @@ export function HomeScreen({ today }: { today: IsoDate }) {
   // against one worker: it is stamped with whose it was rather than cleared by
   // an effect watching the switcher, which would run a render late.
   const [skipped, setSkipped] = useState<{ workerId: string; days: SkippedDay[] } | null>(null);
-  const [spansByWorker, setSpansByWorker] = useState<Record<string, DaySpan[]>>(() =>
-    Object.fromEntries(homeFixtures.map((f) => [f.worker.id, f.spans])),
-  );
+  // A gesture reaches the store and the page re-renders from it, so nothing here
+  // predicts what the engine will say — the figures beside the calendar are the
+  // answer to what was actually saved.
+  const [saving, startSaving] = useTransition();
 
-  const fixtureOf = (id: string) => homeFixtures.find((f) => f.worker.id === id) ?? homeFixtures[0];
-  const fixture = fixtureOf(worker.id);
-  const { result, alerts } = fixture;
-  /**
-   * **A worker the fixtures do not name falls back with the fixture she fell
-   * back to.** Without it the screen crashed for every worker created through
-   * `הוספת עובד`, whose id the store assigns (`workers/actions.ts`). The screen
-   * is still drawn from fixtures, which is stage 6's to replace.
-   */
-  const spans = spansByWorker[worker.id] ?? fixture.spans;
+  // The switcher moves between workers and the calendar stays on the month it
+  // was showing: the month is a fact about the screen and the worker is a fact
+  // about the shell, so switching does not send the user back to August.
+  const entry =
+    household.find((candidate) => candidate.worker.id === worker.id) ?? household[0];
+  const shown = entry.months.find((inSeries) => sameMonth(inSeries.facts.month, month));
+  // The month's own rest day where there is a month, so a calendar over a
+  // corrected past month shades the column that month was calculated against
+  // (specs.md Part 3).
+  const shownRestDay = shown?.facts.terms.restDay ?? entry.restDay;
+  const spans = shown?.facts.spans ?? [];
 
   // The panel follows the month: browsing away from the selected day's month
   // shows that month's first day rather than a day the grid no longer draws.
@@ -114,30 +161,33 @@ export function HomeScreen({ today }: { today: IsoDate }) {
   }
 
   function handleSelectRange(intent: SpanIntent) {
-    const { spans: added, skipped: refused } = applyMark(intent, fixture.restDay, spans);
-    setSpansByWorker((current) => ({
-      ...current,
-      [worker.id]: [...(current[worker.id] ?? fixture.spans), ...added],
-    }));
-    setSkipped({ workerId: worker.id, days: refused });
+    const workerId = worker.id;
+    startSaving(async () => {
+      const { skipped: refused } = await markRange(workerId, intent);
+      setSkipped({ workerId, days: refused });
+    });
   }
 
   /** A span is one thing: a range that touches it clears the whole of it rather
    * than punching a hole, which for a sick spell would change what it pays
-   * (specs.md item 8). */
+   * (specs.md item 8). The rule itself is the server's. */
   function handleClearRange(from: IsoDate, to: IsoDate) {
-    setSpansByWorker((current) => ({
-      ...current,
-      [worker.id]: (current[worker.id] ?? []).filter((span) => !touchesRange(span, from, to)),
-    }));
+    const workerId = worker.id;
     setSkipped(null);
+    startSaving(() => clearRange(workerId, from, to));
+  }
+
+  function handleSetHolidayWorked(spanId: string, workedIt: boolean) {
+    const workerId = worker.id;
+    setSkipped(null);
+    startSaving(() => setHolidayWorked(workerId, spanId, workedIt));
   }
 
   /** Grouped by reason, so a week swept across five taken days reads as one
    * sentence rather than five. */
   const refusals = useMemo(() => {
     if (!skipped || skipped.workerId !== worker.id) return [];
-    const byReason = new Map<SkipReason, IsoDate[]>();
+    const byReason = new Map<SkipReason, string[]>();
     for (const day of skipped.days) {
       const dates = byReason.get(day.reason);
       if (dates) dates.push(day.date);
@@ -155,7 +205,7 @@ export function HomeScreen({ today }: { today: IsoDate }) {
       compareIsoDate(shownDay, endOf(span, openEnd)) <= 0,
   );
 
-  const marks = he.calendar.marks(fixture.restDay);
+  const marks = he.calendar.marks(shownRestDay);
   const faceKey: keyof typeof dayFace | undefined =
     daySpan === undefined
       ? undefined
@@ -187,13 +237,13 @@ export function HomeScreen({ today }: { today: IsoDate }) {
   return (
     <>
       {/* What stops the month being calculated correctly, first (item 27). */}
-      {alerts.length > 0 ? (
+      {homeAlerts.length > 0 ? (
         <section aria-labelledby="home-blockers" className="flex flex-none flex-col gap-1.5">
           <h2 id="home-blockers" dir="auto" className="text-[15px] font-semibold text-ink-warm">
             {he.status.needsAttention}
           </h2>
           <div className="grid items-start gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {alerts.map((alert) => (
+            {homeAlerts.map((alert) => (
               <Card key={alert.key} radius="sm" className="flex min-w-0 flex-col gap-0.5 px-3.5 py-2.25">
                 {/* Title, action and "?" on one line and the note under them:
                     the strip leads the screen, so it spends as little height as
@@ -242,11 +292,12 @@ export function HomeScreen({ today }: { today: IsoDate }) {
           <MonthCalendar
             month={month}
             spans={spans}
-            restDay={fixture.restDay}
+            restDay={shownRestDay}
             today={today}
             onMonthChange={setMonth}
             onSelectRange={handleSelectRange}
             onClearRange={handleClearRange}
+            onSetHolidayWorked={handleSetHolidayWorked}
             selectedDay={shownDay}
             onSelectDay={setSelected}
             editRequest={editRequest}
@@ -260,20 +311,20 @@ export function HomeScreen({ today }: { today: IsoDate }) {
             className="flex-1"
           />
 
-          <SpanOverflowNotes spans={spans} month={month} restDay={fixture.restDay} className="mt-2.5" />
+          <SpanOverflowNotes spans={spans} month={month} restDay={shownRestDay} className="mt-2.5" />
 
           {refusals.length > 0 ? (
             <Card tone="inset" radius="panel" className="mt-2.5 flex flex-none flex-col gap-1.5 px-3.5 py-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span dir="auto" className="text-[14px] font-semibold text-ink-warm">
-                  {he.calendar.skipped(fixture.restDay).title}
+                  {he.calendar.skipped(shownRestDay).title}
                 </span>
                 <button
                   type="button"
                   onClick={() => setSkipped(null)}
                   className="text-[13px] font-medium text-ink-quiet transition-colors hover:text-ink"
                 >
-                  <span dir="auto">{he.calendar.skipped(fixture.restDay).dismiss}</span>
+                  <span dir="auto">{he.calendar.skipped(shownRestDay).dismiss}</span>
                 </button>
               </div>
               <ul aria-live="polite" className="flex flex-col gap-1">
@@ -286,7 +337,7 @@ export function HomeScreen({ today }: { today: IsoDate }) {
                       </span>
                     ))}
                     <span> — </span>
-                    <span>{he.calendar.skipped(fixture.restDay)[reason]}</span>
+                    <span>{he.calendar.skipped(shownRestDay)[reason]}</span>
                   </li>
                 ))}
               </ul>
@@ -294,7 +345,19 @@ export function HomeScreen({ today }: { today: IsoDate }) {
           ) : null}
         </Card>
 
-        <div className="order-2 flex min-w-0 flex-col gap-3 lg:col-start-2 lg:row-start-1 xl:col-start-3">
+        {/* Dimmed while a gesture is on its way to the store and back. The
+            figures here are the engine's answer to what was saved, so between
+            the click and the answer they are the *previous* month's — saying so
+            is better than letting a stale number look settled. */}
+        <div
+          aria-busy={saving}
+          className={[
+            "order-2 flex min-w-0 flex-col gap-3 transition-opacity lg:col-start-2 lg:row-start-1 xl:col-start-3",
+            saving ? "opacity-60" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           <Card className="flex flex-col gap-2.5 px-3.75 py-3">
             <div className="flex items-center justify-between gap-2.5">
               <button
@@ -375,58 +438,58 @@ export function HomeScreen({ today }: { today: IsoDate }) {
             </button>
           </Card>
 
-          <Card className="flex flex-col gap-2 px-3.75 py-3.25">
-            {/* One way further in, at the bottom: a "לחישוב" link here said
-                the same (the user, 2026-09-15). */}
-            <h2 dir="auto" className="text-[16px] font-semibold">
-              {he.home.paid.title}
-            </h2>
-
-            {result.lines.map((line) => (
-              <div key={line.key} className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between gap-2.5">
-                  <span className="flex min-w-0 items-center gap-1.75">
-                    <span dir="auto" className="text-[15px] font-light text-ink-soft">
-                      {line.label}
-                    </span>
-                    <WhyButton
-                      controls={`why-${line.key}`}
-                      open={openWhy === line.key}
-                      onToggle={() => toggleWhy(line.key)}
-                    />
-                  </span>
-                  <MoneyValue agorot={line.amount} chip="warm" manual={line.manual} className="flex-none" />
-                </div>
-                <WhyPanel id={`why-${line.key}`} open={openWhy === line.key} explanation={line.explanation} />
-              </div>
-            ))}
-
-            <Card tone="tint" radius="tint" className="mt-0.5 flex flex-col gap-2 px-3 py-2.25">
-              <div className="flex items-center justify-between gap-2.5">
-                <span className="flex min-w-0 items-center gap-1.75">
-                  <span dir="auto" className="text-[16px] font-semibold text-balance">
-                    {he.home.paid.total}
-                  </span>
-                  <WhyButton controls="why-total" open={openWhy === "total"} onToggle={() => toggleWhy("total")} />
-                </span>
-                <MoneyValue agorot={result.net} size="lg" chip="plain" className="flex-none" />
-              </div>
-              <WhyPanel
-                id="why-total"
-                open={openWhy === "total"}
-                explanation={{ text: he.home.paid.totalExplanation }}
-                within="tint"
-              />
+          {shown ? (
+            <MoneyCard
+              result={shown.result}
+              restDay={shown.facts.terms.restDay}
+              openWhy={openWhy}
+              onToggleWhy={toggleWhy}
+            />
+          ) : (
+            <Card className="flex flex-none flex-col gap-1.5 px-3.75 py-3.25">
+              <h2 dir="auto" className="text-[16px] font-semibold">
+                {he.month.empty.title}
+              </h2>
+              <p dir="auto" className="text-[15px] leading-[1.5] font-light text-ink-mute">
+                {he.month.empty.body}
+              </p>
             </Card>
+          )}
 
-            <Link
-              href="/month/payslip"
-              className="flex items-center justify-center gap-2 pt-0.5 text-[14px] text-ink-mute transition-colors hover:text-forest"
-            >
-              <span dir="auto">{he.home.paid.fullSheet}</span>
-              <Chevron towards="next" />
-            </Link>
-          </Card>
+          {/* Worth knowing about this month, and it is drawn nowhere else: the
+              payslip lays the figures out and says nothing about what they
+              imply. It sits under the money card because every one of these is
+              a remark about a figure above it. */}
+          {shown && shown.result.warnings.length > 0 ? (
+            <Card className="flex min-w-0 flex-none flex-col gap-1.5 px-3.75 py-3.25">
+              <h2 dir="auto" className="text-[16px] font-semibold">
+                {he.month.preview.warnings}
+              </h2>
+              {shown.result.warnings.map((warning) => (
+                <WhyPanel
+                  key={warning.key}
+                  id={`warning-${warning.key}`}
+                  open
+                  explanation={{ text: warning.message, link: warning.link }}
+                />
+              ))}
+            </Card>
+          ) : null}
+
+          {/*
+            Further in, from this month to the sheet that lays a month out row
+            by row. It belongs to the column and not to the money card, because
+            it is a way through rather than a figure — and a month with nothing
+            in it yet is exactly when someone wants to look at the last one that
+            had, so it is drawn whether or not there is a month above it.
+          */}
+          <Link
+            href="/month/payslip"
+            className="flex flex-none items-center justify-center gap-2 pt-0.5 text-[14px] text-ink-mute transition-colors hover:text-forest"
+          >
+            <span dir="auto">{he.home.paid.fullSheet}</span>
+            <Chevron towards="next" />
+          </Link>
         </div>
 
         {/* v4's workers card is left out: the top bar's switcher and its
@@ -447,46 +510,93 @@ export function HomeScreen({ today }: { today: IsoDate }) {
                 </span>
               </span>
             </div>
-            {workers.map((each) => (
-              <div key={each.id} className="mt-0.5 flex flex-col gap-1.5 border-t border-line px-2.75 pt-2.25">
-                <span className="flex min-w-0 items-center gap-2">
-                  <span aria-hidden="true" className={`size-2 flex-none rounded-full ${workerDot}`} />
-                  <span dir="auto" className="truncate text-[14px] font-semibold text-ink-warm">
-                    {each.name}
+            {workers.map((each) => {
+              // Her own month, and the balances it closed with. A worker with no
+              // record of this month has no balance to state, and the rows say
+              // so with the same placeholder the calendar's own figures use —
+              // the same rule the calendar follows when it draws her nothing.
+              const hers = household.find((candidate) => candidate.worker.id === each.id);
+              const herMonth = hers?.months.find((inSeries) =>
+                sameMonth(inSeries.facts.month, month),
+              );
+              const herMarks = he.calendar.marks(
+                herMonth?.facts.terms.restDay ?? hers?.restDay ?? entry.restDay,
+              );
+              return (
+                <div key={each.id} className="mt-0.5 flex flex-col gap-1.5 border-t border-line px-2.75 pt-2.25">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span aria-hidden="true" className={`size-2 flex-none rounded-full ${workerDot}`} />
+                    <span dir="auto" className="truncate text-[14px] font-semibold text-ink-warm">
+                      {each.name}
+                    </span>
                   </span>
-                </span>
-                {fixtureOf(each.id).result.balances.map((balance) => {
-                  const key = `${each.id}-${balance.kind}-balance`;
-                  return (
-                    <div key={balance.kind} className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between gap-2.5">
-                        <span className="flex min-w-0 items-center gap-1.75">
-                          <span dir="auto" className="text-[15px] font-light text-ink-soft">
-                            {marks[balance.kind]}
+                  {/* A worker with no record of this month has no balance to
+                      state, so the two rows are drawn with the placeholder
+                      rather than left out — a missing row reads as a worker who
+                      has no vacation at all. There is no "?" beside them for
+                      the same reason: nothing was calculated to explain. */}
+                  {herMonth === undefined
+                    ? (["vacation", "sick"] as const).map((kind) => (
+                        <div key={kind} className="flex items-center justify-between gap-2.5">
+                          <span dir="auto" className="min-w-0 text-[15px] font-light text-ink-soft">
+                            {herMarks[kind]}
                           </span>
-                          <WhyButton
-                            controls={`why-${key}`}
-                            open={openWhy === key}
-                            onToggle={() => toggleWhy(key)}
-                            label={he.why.balanceLabel}
-                          />
-                        </span>
-                        <span className="flex-none text-[15px] font-semibold whitespace-nowrap">
-                          <Bidi noTranslate>
-                            {balance.closing === null ? he.placeholder.count : formatDays(balance.closing)}
-                          </Bidi>
-                          <span> </span>
-                          <span dir="auto" className="font-light text-ink-quiet">
-                            {he.units.days}
+                          <span className="flex-none text-[15px] font-semibold whitespace-nowrap">
+                            <Bidi noTranslate>{he.placeholder.count}</Bidi>
+                            <span> </span>
+                            <span dir="auto" className="font-light text-ink-quiet">
+                              {he.units.days}
+                            </span>
                           </span>
-                        </span>
+                        </div>
+                      ))
+                    : null}
+                  {(herMonth?.result.balances ?? []).map((balance) => {
+                    const key = `${each.id}-${balance.kind}-balance`;
+                    return (
+                      <div key={balance.kind} data-row={key} className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between gap-2.5">
+                          <span className="flex min-w-0 flex-col gap-px">
+                            <span className="flex min-w-0 items-center gap-1.75">
+                              <span dir="auto" className="text-[15px] font-light text-ink-soft">
+                                {herMarks[balance.kind]}
+                              </span>
+                              <WhyButton
+                                controls={`why-${key}`}
+                                open={openWhy === key}
+                                onToggle={() => toggleWhy(key)}
+                                label={he.why.balanceLabel}
+                              />
+                            </span>
+                            {/* Criterion 2 asks for the days used beside the
+                                balance: a balance with no days behind it cannot
+                                be checked, and this month's are what the user
+                                just changed by marking a day. v4 draws only the
+                                balance — a departure recorded in `CLAUDE.md`,
+                                and the user's (2026-09-16). */}
+                            <span className="text-[13px] font-light text-ink-quiet">
+                              <span dir="auto">{he.sheet.reporting.daysUsed}</span>
+                              <span>: </span>
+                              <Bidi noTranslate>{formatDays(balance.used ?? 0)}</Bidi>
+                            </span>
+                          </span>
+                          <span className="flex-none text-[15px] font-semibold whitespace-nowrap">
+                            <Bidi noTranslate>
+                              {balance.closing === null ? he.placeholder.count : formatDays(balance.closing)}
+                            </Bidi>
+                            <span> </span>
+                            <span dir="auto" className="font-light text-ink-quiet">
+                              {he.units.days}
+                            </span>
+                          </span>
+                        </div>
+                        <WhyPanel id={`why-${key}`} open={openWhy === key} explanation={balance.explanation} />
                       </div>
-                      <WhyPanel id={`why-${key}`} open={openWhy === key} explanation={balance.explanation} />
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+                    );
+                  })}
+                </div>
+              );
+            })}
           </Card>
 
           {/* Exporting is a screen rather than a bare download: the minimum wage
@@ -513,5 +623,241 @@ export function HomeScreen({ today }: { today: IsoDate }) {
             2026-09-15). */}
       </div>
     </>
+  );
+}
+
+/** One figure of the month, with the "?" that says where it came from. The card
+ * is compact by design — v4 draws five rows and a total, and the itemisation
+ * behind each of them is the payslip's (specs.md item 5). */
+function MoneyRow({
+  label,
+  value,
+  whyKey,
+  explanation,
+  strong,
+  openWhy,
+  onToggleWhy,
+}: {
+  label: string;
+  /** Drawn rather than formatted here, because one of these rows is a pair of
+   * day counts and the rest are money. */
+  value: ReactNode;
+  whyKey: string;
+  explanation: Explanation;
+  strong?: boolean;
+  openWhy: string | null;
+  onToggleWhy: (key: string) => void;
+}) {
+  return (
+    // `data-row` is the browser suite's handle on one row (`CLAUDE.md` rule 10)
+    // — the same attribute `SummaryRow` carries on the payslip, so a figure can
+    // be read by what it is rather than by the Hebrew beside it.
+    <div data-row={whyKey} className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-2.5">
+        <span className="flex min-w-0 items-center gap-1.75">
+          <span
+            dir="auto"
+            className={
+              strong
+                ? "text-[15px] font-semibold text-ink"
+                : "text-[15px] font-light text-ink-soft"
+            }
+          >
+            {label}
+          </span>
+          <WhyButton
+            controls={`why-${whyKey}`}
+            open={openWhy === whyKey}
+            onToggle={() => onToggleWhy(whyKey)}
+          />
+        </span>
+        <span className="flex-none">{value}</span>
+      </div>
+      <WhyPanel id={`why-${whyKey}`} open={openWhy === whyKey} explanation={explanation} />
+    </div>
+  );
+}
+
+/**
+ * What the month came to, as `דף הבית v4` draws it: ‏ברוטו‎, what was withheld
+ * from it, ‏נטו‎, what was transferred out of that, and the total.
+ *
+ * **Which of those rows are drawn is the engine's answer and not this card's.**
+ * `monthLevels` owns the rule — a level is only real when something below it
+ * changes the figure, or two identical figures appear under two headings and
+ * read as an error (specs.md Part 5). The artboard was drawn against the same
+ * two flags, so nothing here departs from it.
+ *
+ * **It summarises and does not itemise** (item 5). The lines behind the ‏ברוטו‎
+ * are the payslip's and the export's, and the lines the user added are one row
+ * however many of them there are (item 20).
+ *
+ * **The two rows below the total are below it on purpose.** Money paid to a
+ * third party never reaches the worker's own total (item 16) and the
+ * national-insurance figure is an estimate the family still owes (item 19) —
+ * either of them drawn above `סך הכל תשלום לעובד/ת` would read as part of it,
+ * which is a sum the family would act on. v4 draws the third-party row among
+ * the others; this is a departure recorded in `CLAUDE.md`.
+ */
+function MoneyCard({
+  result,
+  restDay,
+  openWhy,
+  onToggleWhy,
+}: {
+  result: MonthResult;
+  /** The month's own rest day, because the work-day count's explanation names
+   * her days (specs.md items 5, 14). */
+  restDay: RestDay;
+  openWhy: string | null;
+  onToggleWhy: (key: string) => void;
+}) {
+  const why = { openWhy, onToggleWhy };
+  const { withholdingRows, transferRows, userAfter, withholds, transfers } =
+    monthLevels(result);
+  const thirdPartySubtotal = result.subtotals.find(
+    (subtotal) => subtotal.column === "H",
+  );
+
+  return (
+    <Card className="flex flex-none flex-col gap-2 px-3.75 py-3.25">
+      <h2 dir="auto" className="text-[16px] font-semibold">
+        {he.home.paid.title}
+      </h2>
+
+      {/* **Both counts, which is what the Wage Protection Act asks of the
+          payslip made from this month** (specs.md items 2, 5). v4 draws no such
+          row and the payslip has one — but the payslip opens on the last month
+          that ended, so without this the running month's counts are readable
+          nowhere, and a vacation day wrongly shrinking the standard count would
+          show on no screen at all. A departure recorded in `CLAUDE.md`, and the
+          user's (2026-09-16). */}
+      <MoneyRow
+        {...why}
+        label={he.sheet.reporting.workDays}
+        whyKey="workDays"
+        explanation={{ text: he.sheet.why.workDays(restDay) }}
+        value={
+          <ValueChip>
+            <Bidi noTranslate>
+              {`${formatDays(result.actualDays ?? 0)} / ${formatDays(result.standardDays ?? 0)}`}
+            </Bidi>
+          </ValueChip>
+        }
+      />
+
+      {withholds ? (
+        <>
+          <MoneyRow
+            {...why}
+            label={he.month.preview.gross}
+            value={<MoneyValue agorot={result.gross} chip="warm" />}
+            whyKey="gross"
+            explanation={{ text: he.sheet.why.gross }}
+            strong
+          />
+          {withholdingRows.map((line) => (
+            <MoneyRow
+              {...why}
+              key={line.key}
+              label={line.label}
+              value={<MoneyValue agorot={line.amount} chip="warm" manual={line.manual} />}
+              whyKey={line.key}
+              explanation={line.explanation}
+            />
+          ))}
+        </>
+      ) : null}
+
+      {transfers ? (
+        <>
+          <MoneyRow
+            {...why}
+            label={he.month.preview.afterWithholding}
+            value={<MoneyValue agorot={result.afterWithholding} chip="warm" />}
+            whyKey="afterWithholding"
+            explanation={{ text: he.sheet.why.afterWithholding }}
+            strong
+          />
+          {/* However many lines the user placed below the total, one row —
+              the itemisation is the payments screen's and the export's
+              (item 20). */}
+          {userAfter.length > 0 ? (
+            <MoneyRow
+              {...why}
+              label={he.month.preview.userLines}
+              value={
+                <MoneyValue
+                  agorot={userAfter.reduce((total, row) => total + (row.amount ?? 0), 0)}
+                  chip="warm"
+                  manual={userAfter.some((row) => row.manual)}
+                />
+              }
+              whyKey="userLines-afterGross"
+              explanation={{ text: he.month.preview.userLinesWhy }}
+            />
+          ) : null}
+          {transferRows.map((line) => (
+            <MoneyRow
+              {...why}
+              key={line.key}
+              label={line.label}
+              value={<MoneyValue agorot={line.amount} chip="warm" manual={line.manual} />}
+              whyKey={line.key}
+              explanation={line.explanation}
+            />
+          ))}
+        </>
+      ) : null}
+
+      <Card
+        tone="tint"
+        radius="tint"
+        data-row="net"
+        className="mt-0.5 flex flex-col gap-2 px-3 py-2.25"
+      >
+        <div className="flex items-center justify-between gap-2.5">
+          <span className="flex min-w-0 items-center gap-1.75">
+            <span dir="auto" className="text-[16px] font-semibold text-balance">
+              {bottomFigure(transfers).label}
+            </span>
+            <WhyButton
+              controls="why-total"
+              open={openWhy === "total"}
+              onToggle={() => onToggleWhy("total")}
+            />
+          </span>
+          <MoneyValue agorot={result.net} size="lg" chip="plain" className="flex-none" />
+        </div>
+        <WhyPanel
+          id="why-total"
+          open={openWhy === "total"}
+          explanation={bottomFigure(transfers).explanation}
+          within="tint"
+        />
+      </Card>
+
+      <div className="mt-0.5 flex flex-col gap-2 border-t border-line pt-2.5">
+        {thirdPartySubtotal ? (
+          <MoneyRow
+            {...why}
+            label={thirdPartySubtotal.label}
+            value={<MoneyValue agorot={thirdPartySubtotal.amount} chip="warm" />}
+            whyKey="subtotal-H"
+            explanation={thirdPartySubtotal.explanation}
+          />
+        ) : null}
+        <MoneyRow
+          {...why}
+          label={he.sheet.reporting.nationalInsuranceEstimate}
+          value={<MoneyValue agorot={result.nationalInsuranceEstimate} chip="warm" />}
+          whyKey="nationalInsuranceEstimate"
+          explanation={{
+            text: he.sheet.why.nationalInsuranceEstimate,
+            link: "nationalInsurance",
+          }}
+        />
+      </div>
+    </Card>
   );
 }

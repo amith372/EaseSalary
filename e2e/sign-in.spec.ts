@@ -43,7 +43,7 @@ test.describe("signed out", () => {
   test("every screen redirects to the sign-in screen", async ({ page }) => {
     // Four addresses from four different stages, so this catches a route added
     // later that answered before the proxy rather than behind it.
-    for (const address of ["/", "/month", "/workers", "/reports"]) {
+    for (const address of ["/", "/payments", "/workers", "/reports"]) {
       await page.goto(address);
       await expect(page).toHaveURL(/\/sign-in$/);
       await expect(page.getByRole("heading", { name: he.signIn.signInTitle })).toBeVisible();

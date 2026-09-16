@@ -492,7 +492,9 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
         </section>
 
         <section className="flex flex-wrap items-center gap-5.5 border-t border-line pt-6">
-          <Link href="/month" className="text-[17px] font-medium">
+          {/* Back to the calendar and the figures, which are the opening
+              screen's since 2026-09-16 — this sheet is one link further in. */}
+          <Link href="/" className="text-[17px] font-medium">
             <Bidi>{he.payslip.correct}</Bidi>
           </Link>
           <Link

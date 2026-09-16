@@ -1,9 +1,10 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { switchToTestWorker, openSettingsForTestWorker } from "./household";
-import { FRIDAY, SATURDAY } from "../src/lib/dates";
+import { FRIDAY, SATURDAY, monthOf } from "../src/lib/dates";
 import { fullDayLabel } from "../src/lib/dateLabels";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
+import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The worker's profile through the browser — the four things step 9 exists to
@@ -63,6 +64,50 @@ function row(page: Page, key: string) {
 }
 
 /**
+ * One month's payslip, showing the worker the spec is on.
+ *
+ * **A term's effect is read off the sheet and not off the opening screen**
+ * (specs.md item 5): the rest-eve supplement and a standing line are lines
+ * behind the ‏ברוטו‎, and the card beside the calendar summarises rather than
+ * itemising. Both were drawn on `/month` until 2026-09-16. `switch` is the
+ * caller's, because the known household holds one worker and has nothing to
+ * step to.
+ */
+async function openPayslip(
+  page: Page,
+  month: string,
+  options: { switch?: boolean } = {},
+): Promise<void> {
+  await page.goto(`/month/payslip?month=${month}`);
+  if (options.switch) await switchToTestWorker(page);
+}
+
+/** The same, for the demo household, which has two workers to step between. */
+async function openPayslipForTestWorker(
+  page: Page,
+  month: string,
+): Promise<void> {
+  await openPayslip(page, month, { switch: true });
+}
+
+/** August 2025 — the month Part 4 states every figure of. */
+const AUGUST_2025 = "2025-08";
+
+/** The month the demo household opens on, as `YYYY-MM`. Read off the clock
+ * rather than written here, so the spec does not pin itself to one month. */
+function thisMonth(): string {
+  const { year, month } = monthOf(todayInIsrael());
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+/** Every line the *profile's* standing lines put on the sheet. `userLineKey`
+ * builds the key as `standing.<id>` and the id is minted by the store, so the
+ * prefix is the whole of what a test can name. */
+function standingLines(page: Page) {
+  return page.locator('[data-row^="standing."]');
+}
+
+/**
  * Wait until the change reaching the store has come back.
  *
  * **This is not a sleep and it is not flake management.** The profile and the
@@ -106,14 +151,15 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
     // The known household, because Part 4 states its rest-eve figure outright:
     // ₪500 across the five Fridays of August 2025.
     await useHousehold(page, "known", "restday");
-    await page.goto("/month");
 
+    await openPayslip(page, AUGUST_2025);
     await expect(row(page, "restEveSupplement")).toContainText(
       formatAgorot(
         AUGUST_2025_REST_EVES_AS_SATURDAY_RESTER * REST_EVE_SUPPLEMENT,
       ),
     );
     // Her rest day is Saturday, so the calendar's own legend says so.
+    await page.goto("/");
     await expect(
       page.getByText(he.calendar.marks(SATURDAY).freeRestDay, { exact: true }),
     ).toBeVisible();
@@ -139,7 +185,7 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
     // **The calendar redraws.** A Friday-resting worker's free rest day is not
     // called "שבת חופשית", and the legend is where the wording is drawn from
     // her own day rather than from a constant (item 5).
-    await page.goto("/month");
+    await page.goto("/");
     await expect(
       page.getByText(he.calendar.marks(FRIDAY).freeRestDay, { exact: true }),
     ).toBeVisible();
@@ -152,6 +198,7 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
     // from ₪500 to ₪400 while nothing else about the month changed. That is the
     // failure this catches: a rest day the profile stores and the calendar
     // draws, with the figures still counted against Saturday.
+    await openPayslip(page, AUGUST_2025);
     await expect(row(page, "restEveSupplement")).toContainText(
       formatAgorot(AUGUST_2025_REST_EVES_AS_FRIDAY_RESTER * REST_EVE_SUPPLEMENT),
     );
@@ -168,11 +215,12 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
   }) => {
     await useHousehold(page, "demo", "standing");
 
-    // Before: the month draws no summarised user-lines row at all, because the
-    // demo household's September holds none.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await expect(row(page, "userLines-beforeGross")).toHaveCount(0);
+    // Before: the month's sheet carries no standing line at all, because the
+    // demo household's September holds none. Matched on the key's prefix, which
+    // is how `userLineKey` addresses one — the id is the store's to give, so
+    // the test cannot name it (`engine/month.ts`).
+    await openPayslipForTestWorker(page, thisMonth());
+    await expect(standingLines(page)).toHaveCount(0);
 
     await openSettingsForTestWorker(page);
     const standing = page.locator('[data-terms="standing"]');
@@ -197,11 +245,11 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
 
     // **It reaches the month, at the amount it was set at** (item 20: it
     // "appears in every month afterwards, at the same amount"). An addition
-    // sits before the month's total by default, which is where the summarised
-    // row is drawn.
-    await page.goto("/month");
-    await switchToTestWorker(page);
-    await expect(row(page, "userLines-beforeGross")).toContainText(
+    // sits before the month's total by default, so it is a line of column E on
+    // the sheet — where the payslip itemises what the opening screen sums into
+    // the ‏ברוטו‎ (item 5).
+    await openPayslipForTestWorker(page, thisMonth());
+    await expect(standingLines(page)).toContainText(
       formatAgorot(STANDING_AGOROT),
     );
 
