@@ -35,7 +35,7 @@ export default async function PayslipPage() {
   const household: WorkerPayslip[] = await Promise.all(
     workers.map(async (profile) => {
       const stored = await repository.listMonths(profile.id);
-      const series = calculateSeries(stored, profile, today);
+      const series = calculateSeries(stored, profile, today, await repository.listRates());
       // What is still owed after every month, which is a figure that carries
       // across the whole employment rather than sitting in one of them. The
       // payments screen walks the same ledger.

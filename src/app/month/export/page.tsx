@@ -5,6 +5,7 @@ import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { getRepository } from "@/lib/store";
 import { salaryFor } from "@/lib/engine/salary";
+import { calculateSeries } from "@/lib/engine/series";
 import {
   blocksExport,
   exportQuestions,
@@ -75,7 +76,15 @@ export default async function BeforeExportPage() {
 
   const household: WorkerBeforeExport[] = await Promise.all(
     workers.map(async (profile) => {
-      const months = await repository.listMonths(profile.id);
+      // The replay's months and not the stored ones: a month nobody opened is
+      // exported like any other (specs.md item 6, Part 3), and confirming it is
+      // what opens it.
+      const series = calculateSeries(
+        await repository.listMonths(profile.id),
+        profile,
+        today,
+        rates,
+      );
       return {
         worker: {
           id: profile.id,
@@ -83,7 +92,8 @@ export default async function BeforeExportPage() {
           firstName: profile.firstName,
         },
         restDay: profile.restDay,
-        months: months.map((facts) => ({
+        firstMonth: profile.firstMonth,
+        months: series.map(({ facts }) => ({
           month: facts.month,
           confirmedWage: facts.confirmedWage,
           baseMonthlySalaryAgorot: salaryFor(profile, facts.month),

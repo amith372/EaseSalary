@@ -476,7 +476,8 @@ describe("opening a month the store has no record of (specs.md item 21)", () => 
   it("opens a month holding nothing but the position it opens from", async () => {
     // Part 5: a month that only holds facts is a draft, and a draft opened by a
     // mark has no advance, no third-party payment, no line of the user's own,
-    // no override, and income tax at zero (item 17).
+    // no override, and no confirmed income tax, so the engine works the tax
+    // out as for any month not yet confirmed (item 17).
     const opened = openMonthRecord(HANNA, APRIL, NEW_WAGE);
     expect(opened).toEqual({
       month: APRIL,
@@ -485,9 +486,9 @@ describe("opening a month the store has no record of (specs.md item 21)", () => 
       advances: [],
       thirdPartyPayments: [],
       userLines: [],
-      incomeTaxAgorot: 0,
       overrides: {},
     });
+    expect(opened).not.toHaveProperty("incomeTaxAgorot");
   });
 
   it("snapshots the terms so the month keeps what it was calculated with", async () => {

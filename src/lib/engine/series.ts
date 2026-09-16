@@ -1,12 +1,18 @@
-import { compareMonth } from "@/lib/dates";
+import { SEEDED_RATES } from "@/lib/datedRates";
+import type { DatedRate } from "@/lib/datedRates";
+import { compareMonth, eachMonth, monthOf, yearMonthText } from "@/lib/dates";
 import { holidayDaysOf } from "@/lib/engine/leave";
 import { calculateMonth } from "@/lib/engine/month";
+import { openMonthRecord, wageToCarry } from "@/lib/engine/repository";
 import { closeMonth } from "@/lib/engine/types";
 import type {
   Employment,
   MonthContext,
   MonthFacts,
+  MonthSpan,
+  WorkerTerms,
 } from "@/lib/engine/types";
+import { overlapsMonth } from "@/lib/spans";
 import type { IsoDate, MonthResult, YearMonth } from "@/lib/types";
 
 /**
@@ -59,6 +65,63 @@ export class DuplicateMonthError extends Error {
   }
 }
 
+/**
+ * A month earlier than the worker's first month (specs.md item 6). No such
+ * month can be opened, and one handed to the walk anyway has nothing to open
+ * from: the opening position is the first month's.
+ */
+export class MonthBeforeFirstMonthError extends Error {
+  constructor(
+    readonly month: YearMonth,
+    readonly firstMonth: YearMonth,
+  ) {
+    super(
+      `The month ${yearMonthText(month)} is before the first month ${yearMonthText(firstMonth)}`,
+    );
+    this.name = "MonthBeforeFirstMonthError";
+  }
+}
+
+/** Every span the opened months carry, once each. The store hands a spell to
+ * every month it touches, so the same span arrives more than once. */
+function everySpan(months: MonthFacts[]): MonthSpan[] {
+  const byId = new Map<string, MonthSpan>();
+  for (const facts of months) {
+    for (const span of facts.spans) byId.set(span.id, span);
+  }
+  return [...byId.values()];
+}
+
+/**
+ * A month nobody opened, as the walk values it (specs.md Part 3): exactly the
+ * record `openMonthRecord` would open it with, at the wage `wageToCarry` finds
+ * for it — the same two functions an action opens a month with, so opening it
+ * changes nothing about it.
+ *
+ * **It holds the spans that reach into it**, which is what the store would have
+ * handed it had it been opened: a sick spell nobody closed keeps running into
+ * the months after the one it was marked in.
+ */
+function unopenedMonth(
+  month: YearMonth,
+  worker: WorkerTerms,
+  opened: MonthFacts[],
+  spans: MonthSpan[],
+  rates: DatedRate[],
+): MonthFacts {
+  const confirmedWage = wageToCarry(opened, month, worker, rates);
+  if (confirmedWage === null) {
+    // Only a worker with no opened month and no minimum wage on record for
+    // this month; the seeded table begins in April 2025 and every first month
+    // the wizard offers is later than that.
+    throw new Error(`No wage is known for ${yearMonthText(month)}`);
+  }
+  return {
+    ...openMonthRecord(worker, month, confirmedWage),
+    spans: spans.filter((span) => overlapsMonth(span, month)),
+  };
+}
+
 /** The vacation days the month drew, read off the balance line rather than
  * counted again here. Counting them a second time would be a second path to one
  * figure, and the two would disagree the day either is corrected. */
@@ -80,10 +143,18 @@ function closingBalances(result: MonthResult) {
  * balances that are merely wrong, which is exactly the failure this application
  * is written to make impossible rather than to make unlikely.
  *
- * It walks the months it is given and invents none. A gap in the history is a
- * month that was never recorded, and a month that never happened accrued
- * nothing: the accrual is a fact about a month that was worked, not about a
- * hole in a list.
+ * **It walks every month from the worker's first month** (specs.md item 6,
+ * Part 3), to today's month when `today` is given and otherwise to the last
+ * month it was handed. A month nobody opened is an ordinary month and accrues
+ * like any other — `unopenedMonth` says what it holds — and a month after
+ * today's is not valued at all, even where marks were already made in it
+ * (item 21). The profile is taken whole for that one purpose: a month nobody
+ * opened has no terms of its own, so it is valued at the profile's, while every
+ * month that was opened is still read off its own.
+ *
+ * `rates` is the household's dated-rates table, which a month nobody opened
+ * takes its wage from; an action opening a month reads the same table, so the
+ * two agree. Left out, the seeded table is read.
  *
  * A refused month stops the walk, and the `InvalidMonthError` says which month
  * it was. That is not a limitation to work around: a month that cannot be
@@ -92,8 +163,9 @@ function closingBalances(result: MonthResult) {
  */
 export function calculateSeries(
   months: MonthFacts[],
-  employment: Employment,
+  worker: WorkerTerms & Employment,
   today?: IsoDate,
+  rates: DatedRate[] = SEEDED_RATES,
 ): MonthInSeries[] {
   const ordered = [...months].sort((a, b) => compareMonth(a.month, b.month));
   for (let i = 1; i < ordered.length; i += 1) {
@@ -101,18 +173,33 @@ export function calculateSeries(
       throw new DuplicateMonthError(ordered[i].month);
     }
   }
+  const first = worker.firstMonth;
+  if (ordered.length > 0 && compareMonth(ordered[0].month, first) < 0) {
+    throw new MonthBeforeFirstMonthError(ordered[0].month, first);
+  }
+
+  const last = today !== undefined ? monthOf(today) : ordered.at(-1)?.month;
+  if (last === undefined || compareMonth(first, last) > 0) return [];
+
+  const opened = new Map(ordered.map((facts) => [yearMonthText(facts.month), facts]));
+  const spans = everySpan(ordered);
 
   let openingBalances: MonthContext["openingBalances"];
-  let year: number | null = null;
-  let vacationDaysEarlierInYear = 0;
-  let holidayDaysEarlierInYear = 0;
+  let year = first.year;
+  let vacationDaysEarlierInYear = worker.openingPosition.vacationUsedThisYear;
+  let holidayDaysEarlierInYear = worker.openingPosition.holidayUsedThisYear;
 
-  return ordered.map((facts) => {
-    if (facts.month.year !== year) {
-      year = facts.month.year;
+  return eachMonth(first, last).map((month) => {
+    const facts =
+      opened.get(yearMonthText(month)) ??
+      unopenedMonth(month, worker, ordered, spans, rates);
+    if (month.year !== year) {
+      year = month.year;
       vacationDaysEarlierInYear = 0;
       holidayDaysEarlierInYear = 0;
     }
+
+    const employment: Employment = worker;
 
     const result = calculateMonth(facts, employment, {
       today,

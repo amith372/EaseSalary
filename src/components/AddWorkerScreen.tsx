@@ -7,14 +7,31 @@ import { createWorker } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Chip } from "@/components/Chip";
 import { LogoMark } from "@/components/icons";
-import type { RestDay } from "@/lib/dates";
-import type { IsoDate } from "@/lib/types";
 import {
+  addMonths,
+  compareMonth,
+  eachMonth,
+  monthOf,
+  parseYearMonth,
+  sameMonth,
+  yearMonthText,
+} from "@/lib/dates";
+import type { RestDay } from "@/lib/dates";
+import { monthLabel } from "@/lib/dateLabels";
+import type { IsoDate, YearMonth } from "@/lib/types";
+import {
+  asksOpeningPosition,
+  asksRecuperationPaid,
+  firstMonthChoices,
   restDayChoices,
+  reviewEmployedSince,
   reviewNewWorker,
   type NewWorkerDraft,
   type NewWorkerRefusal,
+  type OpeningDraft,
 } from "@/lib/engine/profile";
+import { paymentMonthBeforeFirstMonth } from "@/lib/engine/recuperation";
+import { legalLink, type LegalLinkKey } from "@/lib/links";
 import { genders, incomeTaxModes } from "@/lib/engine/types";
 import type { Gender, IncomeTaxMode } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
@@ -44,18 +61,15 @@ import { formatAgorot } from "@/lib/money";
  * agree today.
  *
  * **Three departures from the artboard, each because the drawing asks for
- * something the application has no field for.** The artboard marks the country
- * optional and it cannot be — it is where her holiday list comes from, and a
- * worker without one would be offered no list at all. Its step 2 offers a
- * choice between calculating "from this month" and "from the start of the
- * employment", which corresponds to nothing that is stored: months are created
- * as the family fills them in, and the opening position is item 6's and has its
- * own control on her page. The recuperation month stands in that place instead,
- * because `specs.md` item 15 says in as many words that it is set on the
- * profile when the worker is created. And its step 3 asks for a medical
- * insurance *premium*, which is not a term of the employment anywhere in the
- * spec; item 16's `insurer` — who the premium is paid *through* — is, and is
- * what the sheet actually prints.
+ * something the spec does not.** The artboard marks the country optional and it
+ * cannot be — it is where her holiday list comes from, and a worker without one
+ * would be offered no list at all. Its step 2 offers calculating "from this
+ * month" or "from the start of the employment"; item 6 offers this month or the
+ * month before, never earlier than the employment, and asks for the opening
+ * position in the same step when the employment began before the first month.
+ * And its step 3 asks for a medical insurance *premium*, which is not a term of
+ * the employment anywhere in the spec; item 16's `insurer` — who the premium is
+ * paid *through* — is, and is what the sheet actually prints.
  */
 
 /** How many steps there are, and which field belongs to which. A refusal names
@@ -74,6 +88,12 @@ const STEP_OF: Record<NewWorkerRefusal, number> = {
   supplement: 2,
   incomeTaxMode: 2,
   incomeTaxRate: 2,
+  firstMonth: 1,
+  openingDays: 1,
+  openingUsed: 1,
+  recuperationPaid: 1,
+  recuperationPaidIn: 1,
+  openingAdvance: 1,
 };
 
 const LAST_STEP = 3;
@@ -125,6 +145,18 @@ export function AddWorkerScreen({
     insurer: "",
     incomeTaxMode: "automatic",
     incomeTaxPercentage: "",
+    firstMonth: "",
+    // Zero opens every count, as on her page: a family with nothing accrued
+    // needs to type nothing.
+    opening: {
+      vacationDays: "0",
+      sickDays: "0",
+      vacationUsedThisYear: "0",
+      holidayUsedThisYear: "0",
+      recuperationPaid: null,
+      recuperationPaidIn: "",
+      advances: [],
+    },
   }));
 
   /**
@@ -158,9 +190,32 @@ export function AddWorkerScreen({
    * moment it is touched. */
   const [shown, setShown] = useState(false);
 
+  /**
+   * **The first month the draft carries is always one the start date allows.**
+   * A choice made before the date was corrected may no longer be offered, and
+   * then the first of the new choices stands — the one a single choice would
+   * have been — rather than a refusal about a control that is not drawn.
+   */
+  const plan = useMemo(() => wizardPlan(draft, today), [draft, today]);
+  const effective = useMemo<NewWorkerDraft>(
+    () => ({
+      ...draft,
+      firstMonth: plan ? yearMonthText(plan.firstMonth) : draft.firstMonth,
+      opening: {
+        ...draft.opening,
+        // The payment month opens at the month it was due.
+        recuperationPaidIn:
+          draft.opening.recuperationPaidIn === "" && plan?.paymentMonth
+            ? yearMonthText(plan.paymentMonth)
+            : draft.opening.recuperationPaidIn,
+      },
+    }),
+    [draft, plan],
+  );
+
   const reviewed = useMemo(
-    () => reviewNewWorker(draft, minimumWageAgorot, today),
-    [draft, minimumWageAgorot, today],
+    () => reviewNewWorker(effective, minimumWageAgorot, today),
+    [effective, minimumWageAgorot, today],
   );
 
   /** The refusal this step is responsible for, or none. A refusal belonging to
@@ -201,7 +256,7 @@ export function AddWorkerScreen({
     // Step 2 to step 3 is the save. Everything is reviewed again on the server,
     // which is where the rule actually holds.
     startSaving(async () => {
-      const saved = await createWorker(draft);
+      const saved = await createWorker(effective);
       if (!saved.ok) {
         setShown(true);
         setFailedToSave(true);
@@ -263,7 +318,8 @@ export function AddWorkerScreen({
           {step === 1 ? (
             <WhenStep
               headingRef={heading}
-              draft={draft}
+              draft={effective}
+              plan={plan}
               change={change}
               chooseMonth={() => setMonthChosen(true)}
               refusalFor={refusalFor}
@@ -560,15 +616,86 @@ function WhoStep({
   );
 }
 
+/**
+ * What step 2 asks beyond its three fields, worked out from the draft: the
+ * first months the start date allows and the one chosen, whether the opening
+ * position is asked, and whether the recuperation question is. `null` until
+ * the start date is a date the wizard accepts.
+ */
+interface WizardPlan {
+  choices: YearMonth[];
+  firstMonth: YearMonth;
+  asksOpening: boolean;
+  asksUsed: boolean;
+  asksRecuperation: boolean;
+  /** The month the payment fell due, when it fell before the first month. */
+  paymentMonth: YearMonth | null;
+  /** The months a payment could have been made in, newest first. */
+  paidInChoices: YearMonth[];
+}
+
+function wizardPlan(draft: NewWorkerDraft, today: IsoDate): WizardPlan | null {
+  const employedSince = reviewEmployedSince(draft.employedSince, today);
+  if (employedSince === "invalid" || employedSince === "range" || employedSince === "afterFirstMonth") {
+    return null;
+  }
+  const choices = firstMonthChoices(employedSince, today);
+  const typed = parseYearMonth(draft.firstMonth);
+  const firstMonth =
+    (typed && choices.find((choice) => sameMonth(choice, typed))) ?? choices[0];
+  const recuperationMonth = Number(draft.recuperationMonth);
+  const asksOpening = asksOpeningPosition(employedSince, firstMonth);
+  const asksRecuperation =
+    asksOpening && asksRecuperationPaid(employedSince, recuperationMonth, firstMonth);
+  // The year before the first month, and never before the employment: the
+  // payment asked about is the running employment year's.
+  const earliest = addMonths(firstMonth, -12);
+  const hired = monthOf(employedSince);
+  return {
+    choices,
+    firstMonth,
+    asksOpening,
+    asksUsed: asksOpening && firstMonth.month > 1,
+    asksRecuperation,
+    paymentMonth: asksRecuperation
+      ? paymentMonthBeforeFirstMonth(employedSince, recuperationMonth, firstMonth)
+      : null,
+    paidInChoices: eachMonth(
+      compareMonth(hired, earliest) > 0 ? hired : earliest,
+      addMonths(firstMonth, -1),
+    ).reverse(),
+  };
+}
+
+/** "דמי הבראה — באתר כל זכות", the rule a question asks about (item 26). */
+function RuleLink({ rule }: { rule: LegalLinkKey }) {
+  const link = legalLink(rule);
+  return (
+    <a
+      href={link.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      dir="auto"
+      className="text-[14px] font-medium text-forest hover:underline hover:underline-offset-[3px]"
+    >
+      <span>{link.label}</span>
+      <span> — </span>
+      <span>{he.why.linkSuffix}</span>
+    </a>
+  );
+}
+
 function WhenStep({
   headingRef,
   draft,
+  plan,
   change,
   chooseMonth,
   refusalFor,
 }: {
   headingRef: HeadingRef;
   draft: NewWorkerDraft;
+  plan: WizardPlan | null;
   change: Change;
   /** Said when the family picks a month themselves, after which the suggestion
    * stops following the start date. */
@@ -652,8 +779,229 @@ function WhenStep({
         >
           {words.recuperationMonthAdvice}
         </p>
+
+        {plan && plan.choices.length > 1 ? (
+          <ChoiceGroup
+            label={words.firstMonth}
+            hint={words.firstMonthHint}
+            refusal={refusalFor("firstMonth")}
+            data-choice="firstMonth"
+          >
+            {plan.choices.map((choice) => (
+              <Chip
+                key={yearMonthText(choice)}
+                selected={sameMonth(choice, plan.firstMonth)}
+                onClick={() => change({ firstMonth: yearMonthText(choice) })}
+              >
+                <Bidi>{monthLabel(choice)}</Bidi>
+              </Chip>
+            ))}
+          </ChoiceGroup>
+        ) : null}
       </section>
+
+      {plan?.asksOpening ? (
+        <OpeningQuestions
+          opening={draft.opening}
+          plan={plan}
+          change={(over) => change({ opening: { ...draft.opening, ...over } })}
+          refusalFor={refusalFor}
+        />
+      ) : null}
     </>
+  );
+}
+
+/**
+ * The opening position (specs.md item 6), asked in the same step when the
+ * employment began before the first month. Each question links to its rule.
+ */
+function OpeningQuestions({
+  opening,
+  plan,
+  change,
+  refusalFor,
+}: {
+  opening: OpeningDraft;
+  plan: WizardPlan;
+  change: (over: Partial<OpeningDraft>) => void;
+  refusalFor: RefusalFor;
+}) {
+  const words = he.addWorker.when.opening;
+  const advanceWords = he.workers.profile.terms.opening;
+  const daysInput = (value: string, onChange: (text: string) => void, field: string, refused: boolean) => (
+    <input
+      type="text"
+      inputMode="decimal"
+      dir="ltr"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className={`${INPUT} text-start`}
+      aria-invalid={refused}
+      data-field={field}
+    />
+  );
+  const daysRefusal = refusalFor("openingDays");
+  const usedRefusal = refusalFor("openingUsed");
+
+  return (
+    <section
+      className="flex flex-col gap-5.5 border-t border-line pt-7"
+      data-role="opening-position"
+    >
+      <div className="flex flex-col gap-1.5">
+        <h2 dir="auto" className="text-[22px] font-semibold">
+          {words.title}
+        </h2>
+        <p dir="auto" className="text-[16px] font-light text-pretty text-ink-mute">
+          {words.lead}
+        </p>
+      </div>
+
+      <Field label={words.vacationDays} hint={words.balanceHint} refusal={daysRefusal}>
+        {daysInput(opening.vacationDays, (text) => change({ vacationDays: text }), "openingVacationDays", daysRefusal !== null)}
+      </Field>
+      <RuleLink rule="annualLeave" />
+
+      <Field label={words.sickDays} hint={words.balanceHint} refusal={daysRefusal}>
+        {daysInput(opening.sickDays, (text) => change({ sickDays: text }), "openingSickDays", daysRefusal !== null)}
+      </Field>
+      <RuleLink rule="sickPay" />
+
+      {plan.asksUsed ? (
+        <>
+          <Field label={words.vacationUsed} hint={words.usedHint} refusal={usedRefusal}>
+            {daysInput(opening.vacationUsedThisYear, (text) => change({ vacationUsedThisYear: text }), "openingVacationUsed", usedRefusal !== null)}
+          </Field>
+          <RuleLink rule="annualLeave" />
+
+          <Field label={words.holidayUsed} hint={words.usedHint} refusal={usedRefusal}>
+            {daysInput(opening.holidayUsedThisYear, (text) => change({ holidayUsedThisYear: text }), "openingHolidayUsed", usedRefusal !== null)}
+          </Field>
+          <RuleLink rule="holidayWork" />
+        </>
+      ) : null}
+
+      {plan.asksRecuperation ? (
+        <>
+          <ChoiceGroup
+            label={words.recuperationPaid}
+            hint={words.recuperationPaidHint}
+            refusal={refusalFor("recuperationPaid")}
+            data-choice="recuperationPaid"
+          >
+            {([true, false] as const).map((answer) => (
+              <Chip
+                key={String(answer)}
+                selected={opening.recuperationPaid === answer}
+                onClick={() => change({ recuperationPaid: answer })}
+              >
+                <span dir="auto">{answer ? words.yes : words.no}</span>
+              </Chip>
+            ))}
+          </ChoiceGroup>
+          {opening.recuperationPaid === true ? (
+            <Field label={words.recuperationPaidIn} refusal={refusalFor("recuperationPaidIn")}>
+              <select
+                value={opening.recuperationPaidIn}
+                onChange={(event) => change({ recuperationPaidIn: event.target.value })}
+                className={INPUT}
+                data-field="recuperationPaidIn"
+              >
+                {plan.paidInChoices.map((choice) => (
+                  <option key={yearMonthText(choice)} value={yearMonthText(choice)}>
+                    {monthLabel(choice)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          ) : null}
+          <RuleLink rule="recuperation" />
+        </>
+      ) : null}
+
+      <fieldset className="flex flex-col gap-2" data-choice="openingAdvances">
+        <legend dir="auto" className="text-[17px] font-semibold">
+          {words.advances}
+        </legend>
+        <p dir="auto" className="text-[15px] font-light text-pretty text-ink-soft">
+          {words.advancesHint}
+        </p>
+        {opening.advances.map((advance, index) => (
+          <div
+            key={index}
+            data-opening-advance={index + 1}
+            className="mt-1 flex flex-col gap-3 rounded-card-sm border border-line px-4 py-3.5"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span dir="auto" className="text-[16px] font-medium">
+                {words.advanceName(index + 1)}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  change({ advances: opening.advances.filter((_, at) => at !== index) })
+                }
+                className="text-[14px] font-medium text-ink-mute transition-colors hover:text-clay-deep"
+              >
+                <span dir="auto">{advanceWords.remove}</span>
+              </button>
+            </div>
+            <Field label={advanceWords.principal} refusal={null}>
+              <input
+                type="text"
+                inputMode="decimal"
+                dir="ltr"
+                value={advance.principal}
+                placeholder={he.placeholder.amountInput}
+                onChange={(event) =>
+                  change({
+                    advances: opening.advances.map((each, at) =>
+                      at === index ? { ...each, principal: event.target.value } : each,
+                    ),
+                  })
+                }
+                className={`${INPUT} text-start`}
+                data-field="openingAdvancePrincipal"
+              />
+            </Field>
+            <Field label={advanceWords.repaid} hint={advanceWords.repaidHint} refusal={null}>
+              <input
+                type="text"
+                inputMode="decimal"
+                dir="ltr"
+                value={advance.repaid}
+                placeholder={he.placeholder.amountInput}
+                onChange={(event) =>
+                  change({
+                    advances: opening.advances.map((each, at) =>
+                      at === index ? { ...each, repaid: event.target.value } : each,
+                    ),
+                  })
+                }
+                className={`${INPUT} text-start`}
+                data-field="openingAdvanceRepaid"
+              />
+            </Field>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() =>
+            change({ advances: [...opening.advances, { principal: "", repaid: "", note: "" }] })
+          }
+          className="mt-1 self-start text-[15px] font-medium text-forest hover:underline hover:underline-offset-4"
+        >
+          <span dir="auto">{advanceWords.addAdvance}</span>
+        </button>
+        {refusalFor("openingAdvance") ? (
+          <p dir="auto" role="alert" className="text-[14px] text-clay-deep">
+            {refusalFor("openingAdvance")}
+          </p>
+        ) : null}
+        <RuleLink rule="wageDeductions" />
+      </fieldset>
+    </section>
   );
 }
 

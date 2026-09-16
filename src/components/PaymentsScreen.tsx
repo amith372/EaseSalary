@@ -6,9 +6,9 @@ import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { TwoToneIcon } from "@/components/icons";
 import { MonthActions, type MonthSection } from "@/components/MonthActions";
-import { MonthStepper, openingMonthOf } from "@/components/MonthStepper";
+import { MonthStepper, notBefore, openingMonthOf } from "@/components/MonthStepper";
 import { useWorkerScope } from "@/components/WorkerScope";
-import { sameMonth } from "@/lib/dates";
+import { compareMonth, monthOf, sameMonth } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
 import type { AdvanceStanding } from "@/lib/engine/advances";
 import type { OrphanedOverride } from "@/lib/engine/overrides";
@@ -79,7 +79,9 @@ export interface MonthPayments {
  * what is still owed on each advance. */
 export interface WorkerPayments {
   worker: Worker;
-  /** Oldest first. */
+  /** Where the month arrows stop (specs.md item 6). */
+  firstMonth: YearMonth;
+  /** Oldest first: every month from her first to the current one. */
   months: MonthPayments[];
   advances: AdvanceStanding[];
 }
@@ -93,7 +95,7 @@ interface PaymentsScreenProps {
 
 export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   const { worker } = useWorkerScope();
-  const [month, setMonth] = useState<YearMonth>(() =>
+  const [chosenMonth, setMonth] = useState<YearMonth>(() =>
     openingMonthOf(
       household.flatMap((entry) =>
         entry.months.map(({ record }) => record.month),
@@ -108,6 +110,10 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   const entry =
     household.find((candidate) => candidate.worker.id === worker.id) ??
     household[0];
+  // Never a month before hers (specs.md item 6), as on the opening screen.
+  const month = notBefore(chosenMonth, entry.firstMonth);
+  // A month ahead is not valued, and nothing can be entered in it yet.
+  const future = compareMonth(month, monthOf(today)) > 0;
   const shown = entry.months.find(({ record }) =>
     sameMonth(record.month, month),
   );
@@ -189,7 +195,12 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
               <Bidi>{monthLabel(month)}</Bidi>
             </span>
           </span>
-          <MonthStepper month={month} today={today} onMonthChange={setMonth} />
+          <MonthStepper
+            month={month}
+            today={today}
+            earliest={entry.firstMonth}
+            onMonthChange={setMonth}
+          />
         </div>
       </div>
 
@@ -226,6 +237,12 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
             openSections={openSections}
             onToggleSection={toggleSection}
           />
+        ) : future ? (
+          <Card className="flex flex-none flex-col px-4.5 py-3">
+            <p dir="auto" className="text-[17px] leading-[1.5] font-semibold">
+              {he.month.future}
+            </p>
+          </Card>
         ) : (
           <Card className="flex flex-none flex-col gap-1.5 px-4.5 py-3">
             <span dir="auto" className="text-[17px] font-semibold">

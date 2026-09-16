@@ -67,6 +67,8 @@ function facts(overrides: Partial<MonthFacts> = {}): MonthFacts {
 
 const EMPLOYMENT = {
   employedSince: HANNA,
+  // The workbook's first month (`workbook.fixture.ts`).
+  firstMonth: { year: 2025, month: 4 },
   gender: "female",
   openingPosition: workbookWorker(0).openingPosition,
 } as const;
@@ -534,7 +536,11 @@ describe("the two figures the month has to have confirmed", () => {
    * built on top of it is silent rather than merely showing a zero.
    */
   it("asks nothing before a full working year has been completed", () => {
-    const firstYear = { ...EMPLOYMENT, employedSince: "2025-06-01" as const };
+    const firstYear = {
+      ...EMPLOYMENT,
+      employedSince: "2025-06-01" as const,
+      firstMonth: { year: 2025, month: 6 },
+    };
 
     // Nine months in: the first year closes at the end of 31 May 2026.
     expect(

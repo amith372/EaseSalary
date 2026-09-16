@@ -13,6 +13,11 @@ import {
   spellEndFromReturn,
 } from "@/lib/engine/beforeExport";
 import { recordOf } from "@/lib/engine/repository";
+import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
+import { lineKeys } from "@/lib/engine/lines";
+import { calculateSeries } from "@/lib/engine/series";
+import { compareMonth, monthOf as monthOfDate, sameMonth } from "@/lib/dates";
+import { openMonthIfMissing } from "@/lib/openMonth";
 import { parseShekels } from "@/lib/money";
 import { todayInIsrael } from "@/lib/today";
 import type { IsoDate, YearMonth } from "@/lib/types";
@@ -56,11 +61,18 @@ function revalidateMonth(): void {
 
 /** Asked about a worker or a month the store does not have. Actions are
  * reachable by a crafted request, so both are checked rather than assumed —
- * stage 3 adds the household check beside them. */
+ * stage 3 adds the household check beside them.
+ *
+ * A month nobody opened is opened here, as it stands in the replay: confirming
+ * is the first fact recorded in it (`openMonthIfMissing`). Only a month that
+ * has begun; a later one cannot be exported yet (item 21). */
 async function monthOf(workerId: string, month: YearMonth) {
   const repository = await getRepository();
   const profile = await repository.getWorker(workerId);
   if (profile === null) throw new Error(`No worker with id ${workerId}`);
+  if (compareMonth(month, monthOfDate(todayInIsrael())) <= 0) {
+    await openMonthIfMissing(repository, profile, month);
+  }
   const facts = await repository.getMonth(workerId, month);
   if (facts === null) {
     throw new Error(`No month ${month.year}-${month.month} for ${workerId}`);
@@ -110,6 +122,38 @@ export async function closeSickSpell(
   });
   revalidateMonth();
   return { ok: true };
+}
+
+/**
+ * The income tax the month is confirmed with (specs.md item 17): what the
+ * engine works out for it now, from the same replay the preview draws.
+ *
+ * **Worked out afresh at every confirmation**, so the figure a correction moved
+ * is the one stored: the month's earlier confirmed figure and any override are
+ * set aside for the calculation. An override still wins on the sheet — it is
+ * kept on the month, and only the figure under it is refreshed.
+ */
+async function taxToConfirm(
+  repository: SalaryRepository,
+  profile: WorkerProfile,
+  month: YearMonth,
+): Promise<number> {
+  const months = (await repository.listMonths(profile.id)).map((facts) => {
+    if (!sameMonth(facts.month, month)) return facts;
+    const { incomeTaxAgorot, ...rest } = facts;
+    void incomeTaxAgorot;
+    const overrides = { ...facts.overrides };
+    delete overrides[lineKeys.incomeTax];
+    return { ...rest, overrides };
+  });
+  const entry = calculateSeries(
+    months,
+    profile,
+    todayInIsrael(),
+    await repository.listRates(),
+  ).find((one) => sameMonth(one.facts.month, month));
+  const line = entry?.result.closing.find((row) => row.key === lineKeys.incomeTax);
+  return Math.abs(line?.amount ?? 0);
 }
 
 /** The figures the confirmation carries. Text, because they are what was typed
@@ -202,6 +246,7 @@ export async function confirmMonth(
 
   await repository.saveMonth(workerId, {
     ...recordOf(facts),
+    incomeTaxAgorot: await taxToConfirm(repository, profile, month),
     // Part 5's *confirmed* event, which `דף המשכורת` prints. Read from the
     // clock here, in the action, and never in the engine or a render.
     confirmedAt: new Date().toISOString(),

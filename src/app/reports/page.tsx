@@ -38,7 +38,7 @@ export default async function ReportsPage() {
   const household: WorkerReports[] = await Promise.all(
     workers.map(async (profile) => {
       const stored = await repository.listMonths(profile.id);
-      const series = calculateSeries(stored, profile, today);
+      const series = calculateSeries(stored, profile, today, await repository.listRates());
       // Newest first, because the two yearly reports open on the latest year
       // the worker has rather than on the current calendar year: a family
       // downloading in January is almost always after the year that just

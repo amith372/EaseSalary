@@ -184,7 +184,9 @@ const secondWorker: WorkerProfile = {
   incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "IN",
-  openingPosition: { vacationDays: 9, sickDays: 24, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
+  // July 2025's recuperation fell before her first month and was paid, so
+  // January carries none of it (specs.md item 15).
+  openingPosition: { vacationDays: 9, sickDays: 24, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: { year: 2025, month: 7 }, advances: [] },
   // Her permit date is the first worker's, and deliberately: the employment
   // permit belongs to the *employer* and a household holds one of them
   // (item 28). Until stage 3 gives the household a record of its own, each

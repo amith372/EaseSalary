@@ -85,13 +85,14 @@ export default async function PaymentsPage() {
       // never stored, so a month calculated alone would open from nothing
       // (item 13).
       const months = await repository.listMonths(profile.id);
-      const series = calculateSeries(months, profile, today);
+      const series = calculateSeries(months, profile, today, await repository.listRates());
       return {
         worker: {
           id: profile.id,
           name: profile.name,
           firstName: profile.firstName,
         },
+        firstMonth: profile.firstMonth,
         months: series.map(({ facts, result }) => ({
           // `recordOf` drops the spans, which belong to the worker and not to a
           // month (`repository.ts`) and which this screen has nothing to say

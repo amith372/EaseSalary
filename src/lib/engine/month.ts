@@ -17,7 +17,7 @@ import { lineKeys, type LineDraft, toLine } from "@/lib/engine/lines";
 // from and where the interface expects to find them.
 export { lineKeys };
 import { deriveRates } from "@/lib/engine/rates";
-import { recuperationDaysFor } from "@/lib/engine/recuperation";
+import { recuperationDaysInMonth } from "@/lib/engine/recuperation";
 import { sickDeductionDays } from "@/lib/engine/sick";
 import {
   nationalInsuranceEstimateOf,
@@ -331,8 +331,8 @@ function buildLines(
   // one comes from a function and the other from a stored figure. Overridable,
   // because item 15 offers the entitlement as a suggestion the user may change
   // before approving, and item 17's override is how a suggestion is changed.
-  const recuperationDays = recuperationDaysFor(
-    employment.employedSince,
+  const recuperationDays = recuperationDaysInMonth(
+    employment,
     facts.terms.recuperationMonth,
     facts.month,
   );

@@ -313,21 +313,22 @@ export function wageToCarry(
 }
 
 /**
- * A month the store had no record of, opened so that a fact can be recorded in
- * it (specs.md item 21).
+ * A month the store had no record of, as the replay values it and as it is
+ * opened so that a fact can be recorded in it (specs.md item 21, Part 3).
  *
  * **It holds nothing but the position it opens from**, which is the whole of
  * what a draft month is (Part 5): no advance, no payment, no line of the user's
- * own, and an income-tax line at zero, because zero is what every month holds
- * until she says otherwise (item 17). The facts arrive afterwards, one gesture
- * at a time, which is what a month created by its first mark means.
+ * own, and no confirmed income tax, so the engine works the tax out as it does
+ * for any month not yet confirmed (item 17). The facts arrive afterwards, one
+ * gesture at a time. The replay builds a month nobody opened from this same
+ * function, which is what makes opening a month change nothing about it.
  *
  * The terms are snapshotted off the profile as they stand now, the way every
  * other month's were: a month keeps the terms it was calculated with and never
  * reads the profile again (Part 3).
  */
 export function openMonthRecord(
-  profile: WorkerProfile,
+  profile: WorkerTerms,
   month: YearMonth,
   confirmedWage: ConfirmedWage,
 ): MonthRecord {
@@ -338,7 +339,6 @@ export function openMonthRecord(
     advances: [],
     thirdPartyPayments: [],
     userLines: [],
-    incomeTaxAgorot: 0,
     overrides: {},
   };
 }

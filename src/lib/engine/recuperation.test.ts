@@ -186,6 +186,9 @@ function marchFacts(overrides: Partial<MonthFacts> = {}): MonthFacts {
 
 const EMPLOYMENT = {
   employedSince: HANNA,
+  // The workbook's first month. Its payment month, March 2026, is not before
+  // it, so nothing is carried into it.
+  firstMonth: { year: 2025, month: 4 },
   gender: "female",
   openingPosition: workbookWorker(0).openingPosition,
 } as const;
@@ -286,5 +289,111 @@ describe("the line the month draws", () => {
     expect(april.warnings.some((w) => w.key === "recuperationRateMissing")).toBe(
       false,
     );
+  });
+});
+
+/**
+ * A payment whose month passed before the worker's first month (item 15): the
+ * opening position says whether it was paid, and an unpaid one is due in the
+ * first month. Every count below is the ladder above, read at the payment
+ * month's last day.
+ */
+describe("a payment that fell before the first month", () => {
+  const september2026 = { year: 2026, month: 9 };
+
+  function firstMonthResult({
+    employedSince,
+    recuperationMonth,
+    paidIn = null,
+    month = september2026,
+  }: {
+    employedSince: string;
+    recuperationMonth: number;
+    paidIn?: { year: number; month: number } | null;
+    month?: { year: number; month: number };
+  }) {
+    const facts = marchFacts({ month });
+    return calculateMonth(
+      { ...facts, terms: { ...facts.terms, recuperationMonth } },
+      {
+        employedSince,
+        firstMonth: september2026,
+        gender: "female",
+        openingPosition: {
+          ...workbookWorker(0).openingPosition,
+          recuperationPaidIn: paidIn,
+        },
+      },
+    );
+  }
+
+  const recuperationLine = (result: ReturnType<typeof calculateMonth>) =>
+    result.lines.find((l) => l.key === lineKeys.recuperation);
+
+  it("is paid in the first month when nobody paid it", () => {
+    // Employed 1.3.2023, paid each March. The employment year running in
+    // September 2026 began in March 2026, and its payment month, March 2026,
+    // had already passed. By 31.3.2026 three years were complete: six days.
+    const line = recuperationLine(
+      firstMonthResult({ employedSince: "2023-03-01", recuperationMonth: 3 }),
+    );
+    expect(line?.units).toBe(6);
+    // 6 × ₪451.50 = ₪2,709.00, the rate in force in September 2026.
+    expect(line?.amount).toBe(270900);
+  });
+
+  it("is not paid again when the opening position says it was", () => {
+    const result = firstMonthResult({
+      employedSince: "2023-03-01",
+      recuperationMonth: 3,
+      paidIn: { year: 2026, month: 3 },
+    });
+    expect(recuperationLine(result)).toBeUndefined();
+  });
+
+  it("is only the first month's", () => {
+    // October 2026 is not the first month, and nothing falls due in it.
+    const result = firstMonthResult({
+      employedSince: "2023-03-01",
+      recuperationMonth: 3,
+      month: { year: 2026, month: 10 },
+    });
+    expect(recuperationLine(result)).toBeUndefined();
+  });
+
+  it("waits for its own month when that month has not come yet", () => {
+    // Paid each November: the year running in September 2026 (March 2026 to
+    // February 2027) pays in November 2026, so September pays nothing.
+    const result = firstMonthResult({
+      employedSince: "2023-03-01",
+      recuperationMonth: 11,
+    });
+    expect(recuperationLine(result)).toBeUndefined();
+  });
+
+  it("owes nothing for a payment month inside the first employment year", () => {
+    // Employed 1.12.2025: March 2026 fell in her first year, before one was
+    // complete, so it owed nothing and nothing is carried.
+    const result = firstMonthResult({
+      employedSince: "2025-12-01",
+      recuperationMonth: 3,
+    });
+    expect(recuperationLine(result)).toBeUndefined();
+  });
+
+  it("pays once when the first month is the payment month itself", () => {
+    // First month March 2026 for a March payment: the ordinary six days, not
+    // twelve.
+    const facts = marchFacts();
+    const result = calculateMonth(
+      { ...facts, terms: { ...facts.terms, recuperationMonth: 3 } },
+      {
+        employedSince: "2023-03-01",
+        firstMonth: { year: 2026, month: 3 },
+        gender: "female",
+        openingPosition: workbookWorker(0).openingPosition,
+      },
+    );
+    expect(recuperationLine(result)?.units).toBe(6);
   });
 });

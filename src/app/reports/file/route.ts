@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
   if (worker === null) return new Response("No such worker", { status: 404 });
 
   const months = await repository.listMonths(workerId);
-  const series = calculateSeries(months, worker, todayInIsrael());
+  const series = calculateSeries(months, worker, todayInIsrael(), await repository.listRates());
 
   let bytes: Buffer;
   let filename: string;

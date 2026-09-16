@@ -12,10 +12,16 @@ import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { SheetBadge } from "@/components/icons";
-import { MonthStepper, openingMonthOf } from "@/components/MonthStepper";
+import { MonthStepper, notBefore, openingMonthOf } from "@/components/MonthStepper";
 import { useWorkerScope } from "@/components/WorkerScope";
 import type { DatedRate } from "@/lib/datedRates";
-import { monthHasEnded, sameMonth, yearMonthText } from "@/lib/dates";
+import {
+  compareMonth,
+  monthHasEnded,
+  monthOf,
+  sameMonth,
+  yearMonthText,
+} from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { dayLabel, fullDayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
 import type {
@@ -81,7 +87,9 @@ export interface MonthBeforeExport {
 export interface WorkerBeforeExport {
   worker: Worker;
   restDay: RestDay;
-  /** Oldest first. */
+  /** Where the month arrows stop (specs.md item 6). */
+  firstMonth: YearMonth;
+  /** Oldest first: every month from her first to the current one. */
   months: MonthBeforeExport[];
 }
 
@@ -131,7 +139,7 @@ export function BeforeExportScreen({
   sourceUrl,
 }: BeforeExportScreenProps) {
   const { worker } = useWorkerScope();
-  const [month, setMonth] = useState<YearMonth>(() =>
+  const [chosenMonth, setMonth] = useState<YearMonth>(() =>
     openingExportMonth(
       household.flatMap((entry) => entry.months.map((each) => each.month)),
       today,
@@ -141,6 +149,9 @@ export function BeforeExportScreen({
   const entry =
     household.find((candidate) => candidate.worker.id === worker.id) ??
     household[0];
+  // Never a month before hers (specs.md item 6), as on the opening screen.
+  const month = notBefore(chosenMonth, entry.firstMonth);
+  const future = compareMonth(month, monthOf(today)) > 0;
   const shown = entry.months.find((each) => sameMonth(each.month, month));
 
   return (
@@ -160,7 +171,11 @@ export function BeforeExportScreen({
             <span> </span>
             <Bidi>{entry.worker.name}</Bidi>
           </h1>
-          <MonthStepper month={month} onMonthChange={setMonth} />
+          <MonthStepper
+            month={month}
+            earliest={entry.firstMonth}
+            onMonthChange={setMonth}
+          />
         </div>
         <p
           dir="auto"
@@ -179,6 +194,12 @@ export function BeforeExportScreen({
           failure={failure}
           sourceUrl={sourceUrl}
         />
+      ) : future ? (
+        <Card className="flex flex-col px-4.5 py-3">
+          <p dir="auto" className="text-[17px] leading-[1.5] font-semibold">
+            {he.month.future}
+          </p>
+        </Card>
       ) : (
         <Card className="flex flex-col gap-1.5 px-4.5 py-3">
           <span dir="auto" className="text-[17px] font-semibold">

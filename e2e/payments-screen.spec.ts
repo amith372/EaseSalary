@@ -2,7 +2,7 @@
 import { switchToTestWorker, openPaymentSections } from "./household";
 import { addMonths, monthOf, SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
-import { formatAgorot, formatDays } from "../src/lib/money";
+import { formatAgorot } from "../src/lib/money";
 import { todayInIsrael } from "../src/lib/today";
 
 /**
@@ -129,8 +129,10 @@ test.describe("a range is ordered by date and never by screen position", () => {
     // still producing a range. Sweeping 5–8 October and 8–5 October must reach
     // the same four days.
     //
-    // 5.10.2026 is a Monday and 8.10.2026 a Thursday, so no rest day and no
-    // rest-eve falls inside — four whole days come off the balance (item 7).
+    // 5.10.2026 is a Monday and 8.10.2026 a Thursday, so no rest day falls
+    // inside and all four days take the mark (item 5). October is after the
+    // current month and is not valued (item 21), so the days are read off the
+    // calendar rather than off a balance.
     await useHousehold(page, "order-forward");
     await page.goto("/");
     await switchToTestWorker(page);
@@ -143,9 +145,7 @@ test.describe("a range is ordered by date and never by screen position", () => {
         exact: true,
       })
       .click();
-    await expect(row(page, "worker-2-vacation-balance")).toContainText(
-      `${he.sheet.reporting.daysUsed}: ${formatDays(4)}`,
-    );
+    await expectFourDaysMarked(page);
 
     // The same range swept from its later end, in a store of its own so the
     // first sweep is not still there.
@@ -161,24 +161,24 @@ test.describe("a range is ordered by date and never by screen position", () => {
         exact: true,
       })
       .click();
-    await expect(row(page, "worker-2-vacation-balance")).toContainText(
-      `${he.sheet.reporting.daysUsed}: ${formatDays(4)}`,
-    );
+    await expectFourDaysMarked(page);
 
-    // And the days themselves, not only their count: each of the four carries
-    // the mark and the day outside the range does not. The mark is read off the
-    // day's name, which is where a screen reader hears it.
-    const vacation = he.calendar.marks(SATURDAY).vacation;
-    for (const date of ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08"]) {
-      await expect(page.locator(`[data-date="${date}"]`)).toHaveAccessibleName(
-        new RegExp(`, ${vacation}$`),
-      );
-    }
-    await expect(page.locator('[data-date="2026-10-09"]')).not.toHaveAccessibleName(
-      new RegExp(vacation),
-    );
   });
 });
+
+/** Each of 5–8 October carries the vacation mark and the day after does not.
+ * The mark is read off the day's name, which is where a screen reader hears it. */
+async function expectFourDaysMarked(page: Page): Promise<void> {
+  const vacation = he.calendar.marks(SATURDAY).vacation;
+  for (const date of ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08"]) {
+    await expect(page.locator(`[data-date="${date}"]`)).toHaveAccessibleName(
+      new RegExp(`, ${vacation}$`),
+    );
+  }
+  await expect(page.locator('[data-date="2026-10-09"]')).not.toHaveAccessibleName(
+    new RegExp(vacation),
+  );
+}
 
 test.describe("an advance given and repaid, walked across months (item 20)", () => {
   test("owes the same figure whichever month is on screen", async ({ page }) => {

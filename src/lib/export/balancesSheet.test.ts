@@ -36,7 +36,8 @@ const AUGUST_MARKS: ClosedSpan[] = [
   { id: "vac-1", kind: "vacation", from: "2025-08-11", to: "2025-08-11" },
 ];
 
-const worker = plainWorker();
+// Her first month is the earliest month these cases walk (specs.md item 6).
+const worker = { ...plainWorker(), firstMonth: { year: 2025, month: 6 } };
 
 function monthOf(month: number, spans: ClosedSpan[] = []): MonthFacts {
   return { ...plainAugustFacts(worker), month: { year: 2025, month }, spans };

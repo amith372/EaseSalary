@@ -29,10 +29,11 @@ describe("the demo household is the workbooks", () => {
   async function hanna() {
     const repository = createInMemoryRepository(devSeed);
     const worker = (await repository.getWorker("worker-1"))!;
-    return calculateSeries(
-      await repository.listMonths("worker-1"),
-      worker,
-      "2026-09-11",
+    const seeded = await repository.listMonths("worker-1");
+    // Only the months the seed opened have a tab to be measured against; the
+    // walk also values the months after them, up to today's (Part 3).
+    return calculateSeries(seeded, worker, "2026-09-11").filter((one) =>
+      seeded.some((month) => month.month.year === one.facts.month.year && month.month.month === one.facts.month.month),
     );
   }
 

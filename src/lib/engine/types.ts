@@ -437,7 +437,7 @@ export interface MonthIncomeTax {
  */
 export type Employment = Pick<
   WorkerTerms,
-  "employedSince" | "gender" | "openingPosition"
+  "employedSince" | "firstMonth" | "gender" | "openingPosition"
 > & {
   /**
    * Who the medical-insurance premium is paid through (specs.md item 16).

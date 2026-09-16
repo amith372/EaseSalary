@@ -246,7 +246,12 @@ Each of these is true or false at a glance.
 6. **Each worker has a first month: the month the application starts calculating her from.**
    It is chosen once when the worker is added — the month she is added in, or the month
    before it, so a family registering early in a month can still pay the month that just
-   ended — and no month before it can be opened or viewed. The date the employment began
+   ended — and no month before it can be opened or viewed. The first month is never
+   earlier than the month the employment began: when the employment begins after the
+   month she is added in, her first month is the month it begins, and the choice is not
+   offered. A later correction that would put the date the employment began after the
+   first month is refused, because the months from the first month on would then fall
+   before the employment. The date the employment began
    is on or after 1 January 2020 and no later than one year after the current
    date; any other date is refused, when the worker is added and when the date is
    corrected later. When the employment began
@@ -571,6 +576,10 @@ Each of these is true or false at a glance.
     rate is not derived from the monthly salary — nothing in that salary implies it — so
     it is confirmed by the user the way the minimum wage is and stored with the month it
     was used for, which is also what lets a past month be reproduced at its own rate.
+    When the payment for the employment year running at the worker's first month falls
+    in a month before the first month, the opening position says whether it was paid: if
+    it was not, it is due in the first month; if it was, it is not paid again for that
+    employment year.
 16. Payments that go to third parties rather than to the worker — the medical insurance
     premium, the national-insurance contribution, the agency and placement fees, the
     visa and licence fees — are recorded in their own column and are never added into

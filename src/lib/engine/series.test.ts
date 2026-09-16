@@ -11,6 +11,7 @@ import {
 import {
   calculateSeries,
   DuplicateMonthError,
+  MonthBeforeFirstMonthError,
   type MonthInSeries,
 } from "@/lib/engine/series";
 import { snapshotTerms} from "@/lib/engine/types";
@@ -173,19 +174,24 @@ describe("the balances carry from month to month", () => {
     );
   });
 
-  it("walks the months it holds and invents none", () => {
-    // A gap is a month that was never recorded, and a month that never happened
-    // accrued nothing. March therefore opens with January's closing figure and
-    // not with two months' accrual (Part 3).
+  it("walks the months nobody opened as ordinary months", () => {
+    // A gap is a month nobody opened, and a month nobody opened is an ordinary
+    // month that accrues like any other (Part 3). March therefore opens with two
+    // months' accrual on top of the opening position.
     const gapped = calculateSeries(
       [facts(month(2026, 1)), facts(month(2026, 3))],
       HANNA,
     );
-    expect(balance(gapped[1], "vacation").opening).toBeCloseTo(
-      5 + VACATION_A_MONTH,
+    expect(gapped.map((each) => each.facts.month)).toEqual([
+      month(2026, 1),
+      month(2026, 2),
+      month(2026, 3),
+    ]);
+    expect(balance(gapped[2], "vacation").opening).toBeCloseTo(
+      5 + 2 * VACATION_A_MONTH,
       10,
     );
-    expect(balance(gapped[1], "sick").opening).toBe(10 + SICK_A_MONTH);
+    expect(balance(gapped[2], "sick").opening).toBe(10 + 2 * SICK_A_MONTH);
   });
 });
 
@@ -258,7 +264,7 @@ describe("the calendar year's own totals carry, and reset at January", () => {
       [facts(month(2026, 1), januarySpans), facts(month(2026, 12))],
       { ...HANNA, openingPosition: { vacationDays: 20, sickDays: 10, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] } },
     );
-    return series[1].result.warnings.map((warning) => warning.key);
+    return series.at(-1)!.result.warnings.map((warning) => warning.key);
   }
 
   it("counts the seven days January drew when December asks", () => {
@@ -284,8 +290,9 @@ describe("the calendar year's own totals carry, and reset at January", () => {
       ],
       { ...HANNA, openingPosition: { vacationDays: 20, sickDays: 10, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] } },
     );
-    expect(series[1].result.warnings).toEqual([]);
-    expect(series[2].result.warnings.map((w) => w.key)).toEqual([
+    // December 2026 is the twelfth month of the walk, December 2027 the last.
+    expect(series[11].result.warnings).toEqual([]);
+    expect(series.at(-1)!.result.warnings.map((w) => w.key)).toEqual([
       "vacationUnderSeven",
     ]);
   });
@@ -449,7 +456,7 @@ describe("the walk does not depend on the order or the count of what it is given
       [facts(month(2027, 1)), facts(month(2026, 12))],
       HANNA,
     );
-    expect(series.map((each) => each.facts.month)).toEqual([
+    expect(series.slice(-2).map((each) => each.facts.month)).toEqual([
       month(2026, 12),
       month(2027, 1),
     ]);
@@ -491,11 +498,13 @@ describe("nothing in the walk reads a clock", () => {
         void warnings;
         return rest;
       });
+    // Only January and February are compared: a later today walks further,
+    // and the months it adds are not the ones this test is about.
     const withoutToday = calculateSeries(months, HANNA);
     for (const today of ["2026-03-15", "2030-01-01", "2026-02-14"]) {
-      expect(figures(calculateSeries(months, HANNA, today))).toEqual(
-        figures(withoutToday),
-      );
+      expect(
+        figures(calculateSeries(months, HANNA, today).slice(0, 2)),
+      ).toEqual(figures(withoutToday));
     }
   });
 
@@ -510,16 +519,190 @@ describe("nothing in the walk reads a clock", () => {
       to: null,
     };
     const months = [facts(month(2026, 2), [open])];
+    // February first, so the walk's first entry is the month asked about.
+    const FROM_FEBRUARY = { ...HANNA, firstMonth: month(2026, 2) };
     expect(
-      balance(calculateSeries(months, HANNA, "2026-02-28")[0], "sick").used,
+      balance(calculateSeries(months, FROM_FEBRUARY, "2026-02-28")[0], "sick").used,
     ).toBe(3);
     expect(
-      balance(calculateSeries(months, HANNA, "2026-03-02")[0], "sick").used,
+      balance(calculateSeries(months, FROM_FEBRUARY, "2026-03-02")[0], "sick").used,
     ).toBe(3);
     // Asked on the 27th it has counted two, which is the same rule and the
     // reason the clock is the caller's to pass.
     expect(
-      balance(calculateSeries(months, HANNA, "2026-02-27")[0], "sick").used,
+      balance(calculateSeries(months, FROM_FEBRUARY, "2026-02-27")[0], "sick").used,
     ).toBe(2);
+  });
+});
+
+describe("the walk runs from the first month (specs.md item 6, Part 3)", () => {
+  it("gives a month nobody opened the profile's terms and the wage in force", () => {
+    // February 2026 falls before the April 2026 rise, so its minimum wage is
+    // the April 2025 row: ₪6,247.65 (`datedRates.ts`, read from the 2025
+    // workbook's April tab). No marks, no advances, no lines of her own.
+    const [, february] = calculateSeries(
+      [facts(month(2026, 1)), facts(month(2026, 3))],
+      HANNA,
+    );
+    expect(february.facts.terms).toEqual(snapshotTerms(HANNA));
+    expect(february.facts.confirmedWage.minimumAgorot).toBe(624765);
+    expect(february.facts.spans).toEqual([]);
+    expect(february.facts.advances).toEqual([]);
+    expect(february.facts.userLines).toEqual([]);
+  });
+
+  it("walks to today's month and values it at its own wage", () => {
+    // April 2026 is the month the minimum wage rose to ₪6,443.85 (the 2026
+    // workbook's April tab), so the month the walk makes up carries that
+    // figure and not January's.
+    const series = calculateSeries([facts(month(2026, 1))], HANNA, "2026-04-10");
+    expect(series.map((each) => each.facts.month)).toEqual([
+      month(2026, 1),
+      month(2026, 2),
+      month(2026, 3),
+      month(2026, 4),
+    ]);
+    expect(series[3].facts.confirmedWage.minimumAgorot).toBe(644385);
+  });
+
+  it("does not value a month after the current one", () => {
+    // Part 3: "A month after the current one is not valued", even when marks
+    // were already recorded in it (item 21).
+    const series = calculateSeries(
+      [facts(month(2026, 1)), facts(month(2026, 6))],
+      HANNA,
+      "2026-03-05",
+    );
+    expect(series.map((each) => each.facts.month)).toEqual([
+      month(2026, 1),
+      month(2026, 2),
+      month(2026, 3),
+    ]);
+  });
+
+  it("walks nothing when the first month has not come yet", () => {
+    expect(
+      calculateSeries([], { ...HANNA, firstMonth: month(2026, 5) }, "2026-04-10"),
+    ).toEqual([]);
+  });
+
+  it("refuses a month before the first month", () => {
+    // No month before the first can be opened (item 6); one handed in anyway
+    // has no opening position to start from.
+    expect(() =>
+      calculateSeries([facts(month(2026, 1))], {
+        ...HANNA,
+        firstMonth: month(2026, 2),
+      }),
+    ).toThrow(MonthBeforeFirstMonthError);
+  });
+
+  it("carries a sick spell nobody closed into the month nobody opened", () => {
+    // She fell ill on 29 January and has not returned; asked on 2 February.
+    // January draws 29, 30, 31 — three days, 10 + 1.5 - 3 = 8.5. February draws
+    // the 1st and the 2nd, every day counted (item 8): 8.5 + 1.5 - 2 = 8.
+    const open: MonthSpan = {
+      id: "spell",
+      kind: "sick",
+      from: "2026-01-29",
+      to: null,
+    };
+    const series = calculateSeries(
+      [facts(month(2026, 1), [open])],
+      HANNA,
+      "2026-02-02",
+    );
+    expect(balance(series[0], "sick").closing).toBe(8.5);
+    expect(balance(series[1], "sick").used).toBe(2);
+    expect(balance(series[1], "sick").closing).toBe(8);
+  });
+
+  it("stops the sick balance at ninety across a month nobody opened", () => {
+    // Opening at 88: January 88 + 1.5 = 89.5, February accrues only the half a
+    // day left to ninety, and March, opening at ninety, accrues nothing
+    // (item 8).
+    const series = calculateSeries(
+      [facts(month(2026, 1)), facts(month(2026, 3))],
+      { ...HANNA, openingPosition: { ...HANNA.openingPosition, sickDays: 88 } },
+    );
+    expect(balance(series[1], "sick").closing).toBe(90);
+    expect(balance(series[2], "sick").opening).toBe(90);
+    expect(balance(series[2], "sick").closing).toBe(90);
+  });
+});
+
+describe("the opening position's year counts (specs.md item 6)", () => {
+  // 14 and 15 December 2026 are a Monday and a Tuesday: two vacation days.
+  const twoDays: MonthSpan = {
+    id: "dec",
+    kind: "vacation",
+    from: "2026-12-14",
+    to: "2026-12-15",
+  };
+
+  function december(usedBefore: number) {
+    const series = calculateSeries([facts(month(2026, 12), [twoDays])], {
+      ...HANNA,
+      firstMonth: month(2026, 12),
+      openingPosition: {
+        ...HANNA.openingPosition,
+        vacationDays: 20,
+        vacationUsedThisYear: usedBefore,
+      },
+    });
+    return series[0].result.warnings.map((warning) => warning.key);
+  }
+
+  it("counts the vacation used before the first month toward the seven", () => {
+    // 5 before + 2 in December = 7, which is what item 7 asks for; 4 + 2 is
+    // one short.
+    expect(december(5)).toEqual([]);
+    expect(december(4)).toEqual(["vacationUnderSeven"]);
+  });
+
+  it("leaves that count in the first month's year", () => {
+    // Seven used in 2026 say nothing about 2027 (item 7): December 2027, with
+    // nothing drawn in it, warns.
+    const series = calculateSeries([facts(month(2027, 12))], {
+      ...HANNA,
+      firstMonth: month(2026, 12),
+      openingPosition: {
+        ...HANNA.openingPosition,
+        vacationDays: 20,
+        vacationUsedThisYear: 7,
+      },
+    });
+    expect(series[0].result.warnings).toEqual([]);
+    expect(series.at(-1)!.result.warnings.map((w) => w.key)).toEqual([
+      "vacationUnderSeven",
+    ]);
+  });
+
+  it("counts the holidays used before the first month toward the nine", () => {
+    // 2026 is a full year of employment, so nine holidays (item 10). With nine
+    // already used, a holiday on Monday 2 February is the tenth and refused.
+    const holiday: MonthSpan = {
+      id: "h",
+      kind: "holiday",
+      from: "2026-02-02",
+      to: "2026-02-02",
+      worked: false,
+    };
+    const worker = (used: number): WorkerProfile => ({
+      ...HANNA,
+      firstMonth: month(2026, 2),
+      openingPosition: { ...HANNA.openingPosition, holidayUsedThisYear: used },
+    });
+    expect(() =>
+      calculateSeries([facts(month(2026, 2), [holiday])], worker(8)),
+    ).not.toThrow();
+    let refused: InvalidMonthError | null = null;
+    try {
+      calculateSeries([facts(month(2026, 2), [holiday])], worker(9));
+    } catch (error) {
+      refused = error as InvalidMonthError;
+    }
+    expect(refused).toBeInstanceOf(InvalidMonthError);
+    expect(refused!.refusals.map((each) => each.code)).toEqual(["holidayLimit"]);
   });
 });

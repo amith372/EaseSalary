@@ -42,23 +42,21 @@ export async function GET(request: NextRequest) {
   const worker = await repository.getWorker(workerId);
   if (worker === null) return new Response("No such worker", { status: 404 });
 
-  const months = await repository.listMonths(workerId);
-  const wanted = months.find((facts) => sameMonth(facts.month, month));
-  if (wanted === undefined) {
-    return new Response("No such month", { status: 404 });
-  }
-  if (blocksExport(wanted, todayInIsrael()).length > 0) {
-    return new Response("The month has an unanswered question", {
-      status: 409,
-    });
-  }
-
   // The whole history, because a month's opening balances are the previous
-  // month's closing ones and no balance is ever stored (item 13).
-  const series = calculateSeries(months, worker, todayInIsrael());
+  // month's closing ones and no balance is ever stored (item 13). The month is
+  // looked up in the replay, which values a month nobody opened as well
+  // (item 6, Part 3); one outside it — before her first month or after the
+  // current one — does not exist to export.
+  const months = await repository.listMonths(workerId);
+  const series = calculateSeries(months, worker, todayInIsrael(), await repository.listRates());
   const inSeries = series.find((one) => sameMonth(one.facts.month, month));
   if (inSeries === undefined) {
     return new Response("No such month", { status: 404 });
+  }
+  if (blocksExport(inSeries.facts, todayInIsrael()).length > 0) {
+    return new Response("The month has an unanswered question", {
+      status: 409,
+    });
   }
 
   const { bytes, filename } = await monthFileOf({

@@ -14,7 +14,10 @@ import {
   reviewNewWorker,
   firstNameOf,
   type NewWorkerDraft,
+  firstMonthFor,
+  firstMonthChoices,
   reviewEmployedSince,
+  type OpeningDraft,
 } from "@/lib/engine/profile";
 import type { MonthFacts, WorkerTerms } from "@/lib/engine/types";
 
@@ -370,6 +373,29 @@ describe("the income-tax setting the server accepts (specs.md item 17)", () => {
  * returned. It is passed in rather than looked up, which is what lets the
  * refusal below be asserted at all.
  */
+describe("the first month of a worker added today (specs.md item 6)", () => {
+  it("is the month she is added in when the employment already began", () => {
+    expect(firstMonthFor("2024-04-01", "2026-09-17")).toEqual({ year: 2026, month: 9 });
+    expect(firstMonthFor("2026-09-30", "2026-09-17")).toEqual({ year: 2026, month: 9 });
+  });
+
+  it("is the month the employment begins when that is still ahead", () => {
+    expect(firstMonthFor("2026-11-15", "2026-09-17")).toEqual({ year: 2026, month: 11 });
+  });
+
+  it("may be the month before, unless the employment began after it", () => {
+    const september = { year: 2026, month: 9 };
+    const august = { year: 2026, month: 8 };
+    expect(firstMonthChoices("2024-04-01", "2026-09-17")).toEqual([september, august]);
+    // Began during August: August is still a month of the employment.
+    expect(firstMonthChoices("2026-08-20", "2026-09-17")).toEqual([september, august]);
+    // Began this month: last month was before the employment.
+    expect(firstMonthChoices("2026-09-03", "2026-09-17")).toEqual([september]);
+    // Begins later: that month, and nothing to choose.
+    expect(firstMonthChoices("2026-11-15", "2026-09-17")).toEqual([{ year: 2026, month: 11 }]);
+  });
+});
+
 describe("the start date's range (specs.md item 6)", () => {
   it("counts the year from the day it is given", () => {
     expect(reviewEmployedSince("2025-03-10", "2024-03-10")).toBe("2025-03-10");
@@ -379,6 +405,17 @@ describe("the start date's range (specs.md item 6)", () => {
   it("gives 29 February the last day of the next February", () => {
     expect(reviewEmployedSince("2029-02-28", "2028-02-29")).toBe("2029-02-28");
     expect(reviewEmployedSince("2029-03-01", "2028-02-29")).toBe("range");
+  });
+
+  it("refuses a corrected date after the worker's first month", () => {
+    const september = { year: 2026, month: 9 };
+    // The first month's own last day is still inside it; the next day is not.
+    expect(reviewEmployedSince("2026-09-30", "2026-09-17", september)).toBe("2026-09-30");
+    expect(reviewEmployedSince("2026-10-01", "2026-09-17", september)).toBe("afterFirstMonth");
+    // Earlier is always a correction the first month can hold.
+    expect(reviewEmployedSince("2024-04-01", "2026-09-17", september)).toBe("2024-04-01");
+    // Out of range is said before the first month is considered.
+    expect(reviewEmployedSince("2028-01-01", "2026-09-17", september)).toBe("range");
   });
 
   it("tells a date that is not a date from one out of range", () => {
@@ -406,7 +443,148 @@ describe("reviewNewWorker", () => {
     insurer: "",
     incomeTaxMode: "automatic",
     incomeTaxPercentage: "",
+    firstMonth: "2026-09",
+    opening: opening(),
     ...over,
+  });
+
+  const opening = (over: Partial<OpeningDraft> = {}): OpeningDraft => ({
+    vacationDays: "0",
+    sickDays: "0",
+    vacationUsedThisYear: "0",
+    holidayUsedThisYear: "0",
+    recuperationPaid: null,
+    recuperationPaidIn: "",
+    advances: [],
+    ...over,
+  });
+
+  it("refuses a first month the start date does not offer", () => {
+    // July is two months before the month she is added in.
+    expect(reviewNewWorker(draft({ firstMonth: "2026-07" }), MINIMUM, TODAY)).toEqual({
+      ok: false,
+      reason: "firstMonth",
+    });
+    // August, for an employment that began in September.
+    expect(
+      reviewNewWorker(
+        draft({ employedSince: "2026-09-01", firstMonth: "2026-08" }),
+        MINIMUM,
+        TODAY,
+      ),
+    ).toEqual({ ok: false, reason: "firstMonth" });
+    const reviewed = reviewNewWorker(draft({ firstMonth: "2026-08" }), MINIMUM, TODAY);
+    expect(reviewed.ok && reviewed.profile.firstMonth).toEqual({ year: 2026, month: 8 });
+  });
+
+  /** An employment the application sees from its first month has no opening
+   * position, so a figure left in a field the wizard did not show is not read. */
+  it("reads no opening position when the employment began in the first month", () => {
+    const reviewed = reviewNewWorker(
+      draft({
+        employedSince: "2026-09-01",
+        opening: opening({ vacationDays: "5", advances: [{ principal: "100", repaid: "", note: "" }] }),
+      }),
+      MINIMUM,
+      TODAY,
+    );
+    expect(reviewed.ok && reviewed.profile.openingPosition).toEqual({
+      vacationDays: 0,
+      sickDays: 0,
+      vacationUsedThisYear: 0,
+      holidayUsedThisYear: 0,
+      recuperationPaidIn: null,
+      advances: [],
+    });
+  });
+
+  /**
+   * An employment since 1.4.2024 added in September 2026, recuperation in July.
+   * The employment year running in September 2026 began in April 2026, so its
+   * payment month is July 2026 — before the first month — and two full years
+   * are complete by then, so it is owed (item 15). The question is asked.
+   */
+  describe("an employment that began before the first month", () => {
+    const midway = (over: Partial<OpeningDraft>) =>
+      reviewNewWorker(draft({ employedSince: "2024-04-01", opening: opening(over) }), MINIMUM, TODAY);
+
+    it("keeps every figure the family stated", () => {
+      const reviewed = midway({
+        vacationDays: "12.5",
+        sickDays: "30",
+        vacationUsedThisYear: "3",
+        holidayUsedThisYear: "2",
+        recuperationPaid: true,
+        recuperationPaidIn: "2026-07",
+        advances: [{ principal: "10000", repaid: "2000", note: "" }],
+      });
+      expect(reviewed.ok && reviewed.profile.openingPosition).toEqual({
+        vacationDays: 12.5,
+        sickDays: 30,
+        vacationUsedThisYear: 3,
+        holidayUsedThisYear: 2,
+        recuperationPaidIn: { year: 2026, month: 7 },
+        advances: [{ number: 1, principalAgorot: 1000000, repaidAgorot: 200000 }],
+      });
+    });
+
+    it("needs the recuperation question answered, and a no stores no month", () => {
+      expect(midway({})).toEqual({ ok: false, reason: "recuperationPaid" });
+      const no = midway({ recuperationPaid: false, recuperationPaidIn: "2026-07" });
+      expect(no.ok && no.profile.openingPosition.recuperationPaidIn).toBeNull();
+    });
+
+    it("refuses a payment month outside the employment before the first month", () => {
+      expect(midway({ recuperationPaid: true, recuperationPaidIn: "2026-09" })).toEqual({
+        ok: false,
+        reason: "recuperationPaidIn",
+      });
+      expect(midway({ recuperationPaid: true, recuperationPaidIn: "2024-03" })).toEqual({
+        ok: false,
+        reason: "recuperationPaidIn",
+      });
+      expect(midway({ recuperationPaid: true, recuperationPaidIn: "" })).toEqual({
+        ok: false,
+        reason: "recuperationPaidIn",
+      });
+    });
+
+    it("refuses what is not a count of days, and an advance repaid past its sum", () => {
+      const answered = { recuperationPaid: false };
+      expect(midway({ ...answered, sickDays: "" })).toEqual({ ok: false, reason: "openingDays" });
+      expect(midway({ ...answered, vacationUsedThisYear: "-1" })).toEqual({
+        ok: false,
+        reason: "openingUsed",
+      });
+      expect(
+        midway({ ...answered, advances: [{ principal: "100", repaid: "150", note: "" }] }),
+      ).toEqual({ ok: false, reason: "openingAdvance" });
+    });
+
+    /** October's payment for the year that began in April 2026 is still ahead
+     * of September, so nothing fell before the first month and nothing is asked. */
+    it("does not ask about recuperation whose month is still ahead", () => {
+      const reviewed = reviewNewWorker(
+        draft({ employedSince: "2024-04-01", recuperationMonth: "10" }),
+        MINIMUM,
+        TODAY,
+      );
+      expect(reviewed.ok && reviewed.profile.openingPosition.recuperationPaidIn).toBeNull();
+    });
+
+    /** January has nothing of its year before it, so the counts are not read. */
+    it("does not read the days used this year for a January first month", () => {
+      const reviewed = reviewNewWorker(
+        draft({
+          employedSince: "2024-04-01",
+          firstMonth: "2026-01",
+          opening: opening({ vacationUsedThisYear: "x", recuperationPaid: false }),
+        }),
+        MINIMUM,
+        "2026-01-10",
+      );
+      expect(reviewed.ok && reviewed.profile.openingPosition.vacationUsedThisYear).toBe(0);
+    });
   });
 
   it("makes a profile whose every stated term is the one that was typed", () => {
@@ -550,7 +728,17 @@ describe("reviewNewWorker", () => {
     ["2027-09-17", false],
     ["1901-01-01", false],
   ])("takes %s as a start date: %s", (employedSince, accepted) => {
-    const reviewed = reviewNewWorker(draft({ employedSince }), MINIMUM, TODAY);
+    // The rest of the draft made valid for the date: a start a year ahead
+    // makes that month the first, and one in 2020 is asked about recuperation.
+    const reviewed = reviewNewWorker(
+      draft({
+        employedSince,
+        firstMonth: employedSince.startsWith("2027") ? "2027-09" : "2026-09",
+        opening: opening({ recuperationPaid: false }),
+      }),
+      MINIMUM,
+      TODAY,
+    );
     expect(reviewed.ok ? true : reviewed.reason).toBe(
       accepted ? true : "employedSinceRange",
     );

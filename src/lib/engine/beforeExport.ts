@@ -9,7 +9,7 @@ import {
 } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
-import { recuperationDaysFor } from "@/lib/engine/recuperation";
+import { recuperationDaysInMonth } from "@/lib/engine/recuperation";
 import { holidayDatesCounted } from "@/lib/engine/holidayDates";
 import { closeMonth, unansweredHolidays } from "@/lib/engine/types";
 import type {
@@ -442,8 +442,8 @@ export function recuperationToConfirm(
   employment: Employment,
   rates: DatedRate[],
 ): { days: number; offeredAgorot: number | null; storedAgorot?: number } | null {
-  const days = recuperationDaysFor(
-    employment.employedSince,
+  const days = recuperationDaysInMonth(
+    employment,
     facts.terms.recuperationMonth,
     facts.month,
   );

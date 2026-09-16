@@ -18,6 +18,9 @@ import { fillMonthSheet } from "@/lib/export/monthSheet";
 import { MONTH_TEMPLATE, readTemplate } from "@/lib/export/template";
 import { monthLabel } from "@/lib/dateLabels";
 import { formatAgorot } from "@/lib/money";
+import { sameMonth } from "@/lib/dates";
+import { createInMemoryRepository } from "@/lib/engine/repository";
+import { openMonthIfMissing } from "@/lib/openMonth";
 
 /**
  * **The preview and the file, driven from one engine result and asserted to say
@@ -456,5 +459,82 @@ describe("the preview and the file, from one engine result", () => {
       .filter((line) => line.column !== "H")
       .reduce((total, line) => total + (line.amount ?? 0), 0);
     expect(gross).toBe(withoutH);
+  });
+});
+
+/**
+ * **A month nobody opened, previewed and then opened** (specs.md Part 3, item
+ * 21): opening a month records it without changing what it was, so the figures
+ * the preview drew before the first fact was recorded are the figures the
+ * month holds after it was opened — the one the export then fills from.
+ *
+ * What it would catch: a month opened with a zero income tax, another wage, or
+ * other terms than the replay valued it with, which moves every figure the
+ * moment the user confirms it.
+ */
+describe("a month nobody opened keeps its figures when it is opened", () => {
+  it("draws the same result before and after", async () => {
+    // Her first month is July 2025 and nothing was recorded in August; asked on
+    // 20 August, the walk values August as an ordinary month.
+    const worker = {
+      ...plainWorker(),
+      id: "w",
+      name: "חנה",
+      firstName: "חנה",
+      insurer: "",
+      firstMonth: { year: 2025, month: 7 },
+      documents: {
+        employmentPermitExpiry: null,
+        workVisaExpiry: null,
+        passportExpiry: null,
+      },
+    };
+    const july = { ...plainAugustFacts(worker), month: { year: 2025, month: 7 } };
+    const repository = createInMemoryRepository({ workers: [worker] });
+    const { spans, ...julyRecord } = july;
+    void spans;
+    await repository.saveMonth("w", julyRecord);
+    const today = "2025-08-20";
+    const august = { year: 2025, month: 8 };
+
+    const before = calculateSeries(
+      await repository.listMonths("w"),
+      worker,
+      today,
+      await repository.listRates(),
+    ).find((one) => sameMonth(one.facts.month, august));
+    expect(await repository.getMonth("w", august)).toBeNull();
+
+    expect(await openMonthIfMissing(repository, worker, august)).toBe(true);
+    const after = calculateSeries(
+      await repository.listMonths("w"),
+      worker,
+      today,
+      await repository.listRates(),
+    ).find((one) => sameMonth(one.facts.month, august));
+
+    expect(before).toBeDefined();
+    expect(after!.result).toEqual(before!.result);
+  });
+
+  it("refuses to open a month before the first", async () => {
+    const worker = {
+      ...plainWorker(),
+      id: "w",
+      name: "חנה",
+      firstName: "חנה",
+      insurer: "",
+      documents: {
+        employmentPermitExpiry: null,
+        workVisaExpiry: null,
+        passportExpiry: null,
+      },
+    };
+    const repository = createInMemoryRepository({ workers: [worker] });
+    // The fixture's first month is August 2025.
+    expect(
+      await openMonthIfMissing(repository, worker, { year: 2025, month: 7 }),
+    ).toBe(false);
+    expect(await repository.getMonth("w", { year: 2025, month: 7 })).toBeNull();
   });
 });

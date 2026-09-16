@@ -38,7 +38,7 @@ export default async function WorkersPage() {
   const household: WorkerSummary[] = await Promise.all(
     workers.map(async (profile) => {
       const months = await repository.listMonths(profile.id);
-      const series = calculateSeries(months, profile, today);
+      const series = calculateSeries(months, profile, today, await repository.listRates());
       // The closing balances of her last month, which is what "how many days
       // has she left" means. A worker with no months at all has her opening
       // position and nothing has happened to it yet (item 6).

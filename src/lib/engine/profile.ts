@@ -2,15 +2,20 @@ import {
   FRIDAY,
   SATURDAY,
   SUNDAY,
+  addMonths,
   compareIsoDate,
   compareMonth,
   daysInMonth,
   fromIsoDate,
   isoOf,
+  monthOf,
+  parseYearMonth,
+  sameMonth,
   toIsoDate,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { reviewTaxPercentage } from "@/lib/engine/incomeTax";
+import { recuperationDaysCarriedIntoFirstMonth } from "@/lib/engine/recuperation";
 import { recordOf } from "@/lib/engine/repository";
 import { salaryFor } from "@/lib/engine/salary";
 import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
@@ -146,14 +151,17 @@ export function latestEmployment(today: IsoDate): IsoDate {
 
 /**
  * The date the employment began, or why it is refused (specs.md item 6):
- * `"invalid"` for no date at all and `"range"` for a date before 2020 or more
- * than a year after `today`. The same rule serves the wizard and a later
- * correction, so the two cannot disagree.
+ * `"invalid"` for no date at all, `"range"` for a date before 2020 or more than
+ * a year after `today`, and `"afterFirstMonth"` for a correction that would
+ * leave the worker's first month before her employment. The same rule serves
+ * the wizard and a later correction, so the two cannot disagree; only a
+ * correction passes `firstMonth`, because the wizard derives it from the date.
  */
 export function reviewEmployedSince(
   text: string,
   today: IsoDate,
-): IsoDate | "invalid" | "range" {
+  firstMonth?: YearMonth,
+): IsoDate | "invalid" | "range" | "afterFirstMonth" {
   const date = reviewDate(text);
   if (date === null || date === "invalid") return "invalid";
   if (
@@ -162,7 +170,69 @@ export function reviewEmployedSince(
   ) {
     return "range";
   }
+  if (firstMonth && compareMonth(monthOf(date), firstMonth) > 0) {
+    return "afterFirstMonth";
+  }
   return date;
+}
+
+/**
+ * The first month of a worker added today (specs.md item 6): the month she is
+ * added in, and never earlier than the month her employment begins — a start
+ * date still ahead makes that month the first.
+ */
+export function firstMonthFor(employedSince: IsoDate, today: IsoDate): YearMonth {
+  const hired = monthOf(employedSince);
+  const added = monthOf(today);
+  return compareMonth(hired, added) > 0 ? hired : added;
+}
+
+/**
+ * The first months a worker added today may be given (specs.md item 6): the
+ * month she is added in, and the month before it so a family registering early
+ * in a month can still pay the month that just ended — but never a month
+ * before the employment began. One choice means none is offered.
+ */
+export function firstMonthChoices(
+  employedSince: IsoDate,
+  today: IsoDate,
+): YearMonth[] {
+  const first = firstMonthFor(employedSince, today);
+  const previous = addMonths(first, -1);
+  return compareMonth(monthOf(employedSince), previous) <= 0
+    ? [first, previous]
+    : [first];
+}
+
+/**
+ * Whether the wizard asks for the opening position: only when the employment
+ * began before the first month, since otherwise the application has seen the
+ * whole of it (specs.md item 6).
+ */
+export function asksOpeningPosition(
+  employedSince: IsoDate,
+  firstMonth: YearMonth,
+): boolean {
+  return compareMonth(monthOf(employedSince), firstMonth) < 0;
+}
+
+/**
+ * Whether the wizard asks if the recuperation payment was already made: only
+ * when the payment for the employment year running at the first month fell
+ * before the first month and is owed at all (specs.md item 15).
+ */
+export function asksRecuperationPaid(
+  employedSince: IsoDate,
+  recuperationMonth: number,
+  firstMonth: YearMonth,
+): boolean {
+  return (
+    recuperationDaysCarriedIntoFirstMonth(
+      employedSince,
+      recuperationMonth,
+      firstMonth,
+    ) > 0
+  );
 }
 
 /** The three documents as the form hands them over — each as typed, so the
@@ -428,6 +498,27 @@ export interface NewWorkerDraft {
   insurer: string;
   incomeTaxMode: unknown;
   incomeTaxPercentage: string;
+  /** "2026-09", one of `firstMonthChoices` (item 6). */
+  firstMonth: string;
+  /**
+   * The opening position as typed (item 6). Read only when the employment
+   * began before the first month; otherwise the position is zero, whatever
+   * the fields hold.
+   */
+  opening: OpeningDraft;
+}
+
+/** The opening position as the wizard hands it over (item 6). */
+export interface OpeningDraft {
+  vacationDays: string;
+  sickDays: string;
+  vacationUsedThisYear: string;
+  holidayUsedThisYear: string;
+  /** Yes, no, or not answered yet (`null`). Unknown because it arrives as data. */
+  recuperationPaid: unknown;
+  /** "2025-07", the month it was paid in, read when the answer is yes. */
+  recuperationPaidIn: string;
+  advances: OpeningAdvanceDraft[];
 }
 
 /** Why a draft is not yet a worker, in the words the wizard shows. Each names
@@ -450,7 +541,19 @@ export type NewWorkerRefusal =
   | "belowMinimum"
   | "supplement"
   | "incomeTaxMode"
-  | "incomeTaxRate";
+  | "incomeTaxRate"
+  /** A first month that is not one of the choices the start date allows. */
+  | "firstMonth"
+  /** A balance that is not a count of days. */
+  | "openingDays"
+  /** A count of days used this year that is not a count of days. */
+  | "openingUsed"
+  | "recuperationPaid"
+  /** A payment month that is not before the first month, or is before the
+   * employment began. */
+  | "recuperationPaidIn"
+  /** An opening advance that `reviewOpeningAdvance` refuses. */
+  | "openingAdvance";
 
 /**
  * The first name alone, for "לדף של [שם]" (`Worker.firstName`).
@@ -465,9 +568,7 @@ export function firstNameOf(fullName: string): string {
 }
 
 export type ReviewedNewWorker =
-  // The first month is the caller's: it depends on today, and nothing here
-  // reads a clock.
-  | { ok: true; profile: Omit<WorkerProfile, "id" | "firstMonth"> }
+  | { ok: true; profile: Omit<WorkerProfile, "id"> }
   | { ok: false; reason: NewWorkerRefusal };
 
 /**
@@ -484,11 +585,11 @@ export type ReviewedNewWorker =
  * was not today's.
  *
  * **What the wizard does not ask for opens empty rather than guessed** — no
- * standing lines, no opening balances, no document dates, no holiday exception.
- * Each has a control on the worker's own page already, and a default invented
- * here would be a figure the family never stated (`CLAUDE.md` rule 4). The
- * opening position in particular is item 6's and is zero for a worker whose
- * employment the application has watched from its first day.
+ * standing lines, no document dates, no holiday exception. Each has a control
+ * on the worker's own page already, and a default invented here would be a
+ * figure the family never stated (`CLAUDE.md` rule 4). The opening position is
+ * asked only when the employment began before the first month, and is zero for
+ * a worker whose employment the application watches from its first month.
  */
 export function reviewNewWorker(
   draft: NewWorkerDraft,
@@ -540,6 +641,21 @@ export function reviewNewWorker(
   const tax = reviewIncomeTax(draft.incomeTaxMode, draft.incomeTaxPercentage);
   if (!tax.ok) return { ok: false, reason: tax.reason };
 
+  const firstMonth = parseYearMonth(draft.firstMonth.trim());
+  if (
+    firstMonth === null ||
+    !firstMonthChoices(employedSince, today).some((choice) =>
+      sameMonth(choice, firstMonth),
+    )
+  ) {
+    return { ok: false, reason: "firstMonth" };
+  }
+
+  const opening = asksOpeningPosition(employedSince, firstMonth)
+    ? reviewOpeningPosition(draft.opening, employedSince, recuperationMonth, firstMonth)
+    : { ok: true as const, position: EMPTY_OPENING };
+  if (!opening.ok) return { ok: false, reason: opening.reason };
+
   return {
     ok: true,
     profile: {
@@ -560,14 +676,93 @@ export function reviewNewWorker(
         workVisaExpiry: null,
         passportExpiry: null,
       },
-      openingPosition: {
-        vacationDays: 0,
-        sickDays: 0,
-        vacationUsedThisYear: 0,
-        holidayUsedThisYear: 0,
-        recuperationPaidIn: null,
-        advances: [],
-      },
+      firstMonth,
+      openingPosition: opening.position,
+    },
+  };
+}
+
+const EMPTY_OPENING: OpeningPosition = {
+  vacationDays: 0,
+  sickDays: 0,
+  vacationUsedThisYear: 0,
+  holidayUsedThisYear: 0,
+  recuperationPaidIn: null,
+  advances: [],
+};
+
+/**
+ * The opening position a new worker starts from, or the first reason it is not
+ * one (specs.md items 6 and 15).
+ *
+ * **Each question is read only where it is asked.** The days used this year
+ * are asked when the first month is not January, since in January nothing of
+ * the year came before it; whether recuperation was paid is asked only when
+ * `asksRecuperationPaid` says a payment fell before the first month. A field
+ * the wizard did not show is not read, so a value left in it from an earlier
+ * answer cannot reach the profile.
+ *
+ * The advances are numbered from one: a new worker has no ledger yet, and the
+ * number is the store's to give in every other case (item 20).
+ */
+export function reviewOpeningPosition(
+  draft: OpeningDraft,
+  employedSince: IsoDate,
+  recuperationMonth: number,
+  firstMonth: YearMonth,
+): { ok: true; position: OpeningPosition } | { ok: false; reason: NewWorkerRefusal } {
+  const vacationDays = parseDays(draft.vacationDays);
+  const sickDays = parseDays(draft.sickDays);
+  if (vacationDays === null || sickDays === null) {
+    return { ok: false, reason: "openingDays" };
+  }
+
+  let vacationUsedThisYear = 0;
+  let holidayUsedThisYear = 0;
+  if (firstMonth.month > 1) {
+    const vacationUsed = parseDays(draft.vacationUsedThisYear);
+    const holidayUsed = parseDays(draft.holidayUsedThisYear);
+    if (vacationUsed === null || holidayUsed === null) {
+      return { ok: false, reason: "openingUsed" };
+    }
+    vacationUsedThisYear = vacationUsed;
+    holidayUsedThisYear = holidayUsed;
+  }
+
+  let recuperationPaidIn: YearMonth | null = null;
+  if (asksRecuperationPaid(employedSince, recuperationMonth, firstMonth)) {
+    if (draft.recuperationPaid !== true && draft.recuperationPaid !== false) {
+      return { ok: false, reason: "recuperationPaid" };
+    }
+    if (draft.recuperationPaid) {
+      const paidIn = parseYearMonth(draft.recuperationPaidIn.trim());
+      if (
+        paidIn === null ||
+        compareMonth(paidIn, firstMonth) >= 0 ||
+        compareMonth(paidIn, monthOf(employedSince)) < 0
+      ) {
+        return { ok: false, reason: "recuperationPaidIn" };
+      }
+      recuperationPaidIn = paidIn;
+    }
+  }
+
+  const advances: OpeningAdvance[] = [];
+  for (const [index, advance] of draft.advances.entries()) {
+    const reviewed = reviewOpeningAdvance(advance, index + 1);
+    if (!reviewed.ok) return { ok: false, reason: "openingAdvance" };
+    advances.push(reviewed.advance);
+  }
+
+  return {
+    ok: true,
+    position: {
+      vacationDays,
+      sickDays,
+      vacationUsedThisYear,
+      holidayUsedThisYear,
+      recuperationPaidIn,
+      advances,
     },
   };
 }

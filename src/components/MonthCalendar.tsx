@@ -68,6 +68,9 @@ interface MonthCalendarProps {
    * not shown, because there is nowhere for it to go.
    */
   today?: IsoDate;
+  /** The worker's first month, where the backward arrow stops (specs.md
+   * item 6). */
+  earliest?: YearMonth;
   onMonthChange?: (month: YearMonth) => void;
   onSelectRange?: (intent: SpanIntent) => void;
   /** Clearing takes a range the way marking does, and the caller decides what a
@@ -277,6 +280,7 @@ export function MonthCalendar({
   spans,
   restDay,
   today,
+  earliest,
   onMonthChange,
   onSelectRange,
   onClearRange,
@@ -523,6 +527,7 @@ export function MonthCalendar({
             <MonthStepper
               month={month}
               today={today}
+              earliest={earliest}
               onMonthChange={(next) => onMonthChange?.(next)}
               label={heading}
             />
@@ -545,6 +550,7 @@ export function MonthCalendar({
           <MonthStepper
             month={month}
             today={today}
+            earliest={earliest}
             onMonthChange={(next) => onMonthChange?.(next)}
           />
         </div>

@@ -204,6 +204,14 @@ const quietButtonClass =
 /** What the refusal was, as a sentence. Never a code: a refusal carries the
  * reason it was refused (specs.md item 25). */
 function Refusal({ reason }: { reason: ProfileActionRefusal }) {
+  // A sentence that names the worker's first month is written by the one
+  // control that holds it (`EmployedSinceControl`), and no other control is
+  // refused for that reason.
+  if (reason === "employedSinceAfterFirstMonth") return null;
+  return <RefusalLine>{he.workers.profile.terms.refused[reason]}</RefusalLine>;
+}
+
+function RefusalLine({ children }: { children: ReactNode }) {
   return (
     /* `role="alert"` rather than `aria-live`: the paragraph is mounted with its
        sentence already in it, and a live region is only announced reliably
@@ -213,7 +221,7 @@ function Refusal({ reason }: { reason: ProfileActionRefusal }) {
       dir="auto"
       className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
     >
-      {he.workers.profile.terms.refused[reason]}
+      {children}
     </p>
   );
 }
@@ -1257,10 +1265,12 @@ export function IdentifyingNumberControl({
 export function EmployedSinceControl({
   workerId,
   employedSince,
+  firstMonth,
   onSubmit,
 }: {
   workerId: string;
   employedSince: string;
+  firstMonth: YearMonth;
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.employedSince;
@@ -1289,7 +1299,15 @@ export function EmployedSinceControl({
         >
           <span dir="auto">{words.save}</span>
         </button>
-        {refusal ? <Refusal reason={refusal} /> : null}
+        {refusal === "employedSinceAfterFirstMonth" ? (
+          <RefusalLine>
+            <span>{words.afterFirstMonth.before}</span>
+            <bdi>{monthLabel(firstMonth)}</bdi>
+            <span>{words.afterFirstMonth.after}</span>
+          </RefusalLine>
+        ) : refusal ? (
+          <Refusal reason={refusal} />
+        ) : null}
       </div>
     </TermRow>
   );

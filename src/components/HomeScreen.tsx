@@ -8,21 +8,30 @@ import { Card } from "@/components/Card";
 import { Chevron, RailIcon, TwoToneIcon, type TwoToneName } from "@/components/icons";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { MoneyValue } from "@/components/MoneyValue";
-import { openingMonthOf } from "@/components/MonthStepper";
+import { notBefore, openingMonthOf } from "@/components/MonthStepper";
 import { SpanOverflowNotes } from "@/components/SpanOverflow";
 import { ValueChip } from "@/components/ValueChip";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { WhyButton, WhyPanel } from "@/components/WhyDisclosure";
 import { homeAlerts } from "@/lib/fixtures/home";
 import { dayLabel } from "@/lib/dateLabels";
-import { addDays, compareIsoDate, fromIsoDate, isoOf, monthOf, sameMonth } from "@/lib/dates";
+import {
+  addDays,
+  compareIsoDate,
+  compareMonth,
+  fromIsoDate,
+  isoOf,
+  monthOf,
+  sameMonth,
+} from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { monthLevels } from "@/lib/engine/month";
 import type { MonthInSeries } from "@/lib/engine/series";
 import { clipEndOf } from "@/lib/engine/types";
+import type { MonthSpan } from "@/lib/engine/types";
 import { bottomFigure, he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
-import { endOf, type SkippedDay, type SkipReason } from "@/lib/spans";
+import { endOf, overlapsMonth, type SkippedDay, type SkipReason } from "@/lib/spans";
 import type {
   Explanation,
   HolidaySpan,
@@ -76,7 +85,13 @@ export interface WorkerMonths {
    * rest day stored on that month, which may differ for a family that moved it
    * (specs.md Part 3), and that one is read off `facts.terms` below. */
   restDay: RestDay;
+  /** Where the month arrows stop (specs.md item 6). */
+  firstMonth: YearMonth;
   months: MonthInSeries[];
+  /** Every mark she has. Read only for a month after the current one, which
+   * the replay does not value and so does not hand over (item 21), and whose
+   * calendar still shows what was marked on it. */
+  spans: MonthSpan[];
 }
 
 /** What the day panel says about one day, in the day's own colours. */
@@ -118,7 +133,7 @@ export function HomeScreen({
   // The current month where anybody has a record of it, and otherwise the last
   // month anybody has — `openingMonthOf` says why, and the payments screen asks
   // the same question so the two never open on different months.
-  const [month, setMonth] = useState<YearMonth>(() =>
+  const [chosenMonth, setMonth] = useState<YearMonth>(() =>
     openingMonthOf(
       household.flatMap((entry) => entry.months.map((m) => m.facts.month)),
       today,
@@ -141,12 +156,19 @@ export function HomeScreen({
   // about the shell, so switching does not send the user back to August.
   const entry =
     household.find((candidate) => candidate.worker.id === worker.id) ?? household[0];
+  // Never a month before hers: the arrows stop at her first month, and a month
+  // chosen while another worker was on screen is shown from her first instead.
+  const month = notBefore(chosenMonth, entry.firstMonth);
+  const future = compareMonth(month, monthOf(today)) > 0;
   const shown = entry.months.find((inSeries) => sameMonth(inSeries.facts.month, month));
   // The month's own rest day where there is a month, so a calendar over a
   // corrected past month shades the column that month was calculated against
   // (specs.md Part 3).
   const shownRestDay = shown?.facts.terms.restDay ?? entry.restDay;
-  const spans = shown?.facts.spans ?? [];
+  // A month ahead is not valued, so its marks come off her spans directly.
+  const spans = future
+    ? entry.spans.filter((span) => overlapsMonth(span, month))
+    : (shown?.facts.spans ?? []);
 
   // The panel follows the month: browsing away from the selected day's month
   // shows that month's first day rather than a day the grid no longer draws.
@@ -295,6 +317,7 @@ export function HomeScreen({
             spans={spans}
             restDay={shownRestDay}
             today={today}
+            earliest={entry.firstMonth}
             onMonthChange={setMonth}
             onSelectRange={handleSelectRange}
             onClearRange={handleClearRange}
@@ -446,6 +469,12 @@ export function HomeScreen({
               openWhy={openWhy}
               onToggleWhy={toggleWhy}
             />
+          ) : future ? (
+            <Card className="flex flex-none flex-col px-3.75 py-3.25">
+              <p dir="auto" className="text-[16px] leading-[1.5] font-semibold">
+                {he.month.future}
+              </p>
+            </Card>
           ) : (
             <Card className="flex flex-none flex-col gap-1.5 px-3.75 py-3.25">
               <h2 dir="auto" className="text-[16px] font-semibold">

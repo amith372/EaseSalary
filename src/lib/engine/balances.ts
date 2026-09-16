@@ -3,7 +3,7 @@ import type { RestDay } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { lineKeys } from "@/lib/engine/lines";
-import { recuperationDaysFor } from "@/lib/engine/recuperation";
+import { recuperationDaysInMonth } from "@/lib/engine/recuperation";
 import type {
   ClosedMonthFacts,
   ClosedSpan,
@@ -317,8 +317,8 @@ export function recuperationRateMissingWarning(
   employment: Employment,
   rates: DatedRate[],
 ): Warning | null {
-  const days = recuperationDaysFor(
-    employment.employedSince,
+  const days = recuperationDaysInMonth(
+    employment,
     facts.terms.recuperationMonth,
     facts.month,
   );

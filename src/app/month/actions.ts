@@ -16,7 +16,7 @@ import {
   withoutOverride,
 } from "@/lib/engine/overrides";
 import type { OverrideDraft, OverrideRefusal } from "@/lib/engine/overrides";
-import { openMonthRecord, recordOf, wageToCarry } from "@/lib/engine/repository";
+import { recordOf } from "@/lib/engine/repository";
 import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
 import {
   reviewTaxPercentage,
@@ -50,7 +50,8 @@ import {
   type MarkIntent,
   type SkippedDay,
 } from "@/lib/spans";
-import { monthOf, orderDates, sameMonth } from "@/lib/dates";
+import { compareMonth, monthOf, orderDates, sameMonth } from "@/lib/dates";
+import { isBeforeFirstMonth, openMonthIfMissing } from "@/lib/openMonth";
 import { todayInIsrael } from "@/lib/today";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
@@ -102,48 +103,6 @@ async function profileOf(workerId: string) {
   return profile;
 }
 
-/**
- * The month a mark is being made in, opened if the store has no record of it
- * (specs.md item 21).
- *
- * **A month is created by the first mark on its calendar and by nothing else.**
- * Item 21 says a future month is filled in ahead of time *through the calendar*,
- * and that is the whole of the gesture: no button that says "start this month",
- * nothing for the user to know about months existing, and no month brought into
- * being by a page merely being looked at — a render that writes is a store that
- * grows every time somebody steps forward through the stepper. Everything on
- * `/payments` is offered only for a month that already has a record, so the
- * calendar is also the only place the question can arise.
- *
- * It returns whether a month is now there. `false` is a worker with no months at
- * all, which is the one case `wageToCarry` cannot answer: the marks are still
- * saved — they belong to the worker (Part 3) — and the month shows as empty
- * until she has a wage position to open one from.
- */
-async function openMonthIfMissing(
-  workerId: string,
-  profile: WorkerProfile,
-  month: YearMonth,
-): Promise<boolean> {
-  const repository = await getRepository();
-  if ((await repository.getMonth(workerId, month)) !== null) return true;
-
-  // The dated-rates table first, and a neighbouring month only where the table
-  // cannot answer — see `wageToCarry`. The stored rates are read through the
-  // repository so a fetched wage counts, exactly as the pre-export screen reads
-  // them (item 4).
-  const wage = wageToCarry(
-    await repository.listMonths(workerId),
-    month,
-    profile,
-    await repository.listRates(),
-  );
-  if (wage === null) return false;
-
-  await repository.saveMonth(workerId, openMonthRecord(profile, month, wage));
-  return true;
-}
-
 export async function markRange(
   workerId: string,
   intent: MarkIntent,
@@ -159,6 +118,12 @@ export async function markRange(
 
   const repository = await getRepository();
   const profile = await profileOf(workerId);
+  // No calendar before the first month is drawn, so a mark there is a crafted
+  // request and is refused like one (specs.md item 6).
+  const range = orderDates(intent.from, intent.to);
+  if (isBeforeFirstMonth(profile, monthOf(range.from))) {
+    throw new Error(`A mark before the first month of ${workerId}`);
+  }
   const existing = await repository.listSpans(workerId);
 
   // Her own rest day, read from the profile because this is a new mark and not
@@ -172,10 +137,10 @@ export async function markRange(
   // **The month the user is looking at, and not the months the stored spans
   // reach.** A sweep is made on one calendar, so the month it is a fact about
   // is the one the range was swept in; a spell that merges with an existing one
-  // across a boundary reaches a month the user did not open and must not create
-  // it, because a month that never happened accrued nothing (`series.ts`).
+  // across a boundary reaches a month the user did not open and need not open
+  // it: the replay already values that month and hands it the spell (`series.ts`).
   if (spans.length > 0) {
-    await openMonthIfMissing(workerId, profile, monthOf(orderDates(intent.from, intent.to).from));
+    await openMonthIfMissing(repository, profile, monthOf(range.from));
   }
 
   revalidateMonth();
@@ -259,9 +224,8 @@ export async function setHolidayWorked(
  */
 
 /** Why an action was refused, in the words the screen shows. `noMonth` is the
- * one the user cannot cause by typing: it is a page held open over a month the
- * store has no record of, which until the future-month step exists is any month
- * outside the seeded range. */
+ * one the user cannot cause by typing: a month before the worker's first month,
+ * or a month after the current one that nothing has opened yet. */
 export type MonthActionRefusal =
   | UserLineRefusal
   | AdvanceRefusal
@@ -279,6 +243,24 @@ export type MonthActionResult =
   | { ok: false; reason: MonthActionRefusal };
 
 /**
+ * The month a figure is being entered in, or `null`.
+ *
+ * A month nobody opened is opened first when the replay values it — from the
+ * first month to the current one (Part 3) — because the screen shows it as an
+ * ordinary month and a figure entered there has to land somewhere.
+ */
+async function monthToChange(
+  workerId: string,
+  profile: WorkerProfile,
+  month: YearMonth,
+) {
+  if (compareMonth(month, monthOf(todayInIsrael())) <= 0) {
+    await openMonthIfMissing(await getRepository(), profile, month);
+  }
+  return (await getRepository()).getMonth(workerId, month);
+}
+
+/**
  * Read the month, change it, save it back.
  *
  * The spans are dropped on the way in and never on the way out: a month's spans
@@ -292,9 +274,7 @@ async function changeMonth(
   change: (record: MonthRecord) => MonthRecord,
 ): Promise<MonthActionResult> {
   const repository = await getRepository();
-  await profileOf(workerId);
-
-  const facts = await repository.getMonth(workerId, month);
+  const facts = await monthToChange(workerId, await profileOf(workerId), month);
   if (facts === null) return { ok: false, reason: "noMonth" };
 
   await repository.saveMonth(workerId, change(recordOf(facts)));
@@ -448,6 +428,9 @@ export async function addAdvance(
 ): Promise<MonthActionResult> {
   const repository = await getRepository();
   const profile = await profileOf(workerId);
+  if ((await monthToChange(workerId, profile, month)) === null) {
+    return { ok: false, reason: "noMonth" };
+  }
   const months = await repository.listMonths(workerId);
   const facts = months.find((candidate) => sameMonth(candidate.month, month));
   if (facts === undefined) return { ok: false, reason: "noMonth" };
@@ -524,10 +507,7 @@ export async function addThirdPartyPayment(
   month: YearMonth,
   draft: ThirdPartyDraft,
 ): Promise<MonthActionResult> {
-  const repository = await getRepository();
-  await profileOf(workerId);
-
-  const facts = await repository.getMonth(workerId, month);
+  const facts = await monthToChange(workerId, await profileOf(workerId), month);
   if (facts === null) return { ok: false, reason: "noMonth" };
 
   const reviewed = reviewThirdPartyPayment(draft, facts.thirdPartyPayments);
@@ -579,7 +559,7 @@ async function linesOf(workerId: string, month: YearMonth) {
   const repository = await getRepository();
   const profile = await profileOf(workerId);
   const months = await repository.listMonths(workerId);
-  const series = calculateSeries(months, profile, todayInIsrael());
+  const series = calculateSeries(months, profile, todayInIsrael(), await repository.listRates());
   return series.find((entry) => sameMonth(entry.facts.month, month)) ?? null;
 }
 

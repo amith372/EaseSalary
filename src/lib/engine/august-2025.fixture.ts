@@ -52,7 +52,9 @@ export function plainWorker(standingLines: UserLine[] = []): WorkerTerms {
     incomeTax: DEFAULT_INCOME_TAX,
     standingLines,
     country: "PH",
-    openingPosition: { vacationDays: 0, sickDays: 0, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: null, advances: [] },
+    // July 2025's recuperation fell before this first month and was paid, so
+    // August carries none of it (specs.md item 15).
+    openingPosition: { vacationDays: 0, sickDays: 0, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: { year: 2025, month: 7 }, advances: [] },
   };
 }
 

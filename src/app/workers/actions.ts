@@ -84,6 +84,7 @@ export type ProfileActionRefusal =
   | "recuperationMonth"
   | "date"
   | "employedSinceRange"
+  | "employedSinceAfterFirstMonth"
   | "entryUnknown"
   | SalaryChangeRefusal
   | "supplement"
@@ -206,16 +207,20 @@ export async function setRestEveSupplement(
  *
  * The date is required and checked by building it and reading it back
  * (`reviewDate`), so 2026-02-30 is refused rather than rolled into March, and
- * it must fall between 2020 and a year from today (item 6).
+ * it must fall between 2020 and a year from today, and not after the worker's
+ * first month (item 6).
  */
 export async function setEmployedSince(
   workerId: string,
   dateText: string,
 ): Promise<ProfileActionResult> {
   const profile = await profileOf(workerId);
-  const date = reviewEmployedSince(dateText, todayInIsrael());
+  const date = reviewEmployedSince(dateText, todayInIsrael(), profile.firstMonth);
   if (date === "invalid") return { ok: false, reason: "date" };
   if (date === "range") return { ok: false, reason: "employedSinceRange" };
+  if (date === "afterFirstMonth") {
+    return { ok: false, reason: "employedSinceAfterFirstMonth" };
+  }
   return saveProfile({ ...profile, employedSince: date }, false);
 }
 
@@ -643,11 +648,7 @@ export async function createWorker(
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   const workerId = randomUUID();
-  await repository.saveWorker({
-    ...reviewed.profile,
-    id: workerId,
-    firstMonth: monthOf(today),
-  });
+  await repository.saveWorker({ ...reviewed.profile, id: workerId });
   await saveIdentifyingNumbers(repository, workerId, {
     passport: draft.passportNumber,
   });

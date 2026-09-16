@@ -27,7 +27,8 @@ import {
  * it, which is exactly why it is a stored fact and is written here as one. */
 const DAY_RATE = 45150;
 
-const worker = plainWorker();
+// Her first month is the earliest month these cases walk (specs.md item 6).
+const worker = { ...plainWorker(), firstMonth: { year: 2025, month: 6 } };
 
 function monthOf(year: number, month: number): MonthFacts {
   const facts: MonthFacts = { ...plainAugustFacts(worker), month: { year, month } };
@@ -62,12 +63,19 @@ async function sheetOf(report: Parameters<typeof buildReport>[0]) {
 describe("the yearly salary summary (item 29)", () => {
   it("holds that year's months and no other year's", () => {
     const report = yearlySalaryReport(SERIES, 2025);
-    // Two of the three months are 2025's. A report that ignored the year would
-    // print July 2026 into the 2025 file, which item 29 forbids in so many
-    // words: it is downloaded a year at a time and never every year at once.
+    // The walk fills the months between June 2025 and July 2026 that nobody
+    // opened, and each is an ordinary month (item 6), so 2025 holds June to
+    // December. A report that ignored the year would print 2026's months into
+    // the 2025 file, which item 29 forbids in so many words: it is downloaded a
+    // year at a time and never every year at once.
     expect(report.rows.map((row) => row[0])).toEqual([
       "יוני 2025",
       "יולי 2025",
+      "אוגוסט 2025",
+      "ספטמבר 2025",
+      "אוקטובר 2025",
+      "נובמבר 2025",
+      "דצמבר 2025",
     ]);
   });
 

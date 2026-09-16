@@ -1,12 +1,16 @@
 import {
   addDays,
+  addMonths,
   compareIsoDate,
+  compareMonth,
   daysInMonth,
   fromIsoDate,
   isoOf,
+  monthOf,
   toIsoDate,
   utcDate,
 } from "@/lib/dates";
+import type { Employment } from "@/lib/engine/types";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
@@ -145,5 +149,87 @@ export function recuperationDaysFor(
   const lastDay = isoOf(month, daysInMonth(month));
   return recuperationDaysPerYear(
     employmentYearsCompletedBy(employedSince, lastDay),
+  );
+}
+
+/**
+ * The days of a payment that fell before the worker's first month and is due
+ * in it instead, or zero (specs.md item 15).
+ *
+ * The payment in question is the one for the employment year running at the
+ * first month: that year's months begin in the month of an anniversary, and its
+ * payment falls in the first of them that is the recuperation month. Only when
+ * that month is already behind the first month is anything carried, and only
+ * when the opening position does not say it was paid — which the caller
+ * decides, because this module knows nothing of the opening position.
+ */
+export function recuperationDaysCarriedIntoFirstMonth(
+  employedSince: IsoDate,
+  recuperationMonth: number,
+  firstMonth: YearMonth,
+): number {
+  const paymentMonth = paymentMonthBeforeFirstMonth(
+    employedSince,
+    recuperationMonth,
+    firstMonth,
+  );
+  if (paymentMonth === null) return 0;
+  return recuperationDaysFor(employedSince, recuperationMonth, paymentMonth);
+}
+
+/**
+ * The month the payment for the employment year running at the first month
+ * fell in, when that month is before the first month, and otherwise `null`
+ * (specs.md item 15). The wizard offers it as the month the payment was made
+ * in, since that is when it was due.
+ */
+export function paymentMonthBeforeFirstMonth(
+  employedSince: IsoDate,
+  recuperationMonth: number,
+  firstMonth: YearMonth,
+): YearMonth | null {
+  const hired = monthOf(employedSince);
+  const monthsIn =
+    (firstMonth.year - hired.year) * 12 + (firstMonth.month - hired.month);
+  if (monthsIn < 0) return null;
+  const yearBegan = addMonths(hired, monthsIn - (monthsIn % 12));
+  const paymentMonth = addMonths(
+    yearBegan,
+    (recuperationMonth - yearBegan.month + 12) % 12,
+  );
+  return compareMonth(paymentMonth, firstMonth) < 0 ? paymentMonth : null;
+}
+
+/**
+ * The days of recuperation one month pays: its own payment, and in the first
+ * month also a payment that fell before it and was not paid (specs.md item 15).
+ * The two never meet in one month — a payment month behind the first month
+ * means the first month is not a payment month of the same year. Every reader
+ * of "what this month pays" asks here, so the line, its confirmation and its
+ * warning cannot disagree.
+ */
+export function recuperationDaysInMonth(
+  employment: Pick<Employment, "employedSince" | "firstMonth" | "openingPosition">,
+  recuperationMonth: number,
+  month: YearMonth,
+): number {
+  const own = recuperationDaysFor(
+    employment.employedSince,
+    recuperationMonth,
+    month,
+  );
+  if (
+    compareMonth(month, employment.firstMonth) !== 0 ||
+    employment.openingPosition.recuperationPaidIn !== null
+  ) {
+    return own;
+  }
+  return (
+    own +
+    recuperationDaysCarriedIntoFirstMonth(
+      employment.employedSince,
+      recuperationMonth,
+      employment.firstMonth,
+    )
   );
 }

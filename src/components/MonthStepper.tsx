@@ -2,9 +2,12 @@
 
 import type { ReactNode } from "react";
 import { Chevron } from "@/components/icons";
-import { addMonths, monthOf, sameMonth } from "@/lib/dates";
+import { addMonths, compareMonth, monthOf, sameMonth } from "@/lib/dates";
 import { he } from "@/lib/i18n/he";
 import type { IsoDate, YearMonth } from "@/lib/types";
+
+const stepButton =
+  "flex size-8 items-center justify-center rounded-tab border border-ink-quiet bg-surface text-ink-warm shadow-[0_1px_2px_rgb(58_50_42/0.06)] transition-colors hover:bg-hover hover:text-ink disabled:cursor-default disabled:opacity-40 disabled:hover:bg-surface disabled:hover:text-ink-warm";
 
 /**
  * Back a month, to this month, forward a month.
@@ -20,20 +23,38 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * `today` is a prop and never a clock (`CLAUDE.md`): without it the "this
  * month" button is not drawn at all, because a control that cannot say which
  * month is this one is a control with nothing to do.
+ *
+ * `earliest` is the worker's first month (specs.md item 6): nothing before it
+ * can be opened, so the backward arrow is disabled there rather than stepping
+ * onto a month the application has no position for.
  */
 export function MonthStepper({
   month,
   today,
+  earliest,
   onMonthChange,
   label,
 }: {
   month: YearMonth;
   today?: IsoDate;
+  earliest?: YearMonth;
   onMonthChange: (month: YearMonth) => void;
   /** The month's name, drawn between the two arrows as the home band has it;
    * the "this month" button then follows the arrows instead of parting them. */
   label?: ReactNode;
 }) {
+  const atEarliest = earliest !== undefined && compareMonth(month, earliest) <= 0;
+  const previous = (
+    <button
+      type="button"
+      aria-label={he.calendar.previousMonth}
+      disabled={atEarliest}
+      onClick={() => onMonthChange(addMonths(month, -1))}
+      className={stepButton}
+    >
+      <Chevron towards="previous" />
+    </button>
+  );
   const thisMonth = today ? (
     <button
       type="button"
@@ -44,26 +65,23 @@ export function MonthStepper({
     </button>
   ) : null;
 
+  const next = (
+    <button
+      type="button"
+      aria-label={he.calendar.nextMonth}
+      onClick={() => onMonthChange(addMonths(month, 1))}
+      className={stepButton}
+    >
+      <Chevron towards="next" />
+    </button>
+  );
+
   if (label) {
     return (
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          aria-label={he.calendar.previousMonth}
-          onClick={() => onMonthChange(addMonths(month, -1))}
-          className="flex size-8 items-center justify-center rounded-tab border border-ink-quiet bg-surface text-ink-warm shadow-[0_1px_2px_rgb(58_50_42/0.06)] transition-colors hover:bg-hover hover:text-ink"
-        >
-          <Chevron towards="previous" />
-        </button>
+        {previous}
         {label}
-        <button
-          type="button"
-          aria-label={he.calendar.nextMonth}
-          onClick={() => onMonthChange(addMonths(month, 1))}
-          className="flex size-8 items-center justify-center rounded-tab border border-ink-quiet bg-surface text-ink-warm shadow-[0_1px_2px_rgb(58_50_42/0.06)] transition-colors hover:bg-hover hover:text-ink"
-        >
-          <Chevron towards="next" />
-        </button>
+        {next}
         {thisMonth ? <span className="ms-1">{thisMonth}</span> : null}
       </div>
     );
@@ -71,25 +89,18 @@ export function MonthStepper({
 
   return (
     <div className="flex items-center gap-2">
-      <button
-        type="button"
-        aria-label={he.calendar.previousMonth}
-        onClick={() => onMonthChange(addMonths(month, -1))}
-        className="flex size-8 items-center justify-center rounded-tab border border-ink-quiet bg-surface text-ink-warm shadow-[0_1px_2px_rgb(58_50_42/0.06)] transition-colors hover:bg-hover hover:text-ink"
-      >
-        <Chevron towards="previous" />
-      </button>
+      {previous}
       {thisMonth}
-      <button
-        type="button"
-        aria-label={he.calendar.nextMonth}
-        onClick={() => onMonthChange(addMonths(month, 1))}
-        className="flex size-8 items-center justify-center rounded-tab border border-ink-quiet bg-surface text-ink-warm shadow-[0_1px_2px_rgb(58_50_42/0.06)] transition-colors hover:bg-hover hover:text-ink"
-      >
-        <Chevron towards="next" />
-      </button>
+      {next}
     </div>
   );
+}
+
+/** The later of a month and the worker's first month — what a screen shows
+ * when the month it was left on is before her first (specs.md item 6): after
+ * switching to a worker who started later, or before her employment begins. */
+export function notBefore(month: YearMonth, earliest: YearMonth): YearMonth {
+  return compareMonth(month, earliest) < 0 ? earliest : month;
 }
 
 /**

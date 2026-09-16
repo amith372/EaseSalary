@@ -95,7 +95,12 @@ const LADDER: [YearMonth, number][] = [
 ];
 
 describe("the sick balance the family kept by hand", () => {
-  const series = calculateSeries(everyMonth(), workbookWorker(WAGE_2025));
+  // The ladder starts at her first 2024 tab, earlier than the fixture's first
+  // month, so the walk is given that month as its first (item 6).
+  const series = calculateSeries(everyMonth(), {
+    ...workbookWorker(WAGE_2025),
+    firstMonth: { year: 2024, month: 4 },
+  });
 
   const closingSick = (month: YearMonth) => {
     const entry = series.find(

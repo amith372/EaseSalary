@@ -52,7 +52,9 @@ function knownWorker(): WorkerTerms {
       sickDays: 0,
       vacationUsedThisYear: 0,
       holidayUsedThisYear: 0,
-      recuperationPaidIn: null,
+      // July 2025's payment was made before August, her first month here, so
+      // nothing is carried into Part 4's month (item 15).
+      recuperationPaidIn: { year: 2025, month: 7 },
       advances: [{ number: 1, principalAgorot: 1000000, repaidAgorot: 0 }],
     },
   };

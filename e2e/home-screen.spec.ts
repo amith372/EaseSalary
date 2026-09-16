@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { TEST_WORKER_NAME, useHousehold, switchToTestWorker, openPaymentSections } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { monthLabel } from "../src/lib/dateLabels";
@@ -237,75 +237,57 @@ test.describe("a month that has not ended yet (specs.md item 21)", () => {
   });
 });
 
-test.describe("a month the store has no record of", () => {
-  test("is empty until a mark opens it, and then it calculates", async ({
+test.describe("a month after the current one", () => {
+  test("keeps its marks and is not valued until it begins", async ({
     page,
   }) => {
-    // October 2026 is past the demo household's last seeded month, so the store
-    // has no record of it at all: the screen says so rather than showing a month
-    // of zeroes.
-    await useHousehold(page, "demo", "open");
+    // October 2026 is after the current month, so it is not valued at all
+    // (specs.md item 21): the money card says so in one sentence rather than
+    // showing a month of zeroes — before a mark and after one alike.
+    await useHousehold(page, "demo", "future");
     await page.goto("/");
     await switchToTestWorker(page);
     await page.getByRole("button", { name: he.calendar.nextMonth }).click();
 
-    await expect(page.getByText(he.month.empty.title)).toBeVisible();
+    await expect(page.getByText(he.month.future)).toBeVisible();
     await expect(row(page, "net")).toHaveCount(0);
 
-    // The gesture item 21 names — the calendar — and nothing else. 5.10.2026 is
-    // a Monday and 8.10.2026 a Thursday, so four whole days come off the
-    // balance: no rest day and no rest-eve falls inside the range (item 5).
+    // Marking ahead is allowed (item 21). 5.10.2026 is a Monday and 8.10.2026 a
+    // Thursday, so no rest day falls inside and all four days take the mark.
     await sweep(page, "2026-10-05", "2026-10-08", "vacation");
 
-    // The month now exists and is calculated.
-    await expect(page.getByText(he.month.empty.title)).toHaveCount(0);
-    await expect(row(page, "net")).toBeVisible();
-    await expect(row(page, "worker-2-vacation-balance")).toContainText(daysUsed(4));
+    const vacation = he.calendar.marks(SATURDAY).vacation;
+    for (const date of ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08"]) {
+      await expect(page.locator(`[data-date="${date}"]`)).toHaveAccessibleName(
+        new RegExp(`, ${vacation}$`),
+      );
+    }
+    await expect(page.getByText(he.month.future)).toBeVisible();
+    await expect(row(page, "net")).toHaveCount(0);
 
-    // **The wage the opened month carries is what this would catch.** No rate is
-    // ever hardcoded (`CLAUDE.md`), so a month opened with an invented base
-    // would draw a plausible salary from nowhere. October 2026 takes the
-    // minimum wage **in force during it** — ₪6,443.85, the row dated 1.4.2026
-    // and sourced to the family's own 2026 workbook — and not the position the
-    // month before it was confirmed at.
-    //
-    // **This assertion was the other way round until 2026-09-11**, and it
-    // passed: a month opened by a mark carried its neighbour's wage, so an
-    // October 2026 was valued at the wage of April 2025 and paid under the legal
-    // minimum. `wageToCarry`'s own comment said it worked that way only until
-    // the dated-rates table landed, and the table had landed. The test asserted
-    // the behaviour rather than the rule, which is how it kept the defect.
-    //
-    // **Read off the payslip, because the opening screen summarises** (item 5):
-    // the base is one of the lines behind the ‏ברוטו‎ and the sheet is where a
-    // month is itemised. The address names the month, or the payslip opens on
-    // the last one that ended and October has not.
-    await page.goto("/month/payslip?month=2026-10");
-    await switchToTestWorker(page);
-    await expect(row(page, "base")).toContainText(formatAgorot(IN_FORCE_2026));
-
-    // And September, which the seed itself values at the same figure — since
-    // 2026-09-11 a seeded month carries the wage in force during it rather than
-    // one figure stamped across the year (`seed.ts`), so the month opened by a
-    // mark and the month beside it agree instead of differing by a rise.
+    // **No rate is ever hardcoded** (`CLAUDE.md`): September is valued at the
+    // minimum wage in force during it — ₪6,443.85, the row dated 1.4.2026 and
+    // sourced to the family's own 2026 workbook. Read off the payslip, because
+    // the opening screen summarises and the sheet itemises (item 5).
     await page.goto("/month/payslip?month=2026-09");
     await switchToTestWorker(page);
     await expect(row(page, "base")).toContainText(formatAgorot(IN_FORCE_2026));
   });
+});
 
-  test("survives a reload, because the mark went to the store", async ({
-    page,
-  }) => {
+test.describe("a mark goes to the store", () => {
+  test("survives a reload", async ({ page }) => {
     // The failure this catches is a mark held in the browser and never saved:
     // the screen would look right until the page was reloaded, which is the one
-    // thing no unit test does. **This is the check the port of 2026-09-16 was
-    // for** — before it, marking on this screen was `useState` and a reload lost
-    // every mark.
+    // thing no unit test does.
+    //
+    // The current month, which the screen opens on. 7.9.2026 is a Monday and
+    // 10.9.2026 a Thursday, so no rest day and no rest-eve falls inside and
+    // four whole days come off the balance (item 7).
     await useHousehold(page, "demo", "reload");
     await page.goto("/");
     await switchToTestWorker(page);
-    await page.getByRole("button", { name: he.calendar.nextMonth }).click();
-    await sweep(page, "2026-10-05", "2026-10-08", "vacation");
+    await sweep(page, "2026-09-07", "2026-09-10", "vacation");
     await expect(row(page, "worker-2-vacation-balance")).toContainText(daysUsed(4));
 
     await page.reload();
@@ -316,10 +298,20 @@ test.describe("a month the store has no record of", () => {
     await expect(
       page.getByRole("group", { name: he.header.workerSwitcher.showing }),
     ).toContainText(TEST_WORKER_NAME);
-    await page.getByRole("button", { name: he.calendar.nextMonth }).click();
     await expect(row(page, "worker-2-vacation-balance")).toContainText(daysUsed(4));
   });
 });
+
+/**
+ * The home and payments screens open on the current month, and the known case's only month is
+ * August 2025 — the worker's first month (specs.md item 6). Stepping back until
+ * the arrow refuses lands on it, whatever today is.
+ */
+async function backToFirstMonth(page: Page): Promise<void> {
+  const back = page.getByRole("button", { name: he.calendar.previousMonth });
+  while (await back.isEnabled()) await back.click();
+  await expect(page.getByText(monthLabel({ year: 2025, month: 8 })).first()).toBeVisible();
+}
 
 test.describe("the known case of Part 4, entered through the screen", () => {
   test("reaches ₪9,305.75 and ₪7,305.75 from three gestures", async ({
@@ -327,6 +319,7 @@ test.describe("the known case of Part 4, entered through the screen", () => {
   }) => {
     await useHousehold(page, "known", "part4");
     await page.goto("/");
+    await backToFirstMonth(page);
 
     // **The starting figure, before anything is entered.** August 2025 with an
     // empty calendar is ₪8,879.40 — five rest days all worked and five
@@ -396,6 +389,7 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     // The fourth total needs the advance instalment, which is recorded where
     // everything that *records* a payment is recorded (item 5).
     await page.goto("/payments");
+    await backToFirstMonth(page);
     await openPaymentSections(page);
     await page
       .getByRole("button", { name: he.month.actions.advances.repayLabel(1) })
@@ -424,6 +418,7 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     // screen at once, which is what makes ₪7,305.75 readable as ₪9,305.75 less
     // ₪2,000 rather than as a number the application produced.
     await page.goto("/");
+    await backToFirstMonth(page);
     await expect(row(page, "afterWithholding")).toContainText(
       formatAgorot(PART_4.gross),
     );
@@ -442,6 +437,7 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     // rate and a second mark's for one day, and the sheet would look ordinary.
     await useHousehold(page, "known", "invalid");
     await page.goto("/");
+    await backToFirstMonth(page);
     // ₪8,453.05 — the plain August less one rest day at ₪426.35: ₪6,247.65 plus
     // ₪500 in column E, and four rest days rather than five in column F. Every
     // figure in that sentence is Part 4's, and it is written out so that the

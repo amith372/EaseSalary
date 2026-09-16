@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+﻿import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { he } from "../src/lib/i18n/he";
 
@@ -95,6 +95,9 @@ async function anAccountWithAWorker(person: Person): Promise<void> {
     first_name: person.firstName,
     gender: "female",
     employed_since: "2025-01-01",
+    // The first month the seeded rates table can value (specs.md item 6);
+    // her opening position is not what this test is about.
+    first_month: "2025-04-01",
     base_monthly_salary_agorot: 609590,
     recuperation_month: 7,
     country: "PH",

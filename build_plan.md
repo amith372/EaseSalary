@@ -126,15 +126,6 @@ Carried forward from finished steps. None of these is a defect.
   is what keeps fourteen spec files working. There are three seeds now: the demo, the known
   case, and `empty`, which is the state a new account is in and the only one the add-worker
   flow can start from.
-- **Item 6's first month is not built.** The spec now gives each worker a first month (the
-  month added or the one before), refuses earlier months, asks the opening position in the
-  add-worker wizard when the employment began earlier — including vacation and holiday days
-  used that calendar year and whether this employment year's recuperation was paid — and the
-  replay walks every month from the first month, an unopened one as an ordinary month (Part
-  3). The schema and profile hold the first month and the whole opening position (existing
-  workers took their earliest recorded month); nothing reads them yet. The wizard does not ask
-  them, the replay skips unopened months, and an unopened month shows `he.month.empty` and
-  cannot be exported.
 - **The home screen's blocker strip is three fixed cards** (`src/lib/fixtures/home.ts`), the
   same for every household, with placeholders where a date or a sum belongs. **Stage 6's**,
   with the action list.

@@ -276,6 +276,34 @@ export const he = {
        * of up to eleven months later. */
       recuperationMonthAdvice:
         "מומלץ לבחור את החודש שבו התחילה ההעסקה — כך התשלום הראשון מגיע מיד כשמלאו 12 חודשים.",
+      /** Item 6's choice, offered only when the start date leaves two. */
+      firstMonth: "מאיזה חודש מתחילים לחשב",
+      firstMonthHint:
+        "אפשר להתחיל מהחודש הקודם, כדי לחשב גם את המשכורת של החודש שהסתיים. חודשים מוקדמים יותר לא יופיעו באפליקציה.",
+
+      /**
+       * The opening position (item 6), asked only when the employment began
+       * before the first month. Each question carries the link to its rule.
+       */
+      opening: {
+        title: "המצב שממנו מתחילים",
+        lead: "ההעסקה התחילה לפני החודש הראשון באפליקציה, ולכן צריך לדעת מה כבר נצבר ומה כבר נוצל. אפשר לתקן הכול אחר כך בדף שלה.",
+        vacationDays: "ימי חופשה שכבר נצברו",
+        sickDays: "ימי מחלה שכבר נצברו",
+        balanceHint: "ימים שנצברו ועוד לא נוצלו, נכון לתחילת החודש הראשון.",
+        vacationUsed: "ימי חופשה שכבר נוצלו השנה",
+        holidayUsed: "ימי חג שכבר נוצלו השנה",
+        usedHint: "מתחילת השנה ועד החודש הראשון באפליקציה.",
+        recuperationPaid: "שולמו דמי הבראה לשנה הזו?",
+        recuperationPaidHint:
+          "לשנת העבודה הנוכחית. אם לא, התשלום יתווסף למשכורת של החודש הראשון.",
+        yes: "כן",
+        no: "לא",
+        recuperationPaidIn: "באיזה חודש שולמו",
+        advances: "מקדמה שעדיין נפרעת",
+        advancesHint: "אם ניתנה לה מקדמה שעוד לא הוחזרה במלואה.",
+        advanceName: (number: number) => `מקדמה ${number}`,
+      },
     },
 
     pay: {
@@ -308,9 +336,9 @@ export const he = {
       /** Three sentences, each about something the application actually does.
        * Nothing here promises a screen that does not exist. */
       steps: [
-        "החודש הנוכחי כבר מחכה בדף הבית — אפשר להתחיל לסמן בלוח.",
-        "היתרות של חופשה ומחלה מתחילות להצטבר מתאריך תחילת ההעסקה.",
-        "מספרי הדרכון והאשרה, התאריכים שלהם ויתרות פתיחה — הכול נוסף בדף שלה.",
+        "החודש הראשון שלה כבר מחכה בדף הבית — אפשר להתחיל לסמן בלוח.",
+        "יתרות החופשה והמחלה מתעדכנות מכאן בכל חודש, לפי הוותק שלה.",
+        "מספרי הדרכון והאשרה, התאריכים שלהם והמצב שממנו התחלנו — אפשר להוסיף ולתקן בדף שלה.",
       ],
       toWorker: "לדף שלה",
     },
@@ -331,6 +359,12 @@ export const he = {
       supplement: "הסכום לא תקין.",
       incomeTaxMode: "צריך לבחור.",
       incomeTaxRate: "צריך אחוז בין 0 ל-100, למשל 2.5.",
+      firstMonth: "צריך לבחור חודש.",
+      openingDays: "צריך מספר ימים, למשל 12 או 2.5.",
+      openingUsed: "צריך מספר ימים, למשל 3 או 0.",
+      recuperationPaid: "צריך לבחור.",
+      recuperationPaidIn: "צריך לבחור חודש.",
+      openingAdvance: "צריך סכום, וההחזר לא יכול להיות גדול ממנו.",
       /** The save itself failed, which is not a field the user can correct. */
       save: "לא הצלחנו לשמור. אפשר לנסות שוב.",
     },
@@ -813,13 +847,16 @@ export const he = {
    * and `/reports` read several of them too.
    */
   month: {
-    /** A month the store has no record of. It is not an error and not an empty
-     * result — nothing has been entered yet, which for a month ahead of the
-     * present is the ordinary state (specs.md item 21). */
+    /** A month with nothing calculated for it that is neither before the first
+     * month nor after the current one — which the replay does not produce, so
+     * this is the fallback a screen draws rather than an empty card. */
     empty: {
       title: "החודש הזה עדיין ריק",
       body: "לא נרשם בו דבר, ולכן אין עדיין מה לחשב.",
     },
+    /** A month after the current one (specs.md item 21): its calendar can be
+     * marked, and it is not valued until it begins. */
+    future: "החודש הזה עוד לא התחיל — המשכורת תחושב כשיגיע.",
     preview: {
       /**
        * The lines the user added, summed. One heading covers both directions,
@@ -1539,8 +1576,14 @@ export const he = {
         /** When the employment began: what seniority is counted from. */
         employedSince: {
           label: "תחילת העסקה",
-          hint: "משפיע על ותק, על הבראה ועל מכסת החופשה. תיקון התאריך מעדכן את כל החודשים, כי היתרות מחושבות מחדש מתחילת ההעסקה.",
+          hint: "משפיע על ותק, על הבראה ועל מכסת החופשה. תיקון התאריך מעדכן את כל החודשים, כי היתרות מחושבות מחדש מהחודש הראשון של העובדת באפליקציה.",
           save: "לשמור",
+          /** Item 6: a correction past the first month is refused. The month is
+           * its own element between the two halves (`CLAUDE.md`). */
+          afterFirstMonth: {
+            before: "התאריך צריך להיות עד סוף ",
+            after: ", החודש הראשון של העובדת באפליקציה",
+          },
         },
         /** Item 14: an agreed term, changed or stopped when the agreement is. */
         restEveSupplement: {

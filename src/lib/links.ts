@@ -141,6 +141,13 @@ export const legalLinks = {
     // sector, which is the fact that stops her deducting too much.
     url: termsSection("ניכויים_משכר_העובד"),
   },
+  wageDeductions: {
+    label: "ניכויים משכר העובד/ת",
+    // What an advance repaid out of the salary rests on (item 20): the same
+    // section `incomeTax` opens at, named for the deduction the user is
+    // entering rather than for the tax.
+    url: termsSection("ניכויים_משכר_העובד"),
+  },
   wageProtection: {
     label: "תלוש שכר",
     // What item 2 rests on: this page is the one that lists what a payslip must

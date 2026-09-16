@@ -38,7 +38,7 @@ export default async function WorkerPage({
 
   const today = todayInIsrael();
   const months = await repository.listMonths(id);
-  const series = calculateSeries(months, profile, today);
+  const series = calculateSeries(months, profile, today, await repository.listRates());
   const closing = series[series.length - 1]?.result.balances;
 
   const listed: ProfileMonth[] = series.map(({ result }) => ({

@@ -166,6 +166,7 @@ export function SettingsScreen({
           <EmployedSinceControl
             workerId={profile.id}
             employedSince={profile.employedSince}
+            firstMonth={profile.firstMonth}
             onSubmit={handleAction}
           />
           <GenderControl

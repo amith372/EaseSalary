@@ -83,7 +83,9 @@ const hanna: WorkerProfile = {
     sickDays: 0,
     vacationUsedThisYear: 0,
     holidayUsedThisYear: 0,
-    recuperationPaidIn: null,
+    // July 2025's recuperation fell before this first month and was paid, so
+    // August carries none of it (specs.md item 15).
+    recuperationPaidIn: { year: 2025, month: 7 },
     // Part 4: a ₪10,000 advance from an earlier month, repaid at ₪2,000 a
     // month. The advance is in the opening position because it did not
     // originate inside the application (item 6); the instalment is August's and

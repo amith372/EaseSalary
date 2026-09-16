@@ -59,7 +59,9 @@ export default async function HomePage() {
           firstName: profile.firstName,
         },
         restDay: profile.restDay,
-        months: calculateSeries(months, profile, today),
+        firstMonth: profile.firstMonth,
+        months: calculateSeries(months, profile, today, await repository.listRates()),
+        spans: await repository.listSpans(profile.id),
       };
     }),
   );

@@ -133,7 +133,8 @@ interface MonthRow {
   third_party_payments: ThirdPartyPayment[];
   user_lines: UserLine[];
   overrides: Record<string, LineOverride>;
-  income_tax_agorot: number;
+  /** Null until the month is confirmed (specs.md item 17). */
+  income_tax_agorot: number | null;
   recuperation_day_rate_agorot: number | null;
   confirmed_at: string | null;
 }
@@ -323,7 +324,9 @@ function recordOfRow(row: MonthRow): MonthRecord {
     thirdPartyPayments: row.third_party_payments,
     userLines: row.user_lines,
     overrides: row.overrides,
-    incomeTaxAgorot: row.income_tax_agorot,
+    ...(row.income_tax_agorot === null
+      ? {}
+      : { incomeTaxAgorot: row.income_tax_agorot }),
     // Null is "not confirmed for this month" and never "worth nothing", so it
     // comes back absent and the engine falls back to the dated-rates table —
     // the same figure from the same source (`specs.md` item 15).
@@ -352,7 +355,7 @@ function monthRowOf(workerId: string, record: MonthRecord) {
     third_party_payments: record.thirdPartyPayments,
     user_lines: record.userLines,
     overrides: record.overrides,
-    income_tax_agorot: record.incomeTaxAgorot ?? 0,
+    income_tax_agorot: record.incomeTaxAgorot ?? null,
     recuperation_day_rate_agorot: record.recuperationDayRateAgorot ?? null,
     confirmed_at: record.confirmedAt ?? null,
   };
