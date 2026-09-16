@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import type { ReactNode } from "react";
 import {
   closeSickSpell,
   confirmMonth,
@@ -11,6 +10,8 @@ import {
 } from "@/app/month/export/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { Chip } from "@/components/Chip";
+import { SheetBadge } from "@/components/icons";
 import { MonthStepper, openingMonthOf } from "@/components/MonthStepper";
 import { useWorkerScope } from "@/components/WorkerScope";
 import type { DatedRate } from "@/lib/datedRates";
@@ -143,7 +144,7 @@ export function BeforeExportScreen({
   const shown = entry.months.find((each) => sameMonth(each.month, month));
 
   return (
-    <section className="mx-auto flex w-full max-w-[760px] flex-col gap-4 pb-6">
+    <section className="mx-auto flex w-full max-w-[760px] min-w-0 flex-col gap-5.5 pb-6">
       <header className="flex flex-col gap-1.5">
         <span
           dir="auto"
@@ -152,7 +153,7 @@ export function BeforeExportScreen({
           {he.beforeExport.eyebrow}
         </span>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-[28px] font-semibold tracking-[-0.02em]">
+          <h1 className="min-w-0 text-[26px] leading-[1.2] font-semibold tracking-[-0.02em] text-balance break-words sm:text-[32px]">
             <Bidi>{monthLabel(month)}</Bidi>
             <span> </span>
             <span dir="auto">{he.beforeExport.of}</span>
@@ -163,7 +164,7 @@ export function BeforeExportScreen({
         </div>
         <p
           dir="auto"
-          className="max-w-[62ch] text-[17px] leading-[1.5] font-light text-ink-mute text-pretty"
+          className="max-w-[62ch] text-[17px] leading-[1.5] font-light text-ink-mute text-pretty sm:text-[18px]"
         >
           {he.beforeExport.lead}
         </p>
@@ -270,7 +271,7 @@ function MonthConfirmation({
     <div
       aria-busy={saving}
       className={[
-        "flex flex-col gap-4 transition-opacity",
+        "flex flex-col gap-5.5 transition-opacity",
         saving ? "opacity-60" : "",
       ]
         .filter(Boolean)
@@ -280,16 +281,15 @@ function MonthConfirmation({
           effect, where it was read from, and a way to correct it. */}
       <Card
         tone="tint"
-        radius="tint"
         data-wage=""
-        className="flex flex-col gap-2.5 px-5 py-4"
+        className="flex flex-col gap-3 border border-line-strong px-5 py-5 sm:px-6.5"
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <span className="flex min-w-0 flex-col gap-1">
             <span dir="auto" className="text-[17px] font-semibold">
               {words.wage.title}
             </span>
-            <span className="text-[14px] font-light text-ink-mute">
+            <span className="text-[15px] font-light text-ink-warm">
               <span dir="auto">{words.wage.inForceFrom}</span>
               <Bidi noTranslate>{fullDayLabel(effectiveFrom)}</Bidi>
               <span> · </span>
@@ -307,7 +307,7 @@ function MonthConfirmation({
           {/* The figure stays in view while the field is open, so "לתקן" is a
               toggle and not a door that closes behind the user. */}
           <span className="flex flex-none items-center gap-3">
-            <Bidi noTranslate className="text-[24px] font-bold tracking-[-0.02em]">
+            <Bidi noTranslate className="text-[26px] font-bold tracking-[-0.02em]">
               {typedWage === null
                 ? he.placeholder.amount
                 : formatAgorot(typedWage)}
@@ -316,7 +316,7 @@ function MonthConfirmation({
               type="button"
               aria-pressed={editingWage}
               onClick={() => setEditingWage((open) => !open)}
-              className="text-[15px] font-medium text-forest transition-colors hover:underline hover:underline-offset-2"
+              className="-my-2 rounded-card-sm px-1 py-2 text-[15px] font-medium whitespace-nowrap text-forest transition-colors hover:underline hover:underline-offset-3 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
             >
               <span dir="auto">
                 {editingWage ? words.wage.cancel : words.wage.correct}
@@ -369,7 +369,7 @@ function MonthConfirmation({
               value={wageText}
               onChange={(event) => setWageText(event.target.value)}
               placeholder={he.placeholder.amountInput}
-              className="w-full rounded-card-sm border border-line bg-surface px-3 py-2 text-[15px] text-ink"
+              className={fieldClass}
             />
           </label>
         ) : null}
@@ -394,11 +394,9 @@ function MonthConfirmation({
       {shown.blocks.includes("monthNotEnded") ? (
         <Card
           data-block="monthNotEnded"
-          className="flex flex-col gap-1.5 border border-line-strong bg-tint px-5 py-4"
+          className={blockClass}
         >
-          <span dir="auto" className="text-[17px] font-semibold text-clay-deep">
-            {words.notEnded.title}
-          </span>
+          <BlockTitle>{words.notEnded.title}</BlockTitle>
           <p dir="auto" className="text-[15px] leading-[1.55] font-light text-ink-mute">
             {words.notEnded.note}
           </p>
@@ -408,11 +406,9 @@ function MonthConfirmation({
       {shown.blocks.includes("unansweredHoliday") ? (
         <Card
           data-block="unansweredHoliday"
-          className="flex flex-col gap-1.5 border border-line-strong bg-tint px-5 py-4"
+          className={blockClass}
         >
-          <span dir="auto" className="text-[17px] font-semibold text-clay-deep">
-            {words.unansweredHoliday.title}
-          </span>
+          <BlockTitle>{words.unansweredHoliday.title}</BlockTitle>
           <p dir="auto" className="text-[15px] leading-[1.55] font-light text-ink-mute">
             {words.unansweredHoliday.note}
           </p>
@@ -425,14 +421,14 @@ function MonthConfirmation({
       {shown.recuperation !== null ? (
         <Card
           data-recuperation-rate=""
-          className="flex flex-col gap-2.5 px-5 py-4"
+          className="flex flex-col gap-3 px-5 py-5 sm:px-6.5"
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <span className="flex min-w-0 flex-col gap-1">
               <span dir="auto" className="text-[17px] font-semibold">
                 {words.recuperation.title}
               </span>
-              <span className="text-[14px] font-light text-ink-mute">
+              <span className="text-[15px] font-light text-ink-warm">
                 <span dir="auto">{words.recuperation.days}</span>
                 <span> </span>
                 <Bidi noTranslate>{formatDays(shown.recuperation.days)}</Bidi>
@@ -452,7 +448,7 @@ function MonthConfirmation({
                 value={rateText}
                 onChange={(event) => setRateText(event.target.value)}
                 placeholder={he.placeholder.amountInput}
-                className="w-full rounded-card-sm border border-line bg-surface px-3 py-2 text-[15px] text-ink"
+                className={fieldClass}
               />
             </label>
           </div>
@@ -473,7 +469,7 @@ function MonthConfirmation({
         </Card>
       ) : null}
 
-      <Card className="flex flex-col overflow-hidden px-0 py-0">
+      <Card className="flex flex-col overflow-hidden">
         {shown.questions.map((question, index) => (
           <QuestionRow
             key={question.key}
@@ -491,11 +487,9 @@ function MonthConfirmation({
       {mismatches.length > 0 ? (
         <Card
           data-mismatch=""
-          className="flex flex-col gap-1.5 border border-line-strong bg-tint px-5 py-4"
+          className={blockClass}
         >
-          <span dir="auto" className="text-[17px] font-semibold text-clay-deep">
-            {words.mismatch.title}
-          </span>
+          <BlockTitle>{words.mismatch.title}</BlockTitle>
           <ul className="flex flex-col gap-1">
             {mismatches.map((question) => (
               <li
@@ -510,8 +504,8 @@ function MonthConfirmation({
         </Card>
       ) : null}
 
-      <div className="flex flex-col gap-2 border-t border-line pt-4">
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col gap-2.5 border-t border-line pt-5.5">
+        <div className="flex flex-wrap items-center gap-x-4.5 gap-y-3">
           {/* Item 2's two versions, as two buttons of equal weight: neither
               artboard draws a chooser, and the difference between the files is
               one the user has to be able to see before she picks (settled
@@ -539,8 +533,9 @@ function MonthConfirmation({
                   },
                 )
               }
-              className="rounded-card-sm bg-forest px-6 py-3 text-[17px] font-semibold text-surface transition-colors hover:bg-forest-deep disabled:cursor-not-allowed disabled:opacity-45"
+              className="flex items-center gap-2.75 rounded-tint bg-forest px-6 py-3.5 text-[17px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:cursor-not-allowed disabled:opacity-45 sm:px-7.5 sm:text-[18px]"
             >
+              <SheetBadge className="size-5 text-forest" />
               <span dir="auto">
                 {withNotes ? words.finish.actionWithNotes : words.finish.action}
               </span>
@@ -548,7 +543,7 @@ function MonthConfirmation({
           ))}
           <Link
             href="/"
-            className="text-[16px] text-ink-mute transition-colors hover:text-forest"
+            className="py-2 text-[16px] text-ink-mute transition-colors hover:text-forest"
           >
             <span dir="auto">{words.finish.back}</span>
           </Link>
@@ -663,11 +658,9 @@ function OpenSpellBlock({
   return (
     <Card
       data-block="openSickSpell"
-      className="flex flex-col gap-2.5 border border-line-strong bg-tint px-5 py-4"
+      className={blockClass}
     >
-      <span dir="auto" className="text-[18px] font-semibold text-clay-deep">
-        {words.title}
-      </span>
+      <BlockTitle>{words.title}</BlockTitle>
       <p className="text-[16px] leading-[1.55] font-light text-ink-mute text-pretty">
         <span dir="auto">{words.since}</span>
         <Bidi noTranslate>{fullDayLabel(spell.from)}</Bidi>
@@ -685,7 +678,7 @@ function OpenSpellBlock({
             data-return-input=""
             value={returnedOn}
             onChange={(event) => setReturnedOn(event.target.value)}
-            className="rounded-card-sm border border-line bg-surface px-3 py-2 text-[15px] text-ink"
+            className={fieldClass}
           />
         </label>
         <button
@@ -693,7 +686,7 @@ function OpenSpellBlock({
           data-close-spell=""
           disabled={returnedOn === ""}
           onClick={() => onRun(() => closeSickSpell(workerId, spell.spanId, returnedOn))}
-          className="rounded-card-sm border border-line bg-surface px-4 py-2 text-[15px] font-semibold text-ink transition-colors hover:border-line-hover disabled:cursor-not-allowed disabled:opacity-45"
+          className="rounded-card-sm border border-line-hover bg-surface px-4 py-2 text-[15px] font-semibold text-ink transition-colors hover:border-ask-line-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest disabled:cursor-not-allowed disabled:opacity-45"
         >
           <span dir="auto">{words.save}</span>
         </button>
@@ -744,13 +737,13 @@ function QuestionRow({
     <div
       data-question={question.key}
       className={[
-        "flex flex-wrap items-center gap-4 px-6 py-4",
-        first ? "" : "border-t border-line",
+        "flex flex-wrap items-center gap-x-4.5 gap-y-3 px-5 py-4.25 sm:px-6",
+        first ? "" : "border-t border-line-soft",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      <span className="flex min-w-0 flex-1 basis-[300px] flex-col gap-0.5">
+      <span className="flex min-w-0 flex-1 basis-[260px] flex-col gap-0.75">
         <span dir="auto" className="text-[17px] font-medium">
           {askOf(question.key, restDay)}
         </span>
@@ -775,44 +768,14 @@ function QuestionRow({
         ) : null}
       </span>
       <span className="flex flex-none items-center gap-2">
-        <AnswerChip
-          selected={answer === true}
-          onClick={() => onAnswer(true)}
-          label={words.yes}
-        />
-        <AnswerChip
-          selected={answer === false}
-          onClick={() => onAnswer(false)}
-          label={words.no}
-        />
+        <Chip selected={answer === true} onClick={() => onAnswer(true)}>
+          <span dir="auto">{words.yes}</span>
+        </Chip>
+        <Chip selected={answer === false} onClick={() => onAnswer(false)}>
+          <span dir="auto">{words.no}</span>
+        </Chip>
       </span>
     </div>
-  );
-}
-
-function AnswerChip({
-  selected,
-  onClick,
-  label,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  label: string;
-}): ReactNode {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-      className={[
-        "rounded-full border px-4.5 py-2 text-[15px] transition-colors",
-        selected
-          ? "border-line-hover bg-tint font-semibold text-ink"
-          : "border-line bg-surface font-normal text-ink-mute hover:border-line-hover",
-      ].join(" ")}
-    >
-      <span dir="auto">{label}</span>
-    </button>
   );
 }
 
@@ -911,3 +874,26 @@ function detailOf(detail: ExportQuestionDetail): string {
     }
   }
 }
+
+/**
+ * A card that stops the export or warns before it. The artboard draws the open
+ * spell a step warmer than the wage card, with a clay dot before its title;
+ * every card of that kind takes the same look, so a block is told from a
+ * confirmation at a glance.
+ */
+const blockClass =
+  "flex flex-col gap-2.5 border border-line-strong bg-chip px-5 py-5 sm:px-6.5";
+
+function BlockTitle({ children }: { children: string }) {
+  return (
+    <span className="flex items-center gap-2.5">
+      <span aria-hidden="true" className="size-2 flex-none rounded-full bg-clay" />
+      <span dir="auto" className="text-[18px] font-semibold text-clay-deep">
+        {children}
+      </span>
+    </span>
+  );
+}
+
+const fieldClass =
+  "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";

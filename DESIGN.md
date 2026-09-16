@@ -113,7 +113,7 @@ folded sheet.
   open while the month is stepped. A heading's side item — the tax amount, the
   `לתת מקדמה` button — shows only while its section is open.
 
-### The forms on payments, settings and the holiday picker
+### The forms on payments, settings, the holiday picker, before the export and sign-in
 
 - A text field's border is `line-field`, far firmer than the artboards'
   hairline: the border is the field's only outline, and the hairline held
@@ -127,6 +127,20 @@ folded sheet.
 - The four groups start folded, each opened from its heading as the payments
   screen's sections are; the group's note is inside the fold. The account
   section below them does not fold. A worker switch folds them again.
+
+### Before the export
+
+- The yes/no answers are the shared `Chip`, filled sage when chosen. The
+  artboard draws a chosen answer in the warm tint, a step from an unchosen one
+  that a glance does not catch.
+- The artboard's `הסכום נכון` button and `עדיין לא חזרה` link are not drawn:
+  the export buttons already confirm the wage, and an open spell is answered
+  only by a return date, so each would add a step that decides nothing.
+- Two export buttons of equal weight, where the artboard draws one: the plain
+  file and the one with notes, which the family chooses between.
+- Every card that blocks or warns wears the open spell's look — the warmer
+  fill and the clay dot — so a block is told from a confirmation at a glance.
+  The artboard draws only the spell, since it draws no other block.
 
 ### Still owed to the canvas
 
