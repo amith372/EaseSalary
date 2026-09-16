@@ -456,10 +456,32 @@ export function HomeScreen({
             </Card>
           )}
 
+          {/*
+            Further in, from this month to the sheet that lays a month out row
+            by row. It belongs to the column and not to the money card, because
+            it is a way through rather than a figure — and a month with nothing
+            in it yet is exactly when someone wants to look at the last one that
+            had, so it is drawn whether or not there is a month above it. It
+            wears the export card's shape: a muted line under the cards was
+            missed (the user, 2026-09-16).
+          */}
+          <Link
+            href="/month/payslip"
+            className={`${railLink} flex-none rounded-card border border-line bg-surface px-3 py-2.75`}
+          >
+            <span className="flex size-8.5 flex-none items-center justify-center rounded-tab bg-tile-sage text-icon-sage">
+              <RailIcon name="payslip" className="size-4" />
+            </span>
+            <span dir="auto" className="min-w-0 flex-auto text-[16px] font-semibold">
+              {he.home.paid.fullSheet}
+            </span>
+            <Chevron towards="next" className="text-chevron-soft" />
+          </Link>
+
           {/* Worth knowing about this month, and it is drawn nowhere else: the
               payslip lays the figures out and says nothing about what they
-              imply. It sits under the money card because every one of these is
-              a remark about a figure above it. */}
+              imply. It sits under the link to the payslip, which is read
+              first (the user, 2026-09-16). */}
           {shown && shown.result.warnings.length > 0 ? (
             <Card className="flex min-w-0 flex-none flex-col gap-1.5 px-3.75 py-3.25">
               <h2 dir="auto" className="text-[16px] font-semibold">
@@ -475,21 +497,6 @@ export function HomeScreen({
               ))}
             </Card>
           ) : null}
-
-          {/*
-            Further in, from this month to the sheet that lays a month out row
-            by row. It belongs to the column and not to the money card, because
-            it is a way through rather than a figure — and a month with nothing
-            in it yet is exactly when someone wants to look at the last one that
-            had, so it is drawn whether or not there is a month above it.
-          */}
-          <Link
-            href="/month/payslip"
-            className="flex flex-none items-center justify-center gap-2 pt-0.5 text-[14px] text-ink-mute transition-colors hover:text-forest"
-          >
-            <span dir="auto">{he.home.paid.fullSheet}</span>
-            <Chevron towards="next" />
-          </Link>
         </div>
 
         {/* v4's workers card is left out: the top bar's switcher and its

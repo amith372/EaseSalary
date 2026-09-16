@@ -85,12 +85,15 @@ test.describe("the settings screen", () => {
       .getByRole("link", { name: he.workers.toProfile(he.placeholder.name) })
       .last()
       .click();
+    // The URL first: the list draws her name as a heading too, and its cards
+    // carry their own "פרטים והגדרות" links.
+    await expect(page).toHaveURL(/\/workers\/[^/]+$/);
     await expect(
-      page.getByRole("heading", { name: TEST_WORKER_NAME }),
+      page.getByRole("heading", { level: 1, name: TEST_WORKER_NAME }),
     ).toBeVisible();
 
     await page
-      .getByRole("link", { name: he.workers.profile.terms.title })
+      .getByRole("link", { name: he.workers.toSettings })
       .click();
     await expect(page).toHaveURL(/\/settings$/);
     await expect(page.locator('[data-group="employment"]')).toContainText(

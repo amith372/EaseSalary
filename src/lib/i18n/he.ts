@@ -1376,6 +1376,11 @@ export const he = {
       advance: "מקדמה שנשארה לפירעון",
     },
     toProfile: (firstName: string) => `לדף של ${firstName}`,
+    /** Where her terms and identifying numbers are edited — `/settings`, with
+     * her selected. The artboard's words, on the list card and her own page. */
+    toSettings: "פרטים והגדרות",
+    /** Under the add card: the wizard is short, said before it is opened. */
+    addLead: "נשאל רק את הפרטים ההכרחיים, ואת המצב שממנו מתחילים",
     profile: {
       /** The months she has, listed. **No status badge**: a month's four states
        * are Part 5's and nothing in the application can confirm or export one
@@ -1404,13 +1409,14 @@ export const he = {
         empty: "אין מקדמה פתוחה.",
         of: "מתוך",
         repaid: "נפרע",
+        /** Joined to the month with no space: "ניתנה באוגוסט 2025". */
+        granted: "ניתנה ב",
         /** The artboard's own link out of this section: an advance is *given*
          * and *repaid* on the payments screen, because that is where everything
          * that records a payment lives (item 5). */
         record: "לרשום מקדמה או פירעון",
       },
       terms: {
-        title: "תנאי ההעסקה",
         note: "מה שנכון לכל חודש, עד שמשנים אותו. חודש שכבר אושר שומר על התנאים שאיתם חושב.",
         /** The base salary and its changes (specs.md item 3; decided with the
          * user on 2026-09-13 that a change holds from a month she names). */
@@ -2408,16 +2414,6 @@ export const he = {
     /** A warning changes no figure and stops nothing. It is worded as what the
      * law asks rather than as what the user did wrong (specs.md item 7). */
     warnings: {
-      /**
-       * The month that has not ended yet (specs.md item 21), as
-       * `חישוב החודש` words it in the כדאי לדעת card.
-       *
-       * **It says both halves in one sentence**, which is the point: a user who
-       * reads only "cannot be exported" would stop filling the month in, and
-       * filling it in ahead of time is exactly what item 21 allows.
-       */
-      monthNotEnded:
-        "החודש הזה טרם הסתיים, ולכן אפשר למלא אותו אבל עדיין אי אפשר לייצא אותו.",
       vacationUnderSeven: (year: number, days: number) =>
         `בשנת ${year} נוצלו ${formatDays(days)} ימי חופשה. החוק מבקש לפחות שבעה ימי חופשה בשנה. היתרה עצמה נשמרת ואינה נמחקת.`,
       /** The recuperation month with nothing to price its days at (item 15).

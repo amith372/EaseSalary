@@ -1,4 +1,4 @@
-import { daysInMonth, fromIsoDate, isoOf, monthHasEnded } from "@/lib/dates";
+import { daysInMonth, fromIsoDate, isoOf } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
@@ -299,31 +299,6 @@ export function vacationYearWarning(
 }
 
 /**
- * The month that has not ended yet: it takes facts and cannot be exported
- * (specs.md item 21).
- *
- * **It is a warning and not a refusal**, which is the whole of item 21: a
- * refusal would stop the calculation, and a month filled in ahead of time is
- * meant to be calculated — the preview is how the family sees what next month
- * will cost. Part 5 puts it the same way: such a month is a draft that cannot
- * be confirmed, and not a fifth state of its own.
- *
- * **The condition is `today` and it is never a clock** (`CLAUDE.md`). A caller
- * that passes none is calculating a month in the abstract — the workbook tests
- * do exactly that — and gets no warning, because nothing has told it when now
- * is. The month screen and the export both pass one.
- */
-export function monthNotEndedWarning(
-  facts: ClosedMonthFacts,
-  context: MonthContext = {},
-): Warning | null {
-  const today = context.today;
-  if (today === undefined) return null;
-  if (monthHasEnded(facts.month, today)) return null;
-  return { key: "monthNotEnded", message: he.sheet.warnings.monthNotEnded };
-}
-
-/**
  * The recuperation month that cannot price what it owes (specs.md item 15).
  *
  * **It is a warning and not a refusal**, for item 21's reason: the month is
@@ -467,7 +442,6 @@ export function buildWarnings(
   context: MonthContext = {},
 ): Warning[] {
   return [
-    monthNotEndedWarning(facts, context),
     belowMinimumWageWarning(facts, rates),
     vacationYearWarning(facts, context),
     recuperationRateMissingWarning(facts, employment, rates),

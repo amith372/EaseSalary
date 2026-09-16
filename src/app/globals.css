@@ -27,6 +27,7 @@
   --color-chip: #f4efe7; /* the pill an amount or a count sits in */
   --color-hover: #f6efe6; /* a tab or a bare button under the cursor */
   --color-line: #efe6da;
+  --color-line-soft: #f5eee4; /* the rule between rows inside a card */
   --color-line-strong: #e3d6c2; /* the mark picker, one step firmer */
   --color-line-hover: #dcc7a9; /* the outline a day takes under the cursor */
 
@@ -126,6 +127,8 @@
   --color-tile-purple: #e6dff3;
   --color-row-hover: #fcf6ee; /* a row inside a card under the cursor */
   --color-chevron-soft: #c6b49e; /* the chevron at the end of a link row */
+  --color-advance-dot: #c9a06e; /* an advance: its balance dot and repaid bar */
+  --color-advance-track: #efe2cf; /* the part of an advance still owed */
 
   /* Radii, named for what they belong to rather than by size: the artboard
      uses eight, and a scale of xs/sm/md/lg would say nothing about which. */

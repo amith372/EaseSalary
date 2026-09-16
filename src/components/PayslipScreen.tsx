@@ -126,7 +126,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
 
   if (shown === undefined) {
     return (
-      <div className="flex flex-1 justify-center px-7 pt-3 pb-7">
+      <div className="flex flex-1 justify-center pt-3 pb-7">
         <p className="text-[17px] font-light text-ink-soft">
           <Bidi>{he.payslip.none}</Bidi>
         </p>
@@ -157,12 +157,12 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
     /* A `div` and not a `main`: the shell already provides the page's one main
        landmark, and a second nested inside it leaves a screen reader with two
        "main content" regions and the skip link pointing at the outer. */
-    <div className="flex flex-1 justify-center px-7 pt-3 pb-7">
+    <div className="flex flex-1 justify-center pt-3 pb-7">
       <div className="flex w-full max-w-[820px] flex-col gap-6.5">
         <section className="flex flex-wrap items-end justify-between gap-6.5">
           <div className="flex flex-col gap-1">
             <span
-              className="text-[14px] font-semibold tracking-[0.06em] text-ink-quiet"
+              className="text-[14px] font-semibold tracking-[0.06em] text-clay-deep"
             >
               <Bidi>{he.payslip.eyebrow}</Bidi>
             </span>
@@ -186,6 +186,10 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               data-payslip-export
               className="flex items-center gap-2.5 rounded-tint bg-forest px-6 py-3.5 text-[17px] font-semibold whitespace-nowrap text-white hover:bg-forest-deep hover:text-white"
             >
+              <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="size-5 flex-none">
+                <rect x="1" y="1.5" width="14" height="13" rx="3" className="fill-white/20" />
+                <path d="M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
               <Bidi>{he.home.paid.exportToExcel}</Bidi>
             </a>
           ) : null}
@@ -253,12 +257,13 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                     >
                       <SummaryRow
                         {...why}
+                  size="sheet"
                         label={line.label}
                         whyKey={line.key}
                         explanation={line.explanation}
                         hint={unitsHint(line)}
                         value={
-                          <MoneyValue agorot={line.amount} manual={line.manual} />
+                          <MoneyValue agorot={line.amount} manual={line.manual} size="sheet" />
                         }
                       />
                     </div>
@@ -267,10 +272,11 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                     <div className="py-3">
                       <SummaryRow
                         {...why}
+                  size="sheet"
                         label={subtotal.label}
                         whyKey={`subtotal-${column}`}
                         explanation={subtotal.explanation}
-                        value={<MoneyValue agorot={subtotal.amount} />}
+                        value={<MoneyValue agorot={subtotal.amount} size="sheet" />}
                         strong
                       />
                     </div>
@@ -284,10 +290,11 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                 <div className="border-b border-line py-3.5">
                   <SummaryRow
                     {...why}
+                  size="sheet"
                     label={he.month.preview.gross}
                     whyKey="gross"
                     explanation={{ text: he.sheet.why.gross }}
-                    value={<MoneyValue agorot={result.gross} />}
+                    value={<MoneyValue agorot={result.gross} size="sheet" />}
                     strong
                   />
                 </div>
@@ -297,11 +304,12 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                     <div key={row.key} className="border-b border-line py-3.5">
                       <SummaryRow
                         {...why}
+                  size="sheet"
                         label={row.label}
                         whyKey={row.key}
                         explanation={row.explanation}
                         value={
-                          <MoneyValue agorot={row.amount} manual={row.manual} />
+                          <MoneyValue agorot={row.amount} manual={row.manual} size="sheet" />
                         }
                       />
                     </div>
@@ -311,10 +319,11 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                 <div className="border-b border-line py-3.5">
                   <SummaryRow
                     {...why}
+                  size="sheet"
                     label={he.month.preview.afterWithholding}
                     whyKey="afterWithholding"
                     explanation={{ text: he.sheet.why.afterWithholding }}
-                    value={<MoneyValue agorot={result.afterWithholding} />}
+                    value={<MoneyValue agorot={result.afterWithholding} size="sheet" />}
                     strong
                   />
                 </div>
@@ -324,11 +333,12 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                     <div key={row.key} className="border-b border-line py-3.5">
                       <SummaryRow
                         {...why}
+                  size="sheet"
                         label={row.label}
                         whyKey={row.key}
                         explanation={row.explanation}
                         value={
-                          <MoneyValue agorot={row.amount} manual={row.manual} />
+                          <MoneyValue agorot={row.amount} manual={row.manual} size="sheet" />
                         }
                       />
                     </div>
@@ -337,9 +347,10 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               <div className="pt-4.5">
                 <SummaryRow
                   {...why}
+                  size="sheet"
                   {...bottomFigure(transfers)}
                   whyKey="net"
-                  value={<MoneyValue agorot={result.net} size="lg" />}
+                  value={<MoneyValue agorot={result.net} size="sheetTotal" />}
                   strong
                 />
               </div>
@@ -364,12 +375,13 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                 <div key={line.key} className="border-b border-line py-3.5">
                   <SummaryRow
                     {...why}
+                  size="sheet"
                     label={line.label}
                     whyKey={line.key}
                     explanation={line.explanation}
                     hint={coversHint(line)}
                     value={
-                      <MoneyValue agorot={line.amount} manual={line.manual} />
+                      <MoneyValue agorot={line.amount} manual={line.manual} size="sheet" />
                     }
                   />
                 </div>
@@ -378,10 +390,11 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                 <div className="pt-4.5">
                   <SummaryRow
                     {...why}
+                  size="sheet"
                     label={thirdPartySubtotal.label}
                     whyKey="subtotal-H"
                     explanation={thirdPartySubtotal.explanation}
-                    value={<MoneyValue agorot={thirdPartySubtotal.amount} />}
+                    value={<MoneyValue agorot={thirdPartySubtotal.amount} size="sheet" />}
                     strong
                   />
                 </div>
@@ -394,7 +407,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
           <h2 className="text-[22px] font-semibold">
             <Bidi>{he.payslip.days.title}</Bidi>
           </h2>
-          <div className="grid grid-cols-2 overflow-hidden rounded-card border border-line bg-surface">
+          <div className="grid overflow-hidden sm:grid-cols-2 rounded-card border border-line bg-surface">
             <DayStat
               name="workDays"
               dot="bg-workday-dot"
@@ -447,6 +460,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               >
                 <SummaryRow
                   {...why}
+                  size="sheet"
                   label={
                     balance.kind === "vacation"
                       ? he.home.balances.vacation
@@ -485,7 +499,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                 <span className="text-[17px] font-light text-ink-warm">
                   <Bidi>{he.workers.facts.advance}</Bidi>
                 </span>
-                <MoneyValue agorot={shown.advanceOwedAgorot} />
+                <MoneyValue agorot={shown.advanceOwedAgorot} size="sheet" />
               </div>
             ) : null}
           </div>
@@ -494,7 +508,10 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
         <section className="flex flex-wrap items-center gap-5.5 border-t border-line pt-6">
           {/* Back to the calendar and the figures, which are the opening
               screen's since 2026-09-16 — this sheet is one link further in. */}
-          <Link href="/" className="text-[17px] font-medium">
+          <Link
+            href="/"
+            className="text-[17px] font-medium underline-offset-4 hover:underline"
+          >
             <Bidi>{he.payslip.correct}</Bidi>
           </Link>
           <Link
@@ -532,7 +549,7 @@ function DayStat({
       <span className="flex-1 text-[17px] font-light text-ink-warm">
         <Bidi>{label}</Bidi>
       </span>
-      <span className="text-[18px] font-semibold">
+      <span className="text-[18px] font-semibold whitespace-nowrap">
         <Bidi noTranslate>{value}</Bidi>
       </span>
     </div>

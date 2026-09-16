@@ -214,43 +214,26 @@ test.describe("the opening screen", () => {
 });
 
 test.describe("a month that has not ended yet (specs.md item 21)", () => {
-  test("says so, and takes the facts anyway", async ({ page }) => {
+  test("takes the facts, and raises no warning for it", async ({ page }) => {
     // The demo household's months run through September 2026, so the screen
     // opens on the month still running. Item 21: it can be filled in and it
-    // cannot be exported.
+    // cannot be exported — the second half is the export's refusal, and this
+    // screen does not repeat it, since a running month is its ordinary state
+    // (the user, 2026-09-16).
     await useHousehold(page, "demo", "item21");
     await page.goto("/");
     await switchToTestWorker(page);
 
-    const warning = page.locator("#warning-monthNotEnded");
-    await expect(warning).toBeVisible();
-    await expect(warning).toContainText(he.sheet.warnings.monthNotEnded);
+    await expect(page.locator("#warning-monthNotEnded")).toHaveCount(0);
 
-    // The other half of item 21, and the half a warning could quietly have
-    // replaced: the month is still calculated. A figure is drawn, and marking a
-    // day changes it.
+    // The half a warning could quietly have replaced: the month is still
+    // calculated. A figure is drawn, and marking a day changes it.
     await expect(row(page, "net")).toBeVisible();
     await expect(row(page, "worker-2-vacation-balance")).toContainText(daysUsed(0));
     // 14.9.2026 is a Monday and 16.9.2026 a Wednesday — neither the rest day nor
     // the rest-eve, so three whole days come off the balance (item 7).
     await sweep(page, "2026-09-14", "2026-09-16", "vacation");
     await expect(row(page, "worker-2-vacation-balance")).toContainText(daysUsed(3));
-
-    // And the warning is still there afterwards: filling the month in is not
-    // what makes it exportable.
-    await expect(page.locator("#warning-monthNotEnded")).toBeVisible();
-  });
-
-  test("says nothing about a month that has ended", async ({ page }) => {
-    // The same screen stepped back to August 2026, which is over. A warning
-    // that appeared on every month is one nobody reads (`types.ts`), so its
-    // absence here is the assertion.
-    await useHousehold(page, "demo", "ended");
-    await page.goto("/");
-    await switchToTestWorker(page);
-    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
-    await expect(row(page, "net")).toBeVisible();
-    await expect(page.locator("#warning-monthNotEnded")).toHaveCount(0);
   });
 });
 
@@ -274,11 +257,10 @@ test.describe("a month the store has no record of", () => {
     // balance: no rest day and no rest-eve falls inside the range (item 5).
     await sweep(page, "2026-10-05", "2026-10-08", "vacation");
 
-    // The month now exists, is calculated, and says it cannot be exported yet.
+    // The month now exists and is calculated.
     await expect(page.getByText(he.month.empty.title)).toHaveCount(0);
     await expect(row(page, "net")).toBeVisible();
     await expect(row(page, "worker-2-vacation-balance")).toContainText(daysUsed(4));
-    await expect(page.locator("#warning-monthNotEnded")).toBeVisible();
 
     // **The wage the opened month carries is what this would catch.** No rate is
     // ever hardcoded (`CLAUDE.md`), so a month opened with an invented base

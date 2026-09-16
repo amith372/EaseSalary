@@ -84,8 +84,11 @@ Carried forward from finished steps. None of these is a defect.
   `ממתין לתשלום` and `לקראת החודשים הבאים` sections are a *reminder* view resting on item 15's
   yearly clock and item 28's document dates. Four of their six rows wait on the profile's
   three documents. **Stage 6's**, with the rest of the alert list.
-- **The advances section departs from its artboard**: the drawing has a progress bar and the
-  date an advance was given; the screen has the same three figures in words.
+- **`דף העובד` draws six things the profile does not**: the `צריך לטפל` hero card and the
+  months' status badges (the month's four states, which nothing sets yet), the seniority in
+  the subtitle, day counts on a month row, a month row linking to that month's payslip (the
+  payslip takes no month), the `?` explaining each balance, and the closing links row.
+  `העובדות` likewise draws a status chip and a `משותף/ת עם` chip per card.
 - **`דף המשכורת` omits `להוסיף הערה לחודש`**, settled with the user on 2026-09-10: it needs a
   note on the month as a whole, and a note belongs to a mark or to a line the user added.
 - **`סיכום שנתי` carries no yearly total row.** Item 29 asks for "that year's months with

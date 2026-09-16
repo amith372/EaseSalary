@@ -174,14 +174,16 @@ export function TwoToneIcon({
   );
 }
 
-/** The outlined icons of the side rail's tiles: a person for the workers, a
- * calendar for the balances, a sheet for the export, and the pencil on
- * "עריכת היום". One stroke weight for all four. */
+/** The outlined icons of the home screen's tiles: a person for the workers, a
+ * calendar for the balances, a sheet for the export, a ruled page for the
+ * payslip — lined rather than folded, so the two ways further in do not wear
+ * one icon — the pencil on "עריכת היום", and the plus on "הוספת עובד/ת". One
+ * stroke weight for all six. */
 export function RailIcon({
   name,
   className,
 }: {
-  name: "person" | "calendar" | "sheet" | "pencil";
+  name: "person" | "calendar" | "sheet" | "payslip" | "pencil" | "plus";
   className?: string;
 }) {
   const common = {
@@ -215,10 +217,23 @@ export function RailIcon({
           <path d="M10 2.6v3.9h3.9" strokeLinejoin="round" />
         </svg>
       );
+    case "payslip":
+      return (
+        <svg {...common}>
+          <rect x="3.6" y="2.4" width="10.8" height="13.2" rx="1.8" />
+          <path d="M6.2 6h5.6M6.2 9h5.6M6.2 12h3.2" strokeLinecap="round" />
+        </svg>
+      );
     case "pencil":
       return (
         <svg {...common}>
           <path d="M10.6 2.6l2.8 2.8-7.6 7.6-3.4.6.6-3.4z" strokeLinejoin="round" />
+        </svg>
+      );
+    case "plus":
+      return (
+        <svg {...common} strokeWidth={1.7}>
+          <path d="M9 3.5v11M3.5 9h11" strokeLinecap="round" />
         </svg>
       );
   }

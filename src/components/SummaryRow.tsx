@@ -23,6 +23,7 @@ export function SummaryRow({
   hint,
   strong,
   within,
+  size = "compact",
 }: {
   label: string;
   value: ReactNode;
@@ -33,7 +34,11 @@ export function SummaryRow({
   hint?: ReactNode;
   strong?: boolean;
   within?: "surface" | "tint";
+  /** `sheet` is the payslip's, whose artboard draws every row a step larger
+   * than the home screen's compact summary. */
+  size?: "compact" | "sheet";
 }) {
+  const sheet = size === "sheet";
   const open = openWhy === whyKey;
   return (
     // `data-row` is the browser suite's handle on one row (`CLAUDE.md` rule 9):
@@ -47,14 +52,16 @@ export function SummaryRow({
             dir="auto"
             className={
               strong
-                ? "text-[17px] font-semibold"
-                : "text-[16px] font-light text-ink-warm"
+                ? `${sheet ? "text-[18px]" : "text-[17px]"} font-semibold`
+                : `${sheet ? "text-[17px]" : "text-[16px]"} font-light text-ink-warm`
             }
           >
             {label}
           </span>
           {hint ? (
-            <span className="text-[13px] font-light text-ink-quiet">{hint}</span>
+            <span className={`${sheet ? "text-[15px]" : "text-[13px]"} font-light text-ink-quiet`}>
+              {hint}
+            </span>
           ) : null}
         </span>
         <span className="flex flex-none items-center gap-2.25">

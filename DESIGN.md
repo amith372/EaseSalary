@@ -35,6 +35,7 @@ canonical for the home screen and supersedes the v3 departures recorded in
 | The money card carries **one** link, to the payslip. v4 draws two | See *The link* below |
 | The money card opens with `ימים בפועל / ימי תקן`, which v4 has no row for | The Wage Protection Act asks both counts of the payslip (items 2, 5). The payslip has them, but it opens on the last month that *ended* — so without this the running month's counts are readable nowhere, and a vacation day wrongly shrinking the standard count would show on no screen at all |
 | Each balance in the rail carries a `ימים שנוצלו החודש` hint. v4 draws the balance alone | Criterion 2: a balance with no days behind it cannot be checked, and this month's are what the user just changed by marking a day |
+| Under the money card: the payslip link first, then a `כדאי לדעת` card that v4 does not draw | The warnings appear on no other screen. The link is read first; a running month raises no warning, since it is this screen's ordinary state |
 | The third-party and national-insurance rows sit **below** the total. v4 draws the third-party row among the others | Money paid to a third party never reaches the worker's total (item 16) and the national-insurance figure is an estimate still owed (item 19). Either drawn above `סך הכל תשלום לעובד/ת` reads as part of it — a sum the family would act on |
 
 Measured after the cuts: nothing scrolls sideways at any width, and 1440×700
@@ -72,6 +73,36 @@ then pointed at `חישוב החודש` instead — and that screen turned out t
 that worked while the home screen was a fixture of it. So the calculation moved
 onto the opening screen and `חישוב החודש` went. The cut was right after all:
 there is one screen further in, and it is the payslip.
+
+It is drawn in the export card's shape — a bordered card with a sage icon tile,
+a bold title and a chevron — and not as v4's muted line under the cards, which
+was easy to miss. Its icon is a ruled page, so it does not share the export's
+folded sheet.
+
+### The payslip
+
+- Its rows are drawn a step larger than the home screen's (`SummaryRow`
+  `size="sheet"`), but a line keeps the light weight and only a subtotal or a
+  level is bold. The artboard draws a line bold and its subtotal smaller than
+  it, which makes the total read as the lesser figure.
+- `הימים בחודש` is one column below `sm`: two columns at phone width broke
+  `27 / 27` over two lines.
+
+### The workers list and the worker's page
+
+- The list has no header `להוסיף עובד/ת` button; the dashed card at its foot
+  is the one way in, and it shows only while the household has room. Two
+  buttons for one action, one of them offering a save the database refuses.
+- The avatar tile holds a person glyph; the artboard draws it empty. Nothing
+  stores a photo, and an empty tile reads as a picture that failed to load.
+- Each list card closes with `החודשים` and `פרטים והגדרות` beside the profile
+  link; the second selects that worker in the switcher, since `/settings`
+  shows whoever the switcher holds.
+- The add-worker fields show focus as the forest outline `Chip` uses, as well
+  as the border and fill change. The artboard draws only a 1px border
+  colour, which is too faint to find the caret by keyboard.
+- What the artboards draw and nothing yet supplies is listed in
+  `build_plan.md`, not drawn as placeholders.
 
 ### Still owed to the canvas
 

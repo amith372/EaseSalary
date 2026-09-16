@@ -20,7 +20,7 @@ import { todayInIsrael } from "@/lib/today";
  * **The balances are the replay's and not a second count.** `calculateSeries`
  * walks her months from the opening position (item 13) and the closing figures
  * of the last of them are what "how many days has she left" means — the same
- * function `/month` and `/payments` run, so the three screens cannot disagree.
+ * function the home screen and `/payments` run, so the three screens cannot disagree.
  *
  * A worker the store does not have is a 404 and not an error page: the id is in
  * the address bar and a mistyped one is an ordinary thing, not a bug in the
@@ -47,6 +47,7 @@ export default async function WorkerPage({
     // engine's own result rather than summed here: one figure, one calculation
     // path (Part 3).
     netAgorot: result.net,
+    grossAgorot: result.gross,
   }));
 
   return (

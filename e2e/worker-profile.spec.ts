@@ -139,7 +139,10 @@ test.describe("the workers' list", () => {
     await expect(page.getByText(he.workers.limit)).toBeVisible();
 
     // The link the artboard draws, and it goes to a page that exists.
-    await page.locator("#worker-worker-1").getByRole("link").click();
+    await page
+      .locator("#worker-worker-1")
+      .getByRole("link", { name: he.workers.toProfile("") })
+      .click();
     await expect(page).toHaveURL(/\/workers\/worker-1$/);
   });
 });

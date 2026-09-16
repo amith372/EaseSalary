@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type RefObject } from "react";
 import { createWorker } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Chip } from "@/components/Chip";
@@ -166,6 +166,20 @@ export function AddWorkerScreen({
       ? words.errors[blocking]
       : null;
 
+  /** The step's heading takes focus when the step changes, so a screen reader
+   * hears the new question rather than nothing — the button pressed stays put
+   * while everything around it is replaced. Not on the first draw, which is an
+   * ordinary page load. */
+  const heading = useRef<HTMLHeadingElement>(null);
+  const firstDraw = useRef(true);
+  useEffect(() => {
+    if (firstDraw.current) {
+      firstDraw.current = false;
+      return;
+    }
+    heading.current?.focus();
+  }, [step]);
+
   function forward() {
     if (blocking !== null) {
       setShown(true);
@@ -231,6 +245,7 @@ export function AddWorkerScreen({
 
           {step === 0 ? (
             <WhoStep
+              headingRef={heading}
               draft={draft}
               countries={countries}
               change={change}
@@ -239,6 +254,7 @@ export function AddWorkerScreen({
           ) : null}
           {step === 1 ? (
             <WhenStep
+              headingRef={heading}
               draft={draft}
               change={change}
               chooseMonth={() => setMonthChosen(true)}
@@ -247,13 +263,14 @@ export function AddWorkerScreen({
           ) : null}
           {step === 2 ? (
             <PayStep
+              headingRef={heading}
               draft={draft}
               change={change}
               refusalFor={refusalFor}
               minimumWageAgorot={minimumWageAgorot}
             />
           ) : null}
-          {step === LAST_STEP ? <DoneStep workerId={workerId} /> : null}
+          {step === LAST_STEP ? <DoneStep headingRef={heading} workerId={workerId} /> : null}
 
           {failedToSave ? (
             <p
@@ -279,6 +296,7 @@ export function AddWorkerScreen({
                 type="button"
                 onClick={forward}
                 disabled={saving}
+                aria-busy={saving}
                 data-role="add-worker-next"
                 className="rounded-[15px] bg-forest px-9 py-3.75 text-[19px] font-semibold whitespace-nowrap text-white transition-colors hover:bg-forest-deep disabled:cursor-not-allowed disabled:opacity-45"
               >
@@ -318,10 +336,24 @@ function Progress({ step }: { step: number }) {
   );
 }
 
-function Heading({ title, lead }: { title: string; lead: string }) {
+type HeadingRef = RefObject<HTMLHeadingElement | null>;
+
+/** `tabIndex={-1}` so the wizard can move focus here; the global focus ring
+ * leaves `-1` alone, so arriving draws no ring round the title. */
+function Heading({
+  title,
+  lead,
+  headingRef,
+}: {
+  title: string;
+  lead: string;
+  headingRef: HeadingRef;
+}) {
   return (
     <section className="flex flex-col gap-2.5">
       <h1
+        ref={headingRef}
+        tabIndex={-1}
         dir="auto"
         className="text-[32px] leading-[1.25] font-semibold tracking-[-0.02em] text-balance"
       >
@@ -335,7 +367,7 @@ function Heading({ title, lead }: { title: string; lead: string }) {
 }
 
 const INPUT =
-  "w-full rounded-[14px] border border-line bg-ground px-4.5 py-3.75 text-[18px] text-ink outline-none transition-colors focus:border-forest focus:bg-surface";
+  "w-full rounded-tint border border-line bg-ground px-4.5 py-3.75 text-[18px] text-ink transition-colors focus:border-forest focus:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
 
 /**
  * One labelled field: the label, an optional marker, the hint under it, the
@@ -353,7 +385,7 @@ function Field({
   children,
 }: {
   label: string;
-  hint?: string;
+  hint?: ReactNode;
   optional?: boolean;
   refusal: string | null;
   children: ReactNode;
@@ -422,11 +454,13 @@ type Change = (over: Partial<NewWorkerDraft>) => void;
 type RefusalFor = (...fields: NewWorkerRefusal[]) => string | null;
 
 function WhoStep({
+  headingRef,
   draft,
   countries,
   change,
   refusalFor,
 }: {
+  headingRef: HeadingRef;
   draft: NewWorkerDraft;
   countries: Country[];
   change: Change;
@@ -437,7 +471,7 @@ function WhoStep({
 
   return (
     <>
-      <Heading title={words.title} lead={words.lead} />
+      <Heading title={words.title} lead={words.lead} headingRef={headingRef} />
       <section className="flex flex-col gap-5.5">
         <Field label={words.name} hint={words.nameHint} refusal={refusalFor("name")}>
           <input
@@ -446,6 +480,7 @@ function WhoStep({
             placeholder={words.namePlaceholder}
             onChange={(event) => change({ name: event.target.value })}
             className={INPUT}
+            aria-invalid={refusalFor("name") !== null}
             data-field="name"
           />
         </Field>
@@ -501,6 +536,7 @@ function WhoStep({
             value={draft.country}
             onChange={(event) => change({ country: event.target.value })}
             className={INPUT}
+            aria-invalid={refusalFor("country") !== null}
             data-field="country"
           >
             {countries.map((country) => (
@@ -516,11 +552,13 @@ function WhoStep({
 }
 
 function WhenStep({
+  headingRef,
   draft,
   change,
   chooseMonth,
   refusalFor,
 }: {
+  headingRef: HeadingRef;
   draft: NewWorkerDraft;
   change: Change;
   /** Said when the family picks a month themselves, after which the suggestion
@@ -533,7 +571,7 @@ function WhenStep({
 
   return (
     <>
-      <Heading title={words.title} lead={words.lead} />
+      <Heading title={words.title} lead={words.lead} headingRef={headingRef} />
       <section className="flex flex-col gap-5.5">
         {/*
           A date control rather than three boxes, so what leaves it is already
@@ -553,6 +591,7 @@ function WhenStep({
             value={draft.employedSince}
             onChange={(event) => change({ employedSince: event.target.value })}
             className={`${INPUT} text-start`}
+            aria-invalid={refusalFor("employedSince") !== null}
             data-field="employedSince"
           />
         </Field>
@@ -586,6 +625,7 @@ function WhenStep({
               change({ recuperationMonth: event.target.value });
             }}
             className={INPUT}
+            aria-invalid={refusalFor("recuperationMonth") !== null}
             data-field="recuperationMonth"
           >
             {he.calendar.monthNames.map((name, index) => (
@@ -609,11 +649,13 @@ function WhenStep({
 }
 
 function PayStep({
+  headingRef,
   draft,
   change,
   refusalFor,
   minimumWageAgorot,
 }: {
+  headingRef: HeadingRef;
   draft: NewWorkerDraft;
   change: Change;
   refusalFor: RefusalFor;
@@ -624,7 +666,7 @@ function PayStep({
 
   return (
     <>
-      <Heading title={words.title} lead={words.lead} />
+      <Heading title={words.title} lead={words.lead} headingRef={headingRef} />
       <section className="flex flex-col gap-5.5">
         {/*
           The floor is shown and not merely enforced. A family that meets item
@@ -634,7 +676,13 @@ function PayStep({
         */}
         <Field
           label={words.salary}
-          hint={`${words.salaryHint.before}${formatAgorot(minimumWageAgorot)}${words.salaryHint.after}`}
+          hint={
+            <>
+              <span>{words.salaryHint.before}</span>
+              <Bidi noTranslate>{formatAgorot(minimumWageAgorot)}</Bidi>
+              <span>{words.salaryHint.after}</span>
+            </>
+          }
           refusal={refusalFor("salary", "belowMinimum")}
         >
           <input
@@ -644,6 +692,7 @@ function PayStep({
             value={draft.baseMonthlySalary}
             onChange={(event) => change({ baseMonthlySalary: event.target.value })}
             className={`${INPUT} text-start`}
+            aria-invalid={refusalFor("salary", "belowMinimum") !== null}
             data-field="baseMonthlySalary"
           />
         </Field>
@@ -661,6 +710,7 @@ function PayStep({
             value={draft.restEveSupplement}
             onChange={(event) => change({ restEveSupplement: event.target.value })}
             className={`${INPUT} text-start`}
+            aria-invalid={refusalFor("supplement") !== null}
             data-field="restEveSupplement"
           />
         </Field>
@@ -750,14 +800,20 @@ function noteFor(mode: unknown): string {
  * stage 6's — promising it here would be a feature invented on a confirmation
  * screen (`CLAUDE.md` rule 4).
  */
-function DoneStep({ workerId }: { workerId: string | null }) {
+function DoneStep({
+  workerId,
+  headingRef,
+}: {
+  workerId: string | null;
+  headingRef: HeadingRef;
+}) {
   const words = he.addWorker.done;
 
   return (
     <>
-      <Heading title={words.title} lead={words.lead} />
+      <Heading title={words.title} lead={words.lead} headingRef={headingRef} />
       <section
-        className="flex flex-col gap-3.5 rounded-[20px] border border-chip-line bg-chip px-7 py-6.5"
+        className="flex flex-col gap-3.5 rounded-card border border-chip-line bg-chip px-7 py-6.5"
         data-role="add-worker-done"
       >
         <span dir="auto" className="text-[17px] font-semibold">

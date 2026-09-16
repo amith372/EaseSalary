@@ -3,8 +3,10 @@ import type { ReactNode } from "react";
 import { Bidi } from "@/components/Bidi";
 import { ADD_WORKER } from "@/components/AppShell";
 import { Card } from "@/components/Card";
-import { TwoToneIcon } from "@/components/icons";
+import { RailIcon, TwoToneIcon } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
+import { WorkerAvatar } from "@/components/WorkerAvatar";
+import { WorkerSettingsLink } from "@/components/WorkerSettingsLink";
 import { fullDayLabel } from "@/lib/dateLabels";
 import { he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
@@ -13,28 +15,27 @@ import type { IsoDate, Worker } from "@/lib/types";
 /**
  * The household's workers — `EaseSalary - העובדות` (specs.md item 11).
  *
- * **Two things the artboard draws are not here, and each is another stage's.**
- * The status chip on each card ("[חודש] ממתין לחישוב" / "הכול מעודכן") names
- * one of the month's four states, which are Part 5's and which nothing in the
- * application can yet set — a chip here would be a state invented to fill a
- * shape. The "משותף/ת עם [שם]" chip is item 11's invitation and is still
- * stage 3's. The "להוסיף עובד/ת" card is here as of 2026-09-12, and it shows
- * only while the household has room: two workers is item 11's limit and a
- * trigger in the database refuses a third, so a card offering a wizard whose
- * save would be refused is a promise the application cannot keep. The limit
- * itself is stated either way, in the sentence the artboard closes with.
+ * **Three things the artboard draws are not here.** The status chip on each
+ * card ("[חודש] ממתין לחישוב" / "הכול מעודכן") names one of the month's four
+ * states, which are Part 5's and which nothing in the application can yet set —
+ * a chip here would be a state invented to fill a shape. The
+ * "משותף/ת עם [שם]" chip needs the other member's name, which this list is not
+ * given. And the header's "להוסיף עובד/ת" button: the dashed card at the foot of
+ * the list is the one way in (`DESIGN.md`). That card shows only while the
+ * household has room: two workers is item 11's limit and a trigger in the
+ * database refuses a third, so a card offering a wizard whose save would be
+ * refused is a promise the application cannot keep. The limit itself is stated
+ * either way, in the sentence the artboard closes with.
  *
  * It holds no state and no arithmetic: the four facts under each worker are
- * read from the same replay `/month` reads (item 13), on the server.
+ * read from the same replay the home screen reads (item 13), on the server.
  */
 export interface WorkerSummary {
   worker: Worker;
   employedSince: IsoDate;
   /** Her country of origin in Hebrew, resolved on the server by
-   * `countryNameHe` from the shipped holiday lists. This was the two-letter
-   * filing code until 2026-09-11, and a code is not something a family reads.
-   * A country nothing is stored for still falls back to its code, which stage
-   * 5's country list is what will name. */
+   * `countryNameHe` from the shipped holiday lists. A country nothing is stored
+   * for falls back to its two-letter code. */
   country: string;
   baseMonthlySalaryAgorot: number;
   /** Her last month's closing balances, or the opening position for a worker
@@ -61,111 +62,134 @@ export function WorkersList({
     /* The artboard's narrower measure, which `/payments` already takes: a page
        of facts read across the shell's full 1320px is a line the eye loses on
        the way back. */
-    <div className="mx-auto flex w-full max-w-[860px] min-w-0 flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-[860px] min-w-0 flex-col gap-6 sm:gap-7.5">
       <div className="flex min-w-0 flex-col gap-1.5">
         {/* The tab's own icon, beside the heading rather than inside it — see
             `PaymentsScreen` for why the distinction matters under `dir="auto"`. */}
-        <div className="flex items-center gap-2">
-          <TwoToneIcon name="people" className="size-5.5" />
+        <div className="flex items-center gap-2.5">
+          <TwoToneIcon name="people" className="size-7" />
           <h1
             dir="auto"
-            className="text-[24px] leading-[1.2] font-bold tracking-[-0.02em]"
+            className="text-[28px] leading-[1.15] font-semibold tracking-[-0.02em] sm:text-[34px]"
           >
             {words.title}
           </h1>
         </div>
         <p
           dir="auto"
-          className="max-w-[62ch] text-[15px] leading-[1.55] font-light text-ink-mute text-pretty"
+          className="max-w-[62ch] text-[16px] leading-[1.55] font-light text-ink-soft text-pretty sm:text-[18px]"
         >
           {words.lead}
         </p>
       </div>
 
-      {household.map(
-        ({
-          worker,
-          employedSince,
-          country,
-          baseMonthlySalaryAgorot,
-          vacationDays,
-          sickDays,
-          outstandingAgorot,
-        }) => (
-          <Card
-            key={worker.id}
-            id={`worker-${worker.id}`}
-            className="flex min-w-0 flex-col gap-3 px-4.5 py-3.5"
-          >
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1">
-              <h2 dir="auto" className="text-[19px] font-bold tracking-[-0.02em]">
-                <Bidi>{worker.name}</Bidi>
-              </h2>
-              <p className="text-[14px] font-light text-ink-mute">
-                <span dir="auto">{words.employedSince} </span>
-                <Bidi>{fullDayLabel(employedSince)}</Bidi>
-                <span aria-hidden="true"> · </span>
-                <span dir="auto">{words.country} </span>
-                {/* The code the application actually holds, isolated and never
-                    translated: a translated identifier is a wrong identifier
-                    (`CLAUDE.md`). */}
-                <Bidi>{country}</Bidi>
-              </p>
-            </div>
-
+      <div className="flex min-w-0 flex-col gap-5">
+        {household.map(
+          ({
+            worker,
+            employedSince,
+            country,
+            baseMonthlySalaryAgorot,
+            vacationDays,
+            sickDays,
+            outstandingAgorot,
+          }) => (
             <Card
-              tone="inset"
-              radius="panel"
-              className="grid grid-cols-1 gap-x-6 gap-y-2 px-3.5 py-3 sm:grid-cols-2"
+              key={worker.id}
+              id={`worker-${worker.id}`}
+              radius="lg"
+              className="flex min-w-0 flex-col gap-5 px-4.5 py-5 sm:gap-5.5 sm:px-7.5 sm:py-6.5"
             >
-              <Fact label={words.facts.salary}>
-                <MoneyValue agorot={baseMonthlySalaryAgorot} />
-              </Fact>
-              <Fact label={words.facts.advance}>
-                <MoneyValue agorot={outstandingAgorot} />
-              </Fact>
-              <Fact label={words.facts.vacation}>
-                <Bidi noTranslate className="text-[16px] font-semibold">
-                  {formatDays(vacationDays)}
-                </Bidi>
-              </Fact>
-              <Fact label={words.facts.sick}>
-                <Bidi noTranslate className="text-[16px] font-semibold">
-                  {formatDays(sickDays)}
-                </Bidi>
-              </Fact>
+              <div className="flex min-w-0 items-start gap-4 sm:gap-5">
+                <WorkerAvatar />
+                <div className="flex min-w-0 flex-col gap-1">
+                  <h2
+                    dir="auto"
+                    className="text-[22px] leading-[1.2] font-bold tracking-[-0.02em] break-words sm:text-[26px]"
+                  >
+                    <Bidi>{worker.name}</Bidi>
+                  </h2>
+                  <p className="text-[15px] font-light text-ink-mute sm:text-[17px]">
+                    <span dir="auto">{words.employedSince} </span>
+                    <Bidi>{fullDayLabel(employedSince)}</Bidi>
+                    <span aria-hidden="true"> · </span>
+                    <span dir="auto">{words.country} </span>
+                    {/* Isolated: a Hebrew name beside Latin fallbacks such as a
+                        two-letter code. A country is a word, not an
+                        identifier, so translation may have it. */}
+                    <Bidi>{country}</Bidi>
+                  </p>
+                </div>
+              </div>
+
+              {/* A ruled grid: each cell draws its own top and start rules and
+                  is pulled back over the frame by a pixel, so the frame and the
+                  rules between cells are one hairline. Two columns even on a phone:
+                  the longest figure fits in half of 390px. */}
+              <Card
+                tone="inset"
+                radius="sm"
+                className="grid grid-cols-2 overflow-hidden"
+              >
+                <Fact label={words.facts.salary}>
+                  <MoneyValue agorot={baseMonthlySalaryAgorot} size="fact" />
+                </Fact>
+                <Fact label={words.facts.vacation}>
+                  <Days value={vacationDays} />
+                </Fact>
+                <Fact label={words.facts.sick}>
+                  <Days value={sickDays} />
+                </Fact>
+                <Fact label={words.facts.advance}>
+                  <MoneyValue agorot={outstandingAgorot} size="fact" />
+                </Fact>
+              </Card>
+
+              <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 border-t border-line pt-4.5 sm:pt-5">
+                <Link
+                  href={`/workers/${worker.id}`}
+                  className="text-[17px] font-semibold text-forest transition-colors hover:text-forest-deep sm:text-[18px]"
+                >
+                  <span dir="auto">{words.toProfile(worker.firstName)}</span>
+                </Link>
+                <Link href={`/workers/${worker.id}#months`} className={quietLink}>
+                  <span dir="auto">{words.profile.months.title}</span>
+                </Link>
+                <WorkerSettingsLink workerId={worker.id} className={quietLink}>
+                  <span dir="auto">{words.toSettings}</span>
+                </WorkerSettingsLink>
+              </div>
             </Card>
+          ),
+        )}
 
-            <Link
-              href={`/workers/${worker.id}`}
-              className="text-[15px] font-semibold text-forest hover:underline hover:underline-offset-4"
-            >
-              <span dir="auto">{words.toProfile(worker.firstName)}</span>
-            </Link>
-          </Card>
-        ),
-      )}
-
-      {/*
-        The artboard's "להוסיף עובד/ת" card, and it appears only while there is
-        room for one: item 11 holds a household to two workers, and the database
-        refuses a third on a trigger. A control that led to a wizard the save at
-        the end of it would refuse is a promise the application cannot keep, so
-        the sentence below stands alone at two.
-      */}
-      {hasRoom ? (
-        <Link
-          href={ADD_WORKER}
-          data-role="add-worker-link"
-          className="rounded-card border border-dashed border-line px-4.5 py-4 text-center text-[16px] font-semibold text-forest transition-colors hover:border-line-hover hover:text-forest-deep"
-        >
-          <span dir="auto">{he.emptyHousehold.add}</span>
-        </Link>
-      ) : null}
+        {hasRoom ? (
+          <Link
+            href={ADD_WORKER}
+            data-role="add-worker-link"
+            className="flex min-w-0 items-center gap-4 rounded-calendar border border-dashed border-line-strong px-4.5 py-5 transition-colors hover:border-line-hover hover:bg-row-hover sm:gap-4.5 sm:px-8 sm:py-7.5"
+          >
+            <span className="flex size-11 flex-none items-center justify-center rounded-tint bg-tile-amber text-clay-deep">
+              <RailIcon name="plus" className="size-5" />
+            </span>
+            <span className="flex min-w-0 flex-col gap-0.75">
+              <span dir="auto" className="text-[18px] font-semibold sm:text-[20px]">
+                {he.emptyHousehold.add}
+              </span>
+              <span
+                dir="auto"
+                className="text-[15px] font-light text-ink-mute text-pretty sm:text-[16px]"
+              >
+                {words.addLead}
+              </span>
+            </span>
+          </Link>
+        ) : null}
+      </div>
 
       <p
         dir="auto"
-        className="max-w-[62ch] text-[14px] leading-[1.55] font-light text-ink-quiet text-pretty"
+        className="max-w-[70ch] text-[15px] leading-[1.55] font-light text-ink-faint text-pretty sm:text-[16px]"
       >
         {words.limit}
       </p>
@@ -173,13 +197,28 @@ export function WorkersList({
   );
 }
 
+const quietLink =
+  "text-[16px] text-ink-soft transition-colors hover:text-forest sm:text-[17px]";
+
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex min-w-0 items-baseline justify-between gap-3">
-      <span dir="auto" className="text-[14px] font-light text-ink-mute">
+    <div className="-ms-px -mt-px flex min-w-0 flex-col gap-1 border-s border-t border-line px-3.5 py-3 sm:px-5 sm:py-4">
+      <span dir="auto" className="text-[14px] font-light text-ink-mute sm:text-[15px]">
         {label}
       </span>
       {children}
     </div>
+  );
+}
+
+function Days({ value }: { value: number }) {
+  return (
+    <span className="text-[18px] font-semibold whitespace-nowrap sm:text-[20px]">
+      <Bidi noTranslate>{formatDays(value)}</Bidi>
+      <span> </span>
+      <span dir="auto" className="font-light text-ink-quiet">
+        {he.units.days}
+      </span>
+    </span>
   );
 }
