@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { TEST_WORKER_NAME, useHousehold, switchToTestWorker } from "./household";
+import { TEST_WORKER_NAME, useHousehold, switchToTestWorker, openPaymentSections } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { monthLabel } from "../src/lib/dateLabels";
 import { monthOf, SATURDAY } from "../src/lib/dates";
@@ -396,6 +396,7 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     // The fourth total needs the advance instalment, which is recorded where
     // everything that *records* a payment is recorded (item 5).
     await page.goto("/payments");
+    await openPaymentSections(page);
     await page
       .getByRole("button", { name: he.month.actions.advances.repayLabel(1) })
       .click();

@@ -30,6 +30,7 @@
   --color-line-soft: #f5eee4; /* the rule between rows inside a card */
   --color-line-strong: #e3d6c2; /* the mark picker, one step firmer */
   --color-line-hover: #dcc7a9; /* the outline a day takes under the cursor */
+  --color-line-field: #9f8b74; /* a text field's border: its only outline, so it holds 3:1 on white and on ground (WCAG 1.4.11) */
 
   /* Green — links, and the two actions */
   --color-forest: #3f6047;

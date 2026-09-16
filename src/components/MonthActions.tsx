@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import {
+  cloneElement,
+  useId,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import {
   addAdvance,
   addThirdPartyPayment,
@@ -21,6 +27,7 @@ import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { CoveredMonths } from "@/components/CoveredMonths";
+import { Chevron } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
 import { addMonths, yearMonthText } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
@@ -84,14 +91,9 @@ import type { OverrideCandidate, YearMonth } from "@/lib/types";
  * application derived is replaced in the overrides section. `MonthLine
  * .overridable` is what says which is which, and no section here tests a key.
  *
- * **The `תשלומים` artboard draws one of its three sections and not the other
- * two.** It has the advances — "לרשום מקדמה חדשה", "לעדכן פירעון", and what is
- * repaid out of what — beside the third-party payments, and no income-tax field
- * and no user lines; `docs/design-pass-jobs-1-2.md` lists those among job 3's
- * missing screens. So the sections it does not draw are built in the idiom the
- * calendar's own picker established — a panel of chips that opens where it is
- * needed and closes when it is answered — and that is written down here so
- * nobody later reads them as having been checked against a drawing.
+ * **The `תשלומים` artboard draws all five sections in this order**, each under
+ * its own heading and divided by a rule. Every section starts folded, which the
+ * artboard does not draw (`DESIGN.md`).
  *
  * **It holds no arithmetic and decides nothing.** Every change goes to a server
  * action, which parses the amount, checks the choices and writes through the
@@ -142,10 +144,89 @@ interface MonthActionsProps {
     action: () => Promise<MonthActionResult>,
     onResult: (result: MonthActionResult) => void,
   ) => void;
+  /** The sections the user has unfolded. Held by the screen rather than here,
+   * because this card is keyed on the month and stepping to another month
+   * would otherwise fold everything she had just opened. */
+  openSections: ReadonlySet<MonthSection>;
+  onToggleSection: (section: MonthSection) => void;
+}
+
+export type MonthSection =
+  | "incomeTax"
+  | "userLines"
+  | "advances"
+  | "thirdParty"
+  | "overrides";
+
+type FoldProps = {
+  fold: { open: boolean; onToggle: () => void };
+};
+
+/**
+ * One of the card's five sections, folded until its heading is pressed (the
+ * user, 2026-09-16: five open forms are too much to meet at once). The body is
+ * hidden rather than unmounted, so a half-typed field survives a fold.
+ * `data-group` is the browser suite's handle on the section: the word "סכום"
+ * labels a field in four of the five, so a lookup by label alone matches
+ * several.
+ */
+function FoldSection({
+  group,
+  title,
+  aside,
+  fold,
+  children,
+}: FoldProps & {
+  group: MonthSection;
+  title: string;
+  aside?: ReactNode;
+  children: ReactNode;
+}) {
+  const bodyId = useId();
+  return (
+    <section
+      data-group={group}
+      className="flex flex-col gap-2.5 border-t border-line-soft py-4 first:border-t-0"
+    >
+      <div className="flex items-center justify-between gap-3">
+        {/* The heading takes the row, so the whole line opens the section and
+            not only its words. */}
+        <h2 className="min-w-0 flex-1 text-[19px] font-semibold">
+          <button
+            type="button"
+            aria-expanded={fold.open}
+            aria-controls={bodyId}
+            onClick={fold.onToggle}
+            className="flex w-full items-center gap-2 rounded-chip text-start transition-colors hover:text-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          >
+            {/* Points towards the inline end when folded and down when open.
+                The turn is on a wrapper, since the icon already rotates itself
+                for the page's direction. */}
+            <span
+              aria-hidden="true"
+              className={[
+                "flex flex-none text-ink-quiet transition-transform",
+                fold.open ? "rotate-90 rtl:-rotate-90" : "",
+              ].join(" ")}
+            >
+              <Chevron towards="next" />
+            </span>
+            <span dir="auto">{title}</span>
+          </button>
+        </h2>
+        {fold.open ? aside : null}
+      </div>
+      <div id={bodyId} hidden={!fold.open} className="flex flex-col gap-2.5">
+        {children}
+      </div>
+    </section>
+  );
 }
 
 /** A labelled field. The input is `dir="ltr"` wherever it takes digits, so an
- * amount is typed left to right inside a right-to-left page (`CLAUDE.md`). */
+ * amount is typed left to right inside a right-to-left page (`CLAUDE.md`).
+ * The hint sits outside the label and is attached as the input's description,
+ * so a screen reader names the field by its label alone. */
 function Field({
   label,
   hint,
@@ -153,25 +234,49 @@ function Field({
 }: {
   label: string;
   hint?: string;
-  children: ReactNode;
+  children: ReactElement<{ "aria-describedby"?: string }>;
 }) {
+  const hintId = useId();
   return (
-    <label className="flex min-w-0 flex-col gap-1">
-      <span dir="auto" className="text-[13px] font-medium text-ink-warm">
-        {label}
-      </span>
-      {children}
+    <div className="flex min-w-0 flex-col gap-1">
+      <label className="flex min-w-0 flex-col gap-1">
+        <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+          {label}
+        </span>
+        {hint
+          ? cloneElement(children, { "aria-describedby": hintId })
+          : children}
+      </label>
       {hint ? (
-        <span dir="auto" className="text-[12px] font-light text-ink-quiet">
+        <span
+          id={hintId}
+          dir="auto"
+          className="text-[12px] font-light text-ink-quiet"
+        >
           {hint}
         </span>
       ) : null}
-    </label>
+    </div>
   );
 }
 
 const inputClass =
-  "w-full rounded-card-sm border border-line bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-line-hover focus-visible:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
+  "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
+
+/** A bare text action inside a row. The padding widens what a finger can hit to
+ * about 44px and the negative margin gives the space back, so the row is laid
+ * out as if the button were its text alone. */
+const rowActionClass =
+  "-mx-1 -my-3 px-1 py-3 text-[13px] text-ink-mute transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
+
+/** Closes a panel without saving; padded to a finger's height like the row
+ * actions, without growing the button row. */
+const cancelClass =
+  "-my-1 px-2 py-3 text-[14px] text-ink-quiet transition-colors hover:text-ink";
+
+/** The one outlined button of this card, in a form and outside one alike. */
+const outlineButtonClass =
+  "rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
 
 export function MonthActions({
   workerId,
@@ -184,16 +289,19 @@ export function MonthActions({
   lines,
   orphanedOverrides,
   onSubmit,
+  openSections,
+  onToggleSection,
 }: MonthActionsProps) {
-  const words = he.month.actions;
+  const fold = (section: MonthSection) => ({
+    open: openSections.has(section),
+    onToggle: () => onToggleSection(section),
+  });
 
   return (
-    <Card className="flex min-w-0 flex-col gap-3 px-4.5 py-3">
-      <h2 dir="auto" className="text-[17px] font-semibold">
-        {words.title}
-      </h2>
+    <Card radius="lg" className="flex min-w-0 flex-col px-6.5 py-1.5">
 
       <IncomeTaxControl
+        fold={fold("incomeTax")}
         workerId={workerId}
         month={month}
         incomeTax={incomeTax}
@@ -201,6 +309,7 @@ export function MonthActions({
       />
 
       <UserLinesControl
+        fold={fold("userLines")}
         workerId={workerId}
         month={month}
         userLines={userLines}
@@ -208,6 +317,7 @@ export function MonthActions({
       />
 
       <AdvancesControl
+        fold={fold("advances")}
         workerId={workerId}
         month={month}
         ledger={ledger}
@@ -220,6 +330,7 @@ export function MonthActions({
           either direction (item 16). Reading down the card the user meets
           everything about her pay before anything about somebody else's. */}
       <ThirdPartyControl
+        fold={fold("thirdParty")}
         workerId={workerId}
         month={month}
         thirdPartyPayments={thirdPartyPayments}
@@ -231,6 +342,7 @@ export function MonthActions({
           met it first would be asked to replace figures she has not yet given
           the facts for. */}
       <OverridesControl
+        fold={fold("overrides")}
         workerId={workerId}
         month={month}
         lines={lines}
@@ -263,8 +375,11 @@ function Refusal({
       ? amountText
       : he.month.actions.refused[reason];
   return (
+    /* `role="alert"` rather than `aria-live`: the paragraph is mounted with its
+       sentence already in it, and a live region is only announced reliably
+       when its content changes after it exists. */
     <p
-      aria-live="polite"
+      role="alert"
       dir="auto"
       className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
     >
@@ -324,11 +439,12 @@ function useMonthAction(onSubmit: MonthActionsProps["onSubmit"]) {
  * a tax entered by mistake comes off.
  */
 function IncomeTaxControl({
+  fold,
   workerId,
   month,
   incomeTax,
   onSubmit,
-}: Pick<MonthActionsProps, "workerId" | "month" | "incomeTax" | "onSubmit">) {
+}: FoldProps & Pick<MonthActionsProps, "workerId" | "month" | "incomeTax" | "onSubmit">) {
   const words = he.month.actions.incomeTax;
   const { agorot: incomeTaxAgorot, manual: incomeTaxManual } = incomeTax;
   // The field holds only what the *user* put there. A calculated figure is
@@ -412,19 +528,20 @@ function IncomeTaxControl({
   }
 
   return (
-    <div className="flex flex-col gap-2 border-t border-line pt-2.5">
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 dir="auto" className="text-[15px] font-semibold">
-          {words.title}
-        </h3>
-        {incomeTaxAgorot === 0 ? (
+    <FoldSection
+      group="incomeTax"
+      title={words.title}
+      fold={fold}
+      aside={
+        incomeTaxAgorot === 0 ? (
           <span dir="auto" className="text-[13px] font-light text-ink-quiet">
             {words.none}
           </span>
         ) : (
           <MoneyValue agorot={-incomeTaxAgorot} />
-        )}
-      </div>
+        )
+      }
+    >
 
       {/* **Where the figure came from, and what share of the month it is.**
           The share is the automatic mode's answer to "what percent is that",
@@ -489,7 +606,7 @@ function IncomeTaxControl({
         <button
           type="submit"
           disabled={!changed}
-          className="flex-none rounded-full border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover disabled:cursor-not-allowed disabled:text-ink-quiet disabled:hover:border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          className={`flex-none ${outlineButtonClass} disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet disabled:hover:border-line`}
         >
           <span dir="auto">{words.save}</span>
         </button>
@@ -554,7 +671,7 @@ function IncomeTaxControl({
           <span>{he.why.linkSuffix}</span>
         </a>
       </Card>
-    </div>
+    </FoldSection>
   );
 }
 
@@ -584,18 +701,15 @@ function IncomeTaxControl({
  * under it was derived. One panel does both, because adding and correcting ask
  * the same question — what should this line say — and a second panel would be a
  * second place for the placement rule to drift.
- *
- * **No artboard draws it.** `EaseSalary - תשלומים` carries no user lines at all;
- * `docs/design-pass-jobs-1-2.md` lists them among job 3's missing screens, so
- * this is built in the idiom the calendar's picker established and that is
- * written down here rather than left to be inferred.
+
  */
 function UserLinesControl({
+  fold,
   workerId,
   month,
   userLines,
   onSubmit,
-}: Pick<MonthActionsProps, "workerId" | "month" | "userLines" | "onSubmit">) {
+}: FoldProps & Pick<MonthActionsProps, "workerId" | "month" | "userLines" | "onSubmit">) {
   const words = he.month.actions.lines;
   /** `null` when nothing is open, `"new"` for a line being added, and a line's
    * id when that line is being corrected — one panel at a time, so two
@@ -746,14 +860,14 @@ function UserLinesControl({
             event.preventDefault();
             submit();
           }}
-          className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          className={outlineButtonClass}
         >
           <span dir="auto">{open === "new" ? words.submit : words.save}</span>
         </button>
         <button
           type="button"
           onClick={reset}
-          className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
+          className={cancelClass}
         >
           <span dir="auto">{words.cancel}</span>
         </button>
@@ -762,18 +876,12 @@ function UserLinesControl({
   );
 
   return (
-    /* `data-group` is the browser suite's handle on this section, for the reason
-       `data-row` exists on a preview row (`CLAUDE.md` rule 9): the word "סכום"
-       labels a field in four of this card's five sections, so a lookup by label
-       alone matches several and the section has to say which one is meant. */
-    <div
-      data-group="userLines"
-      className="flex flex-col gap-2 border-t border-line pt-2.5"
+    <FoldSection
+      group="userLines"
+      title={he.month.preview.userLines}
+      fold={fold}
     >
       <div className="flex flex-col gap-0.5">
-        <h3 dir="auto" className="text-[15px] font-semibold">
-          {he.month.preview.userLines}
-        </h3>
         {/* **What this card can and cannot do, before she uses it.** A line
             made here belongs to this month alone; the recurring kind is a term
             of the employment and is set on `/settings`, which shows the worker
@@ -819,7 +927,7 @@ function UserLinesControl({
                   type="button"
                   onClick={() => openEdit(line)}
                   aria-label={words.editLabel(line.label)}
-                  className="ms-auto text-[13px] font-medium text-ink-mute transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                  className={`ms-auto font-medium hover:text-ink ${rowActionClass}`}
                 >
                   <span dir="auto">{words.edit}</span>
                 </button>
@@ -827,7 +935,7 @@ function UserLinesControl({
                   type="button"
                   onClick={() => remove(line.id)}
                   aria-label={words.removeLabel(line.label)}
-                  className="text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                  className={`hover:text-clay-deep ${rowActionClass}`}
                 >
                   <span dir="auto">{words.remove}</span>
                 </button>
@@ -854,7 +962,7 @@ function UserLinesControl({
         <button
           type="button"
           onClick={() => setOpen("new")}
-          className="self-start rounded-full border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          className={`self-start ${outlineButtonClass}`}
         >
           <span dir="auto">{words.add}</span>
         </button>
@@ -864,7 +972,7 @@ function UserLinesControl({
           each branch instead, it was the same element written twice and two
           places for its wording to drift. */}
       {refusal ? <Refusal reason={refusal} /> : null}
-    </div>
+    </FoldSection>
   );
 }
 
@@ -886,12 +994,14 @@ function UserLinesControl({
  * it belongs to, so the number is read and never remembered (item 20).
  */
 function AdvancesControl({
+  fold,
   workerId,
   month,
   ledger,
   monthAdvances,
   onSubmit,
-}: Pick<
+}: FoldProps &
+  Pick<
   MonthActionsProps,
   "workerId" | "month" | "ledger" | "monthAdvances" | "onSubmit"
 >) {
@@ -964,7 +1074,7 @@ function AdvancesControl({
             event.preventDefault();
             submit();
           }}
-          className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          className={outlineButtonClass}
         >
           <span dir="auto">
             {open === "granted" ? words.submitGrant : words.submitRepay}
@@ -973,7 +1083,7 @@ function AdvancesControl({
         <button
           type="button"
           onClick={reset}
-          className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
+          className={cancelClass}
         >
           <span dir="auto">{words.cancel}</span>
         </button>
@@ -982,24 +1092,22 @@ function AdvancesControl({
   );
 
   return (
-    <div
-      data-group="advances"
-      className="flex flex-col gap-2 border-t border-line pt-2.5"
-    >
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 dir="auto" className="text-[15px] font-semibold">
-          {words.title}
-        </h3>
-        {open === null ? (
+    <FoldSection
+      group="advances"
+      title={words.title}
+      fold={fold}
+      aside={
+        open === null ? (
           <button
             type="button"
             onClick={() => setOpen("granted")}
-            className="rounded-full border border-line bg-surface px-3 py-1.5 text-[13px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+            className="rounded-full border border-line-strong bg-surface px-3 py-1.5 text-[13px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
           >
             <span dir="auto">{words.grant}</span>
           </button>
-        ) : null}
-      </div>
+        ) : null
+      }
+    >
 
       {open === "granted" ? panel : null}
 
@@ -1094,7 +1202,7 @@ function AdvancesControl({
                       type="button"
                       onClick={() => setOpen(standing.number)}
                       aria-label={words.repayLabel(standing.number)}
-                      className="ms-auto text-[13px] font-medium text-ink-mute transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                      className={`ms-auto font-medium hover:text-ink ${rowActionClass}`}
                     >
                       <span dir="auto">{words.repay}</span>
                     </button>
@@ -1128,7 +1236,7 @@ function AdvancesControl({
                               standing.number,
                               advance.kind,
                             )}
-                            className="ms-auto text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                            className={`ms-auto hover:text-clay-deep ${rowActionClass}`}
                           >
                             <span dir="auto">{words.remove}</span>
                           </button>
@@ -1152,7 +1260,7 @@ function AdvancesControl({
       )}
 
       {refusal ? <Refusal reason={refusal} /> : null}
-    </div>
+    </FoldSection>
   );
 }
 
@@ -1192,21 +1300,16 @@ function AdvancesControl({
  * **Its amount is edited and never overridden**, for the reason item 17 gives:
  * the figure is what left the account, and there is nothing under it for an
  * override to replace.
- *
- * **No artboard draws this section.** `EaseSalary - תשלומים` draws two sections
- * for third-party payments and both are a *reminder* view — what is due and what
- * is coming — resting on item 15's yearly clock and item 28's document expiry
- * dates, neither of which any type holds. It draws no recording surface at all,
- * exactly as it draws no income-tax field and no user lines. So this is built in
- * the idiom the calendar's picker established, and it is written down here so
- * nobody later reads it as having been checked against a drawing.
+
  */
 function ThirdPartyControl({
+  fold,
   workerId,
   month,
   thirdPartyPayments,
   onSubmit,
-}: Pick<
+}: FoldProps &
+  Pick<
   MonthActionsProps,
   "workerId" | "month" | "thirdPartyPayments" | "onSubmit"
 >) {
@@ -1430,14 +1533,14 @@ function ThirdPartyControl({
             event.preventDefault();
             submit();
           }}
-          className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          className={`${outlineButtonClass} disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet`}
         >
           <span dir="auto">{open === "new" ? words.submit : words.save}</span>
         </button>
         <button
           type="button"
           onClick={reset}
-          className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
+          className={cancelClass}
         >
           <span dir="auto">{words.cancel}</span>
         </button>
@@ -1446,13 +1549,7 @@ function ThirdPartyControl({
   );
 
   return (
-    <div
-      data-group="thirdParty"
-      className="flex flex-col gap-2 border-t border-line pt-2.5"
-    >
-      <h3 dir="auto" className="text-[15px] font-semibold">
-        {words.title}
-      </h3>
+    <FoldSection group="thirdParty" title={words.title} fold={fold}>
       <p
         dir="auto"
         className="text-[13px] leading-[1.5] font-light text-ink-mute text-pretty"
@@ -1495,7 +1592,7 @@ function ThirdPartyControl({
                   aria-label={words.editLabel(
                     he.sheet.thirdParty[payment.kind],
                   )}
-                  className="ms-auto text-[13px] font-medium text-ink-mute transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                  className={`ms-auto font-medium hover:text-ink ${rowActionClass}`}
                 >
                   <span dir="auto">{words.edit}</span>
                 </button>
@@ -1505,7 +1602,7 @@ function ThirdPartyControl({
                   aria-label={words.removeLabel(
                     he.sheet.thirdParty[payment.kind],
                   )}
-                  className="text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                  className={`hover:text-clay-deep ${rowActionClass}`}
                 >
                   <span dir="auto">{words.remove}</span>
                 </button>
@@ -1538,14 +1635,14 @@ function ThirdPartyControl({
         <button
           type="button"
           onClick={() => setOpen("new")}
-          className="self-start rounded-full border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          className={`self-start ${outlineButtonClass}`}
         >
           <span dir="auto">{words.add}</span>
         </button>
       ) : null}
 
       {refusal ? <Refusal reason={refusal} /> : null}
-    </div>
+    </FoldSection>
   );
 }
 
@@ -1581,22 +1678,17 @@ function ThirdPartyControl({
  * holding for rows it is not drawing are listed under the rest and offered to
  * be cleared. An amount that is stored, will reappear, and cannot be seen is
  * the one failure in this criterion that looks like nothing went wrong.
- *
- * **No artboard draws any of this.** `EaseSalary - תשלומים` has no override
- * surface at all, as it has no income-tax field and no user lines;
- * `docs/design-pass-jobs-1-2.md` lists the manual-override state among job 3's
- * missing screens. So it is built in the idiom the calendar's picker
- * established — a panel that opens where it is needed and closes when it is
- * answered — and that is written here so nobody later reads it as having been
- * checked against a drawing.
+
  */
 function OverridesControl({
+  fold,
   workerId,
   month,
   lines,
   orphanedOverrides,
   onSubmit,
-}: Pick<
+}: FoldProps &
+  Pick<
   MonthActionsProps,
   "workerId" | "month" | "lines" | "orphanedOverrides" | "onSubmit"
 >) {
@@ -1673,14 +1765,14 @@ function OverridesControl({
             event.preventDefault();
             save(key);
           }}
-          className="rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+          className={outlineButtonClass}
         >
           <span dir="auto">{words.save}</span>
         </button>
         <button
           type="button"
           onClick={reset}
-          className="px-1 py-2 text-[14px] text-ink-quiet transition-colors hover:text-ink"
+          className={cancelClass}
         >
           <span dir="auto">{words.cancel}</span>
         </button>
@@ -1689,13 +1781,7 @@ function OverridesControl({
   );
 
   return (
-    <div
-      data-group="overrides"
-      className="flex flex-col gap-2 border-t border-line pt-2.5"
-    >
-      <h3 dir="auto" className="text-[15px] font-semibold">
-        {words.title}
-      </h3>
+    <FoldSection group="overrides" title={words.title} fold={fold}>
       <p
         dir="auto"
         className="text-[13px] leading-[1.5] font-light text-ink-mute text-pretty"
@@ -1739,7 +1825,7 @@ function OverridesControl({
                   type="button"
                   onClick={() => openPanel(line)}
                   aria-label={words.changeLabel(line.label)}
-                  className="ms-auto text-[13px] font-medium text-ink-mute transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                  className={`ms-auto font-medium hover:text-ink ${rowActionClass}`}
                 >
                   <span dir="auto">{words.change}</span>
                 </button>
@@ -1748,7 +1834,7 @@ function OverridesControl({
                     type="button"
                     onClick={() => restore(line.key)}
                     aria-label={words.clearLabel(line.label)}
-                    className="text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                    className={`hover:text-clay-deep ${rowActionClass}`}
                   >
                     <span dir="auto">{words.clear}</span>
                   </button>
@@ -1802,7 +1888,7 @@ function OverridesControl({
                     aria-label={words.clearLabel(
                       override.label ?? words.unnamed,
                     )}
-                    className="ms-auto text-[13px] text-ink-mute transition-colors hover:text-clay-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                    className={`ms-auto hover:text-clay-deep ${rowActionClass}`}
                   >
                     <span dir="auto">{words.clear}</span>
                   </button>
@@ -1814,7 +1900,7 @@ function OverridesControl({
       ) : null}
 
       {refusal ? <Refusal reason={refusal} /> : null}
-    </div>
+    </FoldSection>
   );
 }
 

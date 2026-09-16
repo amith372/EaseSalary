@@ -97,3 +97,26 @@ export const TEST_WORKER_NAME = "[שם העובד/ת השני/ה]";
 
 /** Her id, for the routes that take one in the address. */
 export const TEST_WORKER_ID = "worker-2";
+
+/**
+ * Unfolds every section of the payments card, which all start folded. Each is
+ * retried until its heading says it is open, because a press before hydration
+ * is dropped. The open set survives stepping months, not a worker switch or a navigation.
+ */
+export async function openPaymentSections(page: Page): Promise<void> {
+  const toggles = page.locator("[data-group] h2 button[aria-expanded]");
+  await expect(toggles).toHaveCount(5);
+  for (let index = 0; index < 5; index += 1) {
+    const toggle = toggles.nth(index);
+    // Pressed only while it still reads folded, so a press React replays after
+    // hydration cannot be followed by a second one that folds it again.
+    await expect(async () => {
+      if ((await toggle.getAttribute("aria-expanded")) === "false") {
+        await toggle.click();
+      }
+      await expect(toggle).toHaveAttribute("aria-expanded", "true", {
+        timeout: 1500,
+      });
+    }).toPass({ timeout: 15000 });
+  }
+}

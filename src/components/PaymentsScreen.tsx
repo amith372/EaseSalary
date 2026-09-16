@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { MonthActionResult } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { TwoToneIcon } from "@/components/icons";
-import { MonthActions } from "@/components/MonthActions";
+import { MonthActions, type MonthSection } from "@/components/MonthActions";
 import { MonthStepper, openingMonthOf } from "@/components/MonthStepper";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { sameMonth } from "@/lib/dates";
@@ -118,11 +118,38 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   // settled is worse than one that says it is waiting.
   const [saving, startSaving] = useTransition();
 
+  // Every section starts folded (the user, 2026-09-16), and what she unfolds
+  // stays unfolded while she steps between months.
+  const [openSections, setOpenSections] = useState<ReadonlySet<MonthSection>>(
+    () => new Set(),
+  );
+  function toggleSection(section: MonthSection) {
+    setOpenSections((current) => {
+      const next = new Set(current);
+      if (!next.delete(section)) next.add(section);
+      return next;
+    });
+  }
+
+  // One change at a time. A second press while the first is on its way would
+  // send it again — two identical lines, where the user meant one — so it is
+  // dropped. A ref rather than `saving`, which a second keypress in the same
+  // tick would still read as false.
+  const inFlight = useRef(false);
+
   function handleAction(
     action: () => Promise<MonthActionResult>,
     onResult: (result: MonthActionResult) => void,
   ) {
-    startSaving(async () => onResult(await action()));
+    if (inFlight.current) return;
+    inFlight.current = true;
+    startSaving(async () => {
+      try {
+        onResult(await action());
+      } finally {
+        inFlight.current = false;
+      }
+    });
   }
 
   return (
@@ -170,7 +197,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
         aria-busy={saving}
         className={[
           "flex min-w-0 flex-col gap-2.5 transition-opacity",
-          saving ? "opacity-60" : "",
+          saving ? "pointer-events-none opacity-60" : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -196,6 +223,8 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
             lines={shown.lines}
             orphanedOverrides={shown.orphanedOverrides}
             onSubmit={handleAction}
+            openSections={openSections}
+            onToggleSection={toggleSection}
           />
         ) : (
           <Card className="flex flex-none flex-col gap-1.5 px-4.5 py-3">

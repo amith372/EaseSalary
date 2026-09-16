@@ -857,12 +857,11 @@ export const he = {
      * what the month came to and everything that *records* something lives on
      * `/payments`. All four of item 5's contents are now in it — the income-tax
      * line, the lines the user adds, the advances and the manual overrides —
-     * and the payments to third parties beside them (item 16). It is still
-     * named for the group and not for what is in it, which is what let the four
-     * arrive one at a time without the card being renamed three times.
+     * and the payments to third parties beside them (item 16). The card has no
+     * heading of its own: the screen's is `payments.title`, and each section
+     * heads itself.
      */
     actions: {
-      title: "תשלומים נוספים",
       incomeTax: {
         title: "מס הכנסה",
         /** The field is a *correction* since 2026-09-10, not an entry: the

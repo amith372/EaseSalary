@@ -1,5 +1,5 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker } from "./household";
+import { switchToTestWorker, openPaymentSections } from "./household";
 import { addMonths, monthOf, SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot, formatDays } from "../src/lib/money";
@@ -185,6 +185,7 @@ test.describe("an advance given and repaid, walked across months (item 20)", () 
     await useHousehold(page, "advance");
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
 
     // The demo household runs to September 2026 and the screen opens on the
     // month still running, so March is six steps back. The seed states the
@@ -283,6 +284,7 @@ test.describe("a payment to a third party, corrected in place (item 16)", () => 
     await useHousehold(page, "paid-on");
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await stepBack(page, 8); // September 2026 → January 2026
 
     const words = he.month.actions.thirdParty;
@@ -316,6 +318,7 @@ test.describe("a payment to a third party, corrected in place (item 16)", () => 
     await useHousehold(page, "thirdparty");
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await stepBack(page, 8); // September 2026 → January 2026
 
     const words = he.month.actions.thirdParty;
@@ -395,6 +398,8 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
 
     await page.goto("/payments");
     await switchToTestWorker(page);
+
+    await openPaymentSections(page);
     await stepBack(page, 8);
     const group = page.locator('[data-group="overrides"]');
     await group.getByRole("button", { name: words.changeLabel(label) }).click();
@@ -425,6 +430,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // there is the derived one worked out at the top of this file.
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await stepBack(page, 8);
     const replaced = page
       .locator('[data-group="overrides"] li')
@@ -438,6 +444,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // (item 20).
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await stepBack(page, 8);
     const again = page.locator('[data-group="overrides"]');
     await again.getByRole("button", { name: words.changeLabel(label) }).click();
@@ -459,6 +466,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     // leaves the row derived, so a later correction to the wage moves it again.
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await stepBack(page, 8);
     await page
       .locator('[data-group="overrides"]')

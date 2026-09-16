@@ -1,5 +1,5 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, openSettingsForTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections } from "./household";
 import { FRIDAY, SATURDAY, monthOf } from "../src/lib/dates";
 import { fullDayLabel } from "../src/lib/dateLabels";
 import { he } from "../src/lib/i18n/he";
@@ -261,6 +261,7 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
     // profile, so a month that paid something else says so with an override.
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     const overrides = page.getByRole("button", {
       name: he.month.actions.overrides.changeLabel("דמי כיס"),
     });
@@ -334,6 +335,7 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
     // It reaches the month below the total, and the override control offers it.
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await expect(
       page.getByRole("button", {
         name: he.month.actions.overrides.changeLabel("השתתפות בטלפון"),
@@ -352,6 +354,7 @@ test.describe("the opening position (specs.md item 6)", () => {
     // April and May, so nothing is owed and no second advance exists.
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await expect(page.locator('[data-advance="2"]')).toHaveCount(0);
 
     await openSettingsForTestWorker(page);
@@ -381,6 +384,7 @@ test.describe("the opening position (specs.md item 6)", () => {
     // owed, which is arithmetic and not a figure the engine produced.
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     const advance = page.locator('[data-advance="2"]');
     await expect(advance).toBeVisible();
     await expect(advance).toContainText(formatAgorot(OPENING_OUTSTANDING));

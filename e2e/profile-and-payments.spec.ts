@@ -1,5 +1,5 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker } from "./household";
+import { switchToTestWorker, openPaymentSections } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
@@ -143,6 +143,7 @@ test.describe("the payments screen", () => {
     await useHousehold(page, "percent");
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await settled(page);
 
     const words = he.month.actions.incomeTax;
@@ -196,6 +197,7 @@ test.describe("the payments screen", () => {
     await useHousehold(page, "signpost");
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await settled(page);
 
     await page

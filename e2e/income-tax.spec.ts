@@ -1,5 +1,5 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, openSettingsForTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections } from "./household";
 import { SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
@@ -129,6 +129,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
     await useHousehold(page, "agree");
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await settled(page);
 
     await expect(
@@ -236,6 +237,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
     // to compare against an accountant's advice.
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await settled(page);
     await expect(
       page.getByText(he.month.actions.incomeTax.share("0.28")),
@@ -263,6 +265,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
     await useHousehold(page, "override");
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await settled(page);
 
     const field = page.getByLabel(he.month.actions.incomeTax.field);
@@ -279,6 +282,8 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
 
     await page.goto("/payments");
     await switchToTestWorker(page);
+
+    await openPaymentSections(page);
     await settled(page);
     await page.getByLabel(he.month.actions.incomeTax.field).fill("");
     await page
@@ -370,6 +375,8 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
 
     await page.goto("/payments");
     await switchToTestWorker(page);
+
+    await openPaymentSections(page);
     await settled(page);
     await expect(page.getByText(he.month.actions.incomeTax.none)).toBeVisible();
     // The card says where the figure came from, and the credit-point paragraph
@@ -418,6 +425,8 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
 
     await page.goto("/payments");
     await switchToTestWorker(page);
+
+    await openPaymentSections(page);
     await settled(page);
     // The share the card reports is the rate itself, to the hundredth, because
     // a flat rate is the one mode whose percentage does not move.
@@ -481,6 +490,7 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
     await useHousehold(page, "mode-and-override");
     await page.goto("/payments");
     await switchToTestWorker(page);
+    await openPaymentSections(page);
     await settled(page);
     await page.getByLabel(he.month.actions.incomeTax.field).fill("300");
     await page
@@ -507,6 +517,8 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
 
     await page.goto("/payments");
     await switchToTestWorker(page);
+
+    await openPaymentSections(page);
     await settled(page);
     await expect(
       page.getByText(he.month.actions.incomeTax.from.manual),

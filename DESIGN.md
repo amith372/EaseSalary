@@ -104,6 +104,21 @@ folded sheet.
 - What the artboards draw and nothing yet supplies is listed in
   `build_plan.md`, not drawn as placeholders.
 
+### The payments screen
+
+- All five sections of the card start folded, and a section's heading is the
+  button that opens it, with a chevron beside it that points towards the end
+  of the line when folded and down when open. The artboard draws them open:
+  five forms at once were too much to take in on arrival. What is open stays
+  open while the month is stepped. A heading's side item — the tax amount, the
+  `לתת מקדמה` button — shows only while its section is open.
+- A text field's border is `line-field`, far firmer than the artboard's
+  hairline: the border is the field's only outline, and the hairline held
+  1.24:1 against the white card, under WCAG's 3:1 for a control's boundary.
+- The bare text actions in a row are padded out to a finger's height and
+  give the space back with a negative margin, so the rows are drawn as the
+  artboard has them.
+
 ### Still owed to the canvas
 
 The thirteen artboards do not yet draw the tab icons, the heading icons, the
