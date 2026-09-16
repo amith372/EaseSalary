@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { acceptInvitation } from "@/app/sign-in/actions";
 import { Card } from "@/components/Card";
+import { LogoMark } from "@/components/icons";
 import { he } from "@/lib/i18n/he";
 import { supabaseInBrowser } from "@/lib/supabase/client";
 
@@ -169,17 +170,16 @@ export function SignInScreen({
   return (
     <main className="flex min-h-screen items-center justify-center bg-ground px-4 py-10">
       <div className="w-full max-w-92">
+        {/* The wordmark as the top bar draws it, which is the mark this
+            screen is the first to show. */}
         <div className="flex items-center justify-center gap-2.25 text-ink">
+          <LogoMark className="size-8" />
           <span
             translate="no"
             className="text-[22px] font-bold tracking-[-0.02em]"
           >
             {he.app.name}
           </span>
-          <span
-            aria-hidden="true"
-            className="size-5 flex-none rounded-mark bg-clay"
-          />
         </div>
 
         <p dir="auto" className="mt-2.5 text-center text-[15px] text-ink-mute">
@@ -257,7 +257,7 @@ export function SignInScreen({
             <button
               type="submit"
               disabled={working}
-              className="mt-1 rounded-card-sm bg-forest px-6 py-2.75 text-[16px] font-semibold text-surface transition-colors hover:bg-forest-deep disabled:cursor-not-allowed disabled:opacity-45"
+              className="mt-1 rounded-card-sm bg-forest px-6 py-2.75 text-[16px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:cursor-not-allowed disabled:opacity-45"
             >
               <span dir="auto">
                 {working
@@ -277,7 +277,7 @@ export function SignInScreen({
             setError(null);
             setNotice(null);
           }}
-          className="mt-4 w-full text-center text-[14px] text-forest transition-colors hover:text-forest-deep"
+          className="mt-4 w-full rounded-card-sm py-2 text-center text-[14px] text-forest transition-colors hover:text-forest-deep hover:underline hover:underline-offset-3 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
         >
           <span dir="auto">
             {mode === "signIn" ? he.signIn.toSignUp : he.signIn.toSignIn}
@@ -289,7 +289,7 @@ export function SignInScreen({
 }
 
 const inputClass =
-  "w-full rounded-card-sm border border-line bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-line-hover focus-visible:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
+  "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
 
 /**
  * Supabase answers in English, and the screen speaks Hebrew. The three cases

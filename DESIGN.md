@@ -153,6 +153,11 @@ folded sheet.
   holds.
 - The closing line says that the data is kept, not the file (see `he.ts`).
 
+### The sign-in screen
+
+It has no artboard. It is built from the tokens, and its wordmark is the top
+bar's: the v4 mark beside the name.
+
 ### Still owed to the canvas
 
 The thirteen artboards do not yet draw the tab icons, the heading icons, the
