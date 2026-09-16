@@ -113,7 +113,7 @@ Carried forward from finished steps. None of these is a defect.
 - **A person in two households puts what is new into the first they joined** — a worker they
   create, a fetched rate. Shared workers appear beside their own and are written back to their
   own household.
-- **`household_members_write` lets a member add any user to their household** without an
+- **`household_members_insert` lets a member add any user to their household** without an
   invitation. It exposes nothing of the added person's, and tightening it now that invitations
   exist is the user's call.
 - **The holiday picker's button still goes to the worker's page**, not back to `/settings`,
@@ -167,68 +167,12 @@ The templates are committed data. `.gitignore` must never ignore `*.xlsx`: the a
 still runs without them and only the export breaks, so the mistake surfaces on someone else's
 clone rather than here.
 
-## Stage 3 — Accounts and storage
+## Stage 3 — Accounts and storage · **done**
 
-Supabase: Postgres, Auth, row-level security. **The stage in progress.**
-
-- Schema: account, worker, month, **day spans**, advances, third-party payments, overrides,
-  confirmed wages, cached holiday lists. Spans rather than per-day rows, and a sick span may
-  run past the end of the month it started in.
-- **The month's term snapshot is a schema requirement, not an engine detail.** Part 3 has the
-  month storing the terms it was confirmed with — rest day, rest-eve supplement, recuperation
-  month — beside the confirmed wage. Stage 1 built the shape; this stage persists it.
-  Discovered in stage 6 it is a migration.
-- **Facts only, never balances.** Item 13's cascade is decided: the engine replays a worker's
-  months from the opening position, so a corrected month moves every later month by
-  construction and there is nothing to invalidate. Twenty years replays in 37ms. If a cache is
-  ever wanted it goes in front of the replay, where deleting it is safe.
-- The month's state carries item 21: a future month may be filled in but not exported until it
-  has ended.
-- The worker's opening position: balances already accrued and an advance part repaid.
-- Row-level security for account isolation; the two-worker limit on creation.
-- Sharing by invitation, and a shared worker not counting against the other person's limit.
-- Encryption of the four identifying numbers, key in an environment variable. Their expiry
-  dates are not encrypted — the warnings query them.
-- Anything stage 7 stores is account-scoped under the same row-level security, and its context
-  is assembled from the engine's output rather than from the worker row, so an identity number
-  cannot reach it.
-
-Roughly five tickets' worth, and the largest stage in the plan: nine entities, the household
-model of item 11 with its many-to-many membership and a two-worker limit that must not count a
-shared worker, row-level security whose "done when" is an adversarial property, and encryption
-across four fields.
-
-**Landed so far:** the income tax calculated, with `gender` and the three tax modes on the
-profile (2026-09-11); the sign-in at `/sign-in`, the household created on first sign-in, and
-one person is one address (2026-09-12); the Postgres repository substituting at
-`getRepository()` (2026-09-12); `הוספת עובד`, with the passport number sealed (2026-09-12);
-`/settings` with every term moved onto it, the salary changed from a named month, the four
-identifying numbers and the export's identity lines, the switcher surviving a reload, the
-payslip's confirmation date, sign-out, and sharing by email invitation (2026-09-13); the live
-isolation check extended to invitations (2026-09-13); invitations passed on as a link with no
-account created for anyone, accepted only through the link's token, after `/security-review` (2026-09-15).
-
-**The next step is the user running the invitation flow once with two real addresses**, both
-already holding an account, and then closing the stage.
-
-**Two things the stage's own tooling rests on.** The household isolation is checked against
-the live database by hand with `node --env-file=.env scripts/check-household-isolation.mjs`,
-never by the suite, which reads saved files and never the network (Part 4); it talks to
-PostgREST with the **publishable** key exactly as a browser would, because the service-role key
-bypasses row-level security and would prove nothing. The sub-address rule is checked the same
-way, with `scripts/check-one-address-one-account.mjs`, because signing up sends mail that
-Supabase delivers only to the project's team and only twice an hour. The Postgres repository
-is checked the same way and for the same reason, by
-`npx vitest run --config vitest.live.config.ts`: what it does is a mapping onto column names,
-and every way of getting one wrong type-checks.
-
-**Run `/security-review` before this stage is committed**, and nowhere earlier — it is the only
-stage that introduces an authorisation boundary, encryption at rest, and data reachable by a
-request the user did not make. The agent that wrote the policies is the worst placed to attack
-them.
-
-**Done when** a second household cannot reach the first household's worker by any crafted
-request, and the identity columns are unreadable in the database.
+Landed between 2026-09-10 and 2026-09-17. The live checks are run by hand, never by the suite:
+`node --env-file=.env scripts/check-household-isolation.mjs`,
+`scripts/check-one-address-one-account.mjs`, and
+`npx vitest run --config vitest.live.config.ts` — run the first after any migration.
 
 ## Stage 4 — The month screen · **done**
 
@@ -256,6 +200,13 @@ and the seed was put back. A browser test lands with the gesture that opens a sp
 
 Same stack. The calendar, the figures and the balances run on the engine since 2026-09-16;
 what remains is the action list, which replaces the last fixture and adds nothing to the layout.
+**The stage in progress.**
+
+**The next step is the action list as an engine function**, before any screen: a pure function
+over the worker's profile, months, rates and today, returning item 27's entries each tagged
+*blockage* (the opening screen) or *warning* (the bell) by item 27's test. Its expected
+entries are written by hand from item 27 first (rule 11). Then `/alerts` from the `התראות`
+artboard, then the home screen's blocker strip moved onto it, each a step of its own.
 
 - **`/alerts` is this stage's address.** The bell links `התראות` from every screen and it
   404s. The action list below is its content at full length: the home screen shows the list and

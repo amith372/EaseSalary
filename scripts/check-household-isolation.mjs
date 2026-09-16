@@ -135,6 +135,7 @@ function workerFor(householdId, name) {
     first_name: name,
     gender: "female",
     employed_since: "2025-01-01",
+    first_month: "2025-01-01",
     base_monthly_salary_agorot: 600000,
     recuperation_month: 7,
     country: "PH",
@@ -886,6 +887,69 @@ try {
       onlyThatOne.body.length === 1 &&
       onlyThatOne.body[0].id === a.householdId,
     "and the person who accepted sees that household and no other",
+  );
+
+  // -------------------------------------------------------------------------
+  // Removing a share (migration `the_inviter_removes_a_share`): only the
+  // member who sent the invitation, and only through the function.
+  // -------------------------------------------------------------------------
+  const reachesA = async (token) =>
+    (await rest(`workers?select=id&id=eq.${a.workerId}`, { token })).body?.length === 1;
+
+  for (const [who, label] of [
+    [c, "the person who accepted"],
+    [b, "another household"],
+  ]) {
+    const refused = await rest("rpc/remove_household_share", {
+      token: who.token,
+      method: "POST",
+      body: { invitation_id: invitationId },
+    });
+    check(
+      refused.status === 200 && refused.body === 0,
+      `${label} cannot remove the share`,
+    );
+  }
+  check(await reachesA(c.token), "and she is still a member after both refusals");
+
+  // A member removing another directly, past the function: the inviter here,
+  // which would let whoever was invited lock out whoever invited them.
+  await rest(`household_members?household_id=eq.${a.householdId}&user_id=eq.${a.userId}`, {
+    token: c.token,
+    method: "DELETE",
+  });
+  check(await reachesA(a.token), "a member cannot delete another member directly");
+
+  const removed = await rest("rpc/remove_household_share", {
+    token: a.token,
+    method: "POST",
+    body: { invitation_id: invitationId },
+  });
+  check(
+    removed.status === 200 && removed.body === 1,
+    "the member who sent the invitation removes the share",
+  );
+  check(!(await reachesA(c.token)), "and the removed person reaches her worker no more");
+  check(await reachesA(a.token), "while the inviter still does");
+
+  // She joined only through the link, so she is left a household of her own
+  // rather than signed in to none.
+  const leftWith = await rest("households?select=id", { token: c.token });
+  check(
+    Array.isArray(leftWith.body) &&
+      leftWith.body.length === 1 &&
+      leftWith.body[0].id !== a.householdId,
+    "and is left with an empty household of her own",
+  );
+
+  const removedAgain = await rest("rpc/remove_household_share", {
+    token: a.token,
+    method: "POST",
+    body: { invitation_id: invitationId },
+  });
+  check(
+    removedAgain.status === 200 && removedAgain.body === 0,
+    "removing the same share again removes nothing",
   );
 } catch (error) {
   console.log("ERROR", error.message);

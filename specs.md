@@ -518,7 +518,7 @@ Each of these is true or false at a glance.
     no more than two workers. Every member of a household sees the same workers, the same
     months and the same balances, and reaches nothing outside the households it belongs
     to. A second person joins by an invitation they accept, which makes them a member
-    rather than handing them a copy of a worker. The invitation is a link the member passes
+    rather than handing them a copy of a worker. The member who sent an invitation may later remove the person who accepted it, and nobody else may remove a member; what that person recorded stays with the household, and a person left with no household is given an empty one of their own. The invitation is a link the member passes
     on; nothing creates the invited person's account, which they open themselves with the
     invited address, or sign in with if they already have one. Membership rather than a copy
     means there is no owner whose leaving strands a worker, and no second limit to count a

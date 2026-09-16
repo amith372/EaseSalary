@@ -206,6 +206,23 @@ test("an existing account joins through a copied link, and the invitation then r
     path: "test-results/invitation-accepted.png",
   });
 
+  // --- The invited person sees no way to remove anyone ---------------------
+  await inviteePage.goto("/settings");
+  await expect(inviteePage.getByRole("button", { name: words.remove })).toHaveCount(0);
+
+  // --- The member who invited removes the share ------------------------------
+  await accepted.getByRole("button", { name: words.remove }).click();
+  await expect(inviterPage.locator('[data-share] [data-invitation]')).toHaveCount(0);
+
+  // The removed person keeps their own worker and loses the shared one; the
+  // member keeps theirs.
+  await inviteePage.goto("/workers");
+  await expect(inviteePage.getByText(he.workers.toProfile(invitee.firstName))).toBeVisible();
+  await expect(inviteePage.getByText(he.workers.toProfile(inviter.firstName))).toHaveCount(0);
+  await inviterPage.goto("/workers");
+  await expect(inviterPage.getByText(he.workers.toProfile(inviter.firstName))).toBeVisible();
+  await inviteePage.screenshot({ path: "test-results/invitation-removed-invitee-workers.png" });
+
   await inviterContext.close();
   await inviteeContext.close();
 });

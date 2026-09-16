@@ -84,3 +84,11 @@ export async function withdrawInvitation(invitationId: string): Promise<void> {
   await supabase.from("household_invitations").delete().eq("id", invitationId);
   revalidatePath("/settings");
 }
+
+/** A share taken back by the member who sent its invitation (specs.md item 11).
+ * The database decides whether this caller may, and answers nothing either way. */
+export async function removeShare(invitationId: string): Promise<void> {
+  const supabase = await supabaseOnServer();
+  await supabase.rpc("remove_household_share", { invitation_id: invitationId });
+  revalidatePath("/settings");
+}

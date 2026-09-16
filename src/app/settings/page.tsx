@@ -46,15 +46,19 @@ import { supabaseOnServer } from "@/lib/supabase/server";
 async function householdInvitations(): Promise<Invitation[]> {
   try {
     const supabase = await supabaseOnServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     const { data } = await supabase
       .from("household_invitations")
-      .select("id, email, token, accepted_at")
+      .select("id, email, token, accepted_at, invited_by")
       .order("created_at");
     return (data ?? []).map((row) => ({
       id: row.id as string,
       email: row.email as string,
       token: row.token as string,
       accepted: row.accepted_at !== null,
+      sentByMe: user !== null && row.invited_by === user.id,
     }));
   } catch {
     return [];

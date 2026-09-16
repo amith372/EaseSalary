@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition, type ReactNode } from "react";
 import {
   inviteToHousehold,
+  removeShare,
   signOut,
   withdrawInvitation,
   type InvitationResult,
@@ -304,6 +305,8 @@ export interface Invitation {
   /** What the link carries and acceptance requires. */
   token: string;
   accepted: boolean;
+  /** Only the member who sent an invitation may remove the person who accepted it. */
+  sentByMe: boolean;
 }
 
 /**
@@ -430,7 +433,17 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
                 >
                   {invitation.accepted ? words.accepted : words.pending}
                 </span>
-                {invitation.accepted ? null : (
+                {invitation.accepted ? (
+                  invitation.sentByMe ? (
+                    <button
+                      type="button"
+                      onClick={() => startSending(() => removeShare(invitation.id))}
+                      className="text-[13px] font-medium text-ink-mute transition-colors hover:text-ink"
+                    >
+                      <span dir="auto">{words.remove}</span>
+                    </button>
+                  ) : null
+                ) : (
                   <>
                     <button
                       type="button"

@@ -1384,6 +1384,8 @@ export const he = {
         copy: "להעתיק",
         copiedShort: "הועתק",
         withdraw: "לבטל",
+        /** Beside an accepted invitation, for the member who sent it. */
+        remove: "להסיר את השיתוף",
       },
     },
   },
