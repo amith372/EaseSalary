@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Assistant, Gveret_Levin } from "next/font/google";
+import { Assistant } from "next/font/google";
+import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
 import { WORKER_COOKIE } from "@/lib/workerCookie";
@@ -18,27 +19,19 @@ const assistant = Assistant({
 /**
  * The hand-written face of the home calendar's slogan (`CalendarBand`).
  *
- * `adjustFontFallback` is off because Next ships a table of precalculated
- * fallback metrics that has no entry for this family, so asking for them can
- * only fail. The slogan is one short line, so the swap it falls back through
- * shifts nothing around it.
- *
- * **It does not silence `Failed to find font override values for font 'Gveret
- * Levin'`, and nothing passed here will.** Next 16 serves `next dev` through
- * Turbopack, whose font loader is the Rust one in
- * `next_font/google/stylesheet.rs`, and that one logs the line before it
- * consults the option — verified by comparing the stylesheets Turbopack
- * generated with the flag on and off, neither of which carries a fallback
- * `@font-face`. The flag is kept because it states what this font wants of
- * whichever loader reads it. The warning is cosmetic; self-hosting the face
- * through `next/font/local` is what would end it.
+ * **Served from the repo, not from Google Fonts**, because `next/font/google`
+ * has no precalculated fallback metrics for this family and Turbopack's loader
+ * logs `Failed to find font override values` on every `next dev` whatever it
+ * is passed. The local loader measures the file itself, so it builds the
+ * fallback the Google one could not. The file is Google Fonts' Hebrew subset,
+ * the only one the slogan uses; its licence (SIL OFL 1.1) sits beside it and
+ * must travel with it.
  */
-const gveretLevin = Gveret_Levin({
+const gveretLevin = localFont({
+  src: "./fonts/GveretLevin-hebrew.woff2",
   variable: "--font-gveret-levin",
-  subsets: ["hebrew"],
   weight: "400",
   display: "swap",
-  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
