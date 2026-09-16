@@ -43,8 +43,15 @@ export function Chevron({
   );
 }
 
-/** The badge on the "לייצא לאקסל" button. */
-export function SheetBadge({ className }: { className?: string }) {
+/** The badge on a "לייצא לאקסל" action: a white tile on the filled button, a
+ * sage one on a bare link, where white would vanish into the card. */
+export function SheetBadge({
+  className,
+  tile = "fill-surface",
+}: {
+  className?: string;
+  tile?: "fill-surface" | "fill-sage-soft";
+}) {
   return (
     <svg
       aria-hidden="true"
@@ -53,7 +60,7 @@ export function SheetBadge({ className }: { className?: string }) {
       fill="none"
       className={["size-4.25", className ?? ""].filter(Boolean).join(" ")}
     >
-      <rect x="1" y="1.5" width="14" height="13" rx="3" className="fill-surface" />
+      <rect x="1" y="1.5" width="14" height="13" rx="3" className={tile} />
       <path
         d="M5.4 5.4 10.6 10.6M10.6 5.4 5.4 10.6"
         stroke="currentColor"

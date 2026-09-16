@@ -142,6 +142,17 @@ folded sheet.
   fill and the clay dot — so a block is told from a confirmation at a glance.
   The artboard draws only the spell, since it draws no other block.
 
+### The reports screen
+
+- The four report cards are one column below `sm`; two columns at phone width
+  left each card too narrow for its note.
+- The artboard's `לכל החודשים` link is not drawn: the list already holds every
+  month, and there is no screen of months to go to.
+- The hero carries no lead sentence under its heading, where the artboard
+  draws one: the heading and the list below it already say what the screen
+  holds.
+- The closing line says that the data is kept, not the file (see `he.ts`).
+
 ### Still owed to the canvas
 
 The thirteen artboards do not yet draw the tab icons, the heading icons, the

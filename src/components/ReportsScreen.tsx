@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
-import { TwoToneIcon } from "@/components/icons";
+import { SheetBadge, TwoToneIcon } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { monthLabel } from "@/lib/dateLabels";
@@ -160,19 +160,19 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
     /* A `div` and not a `main`: the shell already provides the page's one main
        landmark, and a second one nested inside it leaves a screen reader with
        two "main content" regions and the skip link pointing at the outer. */
-    <div className="flex flex-1 justify-center px-7 pt-5 pb-12">
-      <div className="flex w-full max-w-[880px] flex-col gap-7.5">
+    <div className="flex min-w-0 flex-1 justify-center pb-6">
+      <div className="flex w-full max-w-[880px] min-w-0 flex-col gap-7.5">
         <section className="flex flex-col gap-1.5">
           {/* The tab's own icon, beside the heading rather than inside it — see
               `PaymentsScreen` for why that matters under `dir="auto"`. */}
           <div className="flex items-center gap-2.5">
             <TwoToneIcon name="doc" className="size-7" />
-            <h1 className="text-[34px] font-semibold tracking-tight">
+            <h1 className="text-[28px] font-semibold tracking-tight sm:text-[34px]">
               <Bidi>{words.title}</Bidi>
             </h1>
           </div>
           <p
-            className="max-w-[60ch] text-[18px] font-light text-pretty text-ink-soft"
+            className="max-w-[60ch] text-[17px] font-light text-pretty text-ink-soft sm:text-[18px]"
           >
             <Bidi>{words.lead}</Bidi>
           </p>
@@ -182,18 +182,18 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
           as="section"
           tone="tint"
           radius="lg"
-          className="flex flex-wrap items-center justify-between gap-7 px-8.5 py-7.5"
+          className="flex flex-wrap items-center justify-between gap-x-7 gap-y-5 border border-line-strong px-5 py-6 sm:px-8.5 sm:py-7.5"
         >
           <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-2">
             <span
-              className="self-start text-[13px] font-semibold tracking-[0.06em] text-ink-quiet"
+              className="self-start text-[13px] font-semibold tracking-[0.06em] text-clay-deep"
             >
               <Bidi>{words.thisMonth.eyebrow}</Bidi>
             </span>
             {/* Every dynamic string gets its own wrapping element, or Chrome's
                 translation swaps a bare text node in place and React throws
                 `NotFoundError` on `removeChild` (`CLAUDE.md`). */}
-            <h2 className="mt-1 text-[30px] leading-tight font-bold tracking-tight">
+            <h2 className="mt-1 text-[26px] leading-tight font-bold tracking-tight text-balance sm:text-[30px]">
               {mine.latest === null ? (
                 <Bidi>{words.thisMonth.none}</Bidi>
               ) : (
@@ -208,8 +208,9 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
           {mine.latest !== null ? (
             <a
               href={monthHref(mine.workerId, mine.latest)}
-              className="flex flex-none items-center justify-center gap-3 rounded-[15px] bg-forest px-8 py-4 text-[19px] font-semibold whitespace-nowrap text-white hover:bg-forest-deep hover:text-white"
+              className="flex flex-none items-center justify-center gap-3 rounded-tint bg-forest px-8 py-4 text-[19px] font-semibold whitespace-nowrap text-white transition-colors hover:bg-forest-deep hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest max-sm:w-full"
             >
+              <SheetBadge className="size-5.5 text-forest" />
               <Bidi>{words.thisMonth.action}</Bidi>
             </a>
           ) : null}
@@ -229,7 +230,7 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                 <div
                   key={`${entry.month.year}-${entry.month.month}`}
                   data-report-month={`${entry.month.year}-${entry.month.month}`}
-                  className="flex flex-wrap items-center gap-5 border-t border-line px-6 py-4.5 first:border-t-0"
+                  className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line-soft px-5 py-4.5 first:border-t-0 sm:px-6"
                 >
                   <span
                     className="w-[130px] flex-none text-[18px] font-semibold"
@@ -253,12 +254,13 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                       </span>
                     ))}
                   </span>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     {entry.blocks[0] === undefined ? (
                       <a
                         href={monthHref(mine.workerId, entry.month)}
-                        className="text-[16px] font-semibold whitespace-nowrap"
+                        className="flex items-center gap-2 py-1 text-[16px] font-semibold whitespace-nowrap hover:underline hover:underline-offset-4"
                       >
+                        <SheetBadge tile="fill-sage-soft" className="size-4.5 text-forest" />
                         <Bidi>{words.previousMonths.excel}</Bidi>
                       </a>
                     ) : (
@@ -270,7 +272,7 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                     )}
                     <Link
                       href={`/month/payslip?month=${entry.month.year}-${String(entry.month.month).padStart(2, "0")}`}
-                      className="text-[16px] whitespace-nowrap text-ink-soft hover:text-forest"
+                      className="py-1 text-[16px] whitespace-nowrap text-ink-soft hover:text-forest"
                     >
                       <Bidi>{words.previousMonths.payslip}</Bidi>
                     </Link>
@@ -285,7 +287,7 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
           <h2 className="text-[22px] font-semibold">
             <Bidi>{words.more.title}</Bidi>
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {/* The two yearly reports take the newest year the worker has. A
                 worker with no months has no year to offer, and the card is
                 still drawn: an absent card reads as a report that does not
@@ -360,7 +362,7 @@ function ReportCard({
     </>
   );
 
-  const shared = "flex flex-col gap-2 px-6 py-5.5";
+  const shared = "flex flex-col gap-2 px-5 py-5 sm:px-6 sm:py-5.5";
 
   return href === null ? (
     <div
@@ -373,7 +375,7 @@ function ReportCard({
     <a
       href={href}
       data-report={name}
-      className={`${shared} rounded-card border border-line bg-surface text-ink hover:border-line-hover hover:text-ink`}
+      className={`${shared} rounded-card border border-line bg-surface text-ink transition-colors hover:border-line-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest`}
     >
       {body}
     </a>
