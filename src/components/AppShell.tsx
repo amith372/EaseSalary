@@ -252,7 +252,7 @@ export function AppShell({ children, workers, initialWorkerId, userName }: AppSh
       <header className="flex flex-none flex-wrap items-center gap-x-4 border-b border-line bg-surface px-4 pb-2 md:px-7 xl:h-15.5 xl:flex-nowrap xl:gap-x-5 xl:pb-0">
         <Link
           href="/"
-          className="order-1 flex h-15.5 flex-none items-center gap-2.25 text-ink hover:text-ink"
+          className="order-1 flex h-15.5 min-w-11 flex-none items-center justify-center gap-2.25 text-ink hover:text-ink"
         >
           {/* First in the row, so the mark stands in the top right corner. */}
           <LogoMark />
@@ -295,7 +295,8 @@ export function AppShell({ children, workers, initialWorkerId, userName }: AppSh
                   ref={active ? activeTabRef : undefined}
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "flex flex-none items-center gap-1.75 rounded-tab px-3 py-2 text-[16px] whitespace-nowrap transition-colors",
+                    // 44px tall, a finger's height, rather than the 40 the padding gave.
+                    "flex min-h-11 flex-none items-center gap-1.75 rounded-tab px-3 py-2 text-[16px] whitespace-nowrap transition-colors",
                     active
                       ? "bg-chip font-semibold text-ink"
                       : "font-normal text-ink-mute hover:bg-hover hover:text-ink",
@@ -342,7 +343,10 @@ export function AppShell({ children, workers, initialWorkerId, userName }: AppSh
               count read from the store; until then it led to a 404 under a
               placeholder count. */}
 
-          <Link href="/settings" className="flex items-center gap-2.5 text-ink hover:text-forest">
+          <Link
+            href="/settings"
+            className="flex min-h-11 min-w-11 items-center justify-center gap-2.5 text-ink hover:text-forest"
+          >
             {/*
               Below `lg` the greeting is read but not drawn, rather than not
               rendered: hiding it outright left the link with an aria-hidden

@@ -23,18 +23,22 @@ interface WhyButtonProps {
   onToggle: () => void;
   /** What the button means to a screen reader, since it shows no text. */
   label?: string;
+  /** Which figure or alert it explains, read after the label ("איך חושב הסכום:
+   * ברוטו"), so a list of "?" buttons is not one name said over and over. */
+  subject?: string;
   /** The id of the panel it controls, so the two are announced as a pair. */
   controls: string;
 }
 
-export function WhyButton({ open, onToggle, label, controls }: WhyButtonProps) {
+export function WhyButton({ open, onToggle, label, subject, controls }: WhyButtonProps) {
+  const base = label ?? he.why.amountLabel;
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-expanded={open}
       aria-controls={controls}
-      aria-label={label ?? he.why.amountLabel}
+      aria-label={subject ? `${base}: ${subject}` : base}
       // Drawn at 20px and pressed at 40: the `after` square is an invisible
       // hit area, so a thumb finds the "?" without the row growing to fit it.
       className="relative flex size-5 flex-none after:absolute after:-inset-2.5 after:content-[''] items-center justify-center rounded-full border border-ask-line text-[12px] font-semibold text-ask-ink transition-colors hover:border-ask-line-hover hover:text-ask-ink-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"

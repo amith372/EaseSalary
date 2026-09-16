@@ -44,7 +44,9 @@ export function Chevron({
 }
 
 /** The badge on a "לייצא לאקסל" action: a white tile on the filled button, a
- * sage one on a bare link, where white would vanish into the card. */
+ * sage one on a bare link, where white would vanish into the card. It holds a
+ * spreadsheet's ruled cells, not the canvas's crossed mark, which on the most
+ * consequential button in the app read as "close". */
 export function SheetBadge({
   className,
   tile = "fill-surface",
@@ -62,9 +64,9 @@ export function SheetBadge({
     >
       <rect x="1" y="1.5" width="14" height="13" rx="3" className={tile} />
       <path
-        d="M5.4 5.4 10.6 10.6M10.6 5.4 5.4 10.6"
+        d="M4.2 6.4h7.6M4.2 9.6h7.6M7 4.4v7.2"
         stroke="currentColor"
-        strokeWidth={1.5}
+        strokeWidth={1.3}
         strokeLinecap="round"
       />
     </svg>

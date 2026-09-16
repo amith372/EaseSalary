@@ -379,7 +379,6 @@ export const he = {
     /** The month's own file, which `/month/export` produces. This screen links
      * to it rather than producing it a second way. */
     thisMonth: {
-      eyebrow: "הדוח שמבוקש הכי הרבה",
       /** The heading reads "המשכורת של אוגוסט 2026 לאקסל", and the month sits
        * inside it — so the sentence is kept as its two halves rather than as a
        * template, and each half is its own element beside the `<bdi>` that
@@ -1118,7 +1117,7 @@ export const he = {
          * medical insurance, the one kind that buys a period. */
         expiresOn: "עד מתי הביטוח בתוקף",
         expiresOnHint:
-          "לא חובה. בלי למלא, נחשב שנה מיום התשלום — וזה מה שרוב הפוליסות. אם הפוליסה שלכם לתקופה אחרת, כדאי לכתוב את התאריך שלה.",
+          "לא חובה. בלי למלא, נחשב שנה מיום התשלום — וכך קובעות רוב הפוליסות. אם הפוליסה שלכם לתקופה אחרת, כדאי לכתוב את התאריך שלה.",
         submit: "לרשום",
         /** Reopened with what it holds already in the fields, because
          * correcting a payment by removing it and recording it again is the

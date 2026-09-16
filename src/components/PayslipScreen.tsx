@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { CoveredMonths } from "@/components/CoveredMonths";
+import { SheetBadge } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
 import { SummaryRow } from "@/components/SummaryRow";
 import { ValueChip } from "@/components/ValueChip";
@@ -186,10 +187,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               data-payslip-export
               className="flex items-center gap-2.5 rounded-tint bg-forest px-6 py-3.5 text-[17px] font-semibold whitespace-nowrap text-white hover:bg-forest-deep hover:text-white"
             >
-              <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" className="size-5 flex-none">
-                <rect x="1" y="1.5" width="14" height="13" rx="3" className="fill-white/20" />
-                <path d="M5.4 5.4l5.2 5.2M10.6 5.4l-5.2 5.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <SheetBadge className="size-5 flex-none text-forest" />
               <Bidi>{he.home.paid.exportToExcel}</Bidi>
             </a>
           ) : null}

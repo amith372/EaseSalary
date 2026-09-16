@@ -61,6 +61,17 @@ fits without scrolling.
 - Below `sm` the wordmark is read but not drawn beside the mark, which is what
   keeps the switcher off a third row of chrome at 400px.
 - A skip link stands above the bar, seen only while focused.
+- The greeting follows the user's clock — בוקר טוב, צהריים טובים, ערב טוב, לילה טוב
+  from 05, 12, 17 and 21 — and names nobody, since no name is stored; the
+  artboard's `[השם שלך]` read as a broken screen.
+- The alerts pill is not drawn until `/alerts` exists: it led to a 404 under a
+  placeholder count.
+- Every control in the bar is at least 44px in each direction.
+
+### The export badge (every screen that draws it)
+
+The tile holds a spreadsheet's ruled cells where the canvas draws a crossed
+mark, which on the export button read as "close".
 
 ### The link
 
@@ -148,6 +159,9 @@ folded sheet.
   left each card too narrow for its note.
 - The artboard's `לכל החודשים` link is not drawn: the list already holds every
   month, and there is no screen of months to go to.
+- The hero carries no `הדוח שמבוקש הכי הרבה` label above its heading: nothing
+  measures what is requested, so the label claimed what the application cannot
+  know.
 - The hero carries no lead sentence under its heading, where the artboard
   draws one: the heading and the list below it already say what the screen
   holds.

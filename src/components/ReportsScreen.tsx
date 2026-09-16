@@ -185,15 +185,10 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
           className="flex flex-wrap items-center justify-between gap-x-7 gap-y-5 border border-line-strong px-5 py-6 sm:px-8.5 sm:py-7.5"
         >
           <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-2">
-            <span
-              className="self-start text-[13px] font-semibold tracking-[0.06em] text-clay-deep"
-            >
-              <Bidi>{words.thisMonth.eyebrow}</Bidi>
-            </span>
             {/* Every dynamic string gets its own wrapping element, or Chrome's
                 translation swaps a bare text node in place and React throws
                 `NotFoundError` on `removeChild` (`CLAUDE.md`). */}
-            <h2 className="mt-1 text-[26px] leading-tight font-bold tracking-tight text-balance sm:text-[30px]">
+            <h2 className="text-[26px] leading-tight font-bold tracking-tight text-balance sm:text-[30px]">
               {mine.latest === null ? (
                 <Bidi>{words.thisMonth.none}</Bidi>
               ) : (

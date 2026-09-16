@@ -205,6 +205,8 @@ test.describe("the payments screen", () => {
       .getByRole("link", { name: he.month.actions.lines.standing })
       .click();
     await settled(page);
+    // The link lands on settings, whose groups arrive folded.
+    await openSettingsGroups(page);
 
     await expect(
       page.getByRole("heading", {

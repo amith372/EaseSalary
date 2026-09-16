@@ -424,6 +424,8 @@ test.describe("the three documents and their expiry dates (specs.md item 28)", (
     await settled(page);
 
     await page.reload();
+    // A reload folds the groups again.
+    await openSettingsGroups(page);
     // Read back after a reload, because the failure this catches is a date held
     // in the browser and never saved.
     await expect(

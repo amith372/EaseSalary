@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode, ty
 import { createWorker } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Chip } from "@/components/Chip";
+import { LogoMark } from "@/components/icons";
 import type { RestDay } from "@/lib/dates";
 import {
   restDayChoices,
@@ -222,11 +223,12 @@ export function AddWorkerScreen({
       data-role="add-worker"
     >
       <header className="flex flex-none items-center justify-between gap-5 border-b border-line px-5 py-5 md:px-11">
-        <div className="flex items-center gap-2.5">
+        {/* The wordmark as the top bar draws it. */}
+        <div className="flex items-center gap-2.25">
+          <LogoMark />
           <span translate="no" className="text-[20px] font-bold tracking-[-0.02em]">
             {he.app.name}
           </span>
-          <span aria-hidden="true" className="size-5 flex-none rounded-mark bg-clay" />
         </div>
         {/* Honest on every step but the last, because nothing is written until
             the last button. On the last step there is something to leave to,
@@ -338,8 +340,9 @@ function Progress({ step }: { step: number }) {
 
 type HeadingRef = RefObject<HTMLHeadingElement | null>;
 
-/** `tabIndex={-1}` so the wizard can move focus here; the global focus ring
- * leaves `-1` alone, so arriving draws no ring round the title. */
+/** `tabIndex={-1}` so the wizard can move focus here. `outline-none` because
+ * the browser's own ring still drew round the title on arrival, where it read
+ * as an error; the title is not a control, so nothing is lost. */
 function Heading({
   title,
   lead,
@@ -355,7 +358,7 @@ function Heading({
         ref={headingRef}
         tabIndex={-1}
         dir="auto"
-        className="text-[32px] leading-[1.25] font-semibold tracking-[-0.02em] text-balance"
+        className="text-[32px] leading-[1.25] font-semibold tracking-[-0.02em] text-balance outline-none"
       >
         {title}
       </h1>
@@ -367,7 +370,7 @@ function Heading({
 }
 
 const INPUT =
-  "w-full rounded-tint border border-line bg-ground px-4.5 py-3.75 text-[18px] text-ink transition-colors focus:border-forest focus:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
+  "w-full rounded-tint border border-line-field bg-ground px-4.5 py-3.75 text-[18px] text-ink transition-colors focus:border-forest focus:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
 
 /**
  * One labelled field: the label, an optional marker, the hint under it, the

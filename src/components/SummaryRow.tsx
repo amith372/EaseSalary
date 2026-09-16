@@ -70,6 +70,7 @@ export function SummaryRow({
             controls={`why-${whyKey}`}
             open={open}
             onToggle={() => onToggleWhy(whyKey)}
+            subject={label}
           />
         </span>
       </div>

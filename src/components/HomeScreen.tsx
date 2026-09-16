@@ -264,6 +264,7 @@ export function HomeScreen({
                     open={openWhy === alert.key}
                     onToggle={() => toggleWhy(alert.key)}
                     label={he.home.alerts.whatTheLawSays}
+                    subject={alert.title}
                   />
                 </div>
                 <span dir="auto" className="ps-4.5 text-[14px] leading-[1.45] font-light text-ink-mute text-pretty">
@@ -573,6 +574,7 @@ export function HomeScreen({
                                 open={openWhy === key}
                                 onToggle={() => toggleWhy(key)}
                                 label={he.why.balanceLabel}
+                                subject={herMarks[balance.kind]}
                               />
                             </span>
                             {/* Criterion 2 asks for the days used beside the
@@ -676,6 +678,7 @@ function MoneyRow({
             controls={`why-${whyKey}`}
             open={openWhy === whyKey}
             onToggle={() => onToggleWhy(whyKey)}
+            subject={label}
           />
         </span>
         <span className="flex-none">{value}</span>
@@ -832,6 +835,7 @@ function MoneyCard({
               controls="why-total"
               open={openWhy === "total"}
               onToggle={() => onToggleWhy("total")}
+              subject={bottomFigure(transfers).label}
             />
           </span>
           <MoneyValue agorot={result.net} size="lg" chip="plain" className="flex-none" />
