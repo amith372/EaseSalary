@@ -986,6 +986,20 @@ export const he = {
     lead: "כאן נרשם כל מה שאינו נגזר מהלוח — מקדמות, מס הכנסה, ותוספות והורדות משלך. השורות האלה נכנסות לחישוב החודש, ומופיעות בפירוט בדף המשכורת.",
     /** The screen records one month at a time, so it says which (item 5). */
     forMonth: "החודש שנרשם",
+    /** What falls due in the next twelve months (specs.md item 15). */
+    upcoming: {
+      title: "לקראת החודשים הבאים",
+      lead: "תזכורות — אין מה לרשום כאן עדיין",
+      empty: "אין תשלומים צפויים בשנה הקרובה.",
+      recuperation: "דמי הבראה",
+      recuperationNote: "לפי הותק. התעריף ליום מאושר בחודש עצמו, לפני הייצוא.",
+      notes: {
+        visaExtensionFee: "בחודש שבו אשרת העבודה פגה",
+        licenceFee: "בחודש שבו היתר ההעסקה פג",
+        agencyFee: "שנה אחרי התשלום הקודם",
+      },
+      lastPaid: "שולם בפעם הקודמת",
+    },
   },
 
   /**

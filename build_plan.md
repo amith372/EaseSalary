@@ -79,10 +79,6 @@ Carried forward from finished steps. None of these is a defect.
 - **`שעות עבודה נוספות במהלך אישפוז` has no engine line**, so template row 22 stays empty. It
   is named in Part 5 and nowhere else, and has no `lineKeys` entry, so it cannot be overridden
   or explained (items 17, 24) until it does.
-- **Nothing warns that a third-party payment is due.** The `תשלומים` artboard's
-  `ממתין לתשלום` and `לקראת החודשים הבאים` sections are a *reminder* view resting on item 15's
-  yearly clock and item 28's document dates. Four of their six rows wait on the profile's
-  three documents. **Stage 6's**, with the rest of the alert list.
 - **`דף העובד` draws six things the profile does not**: the `צריך לטפל` hero card and the
   months' status badges (the month's four states, which nothing sets yet), the seniority in
   the subtitle, day counts on a month row, a month row linking to that month's payslip (the
@@ -202,11 +198,10 @@ Same stack. **The stage in progress.**
 - The home screen's blocker strip, on the `blockage` entries — 2026-09-17.
 - The strip and the bell's panel list four and count the rest — 2026-09-17.
 - The reminders pop-up names the blockages it has no switch for — 2026-09-17.
+- `לקראת החודשים הבאים` on the payments screen — 2026-09-17.
 
-**Two steps remain, in this order:**
+**One step remains:**
 
-- **The `תשלומים` artboard's two reminder sections**, which are the same clock read from the
-  payments screen.
 - **The national-insurance tick**, with the months it covers. A quarter leaves the list when a
   recorded payment's `coversMonths` includes its last month.
 

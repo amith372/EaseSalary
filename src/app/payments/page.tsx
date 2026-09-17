@@ -8,6 +8,7 @@ import { lineKeys } from "@/lib/engine/lines";
 import { orphanedOverrides } from "@/lib/engine/overrides";
 import { recordOf } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
+import { upcoming } from "@/lib/engine/upcoming";
 import type { IncomeTaxSetting, MonthIncomeTax } from "@/lib/engine/types";
 import { todayInIsrael } from "@/lib/today";
 import type { MonthResult } from "@/lib/types";
@@ -119,6 +120,9 @@ export default async function PaymentsPage() {
         // the same history and the same opening position the balances are
         // replayed from (item 20).
         advances: advanceLedger(profile.openingPosition, months),
+        // What falls due in the next twelve months, from today and not from
+        // the month on screen (item 15).
+        upcoming: upcoming({ profile, series, today }),
       };
     }),
   );

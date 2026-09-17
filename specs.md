@@ -580,6 +580,14 @@ Each of these is true or false at a glance.
     in a month before the first month, the opening position says whether it was paid: if
     it was not, it is due in the first month; if it was, it is not paid again for that
     employment year.
+    The payments screen lists what falls due in the next twelve months, this month included
+    and the soonest first, under 'לקראת החודשים הבאים': the visa extension fee in the month
+    the work visa expires and the licence fee in the month the employment permit expires
+    (item 28), the agency fee a year after the last one recorded, and the recuperation
+    payment in the worker's recuperation month once it is owed. Each fee shows the amount
+    paid for its kind the last time, said to be that, and no amount where none was paid
+    before; the recuperation payment shows the days it is owed instead, because its day rate
+    is confirmed only in its own month. The list is a reminder and records nothing.
 16. Payments that go to third parties rather than to the worker — the medical insurance
     premium, the national-insurance contribution, the agency and placement fees, the
     visa and licence fees — are recorded in their own column and are never added into

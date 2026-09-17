@@ -15,6 +15,8 @@ import type { OrphanedOverride } from "@/lib/engine/overrides";
 import type { MonthRecord } from "@/lib/engine/repository";
 import { he } from "@/lib/i18n/he";
 import type { MonthIncomeTax } from "@/lib/engine/types";
+import type { UpcomingEntry } from "@/lib/engine/upcoming";
+import { formatAgorot, formatDays } from "@/lib/money";
 import type { IsoDate, OverrideCandidate, Worker, YearMonth } from "@/lib/types";
 
 /**
@@ -84,6 +86,8 @@ export interface WorkerPayments {
   /** Oldest first: every month from her first to the current one. */
   months: MonthPayments[];
   advances: AdvanceStanding[];
+  /** What falls due in the next twelve months (specs.md item 15). */
+  upcoming: UpcomingEntry[];
 }
 
 interface PaymentsScreenProps {
@@ -257,6 +261,79 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
           </Card>
         )}
       </div>
+
+      <UpcomingSection entries={entry.upcoming} />
     </div>
+  );
+}
+
+/**
+ * "לקראת החודשים הבאים", as the `תשלומים` artboard draws it under the card: a
+ * reminder of what falls due in the next twelve months, which records nothing
+ * (specs.md item 15). It follows today and not the month stepped to.
+ */
+function UpcomingSection({ entries }: { entries: UpcomingEntry[] }) {
+  const words = he.payments.upcoming;
+  return (
+    <section aria-labelledby="payments-upcoming" className="mt-4 flex flex-col">
+      <div className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 id="payments-upcoming" dir="auto" className="text-[20px] font-semibold">
+          {words.title}
+        </h2>
+        <span dir="auto" className="text-[15px] font-light text-ink-quiet">
+          {words.lead}
+        </span>
+      </div>
+      {entries.length === 0 ? (
+        <p dir="auto" className="border-t border-line px-1.5 py-4 text-[15px] text-ink-mute">
+          {words.empty}
+        </p>
+      ) : (
+        <ul className="flex flex-col">
+          {entries.map((entry) => {
+            const title =
+              entry.key === "fee" ? he.sheet.thirdParty[entry.kind] : words.recuperation;
+            const note = entry.key === "fee" ? words.notes[entry.kind] : words.recuperationNote;
+            return (
+              <li
+                key={entry.key === "fee" ? entry.kind : `recuperation-${entry.month.year}`}
+                data-role="upcoming"
+                className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-line px-1.5 py-4"
+              >
+                <span className="w-23 flex-none text-[15px] font-medium text-ink-soft">
+                  <Bidi>{monthLabel(entry.month)}</Bidi>
+                </span>
+                <span className="flex min-w-0 flex-[1_1_14rem] flex-col gap-0.5">
+                  <span dir="auto" className="text-[17px] font-semibold">
+                    {title}
+                  </span>
+                  <span dir="auto" className="text-[15px] font-light text-ink-mute text-pretty">
+                    {note}
+                  </span>
+                </span>
+                {entry.key === "recuperation" ? (
+                  <span className="text-[17px] font-semibold text-ink-soft">
+                    <Bidi noTranslate>{formatDays(entry.days)}</Bidi>
+                    <span> </span>
+                    <span dir="auto" className="font-light">
+                      {he.units.days}
+                    </span>
+                  </span>
+                ) : entry.lastPaidAgorot !== null ? (
+                  <span className="flex flex-col items-end gap-px">
+                    <Bidi noTranslate className="text-[17px] font-semibold text-ink-soft">
+                      {formatAgorot(entry.lastPaidAgorot)}
+                    </Bidi>
+                    <span dir="auto" className="text-[13px] font-light text-ink-quiet">
+                      {words.lastPaid}
+                    </span>
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
