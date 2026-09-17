@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, useHousehold } from "./household";
+import { openPaymentSections, switchToTestWorker, useHousehold } from "./household";
 import { he } from "../src/lib/i18n/he";
+import { todayInIsrael } from "../src/lib/today";
 
 /**
  * `/alerts` through the browser (specs.md item 27).
@@ -285,5 +286,136 @@ test.describe("the opening screen's blocker strip (specs.md item 27)", () => {
       .click();
     await expect(page).toHaveURL(/\/alerts$/);
     await expect(owed).toHaveCount(1);
+  });
+});
+
+test.describe("the national-insurance quarter, paid through the payments screen (specs.md items 19, 27)", () => {
+  // The seed covers January–March 2026 and nothing after (`seed.ts`, month 4),
+  // so April–June is owed from July 2026, the month after that quarter ended.
+  test.skip(todayInIsrael() < "2026-07-01", "April–June 2026 is not owed before July 2026");
+
+  test("recording April–June takes that quarter off /alerts and the opening screen", async ({
+    page,
+  }) => {
+    await useHousehold(page, SPEC, "quarter");
+    const quarter = `${he.calendar.monthNames[3]} 2026 – ${he.calendar.monthNames[5]} 2026`;
+    const blockages = page.locator('[data-role="alert"][data-list="blockage"]');
+    const owed = blockages
+      .filter({ hasText: he.alerts.entry.nationalInsurance(quarter).title.join("") })
+      .filter({ hasText: he.placeholder.name })
+      .filter({ hasText: quarter });
+
+    await page.goto("/alerts");
+    await expect(owed).toHaveCount(1);
+    const before = await blockages.count();
+
+    // Recorded in today's month with the quarter chosen by hand, so the test
+    // does not rest on which quarter the form offers in that month.
+    await page.goto("/payments");
+    await switchToTestWorker(page);
+    await openPaymentSections(page);
+    const words = he.month.actions.thirdParty;
+    const group = page.locator('[data-group="thirdParty"]');
+    const kind = he.sheet.thirdParty.nationalInsurance;
+    await group.getByRole("button", { name: words.add, exact: true }).click();
+    await group.getByRole("button", { name: kind, exact: true }).click();
+    await group.getByLabel(words.amount).fill("1200");
+    await group.getByLabel(words.periodFrom).selectOption("2026-04");
+    await group.getByLabel(words.periodTo).selectOption("2026-06");
+    await group.getByLabel(words.paidOn).fill(todayInIsrael());
+    await group.getByRole("button", { name: words.submit, exact: true }).click();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect(group.getByText(kind, { exact: true }).first()).toBeVisible();
+
+    // Off the page, and only that one entry.
+    await page.goto("/alerts");
+    await expect(owed).toHaveCount(0);
+    await expect(blockages).toHaveCount(before - 1);
+    const listed = await page
+      .locator('[data-role="alert"][data-list="blockage"] [data-role="alert-title"]')
+      .allInnerTexts();
+
+    // The opening screen reads the same shorter list.
+    await page.goto("/");
+    const strip = page.locator('[data-role="blocker"]');
+    await expect(strip.first()).toBeVisible();
+    // The first worker owes the same quarter, so the card is found by both.
+    await expect(
+      strip.filter({ hasText: quarter }).filter({ hasText: he.placeholder.name }),
+    ).toHaveCount(0);
+    expect(await strip.locator('[data-role="blocker-title"]').allInnerTexts()).toEqual(
+      listed.slice(0, 4),
+    );
+    if (listed.length > 4) {
+      await expect(page.locator('[data-role="blockers-more"]')).toContainText(
+        String(listed.length - 4),
+      );
+    } else {
+      await expect(page.locator('[data-role="blockers-more"]')).toHaveCount(0);
+    }
+    await page.screenshot({ path: "test-results/home-after-quarter-paid.png" });
+  });
+});
+
+test.describe("an account with nothing outstanding (build_plan.md stage 6, done when)", () => {
+  // December asks every worker for seven vacation days (item 7), which a worker
+  // added that month cannot have.
+  test.skip(todayInIsrael().slice(5, 7) === "12", "December raises the vacation blockage");
+
+  test("a worker added this month with her holidays chosen leaves the opening screen with no blockage", async ({
+    page,
+  }) => {
+    // `empty` is the seed of a new account (`src/lib/store.ts`).
+    await useHousehold(page, "empty", "nothing-owed");
+
+    // Employed from the first of this month: no quarter has ended since, no
+    // recuperation is owed in the first year, and nothing is exported yet. The
+    // salary is April 2026's minimum wage, as in `add-worker.spec.ts`.
+    await page.goto("/workers/new");
+    await page.locator('[data-field="name"]').fill("מריה דה לה קרוס");
+    await page.locator('[data-role="add-worker-next"]').click();
+    await expect(page.getByRole("heading", { name: he.addWorker.when.title })).toBeVisible();
+    await page.locator('[data-field="employedSince"]').fill(`${todayInIsrael().slice(0, 7)}-01`);
+    await page.locator('[data-role="add-worker-next"]').click();
+    await expect(page.getByRole("heading", { name: he.addWorker.pay.title })).toBeVisible();
+    await page.locator('[data-field="baseMonthlySalary"]').fill("6443.85");
+    await page.locator('[data-role="add-worker-next"]').click();
+    await page.locator('[data-role="add-worker-finish"]').click();
+    await expect(page).toHaveURL(/\/workers\/[0-9a-f-]+$/);
+
+    // The one blockage a new worker does carry: this year's holidays.
+    await page.goto("/");
+    await expect(
+      page.locator('[data-role="blocker"]').filter({
+        hasText: he.alerts.entry
+          .holidaysUnchosen(Number(todayInIsrael().slice(0, 4)), "", "")
+          .title.map((part) => (typeof part === "string" ? part : part.value))
+          .join(""),
+      }),
+    ).toHaveCount(1);
+
+    // Chosen through the picker, one candidate at a time until the year is whole.
+    await page.goto("/settings/holidays");
+    const state = page.locator("[data-quota-state]");
+    const unchosen = page.locator('[data-holiday][data-chosen="false"]');
+    const candidates = await unchosen.evaluateAll((rows) =>
+      rows.map((row) => row.getAttribute("data-holiday")!),
+    );
+    for (const date of candidates) {
+      if ((await state.getAttribute("data-quota-state")) === "complete") break;
+      await page.locator(`[data-holiday="${date}"]`).getByRole("checkbox").click();
+      await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    }
+    await expect(state).toHaveAttribute("data-quota-state", "complete");
+
+    await page.goto("/");
+    await expect(page.locator('[data-role="empty-household"]')).toHaveCount(0);
+    await expect(page.locator('[data-role="blocker"]')).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: he.status.needsAttention })).toHaveCount(0);
+    await page.screenshot({ path: "test-results/home-nothing-outstanding.png" });
+
+    await page.goto("/alerts");
+    await expect(page.locator("h1")).toHaveText(he.alerts.title);
+    await expect(page.locator('[data-role="alert"][data-list="blockage"]')).toHaveCount(0);
   });
 });

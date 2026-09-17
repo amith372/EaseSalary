@@ -134,6 +134,19 @@ Carried forward from finished steps. None of these is a defect.
   in those months was worked, so there is no unworked holiday to compare against.
 - **`SalaryRepository` has no `deleteWorker`**, because nothing in the application removes one.
   The live check tidies up through the client instead.
+- **The layout replays every worker's series on every request to draw the bell** (once per
+  request, shared with the page). Not measured; if the browser suite's flakiness grows, this is
+  the first suspect.
+- **A month whose facts are incomplete is not in `actionList`**, though item 27 names it as a
+  blockage: nothing defines "incomplete" beyond what `blocksExport` asks at export time.
+- **Every month exported before 2026-09-17 has no `exported_at`**, so `/alerts` lists each as
+  not exported until it is exported again or marked as handled. An export made in a session
+  carrying the `household` cookie stamps nothing in Supabase, so checking `exported_at` needs a
+  signed-in account without that cookie.
+- **In December every worker owes seven vacation days (item 7)**, including one added that
+  month or employed only from next year, so a new account is never clear in December. The
+  "nothing outstanding" browser test skips December for that reason. Whether the rule should
+  prorate or skip a worker employed for part of the year is the user's call.
 - **The browser suite is intermittently flaky under load** — `payments-screen`,
   `before-export`, `month-screen` and `payslip` among them — and each passes when its own file
   is run alone. Measured on 2026-09-12 against a tree with the sign-in step stashed, so the cause is
@@ -188,44 +201,12 @@ because one would go on drawing days from the balance month after month. So the 
 and the question that closes it were checked once against a seed opened by hand on 2026-09-09,
 and the seed was put back. A browser test lands with the gesture that opens a spell.
 
-## Stage 6 — The opening screen
+## Stage 6 — The opening screen · **done**
 
-Same stack. **The stage in progress.**
-
-- The action list as an engine function (`src/lib/engine/actionList.ts`) — 2026-09-17.
-- `/alerts`, with "not now", the reminder switches and the handled list — 2026-09-17.
-- The bell in the bar, and its panel — 2026-09-17.
-- The home screen's blocker strip, on the `blockage` entries — 2026-09-17.
-- The strip and the bell's panel list four and count the rest — 2026-09-17.
-- The reminders pop-up names the blockages it has no switch for — 2026-09-17.
-- `לקראת החודשים הבאים` on the payments screen — 2026-09-17.
-
-**One step remains:**
-
-- **The national-insurance quarter, driven end to end.** Nothing new to build: the payment form
-  already offers the quarter (`offeredPeriodFor`), and `actionList` already drops a quarter a
-  payment covers. What is missing is the browser test: on `/payments`, for the test worker,
-  record national insurance covering April–June 2026 (the seed covers only January–March), and
-  see that quarter's card leave `/alerts` and the home strip. Then check the done-when below;
-  no seed has nothing outstanding, so it needs one, or a household whose blockers the test
-  clears.
-
-Unfinished, carried by this stage:
-
-- The layout replays every worker's series on every request to draw the bell (once per
-  request, shared with the page). Not measured; if the browser suite's flakiness grows, this
-  is the first suspect.
-- A month whose facts are incomplete, which item 27 names as a blockage, is not in
-  `actionList` yet: nothing defines "incomplete" beyond what `blocksExport` already asks at
-  export time.
-- Every month exported before 2026-09-17 has no `exported_at`, so `/alerts` lists each of
-  them as not exported until it is exported again or marked as handled.
-- A browser session carrying the `household` cookie works on the in-memory demo household
-  (`src/lib/store.ts`), so an export made there stamps nothing in Supabase. Checking
-  `exported_at` needs a signed-in account without that cookie.
-
-**Done when** an account with nothing outstanding shows an opening screen whose action list is
-empty.
+Eight steps, landed 2026-09-17: the action list as an engine function, `/alerts`, the bell and
+its panel, the home screen's blocker strip, four listed and the rest counted, the reminders
+pop-up naming the blockages, `לקראת החודשים הבאים` on `/payments`, and the national-insurance
+quarter and an account with nothing outstanding driven through the browser.
 
 ## Stage 7 — Close what finished stages still owe
 
