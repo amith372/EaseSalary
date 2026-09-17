@@ -316,7 +316,8 @@ Each of these is true or false at a glance.
    first-year rate — without anything prorating it by hand. An unused balance carries
    into the following years rather than being paid out at the end of December, and the
    application warns when a calendar year passed with fewer than seven vacation days
-   taken in it, said in the December that closes that year, noting plainly that the law
+   taken in it — or, where the vacation she accrued in that year came to fewer than seven,
+   fewer than she accrued; a worker not employed in that year is not warned about it — said in the December that closes that year, noting plainly that the law
    asks for at least seven days a year and without pressing the point further. The
    application never deletes accrued days on its own. The sick balance accrues at 1.5 days a month, stops at ninety
    days, and never resets at a year boundary.

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+﻿import { expect, test, type Page } from "@playwright/test";
 import { openPaymentSections, switchToTestWorker, useHousehold } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { todayInIsrael } from "../src/lib/today";
@@ -358,8 +358,8 @@ test.describe("the national-insurance quarter, paid through the payments screen 
 });
 
 test.describe("an account with nothing outstanding (build_plan.md stage 6, done when)", () => {
-  // December asks every worker for seven vacation days (item 7), which a worker
-  // added that month cannot have.
+  // December asks a worker added that month for the month's vacation she
+  // accrued (item 7), which she has not taken.
   test.skip(todayInIsrael().slice(5, 7) === "12", "December raises the vacation blockage");
 
   test("a worker added this month with her holidays chosen leaves the opening screen with no blockage", async ({

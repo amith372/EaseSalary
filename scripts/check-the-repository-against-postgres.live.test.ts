@@ -88,6 +88,7 @@ function aWorker(): WorkerProfile {
         agorot: 12000,
       },
     ],
+    salaryChanges: [{ from: { year: 2026, month: 4 }, agorot: 650000 }],
     holidaySource: { kind: "religion", religion: "christian" },
     openingPosition: {
       vacationDays: 4.5,
@@ -359,6 +360,13 @@ describe("what the household shares between its workers", () => {
     expect(
       again.filter((each) => each.key === "minimumWage" && each.effectiveFrom === "2027-01-01"),
     ).toEqual([{ ...fetched, value: 710000 }]);
+
+    // When it was read, by its source: the home screen's daily read asks this,
+    // and a figure from another source must not answer for it.
+    const read = await repository.lastFetched("minimumWage", fetched.source);
+    expect(read).not.toBeNull();
+    expect(Date.now() - Date.parse(read!)).toBeLessThan(10 * 60 * 1000);
+    expect(await repository.lastFetched("minimumWage", "https://example.test/never")).toBeNull();
   });
 
   test("a holiday list is stored with the address it actually came from", async () => {

@@ -1,7 +1,8 @@
-import { connection } from "next/server";
+import { after, connection } from "next/server";
 import { HomeScreen } from "@/components/HomeScreen";
 import type { WorkerMonths } from "@/components/HomeScreen";
 import { blockagesOf, householdAlerts } from "@/lib/alertsView";
+import { refreshMinimumWageIfStale } from "@/lib/minimumWageRefresh";
 import { getRepository } from "@/lib/store";
 import { calculateSeries } from "@/lib/engine/series";
 import { todayInIsrael } from "@/lib/today";
@@ -35,6 +36,12 @@ import { todayInIsrael } from "@/lib/today";
  * of milliseconds, so the whole household is cheaper than the round trip it
  * would take to ask.
  *
+ * **The minimum wage is read from its source once a day, from here** (item 4).
+ * The screen values the month with the stored table and never waits for the
+ * page: the read runs after the response, and a figure it finds shows on the
+ * next visit. A failed read saves nothing, so it is tried again on the next
+ * visit; the pre-export screen still reads the page on every export.
+ *
  * `connection()` is what keeps this out of the prerender: the store is a live
  * value and `today` is read from a clock, and a page that had been rendered at
  * build time would show the household as it stood when the build ran.
@@ -45,6 +52,15 @@ export default async function HomePage() {
   const repository = await getRepository();
   const today = todayInIsrael();
   const workers = await repository.listWorkers();
+  const now = new Date();
+  after(async () => {
+    try {
+      await refreshMinimumWageIfStale(repository, now);
+    } catch {
+      // A background read that failed changes nothing the user has seen, and
+      // the pre-export screen reads the page again before any export.
+    }
+  });
 
   const household: WorkerMonths[] = await Promise.all(
     workers.map(async (profile) => {

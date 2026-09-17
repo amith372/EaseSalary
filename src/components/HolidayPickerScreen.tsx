@@ -22,6 +22,12 @@ import { legalLink } from "@/lib/links";
 import type { HolidayRow, HolidayYear } from "@/lib/engine/holidayYear";
 import type { HolidaySourceChoice } from "@/lib/holidaySources";
 import { he } from "@/lib/i18n/he";
+import {
+  PICKER,
+  pickerReturnLabel,
+  returningTo,
+  type PickerReturn,
+} from "@/lib/pickerReturn";
 import { formatDays } from "@/lib/money";
 import type { ScrapeFailureKind } from "@/lib/scrape/failure";
 import { dayParts } from "@/lib/spans";
@@ -69,6 +75,8 @@ interface HolidayPickerScreenProps {
   /** The calendar year on screen. It is in the address, because moving to a
    * year with no list is what makes the application fetch one (item 12). */
   year: number;
+  /** The screen the closing button goes back to. */
+  from: PickerReturn;
 }
 
 /** Which panel is open. One at a time, as every other screen does it: a row
@@ -82,6 +90,7 @@ type Open =
 export function HolidayPickerScreen({
   household,
   year,
+  from,
 }: HolidayPickerScreenProps) {
   const words = he.holidays;
   const { worker } = useWorkerScope();
@@ -126,11 +135,11 @@ export function HolidayPickerScreen({
           </p>
         </div>
         <div className="flex flex-none items-center gap-2">
-          <YearStep to={year - 1} label={words.previousYear} towards="previous" />
+          <YearStep to={year - 1} from={from} label={words.previousYear} towards="previous" />
           <Bidi noTranslate className="px-1.5 text-[17px] font-semibold">
             {String(year)}
           </Bidi>
-          <YearStep to={year + 1} label={words.nextYear} towards="next" />
+          <YearStep to={year + 1} from={from} label={words.nextYear} towards="next" />
         </div>
       </div>
 
@@ -356,12 +365,11 @@ export function HolidayPickerScreen({
 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pb-2">
           <Link
-            href={`/workers/${entry.worker.id}`}
+            href={from}
+            data-role="picker-back"
             className="rounded-card-sm bg-forest px-5 py-2.5 text-[16px] font-semibold text-surface transition-colors hover:bg-forest-deep hover:text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
           >
-            <span dir="auto">
-              {he.workers.toProfile(entry.worker.firstName)}
-            </span>
+            <span dir="auto">{pickerReturnLabel(from)}</span>
           </Link>
           <span
             dir="auto"
@@ -384,16 +392,18 @@ const textButtonClass =
  * so stepping it is navigation and the browser's own back works on it. */
 function YearStep({
   to,
+  from,
   label,
   towards,
 }: {
   to: number;
+  from: PickerReturn;
   label: string;
   towards: "previous" | "next";
 }) {
   return (
     <Link
-      href={`/settings/holidays?year=${to}`}
+      href={returningTo(`${PICKER}?year=${to}`, from)}
       aria-label={label}
       className="flex size-8 items-center justify-center rounded-tab border border-line text-ink-quiet transition-colors hover:bg-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
     >

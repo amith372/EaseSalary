@@ -88,15 +88,19 @@ export const legalLinks = {
     url: termsSection("גמול_עבור_העסקה_במנוחה_השבועית"),
   },
   holidayWork: {
-    label: "תשלום על עבודה בימי חג",
-    // Not `דמי_חגים`. See the warning at the top of this file.
-    url: `${KOL_ZCHUT}/תשלום_על_עבודה_בימי_חג`,
+    label: "תשלום עבור ימי חג לעובד/ת זר/ה בסיעוד",
+    // Not `דמי_חגים`. See the warning at the top of this file. This article is
+    // the caregiver's own: nine holidays of her faith or of Israel, a worked one
+    // paid at 150% plus an hour, and an unworked one leaving the salary whole
+    // (item 10).
+    url: `${KOL_ZCHUT}/תשלום_עבור_ימי_חג_לעובד_זר_בסיעוד`,
   },
   annualLeave: {
-    label: "חופשה שנתית",
-    // The general article, and deliberately: the terms page does not restate
-    // the accrual ladder. The seniority tiers of item 7 are here.
-    url: `${KOL_ZCHUT}/חופשה_שנתית`,
+    label: "חופשה שנתית לעובד/ת זר/ה בסיעוד",
+    // The caregiver's own section: accrual, scheduling, and no redemption while
+    // she is employed. It links onward to the general article, which holds the
+    // seniority ladder of item 7.
+    url: termsSection("חופשה_שנתית"),
   },
   sickPay: {
     label: "ימי מחלה לעובד/ת סיעוד",
@@ -150,6 +154,8 @@ export const legalLinks = {
   },
   wageProtection: {
     label: "תלוש שכר",
+    // The general article on purpose: the payslip rules are the same for every
+    // employee, and no article restates them for a foreign caregiver.
     // What item 2 rests on: this page is the one that lists what a payslip must
     // carry — the period and the days worked, the vacation and sick days used
     // that month and the days left, and each payment as its type, its number of

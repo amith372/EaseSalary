@@ -752,6 +752,19 @@ export function createPostgresRepository(
       raise(error, "could not save the rate");
     },
 
+    async lastFetched(key, source) {
+      const { data, error } = await client
+        .from("dated_rates")
+        .select("fetched_at")
+        .eq("key", key)
+        .eq("source", source)
+        .order("fetched_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      raise(error, "could not read when the rate was fetched");
+      return (data?.fetched_at as string | undefined) ?? null;
+    },
+
     async listSwitchedOffWarnings() {
       const { data, error } = await client
         .from("households")

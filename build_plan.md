@@ -108,14 +108,6 @@ Carried forward from finished steps. None of these is a defect.
 - **A person in two households puts what is new into the first they joined** — a worker they
   create, a fetched rate. Shared workers appear beside their own and are written back to their
   own household.
-- **`household_members_insert` lets a member add any user to their household** without an
-  invitation. It exposes nothing of the added person's, and tightening it now that invitations
-  exist is the user's call.
-- **The holiday picker's button still goes to the worker's page**, not back to `/settings`,
-  which is where the picker is now reached from.
-- **The live repository test "comes back exactly as she was saved" fails on a clean tree** —
-  the profile read back has seventeen fields and the fixture sixteen. Measured 2026-09-13 with
-  that day's changes stashed. Not investigated.
 - **The seeded stores are still how the browser suite runs.** A request carrying the
   `household` cookie gets an in-memory household outside production (`src/lib/store.ts`), which
   is what keeps fourteen spec files working. There are three seeds now: the demo, the known
@@ -143,10 +135,6 @@ Carried forward from finished steps. None of these is a defect.
   not exported until it is exported again or marked as handled. An export made in a session
   carrying the `household` cookie stamps nothing in Supabase, so checking `exported_at` needs a
   signed-in account without that cookie.
-- **In December every worker owes seven vacation days (item 7)**, including one added that
-  month or employed only from next year, so a new account is never clear in December. The
-  "nothing outstanding" browser test skips December for that reason. Whether the rule should
-  prorate or skip a worker employed for part of the year is the user's call.
 - **The browser suite is intermittently flaky under load** — `payments-screen`,
   `before-export`, `month-screen` and `payslip` among them — and each passes when its own file
   is run alone. Measured on 2026-09-12 against a tree with the sign-in step stashed, so the cause is
@@ -258,6 +246,28 @@ at the very end — not before.**
 
 **Done when** a question reaches the right screen or the right explanation and the answer names
 its source, and part two can be dropped entirely without part one changing.
+
+## Stage 10 — Confirm the application's rules against the government's own pages
+
+Before anything goes to the future-features appendix, every rule the application applies is
+held against the official source for foreign workers: the Population and Immigration
+Authority's rights pages, starting at
+https://www.gov.il/he/departments/topics/foreign-workers-rights-subject/govil-landing-page,
+its yearly rights booklet, and the caregiving employment procedure. Kol Zchut is the fallback
+where no government page states a rule.
+
+- One pass per rule of Part 2: the wage and its confirmation, the weekly rest day, the nine
+  holidays, vacation and the seven days, sickness, recuperation, national insurance, income
+  tax, medical insurance, deductions and advances.
+- A disagreement is put to the user and never corrected in code or in `specs.md` on the
+  agent's own reading (working rule 1).
+- Every link in `src/lib/links.ts` is checked the same way, and moves to a government page
+  where one states the rule for this worker.
+- gov.il refuses automated fetches (HTTP 403), so the pages are read through the browser or
+  from files the user saves.
+
+**Done when** every rule has a government or Kol Zchut source that agrees with it, or a
+difference the user has settled.
 
 ## Design ↔ spec reconciliation · **closed**
 

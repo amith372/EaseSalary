@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { RemindersDialog, Sentence, WorkerName } from "@/components/AlertsScreen";
 import type { BellView } from "@/lib/alertsView";
 import { he } from "@/lib/i18n/he";
+import { returningTo } from "@/lib/pickerReturn";
 
 const pillClass =
   "flex min-h-11 flex-none items-center gap-1.75 rounded-full border border-line px-3 text-[14px] text-ink-soft transition-colors hover:border-line-hover hover:text-ink";
@@ -101,7 +102,7 @@ export function Bell({ bell }: { bell: BellView }) {
               {cards.map((card) => (
                 <li key={card.id} className="border-b border-line-soft last:border-b-0">
                   <Link
-                    href={card.action.href}
+                    href={returningTo(card.action.href, pathname)}
                     data-role="bell-entry"
                     className="flex items-start gap-3 px-4 py-3 text-ink transition-colors hover:bg-hover hover:text-ink"
                   >

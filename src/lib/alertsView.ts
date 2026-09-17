@@ -104,7 +104,11 @@ function phrase(entry: ActionEntry, workerId: string) {
       };
     case "vacationUnderSeven":
       return {
-        said: words.vacationUnderSeven(entry.year, formatDays(entry.days)),
+        said: words.vacationUnderSeven(
+          entry.year,
+          formatDays(entry.days),
+          formatDays(entry.required),
+        ),
         href: "/",
         law: "annualLeave" as LegalLinkKey,
       };

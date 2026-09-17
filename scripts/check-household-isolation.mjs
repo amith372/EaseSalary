@@ -282,6 +282,26 @@ try {
     "she cannot add herself to a household she is not in",
   );
 
+  // A member adding someone else to her own household with no invitation,
+  // which would skip the step where the added person agrees to it.
+  const added = await rest("household_members", {
+    token: a.token,
+    method: "POST",
+    body: { household_id: a.householdId, user_id: b.userId },
+    prefer: "return=representation",
+  });
+  check(
+    added.status >= 400,
+    "a member cannot add another account to her household directly",
+  );
+  const bReachesA = await rest(`workers?select=id&id=eq.${a.workerId}`, {
+    token: b.token,
+  });
+  check(
+    Array.isArray(bReachesA.body) && bReachesA.body.length === 0,
+    "and that account still reaches nothing of the household",
+  );
+
   // The table's own insert is closed, so the function is not merely the
   // convenient way in but the only one. A direct insert would create a
   // household with no member, which nobody could then reach.

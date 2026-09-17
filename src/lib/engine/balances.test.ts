@@ -10,6 +10,7 @@ import {
   seniorityYearOfCalendarYear,
   sickDaysAvailable,
   vacationDaysPerYear,
+  vacationDaysTheLawAsksFor,
   vacationYearWarning,
 } from "@/lib/engine/balances";
 import { calculateMonth } from "@/lib/engine/month";
@@ -411,6 +412,25 @@ describe("the sick balance is a floor and never goes negative (item 8)", () => {
   });
 });
 
+describe("the vacation days the law asks a year for (specs.md item 7)", () => {
+  // Fourteen days a year in the first four (item 7), a twelfth a month, and the
+  // month employment began counted whole.
+  it("is seven in a full year", () => {
+    expect(vacationDaysTheLawAsksFor("2024-04-01", 2026)).toBe(7);
+  });
+  it("is seven in a partial year that still accrued more than seven", () => {
+    // June to December: 14 × 7 ÷ 12 = 8.17.
+    expect(vacationDaysTheLawAsksFor("2025-06-15", 2025)).toBe(7);
+  });
+  it("is what a short partial year accrued", () => {
+    expect(vacationDaysTheLawAsksFor("2025-10-01", 2025)).toBe(3.5);
+    expect(vacationDaysTheLawAsksFor("2025-12-20", 2025)).toBeCloseTo(14 / 12, 10);
+  });
+  it("is nothing before she was employed", () => {
+    expect(vacationDaysTheLawAsksFor("2026-01-01", 2025)).toBe(0);
+  });
+});
+
 describe("the seven-day vacation warning (specs.md item 7)", () => {
   const december = { year: 2025, month: 12 };
   const worker = terms();
@@ -420,6 +440,7 @@ describe("the seven-day vacation warning (specs.md item 7)", () => {
     // taken — the 1st to the 3rd of December, a Monday to a Wednesday.
     const warning = vacationYearWarning(
       facts(december, [span("vacation", "2025-12-01", "2025-12-03")]),
+      worker,
     );
     expect(warning?.key).toBe("vacationUnderSeven");
     expect(warning?.message.length).toBeGreaterThan(0);
@@ -432,7 +453,7 @@ describe("the seven-day vacation warning (specs.md item 7)", () => {
     // which is exactly what the law asks for.
     const sevenTaken = facts(december, [span("vacation", "2025-12-01", "2025-12-08")]);
     expect(balance("vacation", sevenTaken, worker).used).toBe(7);
-    expect(vacationYearWarning(sevenTaken)).toBeNull();
+    expect(vacationYearWarning(sevenTaken, worker)).toBeNull();
   });
 
   it("counts the days taken earlier in the same calendar year", () => {
@@ -442,15 +463,30 @@ describe("the seven-day vacation warning (specs.md item 7)", () => {
     const context = (vacationDaysEarlierInYear: number): MonthContext => ({
       vacationDaysEarlierInYear,
     });
-    expect(vacationYearWarning(twoTaken, context(5))).toBeNull();
-    expect(vacationYearWarning(twoTaken, context(4))).not.toBeNull();
+    expect(vacationYearWarning(twoTaken, worker, context(5))).toBeNull();
+    expect(vacationYearWarning(twoTaken, worker, context(4))).not.toBeNull();
+  });
+
+  it("asks a partial year for what it accrued, when that is under seven", () => {
+    // Employed from 1.10.2025: October to December is three months of her
+    // first year's fourteen days, 14 × 3 ÷ 12 = 3.5. Three days taken (Monday
+    // 1.12 to Wednesday 3.12) are short of it; four (to Thursday) are not.
+    const october = terms("2025-10-01");
+    const three = facts(december, [span("vacation", "2025-12-01", "2025-12-03")]);
+    const four = facts(december, [span("vacation", "2025-12-01", "2025-12-04")]);
+    expect(vacationYearWarning(three, october)).not.toBeNull();
+    expect(vacationYearWarning(four, october)).toBeNull();
+  });
+
+  it("asks nothing of a year she was not employed in", () => {
+    expect(vacationYearWarning(facts(december), terms("2026-01-01"))).toBeNull();
   });
 
   it("is not raised before the year has passed", () => {
     // Item 7 warns when a year *passed*, so a November with nothing taken is a
     // year still running and is left alone.
-    expect(vacationYearWarning(facts({ year: 2025, month: 11 }))).toBeNull();
-    expect(vacationYearWarning(facts({ year: 2025, month: 3 }))).toBeNull();
+    expect(vacationYearWarning(facts({ year: 2025, month: 11 }), worker)).toBeNull();
+    expect(vacationYearWarning(facts({ year: 2025, month: 3 }), worker)).toBeNull();
   });
 
   it("reaches the month's result without stopping anything", () => {

@@ -31,6 +31,7 @@ import type { MonthInSeries } from "@/lib/engine/series";
 import { clipEndOf } from "@/lib/engine/types";
 import type { MonthSpan } from "@/lib/engine/types";
 import { bottomFigure, he } from "@/lib/i18n/he";
+import { returningTo } from "@/lib/pickerReturn";
 import { formatDays } from "@/lib/money";
 import { endOf, overlapsMonth, type SkippedDay, type SkipReason } from "@/lib/spans";
 import type {
@@ -287,7 +288,7 @@ export function HomeScreen({
                       <WorkerName name={card.workerName} />
                     </span>
                     <Link
-                      href={card.action.href}
+                      href={returningTo(card.action.href, "/")}
                       className="flex-none text-[14px] font-medium whitespace-nowrap hover:underline hover:underline-offset-4"
                     >
                       <span dir="auto">{card.action.label}</span>

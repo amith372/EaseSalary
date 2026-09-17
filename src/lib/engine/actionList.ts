@@ -17,6 +17,7 @@ import {
 import type { IsoDate, YearMonth } from "@/lib/types";
 import { advanceLedger } from "./advances";
 import { holidayYear } from "./holidayYear";
+import { vacationDaysTheLawAsksFor } from "./balances";
 import { holidayAllowanceFor } from "./leave";
 import { recuperationDaysInMonth } from "./recuperation";
 import type { WorkerProfile } from "./repository";
@@ -63,7 +64,7 @@ export type ActionEntry = { list: ActionList } & (
     }
   | { key: "recuperationDue"; month: YearMonth }
   | { key: "recuperationApproaching"; month: YearMonth }
-  | { key: "vacationUnderSeven"; year: number; days: number }
+  | { key: "vacationUnderSeven"; year: number; days: number; required: number }
   | { key: "monthNotExported"; month: YearMonth }
   | {
       key: "minimumWageChanged";
@@ -81,9 +82,6 @@ export const EXPIRY_WARNING_DAYS = 60;
 /** The passport warns while fewer than this many months are left on it, not
  * when it lapses: the employer must see it stays valid that long (item 28). */
 export const PASSPORT_MONTHS_REQUIRED = 18;
-
-/** Item 7: the law asks for at least this many vacation days a year. */
-const VACATION_DAYS_THE_LAW_ASKS_FOR = 7;
 
 const DECEMBER = 12;
 
@@ -240,7 +238,8 @@ function recuperation({ profile, series, today }: ActionListInput): ActionEntry[
   return entries;
 }
 
-/** In December, a year with fewer than seven vacation days taken (item 7). */
+/** In December, a year with fewer vacation days taken than the law asks for:
+ * seven, or what a partial year accrued (item 7). */
 function vacation({ profile, series, today }: ActionListInput): ActionEntry[] {
   const thisMonth = monthOf(today);
   if (thisMonth.month !== DECEMBER) return [];
@@ -254,8 +253,9 @@ function vacation({ profile, series, today }: ActionListInput): ActionEntry[] {
         total + (result.balances.find((line) => line.kind === "vacation")?.used ?? 0),
       opening,
     );
-  if (days >= VACATION_DAYS_THE_LAW_ASKS_FOR) return [];
-  return [{ list: "blockage", key: "vacationUnderSeven", year, days }];
+  const required = vacationDaysTheLawAsksFor(profile.employedSince, year);
+  if (days >= required) return [];
+  return [{ list: "blockage", key: "vacationUnderSeven", year, days, required }];
 }
 
 /** Every month that has ended and that no file was produced from (Part 5). */

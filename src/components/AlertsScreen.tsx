@@ -8,6 +8,7 @@ import { Card } from "@/components/Card";
 import type { AlertCard, AlertsView } from "@/lib/alertsView";
 import { warningKinds, type WarningKind } from "@/lib/engine/alerts";
 import { he, type Said } from "@/lib/i18n/he";
+import { returningTo } from "@/lib/pickerReturn";
 
 /**
  * `EaseSalary - התראות`, for the whole household (specs.md item 27). Everything
@@ -145,7 +146,7 @@ function OpenCard({ card }: { card: AlertCard }) {
       </div>
       <div className="flex items-center gap-4">
         <Link
-          href={card.action.href}
+          href={returningTo(card.action.href, "/alerts")}
           className="rounded-card-sm bg-forest px-5 py-2.5 text-[15px] font-semibold whitespace-nowrap text-white transition-colors hover:bg-forest-deep hover:text-white"
         >
           <span dir="auto">{card.action.label}</span>

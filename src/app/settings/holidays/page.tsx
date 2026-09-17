@@ -11,6 +11,7 @@ import type { ScrapeFailureKind } from "@/lib/scrape/failure";
 import { fetchHolidayList } from "@/lib/scrape/holidayList";
 import { todayInIsrael } from "@/lib/today";
 import { fromIsoDate } from "@/lib/dates";
+import { pickerReturnOf } from "@/lib/pickerReturn";
 
 /**
  * The year's holidays, chosen in advance — `EaseSalary - בחירת חגים`
@@ -73,7 +74,7 @@ export default async function HolidaysPage({
 }: PageProps<"/settings/holidays">) {
   await connection();
 
-  const { year: asked } = await searchParams;
+  const { year: asked, from } = await searchParams;
   const thisYear = fromIsoDate(todayInIsrael()).getUTCFullYear();
   const year = readYear(asked, thisYear);
 
@@ -109,7 +110,11 @@ export default async function HolidaysPage({
     }),
   );
 
-  return <HolidayPickerScreen household={household} year={year} />;
+  return <HolidayPickerScreen
+      household={household}
+      year={year}
+      from={pickerReturnOf(from)}
+    />;
 }
 
 /**

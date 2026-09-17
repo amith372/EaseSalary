@@ -334,7 +334,7 @@ describe("a year with fewer than seven vacation days (item 7)", () => {
     const march = monthOf(ym(2026, 3));
     expect(
       only(listFor({ today: "2026-12-05", months: [march], spans: [...NINE_HOLIDAYS, sixDays] }), "vacationUnderSeven"),
-    ).toEqual([{ list: "blockage", key: "vacationUnderSeven", year: 2026, days: 6 }]);
+    ).toEqual([{ list: "blockage", key: "vacationUnderSeven", year: 2026, days: 6, required: 7 }]);
   });
 
   it("is not raised at seven", () => {
@@ -348,6 +348,26 @@ describe("a year with fewer than seven vacation days (item 7)", () => {
     const profile: WorkerProfile = {
       ...PROFILE,
       openingPosition: { ...PROFILE.openingPosition, vacationUsedThisYear: 7 },
+    };
+    expect(only(listFor({ today: "2026-12-05", profile }), "vacationUnderSeven")).toEqual([]);
+  });
+
+  it("asks a partial year for what it accrued (14 × 3 ÷ 12 = 3.5)", () => {
+    const profile: WorkerProfile = {
+      ...PROFILE,
+      employedSince: "2026-10-01",
+      firstMonth: { year: 2026, month: 10 },
+    };
+    expect(only(listFor({ today: "2026-12-05", profile }), "vacationUnderSeven")).toEqual([
+      { list: "blockage", key: "vacationUnderSeven", year: 2026, days: 0, required: 3.5 },
+    ]);
+  });
+
+  it("is not raised for a worker employed only from next year", () => {
+    const profile: WorkerProfile = {
+      ...PROFILE,
+      employedSince: "2027-01-01",
+      firstMonth: { year: 2027, month: 1 },
     };
     expect(only(listFor({ today: "2026-12-05", profile }), "vacationUnderSeven")).toEqual([]);
   });

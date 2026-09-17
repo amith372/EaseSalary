@@ -2,7 +2,6 @@ import { connection } from "next/server";
 import { BeforeExportScreen } from "@/components/BeforeExportScreen";
 import type { WorkerBeforeExport } from "@/components/BeforeExportScreen";
 import { rateInForce } from "@/lib/datedRates";
-import type { DatedRate } from "@/lib/datedRates";
 import { getRepository } from "@/lib/store";
 import { salaryFor } from "@/lib/engine/salary";
 import { calculateSeries } from "@/lib/engine/series";
@@ -12,9 +11,8 @@ import {
   openSickSpellOf,
   recuperationToConfirm,
 } from "@/lib/engine/beforeExport";
-import type { SalaryRepository } from "@/lib/engine/repository";
-import { MINIMUM_WAGE_SOURCE_URL, fetchMinimumWage } from "@/lib/scrape/minimumWage";
-import type { ScrapeFailureKind } from "@/lib/scrape/failure";
+import { MINIMUM_WAGE_SOURCE_URL } from "@/lib/scrape/minimumWage";
+import { refreshMinimumWage } from "@/lib/minimumWageRefresh";
 import { todayInIsrael } from "@/lib/today";
 
 /**
@@ -42,37 +40,13 @@ import { todayInIsrael } from "@/lib/today";
  * fetch is a live request, and `today` is read from a clock.
  */
 
-/**
- * The wage the confirmation opens with, and where it came from.
- *
- * **A fetched figure is written into the table and a failed fetch is not.** The
- * table is seeded and a fetch updates it (Part 3), so the next opening of this
- * screen starts from what the last one learned; a failure leaves the seeded row
- * standing and the user typing, which is item 4's own degradation.
- *
- * The fetch runs once for the household and not once per worker: the minimum
- * wage is the state's figure and has nothing to do with which worker is being
- * paid.
- */
-async function wageTable(
-  repository: SalaryRepository,
-): Promise<{ rates: DatedRate[]; failure: ScrapeFailureKind | null }> {
-  const stored = await repository.listRates();
-  const fetched = await fetchMinimumWage(stored);
-  if (!fetched.rate.ok) {
-    return { rates: stored, failure: fetched.rate.failure.kind };
-  }
-  await repository.saveRate(fetched.rate.value);
-  return { rates: await repository.listRates(), failure: null };
-}
-
 export default async function BeforeExportPage() {
   await connection();
 
   const repository = await getRepository();
   const today = todayInIsrael();
   const workers = await repository.listWorkers();
-  const { rates, failure } = await wageTable(repository);
+  const { rates, failure } = await refreshMinimumWage(repository);
 
   const household: WorkerBeforeExport[] = await Promise.all(
     workers.map(async (profile) => {

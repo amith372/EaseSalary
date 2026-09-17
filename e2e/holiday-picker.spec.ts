@@ -195,7 +195,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // The picker is reached from `הגדרות`, so `הגדרות` is the tab that lights.
     await expect(
-      page.getByRole("link", { name: he.nav.settings }),
+      page.getByRole("link", { name: he.nav.settings, exact: true }),
     ).toHaveAttribute("aria-current", "page");
 
     await page.screenshot({
@@ -502,5 +502,45 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     // April no longer pays a worked holiday, and July's calendar carries one.
     await openPayslipMonthsBack(page, 5);
     await expect(row(page, "holidaysWorked")).toHaveCount(0);
+  });
+});
+
+test.describe("the picker's closing button goes back to the screen that opened it", () => {
+  const picker = 'a[href^="/settings/holidays"]';
+  const back = (at: Page) => at.locator('[data-role="picker-back"]');
+
+  test("opened from the settings, it goes back to the settings, after stepping a year", async ({
+    page,
+  }) => {
+    await useHousehold(page, "back-settings");
+    await openSettingsForTestWorker(page);
+    await page.locator("main").locator(picker).first().click();
+    await expect(page).toHaveURL(/\/settings\/holidays\?/);
+
+    // Stepping the year is a navigation of its own, and must not lose the way back.
+    await page.getByRole("link", { name: he.holidays.previousYear }).click();
+    await expect(page).toHaveURL(/year=\d{4}/);
+    await expect(back(page)).toHaveText("חזרה להגדרות");
+    await back(page).click();
+    await expect(page).toHaveURL(/\/settings$/);
+  });
+
+  test("opened from an alert, it goes back to the alerts", async ({ page }) => {
+    await useHousehold(page, "back-alerts");
+    await page.goto("/alerts");
+    // The test worker has three of nine chosen, which is a blockage here.
+    await page.locator('[data-role="alert"]').locator(picker).first().click();
+    await expect(page).toHaveURL(/from=%2Falerts/);
+    await expect(back(page)).toHaveText("חזרה להתראות");
+    await back(page).click();
+    await expect(page).toHaveURL(/\/alerts$/);
+    await expect(page.locator("h1")).toHaveText(he.alerts.title);
+  });
+
+  test("an address naming anywhere else goes back to the settings", async ({ page }) => {
+    await useHousehold(page, "back-elsewhere");
+    await page.goto("/settings/holidays?from=https%3A%2F%2Fexample.com");
+    await expect(back(page)).toHaveAttribute("href", "/settings");
+    await expect(back(page)).toHaveText("חזרה להגדרות");
   });
 });

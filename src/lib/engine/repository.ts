@@ -1,7 +1,7 @@
 import { compareMonth } from "@/lib/dates";
 import { salaryFor } from "@/lib/engine/salary";
 import { SEEDED_RATES, rateInForce, withFetchedRate } from "@/lib/datedRates";
-import type { DatedRate } from "@/lib/datedRates";
+import type { DatedRate, RateKey } from "@/lib/datedRates";
 import type { Deferral, WarningKind } from "@/lib/engine/alerts";
 import { snapshotTerms } from "@/lib/engine/types";
 import type {
@@ -193,6 +193,10 @@ export interface SalaryRepository {
   /** Records the row, replacing any held for the same key and effective date
    * rather than being appended beside it (`withFetchedRate`). */
   saveRate(rate: DatedRate): Promise<void>;
+  /** When a row for `key` read from `source` was last saved, or `null` if none
+   * ever was. The source is named because a figure the user confirmed is saved
+   * to the same table and says nothing about when the page was last read. */
+  lastFetched(key: RateKey, source: string): Promise<string | null>;
 
   /**
    * The four identifying numbers, **as sealed bytes and never as numbers**
@@ -416,6 +420,7 @@ export function createInMemoryRepository(
     seed.holidayLists ?? SEEDED_HOLIDAY_LISTS,
   );
   let rates = structuredClone(seed.rates ?? SEEDED_RATES);
+  const fetchedAt = new Map<string, string>();
   let switchedOff: WarningKind[] = [];
   let deferrals: Deferral[] = [];
 
@@ -513,6 +518,11 @@ export function createInMemoryRepository(
 
     async saveRate(rate) {
       rates = withFetchedRate(rates, structuredClone(rate));
+      fetchedAt.set(`${rate.key} ${rate.source}`, new Date().toISOString());
+    },
+
+    async lastFetched(key, source) {
+      return fetchedAt.get(`${key} ${source}`) ?? null;
     },
 
     async sealedNumbers(workerId) {

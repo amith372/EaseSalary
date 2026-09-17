@@ -858,9 +858,18 @@ export const he = {
         note: ["דמי ההבראה ישולמו ב", { value: month }, "."] as Said,
         action: "להגדרות",
       }),
-      vacationUnderSeven: (year: number, days: string) => ({
-        title: ["פחות משבעה ימי חופשה ב־", { value: String(year) }] as Said,
-        note: ["נוצלו ", { value: days }, " ימים השנה, והחוק מחייב לפחות שבעה."] as Said,
+      /** `required` is "7", or what a partial year accrued where that is less. */
+      vacationUnderSeven: (year: number, days: string, required: string) => ({
+        title: ["פחות מ־", { value: required }, " ימי חופשה ב־", { value: String(year) }] as Said,
+        note: (required === "7"
+          ? ["נוצלו ", { value: days }, " ימים השנה, והחוק מחייב לפחות שבעה."]
+          : [
+              "נוצלו ",
+              { value: days },
+              " ימים השנה. החוק מחייב לפחות שבעה, ומי שצברה פחות בשנה חלקית — את כל ",
+              { value: required },
+              " הימים שצברה.",
+            ]) as Said,
         action: "לסמן חופשה",
       }),
       monthNotExported: (month: string) => ({
@@ -1901,6 +1910,8 @@ export const he = {
     lead: "בוחרים מראש אילו ימים יהיו חגים בתשלום, והלוח החודשי מצייר אותם מוכנים.",
     previousYear: "לשנה הקודמת",
     nextYear: "לשנה הבאה",
+    /** The picker's closing button, named for the screen that opened it. */
+    backTo: (screen: string) => `חזרה ל${screen}`,
     /** How many days are chosen against how many she has, and where the quota
      * comes from — the reasoning behind the figure and not only the figure
      * (item 10). */
@@ -2620,8 +2631,10 @@ export const he = {
     /** A warning changes no figure and stops nothing. It is worded as what the
      * law asks rather than as what the user did wrong (specs.md item 7). */
     warnings: {
-      vacationUnderSeven: (year: number, days: number) =>
-        `בשנת ${year} נוצלו ${formatDays(days)} ימי חופשה. החוק מבקש לפחות שבעה ימי חופשה בשנה. היתרה עצמה נשמרת ואינה נמחקת.`,
+      vacationUnderSeven: (year: number, days: number, required: number) =>
+        required === 7
+          ? `בשנת ${year} נוצלו ${formatDays(days)} ימי חופשה. החוק מבקש לפחות שבעה ימי חופשה בשנה. היתרה עצמה נשמרת ואינה נמחקת.`
+          : `בשנת ${year} נוצלו ${formatDays(days)} ימי חופשה, מתוך ${formatDays(required)} שנצברו בה. החוק מבקש לפחות שבעה ימים בשנה, ובשנה חלקית את מה שנצבר. היתרה עצמה נשמרת ואינה נמחקת.`,
       /** The recuperation month with nothing to price its days at (item 15).
        * It names the days, because that is the part the application does know
        * and the part the user would otherwise have to work out for herself. */

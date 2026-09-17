@@ -260,11 +260,35 @@ export function buildBalances(
   ];
 }
 
-/** The Annual Leave Act asks for at least seven vacation days in a year
- * (specs.md item 7). */
+/** The Annual Leave Act, section 7, asks for at least seven vacation days in a
+ * year (specs.md item 7). */
 const VACATION_DAYS_A_YEAR_THE_LAW_ASKS_FOR = 7;
 
 const DECEMBER = 12;
+
+/**
+ * The vacation days a calendar year must see taken: seven, or what she accrued
+ * in the year where that is less, and none in a year she was not employed in
+ * (specs.md item 7). The statute cannot ask for days a partial year never gave
+ * her. The accrual is counted the way `holidayAllowanceFor` counts a partial
+ * year — the month employment began is a whole month.
+ */
+export function vacationDaysTheLawAsksFor(
+  employedSince: IsoDate,
+  calendarYear: number,
+): number {
+  const start = fromIsoDate(employedSince);
+  if (calendarYear < start.getUTCFullYear()) return 0;
+  const months =
+    calendarYear > start.getUTCFullYear()
+      ? MONTHS_PER_YEAR
+      : MONTHS_PER_YEAR - start.getUTCMonth();
+  const accrued =
+    (vacationDaysPerYear(seniorityYearOfCalendarYear(employedSince, calendarYear)) *
+      months) /
+    MONTHS_PER_YEAR;
+  return Math.min(VACATION_DAYS_A_YEAR_THE_LAW_ASKS_FOR, accrued);
+}
 
 /**
  * The seven-day warning: a calendar year that passed with fewer than seven
@@ -281,18 +305,24 @@ const DECEMBER = 12;
  */
 export function vacationYearWarning(
   facts: ClosedMonthFacts,
+  employment: Pick<Employment, "employedSince">,
   context: MonthContext = {},
 ): Warning | null {
   if (facts.month.month !== DECEMBER) return null;
+  const required = vacationDaysTheLawAsksFor(
+    employment.employedSince,
+    facts.month.year,
+  );
   const daysThisYear =
     (context.vacationDaysEarlierInYear ?? 0) +
     daysUsedIn(facts.spans, facts.month, "vacation", facts.terms.restDay);
-  if (daysThisYear >= VACATION_DAYS_A_YEAR_THE_LAW_ASKS_FOR) return null;
+  if (daysThisYear >= required) return null;
   return {
     key: "vacationUnderSeven",
     message: he.sheet.warnings.vacationUnderSeven(
       facts.month.year,
       daysThisYear,
+      required,
     ),
     link: "annualLeave",
   };
@@ -443,7 +473,7 @@ export function buildWarnings(
 ): Warning[] {
   return [
     belowMinimumWageWarning(facts, rates),
-    vacationYearWarning(facts, context),
+    vacationYearWarning(facts, employment, context),
     recuperationRateMissingWarning(facts, employment, rates),
     insurerMissingWarning(facts, employment),
     taxBracketsMissingWarning(
