@@ -114,7 +114,7 @@ function OpenCard({ card }: { card: AlertCard }) {
       />
       <div className="flex min-w-0 flex-[1_1_16rem] flex-col gap-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-[18px] font-semibold tracking-[-0.01em]">
+          <span data-role="alert-title" className="text-[18px] font-semibold tracking-[-0.01em]">
             <Sentence said={card.title} />
             <WorkerName name={card.workerName} />
           </span>
@@ -170,7 +170,14 @@ function OpenCard({ card }: { card: AlertCard }) {
  * nothing else, one checkbox each (specs.md item 27). A tick saves at once; the
  * page re-renders from the store when it has.
  */
-function RemindersDialog({ switchedOff }: { switchedOff: WarningKind[] }) {
+export function RemindersDialog({
+  switchedOff,
+  className = "flex min-h-11 items-center text-[15px] font-medium text-forest hover:underline hover:underline-offset-4",
+}: {
+  switchedOff: WarningKind[];
+  /** The link's look, which the bell's panel draws smaller. */
+  className?: string;
+}) {
   const words = he.alerts.reminders;
   const dialog = useRef<HTMLDialogElement>(null);
   const [off, setOff] = useState(switchedOff);
@@ -187,7 +194,7 @@ function RemindersDialog({ switchedOff }: { switchedOff: WarningKind[] }) {
       <button
         type="button"
         onClick={() => dialog.current?.showModal()}
-        className="flex min-h-11 items-center text-[15px] font-medium text-forest hover:underline hover:underline-offset-4"
+        className={className}
       >
         <span dir="auto">{he.alerts.settingsLink}</span>
       </button>
@@ -234,7 +241,7 @@ function RemindersDialog({ switchedOff }: { switchedOff: WarningKind[] }) {
 }
 
 /** A sentence from `he.ts`, each value in its own isolate (`CLAUDE.md`). */
-function Sentence({ said }: { said: Said }) {
+export function Sentence({ said }: { said: Said }) {
   return (
     <span dir="auto">
       {said.map((part, index) =>
@@ -250,7 +257,7 @@ function Sentence({ said }: { said: Said }) {
   );
 }
 
-function WorkerName({ name }: { name: string | null }) {
+export function WorkerName({ name }: { name: string | null }) {
   if (name === null) return null;
   return (
     <>

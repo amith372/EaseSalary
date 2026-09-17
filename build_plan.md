@@ -198,17 +198,16 @@ and the seed was put back. A browser test lands with the gesture that opens a sp
 ## Stage 6 — The opening screen
 
 Same stack. The calendar, the figures and the balances run on the engine since 2026-09-16;
-the action list is an engine function since 2026-09-17, and what remains is putting it on screen.
+the action list is an engine function and the bell reads it since 2026-09-17; what remains is
+the steps below.
 **The stage in progress.**
 
 - The action list as an engine function (`src/lib/engine/actionList.ts`) — 2026-09-17.
 - `/alerts`, with "not now", the reminder switches and the handled list — 2026-09-17.
+- The bell in the bar, and its panel for four warnings or fewer — 2026-09-17.
 
-**The next step is the bell.** Then the steps below, each a step of its own:
+**The next step is the home screen's blocker strip.** Then the steps below, each a step of its own:
 
-- **The bell in the bar** — drawn in `AppShell.tsx` where its comment marks the place, linking
-  `/alerts` and lit by the count of `warning` entries that `shownEntries` keeps
-  (`src/lib/engine/alerts.ts`), so a switched-off or put-off warning is not counted.
 - **The home screen's blocker strip** — `HomeScreen.tsx` reads `homeAlerts` from
   `src/lib/fixtures/home.ts`, three fixed cards. It moves onto the `blockage` entries and the
   fixture file is deleted.
@@ -219,6 +218,11 @@ the action list is an engine function since 2026-09-17, and what remains is putt
 
 Unfinished, carried by this stage:
 
+- **Waiting on the user:** whether the reminders pop-up becomes a list of the individual
+  warnings with a search, rather than the four kinds. Raised 2026-09-17 as a "maybe"; it
+  changes item 27, so it is asked before it is built.
+- The layout now replays every worker's series on every request to draw the bell. Not
+  measured; if the browser suite's flakiness grows, this is the first suspect.
 - A month whose facts are incomplete, which item 27 names as a blockage, is not in
   `actionList` yet: nothing defines "incomplete" beyond what `blocksExport` already asks at
   export time.

@@ -587,6 +587,11 @@ export const he = {
       night: "לילה טוב",
     },
     alerts: "התראות",
+    /** The panel the bell opens while it counts four warnings or fewer. */
+    bell: {
+      nothing: "אין תזכורות כרגע.",
+      showAll: "הצג הכל",
+    },
     avatarAlt: "התמונה שלך",
     /** Which worker every screen is about. The caption labels the group rather
      * than sitting above the name: a 62px bar has room for one line. */

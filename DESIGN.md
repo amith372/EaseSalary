@@ -64,8 +64,13 @@ fits without scrolling.
 - The greeting follows the user's clock — בוקר טוב, צהריים טובים, ערב טוב, לילה טוב
   from 05, 12, 17 and 21 — and names nobody, since no name is stored; the
   artboard's `[השם שלך]` read as a broken screen.
-- The alerts pill is not drawn until `/alerts` exists: it led to a 404 under a
-  placeholder count.
+- The alerts pill counts warnings only, and its dot shows only while the count
+  is above zero: item 27 puts blockages on the opening screen, not in the bell.
+- With four warnings or fewer the pill opens a panel under it — a heading, the
+  warnings as links, and `הצג הכל` · `להגדיר אילו תזכורות לקבל` — which no
+  artboard draws; the user asked for it on 2026-09-17 (item 27). Below `sm` the
+  panel spans the screen under the top row, because hung from the pill it ran
+  past the edge.
 - Every control in the bar is at least 44px in each direction.
 
 ### The alerts page

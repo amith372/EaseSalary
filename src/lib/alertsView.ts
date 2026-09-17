@@ -224,3 +224,29 @@ export async function alertsView(
       .map(({ row }) => row),
   };
 }
+
+/** The most warnings the bell lists in its panel; with more it opens the page
+ * (specs.md item 27). */
+export const BELL_PANEL_MAX = 4;
+
+export interface BellView {
+  /** The household's warnings as the page shows them. A blockage belongs on
+   * the opening screen, not in the bell. */
+  count: number;
+  /** Those warnings, when there are few enough for the panel; otherwise null
+   * and the bell opens the page. */
+  panel: AlertCard[] | null;
+  switchedOff: WarningKind[];
+}
+
+/** What the bell in the bar shows, read from the page's own view so it never
+ * counts or lists what the page does not. */
+export async function bellView(repository: SalaryRepository, today: IsoDate): Promise<BellView> {
+  const view = await alertsView(repository, today);
+  const warnings = view.open.filter((card) => !card.blockage);
+  return {
+    count: warnings.length,
+    panel: warnings.length <= BELL_PANEL_MAX ? warnings : null,
+    switchedOff: view.switchedOff,
+  };
+}

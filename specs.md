@@ -1086,16 +1086,21 @@ Each of these is true or false at a glance.
     recuperation month or an employment anniversary; the passport's threshold is item 28's.
     Neither list is a notification that leaves the application: nothing is sent by mail or
     by push in this version.
-    Both lists are read in full on a page of their own, which the bell opens: one list, the
+    Both lists are read in full on a page of their own: one list, the
     blockages above the warnings, each entry naming its worker and carrying item 26's link
-    where it rests on a legal rule. **A warning can be put off** — 'not now' hides it for
+    where it rests on a legal rule. **The bell opens a small panel** when it counts four
+    warnings or fewer, and the page when it counts more: the panel lists those warnings, each
+    with its title and note and linking where its entry on the page does, and below them a
+    link to the page and the link that opens the reminder switches. With no warning it says
+    so and keeps both links. It offers no 'not now'; putting a warning off is done on the
+    page. **A warning can be put off** — 'not now' hides it for
     seven days, or until a date or figure it carries changes, whichever comes first. A
     blockage cannot be put off, because the salary cannot be produced correctly while it
     stands. A finished month not yet exported offers 'mark as handled' in place of 'not now':
     it removes that month's warning for good, for a family that produced the sheet some other
     way, and records no export — so the month does not appear among what was already handled,
     and the minimum wage is still measured against the last month actually exported.
-    **Warnings can be switched off by kind** from the alerts page, in a pop-up that lists the
+    **Warnings can be switched off by kind** from the alerts page or the bell's panel, in a pop-up that lists the
     kinds and nothing else, one checkbox each for a document
     running out, a recuperation month approaching, a finished month not yet exported and a
     seniority year about to turn, kept for the household and on by default. A switched-off

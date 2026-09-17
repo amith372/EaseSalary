@@ -3,6 +3,8 @@ import { Assistant } from "next/font/google";
 import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
+import { bellView, type BellView } from "@/lib/alertsView";
+import { todayInIsrael } from "@/lib/today";
 import { WORKER_COOKIE } from "@/lib/workerCookie";
 import { getRepository, NotSignedInError } from "@/lib/store";
 import type { Worker } from "@/lib/types";
@@ -51,8 +53,8 @@ export const metadata: Metadata = {
  * would show the household as it stood when the build ran.
  */
 /**
- * The workers the bar's switcher offers, and none for a request with nobody
- * behind it.
+ * The workers the bar's switcher offers and the bell, and neither for a
+ * request with nobody behind it.
  *
  * **The layout wraps `/sign-in` too**, which is a route reached precisely when
  * there is no session — so the store has no household to answer for, and it says
@@ -61,19 +63,25 @@ export const metadata: Metadata = {
  * a screen the proxy has already refused an unauthenticated request to, so one
  * arriving there is a fault and should be seen as one.
  */
-async function workersInTheBar(): Promise<Worker[]> {
+async function whatTheBarShows(): Promise<{ workers: Worker[]; bell: BellView | null }> {
   try {
-    return (await (await getRepository()).listWorkers()).map(
-      ({ id, name, firstName }) => ({ id, name, firstName }),
-    );
+    const repository = await getRepository();
+    const [profiles, bell] = await Promise.all([
+      repository.listWorkers(),
+      bellView(repository, todayInIsrael()),
+    ]);
+    return {
+      workers: profiles.map(({ id, name, firstName }) => ({ id, name, firstName })),
+      bell,
+    };
   } catch (error) {
-    if (error instanceof NotSignedInError) return [];
+    if (error instanceof NotSignedInError) return { workers: [], bell: null };
     throw error;
   }
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const workers = await workersInTheBar();
+  const { workers, bell } = await whatTheBarShows();
   // The switcher's choice, read here so the first render is already the
   // chosen worker (`WorkerScope`).
   const initialWorkerId = (await cookies()).get(WORKER_COOKIE)?.value;
@@ -85,7 +93,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     // left-to-right without the layout moving.
     <html lang="he" dir="rtl" className={`${assistant.variable} ${gveretLevin.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <AppShell workers={workers} initialWorkerId={initialWorkerId}>{children}</AppShell>
+        <AppShell workers={workers} initialWorkerId={initialWorkerId} bell={bell}>{children}</AppShell>
       </body>
     </html>
   );

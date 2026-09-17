@@ -10,10 +10,12 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { Bell } from "@/components/Bell";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { LogoMark, TwoToneIcon, type TwoToneName } from "@/components/icons";
 import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
+import type { BellView } from "@/lib/alertsView";
 import { he } from "@/lib/i18n/he";
 import { partOfDay } from "@/lib/partOfDay";
 import type { Worker } from "@/lib/types";
@@ -24,6 +26,11 @@ import type { Worker } from "@/lib/types";
  * gone from the application and not only from the home screen, so this is
  * rebuilt rather than forked — a sidebar surviving on one route would be a
  * second shell to keep in step with the first.
+ *
+ * The bell (`Bell`) counts the household's warnings as `/alerts` shows them
+ * (specs.md item 27). The layout reads it, and it stays current because every
+ * server action that changes a month or a warning revalidates, and a
+ * revalidation refreshes the layout with the page.
  *
  * The circular "?" v3 draws in the bar, linking `/help`, is left out until
  * Stage 9 decides whether that screen is built (the user, 2026-09-13): a link
@@ -116,6 +123,8 @@ interface AppShellProps {
   /** The greeting names the user only when there is a name to give: the
    * canvas's bracketed placeholder read as a broken screen. */
   userName?: string;
+  /** What the bell shows, or null when nobody is signed in. */
+  bell: BellView | null;
 }
 
 // The hour is the browser's, never the server's, so the greeting is read through
@@ -128,7 +137,13 @@ function subscribeToMinutes(onChange: () => void) {
 const currentPartOfDay = () => partOfDay(new Date().getHours());
 const noPartOfDay = () => null;
 
-export function AppShell({ children, workers, initialWorkerId, userName }: AppShellProps) {
+export function AppShell({
+  children,
+  workers,
+  initialWorkerId,
+  userName,
+  bell,
+}: AppShellProps) {
   const pathname = usePathname();
   const part = useSyncExternalStore(subscribeToMinutes, currentPartOfDay, noPartOfDay);
 
@@ -339,9 +354,7 @@ export function AppShell({ children, workers, initialWorkerId, userName }: AppSh
         <div className="order-2 ms-auto flex h-15.5 flex-none items-center gap-2.5 ps-2 sm:gap-3.5 xl:order-3">
           <WorkerSwitcher />
 
-          {/* The alerts pill is drawn once `/alerts` exists (Stage 6), with a
-              count read from the store; until then it led to a 404 under a
-              placeholder count. */}
+          {bell !== null ? <Bell bell={bell} /> : null}
 
           <Link
             href="/settings"
