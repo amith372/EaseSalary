@@ -1078,8 +1078,14 @@ Each of these is true or false at a glance.
     facts are incomplete. The test that decides which list an item belongs to is whether
     the salary can be produced correctly today without it: if it can, the item is a
     warning and belongs in the bell; if it cannot, it is a blockage and belongs on the
-    screen. Neither list is a notification that leaves the application: nothing is sent by
-    mail or by push in this version.
+    screen. Where that test leaves an item open, its list is fixed here: a national-insurance
+    quarter due (item 19), recuperation due this month, an advance still being repaid and a
+    year that passed with fewer than seven vacation days go on the opening screen; a finished
+    month not yet exported goes to the bell. The bell warns sixty days before the employment
+    permit, the work visa or the medical insurance expires, and in the month before a
+    recuperation month or an employment anniversary; the passport's threshold is item 28's.
+    Neither list is a notification that leaves the application: nothing is sent by mail or
+    by push in this version.
 28. A worker's employment rests on **three separate documents with three separate
     expiry dates**, and the application holds each with its own number and its own date.
     They are not one thing under different names, and the law makes both of the first two

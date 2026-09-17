@@ -47,7 +47,7 @@ export const CAREGIVER_TERMS = `${KOL_ZCHUT}/תנאי_העסקה_של_עובד_�
  *
  * **The anchor is not a nicety and it is not assembled from a label.** The page
  * text is cached segmented by those same headings (Part 3), so a key here, a
- * cached section and — in stage 7 — a question all resolve to one unit only
+ * cached section and — in stage 9 — a question all resolve to one unit only
  * because they all carry the heading id. An anchor invented from a Hebrew label
  * would land the user at the top of the page and match no section at all, which
  * is the same silent failure `links.ts` already refuses for addresses.

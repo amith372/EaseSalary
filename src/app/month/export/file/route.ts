@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { parseYearMonth, sameMonth } from "@/lib/dates";
 import { getRepository } from "@/lib/store";
 import { blocksExport } from "@/lib/engine/beforeExport";
+import { recordOf } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
 import { monthFileOf } from "@/lib/export/monthExport";
 import { readIdentifyingNumbers } from "@/lib/identifyingNumbers";
@@ -19,8 +20,9 @@ import { todayInIsrael } from "@/lib/today";
  * that a month *is not exported* over an unanswered open spell, and a request
  * for this address can be crafted past the screen that asks. The confirmation
  * itself is `confirmMonth`'s and has already happened by the time the button is
- * pressed — this address produces the file and confirms nothing, so pressing it
- * twice cannot write the month twice.
+ * pressed — this address produces the file and confirms nothing. The one thing
+ * it writes is when the file was produced, so pressing it twice moves that
+ * instant and nothing else.
  *
  * Stage 3 adds the household check beside the worker lookup; today the store is
  * per-cookie and there is nothing else to be reached.
@@ -79,6 +81,17 @@ export async function GET(request: NextRequest) {
     month: inSeries,
     showNotes,
   });
+
+  // Part 5's *exported* event, which the action list reads (item 27). Only a
+  // stored month is stamped: a month nobody opened is valued by the replay and
+  // has no row, and producing a file is no reason to create one.
+  const stored = months.find((one) => sameMonth(one.month, month));
+  if (stored !== undefined) {
+    await repository.saveMonth(workerId, {
+      ...recordOf(stored),
+      exportedAt: new Date().toISOString(),
+    });
+  }
 
   return new Response(new Uint8Array(bytes), {
     headers: {

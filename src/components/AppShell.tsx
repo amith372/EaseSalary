@@ -26,7 +26,7 @@ import type { Worker } from "@/lib/types";
  * second shell to keep in step with the first.
  *
  * The circular "?" v3 draws in the bar, linking `/help`, is left out until
- * Stage 7 decides whether that screen is built (the user, 2026-09-13): a link
+ * Stage 9 decides whether that screen is built (the user, 2026-09-13): a link
  * on every screen to an address that 404s is a promise the bar cannot keep.
  *
  * The greeting and the worker switcher sit here too, where v3 draws them as a

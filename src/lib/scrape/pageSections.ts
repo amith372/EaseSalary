@@ -12,7 +12,7 @@ import type { Scraped } from "@/lib/scrape/failure";
  * reference links of item 26 already point at *sections* of a page rather than
  * at whole pages — several keys in `links.ts` share the caregiver-terms page on
  * purpose — so a question, a legal link and a stored section resolve to the same
- * unit only if that unit is a section. Segmenting in Stage 7 instead would mean
+ * unit only if that unit is a section. Segmenting in Stage 9 instead would mean
  * inventing the unit against text scraped two stages earlier, which is the
  * scrape-it-twice outcome this file exists to avoid.
  *
@@ -31,7 +31,7 @@ import type { Scraped } from "@/lib/scrape/failure";
  * One heading and the text under it, down to the next heading.
  *
  * `anchor` is the page's own heading id — the fragment a link ends in — and it
- * is what makes a section addressable: `links.ts` names it, and Stage 7 matches
+ * is what makes a section addressable: `links.ts` names it, and Stage 9 matches
  * a question to it. The lead paragraphs above the first heading are a section
  * too, with an empty anchor, because a page's opening is where an article
  * usually says what it is about.

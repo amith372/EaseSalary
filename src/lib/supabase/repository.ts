@@ -137,6 +137,7 @@ interface MonthRow {
   income_tax_agorot: number | null;
   recuperation_day_rate_agorot: number | null;
   confirmed_at: string | null;
+  exported_at: string | null;
 }
 
 interface HolidayListRow {
@@ -334,6 +335,7 @@ function recordOfRow(row: MonthRow): MonthRecord {
       ? {}
       : { recuperationDayRateAgorot: row.recuperation_day_rate_agorot }),
     ...(row.confirmed_at === null ? {} : { confirmedAt: row.confirmed_at }),
+    ...(row.exported_at === null ? {} : { exportedAt: row.exported_at }),
   };
 }
 
@@ -358,6 +360,7 @@ function monthRowOf(workerId: string, record: MonthRecord) {
     income_tax_agorot: record.incomeTaxAgorot ?? null,
     recuperation_day_rate_agorot: record.recuperationDayRateAgorot ?? null,
     confirmed_at: record.confirmedAt ?? null,
+    exported_at: record.exportedAt ?? null,
   };
 }
 

@@ -740,6 +740,16 @@ export interface MonthFacts {
    * worked out where it is shown.
    */
   confirmedAt?: string;
+  /**
+   * When a file was last produced from this month, as an instant, or absent for
+   * a month never exported — Part 5's *exported* event.
+   *
+   * **The engine values nothing by it**; the action list reads it (specs.md item
+   * 27): a finished month without one is a month not yet exported, and the
+   * minimum wage the latest exported month was confirmed at is the one a
+   * changed wage is measured against.
+   */
+  exportedAt?: string;
   /** The employment's terms as they stood when this month was confirmed
    * (specs.md Part 3). Read from here and never from the profile. */
   terms: MonthTerms;

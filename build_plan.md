@@ -63,15 +63,15 @@ is its record.
 
 ## The routes — what is still unanswered
 
-`src/components/AppShell.tsx` links five tabs and the bell on every screen, so every one of
-them is a promise made on every page. A tab that 404s is worse than a tab that is not there,
-which is why the "?" the home artboard draws beside the bell is left out until stage 7 (the user,
-2026-09-13). Every address is built except these two:
+`src/components/AppShell.tsx` links five tabs on every screen, so every one of them is a
+promise made on every page. A link that 404s is worse than one that is not there, which is why
+the bell is left out until `/alerts` exists and the "?" the home artboard draws beside it until
+stage 9 (the user, 2026-09-13). Every address is built except these two:
 
 | Route | Artboard | Owed by |
 |---|---|---|
 | `/alerts` | `התראות` | Stage 6 |
-| `/help` | none — stage 7 draws it | Stage 7, which also puts the "?" back in the bar |
+| `/help` | none — stage 9 draws it | Stage 9, which also puts the "?" back in the bar |
 
 ## What is still owed
 
@@ -199,30 +199,69 @@ and the seed was put back. A browser test lands with the gesture that opens a sp
 ## Stage 6 — The opening screen
 
 Same stack. The calendar, the figures and the balances run on the engine since 2026-09-16;
-what remains is the action list, which replaces the last fixture and adds nothing to the layout.
+the action list is an engine function since 2026-09-17, and what remains is putting it on screen.
 **The stage in progress.**
 
-**The next step is the action list as an engine function**, before any screen: a pure function
-over the worker's profile, months, rates and today, returning item 27's entries each tagged
-*blockage* (the opening screen) or *warning* (the bell) by item 27's test. Its expected
-entries are written by hand from item 27 first (rule 11). Then `/alerts` from the `התראות`
-artboard, then the home screen's blocker strip moved onto it, each a step of its own.
+- The action list as an engine function (`src/lib/engine/actionList.ts`) — 2026-09-17.
 
-- **`/alerts` is this stage's address.** The bell links `התראות` from every screen and it
-  404s. The action list below is its content at full length: the home screen shows the list and
-  the bell is what lights (item 27), so the two are one thing built once.
-- The action list: quarterly national insurance, expiring licence or medical insurance, an
-  advance still being repaid, holidays not all chosen, recuperation due, a year with no
-  vacation taken, a finished month not exported, a wage that changed, a worker crossing into a
-  new seniority year.
-- The `תשלומים` artboard's two reminder sections, which are the same clock read from the
+**The next step is `/alerts`**, built from the `התראות` artboard. Then the steps below, each
+a step of its own:
+
+- **`/alerts`** — a new route under `src/app/alerts/`. For each worker in the household it
+  replays `calculateSeries(months, profile, todayInIsrael(), rates)` and passes that with
+  `listSpans` and `listRates` to `actionList`; every entry is phrased in `he.ts` from its
+  `key` and fields (the engine returns data, never words), with its item-26 link. Both lists
+  are shown, the bell's and the opening screen's (item 27).
+- **The bell in the bar** — drawn in `AppShell.tsx` where its comment marks the place, linking
+  `/alerts` and lit by the count of `warning` entries.
+- **The home screen's blocker strip** — `HomeScreen.tsx` reads `homeAlerts` from
+  `src/lib/fixtures/home.ts`, three fixed cards. It moves onto the `blockage` entries and the
+  fixture file is deleted.
+- **The `תשלומים` artboard's two reminder sections**, which are the same clock read from the
   payments screen.
-- The national-insurance tick, with the months it covers.
+- **The national-insurance tick**, with the months it covers. A quarter leaves the list when a
+  recorded payment's `coversMonths` includes its last month.
+
+Unfinished, carried by this stage:
+
+- A month whose facts are incomplete, which item 27 names as a blockage, is not in
+  `actionList` yet: nothing defines "incomplete" beyond what `blocksExport` already asks at
+  export time.
+- `supabase/migrations/20260917180000_an_export_is_not_a_correction.sql` is not applied to
+  the live project. `npx supabase db push` is the user's to run; until then stamping
+  `exported_at` also moves `updated_at`, so an exported month reads as corrected.
+- Every month exported before 2026-09-17 has no `exported_at`, so the bell will list each of
+  them as not exported until it is exported again or stamped by hand.
+- A browser session carrying the `household` cookie works on the in-memory demo household
+  (`src/lib/store.ts`), so an export made there stamps nothing in Supabase. Checking
+  `exported_at` needs a signed-in account without that cookie.
 
 **Done when** an account with nothing outstanding shows an opening screen whose action list is
 empty.
 
-## Stage 7 — The help screen, and a possible assistant on top of it
+## Stage 7 — Close what finished stages still owe
+
+Every entry under "What is still owed" is paid, or is put to the user and settled, here. The
+list is that section, and it is not copied into this stage.
+
+**Done when** "What is still owed" is empty, or holds only what the user has chosen to leave
+open.
+
+- **Waiting on the user:** why the month sheet carries rows 32–38 (`נתוני דיווח נדרשים`, the
+  six Wage Protection Act figures `writeReporting` fills in column C). Answered on 2026-09-17;
+  the user will come back to whether they stay.
+
+## Stage 8 — Clean the code
+
+Run the installed review skills over the whole repository — `ponytail-audit`,
+`simplify`, `code-review` and `mattpocock-skills:codebase-design` among them — and act on
+what they find: duplicated logic, structure that has drifted, dead code and over-built
+abstractions. Behaviour does not change in this stage, so every step ends with the full suite
+passing unchanged.
+
+**Done when** a fresh audit finds no duplicate worth removing and the checks of rule 7 pass.
+
+## Stage 9 — The help screen, and a possible assistant on top of it
 
 Where the "צריך/ה עזרה?" card goes. The design draws that card on every artboard and points it
 nowhere.
