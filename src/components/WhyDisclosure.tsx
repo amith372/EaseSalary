@@ -7,9 +7,9 @@ import type { Explanation } from "@/lib/types";
 /**
  * The circular "?" and the panel it opens — the most repeated element on the
  * canvas, and the whole of the application's help: there is no separate help
- * section to visit (specs.md item 24). Every figure carries one, and so does
- * every alert: the explanation stays beside the thing it explains, in one
- * idiom, rather than an alert carrying a bare "מה אומר החוק" link of its own.
+ * section to visit (specs.md item 24). Every figure carries one: the
+ * explanation stays beside the thing it explains. An alert is not a figure and
+ * carries item 26's link to the law instead (`AlertsScreen`).
  *
  * It is two components rather than one because the canvas puts them in two
  * different places: the button sits beside the value at the end of a row, the

@@ -214,3 +214,39 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await expect(panel).toHaveCount(0);
   });
 });
+
+test.describe("the opening screen's blocker strip (specs.md item 27)", () => {
+  test("leads with exactly the blockages /alerts lists, and no warning", async ({ page }) => {
+    await useHousehold(page, SPEC, "strip");
+
+    await page.goto("/alerts");
+    const listed = await page
+      .locator('[data-role="alert"][data-list="blockage"] [data-role="alert-title"]')
+      .allInnerTexts();
+
+    await page.goto("/");
+    const strip = page.locator('[data-role="blocker"]');
+    await expect(strip.first()).toBeVisible();
+    expect(await strip.locator('[data-role="blocker-title"]').allInnerTexts()).toEqual(listed);
+    // A month not yet exported is the bell's, not the strip's.
+    await expect(strip.filter({ hasText: "טרם יוצא" })).toHaveCount(0);
+
+    // The seed records national insurance for January–March 2026 only
+    // (`seed.ts`, month 4), so from July 2026 the second quarter is owed.
+    const quarter = `${he.calendar.monthNames[3]} 2026 – ${he.calendar.monthNames[5]} 2026`;
+    const words = he.alerts.entry.nationalInsurance(quarter);
+    const owed = strip
+      .filter({ hasText: words.title.join("") })
+      .filter({ hasText: he.placeholder.name })
+      .filter({ hasText: quarter });
+    await expect(owed).toHaveCount(1);
+    await expect(owed.getByRole("link", { name: words.action })).toHaveAttribute(
+      "href",
+      "/payments",
+    );
+    await page.screenshot({ path: "test-results/home-blocker-strip.png" });
+
+    await owed.getByRole("link", { name: words.action }).click();
+    await expect(page).toHaveURL(/\/payments$/);
+  });
+});

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { clearRange, markRange, setHolidayWorked } from "@/app/month/actions";
+import { Sentence, WorkerName } from "@/components/AlertsScreen";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chevron, RailIcon, TwoToneIcon, type TwoToneName } from "@/components/icons";
@@ -13,7 +14,7 @@ import { SpanOverflowNotes } from "@/components/SpanOverflow";
 import { ValueChip } from "@/components/ValueChip";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { WhyButton, WhyPanel } from "@/components/WhyDisclosure";
-import { homeAlerts } from "@/lib/fixtures/home";
+import type { AlertCard } from "@/lib/alertsView";
 import { dayLabel } from "@/lib/dateLabels";
 import {
   addDays,
@@ -69,8 +70,8 @@ import type { SpanIntent } from "@/components/MonthCalendar";
  * **What blocks a correct salary still leads the screen.** v4 draws no such
  * list; item 27 says the opening screen leads with it, so a strip of those
  * cards sits above the columns whenever there is one, and is not drawn at all
- * when there is none (the user, 2026-09-15). Those cards are the one thing here
- * still standing in — see `lib/fixtures/home.ts`.
+ * when there is none (the user, 2026-09-15). They are the blockages `/alerts`
+ * lists, phrased once on the server, and each leads where its card there does.
  *
  * **Nothing reads a clock**: `today` is handed down by the route, so server and
  * browser agree on it.
@@ -122,9 +123,12 @@ const railLink =
 
 export function HomeScreen({
   household,
+  blockages,
   today,
 }: {
   household: WorkerMonths[];
+  /** What stops a correct salary, for the whole household (`blockagesOf`). */
+  blockages: AlertCard[];
   /** Today, read once on the server and handed down, so nothing here reads a
    * clock during a render (`CLAUDE.md`). */
   today: IsoDate;
@@ -259,47 +263,54 @@ export function HomeScreen({
   return (
     <>
       {/* What stops the month being calculated correctly, first (item 27). */}
-      {homeAlerts.length > 0 ? (
+      {blockages.length > 0 ? (
         <section aria-labelledby="home-blockers" className="flex flex-none flex-col gap-1.5">
           <h2 id="home-blockers" dir="auto" className="text-[15px] font-semibold text-ink-warm">
             {he.status.needsAttention}
           </h2>
-          <div className="grid items-start gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {homeAlerts.map((alert) => (
-              <Card key={alert.key} radius="sm" className="flex min-w-0 flex-col gap-0.5 px-3.5 py-2.25">
-                {/* Title, action and "?" on one line and the note under them:
-                    the strip leads the screen, so it spends as little height as
-                    two lines can. */}
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span aria-hidden="true" className="size-2 flex-none rounded-full bg-clay" />
-                  <span dir="auto" className="min-w-0 flex-auto text-[15px] font-semibold">
-                    {alert.title}
+          <ul className="grid items-start gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {blockages.map((card) => (
+              <li key={card.id} className="min-w-0">
+                <Card
+                  radius="sm"
+                  data-role="blocker"
+                  className="flex min-w-0 flex-col gap-0.5 px-3.5 py-2.25"
+                >
+                  {/* Title and action on one line and the note under them: the
+                      strip leads the screen, so it spends as little height as
+                      it can. */}
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span aria-hidden="true" className="size-2 flex-none rounded-full bg-clay" />
+                    <span data-role="blocker-title" className="min-w-0 flex-auto text-[15px] font-semibold">
+                      <Sentence said={card.title} />
+                      <WorkerName name={card.workerName} />
+                    </span>
+                    <Link
+                      href={card.action.href}
+                      className="flex-none text-[14px] font-medium whitespace-nowrap hover:underline hover:underline-offset-4"
+                    >
+                      <span dir="auto">{card.action.label}</span>
+                    </Link>
+                  </div>
+                  <span className="ps-4.5 text-[14px] leading-[1.45] font-light text-ink-mute text-pretty">
+                    <Sentence said={card.note} />
                   </span>
-                  <Link
-                    href="/alerts"
-                    className="flex-none text-[14px] font-medium whitespace-nowrap hover:underline hover:underline-offset-4"
-                  >
-                    <span dir="auto">{alert.action}</span>
-                  </Link>
-                  <WhyButton
-                    controls={`why-${alert.key}`}
-                    open={openWhy === alert.key}
-                    onToggle={() => toggleWhy(alert.key)}
-                    label={he.home.alerts.whatTheLawSays}
-                    subject={alert.title}
-                  />
-                </div>
-                <span dir="auto" className="ps-4.5 text-[14px] leading-[1.45] font-light text-ink-mute text-pretty">
-                  {alert.note}
-                </span>
-                <WhyPanel
-                  id={`why-${alert.key}`}
-                  open={openWhy === alert.key}
-                  explanation={alert.explanation}
-                />
-              </Card>
+                  {card.law ? (
+                    <a
+                      href={card.law.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="self-start ps-4.5 text-[13px] text-ink-quiet hover:text-forest hover:underline hover:underline-offset-[3px]"
+                    >
+                      <span dir="auto">{he.alerts.whatTheLawSays}</span>
+                      <span> — </span>
+                      <span dir="auto">{card.law.label}</span>
+                    </a>
+                  ) : null}
+                </Card>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       ) : null}
 

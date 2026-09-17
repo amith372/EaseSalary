@@ -3,8 +3,7 @@ import { Assistant } from "next/font/google";
 import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
-import { bellView, type BellView } from "@/lib/alertsView";
-import { todayInIsrael } from "@/lib/today";
+import { bellOf, householdAlerts, type BellView } from "@/lib/alertsView";
 import { WORKER_COOKIE } from "@/lib/workerCookie";
 import { getRepository, NotSignedInError } from "@/lib/store";
 import type { Worker } from "@/lib/types";
@@ -66,13 +65,13 @@ export const metadata: Metadata = {
 async function whatTheBarShows(): Promise<{ workers: Worker[]; bell: BellView | null }> {
   try {
     const repository = await getRepository();
-    const [profiles, bell] = await Promise.all([
+    const [profiles, alerts] = await Promise.all([
       repository.listWorkers(),
-      bellView(repository, todayInIsrael()),
+      householdAlerts(),
     ]);
     return {
       workers: profiles.map(({ id, name, firstName }) => ({ id, name, firstName })),
-      bell,
+      bell: bellOf(alerts),
     };
   } catch (error) {
     if (error instanceof NotSignedInError) return { workers: [], bell: null };

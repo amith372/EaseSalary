@@ -1,8 +1,6 @@
 import { connection } from "next/server";
 import { AlertsScreen } from "@/components/AlertsScreen";
-import { alertsView } from "@/lib/alertsView";
-import { getRepository } from "@/lib/store";
-import { todayInIsrael } from "@/lib/today";
+import { householdAlerts } from "@/lib/alertsView";
 
 /**
  * `/alerts` — `EaseSalary - התראות` (specs.md item 27): both lists for the whole
@@ -11,6 +9,6 @@ import { todayInIsrael } from "@/lib/today";
  */
 export default async function AlertsPage() {
   await connection();
-  const view = await alertsView(await getRepository(), todayInIsrael());
+  const view = await householdAlerts();
   return <AlertsScreen view={view} />;
 }

@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { HomeScreen } from "@/components/HomeScreen";
 import type { WorkerMonths } from "@/components/HomeScreen";
+import { blockagesOf, householdAlerts } from "@/lib/alertsView";
 import { getRepository } from "@/lib/store";
 import { calculateSeries } from "@/lib/engine/series";
 import { todayInIsrael } from "@/lib/today";
@@ -66,5 +67,9 @@ export default async function HomePage() {
     }),
   );
 
-  return <HomeScreen household={household} today={today} />;
+  // The strip reads the view `/alerts` and the bell read, so it lists exactly
+  // the blockages the page does.
+  const blockages = blockagesOf(await householdAlerts());
+
+  return <HomeScreen household={household} blockages={blockages} today={today} />;
 }

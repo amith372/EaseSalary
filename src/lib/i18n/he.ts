@@ -964,13 +964,6 @@ export const he = {
       vacation: "ימי חופשה שנשארו",
       sick: "ימי מחלה שנשארו",
     },
-    alerts: {
-      title: "גם מחכה לך",
-      /** The "?" at the end of an alert row shows no text, so this is its whole
-       * meaning to a screen reader. The link it opens sits inside the panel,
-       * beside the sentence, rather than on the row. */
-      whatTheLawSays: "מה אומר החוק",
-    },
   },
 
   /**
@@ -2350,12 +2343,6 @@ export const he = {
     advanceRepaid: "זה החלק מהמקדמה שניתנה מראש ומנוכה החודש, לפי מה שהוסכם.",
     vacationBalance: "מכסת החופשה השנתית, פחות הימים שסומנו בלוח השנה עד היום.",
     sickBalance: "ימי המחלה נצברים בכל חודש עבודה, ומה שלא נוצל נשמר לחודשים הבאים.",
-    nationalInsurance:
-      "ההפרשה לביטוח לאומי מחושבת מעלות החודש המלאה, ומשולמת אחת לרבעון בדיעבד.",
-    medicalInsurance:
-      "מעסיק/ה של עובד/ת סיעוד חייב/ת לבטח אותו/ה בביטוח רפואי, והפוליסה מתחדשת מדי שנה.",
-    holidaysChosen:
-      "המכסה היא תשעה ימי חג לשנה מלאה, והימים נבחרים מראש מתוך רשימת החגים של ארץ המוצא.",
   },
 
   /**

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { coveredMonthsLabel, dayLabel, fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import { daysBetween } from "@/lib/dates";
 import { actionList, type ActionEntry } from "@/lib/engine/actionList";
@@ -13,6 +14,8 @@ import type { SalaryRepository } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
 import { he, type Said } from "@/lib/i18n/he";
 import { legalLink, type LegalLinkKey } from "@/lib/links";
+import { getRepository } from "@/lib/store";
+import { todayInIsrael } from "@/lib/today";
 import { formatAgorot, formatDays } from "@/lib/money";
 import type { IsoDate } from "@/lib/types";
 
@@ -239,10 +242,24 @@ export interface BellView {
   switchedOff: WarningKind[];
 }
 
+/**
+ * The household's alerts for this request, worked out once: the bar's bell,
+ * the opening screen's strip and `/alerts` all read this one result, so none of
+ * them can list what another does not, and the household is replayed once per
+ * request rather than once per reader.
+ */
+export const householdAlerts = cache(
+  async (): Promise<AlertsView> => alertsView(await getRepository(), todayInIsrael()),
+);
+
+/** The blockages, which lead the opening screen (item 27). */
+export function blockagesOf(view: AlertsView): AlertCard[] {
+  return view.open.filter((card) => card.blockage);
+}
+
 /** What the bell in the bar shows, read from the page's own view so it never
  * counts or lists what the page does not. */
-export async function bellView(repository: SalaryRepository, today: IsoDate): Promise<BellView> {
-  const view = await alertsView(repository, today);
+export function bellOf(view: AlertsView): BellView {
   const warnings = view.open.filter((card) => !card.blockage);
   return {
     count: warnings.length,

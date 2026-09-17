@@ -42,7 +42,7 @@ which artboard. Nothing of the design is copied here — the tokens are in
 
 | Artboard | Consumed by |
 |---|---|
-| `דף הבית v4` | Stage 6 — on the engine since 2026-09-16; the blocker strip is still fixtures |
+| `דף הבית v4` | Stage 6 |
 | `חישוב החודש`, `החודשים` | Stage 4 — `חישוב החודש` is the home screen since 2026-09-16 |
 | `דף המשכורת` | Stages 2 + 4 |
 | `העובדות`, `דף העובד`, `הוספת עובד` | Stage 3 |
@@ -125,9 +125,6 @@ Carried forward from finished steps. None of these is a defect.
   is what keeps fourteen spec files working. There are three seeds now: the demo, the known
   case, and `empty`, which is the state a new account is in and the only one the add-worker
   flow can start from.
-- **The home screen's blocker strip is three fixed cards** (`src/lib/fixtures/home.ts`), the
-  same for every household, with placeholders where a date or a sum belongs. **Stage 6's**,
-  with the action list.
 - **A chosen holiday can be moved freely, and the user wants it to be a contract amendment.**
   The regulator's position is that the list is set at the start of the employment and does not
   change month to month; employer and worker may still agree to amend it. So the move becomes an
@@ -197,20 +194,15 @@ and the seed was put back. A browser test lands with the gesture that opens a sp
 
 ## Stage 6 — The opening screen
 
-Same stack. The calendar, the figures and the balances run on the engine since 2026-09-16;
-the action list is an engine function and the bell reads it since 2026-09-17; what remains is
-the steps below.
-**The stage in progress.**
+Same stack. **The stage in progress.**
 
 - The action list as an engine function (`src/lib/engine/actionList.ts`) — 2026-09-17.
 - `/alerts`, with "not now", the reminder switches and the handled list — 2026-09-17.
 - The bell in the bar, and its panel for four warnings or fewer — 2026-09-17.
+- The home screen's blocker strip, on the `blockage` entries — 2026-09-17.
 
-**The next step is the home screen's blocker strip.** Then the steps below, each a step of its own:
+**Two steps remain, in this order:**
 
-- **The home screen's blocker strip** — `HomeScreen.tsx` reads `homeAlerts` from
-  `src/lib/fixtures/home.ts`, three fixed cards. It moves onto the `blockage` entries and the
-  fixture file is deleted.
 - **The `תשלומים` artboard's two reminder sections**, which are the same clock read from the
   payments screen.
 - **The national-insurance tick**, with the months it covers. A quarter leaves the list when a
@@ -221,8 +213,11 @@ Unfinished, carried by this stage:
 - **Waiting on the user:** whether the reminders pop-up becomes a list of the individual
   warnings with a search, rather than the four kinds. Raised 2026-09-17 as a "maybe"; it
   changes item 27, so it is asked before it is built.
-- The layout now replays every worker's series on every request to draw the bell. Not
-  measured; if the browser suite's flakiness grows, this is the first suspect.
+- The layout replays every worker's series on every request to draw the bell (once per
+  request, shared with the page). Not measured; if the browser suite's flakiness grows, this
+  is the first suspect.
+- The strip has no ceiling: the demo household raises seven blockages, which push the
+  calendar below the fold at 1280×720. Whether it caps and links to `/alerts` is the user's.
 - A month whose facts are incomplete, which item 27 names as a blockage, is not in
   `actionList` yet: nothing defines "incomplete" beyond what `blocksExport` already asks at
   export time.
