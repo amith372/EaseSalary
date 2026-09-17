@@ -50,8 +50,8 @@ export const NATIONAL_INSURANCE_ROW = 21;
 /**
  * The numbered rows the template designs, by the engine's own line key.
  *
- * Rows 11 (severance and pension) and 22 (hospital overtime) and 15
- * (`ויזת עובד זר`, until a month can record one) are absent on purpose: the row
+ * Rows 11 (severance and pension) and 15 (`ויזת עובד זר`, until a month can
+ * record one) are absent on purpose: the row
  * exists in the sheet and nothing writes it, which is what item 2's "same rows"
  * asks for. Row 20 is the income tax and is reached through `TAX_ROW` below,
  * because it is a row of the *closing* block on the engine's side and a
@@ -70,6 +70,7 @@ export const TEMPLATE_ROWS: Readonly<Record<string, number>> = {
   [thirdPartyLineKey("licenceFee")]: 16,
   [lineKeys.recuperation]: 18,
   [lineKeys.sickDeduction]: 19,
+  [lineKeys.hospitalOvertime]: LAST_LINE_ROW,
   [thirdPartyLineKey("nationalInsurance")]: NATIONAL_INSURANCE_ROW,
 };
 

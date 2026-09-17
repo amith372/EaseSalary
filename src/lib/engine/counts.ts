@@ -67,19 +67,24 @@ function spansCovering(spans: ClosedSpan[], date: IsoDate): ClosedSpan[] {
  * a vacation day leaves half a day (item 5). The count is therefore not always
  * a whole number, which is why it is carried as one.
  *
- * A holiday behaves oppositely in money and in the counts, and it is the check
- * worth holding on to: one she worked changes the money and not the count, one
- * she did not work changes the count and not the money, and a holiday that
- * changes both, or neither, is a mistake (item 5).
+ * A holiday never moves the actual count (item 5): one she worked is a working
+ * day, and one she did not is a paid day the law lets her take without a
+ * deduction. `countHolidays` false is that reading; the rest-day and rest-eve
+ * counts still read an unworked holiday as a day she was not there.
  */
-function notWorkedFraction(spans: ClosedSpan[], date: IsoDate): number {
+function notWorkedFraction(
+  spans: ClosedSpan[],
+  date: IsoDate,
+  countHolidays = true,
+): number {
   let lost = 0;
   for (const span of spansCovering(spans, date)) {
     // A holiday she worked is a working day like any other, and so is one
     // nobody has answered for: the preview reads an unanswered holiday as
     // worked (item 9), and the count has to agree with the money or the month
     // pays for a day it also counted as not worked.
-    if (span.kind === "holiday" && countsAsWorked(span)) continue;
+    if (span.kind === "holiday" && (!countHolidays || countsAsWorked(span)))
+      continue;
     // Vacation, sickness, an unworked holiday, and the rest day she had off are
     // all days not worked. A span cannot legally overlap another (`spans.ts`
     // refuses the day as `alreadyMarked`), so the max is the one that covers it.
@@ -107,7 +112,7 @@ export function countMonth(facts: ClosedMonthFacts): MonthCounts {
   return {
     standardDays: standardDaysList.length,
     actualDays: standardDaysList.reduce(
-      (days, date) => days - notWorkedFraction(spans, date),
+      (days, date) => days - notWorkedFraction(spans, date, false),
       standardDaysList.length,
     ),
 

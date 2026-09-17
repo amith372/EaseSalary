@@ -123,9 +123,9 @@ async function openFoldedSections(page: Page, count: number): Promise<void> {
   }
 }
 
-/** The payments card's five sections. */
+/** The payments card's six sections. */
 export async function openPaymentSections(page: Page): Promise<void> {
-  await openFoldedSections(page, 5);
+  await openFoldedSections(page, 6);
 }
 
 /** The four groups of `/settings`; the account section below them does not fold. */

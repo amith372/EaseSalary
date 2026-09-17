@@ -30,6 +30,7 @@ export const lineKeys = {
   holidaysWorked: "holidaysWorked",
   sickDeduction: "sickDeduction",
   recuperation: "recuperation",
+  hospitalOvertime: "hospitalOvertime",
   incomeTax: "incomeTax",
 } as const;
 

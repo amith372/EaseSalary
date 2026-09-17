@@ -15,6 +15,7 @@ import {
   removeAdvance,
   removeThirdPartyPayment,
   removeUserLine,
+  setHospitalOvertime,
   setIncomeTax,
   setOverride,
   updateThirdPartyPayment,
@@ -51,6 +52,7 @@ import {
 import type {
   Advance,
   AdvanceKind,
+  HospitalOvertime,
   ThirdPartyKind,
   ThirdPartyPayment,
   UserLine,
@@ -115,6 +117,9 @@ interface MonthActionsProps {
    * else than a standing line says replaces its amount in the overrides
    * section below (item 20). */
   userLines: UserLine[];
+  /** What the family typed for hours in hospital this month, if anything
+   * (specs.md item 20). */
+  hospitalOvertime?: HospitalOvertime;
   /** Every advance the worker has and what is still owed on each, walked on the
    * server: the debt spans months and this one cannot see it (item 20). */
   ledger: AdvanceStanding[];
@@ -153,6 +158,7 @@ interface MonthActionsProps {
 export type MonthSection =
   | "incomeTax"
   | "userLines"
+  | "hospitalOvertime"
   | "advances"
   | "thirdParty"
   | "overrides";
@@ -231,6 +237,7 @@ export function MonthActions({
   month,
   incomeTax,
   userLines,
+  hospitalOvertime,
   ledger,
   monthAdvances,
   thirdPartyPayments,
@@ -261,6 +268,14 @@ export function MonthActions({
         workerId={workerId}
         month={month}
         userLines={userLines}
+        onSubmit={onSubmit}
+      />
+
+      <HospitalOvertimeControl
+        fold={fold("hospitalOvertime")}
+        workerId={workerId}
+        month={month}
+        hospitalOvertime={hospitalOvertime}
         onSubmit={onSubmit}
       />
 
@@ -356,6 +371,120 @@ function useMonthAction(onSubmit: MonthActionsProps["onSubmit"]) {
   }
 
   return { refusal, run, clear: () => setRefusal(null) };
+}
+
+/**
+ * Hospital overtime: an amount the family types, never one worked out
+ * (specs.md item 20). An empty amount removes it, and the note goes with it.
+ */
+function HospitalOvertimeControl({
+  fold,
+  workerId,
+  month,
+  hospitalOvertime,
+  onSubmit,
+}: FoldProps &
+  Pick<MonthActionsProps, "workerId" | "month" | "hospitalOvertime" | "onSubmit">) {
+  const words = he.month.actions.hospitalOvertime;
+  const [amount, setAmount] = useState(
+    hospitalOvertime ? formatAgorot(hospitalOvertime.agorot) : "",
+  );
+  const [note, setNote] = useState(hospitalOvertime?.note ?? "");
+  const { refusal, run } = useMonthAction(onSubmit);
+  const link = legalLink("hospitalOvertime");
+
+  const cleared = amount.trim() === "";
+  const parsed = cleared ? null : parseShekels(amount);
+  const invalid = !cleared && (parsed === null || parsed <= 0);
+  const changed = cleared
+    ? hospitalOvertime !== undefined
+    : !invalid &&
+      (parsed !== hospitalOvertime?.agorot ||
+        note.trim() !== (hospitalOvertime?.note ?? ""));
+  const shownRefusal: MonthActionRefusal | null = invalid ? "amount" : refusal;
+
+  return (
+    <MonthFold
+      group="hospitalOvertime"
+      title={words.title}
+      fold={fold}
+      aside={
+        hospitalOvertime ? (
+          <MoneyValue agorot={hospitalOvertime.agorot} />
+        ) : (
+          <span dir="auto" className="text-[13px] font-light text-ink-quiet">
+            {words.none}
+          </span>
+        )
+      }
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          run(() => setHospitalOvertime(workerId, month, amount, note));
+        }}
+        className="flex flex-col gap-2.5"
+      >
+        <div className="grid gap-2.5 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)]">
+          <Field label={words.amount} hint={words.amountHint}>
+            <input
+              type="text"
+              inputMode="decimal"
+              dir="ltr"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              placeholder={he.placeholder.amountInput}
+              className={inputClass}
+            />
+          </Field>
+          <Field label={words.note}>
+            <input
+              type="text"
+              dir="auto"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+        <div>
+          <button
+            type="submit"
+            disabled={!changed}
+            className={`${outlineButtonClass} disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet disabled:hover:border-line`}
+          >
+            <span dir="auto">{words.save}</span>
+          </button>
+        </div>
+      </form>
+
+      {shownRefusal ? <Refusal reason={shownRefusal} /> : null}
+
+      <Card
+        tone="inset"
+        radius="panel"
+        className="flex flex-col gap-1.75 px-3.5 py-3"
+      >
+        <span
+          dir="auto"
+          className="text-[13px] leading-[1.55] font-light text-ink-warm text-pretty"
+        >
+          {words.rule}
+        </span>
+        <a
+          href={link.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          dir="auto"
+          className="text-[13px] font-medium hover:underline hover:underline-offset-[3px]"
+        >
+          <span>{link.label}</span>
+          <span> — </span>
+          <span>{he.why.linkSuffix}</span>
+        </a>
+      </Card>
+    </MonthFold>
+  );
 }
 
 /**

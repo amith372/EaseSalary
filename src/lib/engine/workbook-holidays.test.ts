@@ -109,10 +109,9 @@ describe("a holiday she does not work changes nothing (item 9)", () => {
     expect(notWorked.gross).toBe(m.gross - 42635);
   });
 
-  it("still leaves the standard count alone, and only the actual count", () => {
-    // Item 5's own check: a holiday she worked changes the money and not the
-    // count, one she did not work changes the count and not the money. A
-    // holiday that changes both, or neither, is a mistake.
+  it("leaves both counts alone", () => {
+    // Item 5's own check: a holiday she worked changes the money, one she did
+    // not work changes nothing, and a holiday that moves a count is a mistake.
     const m = byTab("חודש  2.26");
     const facts = workbookFacts(m);
     const worker = workbookWorker(m.salaryAgorot);
@@ -129,7 +128,7 @@ describe("a holiday she does not work changes nothing (item 9)", () => {
     const notWorked = calculateMonth(withOneOff, worker);
 
     expect(notWorked.standardDays).toBe(worked.standardDays);
-    expect(notWorked.actualDays).toBe(worked.actualDays! - 1);
+    expect(notWorked.actualDays).toBe(worked.actualDays);
   });
 });
 

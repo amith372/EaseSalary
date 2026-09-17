@@ -112,6 +112,12 @@ export const legalLinks = {
     label: "דמי הבראה",
     url: termsSection("דמי_הבראה"),
   },
+  hospitalOvertime: {
+    label: "שעות נוספות לעובד/ת זר/ה בסיעוד",
+    // The page's summary box is where it says a live-in caregiver is not
+    // entitled to overtime pay (specs.md item 20); no section of its own does.
+    url: termsSection("בקצרה"),
+  },
   nationalInsurance: {
     label: "ביטוח לאומי עבור עובד/ת זר/ה בסיעוד",
     // This page settles what the 3.6% is taken on (item 19), which was

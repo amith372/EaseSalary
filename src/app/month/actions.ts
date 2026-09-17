@@ -336,6 +336,32 @@ export async function setIncomeTax(
 }
 
 /**
+ * The month's hospital overtime, typed and never worked out (specs.md item 20).
+ * An empty amount removes it; the note goes with the amount, so it is dropped
+ * when the amount is.
+ */
+export async function setHospitalOvertime(
+  workerId: string,
+  month: YearMonth,
+  amount: string,
+  note: string,
+): Promise<MonthActionResult> {
+  if (amount.trim() === "") {
+    return changeMonth(workerId, month, (record) => ({
+      ...record,
+      hospitalOvertime: undefined,
+    }));
+  }
+  const agorot = parseShekels(amount);
+  if (agorot === null || agorot <= 0) return { ok: false, reason: "amount" };
+  const trimmed = note.trim();
+  return changeMonth(workerId, month, (record) => ({
+    ...record,
+    hospitalOvertime: trimmed === "" ? { agorot } : { agorot, note: trimmed },
+  }));
+}
+
+/**
  * A percentage the user typed against one month, turned into the amount that is
  * actually stored (settled with the user on 2026-09-11).
  *

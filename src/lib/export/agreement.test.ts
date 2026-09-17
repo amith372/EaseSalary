@@ -65,7 +65,8 @@ const afterTotal: UserLine = {
 /**
  * A month that exercises every region the sheet can grow in: a rest day worked,
  * a worked holiday, sickness, an income tax the user entered, a payment to a
- * third party, a line before the total, a line after it, and two advances.
+ * third party, hospital overtime, a line before the total, a line after it,
+ * and two advances.
  *
  * One month rather than several, because the regions interact — an inserted line
  * moves the block, and the block moves the reporting figures — and a month that
@@ -106,6 +107,7 @@ function busyMonth(): { worker: WorkerTerms; facts: MonthFacts } {
       },
     ],
     incomeTaxAgorot: 45000,
+    hospitalOvertime: { agorot: 35000, note: "שלושה לילות בבית החולים" },
   };
   return { worker, facts };
 }

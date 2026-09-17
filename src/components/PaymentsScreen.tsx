@@ -232,6 +232,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
                second path that could disagree (`CLAUDE.md` rule 11). */
             incomeTax={shown.incomeTax}
             userLines={shown.record.userLines}
+            hospitalOvertime={shown.record.hospitalOvertime}
             ledger={entry.advances}
             monthAdvances={shown.record.advances}
             thirdPartyPayments={shown.record.thirdPartyPayments}

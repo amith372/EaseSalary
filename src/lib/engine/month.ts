@@ -352,6 +352,23 @@ function buildLines(
     });
   }
 
+  // Hospital overtime, in column G beside recuperation (specs.md item 20).
+  // An amount the family typed and not a figure worked out, so it is one unit
+  // at that price and is not overridable: it is corrected where it was typed.
+  if (facts.hospitalOvertime !== undefined) {
+    drafts.push({
+      key: lineKeys.hospitalOvertime,
+      label: he.sheet.lines.hospitalOvertime,
+      units: 1,
+      rate: facts.hospitalOvertime.agorot,
+      column: "G",
+      explanation: {
+        text: he.sheet.why.hospitalOvertime(facts.hospitalOvertime.note),
+        link: "hospitalOvertime",
+      },
+    });
+  }
+
   // The lines the user added (specs.md item 20). **What decides whether a line
   // is here is where the user put it and not which way it moves**: a line placed
   // before the month's total is part of what the month came to and enters the

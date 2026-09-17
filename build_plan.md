@@ -76,9 +76,6 @@ is built except this one:
 
 Carried forward from finished steps. None of these is a defect.
 
-- **`שעות עבודה נוספות במהלך אישפוז` has no engine line**, so template row 22 stays empty. It
-  is named in Part 5 and nowhere else, and has no `lineKeys` entry, so it cannot be overridden
-  or explained (items 17, 24) until it does.
 - **`דף העובד` draws six things the profile does not**: the `צריך לטפל` hero card and the
   months' status badges (the month's four states, which nothing sets yet), the seniority in
   the subtitle, day counts on a month row, a month row linking to that month's payslip (the
@@ -119,11 +116,6 @@ Carried forward from finished steps. None of these is a defect.
   explicit profile-level action with an effective date, regenerating only months after it and
   never a closed one, with the change kept as an audit trail. Today `moveHoliday` rewrites the
   date in place with no record. Asked for by the user on 2026-09-12 and not yet built.
-- **Whether an unworked holiday should leave "ימי עבודה בפועל" is unsettled.** It does today
-  (item 5), and her pay is unaffected either way, because the salary comes from the standard
-  count. The user asked for the family's workbooks to settle it, and they cannot: the workbooks
-  are not in this repository, and `workbook.fixture.ts`, which records them, says every holiday
-  in those months was worked, so there is no unworked holiday to compare against.
 - **`SalaryRepository` has no `deleteWorker`**, because nothing in the application removes one.
   The live check tidies up through the client instead.
 - **The layout replays every worker's series on every request to draw the bell** (once per

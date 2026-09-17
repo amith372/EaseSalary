@@ -207,10 +207,12 @@ describe("what leaves the actual count and what does not (specs.md items 5, 8)",
     expect(counts.restDaysWorked).toBe(4);
   });
 
-  it("counts a holiday she did not work as a day not worked (specs.md item 5)", () => {
+  it("counts a holiday she did not work as a day of her month (specs.md item 5)", () => {
+    // "What does not leave it: a holiday, worked or not." August 2025 has 26
+    // days outside its Saturdays, and a paid day off keeps all 26.
     const counts = countMonth(facts(AUGUST_2025, [holiday("2025-08-19", false)]));
     expect(counts.standardDays).toBe(26);
-    expect(counts.actualDays).toBe(25);
+    expect(counts.actualDays).toBe(26);
   });
 
   it("leaves half a day for half a vacation day (specs.md item 5)", () => {
@@ -222,11 +224,10 @@ describe("what leaves the actual count and what does not (specs.md items 5, 8)",
   });
 });
 
-describe("a holiday moves the count or the money, never both (specs.md item 5)", () => {
-  // The sanity check item 5 records: a holiday she worked changes the money and
-  // not the count; one she did not work changes the count and not the money. A
-  // holiday that moves both, or neither, is a mistake. This file owns the count
-  // half of that pair — Step 6 owns the money half.
+describe("a holiday never moves either count (specs.md item 5)", () => {
+  // The check item 5 records: a holiday she worked changes the money, one she
+  // did not work changes nothing at all, and a holiday that moves a count is a
+  // mistake. This file owns the count half; `leave.test.ts` owns the money.
   const worked = countMonth(facts(AUGUST_2025, [holiday("2025-08-19", true)]));
   const notWorked = countMonth(facts(AUGUST_2025, [holiday("2025-08-19", false)]));
   const neither = countMonth(facts(AUGUST_2025));
@@ -236,8 +237,9 @@ describe("a holiday moves the count or the money, never both (specs.md item 5)",
     expect(worked.actualDays).toBe(26);
   });
 
-  it("moves the actual count for a holiday she did not work", () => {
-    expect(notWorked.actualDays).toBe(neither.actualDays - 1);
+  it("does not move the actual count for a holiday she did not work", () => {
+    expect(notWorked.actualDays).toBe(neither.actualDays);
+    expect(notWorked.actualDays).toBe(26);
   });
 
   it("moves neither standard count, whichever the holiday was", () => {

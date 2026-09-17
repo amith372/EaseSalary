@@ -726,6 +726,12 @@ export interface LineOverride {
  * month boundary has to be read as one thing (specs.md Part 3, item 8). The
  * engine reads such a span whole and clips it to the month itself.
  */
+/** A month's hospital overtime: a positive amount and the user's own note. */
+export interface HospitalOvertime {
+  agorot: number;
+  note?: string;
+}
+
 export interface MonthFacts {
   month: YearMonth;
   confirmedWage: ConfirmedWage;
@@ -796,6 +802,12 @@ export interface MonthFacts {
    * a warning when neither exists rather than pricing the days at nothing.
    */
   recuperationDayRateAgorot?: number;
+  /**
+   * What the family chose to pay for hours spent with the patient in hospital
+   * this month, or absent (specs.md item 20). Typed, never worked out: a
+   * live-in caregiver has no statutory overtime, so there is no rate to apply.
+   */
+  hospitalOvertime?: HospitalOvertime;
   /** Keyed by the line's explanation key — `base`, `restDays`, `extra.<id>` and
    * the rest — so an override is addressed by the same key the explanation is
    * (specs.md items 17, 24). */

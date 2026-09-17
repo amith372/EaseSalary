@@ -111,7 +111,7 @@ function columnTotal(result: MonthResult, column: string): number {
     .reduce((total, line) => total + (line.amount ?? 0), 0);
 }
 
-describe("a holiday changes the money or the count, never both (item 9)", () => {
+describe("a holiday changes the money and never the count (items 5, 9)", () => {
   // An ordinary August: nothing marked, all five rest days worked.
   const bare = calculateMonth(facts([]), terms());
 
@@ -130,13 +130,12 @@ describe("a holiday changes the money or the count, never both (item 9)", () => 
     const result = calculateMonth(facts([holiday("2025-08-13", false)]), terms());
     expect(result.lines.find((line) => line.key === lineKeys.holidaysWorked)).toBeUndefined();
     expect(result.gross).toBe(bare.gross);
-    // It does leave the actual count, which is the half a holiday she did not
-    // work moves (item 5): 26 less one day.
-    expect(result.actualDays).toBe(25);
+    // Nor does it leave the actual count (item 5): all 26 days stay.
+    expect(result.actualDays).toBe(26);
     expect(result.standardDays).toBe(26);
   });
 
-  it("moves the count for the unworked one and the money for the worked one", () => {
+  it("moves the money for the worked one and still not the count", () => {
     const worked = calculateMonth(facts([holiday("2025-08-13", true)]), terms());
     expect(worked.actualDays).toBe(26); // a working day like any other
     expect(worked.gross).not.toBe(bare.gross);
@@ -247,11 +246,9 @@ describe("part days are paid and drawn in their own proportion (items 7, 10)", (
   });
 
   /**
-   * The other half of item 5's check, applied to the third state: a holiday
-   * behaves oppositely in money and in the counts. One read as worked changes
-   * the money and not the count, so an unanswered holiday must not also be
-   * counted as a day she did not work — that would pay for a day the month had
-   * already taken off her.
+   * Item 5's check applied to the third state: a holiday never moves a count,
+   * so an unanswered holiday is counted as a day of her month whichever way it
+   * is later answered.
    */
   it("counts an unanswered holiday as a day she attended, not as one she missed", () => {
     const unanswered = calculateMonth(facts([holiday("2025-08-11", null)]), terms());

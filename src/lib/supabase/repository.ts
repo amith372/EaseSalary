@@ -137,6 +137,8 @@ interface MonthRow {
   /** Null until the month is confirmed (specs.md item 17). */
   income_tax_agorot: number | null;
   recuperation_day_rate_agorot: number | null;
+  hospital_overtime_agorot: number | null;
+  hospital_overtime_note: string | null;
   confirmed_at: string | null;
   exported_at: string | null;
 }
@@ -335,6 +337,16 @@ function recordOfRow(row: MonthRow): MonthRecord {
     ...(row.recuperation_day_rate_agorot === null
       ? {}
       : { recuperationDayRateAgorot: row.recuperation_day_rate_agorot }),
+    ...(row.hospital_overtime_agorot === null
+      ? {}
+      : {
+          hospitalOvertime: {
+            agorot: row.hospital_overtime_agorot,
+            ...(row.hospital_overtime_note === null
+              ? {}
+              : { note: row.hospital_overtime_note }),
+          },
+        }),
     ...(row.confirmed_at === null ? {} : { confirmedAt: row.confirmed_at }),
     ...(row.exported_at === null ? {} : { exportedAt: row.exported_at }),
   };
@@ -360,6 +372,8 @@ function monthRowOf(workerId: string, record: MonthRecord) {
     overrides: record.overrides,
     income_tax_agorot: record.incomeTaxAgorot ?? null,
     recuperation_day_rate_agorot: record.recuperationDayRateAgorot ?? null,
+    hospital_overtime_agorot: record.hospitalOvertime?.agorot ?? null,
+    hospital_overtime_note: record.hospitalOvertime?.note ?? null,
     confirmed_at: record.confirmedAt ?? null,
     exported_at: record.exportedAt ?? null,
   };

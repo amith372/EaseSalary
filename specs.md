@@ -173,15 +173,16 @@ Each of these is true or false at a glance.
     rest days, and nothing the worker takes reduces it — neither vacation nor sickness. The actual
     count is that same figure less the days she did not in fact work, and it exists to
     answer the Wage Protection Act's requirement to list the days the worker actually
-    worked. What leaves it: a vacation day, a sick day, a holiday she did not work, and —
-    once it is built — an absence with no entitlement. What does not leave it: a holiday
-    she worked, which is a working day like any other. A day taken in part leaves the
+    worked. What leaves it: a vacation day, a sick day, and — once it is built — an absence
+    with no entitlement. What does not leave it: a holiday, worked or not — one she worked
+    is a working day like any other, and one she did not is a paid day the law lets her
+    take without a deduction, which the user counts as a day of her month rather than an
+    absence. A day taken in part leaves the
     actual count in that same proportion, so half a vacation day leaves half a day.
     Rest days stand outside both counts from the start, so a free rest day touches
-    neither. A holiday behaves oppositely in money and in the counts, and that is the
-    check to hold on to: one she worked changes the money and not the count, one she did
-    not work changes the count and not the money, and a holiday that changes both, or
-    neither, is a mistake. The salary is
+    neither. A holiday never moves either count, and that is the check to hold on to: one
+    she worked changes the money, one she did not work changes nothing at all (item 9),
+    and a holiday that moves a count is a mistake. The salary is
     calculated from the standard count, so vacation and sickness never shrink the base;
     the actual count is there to be read. An absence with no entitlement behind it — a day
     that is neither vacation nor sickness — is out of scope for the first version along
@@ -1024,6 +1025,16 @@ Each of these is true or false at a glance.
     given above for a line the user added: an override is addressed by the row's own key
     (item 17), and one left behind is an amount waiting to reattach itself to a row that
     never asked for it.
+
+    **Hospital overtime is an amount the user types, never a figure the application works
+    out.** A live-in caregiver is not entitled by law to pay for overtime, so no rule prices
+    the hours she spent with the patient in hospital; what the family pays for them is its
+    own choice. The payments screen records it for one month as a single amount with an
+    optional note, and it appears in the preview and on the sheet's own row for it,
+    `שעות עבודה נוספות במהלך אישפוז`, in the one-off column, where it reaches the worker and
+    enters the month's total. Its explanation says that the law requires no such payment
+    and links to the rule (item 26). It is not overridable, because there is no calculated
+    figure under it to replace: it is corrected by editing the amount.
 21. A future month can be filled in ahead of time through the calendar, but it can only
     be exported once it has ended.
 22. Reading the identifying columns straight out of the database shows unreadable values;

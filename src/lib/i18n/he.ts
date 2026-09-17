@@ -1075,6 +1075,16 @@ export const he = {
      * heads itself.
      */
     actions: {
+      /** Hospital overtime (specs.md item 20): typed, never calculated. */
+      hospitalOvertime: {
+        title: "שעות נוספות באשפוז",
+        none: "לא נרשם",
+        amount: "סכום לתשלום",
+        amountHint: "ריק — אין תשלום החודש",
+        note: "הערה (לא חובה)",
+        save: "שמירה",
+        rule: "עובד/ת סיעוד שגר/ה בבית המטופל אינו/ה זכאי/ת לפי החוק לתשלום על שעות נוספות, גם כשהמטופל מאושפז. אם המשפחה בוחרת לשלם על השעות בבית החולים, הסכום נרשם כאן, מופיע בגיליון החודש ונכלל בברוטו.",
+      },
       incomeTax: {
         title: "מס הכנסה",
         /** The field is a *correction* since 2026-09-10, not an entry: the
@@ -2456,6 +2466,8 @@ export const he = {
       holidaysWorked: "עבודה בחג",
       sickDeduction: "ניכוי ימי מחלה",
       recuperation: "דמי הבראה",
+      /** The template's own words for row 22 (specs.md item 20). */
+      hospitalOvertime: "שעות עבודה נוספות במהלך אישפוז",
       incomeTax: "מס הכנסה",
       advanceGranted: "מקדמה שניתנה",
       advanceRepaid: "מקדמה שנפרעת",
@@ -2518,7 +2530,7 @@ export const he = {
        * a holiday behaving oppositely in money and in the counts is the check
        * item 5 says to hold on to. */
       workDays: (restDay: RestDay) =>
-        `ימי התקן הם כל ימי החודש חוץ מ${day(restDay).pluralDefinite}, והמשכורת מחושבת מהם — חופשה או מחלה אינן מקטינות אותם. הימים בפועל הם אותם ימים פחות הימים שלא נעבדו: יום חופשה, יום מחלה, וחג שלא נעבד. חג שנעבד הוא יום עבודה ככל יום אחר ואינו יורד מהם. חוק הגנת השכר מחייב לציין בתלוש את שני המספרים.`,
+        `ימי התקן הם כל ימי החודש חוץ מ${day(restDay).pluralDefinite}, והמשכורת מחושבת מהם — חופשה או מחלה אינן מקטינות אותם. הימים בפועל הם אותם ימים פחות הימים שלא נעבדו: יום חופשה ויום מחלה. חג אינו יורד מהם, בין שעבדה בו ובין שלא: חג שנעבד הוא יום עבודה ככל יום אחר, וחג שלא נעבד הוא יום חופש בתשלום. חוק הגנת השכר מחייב לציין בתלוש את שני המספרים.`,
       base: (standardDays: number, restDay: RestDay) =>
         `משכורת חודשית מלאה. היא נשענת על ${standardDays} ימי התקן של החודש — כל ימי החודש חוץ מ${day(restDay).pluralDefinite} — ולכן חופשה או מחלה אינן מקטינות אותה.`,
       restEveSupplement: (restEves: number, restDay: RestDay) =>
@@ -2536,6 +2548,9 @@ export const he = {
        * anniversary and not from January, and that the day rate is not derived
        * from the salary — which is why it is confirmed rather than calculated.
        */
+      /** Hospital overtime (specs.md item 20): typed, and owed by no law. */
+      hospitalOvertime: (note?: string) =>
+        `הסכום הוקלד בעמוד התשלומים ולא חושב. עובד/ת סיעוד המועסק/ת בבית המטופל אינו/ה זכאי/ת לפי החוק לתשלום על שעות נוספות, ולכן תשלום על השעות בבית החולים הוא החלטה של המשפחה.${note ? ` הערה: ${note}` : ""}`,
       recuperation: (days: number) =>
         `דמי הבראה משולמים פעם בשנה, בחודש שנקבע בפרופיל של העובד/ת. מספר הימים נקבע לפי הוותק: חמישה ימים על השנה הראשונה, שישה על השנייה והשלישית, שבעה מהרביעית עד העשירית, ואילך לפי הסולם שבחוק. השנה נמדדת מיום תחילת ההעסקה ועד יום השנה שאחריו — ולא לפי השנה הקלנדרית, שלפיה נמדדת החופשה — ואין זכאות עד שהושלמה שנת עבודה מלאה. החודש משולמים ${formatDays(days)} ימים. ערך יום ההבראה אינו נגזר מהשכר: הוא נקבע בחוק ומתעדכן בכל יולי, ולכן הוא מאושר ונשמר עם החודש שחושב לפיו.`,
       /**

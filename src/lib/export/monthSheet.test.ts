@@ -359,6 +359,56 @@ describe("the two versions, which differ in one thing only (item 2)", () => {
   });
 });
 
+describe("hospital overtime on the template's own row 22 (item 20)", () => {
+  // Part 4's August plus ₪350 typed for hours in hospital. By hand: G holds
+  // only that amount, so G25 is 350; ד is 9,305.75 + 350 = 9,655.75; the נטו
+  // is 7,305.75 + 350 = 7,655.75.
+  const worker = knownWorker();
+  const facts: MonthFacts = {
+    ...knownFacts(worker),
+    hospitalOvertime: { agorot: 35000 },
+  };
+  const result = calculateMonth(facts, worker);
+  const oneOff: UserLine = {
+    id: "market",
+    label: "בונוס חג",
+    direction: "addition",
+    placement: "beforeGross",
+    agorot: 20000,
+  };
+
+  it("writes the amount in G22 and keeps the template's label", async () => {
+    const sheet = await sheetOf(inputFor(result));
+    expect(sheet.getCell("B22").value).toBe('שעות עבודה נוספות במהלך אישפוז בבי"ח');
+    expect(numberAt(sheet, "C22")).toBe(1);
+    expect(numberAt(sheet, "G22")).toBeCloseTo(350, 2);
+  });
+
+  it("adds it to the one-off total, the ד and the נטו", async () => {
+    const sheet = await sheetOf(inputFor(result));
+    expect(evaluate(sheet, formulaAt(sheet, "G25") ?? "")).toBeCloseTo(350, 2);
+    expect(evaluate(sheet, formulaAt(sheet, "E26") ?? "")).toBeCloseTo(9655.75, 2);
+    expect(evaluate(sheet, formulaAt(sheet, "E29") ?? "")).toBeCloseTo(7655.75, 2);
+  });
+
+  it("stays on row 22 when a line the user added is inserted below it", async () => {
+    const withLine = calculateMonth({ ...facts, userLines: [oneOff] }, worker);
+    const sheet = await sheetOf(inputFor(withLine));
+    expect(numberAt(sheet, "G22")).toBeCloseTo(350, 2);
+    expect(sheet.getCell("B23").value).toBe("בונוס חג");
+    expect(numberAt(sheet, "G23")).toBeCloseTo(200, 2);
+    // 350 + 200 in G, so ד is 9,305.75 + 550.
+    expect(evaluate(sheet, formulaAt(sheet, "E27") ?? "")).toBeCloseTo(9855.75, 2);
+  });
+
+  it("leaves row 22 empty in a month without it", async () => {
+    const sheet = await sheetOf(
+      inputFor(calculateMonth(knownFacts(worker), worker)),
+    );
+    expect(sheet.getCell("G22").value).toBeNull();
+  });
+});
+
 describe("the rows the user added, and the sums that grow over them (item 20)", () => {
   const standing: UserLine = {
     id: "phone",
