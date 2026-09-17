@@ -1,5 +1,7 @@
 import { restEveOf, SATURDAY, SUNDAY, THURSDAY, FRIDAY } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import type { ExpiringDocument } from "@/lib/engine/actionList";
+import type { WarningKind } from "@/lib/engine/alerts";
 import type { AdvanceKind } from "@/lib/engine/types";
 import { formatAgorot, formatDays } from "@/lib/money";
 
@@ -70,6 +72,21 @@ const DAY_WORDS: Record<number, DayWords> = {
     pluralDefinite: "השבתות",
     feminine: true,
   },
+};
+
+/**
+ * A sentence with values in it, as segments: a plain string is Hebrew, and a
+ * `{ value }` is a date, an amount or a name the screen isolates in its own
+ * `<bdi>` (`CLAUDE.md`). The values arrive already formatted, because the
+ * formatters import this file.
+ */
+export type Said = (string | { value: string })[];
+
+const DOCUMENT_NAMES: Record<ExpiringDocument, string> = {
+  employmentPermit: "היתר ההעסקה",
+  workVisa: "אשרת העבודה",
+  passport: "הדרכון",
+  medicalInsurance: "הביטוח הרפואי",
 };
 
 /** The words that agree with the day rather than describing it. */
@@ -750,6 +767,133 @@ export const he = {
       alreadyMarked: "היום כבר מסומן",
       dismiss: "להסתיר",
     }),
+  },
+
+  /**
+   * `/alerts` (specs.md item 27). Each entry of `actionList` is phrased here
+   * from its key and fields; the engine returns none of these words.
+   */
+  alerts: {
+    title: "התראות",
+    lead: "כל מה שדורש טיפול, ומה שכבר טופל.",
+    settingsLink: "להגדיר אילו תזכורות לקבל",
+    /** The pop-up the link opens: the warning kinds and nothing else. */
+    reminders: {
+      title: "אילו תזכורות לקבל",
+      close: "סגירה",
+      kinds: {
+        documentExpiring: "מסמך או ביטוח שעומד לפוג",
+        recuperationApproaching: "חודש הבראה שמתקרב",
+        monthNotExported: "חודש שהסתיים ולא יוצא",
+        seniorityYearTurning: "שנת ותק חדשה",
+      } satisfies Record<WarningKind, string>,
+    },
+    open: "דורש טיפול",
+    nothingOpen: "אין כרגע שום דבר שדורש טיפול.",
+    done: "כבר טופל",
+    nothingDone: "בתשעים הימים האחרונים לא נרשם דבר.",
+    notNow: "לא עכשיו",
+    /** In place of "not now" on a month not yet exported. */
+    markHandled: "סמן כטופל",
+    whatTheLawSays: "מה אומר החוק",
+    /** The chip beside a title. A blockage stops a correct salary; a warning
+     * still has time in it. */
+    tag: {
+      blockage: "לטיפול עכשיו",
+      warning: "תזכורת",
+      inDays: (days: number): Said => ["בעוד ", { value: String(days) }, " ימים"],
+    },
+    entry: {
+      nationalInsurance: (quarter: string) => ({
+        title: ["ביטוח לאומי לרבעון"] as Said,
+        note: ["התשלום על ", { value: quarter }, " טרם נרשם."] as Said,
+        action: "לרשום תשלום",
+      }),
+      documentExpired: (document: ExpiringDocument, on: string) => ({
+        title: ["פג התוקף של ", DOCUMENT_NAMES[document]] as Said,
+        note: ["התוקף הסתיים ב־", { value: on }, "."] as Said,
+        action: document === "medicalInsurance" ? "לרשום חידוש" : "לעדכן תאריך",
+      }),
+      documentExpiring: (document: ExpiringDocument, on: string) => ({
+        title: [`תוקף ${DOCUMENT_NAMES[document]} עומד להסתיים`] as Said,
+        note: (document === "passport"
+          ? ["בתוקף עד ", { value: on }, ", ונשארו פחות משמונה־עשר חודשים."]
+          : ["בתוקף עד ", { value: on }, ". כדאי לחדש לפני כן."]) as Said,
+        action: document === "medicalInsurance" ? "לרשום חידוש" : "לעדכן תאריך",
+      }),
+      advanceOutstanding: (number: number, outstanding: string) => ({
+        title: ["מקדמה ", { value: String(number) }, " עדיין בהחזר"] as Said,
+        note: ["נותרו להחזיר ", { value: outstanding }, "."] as Said,
+        action: "לתשלומים",
+      }),
+      holidaysUnchosen: (year: number, chosen: string, allowance: string) => ({
+        title: ["חגים לשנת ", { value: String(year) }, " טרם נבחרו"] as Said,
+        note: [
+          "נבחרו ",
+          { value: chosen },
+          " מתוך ",
+          { value: allowance },
+          " ימי חג. בלי זה החישוב של חודשי החג לא מדויק.",
+        ] as Said,
+        action: "לבחור חגים",
+      }),
+      recuperationDue: (month: string) => ({
+        title: ["דמי הבראה ב", { value: month }] as Said,
+        note: ["תעריף יום ההבראה טרם אושר לחודש הזה."] as Said,
+        action: "לאשר לפני הייצוא",
+      }),
+      recuperationApproaching: (month: string) => ({
+        title: ["חודש ההבראה מתקרב"] as Said,
+        note: ["דמי ההבראה ישולמו ב", { value: month }, "."] as Said,
+        action: "להגדרות",
+      }),
+      vacationUnderSeven: (year: number, days: string) => ({
+        title: ["פחות משבעה ימי חופשה ב־", { value: String(year) }] as Said,
+        note: ["נוצלו ", { value: days }, " ימים השנה, והחוק מחייב לפחות שבעה."] as Said,
+        action: "לסמן חופשה",
+      }),
+      monthNotExported: (month: string) => ({
+        title: [{ value: month }, " טרם יוצא"] as Said,
+        note: ["החודש הסתיים וגיליון השכר שלו לא הופק."] as Said,
+        action: "לייצא",
+      }),
+      minimumWageChanged: (was: string, now: string, from: string) => ({
+        title: ["שכר המינימום השתנה"] as Said,
+        note: [
+          "מ־",
+          { value: was },
+          " ל־",
+          { value: now },
+          ", בתוקף מ־",
+          { value: from },
+          ". הוא יאושר לפני הייצוא הבא.",
+        ] as Said,
+        action: "להגדרות",
+      }),
+      seniorityYearTurning: (years: number, on: string) => ({
+        title: ["שנת ותק חדשה מתחילה"] as Said,
+        note: [
+          "שנת העבודה ה־",
+          { value: String(years + 1) },
+          " מתחילה ב־",
+          { value: on },
+          ".",
+        ] as Said,
+        action: "לדף העובד/ת",
+      }),
+    },
+    handled: {
+      monthExported: (month: string): Said => ["גיליון השכר של ", { value: month }, " יוצא"],
+      paymentRecorded: (payment: string, month: string): Said => [
+        `תשלום ${payment} נרשם ב`,
+        { value: month },
+      ],
+      recuperationConfirmed: (month: string): Said => [
+        "דמי ההבראה של ",
+        { value: month },
+        " אושרו",
+      ],
+    },
   },
 
   status: {

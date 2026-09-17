@@ -2,6 +2,7 @@ import { compareMonth } from "@/lib/dates";
 import { salaryFor } from "@/lib/engine/salary";
 import { SEEDED_RATES, rateInForce, withFetchedRate } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
+import type { Deferral, WarningKind } from "@/lib/engine/alerts";
 import { snapshotTerms } from "@/lib/engine/types";
 import type {
   ConfirmedWage,
@@ -221,6 +222,14 @@ export interface SalaryRepository {
    * mine to say"; an explicit `null` is "clear it".
    */
   saveSealedNumbers(workerId: string, numbers: SealedNumbers): Promise<void>;
+
+  /** The warning kinds the household switched off (specs.md item 27). */
+  listSwitchedOffWarnings(): Promise<WarningKind[]>;
+  saveSwitchedOffWarnings(kinds: WarningKind[]): Promise<void>;
+  /** The warnings put off with 'not now', across the household's workers. */
+  listDeferrals(): Promise<Deferral[]>;
+  /** Records the deferral, replacing one held for the same worker and entry. */
+  deferWarning(deferral: Deferral): Promise<void>;
 }
 
 /**
@@ -407,6 +416,8 @@ export function createInMemoryRepository(
     seed.holidayLists ?? SEEDED_HOLIDAY_LISTS,
   );
   let rates = structuredClone(seed.rates ?? SEEDED_RATES);
+  let switchedOff: WarningKind[] = [];
+  let deferrals: Deferral[] = [];
 
   function rowOf(workerId: string): WorkerRow {
     const row = workers.get(workerId);
@@ -524,6 +535,28 @@ export function createInMemoryRepository(
       if ("employmentPermit" in numbers) {
         employmentPermitNumber = copyOf(numbers.employmentPermit ?? null);
       }
+    },
+
+    async listSwitchedOffWarnings() {
+      return [...switchedOff];
+    },
+
+    async saveSwitchedOffWarnings(kinds) {
+      switchedOff = [...kinds];
+    },
+
+    async listDeferrals() {
+      return structuredClone(deferrals);
+    },
+
+    async deferWarning(deferral) {
+      deferrals = [
+        ...deferrals.filter(
+          (one) =>
+            one.workerId !== deferral.workerId || one.fingerprint !== deferral.fingerprint,
+        ),
+        structuredClone(deferral),
+      ];
     },
   };
 

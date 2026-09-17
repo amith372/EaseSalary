@@ -68,6 +68,18 @@ fits without scrolling.
   placeholder count.
 - Every control in the bar is at least 44px in each direction.
 
+### The alerts page
+
+| Departure | Why |
+|---|---|
+| The heading is 24px, as on every other screen, not the artboard's 34px | One heading size across the application |
+| Each card names its worker after the title when the household has two | `specs.md` item 27: the page lists the whole household |
+| The tag is `לטיפול עכשיו` on a blockage and `תזכורת` on a warning; a document running out says `בעוד N ימים` | The artboard's `החודש` / `לא דחוף` have no rule behind them; the list is what item 27 splits by |
+| `לא עכשיו` appears on warnings only, and a month not yet exported offers `סמן כטופל` in its place | A blockage cannot be put off; the user, 2026-09-17, for a month whose sheet was produced some other way (item 27) |
+| `להגדיר אילו תזכורות לקבל` opens a pop-up of the four warning kinds, one checkbox each, rather than leading to `הגדרות` | The user, 2026-09-17: the settings rows did not say clearly what is on and what is off (item 27) |
+| The artboard's `[חודש] מוכן לחישוב` card is not drawn | No entry of item 27 says a month is ready; a finished month not yet exported is the one that exists |
+| `כבר טופל` lists exports, third-party payments and confirmed recuperation months of the last ninety days | Those are the handled events the months record (item 27) |
+
 ### The export badge (every screen that draws it)
 
 The tile holds a spreadsheet's ruled cells where the canvas draws a crossed

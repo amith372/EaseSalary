@@ -1086,6 +1086,26 @@ Each of these is true or false at a glance.
     recuperation month or an employment anniversary; the passport's threshold is item 28's.
     Neither list is a notification that leaves the application: nothing is sent by mail or
     by push in this version.
+    Both lists are read in full on a page of their own, which the bell opens: one list, the
+    blockages above the warnings, each entry naming its worker and carrying item 26's link
+    where it rests on a legal rule. **A warning can be put off** — 'not now' hides it for
+    seven days, or until a date or figure it carries changes, whichever comes first. A
+    blockage cannot be put off, because the salary cannot be produced correctly while it
+    stands. A finished month not yet exported offers 'mark as handled' in place of 'not now':
+    it removes that month's warning for good, for a family that produced the sheet some other
+    way, and records no export — so the month does not appear among what was already handled,
+    and the minimum wage is still measured against the last month actually exported.
+    **Warnings can be switched off by kind** from the alerts page, in a pop-up that lists the
+    kinds and nothing else, one checkbox each for a document
+    running out, a recuperation month approaching, a finished month not yet exported and a
+    seniority year about to turn, kept for the household and on by default. A switched-off
+    kind is neither listed nor counted by the bell. Blockages have no switch, for the reason
+    they cannot be put off.
+    Below the lists the same page shows **what was already handled** in the last ninety
+    days, newest first, each with its date: a month exported, a payment to a third party
+    recorded (item 16), and a recuperation month confirmed. It is read off the facts that
+    record those events and never stored of its own, for the reason balances are not
+    (item 13).
 28. A worker's employment rests on **three separate documents with three separate
     expiry dates**, and the application holds each with its own number and its own date.
     They are not one thing under different names, and the law makes both of the first two

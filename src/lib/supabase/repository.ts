@@ -3,6 +3,7 @@ import { isoOf, monthOf, type RestDay } from "@/lib/dates";
 import { SEEDED_RATES, withFetchedRate } from "@/lib/datedRates";
 import type { DatedRate, RateKey } from "@/lib/datedRates";
 import type { SealedNumber } from "@/lib/encryption";
+import type { Deferral, WarningKind } from "@/lib/engine/alerts";
 import { UnknownWorkerError } from "@/lib/engine/repository";
 import type {
   MonthRecord,
@@ -749,6 +750,48 @@ export function createPostgresRepository(
         { onConflict: "household_id,key,effective_from" },
       );
       raise(error, "could not save the rate");
+    },
+
+    async listSwitchedOffWarnings() {
+      const { data, error } = await client
+        .from("households")
+        .select("warnings_off")
+        .eq("id", householdId)
+        .maybeSingle();
+      raise(error, "could not read the switched-off warnings");
+      return (data?.warnings_off as WarningKind[] | undefined) ?? [];
+    },
+
+    async saveSwitchedOffWarnings(kinds) {
+      const { error } = await client
+        .from("households")
+        .update({ warnings_off: kinds })
+        .eq("id", householdId);
+      raise(error, "could not save the switched-off warnings");
+    },
+
+    async listDeferrals() {
+      const { data, error } = await client
+        .from("warning_deferrals")
+        .select("worker_id, fingerprint, until");
+      raise(error, "could not read the deferred warnings");
+      return (data ?? []).map((row) => ({
+        workerId: row.worker_id as string,
+        fingerprint: row.fingerprint as string,
+        until: row.until as IsoDate,
+      }));
+    },
+
+    async deferWarning(deferral: Deferral) {
+      const { error } = await client.from("warning_deferrals").upsert(
+        {
+          worker_id: deferral.workerId,
+          fingerprint: deferral.fingerprint,
+          until: deferral.until,
+        },
+        { onConflict: "worker_id,fingerprint" },
+      );
+      raise(error, "could not put the warning off");
     },
   };
 }

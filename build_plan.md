@@ -65,12 +65,11 @@ is its record.
 
 `src/components/AppShell.tsx` links five tabs on every screen, so every one of them is a
 promise made on every page. A link that 404s is worse than one that is not there, which is why
-the bell is left out until `/alerts` exists and the "?" the home artboard draws beside it until
-stage 9 (the user, 2026-09-13). Every address is built except these two:
+the "?" the home artboard draws is left out until stage 9 (the user, 2026-09-13). Every address
+is built except this one:
 
 | Route | Artboard | Owed by |
 |---|---|---|
-| `/alerts` | `התראות` | Stage 6 |
 | `/help` | none — stage 9 draws it | Stage 9, which also puts the "?" back in the bar |
 
 ## What is still owed
@@ -203,17 +202,13 @@ the action list is an engine function since 2026-09-17, and what remains is putt
 **The stage in progress.**
 
 - The action list as an engine function (`src/lib/engine/actionList.ts`) — 2026-09-17.
+- `/alerts`, with "not now", the reminder switches and the handled list — 2026-09-17.
 
-**The next step is `/alerts`**, built from the `התראות` artboard. Then the steps below, each
-a step of its own:
+**The next step is the bell.** Then the steps below, each a step of its own:
 
-- **`/alerts`** — a new route under `src/app/alerts/`. For each worker in the household it
-  replays `calculateSeries(months, profile, todayInIsrael(), rates)` and passes that with
-  `listSpans` and `listRates` to `actionList`; every entry is phrased in `he.ts` from its
-  `key` and fields (the engine returns data, never words), with its item-26 link. Both lists
-  are shown, the bell's and the opening screen's (item 27).
 - **The bell in the bar** — drawn in `AppShell.tsx` where its comment marks the place, linking
-  `/alerts` and lit by the count of `warning` entries.
+  `/alerts` and lit by the count of `warning` entries that `shownEntries` keeps
+  (`src/lib/engine/alerts.ts`), so a switched-off or put-off warning is not counted.
 - **The home screen's blocker strip** — `HomeScreen.tsx` reads `homeAlerts` from
   `src/lib/fixtures/home.ts`, three fixed cards. It moves onto the `blockage` entries and the
   fixture file is deleted.
@@ -227,11 +222,8 @@ Unfinished, carried by this stage:
 - A month whose facts are incomplete, which item 27 names as a blockage, is not in
   `actionList` yet: nothing defines "incomplete" beyond what `blocksExport` already asks at
   export time.
-- `supabase/migrations/20260917180000_an_export_is_not_a_correction.sql` is not applied to
-  the live project. `npx supabase db push` is the user's to run; until then stamping
-  `exported_at` also moves `updated_at`, so an exported month reads as corrected.
-- Every month exported before 2026-09-17 has no `exported_at`, so the bell will list each of
-  them as not exported until it is exported again or stamped by hand.
+- Every month exported before 2026-09-17 has no `exported_at`, so `/alerts` lists each of
+  them as not exported until it is exported again or marked as handled.
 - A browser session carrying the `household` cookie works on the in-memory demo household
   (`src/lib/store.ts`), so an export made there stamps nothing in Supabase. Checking
   `exported_at` needs a signed-in account without that cookie.

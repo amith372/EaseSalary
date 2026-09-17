@@ -774,8 +774,13 @@ export function OpeningPositionControl({
 }) {
   const words = he.workers.profile.terms.opening;
   const opening = profile.openingPosition;
-  const [vacation, setVacation] = useState(String(opening.vacationDays));
-  const [sick, setSick] = useState(String(opening.sickDays));
+  // Shown to two places (Part 5: days are rounded only for display). A field
+  // saved as shown sends the stored figure back, so the rounding never reaches
+  // the balance.
+  const shownVacation = formatDays(opening.vacationDays);
+  const shownSick = formatDays(opening.sickDays);
+  const [vacation, setVacation] = useState(shownVacation);
+  const [sick, setSick] = useState(shownSick);
   const [adding, setAdding] = useState(false);
   const [principal, setPrincipal] = useState("");
   const [repaid, setRepaid] = useState("");
@@ -819,8 +824,9 @@ export function OpeningPositionControl({
             onClick={() =>
               run(() =>
                 setOpeningDays(workerId, {
-                  vacationDays: vacation,
-                  sickDays: sick,
+                  vacationDays:
+                    vacation === shownVacation ? String(opening.vacationDays) : vacation,
+                  sickDays: sick === shownSick ? String(opening.sickDays) : sick,
                 }),
               )
             }
