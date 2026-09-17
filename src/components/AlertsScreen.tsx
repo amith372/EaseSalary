@@ -227,6 +227,13 @@ export function RemindersDialog({
               </li>
             ))}
           </ul>
+          <p
+            dir="auto"
+            data-role="always-shown"
+            className="border-t border-line pt-3 text-[14px] leading-[1.5] font-light text-ink-mute text-pretty"
+          >
+            {words.alwaysShown}
+          </p>
           <button
             type="button"
             onClick={() => dialog.current?.close()}

@@ -782,9 +782,15 @@ export const he = {
     title: "התראות",
     lead: "כל מה שדורש טיפול, ומה שכבר טופל.",
     settingsLink: "להגדיר אילו תזכורות לקבל",
+    /** Beside "הצג הכל", where a short list leaves the rest to the page. */
+    more: (count: number): Said => ["ועוד ", { value: String(count) }],
     /** The pop-up the link opens: the warning kinds and nothing else. */
     reminders: {
       title: "אילו תזכורות לקבל",
+      /** The blockages, named so a user looking here for one learns why it
+       * has no switch (specs.md item 27). */
+      alwaysShown:
+        "מוצגים תמיד, בלי אפשרות לכבות: ביטוח לאומי לרבעון, מסמך שפג תוקפו, חגים שטרם נבחרו, דמי הבראה החודש, מקדמה שעדיין בהחזר, פחות משבעה ימי חופשה בשנה, שינוי בשכר המינימום.",
       close: "סגירה",
       kinds: {
         documentExpiring: "מסמך או ביטוח שעומד לפוג",

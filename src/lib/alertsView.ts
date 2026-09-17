@@ -228,17 +228,24 @@ export async function alertsView(
   };
 }
 
-/** The most warnings the bell lists in its panel; with more it opens the page
- * (specs.md item 27). */
-export const BELL_PANEL_MAX = 4;
+/** How many entries the bell's panel and the opening screen's strip each list;
+ * the rest are counted and left to the page (specs.md item 27). */
+const FIRST_SHOWN = 4;
 
-export interface BellView {
+/** The first entries of a list, and how many more the page holds. */
+export interface FirstOf {
+  shown: AlertCard[];
+  more: number;
+}
+
+function firstOf(cards: AlertCard[]): FirstOf {
+  return { shown: cards.slice(0, FIRST_SHOWN), more: Math.max(0, cards.length - FIRST_SHOWN) };
+}
+
+export interface BellView extends FirstOf {
   /** The household's warnings as the page shows them. A blockage belongs on
    * the opening screen, not in the bell. */
   count: number;
-  /** Those warnings, when there are few enough for the panel; otherwise null
-   * and the bell opens the page. */
-  panel: AlertCard[] | null;
   switchedOff: WarningKind[];
 }
 
@@ -252,9 +259,9 @@ export const householdAlerts = cache(
   async (): Promise<AlertsView> => alertsView(await getRepository(), todayInIsrael()),
 );
 
-/** The blockages, which lead the opening screen (item 27). */
-export function blockagesOf(view: AlertsView): AlertCard[] {
-  return view.open.filter((card) => card.blockage);
+/** The first blockages, which lead the opening screen (item 27). */
+export function blockagesOf(view: AlertsView): FirstOf {
+  return firstOf(view.open.filter((card) => card.blockage));
 }
 
 /** What the bell in the bar shows, read from the page's own view so it never
@@ -263,7 +270,7 @@ export function bellOf(view: AlertsView): BellView {
   const warnings = view.open.filter((card) => !card.blockage);
   return {
     count: warnings.length,
-    panel: warnings.length <= BELL_PANEL_MAX ? warnings : null,
+    ...firstOf(warnings),
     switchedOff: view.switchedOff,
   };
 }

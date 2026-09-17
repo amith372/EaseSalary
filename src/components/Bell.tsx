@@ -12,8 +12,8 @@ const pillClass =
 
 /**
  * The bell in the bar, as `דף הבית v4` draws it: a dot, the word, the count
- * (specs.md item 27). With four warnings or fewer it opens a small panel
- * listing them; with more it is a link to `/alerts`. The dot is lit only while
+ * (specs.md item 27). It opens a small panel listing the first four warnings
+ * and counting the rest beside the link to `/alerts`. The dot is lit only while
  * there is a warning to count, and below `sm` the word is read but not drawn,
  * as the artboard hides it on a phone.
  */
@@ -62,20 +62,7 @@ export function Bell({ bell }: { bell: BellView }) {
     </>
   );
 
-  if (bell.panel === null) {
-    return (
-      <Link
-        href="/alerts"
-        data-role="bell"
-        aria-current={pathname === "/alerts" ? "page" : undefined}
-        className={pillClass}
-      >
-        {face}
-      </Link>
-    );
-  }
-
-  const cards = bell.panel;
+  const cards = bell.shown;
   return (
     <div ref={root} className="relative flex-none">
       <button
@@ -137,6 +124,16 @@ export function Bell({ bell }: { bell: BellView }) {
             </ul>
           )}
           <div className="flex flex-wrap items-center gap-x-2 border-t border-line bg-ground px-4 py-1">
+            {bell.more > 0 ? (
+              <>
+                <span data-role="bell-more" className="text-[14px] text-ink-mute">
+                  <Sentence said={he.alerts.more(bell.more)} />
+                </span>
+                <span aria-hidden="true" className="text-ink-faint">
+                  ·
+                </span>
+              </>
+            ) : null}
             <Link
               href="/alerts"
               className="flex min-h-11 items-center text-[14px] font-medium text-forest hover:underline hover:underline-offset-4"

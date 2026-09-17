@@ -77,6 +77,10 @@ test.describe("the alerts page (specs.md item 27)", () => {
     const boxes = dialog.getByRole("checkbox");
     await expect(boxes).toHaveCount(4);
     for (let i = 0; i < 4; i += 1) await expect(boxes.nth(i)).toBeChecked();
+    // The blockages are named, so an advance looked for here is explained.
+    await expect(dialog.locator('[data-role="always-shown"]')).toHaveText(
+      he.alerts.reminders.alwaysShown,
+    );
 
     const box = dialog.getByRole("checkbox", { name: he.alerts.reminders.kinds.monthNotExported });
     await box.uncheck();
@@ -129,7 +133,7 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await page.screenshot({ path: "test-results/alerts-after-export.png" });
   });
 
-  test("with more than four warnings the bell is a link to the page, and follows a dismissal", async ({
+  test("with more than four warnings the bell lists four and counts the rest, and follows a dismissal", async ({
     page,
   }) => {
     await useHousehold(page, SPEC, "bell");
@@ -149,12 +153,26 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await expect(unexported(page, JANUARY)).toHaveCount(0);
     await expect(count).toHaveText(String(before - 1));
 
-    // The same figure on another screen, and the bell leads to the page.
+    // The same figure on another screen. The panel lists the page's first
+    // four warnings and counts the rest (item 27).
+    const titles = await page
+      .locator('[data-role="alert"][data-list="warning"] [data-role="alert-title"]')
+      .allInnerTexts();
     await page.goto("/");
     await expect(count).toHaveText(String(before - 1));
     await bell.click();
+    const panel = page.locator('[data-role="bell-panel"]');
+    await expect(panel).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
+    expect(await panel.locator('[data-role="bell-entry"]').allInnerTexts()).toEqual(
+      titles.slice(0, 4).map((title) => expect.stringContaining(title)),
+    );
+    await expect(panel.locator('[data-role="bell-more"]')).toHaveText(
+      he.alerts.more(before - 1 - 4).map((part) => (typeof part === "string" ? part : part.value)).join(""),
+    );
+    await page.screenshot({ path: "test-results/alerts-bell-panel-more.png" });
+    await panel.getByRole("link", { name: he.header.bell.showAll }).click();
     await expect(page).toHaveURL(/\/alerts$/);
-    await expect(page.locator('[data-role="bell-panel"]')).toHaveCount(0);
   });
 
   test("with four warnings or fewer the bell opens a panel listing them", async ({ page }) => {
@@ -185,6 +203,8 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await expect(page).toHaveURL(/\/$/);
     const entries = panel.locator('[data-role="bell-entry"]');
     await expect(entries).toHaveCount(titles.length);
+    // Four or fewer: nothing is left to count.
+    await expect(panel.locator('[data-role="bell-more"]')).toHaveCount(0);
     for (const title of titles) await expect(entries.filter({ hasText: title })).toHaveCount(1);
     await page.screenshot({ path: "test-results/alerts-bell-panel.png" });
 
@@ -216,37 +236,54 @@ test.describe("the alerts page (specs.md item 27)", () => {
 });
 
 test.describe("the opening screen's blocker strip (specs.md item 27)", () => {
-  test("leads with exactly the blockages /alerts lists, and no warning", async ({ page }) => {
+  test("leads with the first four blockages /alerts lists, counts the rest, and no warning", async ({
+    page,
+  }) => {
     await useHousehold(page, SPEC, "strip");
 
     await page.goto("/alerts");
     const listed = await page
       .locator('[data-role="alert"][data-list="blockage"] [data-role="alert-title"]')
       .allInnerTexts();
-
-    await page.goto("/");
-    const strip = page.locator('[data-role="blocker"]');
-    await expect(strip.first()).toBeVisible();
-    expect(await strip.locator('[data-role="blocker-title"]').allInnerTexts()).toEqual(listed);
-    // A month not yet exported is the bell's, not the strip's.
-    await expect(strip.filter({ hasText: "טרם יוצא" })).toHaveCount(0);
-
     // The seed records national insurance for January–March 2026 only
-    // (`seed.ts`, month 4), so from July 2026 the second quarter is owed.
+    // (`seed.ts`, month 4), so from July 2026 the test worker's second quarter
+    // is owed — and it is listed after the first worker's four or more.
     const quarter = `${he.calendar.monthNames[3]} 2026 – ${he.calendar.monthNames[5]} 2026`;
     const words = he.alerts.entry.nationalInsurance(quarter);
-    const owed = strip
+    const owed = page
+      .locator('[data-role="alert"][data-list="blockage"]')
       .filter({ hasText: words.title.join("") })
       .filter({ hasText: he.placeholder.name })
       .filter({ hasText: quarter });
     await expect(owed).toHaveCount(1);
-    await expect(owed.getByRole("link", { name: words.action })).toHaveAttribute(
-      "href",
-      "/payments",
+    expect(listed.length).toBeGreaterThan(4);
+
+    await page.goto("/");
+    const strip = page.locator('[data-role="blocker"]');
+    await expect(strip.first()).toBeVisible();
+    expect(await strip.locator('[data-role="blocker-title"]').allInnerTexts()).toEqual(
+      listed.slice(0, 4),
+    );
+    // A month not yet exported is the bell's, not the strip's.
+    await expect(strip.filter({ hasText: "טרם יוצא" })).toHaveCount(0);
+    await expect(page.locator('[data-role="blockers-more"]')).toContainText(
+      String(listed.length - 4),
     );
     await page.screenshot({ path: "test-results/home-blocker-strip.png" });
 
-    await owed.getByRole("link", { name: words.action }).click();
-    await expect(page).toHaveURL(/\/payments$/);
+    // A card leads where its entry on the page does.
+    const first = strip.first().getByRole("link").first();
+    const href = await first.getAttribute("href");
+    await first.click();
+    await expect(page).toHaveURL(new RegExp(`${href}$`));
+
+    // "Show all" leads to the page, where the rest are.
+    await page.goto("/");
+    await page
+      .locator('[data-role="blockers-more"]')
+      .getByRole("link", { name: he.header.bell.showAll })
+      .click();
+    await expect(page).toHaveURL(/\/alerts$/);
+    await expect(owed).toHaveCount(1);
   });
 });

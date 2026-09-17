@@ -1081,17 +1081,19 @@ Each of these is true or false at a glance.
     screen. Where that test leaves an item open, its list is fixed here: a national-insurance
     quarter due (item 19), recuperation due this month, an advance still being repaid and a
     year that passed with fewer than seven vacation days go on the opening screen; a finished
-    month not yet exported goes to the bell. The bell warns sixty days before the employment
+    month not yet exported goes to the bell. The opening screen shows the first four
+    blockages; when there are more it says how many more and links to the page that lists
+    them all. The bell warns sixty days before the employment
     permit, the work visa or the medical insurance expires, and in the month before a
     recuperation month or an employment anniversary; the passport's threshold is item 28's.
     Neither list is a notification that leaves the application: nothing is sent by mail or
     by push in this version.
     Both lists are read in full on a page of their own: one list, the
     blockages above the warnings, each entry naming its worker and carrying item 26's link
-    where it rests on a legal rule. **The bell opens a small panel** when it counts four
-    warnings or fewer, and the page when it counts more: the panel lists those warnings, each
-    with its title and note and linking where its entry on the page does, and below them a
-    link to the page and the link that opens the reminder switches. With no warning it says
+    where it rests on a legal rule. **The bell opens a small panel**, whatever it counts: the
+    panel lists the first four warnings in the page's order, each with its title and note and
+    linking where its entry on the page does; when there are more it says how many more, and
+    below them come a link to the page and the link that opens the reminder switches. With no warning it says
     so and keeps both links. It offers no 'not now'; putting a warning off is done on the
     page. **A warning can be put off** — 'not now' hides it for
     seven days, or until a date or figure it carries changes, whichever comes first. A
@@ -1101,9 +1103,11 @@ Each of these is true or false at a glance.
     way, and records no export — so the month does not appear among what was already handled,
     and the minimum wage is still measured against the last month actually exported.
     **Warnings can be switched off by kind** from the alerts page or the bell's panel, in a pop-up that lists the
-    kinds and nothing else, one checkbox each for a document
+    kinds, one checkbox each for a document
     running out, a recuperation month approaching, a finished month not yet exported and a
-    seniority year about to turn, kept for the household and on by default. A switched-off
+    seniority year about to turn, kept for the household and on by default. Below the checkboxes the pop-up
+    names the blockages, which are always shown and have no switch, so a user looking there
+    for one learns why it is missing. A switched-off
     kind is neither listed nor counted by the bell. Blockages have no switch, for the reason
     they cannot be put off.
     Below the lists the same page shows **what was already handled** in the last ninety

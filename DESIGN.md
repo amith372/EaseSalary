@@ -25,7 +25,7 @@ canonical for the home screen and supersedes the v3 departures recorded in
 
 | Departure | Why |
 |---|---|
-| A strip of blocker cards leads the screen, above the columns. v4 draws none | `specs.md` item 27: the opening screen leads with what blocks a correct salary |
+| A strip of up to four blocker cards leads the screen, above the columns, with the rest counted beside "הצג הכל". v4 draws none | `specs.md` item 27: the opening screen leads with what blocks a correct salary |
 | v4's workers card is cut from the rail | The top bar's switcher and its `עובדים/ות` tab already reach both workers, and the balances name them |
 | v4's row of action cards under the columns is cut | The tabs, the money card's link and the blockers lead to each of them |
 | The day panel's `סוג יום` and `עובד/ת` rows are cut; `חלק מהיום` and `הערה` show only when the day has one | The tinted card is the kind and the switcher is the worker |

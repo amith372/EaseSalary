@@ -14,7 +14,7 @@ import { SpanOverflowNotes } from "@/components/SpanOverflow";
 import { ValueChip } from "@/components/ValueChip";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { WhyButton, WhyPanel } from "@/components/WhyDisclosure";
-import type { AlertCard } from "@/lib/alertsView";
+import type { FirstOf } from "@/lib/alertsView";
 import { dayLabel } from "@/lib/dateLabels";
 import {
   addDays,
@@ -70,8 +70,9 @@ import type { SpanIntent } from "@/components/MonthCalendar";
  * **What blocks a correct salary still leads the screen.** v4 draws no such
  * list; item 27 says the opening screen leads with it, so a strip of those
  * cards sits above the columns whenever there is one, and is not drawn at all
- * when there is none (the user, 2026-09-15). They are the blockages `/alerts`
- * lists, phrased once on the server, and each leads where its card there does.
+ * when there is none (the user, 2026-09-15). They are the first four blockages
+ * `/alerts` lists, phrased once on the server, each leading where its card
+ * there does; the rest are counted beside a link to the page.
  *
  * **Nothing reads a clock**: `today` is handed down by the route, so server and
  * browser agree on it.
@@ -128,7 +129,7 @@ export function HomeScreen({
 }: {
   household: WorkerMonths[];
   /** What stops a correct salary, for the whole household (`blockagesOf`). */
-  blockages: AlertCard[];
+  blockages: FirstOf;
   /** Today, read once on the server and handed down, so nothing here reads a
    * clock during a render (`CLAUDE.md`). */
   today: IsoDate;
@@ -263,13 +264,13 @@ export function HomeScreen({
   return (
     <>
       {/* What stops the month being calculated correctly, first (item 27). */}
-      {blockages.length > 0 ? (
+      {blockages.shown.length > 0 ? (
         <section aria-labelledby="home-blockers" className="flex flex-none flex-col gap-1.5">
           <h2 id="home-blockers" dir="auto" className="text-[15px] font-semibold text-ink-warm">
             {he.status.needsAttention}
           </h2>
-          <ul className="grid items-start gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {blockages.map((card) => (
+          <ul className="grid items-start gap-2.5 sm:grid-cols-2">
+            {blockages.shown.map((card) => (
               <li key={card.id} className="min-w-0">
                 <Card
                   radius="sm"
@@ -311,6 +312,20 @@ export function HomeScreen({
               </li>
             ))}
           </ul>
+          {blockages.more > 0 ? (
+            <p data-role="blockers-more" className="flex items-center gap-2 text-[14px]">
+              <Sentence said={he.alerts.more(blockages.more)} />
+              <span aria-hidden="true" className="text-ink-faint">
+                ·
+              </span>
+              <Link
+                href="/alerts"
+                className="font-medium text-forest hover:underline hover:underline-offset-4"
+              >
+                <span dir="auto">{he.header.bell.showAll}</span>
+              </Link>
+            </p>
+          ) : null}
         </section>
       ) : null}
 

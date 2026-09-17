@@ -200,6 +200,8 @@ Same stack. **The stage in progress.**
 - `/alerts`, with "not now", the reminder switches and the handled list — 2026-09-17.
 - The bell in the bar, and its panel for four warnings or fewer — 2026-09-17.
 - The home screen's blocker strip, on the `blockage` entries — 2026-09-17.
+- The strip and the bell's panel list four and count the rest — 2026-09-17.
+- The reminders pop-up names the blockages it has no switch for — 2026-09-17.
 
 **Two steps remain, in this order:**
 
@@ -210,14 +212,9 @@ Same stack. **The stage in progress.**
 
 Unfinished, carried by this stage:
 
-- **Waiting on the user:** whether the reminders pop-up becomes a list of the individual
-  warnings with a search, rather than the four kinds. Raised 2026-09-17 as a "maybe"; it
-  changes item 27, so it is asked before it is built.
 - The layout replays every worker's series on every request to draw the bell (once per
   request, shared with the page). Not measured; if the browser suite's flakiness grows, this
   is the first suspect.
-- The strip has no ceiling: the demo household raises seven blockages, which push the
-  calendar below the fold at 1280×720. Whether it caps and links to `/alerts` is the user's.
 - A month whose facts are incomplete, which item 27 names as a blockage, is not in
   `actionList` yet: nothing defines "incomplete" beyond what `blocksExport` already asks at
   export time.

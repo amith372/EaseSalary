@@ -67,8 +67,8 @@ export default async function HomePage() {
     }),
   );
 
-  // The strip reads the view `/alerts` and the bell read, so it lists exactly
-  // the blockages the page does.
+  // The strip reads the view `/alerts` and the bell read, so it lists the
+  // page's first blockages and counts the rest.
   const blockages = blockagesOf(await householdAlerts());
 
   return <HomeScreen household={household} blockages={blockages} today={today} />;
