@@ -74,7 +74,11 @@ is built except this one:
 
 ## What is still owed
 
-Carried forward from finished steps. None of these is a defect.
+Carried forward from finished steps. None of these is a defect. **The second list is
+settled: the user has chosen to leave each of those as it is, so it is not work and is
+not re-opened without her asking.** Stage 7 is done when the first list is empty.
+
+### Still to pay
 
 - **`דף העובד` draws six things the profile does not**: the `צריך לטפל` hero card and the
   months' status badges (the month's four states, which nothing sets yet), the seniority in
@@ -83,41 +87,19 @@ Carried forward from finished steps. None of these is a defect.
   `העובדות` likewise draws a status chip and a `משותף/ת עם` chip per card.
 - **`דף המשכורת` omits `להוסיף הערה לחודש`**, settled with the user on 2026-09-10: it needs a
   note on the month as a whole, and a note belongs to a mark or to a line the user added.
-- **`סיכום שנתי` carries no yearly total row.** Item 29 asks for "that year's months with
-  their totals", and a figure no criterion names is one nobody has checked. A line of code if
-  it is wanted.
-- **Four rest-day labels in the month template stay literal** — `C5`, `B23`, `F1` and `F3` —
-  because the user chose Part 3's nine and not the thirteen the template holds (2026-09-10).
-  So a Friday-resting worker's sheet says `ימי חמישי` in `A26` while `B23` above it still says
-  `ימי שישי`. Reopening it is an edit to Part 3 and hers to ask for.
 - **The sheet's identity line wording is unconfirmed.** `A4` prints `מספר דרכון: <number>`
   (`he.sheet.passportLine`); the template carries only `{{passport_line}}` and nothing states
   the words. `C2` (bank name and branch) and `A2` (employer of record) stay empty: no field
   holds either.
-- **An invited person with no account cannot confirm one**, because Supabase's built-in mail
-  reaches only the project's team. The user chose on 2026-09-15 to set up no custom SMTP and to
-  invite only people who already have an account; SMTP in the Supabase dashboard is what
-  reopens sign-up to anyone, and needs no code.
-- **Signing up from an invitation link is not driven by the suite**, for that same mail; the
-  link's screen and an existing account's acceptance are (`e2e/invitation.spec.ts`). The live
-  isolation check cannot ask that an unconfirmed address accepts nothing — it has no session
-  for one.
 - **A person in two households puts what is new into the first they joined** — a worker they
   create, a fetched rate. Shared workers appear beside their own and are written back to their
   own household.
-- **The seeded stores are still how the browser suite runs.** A request carrying the
-  `household` cookie gets an in-memory household outside production (`src/lib/store.ts`), which
-  is what keeps fourteen spec files working. There are three seeds now: the demo, the known
-  case, and `empty`, which is the state a new account is in and the only one the add-worker
-  flow can start from.
 - **A chosen holiday can be moved freely, and the user wants it to be a contract amendment.**
   The regulator's position is that the list is set at the start of the employment and does not
   change month to month; employer and worker may still agree to amend it. So the move becomes an
   explicit profile-level action with an effective date, regenerating only months after it and
   never a closed one, with the change kept as an audit trail. Today `moveHoliday` rewrites the
   date in place with no record. Asked for by the user on 2026-09-12 and not yet built.
-- **`SalaryRepository` has no `deleteWorker`**, because nothing in the application removes one.
-  The live check tidies up through the client instead.
 - **The layout replays every worker's series on every request to draw the bell** (once per
   request, shared with the page). Not measured; if the browser suite's flakiness grows, this is
   the first suspect.
@@ -131,6 +113,30 @@ Carried forward from finished steps. None of these is a defect.
   `before-export`, `month-screen` and `payslip` among them — and each passes when its own file
   is run alone. Measured on 2026-09-12 against a tree with the sign-in step stashed, so the cause is
   the dev server compiling routes under load and not the proxy.
+
+### Settled open, by the user's own choice
+
+- **`סיכום שנתי` carries no yearly total row.** Item 29 asks for "that year's months with
+  their totals", and a figure no criterion names is one nobody has checked. The user chose on 2026-09-17 to leave it out.
+- **Four rest-day labels in the month template stay literal** — `C5`, `B23`, `F1` and `F3` —
+  because the user chose Part 3's nine and not the thirteen the template holds (2026-09-10).
+  So a Friday-resting worker's sheet says `ימי חמישי` in `A26` while `B23` above it still says
+  `ימי שישי`. Reopening it is an edit to Part 3 and hers to ask for.
+- **An invited person with no account cannot confirm one**, because Supabase's built-in mail
+  reaches only the project's team. The user chose on 2026-09-15 to set up no custom SMTP and to
+  invite only people who already have an account; SMTP in the Supabase dashboard is what
+  reopens sign-up to anyone, and needs no code.
+- **Signing up from an invitation link is not driven by the suite**, for that same mail; the
+  link's screen and an existing account's acceptance are (`e2e/invitation.spec.ts`). The live
+  isolation check cannot ask that an unconfirmed address accepts nothing — it has no session
+  for one.
+- **The seeded stores are still how the browser suite runs.** A request carrying the
+  `household` cookie gets an in-memory household outside production (`src/lib/store.ts`), which
+  is what keeps fourteen spec files working. There are three seeds now: the demo, the known
+  case, and `empty`, which is the state a new account is in and the only one the add-worker
+  flow can start from.
+- **`SalaryRepository` has no `deleteWorker`**, because nothing in the application removes one.
+  The live check tidies up through the client instead.
 
 ## Stage 0 — Repo, scaffold, design system · **done**
 
@@ -190,11 +196,10 @@ quarter and an account with nothing outstanding driven through the browser.
 
 ## Stage 7 — Close what finished stages still owe
 
-Every entry under "What is still owed" is paid, or is put to the user and settled, here. The
-list is that section, and it is not copied into this stage.
+Every entry under "Still to pay" is paid, or is put to the user and moves to the list below
+it, here. The list is that section, and it is not copied into this stage.
 
-**Done when** "What is still owed" is empty, or holds only what the user has chosen to leave
-open.
+**Done when** "Still to pay" is empty.
 
 - **Waiting on the user:** why the month sheet carries rows 32–38 (`נתוני דיווח נדרשים`, the
   six Wage Protection Act figures `writeReporting` fills in column C). Answered on 2026-09-17;
