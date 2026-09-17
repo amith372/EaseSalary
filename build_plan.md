@@ -194,7 +194,7 @@ Same stack. **The stage in progress.**
 
 - The action list as an engine function (`src/lib/engine/actionList.ts`) — 2026-09-17.
 - `/alerts`, with "not now", the reminder switches and the handled list — 2026-09-17.
-- The bell in the bar, and its panel for four warnings or fewer — 2026-09-17.
+- The bell in the bar, and its panel — 2026-09-17.
 - The home screen's blocker strip, on the `blockage` entries — 2026-09-17.
 - The strip and the bell's panel list four and count the rest — 2026-09-17.
 - The reminders pop-up names the blockages it has no switch for — 2026-09-17.
@@ -202,8 +202,13 @@ Same stack. **The stage in progress.**
 
 **One step remains:**
 
-- **The national-insurance tick**, with the months it covers. A quarter leaves the list when a
-  recorded payment's `coversMonths` includes its last month.
+- **The national-insurance quarter, driven end to end.** Nothing new to build: the payment form
+  already offers the quarter (`offeredPeriodFor`), and `actionList` already drops a quarter a
+  payment covers. What is missing is the browser test: on `/payments`, for the test worker,
+  record national insurance covering April–June 2026 (the seed covers only January–March), and
+  see that quarter's card leave `/alerts` and the home strip. Then check the done-when below;
+  no seed has nothing outstanding, so it needs one, or a household whose blockers the test
+  clears.
 
 Unfinished, carried by this stage:
 
