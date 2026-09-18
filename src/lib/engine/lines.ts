@@ -37,7 +37,7 @@ export const lineKeys = {
  * monthly rate, never 26 days at it. Writing a draft this way is what keeps the
  * invariant true by construction rather than by everyone remembering it — and
  * keeping the draft and its rounding in one file is what keeps it true across
- * the modules that build lines, which since Step 7 is more than one.
+ * the modules that build lines, of which there are several.
  *
  * **The precision rule.** A rate carries its fraction and is never rounded; a
  * line amount is integer agorot, rounded exactly once with `Math.round` at the

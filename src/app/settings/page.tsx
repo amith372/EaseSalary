@@ -19,9 +19,8 @@ import { supabaseOnServer } from "@/lib/supabase/server";
 /**
  * `/settings` — `EaseSalary - הגדרות`: the terms of the employment, set once.
  *
- * **Every term is changed here and nowhere else** (the user, 2026-09-13). The
- * worker's page changed them from 2026-09-09 while this route did not exist;
- * they moved here when it did, and the page links to them.
+ * **Every term is changed here and nowhere else**; the worker's page links to
+ * them.
  *
  * **Both workers are prepared, not only the one on screen**, exactly as
  * `/payments` and `/settings/holidays` do it: the switcher lives in the shell

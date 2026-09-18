@@ -5,7 +5,7 @@ import type { HolidayList, HolidaySource } from "@/lib/holidayLists";
 
 /**
  * One source's list for one year, whichever kind of source it is (specs.md
- * item 10, decided with the user on 2026-09-09).
+ * item 10).
  *
  * **The two kinds are one choice to the user and must be one call to a
  * caller.** A country's list is one page per year and a religion's is one page

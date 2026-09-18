@@ -185,14 +185,13 @@ interface SickDay {
  * even where most of it falls outside the month, because the position of a day
  * inside this month depends on how many days of the spell came before it. */
 function sickDaysOf(spans: ClosedSpan[], restDay: RestDay): SickDay[] {
-  // **A holiday inside a spell is a holiday and not a sick day** (item 10,
-  // reversed with the user on 2026-09-12): it pays the ordinary salary and
-  // draws nothing from the sick balance, because charging it to the sick quota
-  // would spend a day of illness on a day she was not going to be working
-  // anyway. It is dropped *after* the numbering rather than before it, because
-  // the spell is an unbroken run of calendar days (item 8) and the tier a later
-  // day falls in is counted over that run — removing it first would shift every
-  // day after it into a cheaper tier.
+  // **A holiday inside a spell is a holiday and not a sick day** (item 10): it
+  // pays the ordinary salary and draws nothing from the sick balance, because
+  // charging it to the sick quota would spend a day of illness on a day she was
+  // not going to be working anyway. It is dropped *after* the numbering rather
+  // than before it, because the spell is an unbroken run of calendar days (item
+  // 8) and the tier a later day falls in is counted over that run — removing it
+  // first would shift every day after it into a cheaper tier.
   const holidays = holidayDatesCounted(spans, restDay);
   return spellsOf(spans, restDay).flatMap((spell) =>
     eachDate(spell.from, spell.to)

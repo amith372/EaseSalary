@@ -44,10 +44,8 @@ import type {
  */
 
 /**
- * What a sweep hands up. It **is** `MarkIntent` and not a shape beside it: the
- * two were written twice and identically until the picker gained a part and a
- * note, at which point one of them would have gone on carrying three fields
- * while the other carried five.
+ * What a sweep hands up. It **is** `MarkIntent` and not a shape beside it: two
+ * shapes would drift the first time the picker gained a field.
  */
 export type SpanIntent = MarkIntent;
 
@@ -104,8 +102,8 @@ interface MonthCalendarProps {
  * **The three kinds the user may mark — and a holiday is not one of them**
  * (specs.md item 9). The year's holidays are chosen in advance from the
  * country's candidate list, arrive on the month already drawn, and the only
- * thing recorded about one is whether she worked it. `MarkKind` no longer
- * contains `"holiday"`, so this list cannot regrow it by accident.
+ * thing recorded about one is whether she worked it. `MarkKind` does not
+ * contain `"holiday"`, so this list cannot grow it by accident.
  */
 const pickerKinds: MarkKind[] = ["vacation", "sick", "freeRestDay"];
 
@@ -214,9 +212,8 @@ function holidayStateOf(
  * including an unmarked rest day — so there is no entry for the weekly rest day
  * and no separate fill for it. The holiday takes three, because its weights
  * are the whole of what the month records about one and a month read back later
- * has to be tellable apart at a glance (specs.md item 9). Three of them since
- * 2026-09-12: a holiday nobody has answered for is its own state and not a
- * quiet no.
+ * has to be tellable apart at a glance (specs.md item 9). A holiday nobody has
+ * answered for is its own state and not a quiet no.
  *
  * Built per render rather than held as a module constant, because one entry
  * names her own rest day (item 5).
@@ -302,7 +299,7 @@ export function MonthCalendar({
   const firstChip = useRef<HTMLButtonElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   // The picker's second row — part of a day and a note — starts folded, so the
-  // decision the picker asks first is only the kind (the user, 2026-09-15).
+  // decision the picker asks first is only the kind.
   const [moreOpen, setMoreOpen] = useState(false);
 
   // A new edit request opens the picker on its day. Adjusted while rendering,

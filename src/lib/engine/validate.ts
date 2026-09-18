@@ -29,7 +29,7 @@ import type { IsoDate, SpanKind, YearMonth } from "@/lib/types";
  *
  * `src/lib/spans.ts` stops what it can at the calendar: a mark swept over a day
  * that already carries one comes back as a skip rather than a second span. But
- * the calendar is one caller and the repository in Stage 3 is another, so the
+ * the calendar is one caller and the repository is another, so the
  * engine refuses the facts if such a pair reaches it anyway (specs.md Part 4).
  * A month that cannot be calculated correctly is refused with a reason and
  * never calculated wrongly in silence.
@@ -183,9 +183,9 @@ function datesRecordedTwice(
   restDay: RestDay,
 ): Map<IsoDate, SpanKind> {
   // A holiday on her weekly rest day is not an entry on that date at all (item
-  // 9, 2026-09-12): the day is the rest day it is, so a free rest day marked on
-  // it is the only thing recorded there. Without this the pair Part 4 no longer
-  // refuses would be refused anyway, here, as two entries on one date.
+  // 9): the day is the rest day it is, so a free rest day marked on
+  // it is the only thing recorded there. Without this the pair Part 4 does not
+  // refuse would be refused anyway, here, as two entries on one date.
   const counted = holidayDatesCounted(spans, restDay);
   const seen = new Map<IsoDate, SpanKind>();
   const twice = new Map<IsoDate, SpanKind>();
@@ -217,13 +217,11 @@ export function validateMonth(
   // disagree with itself (specs.md item 8).
   const { spans } = closeMonth(facts, context.today);
 
-  // **A holiday on her weekly rest day is no longer refused** (item 9, settled
-  // with the user on 2026-09-12). It was: a paid holiday landing on a free rest
-  // day was Part 4's deliberately invalid case, because the day would have been
-  // paid at both rates. It cannot be now — such a day is not a holiday at all,
-  // it is paid once as the rest day it is, and it spends nothing from the
-  // year's nine. A calendar is not a mistake, so what was a refusal is an
-  // explanation on the picker, where the date is chosen.
+  // **A holiday on her weekly rest day is not refused** (item 9). Such a day is
+  // not a holiday at all: it is paid once as the rest day it is, and it spends
+  // nothing from the year's nine, so it cannot be paid at both rates. A
+  // calendar is not a mistake, so the picker explains it where the date is
+  // chosen.
   const twice = [...datesRecordedTwice(spans, facts.terms.restDay)];
   if (twice.length > 0) {
     refusals.push({
@@ -350,8 +348,8 @@ export class InvalidMonthError extends Error {
   /**
    * The month that was refused.
    *
-   * Carried because a refusal is no longer always raised by a caller that knew
-   * which month it asked for: `calculateSeries` replays a worker's whole
+   * Carried because a refusal is not always raised by a caller that knew which
+   * month it asked for: `calculateSeries` replays a worker's whole
    * history, and one refused month stops the replay. Without the month on the
    * error the screen catching it can say what is wrong but not where, which for
    * twenty years of months is the same as saying nothing.

@@ -17,10 +17,10 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * reads a clock.
  *
  * **One day and a range of days are worded the same way**, "26 באוגוסט" and
- * "16–20 באוגוסט", from one string in the translations file. `dayLabel` wrote
- * the bare "26 אוגוסט" until the user settled it: the preposition is correct
- * Hebrew and the bare form was not, and a single day carrying different wording
- * from a range of one day is the kind of difference nobody can explain later.
+ * "16–20 באוגוסט", from one string in the translations file. The preposition is
+ * correct Hebrew and the bare "26 אוגוסט" is not, and a single day carrying
+ * different wording from a range of one day is the kind of difference nobody
+ * can explain later.
  */
 
 /** "אוגוסט 2026" — the calendar's own heading. */

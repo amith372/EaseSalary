@@ -42,8 +42,8 @@ import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
  *
  * Every method is asynchronous, including the in-memory one's. A synchronous
  * interface cannot be implemented over a network round trip, so making it
- * asynchronous here is what keeps stage 3 a substitution rather than a rewrite
- * of every caller.
+ * asynchronous here is what lets Postgres substitute for the in-memory store
+ * without a rewrite of every caller.
  */
 
 /**
@@ -59,7 +59,7 @@ import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
 export interface WorkerProfile extends Worker, WorkerTerms {
   /**
    * The list her year's holidays are chosen from, where it is not her own
-   * country's (specs.md item 10, decided with the user on 2026-09-09).
+   * country's (specs.md item 10).
    *
    * **Absent is her country's list**, which is what item 10 makes the default:
    * the candidate list is "her country of origin's, with another country's

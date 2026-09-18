@@ -44,7 +44,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * the source of the figure.
  *
  * **Above year ten only the general article answers**, and it is what this
- * follows, settled with the user on 2026-09-09: the caregiver page stops at the
+ * follows: the caregiver page stops at the
  * tenth year, and stopping the ladder there would quietly underpay a worker of
  * eleven years by a day. The tiers are 8 days for years 11 to 15, 9 for 16 to
  * 19, and 10 from the twentieth on.

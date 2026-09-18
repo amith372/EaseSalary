@@ -10,16 +10,14 @@ import { he } from "@/lib/i18n/he";
 import { supabaseInBrowser } from "@/lib/supabase/client";
 
 /**
- * The first screen the application has (build_plan.md stage 3, the sign-in
- * step).
+ * The first screen the application has.
  *
  * **It draws no nav and sits outside the shell**: a person who can see the bar
  * is already signed in, so there is nothing above this screen to navigate with.
  *
- * **It has no artboard, and that is a decision rather than an omission**,
- * settled with the user on 2026-09-11. One wordmark, two fields and a button,
- * built from the tokens in `globals.css` — the same palette, type scale and
- * controls every other screen uses.
+ * **It has no artboard, and that is a decision rather than an omission**. One
+ * wordmark, two fields and a button, built from the tokens in `globals.css` —
+ * the same palette, type scale and controls every other screen uses.
  *
  * **The duplicate address is refused by the database and not here.** Signing up
  * with a `+` suffix beside an address that already has an account fails on the
@@ -143,7 +141,7 @@ export function SignInScreen({
        * obfuscated user carrying **no identities** rather than with an error —
        * deliberately, so that the form cannot be used to ask who has an account
        * here. Taken at face value it tells the person their mail is on the way
-       * when nothing was created, which is what the user met on 2026-09-12.
+       * when nothing was created.
        *
        * It is read as "already taken" rather than left obfuscated because this
        * is a household's own application and not a public directory, and

@@ -6,13 +6,13 @@ import { thirdPartyLineKey } from "@/lib/engine/thirdParty";
  * the template does not hold in advance go.
  *
  * **The filler owns this map and there is no sheet model between it and the
- * template** (`build_plan.md` stage 2): a third representation would be a third
+ * template**: a third representation would be a third
  * thing to keep in step, and the property that matters — the preview and the
  * file saying the same thing — is carried by their sharing one engine result
  * rather than by a shape they both convert into.
  *
  * Read out of `data/templates/template_month_standard.xlsx` -> `תבנית` cell by
- * cell on 2026-09-10. Every row number here is that template's, and the whole
+ * cell. Every row number here is that template's, and the whole
  * point of naming them in one file is that a template whose rows move is a
  * change to this file and to nothing else.
  */
@@ -23,7 +23,7 @@ export const LAST_LINE_ROW = 22;
 
 /**
  * The vacation row — **units only, and its money cells left empty** (specs.md
- * item 7, and `build_plan.md`'s reading of the family's own file).
+ * item 7, and the family's own file).
  *
  * The same workbook fills this row three different ways and two of them reduce
  * the base and pay the day back; this application never reduces the base, so
@@ -75,7 +75,7 @@ export const TEMPLATE_ROWS: Readonly<Record<string, number>> = {
 };
 
 /**
- * The income tax's own row — settled with the user on 2026-09-10.
+ * The income tax's own row.
  *
  * Part 5 says the tax "sits in the closing block and not in column E", which is
  * a statement about `MonthResult.closing` and not about a cell: on the sheet the

@@ -81,7 +81,7 @@ export function isAllowedGender(value: unknown): value is Gender {
 
 /**
  * An income-tax setting the browser sent, or why it cannot be stored (specs.md
- * item 17, settled with the user on 2026-09-11).
+ * item 17).
  *
  * **The server decides and the form never does** (Part 3), which matters more
  * here than on the other terms: this one carries a free number, and a rate that

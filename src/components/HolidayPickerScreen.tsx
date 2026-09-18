@@ -49,11 +49,11 @@ import type { IsoDate, Worker } from "@/lib/types";
  *
  * 1. The chips offer **the four faiths beside the countries**. The artboard
  *    draws countries alone because item 10 said a candidate list was a
- *    country's; the user settled on 2026-09-09 that it is a country's *or* a
- *    faith's, and that the two are one choice with two kinds of answer.
+ *    country's; it is a country's *or* a faith's, and the two are one choice
+ *    with two kinds of answer.
  * 2. **Nothing is saved by a button.** Each tick, part and move writes on its
  *    own, as the calendar and the profile already do, so "לשמור את הבחירה" is a
- *    way back rather than a save — settled with the user on 2026-09-09.
+ *    way back rather than a save.
  * 3. The quota bar has **as many slots as the entitlement has days**, not nine.
  *    Nine is the full year's; a worker employed from April has 6.75, and nine
  *    slots would draw her a quota she does not have.

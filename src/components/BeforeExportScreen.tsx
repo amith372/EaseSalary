@@ -51,7 +51,7 @@ import type { IsoDate, Worker, YearMonth } from "@/lib/types";
  * exporting *begins* with them, so they are asked again before every export;
  * what reaches the server is the confirmations they lead to. A question
  * answered against what the month recorded raises a warning and never a
- * refusal — settled with the user on 2026-09-09: she is the one who knows what
+ * refusal: she is the one who knows what
  * happened, and what item 18 buys is that she was asked.
  *
  * **Two things do block, and each says so in `specs.md` itself.** A month that
@@ -530,9 +530,8 @@ function MonthConfirmation({
         <div className="flex flex-wrap items-center gap-x-4.5 gap-y-3">
           {/* Item 2's two versions, as two buttons of equal weight: neither
               artboard draws a chooser, and the difference between the files is
-              one the user has to be able to see before she picks (settled
-              2026-09-10). Both confirm the month first, which is what stage 5's
-              step 7 settled the export button does. */}
+              one the user has to be able to see before she picks. Both confirm
+              the month first, as the export button does. */}
           {[false, true].map((withNotes) => (
             <button
               key={withNotes ? "notes" : "plain"}
@@ -844,7 +843,7 @@ function knownOf(question: ExportQuestion, restDay: RestDay): string {
  * **A lone advance is not listed, because the sentence above it is already the
  * amount.** `נרשם פירעון של 1,000 ₪` with `1,000 ₪` printed underneath is the
  * same figure twice, and a screen that says a thing twice reads as a screen
- * that has counted it twice — seen on the built screen on 2026-09-10. Two
+ * that has counted it twice. Two
  * advances are listed: the sentence then carries their *sum*, and how it was
  * made up is what the list adds. A payment to a third party is always listed,
  * because its sentence carries neither the amount nor what it was for.
@@ -859,7 +858,7 @@ function shownDetailsOf(question: ExportQuestion): ExportQuestionDetail[] {
 /**
  * One recorded item in words — the dates off the calendar and the amounts off
  * the payments screen, which is what makes the question a confirmation of the
- * month rather than of a total (specs.md item 18, settled 2026-09-10).
+ * month rather than of a total (specs.md item 18).
  *
  * **The date is worded by `dateLabels`** and never here: a range inside a month
  * reads "16–20 באוגוסט" and a range across one names both months, and that is

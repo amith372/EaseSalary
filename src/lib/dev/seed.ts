@@ -17,7 +17,7 @@ import type { YearMonth } from "@/lib/types";
  * departed from an ordinary month in each.
  *
  * **The two answer two different questions, and that division is the whole
- * shape of this file** (settled with the user on 2026-09-11).
+ * shape of this file**.
  *
  * **The first worker is Hanna, and she is not a demo — she is the family's own
  * workbooks.** Every month of hers is assembled from a tab of
@@ -53,8 +53,7 @@ import type { YearMonth } from "@/lib/types";
  * days from the balance for as long as nobody closes it (item 8), so a seed
  * carrying one drifts with the real clock and eventually exhausts a balance
  * that was fine on the day it was written — a store that begins failing on a
- * date nobody chose. The open spell is drawn on the home screen's fixtures, and
- * the gesture that opens one is a step of stage 4's own.
+ * date nobody chose. The gesture that opens one is the calendar's.
  */
 
 /** The months the store opens with: 2026, whose workbook is the canonical
@@ -66,8 +65,7 @@ const SEEDED_MONTHS: YearMonth[] = Array.from({ length: 9 }, (_, index) => ({
 
 /**
  * **Hanna, exactly as the family's own workbooks describe her** — so the demo
- * can be held against `שכר_חודשי_להאנה2025.xlsx` and `…2026.xlsx` tab by tab
- * (asked for by the user on 2026-09-11).
+ * can be held against `שכר_חודשי_להאנה2025.xlsx` and `…2026.xlsx` tab by tab.
  *
  * Every field below is read off those files and none is invented: `B3` gives
  * her name, `C4` gives `התחלת עבודה: 1.4.2024`, `D7` gives the ₪100 rest-eve
@@ -98,7 +96,7 @@ const firstWorker: WorkerProfile = {
   // replay those tabs: a demo whose medical-insurance row read "[חברת הביטוח]"
   // could not be held against the sheet it is drawn from. It is the insurer and
   // the health fund and no household's own detail — the template is where such
-  // a name may never live (Part 3), and it no longer does.
+  // a name may never live (Part 3).
   insurer: "קופ\"ח כללית במסגרת חברת הראל",
   // `B3` of every tab. The workbook's own figures are already pseudonymous —
   // the passport reads `P2222222B` and the account `11111111` — so this is the
@@ -142,9 +140,8 @@ const firstWorker: WorkerProfile = {
 };
 
 /**
- * **The second worker is the one the suite works on** (settled with the user on
- * 2026-09-11: the worker from India is for testing, the worker from the
- * Philippines carries the workbooks).
+ * **The second worker is the one the suite works on**: the worker from India is
+ * for testing, the worker from the Philippines carries the workbooks.
  *
  * She therefore carries the *ordinary* terms — Saturday, ₪100 a rest-eve, the
  * tax worked out automatically — because those are the terms every browser test
@@ -188,9 +185,9 @@ const secondWorker: WorkerProfile = {
   openingPosition: { vacationDays: 9, sickDays: 24, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: { year: 2025, month: 7 }, advances: [] },
   // Her permit date is the first worker's, and deliberately: the employment
   // permit belongs to the *employer* and a household holds one of them
-  // (item 28). Until stage 3 gives the household a record of its own, each
-  // worker carries a copy of it and the two are seeded equal so the screen
-  // shows what the household actually has.
+  // (item 28). The in-memory store has no household record, so each worker
+  // carries a copy of it and the two are seeded equal so the screen shows what
+  // the household actually has.
   documents: {
     employmentPermitExpiry: "2026-11-30",
     workVisaExpiry: "2026-10-15",
@@ -220,9 +217,9 @@ const devWorkers: WorkerProfile[] = [firstWorker, secondWorker];
  * ordinary.
  *
  * The holidays are seeded rather than marked: criterion 9 says the user never
- * marks a day as a holiday, and criterion 10's picker that chooses the year's
- * dates is stage 5's. Until it exists the dates arrive from here, and the month
- * records the one fact about each of them — whether she worked it.
+ * marks a day as a holiday. The dates arrive from here in place of what
+ * criterion 10's picker chooses, and the month records the one fact about each
+ * of them — whether she worked it.
  */
 /**
  * The months of the workbooks the demo replays: `חודש 5.25` through
@@ -309,9 +306,9 @@ function monthsFor(
   return SEEDED_MONTHS.map((month) => ({
     month,
     // **The wage in force during the month, and not one figure stamped across
-    // the year** (specs.md item 4). Stamping one left every month from April
-    // 2026 onward valued below the legal minimum, which is what the user found
-    // on 2026-09-11 and what `belowMinimumWageWarning` now says out loud.
+    // the year** (specs.md item 4). Stamping one would leave every month from
+    // April 2026 onward valued below the legal minimum, which is what
+    // `belowMinimumWageWarning` says out loud.
     confirmedWage: wageFor(profile, month),
     // The terms the month was calculated with, copied off the profile at the
     // moment it was confirmed and read from here afterwards (specs.md Part 3).
@@ -320,12 +317,11 @@ function monthsFor(
     thirdPartyPayments: [],
     userLines: [],
     // **No income tax on the record, which is not the same as a zero on it.**
-    // Since 2026-09-10 the engine works the figure out from the month's gross
-    // and a field here is the amount *confirmed* before an export, reproduced
-    // instead of recalculated (specs.md item 17, Part 3). A seeded zero would
-    // therefore be a demo in which every month had already been confirmed to
-    // withhold nothing, and the calculation would never run on any screen —
-    // which is exactly what it did until a browser was pointed at it.
+    // The engine works the figure out from the month's gross, and a field here
+    // is the amount *confirmed* before an export, reproduced instead of
+    // recalculated (specs.md item 17, Part 3). A seeded zero would therefore be
+    // a demo in which every month had already been confirmed to withhold
+    // nothing, and the calculation would never run on any screen.
     overrides: {},
     ...extras[month.month],
   }));

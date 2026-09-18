@@ -42,14 +42,10 @@ import {
 import type { RestDay } from "@/lib/dates";
 
 /**
- * Everything the worker's profile can change, and the only way it changes it
- * (`build_plan.md` stage 4, step 9).
- *
- * **Four things, and each of them is something already built that was waiting
- * on this screen**: the weekly rest day, which step 7c generalised and could
- * not check; the standing lines, which are the one case that makes the
- * override/edit division reachable (item 20); the opening position, which
- * every balance in every month is replayed from (item 6); and the three
+ * Everything the worker's profile can change, and the only way it changes it:
+ * the terms of the employment, the standing lines, which are the one case that
+ * makes the override/edit division reachable (item 20), the opening position,
+ * which every balance in every month is replayed from (item 6), and the three
  * documents with their expiry dates (item 28).
  *
  * **The four identifying numbers go through `setIdentifyingNumber`** (items 22,
@@ -235,8 +231,7 @@ export async function setGender(
 }
 
 /**
- * How this worker's income tax is arrived at (specs.md item 17, settled with
- * the user on 2026-09-11).
+ * How this worker's income tax is arrived at (specs.md item 17).
  *
  * **It is a term of the employment and lives on the profile**, so a family
  * whose caregiver's tax is settled elsewhere says so once instead of typing a
@@ -307,8 +302,7 @@ export async function setInsurer(
 }
 
 /**
- * A change of her base salary, from a month the family names (specs.md item 3,
- * decided with the user on 2026-09-13).
+ * A change of her base salary, from a month the family names (specs.md item 3).
  *
  * **The months before it keep the salary they were calculated with**, and the
  * months from it on carry the new one — a raise is agreed from some month and
@@ -587,8 +581,7 @@ export async function setDocuments(
 }
 
 /**
- * Create the household's worker — the last step of `הוספת עובד`
- * (`build_plan.md` stage 3).
+ * Create the household's worker — the last step of `הוספת עובד`.
  *
  * **Nothing is written until here**, which is what the artboard's "לצאת בלי
  * לשמור" promises and what its fourth step's "שמרנו את הפרטים" reports. Three

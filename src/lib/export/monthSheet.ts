@@ -65,10 +65,10 @@ export interface MonthSheetIdentity {
    * Who the medical-insurance premium is paid through, in the family's own
    * words, or "" where the profile has none (specs.md item 16).
    *
-   * Until 2026-09-12 `B10` named one family's agency, insurer and health fund
-   * in the template's own binary, which Part 3 forbids and which no diff could
-   * show. It is a placeholder now like every other detail, and the sentence
-   * introducing it stays in the template, where the wording belongs.
+   * `B10` is a placeholder like every other detail: a family's agency, insurer
+   * and health fund written into the template's own binary is what Part 3
+   * forbids, and no diff could show it. The sentence introducing it stays in
+   * the template, where the wording belongs.
    */
   insurer: string;
   /**
@@ -190,13 +190,13 @@ function blockLinesOf(result: MonthResult) {
 /**
  * The row the `ה` sentence belongs to — the first repaid advance.
  *
- * Settled with the user on 2026-09-10 against the committed files: the template
- * designs exactly one row for this block and labels it `ה. הפחתה מקדמה`, and
- * `template_month_advance_given.xlsx` is the same layout with one extra row
- * carrying no letter, no label and no styling at all. So the template's row
- * keeps its sentence and holds the repaid advance, and every other row of the
- * block is an unlettered copy of it. A month with no repaid advance leaves the
- * row labelled and empty, which is what rows 11 and 20 already do.
+ * Read off the committed files: the template designs exactly one row for this
+ * block and labels it `ה. הפחתה מקדמה`, and `template_month_advance_given.xlsx`
+ * is the same layout with one extra row carrying no letter, no label and no
+ * styling at all. So the template's row keeps its sentence and holds the repaid
+ * advance, and every other row of the block is an unlettered copy of it. A
+ * month with no repaid advance leaves the row labelled and empty, which is what
+ * rows 11 and 20 already do.
  */
 function letteredIndexOf(rows: ReturnType<typeof blockLinesOf>): number {
   // `advance.<number>.repaid`, which `advanceKey` builds and this reads rather
@@ -220,10 +220,9 @@ export async function fillMonthSheet(
   const layout = layoutOf(added.length, block.length);
 
   // The one merge in the template is the `ד` label's, and `duplicateRow` does
-  // not move a merge with the rows it shifts — checked against exceljs on
-  // 2026-09-10. Unmerged before the sheet grows and merged again at the row the
-  // label ended up on, or the label spans four cells of the wrong row and the
-  // sheet reads as damaged.
+  // not move a merge with the rows it shifts. Unmerged before the sheet grows
+  // and merged again at the row the label ended up on, or the label spans four
+  // cells of the wrong row and the sheet reads as damaged.
   sheet.unMergeCells("A26:D26");
 
   // A row the code inserts is a copy of a row the template already designed
@@ -476,8 +475,8 @@ function writeBlock(
  * is not a second calculation path but the same figure written where the format
  * keeps one. A formula cell in an `.xlsx` holds the formula *and* the value it
  * last evaluated to; exceljs writes only the formula, so until something
- * computes the sheet there is nothing in the cell — and on 2026-09-11 a family
- * opened a month whose rows were all present and whose four totals were blank.
+ * computes the sheet there is nothing in the cell, and a month opens with all
+ * its rows present and its four totals blank.
  * `prepareForExcel` asks Excel to recompute on open, and this is what every
  * other reader sees: a preview pane, a print, a viewer that evaluates nothing.
  *

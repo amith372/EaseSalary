@@ -10,9 +10,9 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F1. F26–F28 are not approved: each is grilled with the user
+- **Last done:** step 8, F2. F26–F28 are not approved: each is grilled with the user
   before any code.
-- **Next:** step 8 — execute the Fix list from the first unchecked item (F2), one commit
+- **Next:** step 8 — execute the Fix list from the first unchecked item (F3), one commit
   each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25.
 - **Waiting on the user:** the questions under "Needs the user". Three are reproduced money
   errors: two in sickness (run 2), and the household's rates never reaching a month (run 5).
@@ -50,7 +50,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F2 done |
 
 ### How each step is run
 
@@ -449,9 +449,9 @@ a single line of them changed, imports aside. **Browser** means the full browser
 run had already dropped.
 
 **A. Deletions**
-- [x] 2026-09-18 F1 — false and misplaced comments — R1.20, R1.21, R2.6, R2.8 — check: the diff touches
+- [x] 2026-09-18 `e9dc38a` F1 — false and misplaced comments — R1.20, R1.21, R2.6, R2.8 — check: the diff touches
   only comment lines.
-- [ ] F2 — history comments, including the year-bound figures at `incomeTax.ts:109` and the
+- [x] 2026-09-18 F2 — history comments, including the year-bound figures at `incomeTax.ts:109` and the
   `build_plan.md` stage refs — R1.22, R2.7, R2.22 — check: comment lines only.
 - [ ] F3 — dead and pass-through code: `SheetLayout.addedLines`/`blockRows`/`taxRow`,
   `days()`, `export { lineKeys }` (the 12 importers read `lines.ts`), `SpanIntent`, `const

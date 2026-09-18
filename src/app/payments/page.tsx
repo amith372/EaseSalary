@@ -33,7 +33,7 @@ import type { MonthResult } from "@/lib/types";
  * route asks the calculation for.
  *
  * **It is still not a second calculation path.** What the month came to is drawn
- * on `/month` and nothing here totals anything: the lines are handed down so the
+ * on `/` and nothing here totals anything: the lines are handed down so the
  * control can list the rows and their figures, and every amount on this screen
  * that the user did not type came out of the same `calculateSeries` the month
  * screen and the export run (Part 3).

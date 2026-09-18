@@ -7,7 +7,7 @@ import { getRepository } from "@/lib/store";
 import { readToday } from "@/lib/requestToday";
 
 /**
- * `EaseSalary - הוספת עובד` (`build_plan.md` stage 3).
+ * `EaseSalary - הוספת עובד`.
  *
  * **It is a static segment beside `/workers/[id]`**, and Next resolves a
  * literal before a parameter, so `new` is this screen and never a worker whose

@@ -48,8 +48,8 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  *    the base. `specs.md` item 7 rejects that style outright; they are used in
  *    `workbook-vacation.test.ts` as the shape the engine must not produce.
  *  - **`חודש  3.25` and `חודש  3.26`**, which carry a recuperation payment in
- *    column G. The engine emits that line from `recuperation.ts` since stage
- *    5's step 6, and the **day counts** those two tabs pay — five and six — are
+ *    column G. The engine emits that line from `recuperation.ts`, and the
+ *    **day counts** those two tabs pay — five and six — are
  *    what `recuperation.test.ts` checks itself against.
  *
  *    **The rate the family valued them at is ₪418 a day**, in the notes
@@ -120,10 +120,9 @@ interface WorkbookMonth {
    * paid it and on what day, in their own words. The day is read out of that
    * sentence, because it is the only place the workbook records it.
    *
-   * **`I` is the authority here and `H` is not**, which is what the reading of
-   * 2026-09-12 settled: `חודש  6.25` puts its premium in `C10` with `H10`
-   * empty, and a scan down column `H` therefore missed a payment the notes
-   * column states twice. Go looking for these in `I`.
+   * **`I` is the authority here and `H` is not**: `חודש  6.25` puts its premium
+   * in `C10` with `H10` empty, and a scan down column `H` therefore misses a
+   * payment the notes column states twice. Go looking for these in `I`.
    */
   thirdPartyPayments?: ThirdPartyPayment[];
 }
@@ -374,7 +373,7 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     // reach the same transfer and lose which advance owes what.
     //
     // **The workbook states two different repayment schedules for advance 4,
-    // and the later one is followed here** (read 2026-09-12). `B29` of this tab
+    // and the later one is followed here**. `B29` of this tab
     // says five instalments of ₪1,000 running 3/26 to 7/26; `B28` of
     // `חודש  3.26` says ₪1,000 in 3/26, ₪2,000 in 4/26, then ₪1,000 in each of
     // 5/26 and 6/26. The tabs themselves settle it — `E29`/`E30` of 4.26, 5.26

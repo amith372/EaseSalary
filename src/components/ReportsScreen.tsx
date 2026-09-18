@@ -12,20 +12,15 @@ import { he } from "@/lib/i18n/he";
 import type { YearMonth } from "@/lib/types";
 
 /**
- * The `דוחות` screen — `EaseSalary - דוחות`, and stage 2's step 3.
- *
- * **It is this stage's address and not only its file.** The shell has linked
- * `דוחות` from every page since stage 0 and the address 404'd, which is worse
- * than a tab that is not there.
+ * The `דוחות` screen — `EaseSalary - דוחות`.
  *
  * **It offers files and calculates nothing.** Every figure it shows was drawn
  * by the same `calculateSeries` the month screen and the month export run, and
  * every download is a link to `/reports/file` rather than a second path to the
  * same numbers (Part 3).
  *
- * **Four report cards, settled with the user on 2026-09-10.** The artboard
- * draws four and the build plan's step 3 named three; she chose all four. The
- * fourth, the national insurance by quarter, has the card's own words for its
+ * **Four report cards, as the artboard draws them.** The fourth, the national
+ * insurance by quarter, has the card's own words for its
  * content and no numbered criterion of its own.
  *
  * **The closing line says what is true.** The artboard drew "כל קובץ נשמר גם
@@ -52,11 +47,10 @@ export interface ReportMonth {
    * Why this month cannot be exported, empty where it can — `blocksExport`'s
    * own answer, which is what `/month/export/file` refuses on.
    *
-   * **The screen has to know, because the route answers 409.** Offering the
-   * link anyway is what the built screen did on 2026-09-10: the hero's green
-   * button pointed at September 2026, a month that had not ended, and pressing
-   * it produced an error page rather than a file. No type, lint or unit test
-   * could reach that — the screen and the route simply disagreed.
+   * **The screen has to know, because the route answers 409.** A link offered
+   * anyway points at a month that has not ended, and pressing it produces an
+   * error page rather than a file. No type, lint or unit test reaches that —
+   * the screen and the route simply disagree.
    */
   blocks: ExportBlockKey[];
 }
@@ -80,7 +74,7 @@ interface ReportsScreenProps {
 }
 
 /**
- * The figures one month's row shows — settled with the user on 2026-09-10.
+ * The figures one month's row shows.
  *
  * **`נטו` is always drawn and the other two only when they say something
  * different.** `ברוטו` appears where income tax was withheld, since with
@@ -126,7 +120,7 @@ function fileHref(
 /**
  * One month's file, as `/דוחות` links it.
  *
- * **The helper column is on by default here** (the user on 2026-09-12). The
+ * **The helper column is on by default here**. The
  * month flow offers the two versions side by side and the family chooses; this
  * screen offers one link per month and no chooser, so the one it hands over is
  * the fuller file. The two surfaces then produce the same file for the same

@@ -38,16 +38,14 @@ import { he } from "@/lib/i18n/he";
 import { formatAgorot } from "@/lib/money";
 
 /**
- * `EaseSalary - הוספת עובד` — the flow that gives a household its first worker
- * (`build_plan.md` stage 3).
+ * `EaseSalary - הוספת עובד` — the flow that gives a household its first worker.
  *
  * **It draws its own chrome and is outside `AppShell`**, as the artboard draws
  * it: the wordmark, a way out, and nothing else. The nav is a promise about a
  * household that has a worker in it, and this is the flow reached precisely
  * when that is not yet true — five tabs beside it would lead a family half-way
  * through adding somebody into five screens about nobody. `AppShell` names the
- * exception and says the same thing there; settled with the user on 2026-09-12,
- * against the open question `build_plan.md` carried about this artboard.
+ * exception and says the same thing there.
  *
  * **Nothing is written until the last button**, which is what "לצאת בלי לשמור"
  * promises on every step. Three steps collect and the fourth reports, so a
@@ -1153,9 +1151,9 @@ function noteFor(mode: unknown): string {
  *
  * **Its three sentences each name something the application actually does.**
  * The artboard's own third line promises a reminder before a national-insurance
- * payment and before a permit expires, which is item 27's alert list and is
- * stage 6's — promising it here would be a feature invented on a confirmation
- * screen (`CLAUDE.md` rule 4).
+ * payment and before a permit expires, which is item 27's alert list and not
+ * something this flow does — promising it here would be a feature invented on
+ * a confirmation screen (`CLAUDE.md` rule 4).
  */
 function DoneStep({
   workerId,

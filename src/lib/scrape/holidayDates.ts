@@ -36,8 +36,8 @@ export function isoOfDayMonth(
  * date moves from year to year, and without when it does not.
  *
  * `year` is `null` for a date printed without one, and that is what the caller
- * needs to know, because such a date keeps the same day and month every year — which the user confirmed on
- * 2026-09-09 is exactly what the absence of a year on those pages means.
+ * needs to know: the absence of a year on those pages means the date keeps the
+ * same day and month every year.
  */
 interface PrintedDate {
   day: string;

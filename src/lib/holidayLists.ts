@@ -13,12 +13,11 @@ import type { IsoDate } from "@/lib/types";
  * way the dated-rates table holds a rate: seeded with what ships, updated by a
  * fetch, and never a figure the code invented (specs.md item 12, Part 3).
  *
- * **Two kinds of list, and the user chooses between them** (item 10, decided
- * with the user on 2026-09-09): the worker's country of origin, or a religion.
- * They differ only in where the list is fetched from — a country's list is one
- * page per year, a religion's is one page carrying every year it knows — so
- * they are one type here and one picker later, and the `source` field is what
- * says which was chosen.
+ * **Two kinds of list, and the user chooses between them** (item 10): the
+ * worker's country of origin, or a religion. They differ only in where the list
+ * is fetched from — a country's list is one page per year, a religion's is one
+ * page carrying every year it knows — so they are one type here and one picker
+ * later, and the `source` field is what says which was chosen.
  *
  * **A list is per calendar year**, as item 10's entitlement is, so the year is
  * part of a list's identity and not a filter applied to it.
@@ -193,18 +192,16 @@ export function byDate(holidays: Holiday[]): Holiday[] {
 /**
  * What a country of origin is called, in Hebrew.
  *
- * **The name is already here and was not being read**: every shipped list
- * carries `country_name_he`, which is what the holiday picker's own chips are
- * labelled with. The profile was printing the two-letter code beside
- * `ארץ מוצא`, so one screen said `הפיליפינים` and another said `PH` about the
- * same worker (found by the user on 2026-09-11). A code is a filing key and
+ * **The name is already here**: every shipped list carries `country_name_he`,
+ * which is what the holiday picker's own chips are labelled with. A profile
+ * printing the two-letter code beside `ארץ מוצא` would say `PH` where another
+ * screen says `הפיליפינים` about the same worker. A code is a filing key and
  * nothing a family employing a caregiver has any reason to read.
  *
  * **The code is the fallback and not a failure.** A country with no stored list
  * has no name this application knows, and inventing one is exactly the guess
  * `CLAUDE.md` rule 4 refuses — `holidaySourceChoices` already resolves the same
- * case the same way, so the picker and the profile fall back alike. Stage 5's
- * country list is what will name the rest.
+ * case the same way, so the picker and the profile fall back alike.
  */
 export function countryNameHe(lists: HolidayList[], code: string): string {
   const named = lists.find(

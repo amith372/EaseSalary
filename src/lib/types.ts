@@ -72,13 +72,10 @@ export interface DaySpan {
    * enforces it, narrowing this field back to a date for every other kind, the
    * same way it already makes a holiday without `worked` a compile error.
    *
-   * **This is a change to a stored shape, so no compiler carries it** — it
-   * joins `MarkKind` and the line keys above. The story is theirs: stage 3 is
-   * what first writes a span to Postgres, so today the column is created
-   * nullable and after stage 3 it would be an `alter column ... drop not null`
-   * against every deployed database, with a reader that tolerates both until
-   * the last row is migrated. Nothing has been stored yet, which is why the
-   * shape settles here rather than later.
+   * **This is a stored shape, so no compiler carries a change to it**, like
+   * `MarkKind` and the line keys above: the column is nullable, and changing
+   * that is an `alter column` against every deployed database, with a reader
+   * that tolerates both until the last row is migrated.
    */
   to: IsoDate | null;
   /** Every action can carry a free-text note (specs.md item 5). */
@@ -108,8 +105,7 @@ export interface HolidaySpan extends DaySpan {
    * from the year's chosen list (specs.md item 9), so its end is always known. */
   to: IsoDate;
   /**
-   * Whether she worked it, in **three** states and not two (specs.md item 9,
-   * settled with the user on 2026-09-12).
+   * Whether she worked it, in **three** states and not two (specs.md item 9).
    *
    * `null` is *nobody has said yet*, and it is a state of its own rather than a
    * quiet no. It has to be, because a holiday's date arrives on the calendar
@@ -444,12 +440,10 @@ export interface Worker {
  * is not expiry but eighteen months remaining, so it lapses in the warnings
  * long before it lapses in fact.
  *
- * **The three numbers are not here and their absence is the design** (item 28,
- * item 22). Each is encrypted at rest with a key held outside the database, and
- * there is no database yet: a field for one now would put a plaintext
- * identifier into an in-memory store, which is the one thing `CLAUDE.md`'s
- * non-negotiables say may never happen. They arrive with their encryption, in
- * stage 3, on the screen this holds the dates for.
+ * **The numbers are not here and their absence is the design** (item 28, item
+ * 22). Each is sealed at rest with a key held outside the database, and a
+ * field for one here would carry a plaintext identifier into every store; they
+ * go through `src/lib/identifyingNumbers.ts` instead.
  *
  * **The dates are deliberately not encrypted**, which is item 28's own
  * sentence: a date identifies nobody, and the warnings of item 27 have to find

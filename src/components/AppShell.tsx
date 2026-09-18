@@ -33,7 +33,7 @@ import type { Worker } from "@/lib/types";
  * revalidation refreshes the layout with the page.
  *
  * The circular "?" v3 draws in the bar, linking `/help`, is left out until
- * Stage 9 decides whether that screen is built (the user, 2026-09-13): a link
+ * Stage 9 decides whether that screen is built: a link
  * on every screen to an address that 404s is a promise the bar cannot keep.
  *
  * The greeting and the worker switcher sit here too, where v3 draws them as a
@@ -64,7 +64,7 @@ const MAIN_ID = "main";
 interface NavItem {
   href: string;
   label: string;
-  /** The shape beside the label, one per screen (the user, 2026-09-16). It is
+  /** The shape beside the label, one per screen. It is
    * recognised before the label is read, and on a phone — where the tabs
    * scroll sideways — it is what a half-scrolled tab still shows. Decorative:
    * the label is what names the tab, so the icon is `aria-hidden`. */
@@ -112,9 +112,7 @@ interface AppShellProps {
    * **They are not the home screen's fixtures**, and the difference is not
    * cosmetic: the switcher's worker is the id every write action is made
    * against, so a shell holding a fixed list would send one household's ids to
-   * another household's store — which is exactly what it did, and what the
-   * second seeded household found. Stage 3 changes where the layout reads them
-   * from and nothing here.
+   * another household's store.
    */
   workers: Worker[];
   /** The worker the switcher was left on, as the layout read it from the
@@ -216,9 +214,7 @@ export function AppShell({
   // — the wordmark, a way out, and nothing else — and it is right to. The nav
   // is a promise about a household that has a worker in it, and this is the
   // flow reached precisely when that is not yet true; a family half-way through
-  // it would otherwise be offered five tabs into screens about nobody. Settled
-  // with the user on 2026-09-12, against `build_plan.md`'s open question about
-  // this artboard.
+  // it would otherwise be offered five tabs into screens about nobody.
   if (pathname === "/sign-in" || pathname === ADD_WORKER) return <>{children}</>;
 
   // A household with no worker in it yet, which is what every new account is

@@ -15,17 +15,11 @@ import { fromIsoDate } from "@/lib/dates";
 import { pickerReturnOf } from "@/lib/pickerReturn";
 
 /**
- * The year's holidays, chosen in advance — `EaseSalary - בחירת חגים`
- * (`build_plan.md` stage 5, the holiday picker).
+ * The year's holidays, chosen in advance — `EaseSalary - בחירת חגים`.
  *
- * **It answers at `/settings/holidays`, and `/settings` itself is still a
- * 404.** The artboard is reached from `הגדרות` and from the home screen's own
- * alert; the first is split between stages 3 and 5 and the second is stage 6's,
- * so neither exists to link from. The address is the artboard's, which is what
- * keeps `הגדרות` lit in the nav, and the way in is a row on the worker's
- * profile — settled with the user on 2026-09-09 and written into
- * `build_plan.md`. Building a settings screen to hold one row would be building
- * two other stages' work to reach this one.
+ * **It answers at `/settings/holidays`**, the artboard's address, which is what
+ * keeps `הגדרות` lit in the nav. The way in is a row of the worker's terms on
+ * `/settings` (`HolidaysRow`) and the alert that names an incomplete selection.
  *
  * **The year is in the address and not in the browser.** Moving to a year the
  * household has no list for is what makes the application fetch one (item 12),
@@ -34,7 +28,7 @@ import { pickerReturnOf } from "@/lib/pickerReturn";
  * calculation of its own.
  *
  * **Both workers are prepared, not only the one on screen**, exactly as
- * `/month` does it and for the same reason: the switcher lives in the shell and
+ * `/` does it and for the same reason: the switcher lives in the shell and
  * its choice is client state, so a page that prepared only "the current worker"
  * would have to learn who that is before it could render.
  */

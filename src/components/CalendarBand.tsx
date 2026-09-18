@@ -53,8 +53,7 @@ export function CalendarBand({
         {/* Tight against the slogan, and tight against the drawing: the heart
             belongs to the words rather than floating between them and the
             branch, and the twenty-odd pixels it gives back are what a long
-            month name — `אוקטובר`, `ספטמבר` — takes out of the drawing (the
-            user, 2026-09-16). */}
+            month name — `אוקטובר`, `ספטמבר` — takes out of the drawing. */}
         <span className="flex flex-none -rotate-2 items-end gap-2 me-2.5">
           <span className="flex flex-col gap-0.75">
             <span

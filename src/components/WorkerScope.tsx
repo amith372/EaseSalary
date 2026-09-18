@@ -24,7 +24,7 @@ import type { Worker } from "@/lib/types";
  * though it moved only the calendar. An account holds no more than two workers
  * (specs.md item 11), so this is a step between them rather than a list.
  *
- * **The choice survives a reload** (`build_plan.md` stage 3). It is kept in a
+ * **The choice survives a reload.** It is kept in a
  * cookie the layout reads, so the server renders the chosen worker from the
  * first byte: a choice kept only in the browser would render the first worker
  * and then jump, and the server and the browser would disagree about whose

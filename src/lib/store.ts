@@ -24,8 +24,8 @@ import { supabaseOnServer } from "@/lib/supabase/server";
  * restart.** `next dev` runs one process, so the marks made in a session are
  * still there when the page re-renders; they are gone when the server restarts,
  * which is the honest shape of an in-memory store and not a defect to work
- * around. The thing that outlives a restart is stage 3's Postgres, and it
- * substitutes exactly here — `getRepository` is the only line in the
+ * around. The thing that outlives a restart is Postgres, and it substitutes
+ * exactly here — `getRepository` is the only line in the
  * application that names an implementation.
  *
  * The singletons are hung off `globalThis` because `next dev` re-evaluates a
@@ -97,11 +97,9 @@ function seedOf(name: string): { seed: (typeof seeds)[SeedName]; key: string } {
 /**
  * The store this request's household is kept in.
  *
- * **This is the substitution point stage 3 was shaped around**, and it is the
- * only line in the application that names an implementation. Every caller
- * awaits a `SalaryRepository` and none of them knows or can know which one it
- * got, which is what made landing Postgres an edit to this function rather than
- * to fifteen routes.
+ * **This is the substitution point**, and it is the only line in the
+ * application that names an implementation. Every caller awaits a
+ * `SalaryRepository` and none of them knows or can know which one it got.
  *
  * **The signed-in person's household is the answer, and a seeded store is the
  * exception.** A request with no `household` cookie reads and writes Postgres

@@ -69,7 +69,7 @@ const HEADING = /חגים לאומיים\s*-\s*(.*?)\s*-\s*\d{4}/;
 /**
  * How far a year's count may sit from the nearest stored year's before the list
  * is disbelieved (Part 3: a holiday list of implausible length is a failed
- * fetch), decided with the user on 2026-09-09.
+ * fetch).
  *
  * **The range is the source's own history and not a pair of numbers written
  * here**, which is the same rule the wage check follows and for the same

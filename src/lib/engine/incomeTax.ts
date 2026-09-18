@@ -107,9 +107,8 @@ interface IncomeTaxInput {
  *
  * **Floored at zero, because a credit is not a refund.** Credit points reduce
  * tax to nothing and then stop; they never pay the worker. At the minimum wage
- * this is not an edge case but the ordinary answer — the tax on ₪6,443.85 a
- * month is ₪644.39 and a woman's 2.75 points are worth ₪665.50 a month, so the
- * line is zero and stays zero until the salary passes about ₪6,655 a month.
+ * this is not an edge case but the ordinary answer: a woman's credit points
+ * are worth more than the tax on the month, so the line is zero.
  *
  * **Rounded once, at the end.** The annual figure, the division by twelve and
  * the credit are all carried at full precision and only the answer becomes an
@@ -161,8 +160,7 @@ export function monthlyIncomeTax(
 
 /**
  * The tax the month's own **setting** arrives at, or `null` where the
- * application has no honest figure (specs.md item 17, settled with the user on
- * 2026-09-11).
+ * application has no honest figure (specs.md item 17).
  *
  * **The setting is read off the month and never off the profile** (Part 3).
  * `terms.incomeTax` was snapshotted when the month was confirmed, so a family
@@ -222,7 +220,7 @@ export function effectiveTaxRate(
  *
  * **Two callers on purpose**: the worker's own `percentage` setting, and a
  * correction the user types against a single month as a percentage rather than
- * as a sum (asked for on 2026-09-11). Both mean the same arithmetic, and one
+ * as a sum. Both mean the same arithmetic, and one
  * function is what keeps the month she corrected by hand agreeing to the agora
  * with the month the setting produced.
  */
@@ -244,7 +242,7 @@ export function taxFromPercentage(
  * is the other unit, so nothing is lost by refusing it here. Above 100 is
  * refused because it withholds more than the month paid.
  *
- * Decimals are allowed (settled with the user on 2026-09-11): 2.5% is an
+ * Decimals are allowed: 2.5% is an
  * ordinary rate and a control that only took whole numbers would send the user
  * to work it out as a sum instead.
  */

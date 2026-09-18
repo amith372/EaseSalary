@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 /**
  * `/sign-in` — the one route that draws no nav tab, because the shell is not
- * around it (build_plan.md stage 3, the sign-in step). Everything else
+ * around it. Everything else
  * redirects here when there is no session, which is what `src/proxy.ts` does.
  */
 export default async function SignInPage({

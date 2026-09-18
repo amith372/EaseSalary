@@ -28,11 +28,9 @@ import type { MonthLine } from "@/lib/types";
  * that added arithmetic of its own would be a second calculation path and would
  * disagree with the screen the day either was corrected.
  *
- * **Which four reports exist was settled with the user on 2026-09-10.** The
- * artboard draws four cards and the build plan's step 3 named three; she chose
- * all four, so the national-insurance report is built here on the strength of
- * that decision and of the card's own words rather than of a numbered
- * criterion, which it does not have.
+ * **Four reports, as the artboard draws four cards.** The national-insurance
+ * report rests on the user's decision and on the card's own words rather than
+ * on a numbered criterion, which it does not have.
  */
 
 interface ReportSheet {

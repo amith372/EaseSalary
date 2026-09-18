@@ -4,9 +4,8 @@
  * The terms of one worker's employment, each with the control that changes it —
  * the rows of `EaseSalary - הגדרות`.
  *
- * **They are drawn on `/settings` and nowhere else** (the user, 2026-09-13). They
- * were built on the worker's own page on 2026-09-09, while `/settings` did not
- * exist, and moved here when it did, so a term is changed in exactly one place.
+ * **They are drawn on `/settings` and nowhere else**, so a term is changed in
+ * exactly one place.
  *
  * Every control holds the draft being typed as local state seeded from the
  * profile, so the screen that draws them keys them by worker: a switch to the
@@ -73,10 +72,10 @@ import { formatAgorot, formatDays, formatPercent } from "@/lib/money";
 
 
 /**
- * The way in to `בחירת חגים` (`build_plan.md` stage 5).
+ * The way in to `בחירת חגים`.
  *
- * It is reached from `הגדרות`, as the artboard draws it; the home screen's
- * alert, the other way in, is stage 6's.
+ * It is reached from `הגדרות`, as the artboard draws it; the alert that names
+ * an incomplete selection is the other way in.
  *
  * It shows what is chosen against what she has, because "an incomplete
  * selection is visible at a glance" is item 10's, and a row that only said
@@ -303,8 +302,7 @@ export function GenderControl({
 }
 
 /**
- * How this worker's income tax is arrived at (specs.md item 17, settled with
- * the user on 2026-09-11).
+ * How this worker's income tax is arrived at (specs.md item 17).
  *
  * **Three named chips rather than one box whose emptiness meant something.**
  * The control this replaces held a single amount in which a typed zero meant
@@ -491,7 +489,7 @@ export function RecuperationControl({
  * The lines set once on the profile that appear in every month afterwards
  * (specs.md item 20).
  *
- * **This is the one case that makes step 8's override/edit division necessary
+ * **This is the one case that makes the override/edit division necessary
  * rather than tidy.** A standing line's amount came from the profile, so a
  * month that paid something else says so with an override — `overridable:
  * prefix === "standing"` — while a line typed into a month is corrected where
@@ -901,7 +899,7 @@ export function OpeningPositionControl({
 
 /**
  * Her base salary, and a change of it from a month the family names (specs.md
- * item 3; the user, 2026-09-13).
+ * item 3).
  *
  * **It shows the salary in force this month**, which is not the profile's
  * opening figure once a raise is recorded, and lists every change beside the

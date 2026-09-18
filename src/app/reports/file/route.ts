@@ -11,7 +11,7 @@ import {
 import { readToday } from "@/lib/requestToday";
 
 /**
- * The four files the `דוחות` screen offers — stage 2's step 3.
+ * The four files the `דוחות` screen offers.
  *
  * **A route handler and not a server action, for the reason
  * `/month/export/file` gives**: this hands back a file, so the browser

@@ -325,7 +325,7 @@ function invitationLink(email: string, token: string): string {
  * `לשתף עובד/ת עם בן/בת משפחה` — an invitation passed on by the member (specs.md
  * item 11).
  *
- * **Nothing is sent from here** (the user, 2026-09-13). The member copies a
+ * **Nothing is sent from here**. The member copies a
  * message with the link and sends it however the family talks; the person
  * invited opens their own account with that address, and the row reads
  * "accepted" from then on.
@@ -482,9 +482,9 @@ function percentOf(fraction: number): string {
 }
 
 /**
- * One of the four groups, folded until its heading is pressed (the user,
- * 2026-09-16), as the payments screen's sections are. Its own state, inside the
- * list keyed by worker, so a worker switch folds every group again.
+ * One of the four groups, folded until its heading is pressed, as the payments
+ * screen's sections are. Its own state, inside the list keyed by worker, so a
+ * worker switch folds every group again.
  */
 function Group({
   id,

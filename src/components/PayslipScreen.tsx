@@ -25,7 +25,7 @@ import type {
 } from "@/lib/types";
 
 /**
- * `דף המשכורת` — the payslip as the family reads it, and stage 2's step 4.
+ * `דף המשכורת` — the payslip as the family reads it.
  *
  * **It is the exported sheet's own layout seen on screen, and that is what
  * makes it a third view rather than a second month screen.** Its lines are

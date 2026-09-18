@@ -402,13 +402,12 @@ function taxBracketsMissingWarning(
  * The month is paying less than the minimum wage that was in force during it,
  * or `null` where it is not.
  *
- * **This is the one rule in the application that is not a preference**, and it
- * was the one rule nothing on the month screen said (found by the user on
- * 2026-09-11, looking at a July 2026 valued at the wage of 1.4.2025). The floor
- * itself is applied in `baseForMonth`, at the pre-export confirmation — so a
- * month reaches the family's hands correct, and a month sitting on screen
- * beforehand was simply wrong with nothing to say so. A family checks the
- * figure on the screen; the confirmation is a step they meet once, at the end.
+ * **This is the one rule in the application that is not a preference.** The
+ * floor itself is applied in `baseForMonth`, at the pre-export confirmation —
+ * so a month reaches the family's hands correct, and without this warning a
+ * month sitting on screen beforehand would be wrong with nothing to say so. A
+ * family checks the figure on the screen; the confirmation is a step they meet
+ * once, at the end.
  *
  * **A month is measured against the wage in force during *it*** (item 4), never
  * against today's: a month filed before a rise is not underpaid because a rise

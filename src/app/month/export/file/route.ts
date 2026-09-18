@@ -24,8 +24,9 @@ import { readToday } from "@/lib/requestToday";
  * it writes is when the file was produced, so pressing it twice moves that
  * instant and nothing else.
  *
- * Stage 3 adds the household check beside the worker lookup; today the store is
- * per-cookie and there is nothing else to be reached.
+ * The worker lookup is the household check: the repository reads under the
+ * signed-in person's session, so row-level security returns no worker from
+ * another household.
  */
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams;

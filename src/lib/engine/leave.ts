@@ -76,7 +76,7 @@ function totalFraction(days: HolidayDay[]): number {
  * this is not always a whole number and the remainder is displayed as it falls.
  *
  * **A holiday inside a spell of sickness is a holiday and is drawn from here**
- * (item 10, reversed with the user on 2026-09-12). It pays the ordinary salary
+ * (item 10). It pays the ordinary salary
  * like any holiday she did not work and draws nothing from the sick balance —
  * `sick.ts` is the other half of that — because charging it to the sick quota
  * would spend a day of illness on a day she was not going to be working anyway.

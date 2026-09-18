@@ -8,11 +8,7 @@ import { calculateSeries } from "@/lib/engine/series";
 import { readToday } from "@/lib/requestToday";
 
 /**
- * The `דוחות` screen's route — stage 2's step 3.
- *
- * **It is this stage's address and not only its file.** The shell has linked
- * `דוחות` from every page since stage 0 and it 404'd, which is worse than a tab
- * that is not there.
+ * The `דוחות` screen's route, which the shell links from every page.
  *
  * **The whole history is replayed and nothing is stored.** A worker's balances
  * are derived by walking her months from the opening position (item 13), so
@@ -61,8 +57,7 @@ export default async function ReportsPage() {
           transfers,
           // The same function `/month/export` and `/month/export/file` use, so
           // the screen and the route cannot disagree about which months have a
-          // file. They did on 2026-09-10, and the hero offered a month that had
-          // not ended.
+          // file — a disagreement offers a month that has not ended.
           blocks: blocksExport(month.facts, today),
         };
       });

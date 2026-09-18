@@ -32,7 +32,7 @@ interface DayWords {
   /** "שבת", "יום שישי" — the day as a bare noun phrase. */
   bare: string;
   /** "שבת", "שישי" — the day before חופשי/ת, where the יום is dropped
-   * ("שישי חופשי", the user, 2026-09-15). Everywhere else the full form reads
+   * ("שישי חופשי"). Everywhere else the full form reads
    * better: "עבודה ביום שישי", not "עבודה בשישי". */
   short: string;
   /** "שבתות", "ימי שישי" — what follows a number. */
@@ -166,9 +166,9 @@ export const he = {
   },
 
   /**
-   * The sign-in screen — the one screen in the application with no artboard,
-   * settled with the user on 2026-09-11 (build_plan.md stage 3). One wordmark,
-   * two fields and a button, built out of the design system the shell carries.
+   * The sign-in screen — the one screen in the application with no artboard.
+   * One wordmark, two fields and a button, built out of the design system the
+   *shell carries.
    *
    * **The word "household" appears nowhere here**, and that is item 11 as
    * written: the first sign-in creates one silently, and a family employing one
@@ -406,12 +406,11 @@ export const he = {
   },
 
   /**
-   * The `דוחות` screen and the four files it offers — stage 2's step 3.
+   * The `דוחות` screen and the four files it offers.
    *
-   * **Four cards, settled with the user on 2026-09-10.** The artboard draws
-   * four and the build plan's step 3 named three; she chose all four, so the
-   * national-insurance report is here on the strength of that decision and of
-   * the card's own words rather than of a numbered criterion.
+   * **Four cards, as the artboard draws them.** The national-insurance report
+   * rests on the user's decision and on the card's own words rather than on a
+   * numbered criterion.
    */
   reports: {
     title: "דוחות",
@@ -423,7 +422,7 @@ export const he = {
      * item 23 says the file is produced on request. What survives is the data,
      * and every file can be produced again from it — which is the reassurance
      * the drawn sentence was reaching for, and it is one the application can
-     * actually keep. Reworded with the user on 2026-09-10.
+     * actually keep.
      */
     closing:
       "הנתונים נשמרים, וכל קובץ אפשר להפיק מחדש בכל עת — גם אחרי שנים.",
@@ -448,7 +447,7 @@ export const he = {
       all: "לכל החודשים",
       /**
        * The three figures a month can show, and **`נטו` is the one that is
-       * always drawn** (specs.md Part 5, and the user on 2026-09-10).
+       * always drawn** (specs.md Part 5).
        *
        * `ברוטו` appears only where income tax was withheld, because with
        * nothing withheld it equals the `נטו`; `שולם לעובד/ת` appears only where
@@ -472,9 +471,9 @@ export const he = {
        *
        * **The row says the reason instead of offering a link that fails.** The
        * route answers 409 for either of these (item 18, item 21), and a green
-       * button that returns an error page is the defect the built screen turned
-       * up on 2026-09-10. These reuse `beforeExport`'s own sentences rather
-       * than adding a third wording for one fact.
+       * button that returns an error page is a defect. These reuse
+       * `beforeExport`'s own sentences rather than adding a third wording for
+       * one fact.
        */
       blocked: {
         monthNotEnded: "החודש עדיין לא הסתיים",
@@ -525,7 +524,7 @@ export const he = {
   },
 
   /**
-   * `דף המשכורת` — the payslip as the family reads it, and stage 2's step 4.
+   * `דף המשכורת` — the payslip as the family reads it.
    *
    * **It is the exported sheet's own layout seen on screen**, which is why its
    * lines are grouped by the sheet's columns and carry the sheet's own subtotal
@@ -646,7 +645,7 @@ export const he = {
 
   calendar: {
     /** Said once a first day is pressed, because nothing else on the screen
-     * says the second press is what finishes it (the user, 2026-09-15). */
+     * says the second press is what finishes it. */
     secondClick: "לחצו על היום האחרון, או שוב על אותו יום",
     /** The third of the navigation trio, and it moves the calendar by a month
      * like the other two: it jumps to the month containing today, never to a
@@ -748,7 +747,7 @@ export const he = {
        * optional, and the placeholder says so rather than a label doing it. */
       /** The button the second row folds behind. It names both halves as
        * actions, because "+ חצי יום · הערה" read as a half day that already
-       * carried a note (the user, 2026-09-16); a range, which cannot be taken in
+       * carried a note; a range, which cannot be taken in
        * part, is offered only the note. */
       more: {
         withPart: "להוספת הערה / שינוי לחצי יום",
@@ -1098,7 +1097,7 @@ export const he = {
         field: "סכום אחר, אם חושב אחרת",
         /**
          * **The correction can be typed as a share of the ‏ברוטו‎ and not only
-         * as a sum** (asked for by the user on 2026-09-11). A family told "2.5
+         * as a sum**. A family told "2.5
          * percent" by an accountant had to work the sum out for itself, against
          * a ‏ברוטו‎ that moves every month — which is exactly the arithmetic
          * this application exists to take off her.
@@ -1129,7 +1128,7 @@ export const he = {
         rule: "הסכום מחושב מהברוטו של החודש לפי מדרגות המס של אותה שנה, פחות נקודות הזיכוי. עובד/ת זר/ה בסיעוד בבית המטופל/ת מקבל/ת 2.25 נקודות זיכוי ואישה מקבלת חצי נקודה נוספת — הן נגזרות מהפרופיל ואין צורך להזין אותן. בשכר המינימום הזיכוי גדול מהמס, ולכן לא מנוכה מס בכלל.",
         /**
          * **The rule said above is the *automatic* mode's rule, so it is not
-         * said under the other two** (settled with the user on 2026-09-11).
+         * said under the other two**.
          * A worker set to a flat 2.5% is not taxed by the brackets at all, and
          * a paragraph explaining credit points beside her figure would be a
          * sentence that is simply untrue of the amount above it — which is the
@@ -1143,8 +1142,7 @@ export const he = {
          * answer and not a line nobody filled in (item 17). */
         none: "לא מנוכה מס החודש",
         /**
-         * What share of this month's ברוטו was actually withheld (settled with
-         * the user on 2026-09-11).
+         * What share of this month's ברוטו was actually withheld.
          *
          * **It is shown here and not on the profile**, because the automatic
          * mode arrives at a different percentage every month — the brackets are
@@ -1187,7 +1185,7 @@ export const he = {
          * where the user is standing rather than left to be discovered: a
          * recurring addition or deduction is a term of the employment and is
          * set once on the worker's page, and a family that could not find it
-         * asked for it to be built (2026-09-11). It was already built. The
+         * asked for it to be built. It was already built. The
          * sentence and the link are the fix, because a feature nobody can find
          * is not a feature the user has.
          */
@@ -1328,7 +1326,7 @@ export const he = {
          * in a control that otherwise lists months. */
         periodNone: "—",
         /**
-         * The day the money left the account (the user on 2026-09-12).
+         * The day the money left the account.
          *
          * Required, and asked of every kind: the sheet's own
          * national-insurance label ends "התשלום בוצע ב ______", a blank the
@@ -1490,7 +1488,7 @@ export const he = {
         periodBackwards:
           "החודש האחרון מוקדם מהחודש הראשון. כדאי לבדוק את סדר החודשים.",
         /** No day of payment. Every payment has one and the sheet asks for it,
-         * so an empty field is not an answer here (the user on 2026-09-12). */
+         * so an empty field is not an answer here. */
         paidOnMissing: "צריך לכתוב מתי התשלום בוצע — תאריך אמיתי, ביום-חודש-שנה.",
         /** Cover that ran out before it was bought. */
         expiryBeforePayment:
@@ -1580,9 +1578,7 @@ export const he = {
    * The workers' list and the worker's own page — `EaseSalary - העובדות` and
    * `EaseSalary - דף העובד` (specs.md items 5, 6, 11, 14, 20, 28).
    *
-   * `profile.terms` holds the words of the rows `/settings` draws: they were
-   * written while the worker's page changed her terms, and moved screens on
-   * 2026-09-13 without changing a word.
+   * `profile.terms` holds the words of the rows `/settings` draws.
    */
   workers: {
     title: "עובדים/ות",
@@ -1609,17 +1605,15 @@ export const he = {
     /**
      * Who else sees this worker — an address and never a name, because an
      * invitation is sent to an address and the account holds nothing else
-     * about the person (item 11, the user on 2026-09-18).
+     * about the person (item 11).
      *
      * More than one is joined with a comma rather than counted: a household
      * holds a member or two, and "משותף/ת עם 2" would send the reader to
      * `הגדרות` to find out who.
      */
     sharedWith: (emails: string[]) => `משותף/ת עם ${emails.join(", ")}`,
-    /** The country of origin as the application holds it — the code the
-     * holiday list is filed under (item 10). It is shown rather than named
-     * because there is no country list yet: stage 5 fetches the holidays per
-     * country and is where a code becomes a name. */
+    /** The country of origin (item 10), named from the holiday lists
+     * (`countryNameHe`) and shown as its code where no list names it. */
     country: "ארץ מוצא",
     facts: {
       salary: "שכר בסיס לחודש",
@@ -1697,7 +1691,7 @@ export const he = {
          * same nine words beside nine amounts is noise the eye has to step
          * over to reach the figure it came for. */
         total: "סך הכל תשלום לעובד/ת",
-        /** The column added up, asked for by the user on 2026-09-11. It says
+        /** The column added up. It says
          * "so far" rather than "in total" because a month still open is
          * counted the moment it closes, and a figure that reads as final
          * while it is still moving is the one a family would quote. */
@@ -1745,8 +1739,8 @@ export const he = {
       },
       terms: {
         note: "מה שנכון לכל חודש, עד שמשנים אותו. חודש שכבר אושר שומר על התנאים שאיתם חושב.",
-        /** The base salary and its changes (specs.md item 3; decided with the
-         * user on 2026-09-13 that a change holds from a month she names). */
+        /** The base salary and its changes (specs.md item 3): a change holds
+         * from a month she names. */
         salary: {
           label: "שכר בסיס לחודש",
           hint: "הסכום שהוסכם עליו, לפני תוספות. לא ניתן לרדת מתחת לשכר המינימום. העלאה חלה מהחודש שבוחרים והלאה, והחודשים שלפניו נשארים כפי שחושבו.",
@@ -1790,8 +1784,7 @@ export const he = {
           male: "גבר",
         },
         /**
-         * How this worker's income tax is arrived at (specs.md item 17,
-         * settled with the user on 2026-09-11).
+         * How this worker's income tax is arrived at (specs.md item 17).
          *
          * **Three named choices rather than a field whose emptiness means
          * something.** One box in which a typed zero meant "withhold nothing"
@@ -1876,10 +1869,8 @@ export const he = {
           hint: "הסכום שמשולם על כל ערב יום מנוחה בחודש, בלי קשר לשאלה אם עבדה בו. אם הוסכם להפסיק, משאירים ריק.",
           save: "לשמור",
         },
-        /** The way in to `בחירת חגים` (`build_plan.md` stage 5). The artboard
-         * is reached from `הגדרות` and from the home screen's own alert, and
-         * neither is built — so the profile carries the link, settled with the
-         * user on 2026-09-09. */
+        /** The way in to `בחירת חגים` from `הגדרות`, as the artboard draws
+         * it. */
         holidays: {
           label: "חגי השנה",
           hint: "התאריכים נבחרים מראש לשנה שלמה, ומגיעים ללוח החודשי מצוירים. מכאן גם בוחרים מאיזו רשימה — ארץ המוצא, מדינה אחרת או דת.",
@@ -2077,7 +2068,7 @@ export const he = {
        * elsewhere (item 25). */
       blocked: "המכסה נוצלה במלואה",
       /**
-       * A holiday that falls on her weekly rest day (item 9, 2026-09-12). Said
+       * A holiday that falls on her weekly rest day (item 9). Said
        * on the row itself, because a family choosing it and watching the quota
        * not move would otherwise read that as a mistake. The rest day is named
        * rather than assumed, since it is a term of the employment (item 5).
@@ -2205,7 +2196,7 @@ export const he = {
        * export — the month is confirmed at the wage in force — and the screen
        * says it is happening before the user presses, because a salary that
        * changed without being announced is exactly the silent figure Part 5 is
-       * about. Settled with the user on 2026-09-09.
+       * about.
        */
       raised: (salary: number, minimum: number) =>
         `המשכורת הרשומה לעובד/ת היא ${formatAgorot(salary)}, ושכר המינימום שבתוקף בחודש הזה גבוה ממנה. החודש יאושר לפי ${formatAgorot(minimum)}, כי משכורת אינה יכולה להיות נמוכה משכר המינימום. אפשר לקבוע משכורת גבוהה יותר בדף העובד/ת.`,
@@ -2260,7 +2251,7 @@ export const he = {
       note: "אפשר להמשיך למלא אותו, ואפשר לייצא אותו אחרי שיסתיים.",
     },
     /**
-     * Item 9, settled with the user on 2026-09-12. The figure on this screen
+     * Item 9. The figure on this screen
      * already pays an unanswered holiday as worked, so the note says so: a
      * family reading a total that includes holiday pay should know it is a
      * lean and not an answer they gave.
@@ -2277,8 +2268,7 @@ export const he = {
      *
      * **Every one of them is a question the chips can answer.** The artboard
      * words the holidays as `אילו חגים נעבדו?` and draws כן/לא beneath it,
-     * which is a question its own control cannot answer; corrected on
-     * 2026-09-09 after the user read it on the built screen. Which holiday was
+     * which is a question its own control cannot answer. Which holiday was
      * worked is recorded on the holiday itself in the month's calendar — this
      * screen confirms and never records, so the question it may ask is whether
      * there were any.
@@ -2296,7 +2286,7 @@ export const he = {
       /**
        * The recorded items themselves, under the question that asks about them
        * — the dates off the calendar and the amounts off the payments screen
-       * (specs.md item 18, settled with the user on 2026-09-10).
+       * (specs.md item 18).
        *
        * **A date arrives already worded.** `dateLabels.ts` imports this file,
        * so it cannot be called from inside it; the screen words the day or the
@@ -2327,7 +2317,7 @@ export const he = {
        * may record two advances, and `נרשמה מקדמה של 1,000 ₪` then describes
        * one advance of a figure that was never given — the amounts are listed
        * beneath it, and a sum presented as a single payment contradicts them.
-       * Corrected on 2026-09-10, when the list made it visible. */
+       * */
       advanceGranted: {
         ask: "ניתנה מקדמה החודש?",
         from: (agorot: number | null, items: number) => {
@@ -2384,10 +2374,9 @@ export const he = {
         },
         mismatch: "מה שנעבד בחג מסומן על החג עצמו בלוח של החודש.",
       },
-      /** Added on 2026-09-10 with item 18's own reason: the vacation balance is
-       * replayed and never stored (item 13), so a day marked on the wrong month
-       * moves every later month — and it was the one mark on the calendar this
-       * screen said nothing about. Half days are counted, which is why the
+      /** Asked for item 18's own reason: the vacation balance is replayed and
+       * never stored (item 13), so a day marked on the wrong month moves every
+       * later month. Half days are counted, which is why the
        * count can read `1.5`. */
       vacationDays: {
         ask: "היו ימי חופשה?",
@@ -2418,9 +2407,9 @@ export const he = {
       },
     },
 
-    /** What a contradicting answer produces — a warning and never a refusal,
-     * settled with the user on 2026-09-09. She is the one who knows what
-     * happened, and what item 18 buys is that she was asked. */
+    /** What a contradicting answer produces — a warning and never a refusal.
+     * She is the one who knows what happened, and what item 18 buys is that she
+     * was asked. */
     mismatch: {
       title: "שווה לבדוק לפני הייצוא",
     },
@@ -2437,10 +2426,10 @@ export const he = {
       action: "לייצא לאקסל",
       /**
        * The second of item 2's two versions, as a button of equal weight beside
-       * the first — settled with the user on 2026-09-10.
+       * the first.
        *
-       * **Neither artboard draws a chooser**, so this is the one control stage 2
-       * adds that the design pass did not draw. The two differ in one thing
+       * **Neither artboard draws a chooser**, so this is a control the design
+       * pass did not draw. The two differ in one thing
        * only, and the name says which: a file that quietly carried the
        * household's notes under the same name as one that did not is how this
        * pair goes wrong after it leaves the application.
@@ -2589,8 +2578,8 @@ export const he = {
 
     /**
      * The seven column H rows, **named in the template's own words** (specs.md
-     * items 2, 16). Four of these were the application's own paraphrase until
-     * 2026-09-04, which item 2 does not allow: the exported file has to carry
+     * items 2, 16), never a paraphrase, which item 2 does not allow: the
+     * exported file has to carry
      * the labels a month tab carries, and a screen teaching the user a name the
      * sheet does not use sends her looking for a row that is not there.
      * `דמי השמה` and `דמי תאגיד` are two different fees in this
@@ -2771,8 +2760,7 @@ export const he = {
         /**
          * **The month is paying under the minimum wage that was in force during
          * it** — the one figure in this application that is not the family's to
-         * choose (asked for by the user on 2026-09-11, who found a July 2026
-         * valued at the wage of April 2025).
+         * choose.
          *
          * It names both figures rather than only the shortfall, because the
          * family has to recognise the one they are looking at before the
@@ -2796,7 +2784,7 @@ export const he = {
 
 /**
  * What the bottom figure of a month is **called**, which is not always the same
- * name (settled with the user on 2026-09-10).
+ * name.
  *
  * The Hebrew `נטו` is the ברוטו less what was withheld from it, and
  * `סך הכל תשלום לעובד/ת` is what is transferred after the advances and after a

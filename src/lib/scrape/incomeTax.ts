@@ -12,8 +12,7 @@ import type { TaxYearBrackets } from "@/lib/taxBrackets";
 
 /**
  * The two figures the income tax is worked out from, read from the pages that
- * publish them: the year's brackets, and what one credit point is worth
- * (build_plan.md stage 3, approved 2026-09-10).
+ * publish them: the year's brackets, and what one credit point is worth.
  *
  * **In the idiom the other scrapes already use**: a pure function over an HTML
  * string with the request injected, so the suite reads saved pages and never

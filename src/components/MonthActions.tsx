@@ -108,7 +108,7 @@ interface MonthActionsProps {
    * of the ברוטו it came to (item 17). */
   incomeTax: MonthIncomeTax;
   /** This month's own lines. The standing ones are terms of the employment and
-   * live on the profile, which stage 4's step 9 is the screen for — so they are
+   * are changed on `/settings` — so they are
    * not listed here and are not corrected here: a month that paid something
    * else than a standing line says replaces its amount in the overrides
    * section below (item 20). */
@@ -513,7 +513,7 @@ function IncomeTaxControl({
           )
         : words.rule;
 
-  // **Which unit the correction is typed in** (asked for on 2026-09-11). It is
+  // **Which unit the correction is typed in**. It is
   // the field's own state and never the worker's setting: a month on the
   // automatic mode may still be corrected by a share, and a month on a flat
   // rate may still be corrected by a sum. The stored value is an amount either
@@ -682,8 +682,8 @@ function IncomeTaxControl({
         >
           {ruleWords}
         </span>
-        {/* The reminder the user asked for on 2026-09-11, said on this screen
-            as well as beside the profile's toggle: a family that only ever
+        {/* The reminder is said on this screen as well as beside the
+            profile's toggle: a family that only ever
             opens the payments screen still meets the rule. */}
         <span
           dir="auto"
@@ -1161,8 +1161,7 @@ function AdvancesControl({
             // refuses on, and a control that answers a click with a refusal is
             // a control that should not have been drawn. Restating them here
             // would be a second copy that agrees today and drifts the first
-            // time either is corrected, which is what it was until this call
-            // replaced it.
+            // time either is corrected.
             const canRepay =
               whyRepaymentIsRefused(standing, month, monthAdvances) === null;
 

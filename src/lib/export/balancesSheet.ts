@@ -23,8 +23,8 @@ import type { BalanceKind, BalanceLine } from "@/lib/types";
  */
 
 /** The two blocks the template draws, read out of
- * `data/templates/template_balances_yearly.xlsx` -> `יתרות` cell by cell on
- * 2026-09-10. Each has a heading, a header row, and twelve rows beneath it —
+ * `data/templates/template_balances_yearly.xlsx` -> `יתרות` cell by cell. Each
+ * has a heading, a header row, and twelve rows beneath it —
  * one per month of the year, which is what the sheet is for. */
 const BLOCKS: ReadonlyArray<{ kind: BalanceKind; firstRow: number }> = [
   // `B1`: "חופשת מחלה- צבירה וניצול", header at row 3.

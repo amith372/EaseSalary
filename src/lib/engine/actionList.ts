@@ -78,7 +78,7 @@ export type ActionEntry = { list: ActionList } & (
 );
 
 /** How far ahead the bell warns of the permit, the visa and the medical
- * insurance running out (the user, 2026-09-17). */
+ * insurance running out. */
 const EXPIRY_WARNING_DAYS = 60;
 
 /** The passport warns while fewer than this many months are left on it, not

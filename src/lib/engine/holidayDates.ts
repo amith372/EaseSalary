@@ -13,13 +13,13 @@ import type { IsoDate } from "@/lib/types";
  * money, the day counts and the sick balance all turn on it, so a disagreement
  * between them is a month that pays for a day it also counted as missed.
  *
- * **A holiday on the weekly rest day is not a holiday** (item 9, settled with
- * the user on 2026-09-12). The day is her weekly rest day and is paid as one
- * whether she worked it or not, so it earns nothing extra as a holiday and
- * spends nothing from the yearly entitlement — another date may be chosen in
- * its place. It is still *drawn* as a holiday on the calendar, because the
- * clash is a fact about the year worth seeing and not a mistake to hide, and
- * that is a question for the screen rather than for the engine.
+ * **A holiday on the weekly rest day is not a holiday** (item 9). The day is
+ * her weekly rest day and is paid as one whether she worked it or not, so it
+ * earns nothing extra as a holiday and spends nothing from the yearly
+ * entitlement — another date may be chosen in its place. It is still *drawn* as
+ * a holiday on the calendar, because the clash is a fact about the year worth
+ * seeing and not a mistake to hide, and that is a question for the screen
+ * rather than for the engine.
  */
 
 /** Every date a holiday span covers, the rest-day ones included — which is what

@@ -275,13 +275,12 @@ async function changeMonth(
 /**
  * The income tax corrected by hand (specs.md item 17).
  *
- * **It stores an override and no longer a figure of its own**, which is the
- * change of 2026-09-10: the engine works the tax out from the month's gross,
- * the brackets in force during it and the worker's credit points, so a typed
- * amount is now an amount put over a figure the application produced — exactly
- * what an override is. It writes the same `overrides` entry the generic control
- * writes, so the row's badge, its stored shape and its clearing are identical
- * either way.
+ * **It stores an override and not a figure of its own**: the engine works the
+ * tax out from the month's gross, the brackets in force during it and the
+ * worker's credit points, so a typed amount is an amount put over a figure the
+ * application produced — exactly what an override is. It writes the same
+ * `overrides` entry the generic control writes, so the row's badge, its stored
+ * shape and its clearing are identical either way.
  *
  * **An empty field clears the override and does not mean zero.** There is a
  * worked-out figure underneath to go back to, so the two gestures mean opposite
@@ -367,7 +366,7 @@ export async function setMonthNote(
 
 /**
  * A percentage the user typed against one month, turned into the amount that is
- * actually stored (settled with the user on 2026-09-11).
+ * actually stored.
  *
  * **The gross is read off the engine here and never taken from the browser.**
  * The figure the field previews beside itself is the same arithmetic, but a

@@ -35,8 +35,7 @@ import { overlapsMonth } from "@/lib/spans";
 import type { IsoDate, SpanKind, YearMonth } from "@/lib/types";
 
 /**
- * The store the application actually keeps a household's facts in
- * (`build_plan.md` stage 3).
+ * The store the application actually keeps a household's facts in.
  *
  * **It is a substitution and not a rewrite**, which is what
  * `src/lib/engine/repository.ts` was shaped for: every caller in the

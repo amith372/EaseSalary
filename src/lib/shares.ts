@@ -6,7 +6,7 @@ import { supabaseOnServer } from "@/lib/supabase/server";
  *
  * **It is an address and never a name.** A share is an invitation sent to an
  * email address; the account holds that address and nothing else about the
- * person, so the chip shows the address (the user, 2026-09-18). Inventing a
+ * person, so the chip shows the address. Inventing a
  * name from the part before the `@` would put a word on the screen that nobody
  * chose and that the person may not answer to.
  *

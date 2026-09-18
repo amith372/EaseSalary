@@ -29,8 +29,7 @@ import type { IsoDate } from "@/lib/types";
  * module's every export is an address the browser can call, so a plain helper
  * beside them is a build error rather than a style question.
  *
- * Everything the holiday picker can change, and the only way it changes it
- * (`build_plan.md` stage 5, the holiday picker).
+ * Everything the holiday picker can change, and the only way it changes it.
  *
  * **The browser collects the gesture and the server decides what it means**
  * (`specs.md` Part 3), exactly as `month/actions.ts` and `workers/actions.ts`
@@ -40,7 +39,7 @@ import type { IsoDate } from "@/lib/types";
  * `holidayYear.ts` the suite tests and against the same allowance
  * `validateMonth` refuses a tenth holiday against.
  *
- * **Nothing is held as a draft**, settled with the user on 2026-09-09: each
+ * **Nothing is held as a draft**: each
  * gesture writes, as the calendar and the profile already do. The artboard's
  * "לשמור את הבחירה" is therefore a way back rather than a save, and its own
  * closing sentence — "אפשר לחזור ולשנות כל עוד החודש לא יוצא" — is what the

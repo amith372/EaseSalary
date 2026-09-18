@@ -10,12 +10,10 @@ import { todayInIsrael } from "@/lib/today";
 import { readToday } from "@/lib/requestToday";
 
 /**
- * `דף המשכורת` — stage 2's step 4, at `/month/payslip`.
+ * `דף המשכורת`, at `/month/payslip`.
  *
- * **The address is stage 2's to choose and this is the choice**: a sibling of
- * `/month/export`, because it is the same month seen a third way and no nav tab
- * owns it. The home screen has linked `לצפייה בדף המשכורת המלא` at `/sheet`
- * since stage 0, which was an address nobody had chosen and which 404'd; it now
+ * **A sibling of `/month/export`**, because it is the same month seen a third
+ * way and no nav tab owns it. The home screen's `לצפייה בדף המשכורת המלא`
  * points here, and so does `/reports`, month by month.
  *
  * **The counts come off `exportQuestions` and nothing counts a span twice.**

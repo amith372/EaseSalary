@@ -7,7 +7,7 @@ import type { WorkerTerms } from "./types";
  * The base monthly salary over time (specs.md item 3).
  *
  * **A change of salary takes effect from a month the user names, and the months
- * before it keep the salary they were calculated with** (the user, 2026-09-13).
+ * before it keep the salary they were calculated with**.
  * That is what a raise is: agreed from some month on, and never a restatement of
  * months already paid. So the profile holds the salary the employment opened
  * with and a dated list of changes after it, and every month reads the one in

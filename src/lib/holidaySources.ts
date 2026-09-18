@@ -9,10 +9,10 @@ import { religiousSources } from "@/lib/scrape/religiousHolidays";
  * The lists the picker can offer, and the name each is offered under
  * (specs.md item 10).
  *
- * **A country and a faith are one choice with two kinds of answer** (decided
- * with the user on 2026-09-09), so they are gathered here rather than left to
- * the screen to assemble: two lists built in the component would be two places
- * where a source could be offered that nothing can fetch.
+ * **A country and a faith are one choice with two kinds of answer**, so they
+ * are gathered here rather than left to the screen to assemble: two lists built
+ * in the component would be two places where a source could be offered that
+ * nothing can fetch.
  *
  * **A country is offered only where a list of some year is already stored for
  * it**, and that is not a limitation to work around: a year's list is fetched

@@ -17,13 +17,10 @@ import { formatAgorot, formatDays } from "@/lib/money";
 import { readToday } from "@/lib/requestToday";
 
 /**
- * One worker's own page — `EaseSalary - דף העובד` (`build_plan.md` stage 4,
- * step 9, and what stage 7 owed it).
+ * One worker's own page — `EaseSalary - דף העובד`.
  *
- * **It is a screen on the repository interface**, which is why it lands in
- * stage 4 rather than in stage 3: the slice builds screens on the in-memory
- * store and stage 3 persists what they write, exactly as it will for the
- * month. Nothing here waits on Postgres and nothing here is built twice.
+ * **It is a screen on the repository interface**, so it runs the same on the
+ * in-memory store and on Postgres.
  *
  * **The balances are the replay's and not a second count.** `calculateSeries`
  * walks her months from the opening position (item 13) and the closing figures

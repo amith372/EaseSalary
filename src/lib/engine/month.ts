@@ -10,11 +10,9 @@ import {
   restDayUnitsOf,
 } from "@/lib/engine/leave";
 import { lineKeys, type LineDraft, toLine } from "@/lib/engine/lines";
-// **Re-exported, not redefined.** The keys moved to `lines.ts` on 2026-09-11
-// so that `balances.ts` could name one without importing this file, which
-// imports `balances.ts` — a cycle for the sake of one string. Every call site
-// still reads them from here, which is where they have always been imported
-// from and where the interface expects to find them.
+// **Re-exported, not redefined.** The keys live in `lines.ts` so that
+// `balances.ts` can name one without importing this file, which imports
+// `balances.ts` — a cycle for the sake of one string.
 export { lineKeys };
 import { deriveRates } from "@/lib/engine/rates";
 import { recuperationDaysInMonth } from "@/lib/engine/recuperation";
@@ -95,9 +93,8 @@ export function isUserLineKey(key: string): boolean {
  * **A level is only real when something below it changes the figure.** With
  * nothing withheld the `נטו` *is* the `ברוטו`, and with nothing transferred the
  * total *is* the `נטו` — and two identical figures under two headings read as an
- * error the family then goes looking for. Settled with the user on 2026-09-03
- * for the month screen and restated by her on 2026-09-10 for the payslip and for
- * `/reports`.
+ * error the family then goes looking for. It holds on the month screen, the
+ * payslip and `/reports` alike.
  *
  * **It lives here because three screens ask it and one of them is a list.** The
  * month screen, the payslip and the row per month on `/reports` each decide what
@@ -411,11 +408,10 @@ function buildLines(
   // beside them, and this file restates neither.
   //
   // **An override on one of these is a magnitude and `toLine` signs it from the
-  // draft's own `units`**, which is where a draft carries its sign. It used to
-  // be re-signed here by a wrapper, because `toLine` took an override verbatim
-  // and a line moved across the month's total would otherwise have inverted an
-  // amount the user typed — item 17 says that must never happen. Signing inside
-  // `toLine` says it once, for the sickness deduction as well as for these.
+  // draft's own `units`**, which is where a draft carries its sign, so a line
+  // moved across the month's total never inverts an amount the user typed
+  // (item 17). Signing inside `toLine` says it once, for the sickness deduction
+  // as well as for these.
   return [
     ...drafts.map((draft) => toLine(draft, facts.overrides)),
     ...userDrafts.map((draft) => toLine(draft, facts.overrides)),

@@ -42,7 +42,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * **Nothing here decides that an export may proceed.** It says what the *facts*
  * stand in the way of; whether every question has been answered is a fact about
  * the conversation and lives with the screen having it, and the file itself is
- * stage 2's.
+ * the export's.
  */
 
 /**
@@ -61,11 +61,9 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * somebody other than the worker. The two halves of the advance are asked
  * separately because a month may do both and each is its own line (item 20).
  *
- * **Vacation is asked for the same reason the rest are** — settled with the
- * user on 2026-09-10, and written into item 18. It draws on a balance that is
- * replayed rather than stored (item 13), so a vacation day marked on the wrong
- * month, or forgotten, moves every later month's balance; leaving it out was
- * the one thing on the calendar the screen said nothing about.
+ * **Vacation is asked for the same reason the rest are** (item 18). It draws on
+ * a balance that is replayed rather than stored (item 13), so a vacation day
+ * marked on the wrong month, or forgotten, moves every later month's balance.
  */
 export const exportQuestionKeys = [
   "advanceGranted",
@@ -90,7 +88,7 @@ export type ExportQuestionKey = (typeof exportQuestionKeys)[number];
  *
  * `details` is the same month said item by item: the dates the calendar holds
  * and the amounts the payments screen holds. **A count alone cannot be
- * confirmed** — settled with the user on 2026-09-10. "Two sick days were
+ * confirmed**. "Two sick days were
  * marked" is a figure a family agrees with while the days sit on the wrong
  * dates, and a month whose figure is right and whose dates are wrong exports a
  * sheet nobody can reconcile against the calendar. The dates are what she
@@ -336,7 +334,7 @@ export function exportQuestions(
  * counting days for a worker who was already back.
  *
  * **Everything else on the screen is a warning**, including an answer that
- * disagrees with what the month recorded — settled with the user on 2026-09-09.
+ * disagrees with what the month recorded.
  * The user is the one who knows what happened, and a month she has looked at
  * and answered for is a month she is entitled to export; what item 18 buys is
  * that she was asked, not that the application overrules her.
@@ -374,7 +372,7 @@ export function blocksExport(
   const blocks: ExportBlockKey[] = [];
   if (!monthHasEnded(facts.month, today)) blocks.push("monthNotEnded");
   if (openSickSpellOf(facts) !== null) blocks.push("openSickSpell");
-  // Item 9, settled with the user on 2026-09-12. The preview reads an
+  // Item 9. The preview reads an
   // unanswered holiday as one she worked and pays for it, and this is what
   // stops that lean reaching a filed sheet: the figure on the screen has to say
   // something, and the export does not.
@@ -429,9 +427,8 @@ export function reviewReturnDate(
  * **The rate is confirmed the way the minimum wage is** (specs.md item 15): it
  * is not derived from the salary — nothing in that salary implies it — so the
  * user confirms it and it is stored with the month it valued, which is what
- * lets a past month be re-exported at its own rate. This is the confirmation
- * `build_plan.md`'s step 6 left to item 18, and it is asked only where days are
- * actually owed.
+ * lets a past month be re-exported at its own rate. It is item 18's
+ * confirmation, and it is asked only where days are actually owed.
  *
  * `offered` may be `null`: the table begins in July 2025 and says nothing about
  * a month before it, which is the honest answer rather than a guessed date. The
@@ -479,8 +476,8 @@ export function reviewWageConfirmation(
  * **A salary may sit above the minimum wage and may never sit below it**
  * (specs.md item 3), so a confirmation that meets a profile still holding last
  * year's figure raises the month to the wage in force rather than writing a
- * month that pays under its own confirmed minimum. Settled with the user on
- * 2026-09-09, and the screen says it is happening before she presses.
+ * month that pays under its own confirmed minimum. The screen says it is
+ * happening before she presses.
  *
  * **The profile itself is not rewritten**, which is the other half of item 3:
  * the salary does not follow a rise on its own, and how far *above* the minimum

@@ -42,7 +42,7 @@ export type MonthSpan =
 
 /**
  * Whether a holiday is calculated as one she worked — **which an unanswered
- * holiday is** (specs.md item 9, settled with the user on 2026-09-12).
+ * holiday is** (specs.md item 9).
  *
  * **One function, because the alternative is `span.worked` read as a truth
  * value in five places.** `worked` has three states, and `null` is falsy: every
@@ -163,10 +163,7 @@ export interface OpeningAdvance {
  * employed foreign caregiver holds 2.25 income-tax credit points and a woman
  * holds half a point more (Kol Zchut, `נקודות זיכוי ממס הכנסה לעובד זר`, read
  * 2026-09-10), so this one field is the whole of what the credit count depends
- * on and the user is never asked for the points themselves. Item 28's docblock
- * has wanted the same field since stage 4 for an unrelated reason — the sheet's
- * `עובד/ת` is written with both endings precisely because the profile could not
- * yet say which — so one field answers two things.
+ * on and the user is never asked for the points themselves.
  *
  * **The list is the source and the union is derived from it**, as `rateKeys`
  * and `advanceKinds` already are: a member added to a hand-kept union would
@@ -179,8 +176,7 @@ export const genders = ["female", "male"] as const;
 export type Gender = (typeof genders)[number];
 
 /**
- * How a worker's income tax is arrived at (specs.md item 17, settled with the
- * user on 2026-09-11).
+ * How a worker's income tax is arrived at (specs.md item 17).
  *
  * **Three, because "nothing is withheld" is a decision and not an amount.** A
  * family whose caregiver's tax is settled elsewhere says so once, on the
@@ -417,7 +413,7 @@ export interface MonthIncomeTax {
    * The month's ‏ברוטו‎ in agorot, or `null` where the month has none.
    *
    * **Here so a percentage correction can show its own arithmetic before it is
-   * saved** (2026-09-11): the field takes either a sum or a share, and a share
+   * saved**: the field takes either a sum or a share, and a share
    * typed blind is a number the user has no way to check. The conversion is
    * still made on the server, against the same gross read again — this figure
    * draws the sentence under the field and decides nothing.
@@ -654,8 +650,8 @@ export interface ThirdPartyPayment {
   kind: ThirdPartyKind;
   agorot: number;
   /**
-   * The day the money actually left the account (the user on 2026-09-12: every
-   * third-party payment records when it was paid).
+   * The day the money actually left the account — every third-party payment
+   * records when it was paid.
    *
    * **Required, and on every kind rather than on the insurance alone.** The
    * sheet already asks for it in so many words — the national-insurance row's
@@ -672,8 +668,8 @@ export interface ThirdPartyPayment {
    * The day the cover runs out, where the payment buys a period of it — the
    * medical-insurance policy above all (specs.md item 27's "עומד לפוג").
    *
-   * **A year after the payment is the default and not the rule** (the user on
-   * 2026-09-12: "usually its paid for a year"). `coverExpiryOf` derives it and
+   * **A year after the payment is the default and not the rule**, because a
+   * policy is usually paid for a year. `coverExpiryOf` derives it and
    * the family may type another date over it, which is why it is stored rather
    * than computed at every read: a policy that ran fifteen months would
    * otherwise be re-derived back to twelve on the next render.
@@ -782,19 +778,16 @@ export interface MonthFacts {
    * The income tax confirmed for this month, held here for the reason
    * `ConfirmedWage` holds the minimum wage and `recuperationDayRateAgorot`
    * holds the recuperation rate: it is what lets a past month **reproduce**
-   * rather than recalculate (specs.md item 17, build_plan.md stage 3).
+   * rather than recalculate (specs.md item 17).
    *
    * **Optional, and absent until the month has been through the pre-export
    * confirmation.** Absent, the engine works the figure out from the month's
    * gross, the brackets in force during it and the worker's credit points; a
-   * year the application holds no table for leaves the line at zero and raises
-   * a warning rather than withholding a number nobody can cite.
+   * year the application holds no table for leaves the line at zero rather
+   * than withholding a number nobody can cite.
    *
-   * **It reversed on 2026-09-10.** Until that day this field was required, this
-   * comment said income tax is never calculated, and the figure was typed by
-   * the user and nothing else. Both `specs.md` and `CLAUDE.md` now say the
-   * opposite. It is still the user's to correct — an override on
-   * `lineKeys.incomeTax` does that, like every other computed row.
+   * It is still the user's to correct — an override on `lineKeys.incomeTax`
+   * does that, like every other computed row.
    */
   incomeTaxAgorot?: number;
   /**
@@ -859,7 +852,7 @@ export function closeMonth(
 /**
  * What the engine needs to know that one month's facts cannot say.
  *
- * Stage 3's repository supplies it; a month handed over on its own is treated
+ * The repository supplies it; a month handed over on its own is treated
  * as the worker's and the year's first, so the entitlement check fires only on
  * a month carrying more than the whole year's allowance by itself, the balances
  * open from the opening position, and the seven-day warning sees only this

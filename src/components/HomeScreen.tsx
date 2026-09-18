@@ -70,7 +70,7 @@ import type { SpanIntent } from "@/components/MonthCalendar";
  * **What blocks a correct salary still leads the screen.** v4 draws no such
  * list; item 27 says the opening screen leads with it, so a strip of those
  * cards sits above the columns whenever there is one, and is not drawn at all
- * when there is none (the user, 2026-09-15). They are the first four blockages
+ * when there is none. They are the first four blockages
  * `/alerts` lists, phrased once on the server, each leading where its card
  * there does; the rest are counted beside a link to the page.
  *
@@ -437,8 +437,7 @@ export function HomeScreen({
             </div>
 
             {/* An ordinary work day has nothing to say about itself, so the
-                card is drawn only for a day that departs from one (the user,
-                2026-09-15). */}
+                card is drawn only for a day that departs from one. */}
             {faceKey === undefined ? null : (
             <div className={`flex items-center gap-2.75 rounded-tint px-3.25 py-2.25 ${dayFace[faceKey].tint}`}>
               <span className="flex size-7 flex-none items-center justify-center rounded-[9px] bg-surface">
@@ -457,8 +456,7 @@ export function HomeScreen({
 
             {/* Only what the coloured card above does not already say: the kind
                 is its title and the worker is the switcher's, so a row appears
-                only when the day is part of one or carries a note (the user,
-                2026-09-15). */}
+                only when the day is part of one or carries a note. */}
             {details.length > 0 ? (
               <dl className="flex flex-col">
                 {details.map((row) => (
@@ -517,7 +515,7 @@ export function HomeScreen({
             in it yet is exactly when someone wants to look at the last one that
             had, so it is drawn whether or not there is a month above it. It
             wears the export card's shape: a muted line under the cards was
-            missed (the user, 2026-09-16).
+            missed.
           */}
           <Link
             href="/month/payslip"
@@ -544,7 +542,7 @@ export function HomeScreen({
           {/* Worth knowing about this month, and it is drawn nowhere else: the
               payslip lays the figures out and says nothing about what they
               imply. It sits under the link to the payslip, which is read
-              first (the user, 2026-09-16). */}
+              first. */}
           {shown && shown.result.warnings.length > 0 ? (
             <Card className="flex min-w-0 flex-none flex-col gap-1.5 px-3.75 py-3.25">
               <h2 dir="auto" className="text-[16px] font-semibold">
@@ -563,8 +561,8 @@ export function HomeScreen({
         </div>
 
         {/* v4's workers card is left out: the top bar's switcher and its
-            עובדים/ות tab already reach both workers, and the balances name them
-            (the user, 2026-09-15). */}
+            עובדים/ות tab already reach both workers, and the balances name
+            them. */}
         <aside className="order-3 grid min-w-0 items-start gap-3 sm:grid-cols-2 lg:col-span-2 lg:row-start-2 xl:col-span-1 xl:col-start-1 xl:row-start-1 xl:flex xl:flex-col xl:items-stretch">
           <Card className="flex flex-col px-1.5 pt-1.5 pb-3">
             <div className="flex items-center gap-2.75 px-2.75 pt-2.5 pb-2">
@@ -643,8 +641,7 @@ export function HomeScreen({
                                 balance: a balance with no days behind it cannot
                                 be checked, and this month's are what the user
                                 just changed by marking a day. v4 draws only the
-                                balance — a departure recorded in `DESIGN.md`,
-                                and the user's (2026-09-16). */}
+                                balance — a departure recorded in `DESIGN.md`. */}
                             <span className="text-[13px] font-light text-ink-quiet">
                               <span dir="auto">{he.sheet.reporting.daysUsed}</span>
                               <span>: </span>
@@ -672,7 +669,7 @@ export function HomeScreen({
 
           {/* Exporting is a screen rather than a bare download: the minimum wage
               is confirmed before every export (item 4), and that is where. One
-              entry to it on this screen, not two (the user, 2026-09-15). */}
+              entry to it on this screen, not two. */}
           <Link href="/month/export" className={`${railLink} rounded-card border border-line bg-surface px-3 py-2.75`}>
             <span className="flex size-8.5 flex-none items-center justify-center rounded-tab bg-tile-sage text-icon-sage">
               <RailIcon name="sheet" className="size-4" />
@@ -690,8 +687,7 @@ export function HomeScreen({
         </aside>
 
         {/* v4's row of action cards is left out: the tabs, the money card's
-            link and the blockers already lead to each of them (the user,
-            2026-09-15). */}
+            link and the blockers already lead to each of them. */}
       </div>
     </>
   );
@@ -862,8 +858,7 @@ function MoneyCard({
           row and the payslip has one — but the payslip opens on the last month
           that ended, so without this the running month's counts are readable
           nowhere, and a vacation day wrongly shrinking the standard count would
-          show on no screen at all. A departure recorded in `DESIGN.md`, and the
-          user's (2026-09-16). */}
+          show on no screen at all. A departure recorded in `DESIGN.md`. */}
       <MoneyRow
         {...why}
         label={he.sheet.reporting.workDays}

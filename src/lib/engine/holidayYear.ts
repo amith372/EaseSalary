@@ -49,8 +49,7 @@ export interface HolidayRow {
    */
   blocked: boolean;
   /**
-   * The date is her weekly rest day (item 9, settled with the user on
-   * 2026-09-12).
+   * The date is her weekly rest day (item 9).
    *
    * **It can still be chosen and is explained rather than refused.** A holiday
    * there is drawn on the calendar as a holiday and treated as one for nothing
@@ -201,11 +200,11 @@ type HolidayReview =
  * Whether some span already covers the date. An open spell is closed at the
  * date itself, which is the window this question is asked in (`touchesRange`).
  *
- * **On her weekly rest day only another holiday counts** (item 9, settled with
- * the user on 2026-09-12). A holiday there is treated as a holiday for nothing,
- * so a free rest day or a sick day already recorded on that Saturday is not a
- * second entry beside it — the day is the rest day either way. Two holidays on
- * one date are still two, because the calendar would draw both.
+ * **On her weekly rest day only another holiday counts** (item 9). A holiday
+ * there is treated as a holiday for nothing, so a free rest day or a sick day
+ * already recorded on that Saturday is not a second entry beside it — the day
+ * is the rest day either way. Two holidays on one date are still two, because
+ * the calendar would draw both.
  */
 function alreadyCovered(
   spans: MonthSpan[],

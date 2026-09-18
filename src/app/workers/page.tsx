@@ -14,13 +14,10 @@ import { readToday } from "@/lib/requestToday";
 
 /**
  * The list of the household's workers — `EaseSalary - העובדות` (specs.md item
- * 11, `build_plan.md` stage 4 step 9).
+ * 11).
  *
- * **It was one of the five nav tabs that 404'd.** The nav is the contract:
- * every tab is a promise the application makes on every page, and a tab that
- * 404s is worse than a tab that is not there. This is the first of the five to
- * be answered, and it is answered here rather than in stage 3 because the
- * screen is one on the repository interface and needs no Postgres to be right.
+ * **The nav is the contract**: every tab is a promise the application makes on
+ * every page, and a tab that 404s is worse than a tab that is not there.
  *
  * **The four facts under each worker are read from the same calculation
  * everything else is.** The balances are replayed from the opening position

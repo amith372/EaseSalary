@@ -16,14 +16,8 @@ import { refreshMinimumWage } from "@/lib/minimumWageRefresh";
 import { readToday } from "@/lib/requestToday";
 
 /**
- * The questions that open an export — `EaseSalary - לפני הייצוא`
- * (`build_plan.md` stage 5, the pre-export questions).
- *
- * **It answers at `/month/export`, and the address was chosen before this
- * screen existed.** The home screen has linked here since stage 0, with a
- * comment saying the confirmation behind the link is built in stage 5; picking
- * a different address now would have left that link pointing at a 404 while the
- * screen it names sat somewhere else.
+ * The questions that open an export — `EaseSalary - לפני הייצוא`, at
+ * `/month/export`, where the home screen links.
  *
  * **The fetch happens here and never in the browser** (specs.md Part 3, item
  * 4). The wage is read from its source, the figure and its effective date are
@@ -32,7 +26,7 @@ import { readToday } from "@/lib/requestToday";
  * correction rather than an export.
  *
  * **Both workers are prepared, not only the one on screen**, exactly as
- * `/month` and `/settings/holidays` do it: the switcher lives in the shell and
+ * `/` and `/settings/holidays` do it: the switcher lives in the shell and
  * its choice is client state, so a page that prepared only "the current worker"
  * would have to learn who that is before it could render.
  *

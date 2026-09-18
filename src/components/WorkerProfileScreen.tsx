@@ -27,14 +27,13 @@ import type { YearMonth } from "@/lib/types";
  *
  * **The hero card is the action list's and not a second opinion.** It carries
  * the first *blockage* this worker has, phrased by `alertsView` exactly as the
- * bell, the opening screen and `/alerts` phrase it (item 27, and the user's
- * choice on 2026-09-17) — so the four cannot list what the others do not. It is
- * absent when she has none.
+ * bell, the opening screen and `/alerts` phrase it (item 27) — so the four
+ * cannot list what the others do not. It is absent when she has none.
  *
  * **What the artboard draws and this page does not**, each an absence rather
  * than an invention (`CLAUDE.md` rule 4): the `?` explaining a *month* row. The
  * status badges, the day counts, the seniority, the row's link to its payslip
- * and the closing links row all landed with stage 7.
+ * and the closing links row are all drawn.
  */
 
 /** One month as this screen lists it: which month it was, what it came to, what
@@ -349,7 +348,7 @@ export function WorkerProfileScreen({
 
       {/* The two things about her that live on another screen, which is the
           artboard's closing row. `לשתף` goes to the account section of
-          `/settings`, where an invitation is actually sent (stage 3). */}
+          `/settings`, where an invitation is actually made. */}
       <section className="flex flex-wrap items-center gap-x-5.5 gap-y-2.5 border-t border-line pt-5">
         <Link
           href="/payments"

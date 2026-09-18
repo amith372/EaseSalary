@@ -1,6 +1,5 @@
 /**
- * The income-tax brackets, held per tax year (specs.md Part 1 item 17,
- * build_plan.md stage 3, approved 2026-09-10).
+ * The income-tax brackets, held per tax year (specs.md Part 1 item 17).
  *
  * **Keyed by the tax year and not by an effective date**, which is the one
  * place this table differs from `datedRates.ts` and is not an inconsistency:

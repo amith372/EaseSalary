@@ -4,9 +4,8 @@ import type ExcelJS from "exceljs";
  * The one repair every filled template needs before it is written back.
  *
  * **exceljs writes `<sheetPr>`'s children in the wrong order and Excel refuses
- * the whole worksheet for it** — found on 2026-09-11 by opening a downloaded
- * month in Excel, which reported
- * `Replaced Part: /xl/worksheets/sheet1.xml part with XML error` and handed
+ * the whole worksheet for it**: Excel reports
+ * `Replaced Part: /xl/worksheets/sheet1.xml part with XML error` and hands
  * back an empty sheet. ECMA-376 declares `CT_SheetPr` as a *sequence* —
  * `tabColor`, then `outlinePr`, then `pageSetUpPr` — and a sequence is ordered,
  * so a document that carries the last two the other way round is invalid even
@@ -50,9 +49,8 @@ export function prepareForExcel(workbook: ExcelJS.Workbook): void {
    * cache, since the value has never been computed. A template's `calcPr`
    * carries the calculation id of the Excel that last saved it, and on that
    * evidence Excel may decide the file is already up to date and print nothing
-   * where each total belongs. That is what the user saw on 2026-09-11: the file
-   * opened, the rows were all there, and the four total lines and the figure
-   * actually transferred were blank.
+   * where each total belongs: the file opens, the rows are all there, and the
+   * four total lines and the figure actually transferred are blank.
    *
    * The totals also carry the engine's own figure as their cached result
    * (`writeTotals`), so a reader that computes nothing still sees them. This

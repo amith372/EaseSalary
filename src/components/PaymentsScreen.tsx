@@ -128,7 +128,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   // settled is worse than one that says it is waiting.
   const [saving, startSaving] = useTransition();
 
-  // Every section starts folded (the user, 2026-09-16), and what she unfolds
+  // Every section starts folded, and what she unfolds
   // stays unfolded while she steps between months.
   const [openSections, setOpenSections] = useState<ReadonlySet<MonthSection>>(
     () => new Set(),
@@ -170,10 +170,10 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
     <div className="mx-auto flex w-full max-w-[860px] min-w-0 flex-col gap-4">
       <div className="flex flex-none flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <div className="flex min-w-0 flex-col gap-1.5">
-          {/* The tab's own icon, repeated on the screen it leads to (the user,
-              2026-09-16). It sits beside the heading and not inside it: an svg
-              as the first child of a `dir="auto"` element leaves it with no
-              strong character to read and silently resolves it left-to-right. */}
+          {/* The tab's own icon, repeated on the screen it leads to. It sits
+              beside the heading and not inside it: an svg as the first child of
+              a `dir="auto"` element leaves it with no strong character to read
+              and silently resolves it left-to-right. */}
           <div className="flex items-center gap-2">
             <TwoToneIcon name="coin" className="size-5.5" />
             <h1

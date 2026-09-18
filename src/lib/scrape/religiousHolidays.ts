@@ -16,7 +16,7 @@ import type { IsoDate } from "@/lib/types";
 
 /**
  * The holidays of a religion, as a second kind of candidate list beside a
- * country's (item 10, decided with the user on 2026-09-09).
+ * country's (item 10).
  *
  * **One page per religion and not one per year.** A country's list is published
  * a year at a time and its address carries the year; these four pages carry

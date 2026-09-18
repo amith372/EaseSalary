@@ -122,7 +122,7 @@ interface MarkResult {
    *
    * Always closed: a swept range has both ends by definition. An open spell is
    * recorded by a different gesture — "she fell ill today", with no return date
-   * asked for (specs.md item 8) — which the month screen builds in stage 4.
+   * asked for (specs.md item 8).
    */
   spans: MarkedSpan[];
   skipped: SkippedDay[];

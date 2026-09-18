@@ -6,8 +6,8 @@ import { Chevron } from "@/components/icons";
 export type Fold = { open: boolean; onToggle: () => void };
 
 /**
- * A section folded until its heading is pressed (the user, 2026-09-16: a screen
- * of open forms is too much to meet at once). The body is hidden rather than
+ * A section folded until its heading is pressed, because a screen of open forms
+ * is too much to meet at once. The body is hidden rather than
  * unmounted, so a half-typed field survives a fold. `data-group` is the browser
  * suite's handle on the section, since a label such as "סכום" repeats across
  * sections and a lookup by label alone matches several.

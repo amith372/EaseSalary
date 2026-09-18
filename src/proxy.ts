@@ -10,8 +10,7 @@ import { supabaseEnv } from "@/lib/supabase/env";
 
 /**
  * **Everything redirects to `/sign-in` when there is no session**, which is what
- * makes that the first screen the application has (build_plan.md stage 3, the
- * sign-in step).
+ * makes that the first screen the application has.
  *
  * It is `proxy.ts` and not `middleware.ts`: Next 16 renamed the convention, and
  * a file under the old name is silently never run.

@@ -71,7 +71,7 @@ const THIRD_PARTY_COLUMN: SheetColumn = "H";
  * whether the family happened to lend her money, which nothing in the rule
  * says: for August 2025 it is 3.6% of ₪9,305.75 and not of ₪7,305.75 (Part 4).
  *
- * **The percentage is looked up by date and is no longer a constant here.** It
+ * **The percentage is looked up by date and is not a constant here.** It
  * is set by the state and changes on a date, and a bare number in this file
  * could not say when — which is precisely how the workbook's own line went
  * stale: D21 of every month tab in `שכר_חודשי_להאנה2025.xlsx` and
@@ -104,12 +104,12 @@ export function nationalInsuranceEstimateOf(
 }
 
 /**
- * The line's explanation key (specs.md item 24), stable from Step 3's commit.
+ * The line's explanation key (specs.md item 24), which is stable.
  *
  * One key per kind, because the sheet has one row per kind per month. A month
  * carrying two payments of the same kind would produce two lines under one key,
- * which an override (item 17) could not tell apart; the repository in Stage 3
- * is where that is kept out, since the key set is fixed here and cannot grow a
+ * which an override (item 17) could not tell apart; the repository is where
+ * that is kept out, since the key set is fixed here and cannot grow a
  * discriminator without breaking every caller that addresses one.
  */
 export function thirdPartyLineKey(kind: ThirdPartyKind): string {
@@ -248,7 +248,7 @@ export interface ThirdPartyDraft {
   coversTo: string;
   /**
    * The day the money left the account, as typed — `YYYY-MM-DD`, and never
-   * empty (the user on 2026-09-12).
+   * empty.
    *
    * The one date of the three a payment carries that nothing held before: the
    * month it appears in is the month the sheet files it under, `coversMonths`
@@ -403,8 +403,8 @@ export function reviewThirdPartyPayment(
  * When cover bought on a given day runs out, where the kind buys a period at
  * all — or `null` where it does not.
  *
- * **A year, for the medical insurance alone** (the user on 2026-09-12: "usually
- * its paid for a year"). "Usually" is why this is a default the family types
+ * **A year, for the medical insurance alone**, because such a policy is usually
+ * paid for a year. "Usually" is why this is a default the family types
  * over and not a rule: `reviewThirdPartyPayment` takes a typed expiry in
  * preference to this, so a policy that ran fifteen months keeps its own date.
  *
