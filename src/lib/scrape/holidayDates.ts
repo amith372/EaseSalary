@@ -39,7 +39,7 @@ export function isoOfDayMonth(
  * one keeps the same day and month every year — which the user confirmed on
  * 2026-09-09 is exactly what the absence of a year on those pages means.
  */
-export interface PrintedDate {
+interface PrintedDate {
   day: string;
   month: string;
   year: number | null;

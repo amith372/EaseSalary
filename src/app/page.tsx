@@ -12,11 +12,9 @@ import { readToday } from "@/lib/requestToday";
  * The opening screen's route, and the only place in the application where the
  * store and the engine meet a request.
  *
- * **The month is worked on where the application opens** (specs.md item 27).
- * This route was `/month` until 2026-09-16, when the calendar and the
- * calculation moved onto the opening screen and the separate month screen went:
- * it drew the same calendar and the same figures one link further in, and the
- * home screen beside it was a mock of it reading from fixtures.
+ * **The month is worked on where the application opens** (specs.md item 27), so
+ * there is no separate month screen drawing the same calendar one link further
+ * in.
  *
  * **It reads and does not record** (item 5). Everything that *records* a
  * payment — the advances, the income tax, the lines the user adds — is the

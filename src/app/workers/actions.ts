@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { getRepository } from "@/lib/store";
+import { getRepository, requireWorker } from "@/lib/store";
 import { advanceLedger } from "@/lib/engine/advances";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
@@ -112,15 +112,6 @@ function revalidateWorker(): void {
   revalidatePath("/payments");
 }
 
-/** Asked to change a worker the store does not have. Actions are reachable by a
- * crafted request, so the id is checked rather than assumed — stage 3 adds the
- * household check beside this one, exactly as `month/actions.ts` says. */
-async function profileOf(workerId: string): Promise<WorkerProfile> {
-  const profile = await (await getRepository()).getWorker(workerId);
-  if (profile === null) throw new Error(`No worker with id ${workerId}`);
-  return profile;
-}
-
 /**
  * Save the worker, and carry the change into the months that follow her
  * profile (`specs.md` Part 5).
@@ -172,7 +163,7 @@ export async function setRestDay(
   restDay: RestDay,
 ): Promise<ProfileActionResult> {
   if (!isAllowedRestDay(restDay)) return { ok: false, reason: "restDay" };
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   return saveProfile({ ...profile, restDay }, true);
 }
 
@@ -191,7 +182,7 @@ export async function setRestEveSupplement(
 ): Promise<ProfileActionResult> {
   const agorot = parseRestEveSupplement(amountText);
   if (agorot === null) return { ok: false, reason: "supplement" };
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   return saveProfile({ ...profile, restEveSupplementAgorot: agorot }, true);
 }
 
@@ -214,7 +205,7 @@ export async function setEmployedSince(
   workerId: string,
   dateText: string,
 ): Promise<ProfileActionResult> {
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   const date = reviewEmployedSince(dateText, await readToday(), profile.firstMonth);
   if (date === "invalid") return { ok: false, reason: "date" };
   if (date === "range") return { ok: false, reason: "employedSinceRange" };
@@ -244,7 +235,7 @@ export async function setGender(
   gender: Gender,
 ): Promise<ProfileActionResult> {
   if (!isAllowedGender(gender)) return { ok: false, reason: "gender" };
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   return saveProfile({ ...profile, gender }, true);
 }
 
@@ -273,7 +264,7 @@ export async function setIncomeTaxSetting(
 ): Promise<ProfileActionResult> {
   const reviewed = reviewIncomeTax(mode, percentageText);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   return saveProfile({ ...profile, incomeTax: reviewed.setting }, true);
 }
 
@@ -298,7 +289,7 @@ export async function setRecuperationMonth(
   if (!Number.isInteger(month) || month < 1 || month > 12) {
     return { ok: false, reason: "recuperationMonth" };
   }
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   return saveProfile({ ...profile, recuperationMonth: month }, true);
 }
 
@@ -316,7 +307,7 @@ export async function setInsurer(
   workerId: string,
   insurer: string,
 ): Promise<ProfileActionResult> {
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   return saveProfile({ ...profile, insurer: insurer.trim() }, true);
 }
 
@@ -342,7 +333,7 @@ export async function setSalaryChange(
   fromText: string,
 ): Promise<ProfileActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   const from = parseYearMonth(fromText.trim());
   const rates = await repository.listRates();
 
@@ -393,7 +384,7 @@ export async function addStandingLine(
   const reviewed = reviewUserLine(draft, randomUUID());
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   return saveProfile(
     { ...profile, standingLines: [...profile.standingLines, reviewed.line] },
     true,
@@ -417,7 +408,7 @@ export async function updateStandingLine(
   const reviewed = reviewUserLine(draft, lineId);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   if (!profile.standingLines.some((line: UserLine) => line.id === lineId)) {
     // A page held open over a line another tab has since stopped. Refused
     // rather than added back: she is looking at a form for something that is
@@ -457,7 +448,7 @@ export async function stopStandingLine(
   workerId: string,
   lineId: string,
 ): Promise<ProfileActionResult> {
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   return saveProfile(
     {
       ...profile,
@@ -487,7 +478,7 @@ export async function setOpeningDays(
   workerId: string,
   draft: OpeningDaysDraft,
 ): Promise<ProfileActionResult> {
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   const reviewed = reviewOpeningDays(draft, profile.openingPosition);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
@@ -510,7 +501,7 @@ export async function addOpeningAdvance(
   draft: OpeningAdvanceDraft,
 ): Promise<ProfileActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   const ledger = advanceLedger(
     profile.openingPosition,
     await repository.listMonths(workerId),
@@ -548,7 +539,7 @@ export async function removeOpeningAdvance(
   advanceNumber: number,
 ): Promise<ProfileActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   const opening = profile.openingPosition.advances.find(
     (advance) => advance.number === advanceNumber,
   );
@@ -596,7 +587,7 @@ export async function setDocuments(
   const reviewed = reviewDocuments(draft);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   return saveProfile({ ...profile, documents: reviewed.documents }, false);
 }
 
@@ -723,7 +714,7 @@ export async function setIdentifyingNumber(
   const repository = await getRepository();
   // Checked rather than assumed: a number written against an id nobody checked
   // is a number written into somebody else's worker.
-  await profileOf(workerId);
+  await requireWorker(workerId);
 
   await saveIdentifyingNumbers(repository, workerId, { [known]: value });
   revalidateWorker();

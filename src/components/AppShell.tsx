@@ -261,8 +261,8 @@ export function AppShell({
         than chosen: five Hebrew tabs, the switcher, the alerts pill and the
         greeting need about 1200px in one line, and at 768 and 1024 four of the
         five tabs sat outside the scroll with nothing to say so. Below that the
-        tabs scroll sideways instead of shrinking; the clipped `דף הב` this
-        replaced was the first thing a critique found.
+        tabs scroll sideways instead of shrinking, because a clipped tab label
+        reads as a broken one.
       */}
       <header className="flex flex-none flex-wrap items-center gap-x-4 border-b border-line bg-surface px-4 pb-2 md:px-7 xl:h-15.5 xl:flex-nowrap xl:gap-x-5 xl:pb-0">
         <Link

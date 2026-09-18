@@ -79,15 +79,15 @@ export type ActionEntry = { list: ActionList } & (
 
 /** How far ahead the bell warns of the permit, the visa and the medical
  * insurance running out (the user, 2026-09-17). */
-export const EXPIRY_WARNING_DAYS = 60;
+const EXPIRY_WARNING_DAYS = 60;
 
 /** The passport warns while fewer than this many months are left on it, not
  * when it lapses: the employer must see it stays valid that long (item 28). */
-export const PASSPORT_MONTHS_REQUIRED = 18;
+const PASSPORT_MONTHS_REQUIRED = 18;
 
 const DECEMBER = 12;
 
-export interface ActionListInput {
+interface ActionListInput {
   profile: WorkerProfile;
   /** The replay up to today's month, which `calculateSeries` returns when it is
    * given `today`. */

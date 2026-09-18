@@ -10,7 +10,7 @@ import type { ElementType, ReactNode } from "react";
  * - `tint` — the warm block that carries the month's total, and the only panel
  *   with no rule around it.
  */
-export type CardTone = "surface" | "inset" | "tint";
+type CardTone = "surface" | "inset" | "tint";
 
 const toneClass: Record<CardTone, string> = {
   surface: "border border-line bg-surface",
@@ -19,7 +19,7 @@ const toneClass: Record<CardTone, string> = {
 };
 
 /** The radii the artboard gives a panel, named for what carries them. */
-export type CardRadius = "panel" | "tint" | "sm" | "md" | "lg";
+type CardRadius = "panel" | "tint" | "sm" | "md" | "lg";
 
 const radiusClass: Record<CardRadius, string> = {
   panel: "rounded-panel",

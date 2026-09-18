@@ -110,13 +110,10 @@ export async function openSettingsForTestWorker(page: Page): Promise<void> {
 }
 
 /** As `seed.ts` names the first worker — Hanna, seeded from the workbooks. */
-export const FIRST_WORKER_NAME = "האנה מונטנה Hanna Montana";
+const FIRST_WORKER_NAME = "האנה מונטנה Hanna Montana";
 
 /** As `seed.ts` names her. */
 export const TEST_WORKER_NAME = "[שם העובד/ת השני/ה]";
-
-/** Her id, for the routes that take one in the address. */
-export const TEST_WORKER_ID = "worker-2";
 
 /**
  * Unfolds every folded section on the screen, which all start folded. Each is

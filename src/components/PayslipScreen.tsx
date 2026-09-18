@@ -39,8 +39,8 @@ import type {
  * month differently (Part 3, rule 11).
  *
  * **`אושר ב[תאריך]` is the day the month was last confirmed before an export**,
- * stored with the month since 2026-09-13 and absent for a month never
- * confirmed, so no date is ever invented. **The month's own note is shown here
+ * stored with the month and absent for a month never confirmed, so no date is
+ * ever invented. **The month's own note is shown here
  * and written on the opening screen** (specs.md item 5), which
  * `להוסיף הערה לחודש` opens on this month.
  */
@@ -519,7 +519,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
 
         <section className="flex flex-wrap items-center gap-5.5 border-t border-line pt-6">
           {/* Back to the calendar and the figures, which are the opening
-              screen's since 2026-09-16 — this sheet is one link further in. */}
+              screen's — this sheet is one link further in. */}
           <Link
             href="/"
             className="text-[17px] font-medium underline-offset-4 hover:underline"

@@ -22,17 +22,10 @@ export interface YearMonth {
  * absence of one.
  *
  * **These four strings are stored span data, not identifiers, so no compiler
- * checks them.** `freeRestDay` was `freeSaturday` until the rest-day rename,
- * and the rename is landed here rather than deferred because there is no
- * database yet: stage 3 is what first writes a span to Postgres, so today the
- * change costs an edit and after stage 3 it costs a migration — an `update
- * spans set kind = 'freeRestDay' where kind = 'freeSaturday'` run against every
- * deployed database, ordered against the check constraint that names the
- * allowed kinds, with a reader that still understands the old value until the
- * last row is converted. That is the story, and the reason it is written down
- * rather than performed: **this is the last commit in which renaming a member
- * of this union is free.** Anything added to it after stage 3 is named once and
- * kept.
+ * checks them.** Renaming a member is a migration — an `update spans set kind`
+ * against every deployed database, ordered against the check constraint that
+ * names the allowed kinds, with a reader that still understands the old value
+ * until the last row is converted — so a member is named once and kept.
  */
 export type MarkKind = "vacation" | "sick" | "freeRestDay";
 
@@ -268,10 +261,8 @@ export interface ClosingLine {
    *
    * The exception is a **standing** line placed after the total, whose amount
    * came from the profile: a month that paid something else has no entry here
-   * to edit, so an override is the only way to say so. This flag had one
-   * reachable value until 2026-09-09, when stage 4's step 9 built the screen
-   * that sets a standing line — and a standing *deduction* defaults to this
-   * side of the total (`defaultPlacementFor`), so it is the ordinary case and
+   * to edit, so an override is the only way to say so — and a standing
+   * *deduction* defaults to this side of the total (`defaultPlacementFor`), so it is the ordinary case and
    * not a corner of one.
    */
   overridable: boolean;

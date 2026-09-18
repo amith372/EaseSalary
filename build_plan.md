@@ -76,7 +76,7 @@ is built except this one:
 
 Carried forward from finished steps. None of these is a defect. **The second list is
 settled: the user has chosen to leave each of those as it is, so it is not work and is
-not re-opened without her asking.** Stage 7 is done when the first list is empty.
+not re-opened without her asking.** New debts are paid in the stage that finds them.
 
 ### Still to pay
 
@@ -170,31 +170,20 @@ its panel, the home screen's blocker strip, four listed and the rest counted, th
 pop-up naming the blockages, `לקראת החודשים הבאים` on `/payments`, and the national-insurance
 quarter and an account with nothing outstanding driven through the browser.
 
-## Stage 7 — Close what finished stages still owe
+## Stage 7 — Close what finished stages still owe · **done**
 
-Every entry under "Still to pay" is paid, or is put to the user and moves to the list below
-it, here. The list is that section, and it is not copied into this stage.
-
-**Done when** "Still to pay" is empty.
-
-- `דף העובד` and `העובדות`, 2026-09-18.
-- A finished month never confirmed is a blockage, 2026-09-18.
-- The month's own note, 2026-09-18.
-- A holiday moved once the year's list is in force is an amendment, 2026-09-18.
-- The bell's replay measured at 6.75 ms a request; nothing to fix, 2026-09-18.
-- **Waiting on the user:** why the month sheet carries rows 32–38 (`נתוני דיווח נדרשים`, the
-  six Wage Protection Act figures `writeReporting` fills in column C). Answered on 2026-09-17;
-  the user will come back to whether they stay.
+Six steps, landed 2026-09-18: `דף העובד` and `העובדות`, an unconfirmed finished month as a
+blockage, the month's own note, holiday amendments, the bell's replay measured, and the
+reporting rows 32–38 kept as item 2 requires.
 
 ## Stage 8 — Clean the code
 
-Run the installed review skills over the whole repository — `ponytail-audit`,
-`simplify`, `code-review` and `mattpocock-skills:codebase-design` among them — and act on
-what they find: duplicated logic, structure that has drifted, dead code and over-built
-abstractions. Behaviour does not change in this stage, so every step ends with the full suite
-passing unchanged.
+The plan, the review runs and the fix list are in `docs/stage8-review.md`, which is deleted
+when the stage closes. Behaviour does not change in this stage, so every step ends with the
+full suite passing unchanged.
 
-**Done when** a fresh audit finds no duplicate worth removing and the checks of rule 7 pass.
+**Done when** every item on that file's fix list is done or struck by the user, and the checks
+of rule 7 pass.
 
 ## Stage 9 — The help screen, and a possible assistant on top of it
 

@@ -103,7 +103,7 @@ export const SEEDED_HOLIDAY_LISTS: HolidayList[] = [
   UZ2026,
 ].map(fromSeedFile);
 
-export function sameSource(a: HolidaySource, b: HolidaySource): boolean {
+function sameSource(a: HolidaySource, b: HolidaySource): boolean {
   if (a.kind === "country" && b.kind === "country") return a.code === b.code;
   if (a.kind === "religion" && b.kind === "religion") {
     return a.religion === b.religion;

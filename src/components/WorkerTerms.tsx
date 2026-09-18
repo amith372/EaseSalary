@@ -18,13 +18,7 @@
  */
 
 import Link from "next/link";
-import {
-  cloneElement,
-  useId,
-  useState,
-  type ReactElement,
-  type ReactNode,
-} from "react";
+import { useState, type ReactNode } from "react";
 import {
   addOpeningAdvance,
   addStandingLine,
@@ -48,6 +42,7 @@ import {
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
+import { Field, inputClass } from "@/components/Field";
 import { MoneyValue } from "@/components/MoneyValue";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import { addMonths, compareMonth, yearMonthText } from "@/lib/dates";
@@ -74,7 +69,7 @@ import type {
 import { salaryFor } from "@/lib/engine/salary";
 import { he } from "@/lib/i18n/he";
 import type { IdentifyingNumbers } from "@/lib/identifyingNumbers";
-import { formatAgorot, formatDays } from "@/lib/money";
+import { formatAgorot, formatDays, formatPercent } from "@/lib/money";
 
 
 /**
@@ -155,44 +150,6 @@ export function TermRow({
   );
 }
 
-/** A labelled field. The hint sits outside the label and is attached as the
- * input's description, so a screen reader names the field by its label alone. */
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactElement<{ "aria-describedby"?: string }>;
-}) {
-  const hintId = useId();
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <label className="flex min-w-0 flex-col gap-1">
-        <span dir="auto" className="text-[13px] font-medium text-ink-warm">
-          {label}
-        </span>
-        {hint
-          ? cloneElement(children, { "aria-describedby": hintId })
-          : children}
-      </label>
-      {hint ? (
-        <span
-          id={hintId}
-          dir="auto"
-          className="text-[12px] font-light text-ink-quiet"
-        >
-          {hint}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-const inputClass =
-  "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
-
 const buttonClass =
   "rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:opacity-50";
 
@@ -234,7 +191,7 @@ function Empty({ children }: { children: ReactNode }) {
   );
 }
 
-export type Submit = (
+type Submit = (
   action: () => Promise<ProfileActionResult>,
   onResult: (result: ProfileActionResult) => void,
 ) => void;
@@ -385,7 +342,7 @@ export function IncomeTaxControl({
   const [rate, setRate] = useState(
     setting.percentage === undefined
       ? ""
-      : String(Number((setting.percentage * 100).toFixed(4))),
+      : formatPercent(setting.percentage),
   );
 
   const notes = {
@@ -943,33 +900,6 @@ export function OpeningPositionControl({
 }
 
 /**
- * The three documents and their expiry dates (specs.md item 28).
- *
- * **Three separate documents with three separate dates, and they are not one
- * thing under different names.** The employment permit belongs to the employer
- * and is renewed by the employer's own application; the work visa belongs to
- * the worker and is renewed through the agency against a fee; the passport is
- * the one the employer must check stays valid, and its threshold is eighteen
- * months remaining rather than expiry — which the hint says outright, because a
- * user reading only the date would act eighteen months late.
- *
- * **No number is asked for and none is stored**, and the note says so: the
- * three numbers are encrypted at rest with the passport and bank account
- * (item 22), and the key that protects them arrives in stage 3.
- */
-/**
- * Who the medical-insurance premium is paid through (specs.md item 16).
- *
- * **It is a field because the template stopped being one family's.** Cell `B10`
- * of both month templates named a real agency, a real insurer and a real health
- * fund until 2026-09-12, which Part 3 forbids; the sentence stayed in the
- * template and the names became this.
- *
- * Saved on a press and not on every keystroke, like the documents beside it: a
- * name is typed in pieces, and a store written on each of them would record a
- * dozen half-written insurers for the one that was meant.
- */
-/**
  * Her base salary, and a change of it from a month the family names (specs.md
  * item 3; the user, 2026-09-13).
  *
@@ -1097,6 +1027,17 @@ export function SalaryControl({
   );
 }
 
+/**
+ * Who the medical-insurance premium is paid through (specs.md item 16).
+ *
+ * **It is a field because a template may carry no family's details** (Part 3):
+ * the sentence in cell `B10` of both month templates names the insurer through
+ * this value.
+ *
+ * Saved on a press and not on every keystroke, like the documents beside it: a
+ * name is typed in pieces, and a store written on each of them would record a
+ * dozen half-written insurers for the one that was meant.
+ */
 export function InsurerControl({
   workerId,
   insurer,
@@ -1135,6 +1076,21 @@ export function InsurerControl({
   );
 }
 
+/**
+ * The three documents and their expiry dates (specs.md item 28).
+ *
+ * **Three separate documents with three separate dates, and they are not one
+ * thing under different names.** The employment permit belongs to the employer
+ * and is renewed by the employer's own application; the work visa belongs to
+ * the worker and is renewed through the agency against a fee; the passport is
+ * the one the employer must check stays valid, and its threshold is eighteen
+ * months remaining rather than expiry — which the hint says outright, because a
+ * user reading only the date would act eighteen months late.
+ *
+ * **The dates are here and the numbers are not.** Each number has a row of its
+ * own (`IdentifyingNumberControl`) and is encrypted at rest (item 22); the
+ * dates stay plain because the warnings have to query them.
+ */
 export function DocumentsControl({
   workerId,
   documents,
@@ -1196,8 +1152,7 @@ export function DocumentsControl({
 }
 
 /**
- * Her passport number — the first of the four identifying numbers to become
- * reachable from the application (specs.md items 22 and 28).
+ * One of the four identifying numbers (specs.md items 22 and 28).
  *
  * **It is opened on the server and rendered as text**, which is the whole of
  * what item 22 permits: decrypted server-side for display and for the export,

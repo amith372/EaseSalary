@@ -120,8 +120,7 @@ export const legalLinks = {
   },
   nationalInsurance: {
     label: "ביטוח לאומי עבור עובד/ת זר/ה בסיעוד",
-    // This page settles what the 3.6% is taken on (item 19), which was
-    // previously inferred from the family's workbook.
+    // This page settles what the 3.6% is taken on (item 19).
     url: `${KOL_ZCHUT}/דיווח_ותשלום_דמי_ביטוח_לאומי_עבור_עובד_זר_בסיעוד`,
   },
   employmentGuide: {

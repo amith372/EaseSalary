@@ -46,7 +46,7 @@ export interface OverrideDraft {
  */
 export type OverrideRefusal = "amount" | "notOverridable";
 
-export type ReviewedOverride =
+type ReviewedOverride =
   | { ok: true; key: string; override: LineOverride }
   | { ok: false; reason: OverrideRefusal };
 
@@ -83,7 +83,7 @@ export type ReviewedOverride =
  * places to remember to grow — which is the whitelist this file refuses in a
  * different spelling.
  */
-export type OverridableRow = Pick<MonthLine, "key" | "label" | "overridable">;
+type OverridableRow = Pick<MonthLine, "key" | "label" | "overridable">;
 
 export function reviewOverride(
   draft: OverrideDraft,

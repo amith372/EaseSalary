@@ -46,7 +46,7 @@ export interface UserLineDraft {
  */
 export type UserLineRefusal = "label" | "amount" | "shape";
 
-export type ReviewedUserLine =
+type ReviewedUserLine =
   | { ok: true; line: UserLine }
   | { ok: false; reason: UserLineRefusal };
 

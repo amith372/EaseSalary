@@ -52,13 +52,12 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  *    5's step 6, and the **day counts** those two tabs pay — five and six — are
  *    what `recuperation.test.ts` checks itself against.
  *
- *    **The rate the family valued them at is ₪418 a day**, which this file said
- *    until 2026-09-12 had never been read out of the tabs. It had: it is in the
- *    notes column all along — `I18` of `חודש  3.25` spells out five days at
+ *    **The rate the family valued them at is ₪418 a day**, in the notes
+ *    column — `I18` of `חודש  3.25` spells out five days at
  *    ₪418 for ₪2,090, and `I18` of `חודש  3.26` six at ₪418 for ₪2,508, the
  *    figure `G18` of that tab then carries.
  *
- *    **They stay out anyway, and now for a reason that can be stated.** ₪418 is
+ *    **They stay out anyway.** ₪418 is
  *    the rate that preceded 1.7.2025; `datedRates.ts` holds ₪451.50 from that
  *    day, which is the one in force when `3.26` was paid. So the engine reaches
  *    ₪2,709 where the tab pays ₪2,508 — the sheet is stale, in exactly the way
@@ -77,7 +76,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  */
 
 /** One month tab, reduced to what the engine needs and what it should produce. */
-export interface WorkbookMonth {
+interface WorkbookMonth {
   /** The tab, as `CLAUDE.md` rule 6 asks it to be named. */
   tab: string;
   month: YearMonth;
@@ -98,8 +97,8 @@ export interface WorkbookMonth {
   /**
    * The closing block (item 20).
    *
-   * **The number is this application's and not the workbook's**, which this
-   * comment claimed until 2026-09-12. The family restarted counting: the
+   * **The number is this application's and not the workbook's.** The family
+   * restarted counting: the
    * ₪4,000 of 11/25 is "מקדמה מס' 1" on its own tab, the ₪5,000 of 2/26 is
    * "מס' 2", and the ₪10,000 of 7/26 is "מקדמה מס' 7.26". Here they are 3, 4
    * and 5, because the sequence also counts the two advances the family moved
@@ -189,7 +188,7 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
      * The 2025 year's medical-insurance premium, ₪3,415.05 paid on 15.6.25.
      *
      * **It is in `C10` and not in `H10`**, which is why reading down column `H`
-     * does not find it and why it was missing here until 2026-09-12. Both `B10`
+     * does not find it. Both `B10`
      * and `I10` of this tab say what it is and when it left the account —
      * "ירד מכרטיס אשראי פרטי של שמעון ב 15.6.25 סך 3,415.05 ₪" — so the column
      * it was typed into is a slip of the family's and not a different kind of
@@ -338,10 +337,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
      * the months — "שמעון ביצעה תשלום בתאריך 20.1.26 עבור בט"ל, לחודשים
      * 10-12/25 סך של 918 ₪".
      *
-     * **It was the one quarter missing here until 2026-09-12**, while its three
-     * neighbours — 7.25, 10.25 and 4.26 — were all recorded. A gap of exactly
-     * one is what item 19's own screen is meant to make visible, so the seed
-     * showing three quarters of a year was worse than showing none.
+     * **It is recorded beside its three neighbours** — 7.25, 10.25 and 4.26.
+     * A gap of exactly one is what item 19's own screen is meant to make
+     * visible, so a seed missing one quarter would show a gap the family never
+     * had.
      */
     thirdPartyPayments: [
       {

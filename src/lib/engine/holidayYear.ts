@@ -193,7 +193,7 @@ export type HolidayRefusal =
    * same reason `partIsAllowed` is checked on the server as well as drawn. */
   | "part";
 
-export type HolidayReview =
+type HolidayReview =
   | { ok: true; fraction: number }
   | { ok: false; reason: HolidayRefusal };
 

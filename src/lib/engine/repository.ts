@@ -25,11 +25,9 @@ import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
  * Where a worker's facts are kept, said in a way that names no database.
  *
  * **No database client is named in this file or in anything it imports**, which
- * is the whole of its job (`build_plan.md`, the vertical slice). Stage 4's month
- * screen runs against the in-memory implementation below, and stage 3 lands its
- * Postgres one *beside* it rather than in front of it; without the interface the
- * screen would be gated on auth, row-level security and a schema, none of which
- * it needs in order to be right. The vendor is deliberately not written down even
+ * is the whole of its job. The in-memory implementation below and the Postgres
+ * one stand *beside* each other, so the screens and the tests need no auth,
+ * row-level security or schema in order to be right. The vendor is deliberately not written down even
  * here: `docs/plan-calculation-engine.md` verifies the rule by grepping this
  * directory for the name, and a comment explaining the rule would be the one hit
  * that makes the grep useless.
@@ -293,12 +291,9 @@ export function recordOf(facts: MonthFacts): MonthRecord {
  *
  * **The minimum wage comes from the dated-rates table and not from the
  * neighbouring month** (specs.md item 4: "a month is valued at the rate in
- * force during it and never at the current one"). This used to read the nearest
- * month's confirmed position, with a comment saying it did so only until the
- * dated-rates table landed — and the table landed. A July 2026 opened by a mark
- * was therefore valued at the wage of April 2025, which is below the wage in
- * force during it, and nothing about the month said so (found by the user on
- * 2026-09-11).
+ * force during it and never at the current one"). A neighbouring month's wage
+ * would value a July 2026 opened by a mark at the wage of April 2025, below the
+ * wage in force during it, with nothing about the month saying so.
  *
  * **The base is floored at that minimum and never rewritten above it**, which
  * is `baseForMonth`'s rule read here: a family paying above the minimum keeps
@@ -307,8 +302,7 @@ export function recordOf(facts: MonthFacts): MonthRecord {
  * minimum this worker is paid stays the family's decision (item 3).
  *
  * **A month the table cannot answer falls back to the nearest confirmed
- * position**, which is the old behaviour kept for the case it was right for: a
- * month earlier than every row has no minimum this application can cite, and
+ * position**, because a month earlier than every row has no minimum this application can cite, and
  * item 4 says it guesses nothing. The carried figure is not necessarily the
  * right one, and it does not have to be — the wage is confirmed before every
  * export, which is where a carried figure is replaced by a real one.
@@ -421,8 +415,8 @@ interface WorkerRow {
  *
  * **It copies on the way in and on the way out.** A caller that mutated what it
  * read would otherwise be mutating the store, which is a bug that cannot happen
- * against Postgres and would therefore appear only after stage 3 replaced this —
- * the worst possible moment to find it. The copies are what make this
+ * against Postgres and so would pass every test here and fail nowhere else. The
+ * copies are what make this
  * implementation *behave* like a database rather than merely satisfy its
  * signature.
  */

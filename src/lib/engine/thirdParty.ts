@@ -285,7 +285,7 @@ export type ThirdPartyRefusal =
    * policy. */
   | "expiryBeforePayment";
 
-export type ReviewedThirdParty =
+type ReviewedThirdParty =
   | { ok: true; payment: ThirdPartyPayment }
   | { ok: false; reason: ThirdPartyRefusal };
 

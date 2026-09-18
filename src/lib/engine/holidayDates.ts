@@ -24,7 +24,7 @@ import type { IsoDate } from "@/lib/types";
 
 /** Every date a holiday span covers, the rest-day ones included — which is what
  * the calendar draws, and the one caller that wants them. */
-export function holidayDatesDrawn(spans: ClosedSpan[]): Set<IsoDate> {
+function holidayDatesDrawn(spans: ClosedSpan[]): Set<IsoDate> {
   const dates = new Set<IsoDate>();
   for (const span of spans) {
     if (span.kind !== "holiday") continue;

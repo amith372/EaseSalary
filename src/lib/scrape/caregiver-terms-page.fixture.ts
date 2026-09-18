@@ -26,9 +26,8 @@ import { join } from "node:path";
  * moved, which is `markupMoved` below and is reported as `notFound`. Inventing
  * a plausibility rule for prose would be a rule with no figure behind it.
  *
- * Resolved from the working directory rather than from `import.meta.url`, which
- * the suite's jsdom environment hands back as an `http:` address that
- * `readFileSync` refuses.
+ * Resolved from the working directory: Vitest runs from the repository root, and
+ * so does every other tool here.
  */
 
 const SAVED_PAGE = join(

@@ -15,13 +15,9 @@ import type { Explanation, MonthLine, SheetColumn, YearMonth } from "@/lib/types
  * that is stored.** `MonthFacts.overrides` is keyed by them (item 17), so a key
  * that moves orphans the amount a user typed by hand and the line silently
  * reverts to the calculated figure — the one failure in this file that looks
- * like nothing went wrong. `restEveSupplement` was `fridaySupplement` until the
- * rest-day rename, and the rename is landed here rather than deferred for the
- * same reason `MarkKind`'s is: no override has ever been stored, because stage
- * 3 is what first writes one. After stage 3 the same change would mean reading
- * the old key alongside the new one and rewriting the stored `overrides` map on
- * the way past, keyed month by month. **This is the last commit in which a line
- * key is free to move**, which is what "stable by design" is asking for.
+ * like nothing went wrong. **A key never moves**: renaming one would mean
+ * reading the old key alongside the new and rewriting every stored `overrides`
+ * map on the way past, month by month.
  */
 export const lineKeys = {
   base: "base",

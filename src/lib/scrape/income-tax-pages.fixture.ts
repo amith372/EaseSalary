@@ -17,9 +17,7 @@ import { join } from "node:path";
  * parser an unspoiled page and passing for the opposite of its reason.
  */
 
-/** Resolved from the working directory, as `minimum-wage-page.fixture.ts`
- * explains: the suite's jsdom environment hands `import.meta.url` back as an
- * `http:` address that `readFileSync` refuses. */
+/** Resolved from the working directory, as `minimum-wage-page.fixture.ts` does. */
 function saved(name: string): string {
   return readFileSync(join(process.cwd(), "src/lib/scrape/fixtures", name), "utf8");
 }

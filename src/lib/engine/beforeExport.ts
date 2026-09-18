@@ -465,7 +465,7 @@ export function recuperationToConfirm(
  * meets the same check. What it refuses is the only thing that cannot be meant:
  * nothing, or a negative wage.
  */
-export type WageConfirmationRefusal = "amount";
+type WageConfirmationRefusal = "amount";
 
 export function reviewWageConfirmation(
   minimumAgorot: number,

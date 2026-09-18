@@ -13,9 +13,8 @@ import { join } from "node:path";
  * something**, so a transform that quietly matched nothing cannot hand a parser
  * an unspoiled page and let the test pass for the opposite of its reason.
  *
- * Resolved from the working directory rather than from `import.meta.url`, which
- * the suite's jsdom environment hands back as an `http:` address that
- * `readFileSync` refuses.
+ * Resolved from the working directory: Vitest runs from the repository root, and
+ * so does every other tool here.
  */
 
 const FIXTURES = join(process.cwd(), "src/lib/scrape/fixtures");

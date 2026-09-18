@@ -6,6 +6,7 @@ import { employmentYearsCompletedBy } from "@/lib/engine/recuperation";
 import type { MonthInSeries } from "@/lib/engine/series";
 import { thirdPartyLineKey } from "@/lib/engine/thirdParty";
 import { he } from "@/lib/i18n/he";
+import { toShekels } from "@/lib/money";
 import type { MonthLine } from "@/lib/types";
 
 /**
@@ -34,14 +35,7 @@ import type { MonthLine } from "@/lib/types";
  * criterion, which it does not have.
  */
 
-/** Money reaches a sheet in shekels, which is what the family reads — the same
- * conversion `monthSheet.ts` makes, and the same reason: the engine's agorot
- * are integers, so this is exact and never a rounding. */
-function shekels(agorot: number | null | undefined): number | null {
-  return agorot === null || agorot === undefined ? null : agorot / 100;
-}
-
-export interface ReportSheet {
+interface ReportSheet {
   /** Names the tab and heads the sheet, so a file opened months later says what
    * it is without the filename. */
   title: string;
@@ -103,8 +97,8 @@ export function yearlySalaryReport(
     columns: [words.month, words.gross, words.net],
     rows: inYear(series, year).map((month) => [
       monthLabel(month.facts.month),
-      shekels(month.result.gross),
-      shekels(month.result.net),
+      toShekels(month.result.gross),
+      toShekels(month.result.net),
     ]),
   };
 }
@@ -142,7 +136,7 @@ export function recuperationReport(
           isoOf(month.facts.month, daysInMonth(month.facts.month)),
         ),
         line?.units ?? null,
-        shekels(line?.amount),
+        toShekels(line?.amount),
       ]),
   };
 }
@@ -176,7 +170,7 @@ export function nationalInsuranceReport(series: MonthInSeries[]): ReportSheet {
       .map(({ month, line }) => [
         monthLabel(month.facts.month),
         (line?.coversMonths ?? []).map(monthLabel).join(", ") || null,
-        shekels(line?.amount),
+        toShekels(line?.amount),
       ]),
   };
 }

@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { getRepository } from "@/lib/store";
+import { getRepository, requireWorker } from "@/lib/store";
 import {
   advanceLedger,
   reviewAdvance,
@@ -84,23 +84,12 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * this file's to know, and an action that revalidated only its caller's route
  * would leave the other stale until something else happened to touch it.
  *
- * **The month is drawn at `/` since 2026-09-16**, when the calendar and the
- * calculation moved onto the opening screen and `/month` went. A path that no
- * longer exists is a silent no-op, so a stale `"/month"` here would save a day
- * and never show it.
+ * **The month is drawn at `/`.** Revalidating a path that does not exist is a
+ * silent no-op, so a wrong path here would save a day and never show it.
  */
 function revalidateMonth(): void {
   revalidatePath("/");
   revalidatePath("/payments");
-}
-
-/** Asked to change a worker the store does not have. Actions are reachable by a
- * crafted request, so the id is checked rather than assumed — stage 3 adds the
- * household check beside this one. */
-async function profileOf(workerId: string) {
-  const profile = await (await getRepository()).getWorker(workerId);
-  if (profile === null) throw new Error(`No worker with id ${workerId}`);
-  return profile;
 }
 
 export async function markRange(
@@ -117,7 +106,7 @@ export async function markRange(
   }
 
   const repository = await getRepository();
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   // No calendar before the first month is drawn, so a mark there is a crafted
   // request and is refused like one (specs.md item 6).
   const range = orderDates(intent.from, intent.to);
@@ -166,7 +155,7 @@ export async function clearRange(
   to: IsoDate,
 ): Promise<void> {
   const repository = await getRepository();
-  await profileOf(workerId);
+  await requireWorker(workerId);
   const ordered = orderDates(from, to);
 
   for (const span of await repository.listSpans(workerId)) {
@@ -192,7 +181,7 @@ export async function setHolidayWorked(
   worked: boolean,
 ): Promise<void> {
   const repository = await getRepository();
-  await profileOf(workerId);
+  await requireWorker(workerId);
 
   const span = (await repository.listSpans(workerId)).find(
     (candidate) => candidate.id === spanId,
@@ -274,7 +263,7 @@ async function changeMonth(
   change: (record: MonthRecord) => MonthRecord,
 ): Promise<MonthActionResult> {
   const repository = await getRepository();
-  const facts = await monthToChange(workerId, await profileOf(workerId), month);
+  const facts = await monthToChange(workerId, await requireWorker(workerId), month);
   if (facts === null) return { ok: false, reason: "noMonth" };
 
   await repository.saveMonth(workerId, change(recordOf(facts)));
@@ -294,10 +283,9 @@ async function changeMonth(
  * writes, so the row's badge, its stored shape and its clearing are identical
  * either way.
  *
- * **An empty field clears the override and does not mean zero.** It used to
- * mean zero, because zero was what a month held until the user said otherwise
- * and there was nothing underneath to go back to. Now there is, and the two
- * gestures mean opposite things: an empty field says the application is right
+ * **An empty field clears the override and does not mean zero.** There is a
+ * worked-out figure underneath to go back to, so the two gestures mean opposite
+ * things: an empty field says the application is right
  * after all, while a typed zero says this month withholds nothing and stores
  * that by hand for ever. `clearOverride`'s own docblock makes the same
  * distinction and this is the second place it bites.
@@ -469,7 +457,7 @@ export async function addAdvance(
   draft: AdvanceDraft,
 ): Promise<MonthActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   if ((await monthToChange(workerId, profile, month)) === null) {
     return { ok: false, reason: "noMonth" };
   }
@@ -509,7 +497,7 @@ export async function removeAdvance(
   kind: AdvanceKind,
 ): Promise<MonthActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   const months = await repository.listMonths(workerId);
   const facts = months.find((candidate) => sameMonth(candidate.month, month));
   if (facts === undefined) return { ok: false, reason: "noMonth" };
@@ -549,7 +537,7 @@ export async function addThirdPartyPayment(
   month: YearMonth,
   draft: ThirdPartyDraft,
 ): Promise<MonthActionResult> {
-  const facts = await monthToChange(workerId, await profileOf(workerId), month);
+  const facts = await monthToChange(workerId, await requireWorker(workerId), month);
   if (facts === null) return { ok: false, reason: "noMonth" };
 
   const reviewed = reviewThirdPartyPayment(draft, facts.thirdPartyPayments);
@@ -599,7 +587,7 @@ export async function removeThirdPartyPayment(
  */
 async function linesOf(workerId: string, month: YearMonth) {
   const repository = await getRepository();
-  const profile = await profileOf(workerId);
+  const profile = await requireWorker(workerId);
   const months = await repository.listMonths(workerId);
   const series = calculateSeries(months, profile, await readToday(), await repository.listRates());
   return series.find((entry) => sameMonth(entry.facts.month, month)) ?? null;
@@ -680,7 +668,7 @@ export async function updateUserLine(
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   const repository = await getRepository();
-  await profileOf(workerId);
+  await requireWorker(workerId);
   const facts = await repository.getMonth(workerId, month);
   if (facts === null) return { ok: false, reason: "noMonth" };
   // A page held open over a line another tab has since removed. Refused rather
@@ -724,7 +712,7 @@ export async function updateThirdPartyPayment(
   draft: ThirdPartyDraft,
 ): Promise<MonthActionResult> {
   const repository = await getRepository();
-  await profileOf(workerId);
+  await requireWorker(workerId);
 
   const facts = await repository.getMonth(workerId, month);
   if (facts === null) return { ok: false, reason: "noMonth" };

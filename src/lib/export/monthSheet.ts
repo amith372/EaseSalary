@@ -18,6 +18,7 @@ import {
 } from "@/lib/export/layout";
 import { VACATION_NOTES_KEY } from "@/lib/export/notes";
 import { prepareForExcel } from "@/lib/export/workbook";
+import { toShekels } from "@/lib/money";
 import type { MonthLine, MonthResult, SheetColumn } from "@/lib/types";
 
 /**
@@ -48,13 +49,6 @@ import type { MonthLine, MonthResult, SheetColumn } from "@/lib/types";
  * filler that left one standing would ship a stale rate to every family. Every
  * money cell this file touches is written or is left empty.
  */
-
-/** Money reaches the sheet in shekels, which is what the family reads. The
- * engine's agorot are already integers, so this is exact and never a rounding:
- * the one rounding in the calculation happened in `lines.ts`. */
-function shekels(agorot: number | null | undefined): number | null {
-  return agorot === null || agorot === undefined ? null : agorot / 100;
-}
 
 /** The identity block, and the two labels that name the worker inside a
  * sentence. Every one of these is a placeholder in the template, because no
@@ -399,13 +393,12 @@ function writeLines(
    * it were the month's.
    *
    * **Nothing in the sheet sums column D**, which is what lets a reported figure
-   * live there without being paid a second time. It was absent from every
-   * exported month until 2026-09-11, when a family noticed the row was empty.
+   * live there without being paid a second time.
    */
   put(
     sheet,
     `D${NATIONAL_INSURANCE_ROW}`,
-    shekels(result.nationalInsuranceEstimate),
+    toShekels(result.nationalInsuranceEstimate),
   );
 
   // The accruals, under the template's own `צבירת ימי חופשה / מחלה`.
@@ -429,8 +422,8 @@ function writeLineRow(
   note: string | undefined,
 ): void {
   put(sheet, `C${row}`, line.units ?? null);
-  put(sheet, `D${row}`, shekels(line.rate));
-  put(sheet, `${line.column}${row}`, shekels(line.amount));
+  put(sheet, `D${row}`, toShekels(line.rate));
+  put(sheet, `${line.column}${row}`, toShekels(line.amount));
   if (note !== undefined) sheet.getCell(`I${row}`).value = note;
 }
 
@@ -452,7 +445,7 @@ function writeBlock(
     // what the family's own sheets show — and a calculated zero is the ordinary
     // answer at the minimum wage, where the credit points exceed the tax. A
     // printed 0.00 would read as a figure somebody chose.
-    put(sheet, `E${TAX_ROW}`, tax.amount === 0 ? null : shekels(tax.amount));
+    put(sheet, `E${TAX_ROW}`, tax.amount === 0 ? null : toShekels(tax.amount));
     const note = input.notes[tax.key];
     if (note !== undefined) sheet.getCell(`I${TAX_ROW}`).value = note;
   }
@@ -464,7 +457,7 @@ function writeBlock(
     // other row of the block carries the engine's own label, because the
     // template has none to give it.
     if (index !== lettered) sheet.getCell(`B${line}`).value = row.label;
-    put(sheet, `E${line}`, shekels(row.amount));
+    put(sheet, `E${line}`, toShekels(row.amount));
     const note = input.notes[row.key];
     if (note !== undefined) sheet.getCell(`I${line}`).value = note;
   });
@@ -512,7 +505,7 @@ function writeTotals(
    */
   const subtotal = (column: SheetColumn) => {
     const found = result.subtotals.find((one) => one.column === column);
-    return found === undefined ? 0 : shekels(found.amount);
+    return found === undefined ? 0 : toShekels(found.amount);
   };
 
   putFormula(
@@ -537,13 +530,13 @@ function writeTotals(
     sheet,
     `E${layout.grossRow}`,
     grossFormula(layout),
-    shekels(result.gross),
+    toShekels(result.gross),
   );
   putFormula(
     sheet,
     `E${layout.netRow}`,
     netFormula(layout),
-    shekels(result.net),
+    toShekels(result.net),
   );
 }
 

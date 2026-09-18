@@ -29,7 +29,7 @@ import type { Worker } from "@/lib/types";
  * given the same `MonthInSeries`, so they cannot word the month differently.
  */
 
-export interface MonthFileRequest {
+interface MonthFileRequest {
   worker: Worker;
   /** The profile, for when the employment began. The month's *terms* are read
    * off the month and never off here (Part 3); this is the employment itself,

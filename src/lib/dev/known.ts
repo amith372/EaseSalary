@@ -107,7 +107,7 @@ const hanna: WorkerProfile = {
  *
  * Part 4: "two paid holidays on the 19th and the 21st". The dates belong to the
  * year and not to the month — the user never marks a day as a holiday (item 9)
- * — so until stage 5's yearly picker exists they arrive from here, unanswered.
+ * — so the known case carries them here, as the year's list would draw them.
  */
 const spans: Record<string, MonthSpan[]> = {
   hanna: [

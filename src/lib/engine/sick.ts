@@ -62,7 +62,7 @@ function unpaidFractionOfSpellDay(dayOfSpell: number): number {
 /** One continuous spell of sickness, whatever number of spans it was entered
  * as. `from` and `to` are its own first and last day, which is where the tiers
  * are counted from. */
-export interface SickSpell {
+interface SickSpell {
   from: IsoDate;
   to: IsoDate;
 }
@@ -159,7 +159,7 @@ export function spellsOf(spans: ClosedSpan[], restDay: RestDay): SickSpell[] {
 }
 
 /** One day of a spell, with the position that decides what it is worth. */
-export interface SickDay {
+interface SickDay {
   date: IsoDate;
   /** Counting from 1 at the spell's own first day, rest days included: a rest
    * day inside a spell advances the position even though no money moves for it

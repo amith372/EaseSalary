@@ -218,7 +218,7 @@ export type AdvanceRefusal =
    * `whyRemovalIsRefused`). */
   | "advanceRepaidAlready";
 
-export type ReviewedAdvance =
+type ReviewedAdvance =
   | { ok: true; advance: Advance }
   | { ok: false; reason: AdvanceRefusal };
 
@@ -274,7 +274,7 @@ export function whyRepaymentIsRefused(
  * What the month the movement is being recorded in already knows: the advances
  * the worker has, this month's own movements, and which month it is.
  */
-export interface AdvanceContext {
+interface AdvanceContext {
   ledger: readonly AdvanceStanding[];
   monthAdvances: readonly Advance[];
   month: YearMonth;

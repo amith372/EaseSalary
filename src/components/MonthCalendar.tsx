@@ -84,35 +84,6 @@ interface MonthCalendarProps {
    */
   onSetHolidayWorked?: (spanId: string, worked: boolean) => void;
   /**
-   * Draw the month without offering to mark it. **Marking only** — the month
-   * buttons still work, because moving between months is reading and not
-   * writing.
-   *
-   * A day is then not a button at all rather than a button that does nothing:
-   * a control that answers a click with silence reads as a broken screen, and
-   * the hint line that tells the user to click one goes with it.
-   */
-  readOnly?: boolean;
-  /**
-   * Draw the month's name as the page's `h1` rather than as a plain label.
-   *
-   * **Both screens that draw a month now set it**, and the prop survives
-   * because the screens that embed a calendar without heading the page with it
-   * must not. `חישוב החודש` has nothing else to head the page; the home screen
-   * had the hero card of v3 until v4 cut it, and went from 2026-09-15 to
-   * 2026-09-16 as the one screen in the application starting at `h2` — found
-   * by an audit, and the screen the skip link lands on. It carries the same
-   * 24px bold either way, so what the prop changes is the element and never
-   * the look.
-   */
-  asPageHeading?: boolean;
-  /**
-   * Draws the header as v4's illustrated band (`CalendarBand`), bled to the edges
-   * of a card padded `px-5 pt-3.5` — the home screen's. The month screen keeps
-   * the plain header, because its artboard draws no band.
-   */
-  decorated?: boolean;
-  /**
    * The day a panel beside the calendar is showing, ringed in the grid. The
    * calendar reports every day it is pressed on through `onSelectDay`, and
    * holds no selected day of its own.
@@ -285,9 +256,6 @@ export function MonthCalendar({
   onSelectRange,
   onClearRange,
   onSetHolidayWorked,
-  readOnly = false,
-  asPageHeading = false,
-  decorated = false,
   selectedDay,
   onSelectDay,
   editRequest,
@@ -504,14 +472,12 @@ export function MonthCalendar({
   const kindTakesPart = (kind: MarkKind) =>
     selection !== null && partIsAllowed({ kind, ...selection, fraction: part });
 
-  const heading = asPageHeading ? (
+  // The month is the page's subject and the skip link lands here, so its name
+  // is the page's `h1`.
+  const heading = (
     <h1 dir="auto" className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
       <Bidi>{monthLabel(month)}</Bidi>
     </h1>
-  ) : (
-    <span className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
-      <Bidi>{monthLabel(month)}</Bidi>
-    </span>
   );
 
   return (
@@ -519,44 +485,20 @@ export function MonthCalendar({
       className={["flex min-h-0 flex-col gap-2", className ?? ""].filter(Boolean).join(" ")}
       onKeyDown={handleEscape}
     >
-      {decorated ? (
-        <>
-          {/* v4 puts the controls first and the month beside them, so the
-              drawing can take the far end of the band. */}
-          <CalendarBand className="-mx-4.5 -mt-3.5 mb-1">
-            <MonthStepper
-              month={month}
-              today={today}
-              earliest={earliest}
-              onMonthChange={(next) => onMonthChange?.(next)}
-              label={heading}
-            />
-          </CalendarBand>
-        </>
-      ) : (
-        <div className="flex flex-wrap items-start justify-between gap-4.5">
-          <div className="flex flex-col gap-0.5">
-            {heading}
-            {readOnly ? null : (
-              <span dir="auto" className="text-[15px] font-light text-ink-quiet">
-                {he.calendar.hint}
-              </span>
-            )}
-          </div>
-          {/* The same stepper the payments screen carries. Moving between months
-              is one question and it is answered in one place — which matters most
-              under right-to-left, where the arrow meaning *forward in time* is the
-              one on the left. */}
-          <MonthStepper
-            month={month}
-            today={today}
-            earliest={earliest}
-            onMonthChange={(next) => onMonthChange?.(next)}
-          />
-        </div>
-      )}
+      {/* v4 puts the controls first and the month beside them, so the drawing
+          can take the far end of the band. The header is bled to the edges of a
+          card padded `px-4.5 pt-3.5`. */}
+      <CalendarBand className="-mx-4.5 -mt-3.5 mb-1">
+        <MonthStepper
+          month={month}
+          today={today}
+          earliest={earliest}
+          onMonthChange={(next) => onMonthChange?.(next)}
+          label={heading}
+        />
+      </CalendarBand>
 
-      <div className={`grid flex-none grid-cols-7 ${decorated ? "gap-1 sm:gap-1.75" : "gap-1.5"}`}>
+      <div className="grid flex-none grid-cols-7 gap-1 sm:gap-1.75">
         {he.calendar.dayNames.map((name) => (
           <span
             key={name}
@@ -572,12 +514,7 @@ export function MonthCalendar({
           roving tabindex keeps the whole month to one tab stop, and the arrow
           keys move between days inside it. */}
       <div
-        className={[
-          "grid flex-1 grid-cols-7",
-          decorated
-            ? "min-h-64 auto-rows-[minmax(48px,1fr)] gap-1 sm:auto-rows-[minmax(58px,1fr)] sm:gap-1.75"
-            : "min-h-44 auto-rows-[minmax(28px,1fr)] gap-1.25",
-        ].join(" ")}
+        className="grid min-h-64 flex-1 auto-rows-[minmax(48px,1fr)] grid-cols-7 gap-1 sm:auto-rows-[minmax(58px,1fr)] sm:gap-1.75"
         ref={gridRef}
         onKeyDown={handleKeyDown}
       >
@@ -645,17 +582,6 @@ export function MonthCalendar({
             </>
           );
 
-          // Drawn rather than offered: no tab stop, no hover outline and no
-          // pressed state, because none of the three is true of a day that
-          // cannot be marked.
-          if (readOnly) {
-            return (
-              <div key={date} data-date={date} aria-label={label} className={face.join(" ")}>
-                {content}
-              </div>
-            );
-          }
-
           return (
             <button
               key={date}
@@ -683,7 +609,7 @@ export function MonthCalendar({
       {/* The range's second press is otherwise learned by accident. Polite, so
           a screen reader hears it after the day's own label. */}
       <span aria-live="polite" className="contents">
-        {!readOnly && anchor !== null && !picking && asking === null ? (
+        {anchor !== null && !picking && asking === null ? (
           <span dir="auto" className="flex-none text-[14px] font-medium text-ink-warm">
             {he.calendar.secondClick}
           </span>

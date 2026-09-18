@@ -619,9 +619,8 @@ export const he = {
     year: "[שנה]",
     name: "[שם]",
     /** Who the medical insurance is paid through, where the family has not
-     * said. The seeds carry it rather than a real agency: the month template
-     * held one family's insurer until 2026-09-12, and moving that name into a
-     * seed file would have kept it in the repository under a new roof. */
+     * said. The seeds carry it rather than a real agency, because no family's
+     * insurer belongs in the repository (Part 3). */
     insurer: "[חברת הביטוח]",
     workerName: "[שם העובד/ת]",
     description: "[תיאור]",
@@ -646,7 +645,6 @@ export const he = {
   },
 
   calendar: {
-    hint: "לחיצה על יום, ואז על יום נוסף, מסמנת טווח",
     /** Said once a first day is pressed, because nothing else on the screen
      * says the second press is what finishes it (the user, 2026-09-15). */
     secondClick: "לחצו על היום האחרון, או שוב על אותו יום",
@@ -971,19 +969,10 @@ export const he = {
       title: "מה שולם החודש",
       exportToExcel: "לייצא לאקסל",
       /**
-       * Where the money card leads, and the saga behind one link (the user,
-       * 2026-09-16).
-       *
-       * **This card carries one link and it has to be the working one.** v4
-       * draws two — this one, and a `לחישוב` in the header that led to
-       * `חישוב החודש`. On 2026-09-15 the header's was cut as a duplicate, on
-       * the strength of two names that read alike; they never led to the same
-       * place, and the cut left the calculation reachable only through the
-       * payslip and back out of it. So on 2026-09-16 this link was pointed at
-       * `חישוב החודש` instead — and then that screen turned out to be the one
-       * that worked while this one was a fixture of it, so the calculation
-       * moved here and the screen went. The cut was right after all: there is
-       * one screen further in, and it is the payslip.
+       * Where the money card leads. **This card carries one link**, though v4
+       * draws a second `לחישוב` in the header: the calculation is the opening
+       * screen itself, so there is one screen further in, and it is the
+       * payslip.
        *
        * The bottom figure of the card above is not named here — three screens
        * draw it and `bottomFigure` names it once, because a month with nothing
@@ -1030,8 +1019,7 @@ export const he = {
 
   /**
    * What a month comes to, wherever it is drawn. The calendar and these figures
-   * live on the opening screen since 2026-09-16; the keys keep their `month`
-   * name because what they describe is a month and not a screen, and the payslip
+   * live on the opening screen; the keys keep their `month` name because what they describe is a month and not a screen, and the payslip
    * and `/reports` read several of them too.
    */
   month: {
@@ -1104,7 +1092,7 @@ export const he = {
       },
       incomeTax: {
         title: "מס הכנסה",
-        /** The field is a *correction* since 2026-09-10, not an entry: the
+        /** The field is a *correction*, not an entry: the
          * figure beside the heading is the one the application worked out,
          * and this is how the user puts another one over it. */
         field: "סכום אחר, אם חושב אחרת",
@@ -1806,11 +1794,10 @@ export const he = {
          * settled with the user on 2026-09-11).
          *
          * **Three named choices rather than a field whose emptiness means
-         * something.** The control this replaced had one box in which a typed
-         * zero meant "withhold nothing" and an empty box meant "work it out",
-         * a distinction nothing on the screen stated — so a family that
-         * cleared the box to switch the tax off got the calculated figure back
-         * instead. A name is the whole of the fix.
+         * something.** One box in which a typed zero meant "withhold nothing"
+         * and an empty box meant "work it out" is a distinction nothing on the
+         * screen states — a family that cleared the box to switch the tax off
+         * would get the calculated figure back instead.
          *
          * **`reminder` says what the law asks**, and it is said under all three
          * choices rather than only under `ללא ניכוי`: a rule that appears the
@@ -2681,10 +2668,8 @@ export const he = {
       recuperation: (days: number) =>
         `דמי הבראה משולמים פעם בשנה, בחודש שנקבע בפרופיל של העובד/ת. מספר הימים נקבע לפי הוותק: חמישה ימים על השנה הראשונה, שישה על השנייה והשלישית, שבעה מהרביעית עד העשירית, ואילך לפי הסולם שבחוק. השנה נמדדת מיום תחילת ההעסקה ועד יום השנה שאחריו — ולא לפי השנה הקלנדרית, שלפיה נמדדת החופשה — ואין זכאות עד שהושלמה שנת עבודה מלאה. החודש משולמים ${formatDays(days)} ימים. ערך יום ההבראה אינו נגזר מהשכר: הוא נקבע בחוק ומתעדכן בכל יולי, ולכן הוא מאושר ונשמר עם החודש שחושב לפיו.`,
       /**
-       * Income tax (specs.md item 17). **Rewritten on 2026-09-10**, the day the
-       * rule reversed: the sentence used to open "היישום אינו מחשב מס הכנסה"
-       * and to tell the user to type a figure. It now says the three things she
-       * cannot see from the amount — that the brackets are annual and the month
+       * Income tax (specs.md item 17). It says the three things she cannot see
+       * from the amount — that the brackets are annual and the month
        * is a twelfth, that the credit points come from the gender on the
        * profile and are never asked for, and that at the minimum wage the
        * credit is larger than the tax, which is why an ordinary month shows

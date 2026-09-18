@@ -155,13 +155,12 @@ const firstWorker: WorkerProfile = {
  * corrected by hand, a payment to a third party, and a spell of sickness across
  * a month boundary.
  *
- * **What she no longer carries, and where it went.** She used to rest on Friday
- * and to be taxed at a flat 2.5%, so that the demo showed a rest day that is
- * not Saturday and a tax that is not calculated. Both are now *set* by the
- * tests that care about them — `worker-profile.spec.ts` moves her rest day and
- * watches the calendar follow, and `income-tax.spec.ts` switches her to each of
- * the three modes in turn — which is the stronger check of the two: it proves
- * the change works and not merely that a seeded value is displayed.
+ * **She rests on Saturday and her tax is calculated.** A Friday rest day and a
+ * flat rate are *set* by the tests that care about them —
+ * `worker-profile.spec.ts` moves her rest day and watches the calendar follow,
+ * and `income-tax.spec.ts` switches her to each of the three modes in turn —
+ * which proves the change works and not merely that a seeded value is
+ * displayed.
  */
 const secondWorker: WorkerProfile = {
   id: "worker-2",
@@ -199,7 +198,7 @@ const secondWorker: WorkerProfile = {
   },
 };
 
-export const devWorkers: WorkerProfile[] = [firstWorker, secondWorker];
+const devWorkers: WorkerProfile[] = [firstWorker, secondWorker];
 
 /**
  * The days that departed from an ordinary month, per worker.
@@ -374,13 +373,10 @@ const workbookMonths: MonthRecord[] = WORKBOOK_SEED_MONTHS.map((m) => ({
 const devMonths: Record<string, MonthRecord[]> = {
   "worker-1": workbookMonths,
   /**
-   * **The second worker is where everything invented now lives.**
-   *
-   * She was the quieter of the two until 2026-09-11; the cases below were the
-   * first worker's, and they moved here when Hanna was reseeded from the
-   * workbooks. A month of Hanna's that carried an advance nobody granted, or a
-   * line nobody wrote, would no longer match the tab it is meant to be held
-   * against — and matching it is the whole reason she was reseeded.
+   * **The second worker is where everything invented lives.** The first is
+   * seeded from the workbooks, and a month of hers that carried an advance
+   * nobody granted, or a line nobody wrote, would no longer match the tab it
+   * is meant to be held against.
    */
   "worker-2": monthsFor(secondWorker, {
     // Medical insurance, which the employer of a caregiver owes and which goes

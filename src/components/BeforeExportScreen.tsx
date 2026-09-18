@@ -11,6 +11,7 @@ import {
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
+import { inputClass } from "@/components/Field";
 import { SheetBadge } from "@/components/icons";
 import { MonthStepper, notBefore, openingMonthOf } from "@/components/MonthStepper";
 import { useWorkerScope } from "@/components/WorkerScope";
@@ -390,7 +391,7 @@ function MonthConfirmation({
               value={wageText}
               onChange={(event) => setWageText(event.target.value)}
               placeholder={he.placeholder.amountInput}
-              className={fieldClass}
+              className={inputClass}
             />
           </label>
         ) : null}
@@ -469,7 +470,7 @@ function MonthConfirmation({
                 value={rateText}
                 onChange={(event) => setRateText(event.target.value)}
                 placeholder={he.placeholder.amountInput}
-                className={fieldClass}
+                className={inputClass}
               />
             </label>
           </div>
@@ -699,7 +700,7 @@ function OpenSpellBlock({
             data-return-input=""
             value={returnedOn}
             onChange={(event) => setReturnedOn(event.target.value)}
-            className={fieldClass}
+            className={inputClass}
           />
         </label>
         <button
@@ -915,6 +916,3 @@ function BlockTitle({ children }: { children: string }) {
     </span>
   );
 }
-
-const fieldClass =
-  "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";

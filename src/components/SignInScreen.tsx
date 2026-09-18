@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { acceptInvitation } from "@/app/sign-in/actions";
 import { Card } from "@/components/Card";
+import { inputClass } from "@/components/Field";
 import { LogoMark } from "@/components/icons";
 import { he } from "@/lib/i18n/he";
 import { supabaseInBrowser } from "@/lib/supabase/client";
@@ -287,9 +288,6 @@ export function SignInScreen({
     </main>
   );
 }
-
-const inputClass =
-  "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
 
 /**
  * Supabase answers in English, and the screen speaks Hebrew. The three cases

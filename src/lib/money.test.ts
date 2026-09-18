@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatAgorot, formatDays, parseShekels } from "@/lib/money";
+import {
+  formatAgorot,
+  formatDays,
+  formatPercent,
+  parseShekels,
+  toShekels,
+} from "@/lib/money";
 
 describe("formatAgorot", () => {
   it("writes the four totals of the August 2025 known case", () => {
@@ -167,5 +173,24 @@ describe("what is shown and what is read back", () => {
     for (const agorot of [0, 1, 99, 100, 45000, 624765, 930575, 100000000]) {
       expect(parseShekels(formatAgorot(agorot))).toBe(agorot);
     }
+  });
+});
+
+describe("formatPercent", () => {
+  it("shows a stored fraction as the percentage typed, without float noise", () => {
+    // 0.07 × 100 is 7.000000000000001 in floating point; the user typed 7.
+    expect(formatPercent(0.07)).toBe("7");
+    expect(formatPercent(0.025)).toBe("2.5");
+    expect(formatPercent(0.1)).toBe("10");
+    expect(formatPercent(0)).toBe("0");
+  });
+});
+
+describe("toShekels", () => {
+  it("divides agorot by a hundred and passes an absent figure through", () => {
+    expect(toShekels(674765)).toBe(6747.65);
+    expect(toShekels(0)).toBe(0);
+    expect(toShekels(null)).toBeNull();
+    expect(toShekels(undefined)).toBeNull();
   });
 });

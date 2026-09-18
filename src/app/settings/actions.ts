@@ -30,9 +30,9 @@ export type InvitationResult =
  * 2026-09-13). The invitation is a row, and the member passes the link on
  * themselves; the person invited opens an account of their own with the invited
  * address — or signs in, if they already have one — and the row is accepted
- * then, through the token only the link carries. Supabase's own invitation mail was tried first and dropped: it created
- * the account itself, with a password nobody chose, and refused to send
- * anything to an address that already had one.
+ * then, through the token only the link carries. Supabase's own invitation
+ * mail is not used: it creates the account itself, with a password nobody
+ * chose, and refuses to send anything to an address that already has one.
  *
  * The row is inserted by the member's own session, so the policies decide
  * whether they may invite into this household at all. Inviting an address

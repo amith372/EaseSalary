@@ -1,12 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  cloneElement,
-  useId,
-  useState,
-  type ReactElement,
-} from "react";
+import { useState } from "react";
 import {
   addAdvance,
   addThirdPartyPayment,
@@ -27,6 +22,7 @@ import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { CoveredMonths } from "@/components/CoveredMonths";
+import { Field, inputClass } from "@/components/Field";
 import { FoldSection, type Fold } from "@/components/FoldSection";
 import { MoneyValue } from "@/components/MoneyValue";
 import { addMonths, yearMonthText } from "@/lib/dates";
@@ -61,7 +57,7 @@ import type {
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { legalLink } from "@/lib/links";
-import { formatAgorot, parseShekels } from "@/lib/money";
+import { formatAgorot, formatPercent, parseShekels } from "@/lib/money";
 import type { OverrideCandidate, YearMonth } from "@/lib/types";
 
 /**
@@ -176,46 +172,6 @@ function MonthFold(props: Omit<Parameters<typeof FoldSection>[0], "className"> &
     />
   );
 }
-
-/** A labelled field. The input is `dir="ltr"` wherever it takes digits, so an
- * amount is typed left to right inside a right-to-left page (`CLAUDE.md`).
- * The hint sits outside the label and is attached as the input's description,
- * so a screen reader names the field by its label alone. */
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactElement<{ "aria-describedby"?: string }>;
-}) {
-  const hintId = useId();
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <label className="flex min-w-0 flex-col gap-1">
-        <span dir="auto" className="text-[13px] font-medium text-ink-warm">
-          {label}
-        </span>
-        {hint
-          ? cloneElement(children, { "aria-describedby": hintId })
-          : children}
-      </label>
-      {hint ? (
-        <span
-          id={hintId}
-          dir="auto"
-          className="text-[12px] font-light text-ink-quiet"
-        >
-          {hint}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-export const inputClass =
-  "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
 
 /** A bare text action inside a row. The padding widens what a finger can hit to
  * about 44px and the negative margin gives the space back, so the row is laid
@@ -490,10 +446,9 @@ function HospitalOvertimeControl({
 /**
  * The income tax, calculated and correctable (specs.md item 17).
  *
- * **It used to be the whole of how the figure got in, and since 2026-09-10 it
- * is the way it is corrected.** The engine works the tax out from the month's
- * gross, the year's brackets and the credit points the worker's gender gives
- * her; this control shows that figure and stores an override over it. It is the
+ * **It corrects the figure and does not enter it.** The engine works the tax
+ * out from the month's gross, the year's brackets and the credit points the
+ * worker's gender gives her; this control shows that figure and stores an override over it. It is the
  * tax's only control, which is why the row answers `false` to the generic
  * override control's question — the reason sits beside the row in `month.ts`.
  *
@@ -541,7 +496,7 @@ function IncomeTaxControl({
     ? words.from.manual
     : incomeTax.setting.mode === "percentage"
       ? words.from.percentage(
-          String(Number(((incomeTax.setting.percentage ?? 0) * 100).toFixed(4))),
+          formatPercent(incomeTax.setting.percentage ?? 0),
         )
       : words.from[incomeTax.setting.mode];
 
@@ -554,7 +509,7 @@ function IncomeTaxControl({
       ? words.ruleNone
       : incomeTax.setting.mode === "percentage"
         ? words.rulePercentage(
-            String(Number(((incomeTax.setting.percentage ?? 0) * 100).toFixed(4))),
+            formatPercent(incomeTax.setting.percentage ?? 0),
           )
         : words.rule;
 
@@ -707,7 +662,7 @@ function IncomeTaxControl({
           ) : (
             <bdi>
               {words.worksOutTo(
-                String(Number((percentage * 100).toFixed(4))),
+                formatPercent(percentage),
                 formatAgorot(gross),
                 formatAgorot(converted),
               )}

@@ -136,14 +136,14 @@ export function reviewDate(text: string): IsoDate | null | "invalid" {
 }
 
 /** The earliest date an employment may have begun (specs.md item 6). */
-export const EARLIEST_EMPLOYMENT: IsoDate = "2020-01-01";
+const EARLIEST_EMPLOYMENT: IsoDate = "2020-01-01";
 
 /**
  * The last date an employment may have begun: one year after today (specs.md
  * item 6). The 29th of February has no anniversary, so it
  * falls back to the last day of February rather than rolling into March.
  */
-export function latestEmployment(today: IsoDate): IsoDate {
+function latestEmployment(today: IsoDate): IsoDate {
   const [year, month, day] = today.split("-").map(Number);
   const next = { year: year + 1, month };
   return isoOf(next, Math.min(day, daysInMonth(next)));
@@ -243,7 +243,7 @@ export interface DocumentsDraft {
   passportExpiry: string;
 }
 
-export type ReviewedDocuments =
+type ReviewedDocuments =
   | { ok: true; documents: WorkerDocuments }
   | { ok: false; reason: "date" };
 
@@ -316,7 +316,7 @@ export type OpeningRefusal =
    * figure first enters (item 6). */
   | "overRepaid";
 
-export type ReviewedOpeningAdvance =
+type ReviewedOpeningAdvance =
   | { ok: true; advance: OpeningAdvance }
   | { ok: false; reason: OpeningRefusal };
 
@@ -567,7 +567,7 @@ export function firstNameOf(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] ?? "";
 }
 
-export type ReviewedNewWorker =
+type ReviewedNewWorker =
   | { ok: true; profile: Omit<WorkerProfile, "id"> }
   | { ok: false; reason: NewWorkerRefusal };
 
@@ -705,7 +705,7 @@ const EMPTY_OPENING: OpeningPosition = {
  * The advances are numbered from one: a new worker has no ledger yet, and the
  * number is the store's to give in every other case (item 20).
  */
-export function reviewOpeningPosition(
+function reviewOpeningPosition(
   draft: OpeningDraft,
   employedSince: IsoDate,
   recuperationMonth: number,

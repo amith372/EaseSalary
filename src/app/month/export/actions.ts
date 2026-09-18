@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getRepository } from "@/lib/store";
+import { getRepository, requireWorker } from "@/lib/store";
 import { salaryFor } from "@/lib/engine/salary";
 import {
   baseForMonth,
@@ -60,16 +60,14 @@ function revalidateMonth(): void {
 }
 
 /** Asked about a worker or a month the store does not have. Actions are
- * reachable by a crafted request, so both are checked rather than assumed —
- * stage 3 adds the household check beside them.
+ * reachable by a crafted request, so both are checked rather than assumed.
  *
  * A month nobody opened is opened here, as it stands in the replay: confirming
  * is the first fact recorded in it (`openMonthIfMissing`). Only a month that
  * has begun; a later one cannot be exported yet (item 21). */
 async function monthOf(workerId: string, month: YearMonth) {
   const repository = await getRepository();
-  const profile = await repository.getWorker(workerId);
-  if (profile === null) throw new Error(`No worker with id ${workerId}`);
+  const profile = await requireWorker(workerId, repository);
   if (compareMonth(month, monthOfDate(await readToday())) <= 0) {
     await openMonthIfMissing(repository, profile, month);
   }
@@ -159,7 +157,7 @@ async function taxToConfirm(
 /** The figures the confirmation carries. Text, because they are what was typed
  * into fields; `parseShekels` is what turns them into agorot, and it is the
  * same reader every other amount in the application goes through. */
-export interface MonthConfirmation {
+interface MonthConfirmation {
   /** The minimum wage the user confirmed — the offered figure unchanged, or the
    * one she typed instead (specs.md item 4). */
   minimumText: string;
@@ -171,9 +169,8 @@ export interface MonthConfirmation {
 }
 
 /**
- * The month confirmed — what the export button does, and until stage 2 puts a
- * file behind it, the whole of what it does (settled with the user on
- * 2026-09-09).
+ * The month confirmed — what the export button does before it hands over the
+ * file.
  *
  * **Three things are written, and they are written together.** The minimum wage
  * with the date it took effect, so the month stays valued at the rate in force

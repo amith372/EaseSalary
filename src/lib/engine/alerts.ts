@@ -27,10 +27,10 @@ export const warningKinds = [
 export type WarningKind = (typeof warningKinds)[number];
 
 /** How long 'not now' hides a warning. */
-export const DEFER_DAYS = 7;
+const DEFER_DAYS = 7;
 
 /** How far back the handled list reaches. */
-export const HANDLED_DAYS = 90;
+const HANDLED_DAYS = 90;
 
 /**
  * A warning put off. **The whole entry is its fingerprint**, so a date or a
@@ -54,7 +54,7 @@ export function deferralOf(workerId: string, entry: ActionEntry, today: IsoDate)
 
 /** "Mark as handled" on a finished month not yet exported: the same record as
  * "not now", with no day on which it shows again. It stamps no export. */
-export const FOREVER: IsoDate = "9999-12-31";
+const FOREVER: IsoDate = "9999-12-31";
 
 export function markedHandledOf(workerId: string, entry: ActionEntry): Deferral {
   return { workerId, fingerprint: fingerprintOf(entry), until: FOREVER };

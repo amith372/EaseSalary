@@ -156,7 +156,7 @@ export function daysUsedIn(
 
 /** What the month opens with. Absent for the worker's first month, which opens
  * from the opening position given once (specs.md item 6). */
-export interface OpeningBalances {
+interface OpeningBalances {
   vacationDays: number;
   sickDays: number;
 }
@@ -342,7 +342,7 @@ export function vacationYearWarning(
  * dated-rates table begins after it. Every month from July 2025 on has a seeded
  * figure, so this is a fence around a gap rather than a case that arises.
  */
-export function recuperationRateMissingWarning(
+function recuperationRateMissingWarning(
   facts: ClosedMonthFacts,
   employment: Employment,
   rates: DatedRate[],
@@ -377,7 +377,7 @@ export function recuperationRateMissingWarning(
  * settled before the export and stored, which is exactly the case the tables
  * are not needed for (item 17).
  */
-export function taxBracketsMissingWarning(
+function taxBracketsMissingWarning(
   facts: ClosedMonthFacts,
   rates: DatedRate[],
   tables: TaxYearBrackets[],
@@ -441,17 +441,16 @@ export function belowMinimumWageWarning(
  * `null` where it does (specs.md item 16).
  *
  * **It fires only where the sheet would otherwise print half a sentence.** Row
- * 10 reads "ביטוח רפואי לעובד/ת - שולם באמצעות …", and until 2026-09-12 the
- * end of that sentence was one family's own agency written into the template's
- * binary. It is a placeholder now, so a month that pays a premium with an empty
- * profile exports a sentence that stops mid-air — which is the state this asks
- * the user to fix before she meets it in the file.
+ * 10 reads "ביטוח רפואי לעובד/ת - שולם באמצעות …", and the end of that sentence
+ * is a placeholder filled from the profile, so a month that pays a premium with
+ * an empty profile exports a sentence that stops mid-air — which is the state
+ * this asks the user to fix before she meets it in the file.
  *
  * A month that paid no premium raises nothing: the row is empty, the sentence
  * is never reached, and chasing every month for a field most of them do not use
  * is exactly the noise item 27's warnings are supposed not to be.
  */
-export function insurerMissingWarning(
+function insurerMissingWarning(
   facts: ClosedMonthFacts,
   employment: Employment,
 ): Warning | null {

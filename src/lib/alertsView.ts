@@ -163,7 +163,7 @@ function handledTitle(entry: HandledEntry): Said {
   }
 }
 
-export async function alertsView(
+async function alertsView(
   repository: SalaryRepository,
   today: IsoDate,
 ): Promise<AlertsView> {

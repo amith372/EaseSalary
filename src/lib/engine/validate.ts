@@ -34,14 +34,13 @@ import type { IsoDate, SpanKind, YearMonth } from "@/lib/types";
  * A month that cannot be calculated correctly is refused with a reason and
  * never calculated wrongly in silence.
  *
- * **A holiday on a free rest day is refused nowhere, since 2026-09-12** (item
- * 9, Part 4). It was refused here as `restDayHoliday`; such a day is now not a
- * holiday at all but the rest day it is, paid once and spending nothing from
+ * **A holiday on a free rest day is refused nowhere** (item 9, Part 4): such a
+ * day is not a holiday at all but the rest day it is, paid once and spending nothing from
  * the year's nine, so there is no second rate for it to be paid at. The general
  * double-entry check below skips it for the same reason.
  */
 
-export type RefusalCode =
+type RefusalCode =
   /** More paid holidays in the year than the entitlement allows (item 10). */
   | "holidayLimit"
   /** A free rest day recorded on a day that is not the worker's rest day
@@ -86,7 +85,7 @@ export type RefusalCode =
    */
   | "advanceRecordedTwice";
 
-export interface Refusal {
+interface Refusal {
   code: RefusalCode;
   /** Hebrew, and it says why rather than only what. */
   message: string;

@@ -622,12 +622,10 @@ export interface UserLine {
  * refuses two payments of one kind, so a month that paid both would have been
  * refused outright and told to sum two figures the sheet keeps apart.
  *
- * `visaExtensionFee` carries item 28's own wording for B14. It was `visaFee`
- * until 2026-09-04, and the rename is deliberate rather than cosmetic: a name
- * meaning "the visa fee" where there are two visa payments preserves exactly
- * the confusion the seventh member exists to end. It costs nothing now because
- * nothing persists it — the store is in memory and no month holds a
- * `thirdParty.visaFee` override — and it would be a migration after stage 3.
+ * `visaExtensionFee` carries item 28's own wording for B14: a name meaning "the
+ * visa fee" where there are two visa payments would preserve exactly the
+ * confusion the seventh member exists to end. The names are stored, so a
+ * rename is a migration.
  */
 export const thirdPartyKinds = [
   "medicalInsurance",

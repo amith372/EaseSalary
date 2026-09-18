@@ -17,7 +17,7 @@ import type { Worker } from "@/lib/types";
  * than a filtered year.
  */
 
-export interface BalancesFileRequest {
+interface BalancesFileRequest {
   worker: Pick<Worker, "id" | "name">;
   /** The worker's whole history, in date order, as `calculateSeries` returns
    * it. Filtered to the year here and never before. */

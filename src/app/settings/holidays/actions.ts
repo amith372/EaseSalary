@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { getRepository } from "@/lib/store";
+import { getRepository, requireWorker } from "@/lib/store";
 import {
   holidayYear,
   reviewHolidayDate,
@@ -66,18 +66,6 @@ function revalidateHolidays(): void {
   revalidatePath("/");
 }
 
-/** Asked to change a worker the store does not have. Actions are reachable by a
- * crafted request, so the id is checked rather than assumed — stage 3 adds the
- * household check beside this one. */
-async function profileOf(
-  repository: SalaryRepository,
-  workerId: string,
-): Promise<WorkerProfile> {
-  const profile = await repository.getWorker(workerId);
-  if (profile === null) throw new Error(`No worker with id ${workerId}`);
-  return profile;
-}
-
 /**
  * The state a gesture is judged against, read fresh rather than trusted from
  * the screen that sent it.
@@ -115,7 +103,7 @@ export async function setHolidaySource(
   source: HolidaySource,
 ): Promise<HolidayActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(repository, workerId);
+  const profile = await requireWorker(workerId, repository);
   await repository.saveWorker({ ...profile, holidaySource: source });
   revalidateHolidays();
   return { ok: true };
@@ -127,11 +115,10 @@ export async function setHolidaySource(
  * **`worked: null` is the state and not a placeholder for one.** The one fact a
  * month records about a holiday is whether she worked it, and it is clicked on
  * the day — so a date chosen here has had nobody answer for it yet, which is a
- * third state and not a quiet no (item 9, settled with the user on 2026-09-12).
- * It was `false` until then, and `false` is what the engine pays nothing for:
- * a family who never opened the month was silently taken to have said she did
- * not work it. Now the preview reads it as worked and pays, and the month
- * cannot be exported until somebody says (item 18).
+ * third state and not a quiet no (item 9). `false` is what the engine pays
+ * nothing for, so defaulting to it would take a family who never opened the
+ * month to have said she did not work it. The preview reads `null` as worked
+ * and pays, and the month cannot be exported until somebody says (item 18).
  */
 export async function chooseHoliday(
   workerId: string,
@@ -139,7 +126,7 @@ export async function chooseHoliday(
   year: number,
 ): Promise<HolidayActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(repository, workerId);
+  const profile = await requireWorker(workerId, repository);
   const state = await stateOf(repository, profile, year);
 
   const reviewed = reviewHolidayDate(
@@ -171,7 +158,7 @@ export async function unchooseHoliday(
   spanId: string,
 ): Promise<HolidayActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(repository, workerId);
+  const profile = await requireWorker(workerId, repository);
   await repository.deleteSpan(profile.id, spanId);
   revalidateHolidays();
   return { ok: true };
@@ -196,7 +183,7 @@ export async function moveHoliday(
   amendment?: { agreedOn: string; note: string },
 ): Promise<HolidayActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(repository, workerId);
+  const profile = await requireWorker(workerId, repository);
   const state = await stateOf(repository, profile, year);
 
   const span = state.spans.find((each) => each.id === spanId);
@@ -254,7 +241,7 @@ export async function setHolidayPart(
   year: number,
 ): Promise<HolidayActionResult> {
   const repository = await getRepository();
-  const profile = await profileOf(repository, workerId);
+  const profile = await requireWorker(workerId, repository);
   const state = await stateOf(repository, profile, year);
 
   const span = state.spans.find((each) => each.id === spanId);

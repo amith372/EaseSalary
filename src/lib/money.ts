@@ -43,6 +43,18 @@ export function formatDays(days: number): string {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
 }
 
+/** A stored fraction as the percentage the user types: 0.025 is "2.5". */
+export function formatPercent(fraction: number): string {
+  return String(Number((fraction * 100).toFixed(4)));
+}
+
+/** Money reaches a sheet in shekels, which is what the family reads. The
+ * engine's agorot are already integers, so this is exact and never a rounding:
+ * the one rounding in the calculation happened in `lines.ts`. */
+export function toShekels(agorot: number | null | undefined): number | null {
+  return agorot === null || agorot === undefined ? null : agorot / 100;
+}
+
 /**
  * Characters a figure can arrive wrapped in and that carry no value: the shekel
  * sign, thousands separators, ordinary and non-breaking spaces, and the bidi

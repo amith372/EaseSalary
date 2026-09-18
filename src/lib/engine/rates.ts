@@ -71,7 +71,7 @@ export function restDayRate(baseMonthlySalaryAgorot: number): number {
  * (specs.md items 3 and 7). A third rate appearing in this type later is that
  * double payment coming back, not a feature.
  */
-export interface Rates {
+interface Rates {
   /** What a sick day is worth. Fractional; never rounded here. */
   daily: number;
   /** What a Saturday worked and a holiday worked are paid at. */

@@ -119,8 +119,7 @@ export function countMonth(facts: ClosedMonthFacts): MonthCounts {
     // Every rest-eve of the month earns the supplement, worked or not: it is an
     // agreed term and nothing conditions it (item 14). `restEves` is therefore
     // what the money is priced from, and `restEvesWorked` is reporting beside
-    // it — the two used to be three counts, and the third existed only for a
-    // setting item 14 no longer has.
+    // it.
     restEves: restEves.length,
     restEvesWorked: restEves.filter((date) => !notWorked(spans, date)).length,
 

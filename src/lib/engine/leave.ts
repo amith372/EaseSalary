@@ -110,14 +110,10 @@ export function holidayDaysWorked(
 /**
  * The rest days paid on the rest-day line.
  *
- * **It is the count itself as of 2026-09-12, and the subtraction it used to make
- * is gone with the rule that needed it** (item 9). A holiday on the weekly rest
- * day was once paid on the holiday line, with this taking it back out of the
- * rest days so the day was paid once rather than twice; such a day is now not a
- * holiday at all, so it is paid on this line like any other rest day she worked
- * and there is nothing to take out. The money is unchanged. The function stays
- * so the call site goes on naming the rule it obeys, and because the rate this
- * feeds is the rest-day rate whether or not a holiday is involved.
+ * **It is the count itself** (item 9). A holiday on the weekly rest day is not
+ * a holiday at all, so it is paid on this line like any other rest day she
+ * worked and there is nothing to take out. The function stays so the call site
+ * goes on naming the rule it obeys.
  */
 export function restDayUnitsOf(restDaysWorked: number): number {
   return restDaysWorked;

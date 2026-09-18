@@ -6,15 +6,8 @@ import type { Gender, IncomeTaxSetting } from "@/lib/engine/types";
 import type { YearMonth } from "@/lib/types";
 
 /**
- * The income tax withheld from one month (specs.md Part 1 item 17,
- * build_plan.md stage 3, approved 2026-09-10).
- *
- * **This file exists because the rule reversed.** Until 2026-09-10 both
- * `specs.md` and `CLAUDE.md` said income tax is never calculated and the line
- * is simply typed; both now say the opposite, and the old wording was replaced
- * rather than qualified. It lands in stage 3 and not in stage 2 because the
- * count of credit points turns on the worker's **gender**, and that is a
- * profile field stage 3 builds.
+ * The income tax withheld from one month (specs.md Part 1 item 17). The count
+ * of credit points turns on the worker's **gender**, a profile field.
  *
  * **Nothing here is a judgement call.** Kol Zchut's
  * `נקודות זיכוי ממס הכנסה לעובד זר`, read on 2026-09-10: a legally employed
@@ -97,7 +90,7 @@ export function annualTaxBeforeCredits(
 }
 
 /** Everything the calculation needs, and nothing it could read for itself. */
-export interface IncomeTaxInput {
+interface IncomeTaxInput {
   /** The month's gross in integer agorot — the ברוטו, which is what the sheet's
    * own tax line is withheld from (specs.md Part 5). */
   grossAgorot: number;

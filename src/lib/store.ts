@@ -8,8 +8,8 @@ import { createPostgresRepository } from "@/lib/supabase/repository";
 import { supabaseOnServer } from "@/lib/supabase/server";
 
 /**
- * The stores the running application talks to until stage 3 lands the real one
- * beside it.
+ * The store a request talks to: the signed-in household's in Postgres, or a
+ * seeded one in memory.
  *
  * **They are held on the server and nowhere else.** `specs.md` Part 3 is plain
  * about the boundary — all salary logic runs on the server and the browser only
@@ -68,7 +68,7 @@ const DEFAULT_SEED: SeedName = "demo";
 /** The cookie that says which household the request is in. Stage 3 replaces it
  * with the household the signed-in person belongs to, which is the same
  * question asked of an identity rather than of the browser. */
-export const HOUSEHOLD_COOKIE = "household";
+const HOUSEHOLD_COOKIE = "household";
 
 const STORES = Symbol.for("easesalary.dev.repositories");
 
@@ -135,6 +135,18 @@ export async function getRepository(): Promise<SalaryRepository> {
   const created = createInMemoryRepository(seed);
   holder[STORES].set(key, created);
   return created;
+}
+
+/** The worker an action names, or a throw. Actions are reachable by a crafted
+ * request, so the id is checked against the household's own store rather than
+ * assumed. */
+export async function requireWorker(
+  workerId: string,
+  repository?: SalaryRepository,
+) {
+  const profile = await (repository ?? (await getRepository())).getWorker(workerId);
+  if (profile === null) throw new Error(`No worker with id ${workerId}`);
+  return profile;
 }
 
 /**
@@ -226,7 +238,7 @@ export class NotSignedInError extends Error {
  * for that reason: if it is ever seen, something upstream failed and the
  * household the person then filled in would be one nobody could reach.
  */
-export class NoHouseholdError extends Error {
+class NoHouseholdError extends Error {
   constructor() {
     super("Signed in, but a member of no household");
     this.name = "NoHouseholdError";

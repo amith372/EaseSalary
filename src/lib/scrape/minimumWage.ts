@@ -48,9 +48,7 @@ export const MINIMUM_WAGE_SOURCE_URL =
  * answers in; this alias is kept because the callers written against it read
  * better for naming what came back.
  */
-export type ScrapeResult = Scraped<DatedRate>;
-
-export type { ScrapeFailure, ScrapeFailureKind } from "@/lib/scrape/failure";
+type ScrapeResult = Scraped<DatedRate>;
 
 /**
  * The most a fetched wage may exceed the one already in force before it is
@@ -219,7 +217,7 @@ export function parseMinimumWagePage(
  * a page the help screen can answer out of, so a failed reading does not
  * discard the corpus, and a page that never arrived leaves it `null`.
  */
-export interface FetchedWage {
+interface FetchedWage {
   rate: ScrapeResult;
   text: Scraped<CachedPage> | null;
 }

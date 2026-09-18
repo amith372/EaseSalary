@@ -103,7 +103,7 @@ export interface Country {
   nameHe: string;
 }
 
-export interface AddWorkerScreenProps {
+interface AddWorkerScreenProps {
   /** The countries the household holds a holiday list for (item 12). Read on
    * the server from the store, so the wizard offers exactly what a year of
    * holidays can actually be drawn from. */

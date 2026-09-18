@@ -27,7 +27,7 @@ export type UpcomingEntry =
 /** The window: this month and the eleven after it. */
 const MONTHS_AHEAD = 12;
 
-export interface UpcomingInput {
+interface UpcomingInput {
   profile: WorkerProfile;
   /** The replay up to today's month. */
   series: MonthInSeries[];

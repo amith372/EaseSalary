@@ -76,7 +76,7 @@ import type {
  */
 export const userLinePrefixes = ["standing", "extra"] as const;
 
-export type UserLinePrefix = (typeof userLinePrefixes)[number];
+type UserLinePrefix = (typeof userLinePrefixes)[number];
 
 export function isUserLineKey(key: string): boolean {
   return userLinePrefixes.some((prefix) => key.startsWith(`${prefix}.`));
@@ -597,9 +597,7 @@ export function calculateMonth(
   const lines = buildLines(month, counts, employment, rates);
 
   // **The gross is settled before the closing block is built**, because the tax
-  // is withheld from it. It used to be summed after `buildClosing`, which was
-  // free while the tax was a figure the user typed; the order is now part of
-  // the calculation rather than an accident of where the lines were needed.
+  // is withheld from it; the order is part of the calculation.
   const gross = lines
     .filter((line) => COLUMNS_THAT_REACH_THE_WORKER.includes(line.column))
     .reduce((total, line) => total + (line.amount ?? 0), 0);

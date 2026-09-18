@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { clearRange, markRange, setHolidayWorked, setMonthNote } from "@/app/month/actions";
-import { inputClass, outlineButtonClass } from "@/components/MonthActions";
+import { inputClass } from "@/components/Field";
+import { outlineButtonClass } from "@/components/MonthActions";
 import { Sentence, WorkerName } from "@/components/AlertsScreen";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
@@ -65,9 +66,6 @@ import type { SpanIntent } from "@/components/MonthCalendar";
  * `setHolidayWorked` in `app/month/actions.ts`, which decide on the server which
  * days inside a swept range may take the mark (items 5, 8) and revalidate this
  * route so the figures beside the calendar are the answer to what was saved.
- * Until 2026-09-16 this screen marked into `useState` against a fixture whose
- * every amount was `null`, while a separate `/month` did the real work; the
- * wiring moved here and that screen went.
  *
  * **What blocks a correct salary still leads the screen.** v4 draws no such
  * list; item 27 says the opening screen leads with it, so a strip of those
@@ -358,13 +356,6 @@ export function HomeScreen({
             selectedDay={shownDay}
             onSelectDay={setSelected}
             editRequest={editRequest}
-            decorated
-            /* The month in the band is this page's subject, so it is the
-               page's `h1`. v3 had a hero card to head the screen and v4 cut
-               it, which left the home screen starting at `h2` — the only
-               screen in the application with no level-one heading, and the
-               one the skip link lands on. */
-            asPageHeading
             className="flex-1"
           />
 

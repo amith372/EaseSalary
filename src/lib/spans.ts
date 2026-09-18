@@ -96,8 +96,7 @@ export type SkipReason =
    * arrive drawn and the month records only whether she worked one (specs.md
    * item 9), so a mark swept over one is refused here rather than layered.
    *
- * There is no `restDayHoliday` beside it, and since 2026-09-12 there is none
-   * anywhere: a holiday landing on her weekly rest day is not a holiday at all
+   * There is no `restDayHoliday` beside it: a holiday landing on her weekly rest day is not a holiday at all
    * but the rest day it is (item 9), so a free rest day marked there is the one
    * thing on that date. A holiday cannot arrive from a sweep in any case,
    * because `MarkIntent.kind` is a `MarkKind` and a holiday is not one. */
@@ -114,9 +113,9 @@ export interface SkippedDay {
  * kind here is what lets the store take one of these without asking whether it
  * needs a `worked` beside it.
  */
-export type MarkedSpan = ClosedDaySpan & { kind: MarkKind };
+type MarkedSpan = ClosedDaySpan & { kind: MarkKind };
 
-export interface MarkResult {
+interface MarkResult {
   /**
    * The spans to add. A range broken by a skipped day yields one span per
    * surviving run, so what is stored is exactly what is marked.

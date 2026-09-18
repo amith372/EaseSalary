@@ -92,7 +92,6 @@ export const TAX_ROW = 20;
  * inserted. `BLOCK_ROW` is the `ה` row — the one row the template designs for
  * the block, and the row a repaid advance is written on. */
 const SUBTOTAL_E_ROW = 23;
-const SPACER_ROW = 27;
 export const BLOCK_ROW = 28;
 
 /** The first of the six reporting rows, beside the labels the template puts in
@@ -194,9 +193,4 @@ export function grossFormula(layout: SheetLayout): string {
  */
 export function netFormula(layout: SheetLayout): string {
   return `E${layout.grossRow}+E${layout.taxRow}+SUM(E${layout.blockFirstRow}:E${layout.blockLastRow})`;
-}
-
-/** The spacer between `ד` and the block, kept where the template put it. */
-export function spacerRow(layout: SheetLayout): number {
-  return SPACER_ROW + layout.addedLines;
 }
