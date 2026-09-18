@@ -12,6 +12,7 @@ import {
   isRange,
   isoOfDayMonth,
 } from "@/lib/scrape/holidayDates";
+import { he } from "@/lib/i18n/he";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -40,16 +41,17 @@ import type { IsoDate } from "@/lib/types";
  */
 
 const KOL_ZCHUT = "https://www.kolzchut.org.il/he";
+const faiths = he.holidays.sources.religion;
 
 /** The four pages, and the Hebrew name of each for the picker. */
 export const religiousSources: Record<
   Religion,
   { url: string; nameHe: string }
 > = {
-  jewish: { url: `${KOL_ZCHUT}/חגים_יהודיים`, nameHe: "חגים יהודיים" },
-  muslim: { url: `${KOL_ZCHUT}/חגים_מוסלמיים`, nameHe: "חגים מוסלמיים" },
-  christian: { url: `${KOL_ZCHUT}/חגים_נוצריים`, nameHe: "חגים נוצריים" },
-  druze: { url: `${KOL_ZCHUT}/חגים_דרוזיים`, nameHe: "חגים דרוזיים" },
+  jewish: { url: `${KOL_ZCHUT}/חגים_יהודיים`, nameHe: faiths.jewish },
+  muslim: { url: `${KOL_ZCHUT}/חגים_מוסלמיים`, nameHe: faiths.muslim },
+  christian: { url: `${KOL_ZCHUT}/חגים_נוצריים`, nameHe: faiths.christian },
+  druze: { url: `${KOL_ZCHUT}/חגים_דרוזיים`, nameHe: faiths.druze },
 };
 
 /**

@@ -2044,6 +2044,14 @@ export const he = {
       label: "רשימת החגים של",
       religions: "או של דת",
       manual: "להוסיף תאריך בעצמי",
+      /** Each faith's list by its own name, which is also what a stored list
+       * is called. */
+      religion: {
+        jewish: "חגים יהודיים",
+        muslim: "חגים מוסלמיים",
+        christian: "חגים נוצריים",
+        druze: "חגים דרוזיים",
+      },
     },
     /** A fetch that came back with nothing, in the three kinds a scrape can
      * fail in — the user is told which happened, because only one of the three

@@ -7,7 +7,7 @@ import { he } from "@/lib/i18n/he";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
 const stepButton =
-  "flex size-8 items-center justify-center rounded-tab border border-ink-quiet bg-surface text-ink-warm shadow-[0_1px_2px_rgb(58_50_42/0.06)] transition-colors hover:bg-hover hover:text-ink disabled:cursor-default disabled:opacity-40 disabled:hover:bg-surface disabled:hover:text-ink-warm";
+  "flex size-8 items-center justify-center rounded-tab border border-ink-quiet bg-surface text-ink-warm shadow-stepper transition-colors hover:bg-hover hover:text-ink disabled:cursor-default disabled:opacity-40 disabled:hover:bg-surface disabled:hover:text-ink-warm";
 
 /**
  * Back a month, to this month, forward a month.
@@ -59,7 +59,7 @@ export function MonthStepper({
     <button
       type="button"
       onClick={() => onMonthChange(monthOf(today))}
-      className="rounded-tab border border-ink-quiet bg-surface px-3.5 py-1.5 text-[15px] font-medium text-ink-warm shadow-[0_1px_2px_rgb(58_50_42/0.06)] transition-colors hover:bg-hover hover:text-ink"
+      className="rounded-tab border border-ink-quiet bg-surface px-3.5 py-1.5 text-[15px] font-medium text-ink-warm shadow-stepper transition-colors hover:bg-hover hover:text-ink"
     >
       <span dir="auto">{he.calendar.thisMonth}</span>
     </button>
