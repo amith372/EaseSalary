@@ -16,7 +16,6 @@ import {
   sameMonth,
   yearMonthText,
 } from "@/lib/dates";
-import type { RestDay } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
 import type { IsoDate, YearMonth } from "@/lib/types";
 import {
@@ -33,7 +32,6 @@ import {
 import { paymentMonthBeforeFirstMonth } from "@/lib/engine/recuperation";
 import { legalLink, type LegalLinkKey } from "@/lib/links";
 import { genders, incomeTaxModes } from "@/lib/engine/types";
-import type { Gender, IncomeTaxMode } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { formatAgorot } from "@/lib/money";
 
@@ -560,7 +558,7 @@ function WhoStep({
               selected={choice === draft.gender}
               onClick={() => change({ gender: choice })}
             >
-              <Bidi>{profile.gender[choice as Gender]}</Bidi>
+              <Bidi>{profile.gender[choice]}</Bidi>
             </Chip>
           ))}
         </ChoiceGroup>
@@ -742,7 +740,7 @@ function WhenStep({
               selected={day === draft.restDay}
               onClick={() => change({ restDay: day })}
             >
-              <Bidi>{profile.restDay.day(day as RestDay)}</Bidi>
+              <Bidi>{profile.restDay.day(day)}</Bidi>
             </Chip>
           ))}
         </ChoiceGroup>
@@ -1093,7 +1091,7 @@ function PayStep({
               selected={mode === draft.incomeTaxMode}
               onClick={() => change({ incomeTaxMode: mode })}
             >
-              <Bidi>{profile.incomeTax[mode as IncomeTaxMode]}</Bidi>
+              <Bidi>{profile.incomeTax[mode]}</Bidi>
             </Chip>
           ))}
         </ChoiceGroup>

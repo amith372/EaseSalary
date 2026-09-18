@@ -56,14 +56,21 @@ export interface AlertsView {
   done: HandledRow[];
 }
 
-function phrase(entry: ActionEntry, workerId: string) {
+function phrase(
+  entry: ActionEntry,
+  workerId: string,
+): {
+  said: { title: Said; note: Said; action: string };
+  href: string;
+  law: LegalLinkKey;
+} {
   const words = he.alerts.entry;
   switch (entry.key) {
     case "nationalInsurance":
       return {
         said: words.nationalInsurance(coveredMonthsLabel([entry.quarter.from, entry.quarter.to])),
         href: "/payments",
-        law: "nationalInsurance" as LegalLinkKey,
+        law: "nationalInsurance",
       };
     case "documentExpired":
     case "documentExpiring": {
@@ -71,14 +78,14 @@ function phrase(entry: ActionEntry, workerId: string) {
       return {
         said: words[entry.key](entry.document, fullDayLabel(entry.expiresOn)),
         href: medical ? "/payments" : "/settings",
-        law: (medical ? "medicalInsurance" : "employmentGuide") as LegalLinkKey,
+        law: medical ? "medicalInsurance" : "employmentGuide",
       };
     }
     case "advanceOutstanding":
       return {
         said: words.advanceOutstanding(entry.number, formatAgorot(entry.outstandingAgorot)),
         href: "/payments",
-        law: "wageDeductions" as LegalLinkKey,
+        law: "wageDeductions",
       };
     case "holidaysUnchosen":
       return {
@@ -88,19 +95,19 @@ function phrase(entry: ActionEntry, workerId: string) {
           formatDays(entry.allowance),
         ),
         href: "/settings/holidays",
-        law: "holidayWork" as LegalLinkKey,
+        law: "holidayWork",
       };
     case "recuperationDue":
       return {
         said: words.recuperationDue(monthLabel(entry.month)),
         href: "/month/export",
-        law: "recuperation" as LegalLinkKey,
+        law: "recuperation",
       };
     case "recuperationApproaching":
       return {
         said: words.recuperationApproaching(monthLabel(entry.month)),
         href: "/settings",
-        law: "recuperation" as LegalLinkKey,
+        law: "recuperation",
       };
     case "vacationUnderSeven":
       return {
@@ -110,19 +117,19 @@ function phrase(entry: ActionEntry, workerId: string) {
           formatDays(entry.required),
         ),
         href: "/",
-        law: "annualLeave" as LegalLinkKey,
+        law: "annualLeave",
       };
     case "monthNotExported":
       return {
         said: words.monthNotExported(monthLabel(entry.month)),
         href: "/reports",
-        law: "wageProtection" as LegalLinkKey,
+        law: "wageProtection",
       };
     case "monthUnconfirmed":
       return {
         said: words.monthUnconfirmed(monthLabel(entry.month)),
         href: "/month/export",
-        law: "wageProtection" as LegalLinkKey,
+        law: "wageProtection",
       };
     case "minimumWageChanged":
       return {
@@ -132,13 +139,13 @@ function phrase(entry: ActionEntry, workerId: string) {
           fullDayLabel(entry.effectiveFrom),
         ),
         href: "/settings",
-        law: "minimumWage" as LegalLinkKey,
+        law: "minimumWage",
       };
     case "seniorityYearTurning":
       return {
         said: words.seniorityYearTurning(entry.years, fullDayLabel(entry.on)),
         href: `/workers/${workerId}`,
-        law: "annualLeave" as LegalLinkKey,
+        law: "annualLeave",
       };
   }
 }

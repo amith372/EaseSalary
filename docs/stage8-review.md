@@ -10,9 +10,9 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F3. F26–F28 are not approved: each is grilled with the user
+- **Last done:** step 8, F4. F26–F28 are not approved: each is grilled with the user
   before any code.
-- **Next:** step 8 — execute the Fix list from the first unchecked item (F4), one commit
+- **Next:** step 8 — execute the Fix list from the first unchecked item (F5), one commit
   each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25.
 - **Waiting on the user:** the questions under "Needs the user". Three are reproduced money
   errors: two in sickness (run 2), and the household's rates never reaching a month (run 5).
@@ -50,7 +50,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F3 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F4 done |
 
 ### How each step is run
 
@@ -453,10 +453,10 @@ run had already dropped.
   only comment lines.
 - [x] 2026-09-18 `7701497` F2 — history comments, including the year-bound figures at `incomeTax.ts:109` and the
   `build_plan.md` stage refs — R1.22, R2.7, R2.22 — check: comment lines only.
-- [x] 2026-09-18 F3 — dead and pass-through code: `SheetLayout.addedLines`/`blockRows`/`taxRow`,
+- [x] 2026-09-18 `45e83f9` F3 — dead and pass-through code: `SheetLayout.addedLines`/`blockRows`/`taxRow`,
   `days()`, `export { lineKeys }` (the 12 importers read `lines.ts`), `SpanIntent`, `const
   heading` — R2.14, R1.17, R4.2 — check: `knip` reports nothing new; export suite unedited.
-- [ ] F4 — optional props and casts the types already cover: `MonthCalendar`'s five callbacks
+- [x] 2026-09-18 F4 — optional props and casts the types already cover: `MonthCalendar`'s five callbacks
   required, the casts of R1.15, `LegalLinkKey` typed in `alertsView.ts` — R4.1, R1.15, R2.17 —
   check: Browser.
 - [ ] F5 — nested ternaries and if-chains become records — R1.7, R1.14 — check: Browser.

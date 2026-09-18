@@ -31,7 +31,7 @@ import {
   type OpeningRefusal,
 } from "@/lib/engine/profile";
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
-import type { Gender, UserLine } from "@/lib/engine/types";
+import type { Gender } from "@/lib/engine/types";
 import { reviewUserLine, type UserLineDraft, type UserLineRefusal } from "@/lib/engine/userLines";
 import { monthOf, parseYearMonth } from "@/lib/dates";
 import {
@@ -398,7 +398,7 @@ export async function updateStandingLine(
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   const profile = await requireWorker(workerId);
-  if (!profile.standingLines.some((line: UserLine) => line.id === lineId)) {
+  if (!profile.standingLines.some((line) => line.id === lineId)) {
     // A page held open over a line another tab has since stopped. Refused
     // rather than added back: she is looking at a form for something that is
     // gone.
@@ -408,7 +408,7 @@ export async function updateStandingLine(
   return saveProfile(
     {
       ...profile,
-      standingLines: profile.standingLines.map((line: UserLine) =>
+      standingLines: profile.standingLines.map((line) =>
         line.id === lineId ? reviewed.line : line,
       ),
     },
@@ -442,7 +442,7 @@ export async function stopStandingLine(
     {
       ...profile,
       standingLines: profile.standingLines.filter(
-        (line: UserLine) => line.id !== lineId,
+        (line) => line.id !== lineId,
       ),
     },
     true,

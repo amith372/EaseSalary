@@ -63,25 +63,25 @@ interface MonthCalendarProps {
   /** The worker's first month, where the backward arrow stops (specs.md
    * item 6). */
   earliest?: YearMonth;
-  onMonthChange?: (month: YearMonth) => void;
-  onSelectRange?: (intent: MarkIntent) => void;
+  onMonthChange: (month: YearMonth) => void;
+  onSelectRange: (intent: MarkIntent) => void;
   /** Clearing takes a range the way marking does, and the caller decides what a
    * span lying half inside it means. */
-  onClearRange?: (from: IsoDate, to: IsoDate) => void;
+  onClearRange: (from: IsoDate, to: IsoDate) => void;
   /**
    * The one fact a month records about a holiday (specs.md item 9). The dates
    * themselves are not the calendar's to change: they come from the year's
    * chosen list, and moving one is criterion 10's editable date in the yearly
    * picker.
    */
-  onSetHolidayWorked?: (spanId: string, worked: boolean) => void;
+  onSetHolidayWorked: (spanId: string, worked: boolean) => void;
   /**
    * The day a panel beside the calendar is showing, ringed in the grid. The
    * calendar reports every day it is pressed on through `onSelectDay`, and
    * holds no selected day of its own.
    */
   selectedDay?: IsoDate;
-  onSelectDay?: (date: IsoDate) => void;
+  onSelectDay: (date: IsoDate) => void;
   /**
    * Open the picker on one day from outside the grid — the day panel's
    * "עריכת היום". It is the picker a second click on that day opens, and
@@ -370,7 +370,7 @@ export function MonthCalendar({
    */
   function pressDay(date: IsoDate) {
     setFocused(date);
-    onSelectDay?.(date);
+    onSelectDay(date);
     const covering = coverage.get(date);
     if (covering?.kind === "holiday" && anchor === null) {
       setAsking(covering as HolidaySpan);
@@ -391,7 +391,7 @@ export function MonthCalendar({
   }
 
   function answerHoliday(workedIt: boolean) {
-    if (asking) onSetHolidayWorked?.(asking.id, workedIt);
+    if (asking) onSetHolidayWorked(asking.id, workedIt);
     setAsking(null);
   }
 
@@ -404,7 +404,7 @@ export function MonthCalendar({
   function applyKind(kind: MarkKind) {
     if (selection) {
       const trimmed = note.trim();
-      onSelectRange?.({
+      onSelectRange({
         kind,
         ...selection,
         ...(part === 1 ? {} : { fraction: part }),
@@ -415,7 +415,7 @@ export function MonthCalendar({
   }
 
   function clearSelection() {
-    if (selection) onClearRange?.(selection.from, selection.to);
+    if (selection) onClearRange(selection.from, selection.to);
     reset();
   }
 
@@ -476,7 +476,7 @@ export function MonthCalendar({
           month={month}
           today={today}
           earliest={earliest}
-          onMonthChange={(next) => onMonthChange?.(next)}
+          onMonthChange={onMonthChange}
           // The month is the page's subject and the skip link lands here, so
           // its name is the page's `h1`.
           label={

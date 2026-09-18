@@ -44,7 +44,6 @@ import {
 } from "@/lib/spans";
 import type {
   Explanation,
-  HolidaySpan,
   IsoDate,
   MarkKind,
   MonthResult,
@@ -247,12 +246,12 @@ export function HomeScreen({
     daySpan === undefined
       ? undefined
       : daySpan.kind === "holiday"
-        ? (daySpan as HolidaySpan).worked === null
+        ? daySpan.worked === null
           ? "holidayUnanswered"
-          : (daySpan as HolidaySpan).worked
+          : daySpan.worked
             ? "holidayWorked"
             : "holidayNotWorked"
-        : (daySpan.kind as MarkKind);
+        : daySpan.kind;
   const kindLabel =
     faceKey === undefined
       ? ""
