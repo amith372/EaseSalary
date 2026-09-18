@@ -129,6 +129,13 @@ folded sheet.
 - The add-worker fields show focus as the forest outline `Chip` uses, as well
   as the border and fill change. The artboard draws only a 1px border
   colour, which is too faint to find the caret by keyboard.
+- The `משותף/ת עם` chip on a list card names an **email address**, where the
+  artboard draws a name: a share is an invitation sent to an address, and the
+  account holds nothing else about the person (the user, 2026-09-18). It is
+  drawn only for an invitation that was accepted, and only for the side that
+  sent it — a joined member is shown the invitations addressed to them and
+  never the address of the family that invited them, so a worker shared into
+  their view carries no chip.
 - What the artboards draw and nothing yet supplies is listed in
   `build_plan.md`, not drawn as placeholders.
 

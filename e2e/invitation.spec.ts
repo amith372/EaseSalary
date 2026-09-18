@@ -206,6 +206,25 @@ test("an existing account joins through a copied link, and the invitation then r
     path: "test-results/invitation-accepted.png",
   });
 
+  // --- The share now shows on the worker's own card ------------------------
+  // **The chip names an address and never a name** (the user, 2026-09-18): the
+  // account holds the address the invitation was sent to and nothing else about
+  // the person. What this would catch is a chip drawn from the household rather
+  // than from an *accepted* invitation, which would announce a share to someone
+  // who never joined.
+  await inviterPage.goto("/workers");
+  const shared = inviterPage.locator('[data-row="worker-shared"]');
+  await expect(shared).toHaveText(he.workers.sharedWith([invitee.email]));
+
+  // And the other way round it says nothing: the policy shows a joined member
+  // the invitations addressed to them, never the address of the family that
+  // invited them, so there is no honest sentence to draw there.
+  await inviteePage.goto("/workers");
+  await expect(inviteePage.locator('[data-row="worker-shared"]')).toHaveCount(0);
+  // Back to the screen the share is managed on, which the removal below acts
+  // through.
+  await inviterPage.goto("/settings");
+
   // --- The invited person sees no way to remove anyone ---------------------
   await inviteePage.goto("/settings");
   await expect(inviteePage.getByRole("button", { name: words.remove })).toHaveCount(0);
@@ -221,6 +240,9 @@ test("an existing account joins through a copied link, and the invitation then r
   await expect(inviteePage.getByText(he.workers.toProfile(inviter.firstName))).toHaveCount(0);
   await inviterPage.goto("/workers");
   await expect(inviterPage.getByText(he.workers.toProfile(inviter.firstName))).toBeVisible();
+  // The chip goes with the share: a card still naming a person who was removed
+  // is the application reporting an access that no longer exists.
+  await expect(inviterPage.locator('[data-row="worker-shared"]')).toHaveCount(0);
   await inviteePage.screenshot({ path: "test-results/invitation-removed-invitee-workers.png" });
 
   await inviterContext.close();

@@ -756,6 +756,18 @@ export interface MonthFacts {
    * changed wage is measured against.
    */
   exportedAt?: string;
+  /**
+   * When this month's facts were last edited, as an instant — the store's own
+   * stamp and never the caller's, which is why `MonthRecord` omits it and no
+   * save can set it.
+   *
+   * **It is the one fact that tells a *corrected* month from a confirmed one**
+   * (Part 5): corrected is `updatedAt > confirmedAt`, so a month confirmed and
+   * then left alone has the two equal rather than unordered. Recording an
+   * export is not an edit and leaves it where it was, or every download would
+   * turn a confirmed month into a corrected one.
+   */
+  updatedAt?: string;
   /** The employment's terms as they stood when this month was confirmed
    * (specs.md Part 3). Read from here and never from the profile. */
   terms: MonthTerms;

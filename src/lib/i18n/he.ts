@@ -1588,6 +1588,29 @@ export const he = {
     limit:
       "בחשבון אפשר לנהל עד שני עובדים/ות. מי שהתקבל/ה בשיתוף מחשבון אחר לא נספר/ת במסגרת הזו.",
     employedSince: "מועסק/ת מאז",
+    /**
+     * The chip on her card: the earliest finished month still a draft, or that
+     * everything is up to date.
+     *
+     * **It names a month rather than counting them**, because the user's next
+     * act is to open that one; a count would say how much is outstanding and
+     * still leave her looking for where to start. A month that has not ended
+     * cannot be confirmed (item 21) and is never what it names.
+     */
+    status: {
+      waiting: (month: string) => `${month} ממתין לחישוב`,
+      upToDate: "הכול מעודכן",
+    },
+    /**
+     * Who else sees this worker — an address and never a name, because an
+     * invitation is sent to an address and the account holds nothing else
+     * about the person (item 11, the user on 2026-09-18).
+     *
+     * More than one is joined with a comma rather than counted: a household
+     * holds a member or two, and "משותף/ת עם 2" would send the reader to
+     * `הגדרות` to find out who.
+     */
+    sharedWith: (emails: string[]) => `משותף/ת עם ${emails.join(", ")}`,
     /** The country of origin as the application holds it — the code the
      * holiday list is filed under (item 10). It is shown rather than named
      * because there is no country list yet: stage 5 fetches the holidays per
@@ -1606,12 +1629,63 @@ export const he = {
     /** Under the add card: the wizard is short, said before it is opened. */
     addLead: "נשאל רק את הפרטים ההכרחיים, ואת המצב שממנו מתחילים",
     profile: {
-      /** The months she has, listed. **No status badge**: a month's four states
-       * are Part 5's and nothing in the application can confirm or export one
-       * yet, so a badge here would be a state invented to fill a shape. */
+      /**
+       * How long she has been employed, in the subtitle beside the date she
+       * started — the artboard's `ותק`.
+       *
+       * It is **elapsed time and not the seniority year**: the year decides her
+       * vacation entitlement and is stated where that is explained, while this
+       * says how long she has been here, which is what a reader of a subtitle
+       * is asking. Whole years, because the two are otherwise easy to read as
+       * one figure.
+       */
+      seniority: (years: number) =>
+        years === 0
+          ? "ותק פחות משנה"
+          : years === 1
+            ? "ותק שנה"
+            : years === 2
+              ? "ותק שנתיים"
+              : `ותק ${years} שנים`,
+      /**
+       * The hero card: the first thing about this worker that needs the user to
+       * do something, in the words `/alerts` already phrases it with (item 27).
+       * The card is absent when she has no blockage, rather than saying that
+       * there is nothing to do — the artboard draws no empty state for it, and
+       * a card that reports calm is a card the eye learns to skip.
+       */
+      needsYou: "צריך לטפל",
+      /** The months she has, listed, each with the state it is in. */
       months: {
         title: "החודשים",
         empty: "עוד לא נרשם אף חודש.",
+        /**
+         * Part 5's four states, as the row's badge says them.
+         *
+         * `יוצא` and not `יוצא לאקסל`: the badge is beside a figure and says
+         * what happened to the month, not through which file. **A corrected
+         * month says so rather than reverting to `אושר`**, because the whole
+         * point of the state is that a file already produced no longer matches
+         * the month and would be produced again.
+         */
+        state: {
+          draft: "טיוטה",
+          confirmed: "אושר",
+          exported: "יוצא",
+          corrected: "תוקן",
+        },
+        /** What the month held, beside its figure: the days actually worked,
+         * and each kind of day that was drawn from a balance. A kind with no
+         * days in the month is left out rather than shown as a zero. */
+        days: {
+          worked: (days: string) => `${days} ימי עבודה`,
+          vacation: (days: string) => `${days} ימי חופשה`,
+          sick: (days: string) => `${days} ימי מחלה`,
+          holidays: (days: string) => `${days} ימי חג`,
+        },
+        /** A month with nothing in it yet — a row that has facts but no
+         * figures. */
+        awaiting: "ממתין לחישוב",
         /** What the figures in the list are, said **once above them** in the
          * same words the month screen closes with — one figure, one name
          * (Part 5). It is a column heading and not a caption on every row: the
@@ -1639,6 +1713,22 @@ export const he = {
          * and *repaid* on the payments screen, because that is where everything
          * that records a payment lives (item 5). */
         record: "לרשום מקדמה או פירעון",
+      },
+      /**
+       * What the advance balance's "?" says.
+       *
+       * The vacation and the sick balance carry the engine's own explanation —
+       * the one the opening screen shows, so the two screens explain one figure
+       * one way. The advance has none, because it is walked from the ledger
+       * rather than calculated by a month, and this is its sentence.
+       */
+      advanceWhy:
+        "סך המקדמות שניתנו פחות מה שנפרע עד היום, על פני כל חודשי ההעסקה.",
+      /** The row that closes the page: the two things about her that live on
+       * another screen. */
+      links: {
+        payments: "התשלומים שקשורים אליו/ה",
+        share: "לשתף עם בן/בת משפחה",
       },
       terms: {
         note: "מה שנכון לכל חודש, עד שמשנים אותו. חודש שכבר אושר שומר על התנאים שאיתם חושב.",

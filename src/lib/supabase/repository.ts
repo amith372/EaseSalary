@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isoOf, monthOf, type RestDay } from "@/lib/dates";
+import { eachMonth, isoOf, monthOf, type RestDay } from "@/lib/dates";
 import { SEEDED_RATES, withFetchedRate } from "@/lib/datedRates";
 import type { DatedRate, RateKey } from "@/lib/datedRates";
 import type { SealedNumber } from "@/lib/encryption";
@@ -32,7 +32,7 @@ import {
   type Religion,
 } from "@/lib/holidayLists";
 import { overlapsMonth } from "@/lib/spans";
-import type { IsoDate, SpanKind } from "@/lib/types";
+import type { IsoDate, SpanKind, YearMonth } from "@/lib/types";
 
 /**
  * The store the application actually keeps a household's facts in
@@ -76,6 +76,23 @@ function ratesOver(stored: DatedRate[]): DatedRate[] {
 
 function listsOver(stored: HolidayList[]): HolidayList[] {
   return stored.reduce(withFetchedList, SEEDED_HOLIDAY_LISTS);
+}
+
+/** Just the two dates of a span, which is all that says which months it
+ * reaches. */
+interface SpanRange {
+  from: IsoDate;
+  to: IsoDate | null;
+}
+
+/**
+ * The months a span falls in — one for a day, more for a spell that crosses a
+ * boundary. An open spell has no end and reaches only the month it began in
+ * here: the months after it hold no fact of their own until it is closed, and
+ * the replay is what carries it forward (Part 3).
+ */
+function monthsOfSpan(span: SpanRange): YearMonth[] {
+  return eachMonth(monthOf(span.from), monthOf(span.to ?? span.from));
 }
 
 interface WorkerRow {
@@ -141,6 +158,9 @@ interface MonthRow {
   hospital_overtime_note: string | null;
   confirmed_at: string | null;
   exported_at: string | null;
+  /** Maintained by the trigger and never sent — it is what tells a corrected
+   * month from a confirmed one (Part 5). */
+  updated_at: string;
 }
 
 interface HolidayListRow {
@@ -306,7 +326,7 @@ function spanRowOf(workerId: string, span: MonthSpan) {
   };
 }
 
-function recordOfRow(row: MonthRow): MonthRecord {
+function recordOfRow(row: MonthRow): Omit<MonthFacts, "spans"> {
   return {
     month: { year: row.year, month: row.month },
     confirmedWage: {
@@ -349,6 +369,9 @@ function recordOfRow(row: MonthRow): MonthRecord {
         }),
     ...(row.confirmed_at === null ? {} : { confirmedAt: row.confirmed_at }),
     ...(row.exported_at === null ? {} : { exportedAt: row.exported_at }),
+    // Never written back — the trigger maintains it, and `MonthRecord` has no
+    // such field for a caller to carry the old instant in on.
+    updatedAt: row.updated_at,
   };
 }
 
@@ -480,6 +503,41 @@ export function createPostgresRepository(
   }
 
   /**
+   * Tells the months that a span of theirs changed.
+   *
+   * **A mark is an edit to its month**, and the month cannot see it: spans
+   * belong to the worker (Part 3), so nothing on the month row moves when a day
+   * is marked, cleared or moved. Without this, a day marked on a month already
+   * exported left the month reporting itself as exported — criterion 13's chain
+   * standing on a file nobody would know to produce again.
+   *
+   * It touches only the months that exist: a span in a month the store holds no
+   * row for changes no recorded month, and the replay values it from the facts
+   * either way.
+   */
+  async function touchMonths(
+    workerId: string,
+    months: YearMonth[],
+  ): Promise<void> {
+    const seen = new Set<string>();
+    for (const month of months) {
+      const key = `${month.year}-${month.month}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const { error } = await client
+        .from("months")
+        // The one statement in the application that sends this column. The
+        // trigger honours it for that reason, and discards it from nothing
+        // else.
+        .update({ updated_at: new Date().toISOString() })
+        .eq("worker_id", workerId)
+        .eq("year", month.year)
+        .eq("month", month.month);
+      raise(error, "could not record the change to the month");
+    }
+  }
+
+  /**
    * The household a worker belongs to, or `null` for a worker not yet created.
    *
    * **A worker's household is her own and not the viewer's.** A person who
@@ -574,20 +632,41 @@ export function createPostgresRepository(
 
     async saveSpan(workerId, span) {
       await requireWorker(workerId);
+      // The span it replaces, if any: moving a mark off a month is an edit to
+      // that month as much as to the one it landed on, and after the write
+      // there is nothing left to say where it was.
+      const { data: before } = await client
+        .from("spans")
+        .select("from, to")
+        .eq("worker_id", workerId)
+        .eq("id", span.id)
+        .maybeSingle();
       const { error } = await client
         .from("spans")
         .upsert(spanRowOf(workerId, span), { onConflict: "worker_id,id" });
       raise(error, "could not save the span");
+      await touchMonths(workerId, [
+        ...monthsOfSpan(span),
+        ...(before === null ? [] : monthsOfSpan(before as SpanRange)),
+      ]);
     },
 
     async deleteSpan(workerId, spanId) {
       await requireWorker(workerId);
-      const { error } = await client
+      // Returning the row that went, because the months it touched are the
+      // months the deletion changed and the row is the only record of which
+      // they were.
+      const { data, error } = await client
         .from("spans")
         .delete()
         .eq("worker_id", workerId)
-        .eq("id", spanId);
+        .eq("id", spanId)
+        .select("from, to");
       raise(error, "could not delete the span");
+      await touchMonths(
+        workerId,
+        ((data ?? []) as SpanRange[]).flatMap(monthsOfSpan),
+      );
     },
 
     async getMonth(workerId, month) {

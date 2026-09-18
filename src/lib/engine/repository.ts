@@ -1,4 +1,4 @@
-import { compareMonth } from "@/lib/dates";
+import { compareMonth, eachMonth, monthOf } from "@/lib/dates";
 import { salaryFor } from "@/lib/engine/salary";
 import { SEEDED_RATES, rateInForce, withFetchedRate } from "@/lib/datedRates";
 import type { DatedRate, RateKey } from "@/lib/datedRates";
@@ -109,16 +109,22 @@ export interface WorkerProfile extends Worker, WorkerTerms {
 }
 
 /**
- * A month as the store holds it — everything in `MonthFacts` except its spans.
+ * A month as the store holds it — everything in `MonthFacts` except its spans
+ * and the instant it was last edited.
  *
- * **The omission is the point and not an economy.** Spans belong to the worker
+ * **`updatedAt` is omitted for the reason the database maintains it**: it is
+ * what tells a *corrected* month from a confirmed one (Part 5), so a save that
+ * forgot to move it would leave a month looking untouched since its
+ * confirmation, which is the one state it is read for. The store stamps it.
+ *
+ * **The spans omission is the point and not an economy.** Spans belong to the worker
  * (Part 3): a spell crossing a boundary is one spell, stored once, and reaching
  * both months whole is what lets each place a day at its right tier. A month's
  * `spans` are therefore *assembled* on the way out and can never be written on
  * the way in — the compiler refuses it, so nobody has to remember. Save a span
  * with `saveSpan` and the months it overlaps carry it from then on.
  */
-export type MonthRecord = Omit<MonthFacts, "spans">;
+export type MonthRecord = Omit<MonthFacts, "spans" | "updatedAt">;
 
 /**
  * Asked for a worker who is not in the store.
@@ -258,18 +264,20 @@ export type SealedNumbers = Partial<{
 
 /**
  * A month read back out of the store, on its way in again — `MonthFacts` less
- * the spans the store assembled onto it.
+ * the two fields the store owns.
  *
  * It spreads rather than listing the fields, and that is deliberate: a field
  * added to `MonthFacts` later would be silently dropped on every save by a
  * function that named them one by one, which is a month quietly losing a fact
  * nobody would see until an export. `spans` is discarded rather than ignored,
  * because writing them back would write a second copy of a spell that belongs
- * to the worker and must stay one thing.
+ * to the worker and must stay one thing; `updatedAt` because the store stamps
+ * it and a caller carrying the old instant back in would freeze it.
  */
 export function recordOf(facts: MonthFacts): MonthRecord {
-  const { spans, ...record } = facts;
+  const { spans, updatedAt, ...record } = facts;
   void spans;
+  void updatedAt;
   return record;
 }
 
@@ -367,10 +375,34 @@ function monthKey(month: YearMonth): string {
   return `${month.year}-${String(month.month).padStart(2, "0")}`;
 }
 
+/**
+ * Tells the months a span covers that they changed.
+ *
+ * **A mark is an edit to its month**, and the month cannot see it: spans belong
+ * to the worker and not to the month (Part 3), so nothing on a month moves when
+ * a day is marked, cleared or moved. Without this, a day marked on a month
+ * already exported left the month reporting itself as exported — criterion 13's
+ * chain standing on a file nobody would know to produce again. The Postgres
+ * store owes the same answer, and pays it in `touchMonths` there.
+ *
+ * Only months the store already holds are touched: a mark in a month with no
+ * record changes no recorded month, and the replay values it from the facts
+ * either way.
+ */
+function touchMonthsOf(row: WorkerRow, spans: MonthSpan[]): void {
+  const at = new Date().toISOString();
+  for (const span of spans) {
+    for (const month of eachMonth(monthOf(span.from), monthOf(span.to ?? span.from))) {
+      const record = row.months.get(monthKey(month));
+      if (record !== undefined) record.updatedAt = at;
+    }
+  }
+}
+
 interface WorkerRow {
   profile: WorkerProfile;
   spans: MonthSpan[];
-  months: Map<string, MonthRecord>;
+  months: Map<string, StoredMonth>;
   /** Sealed bytes, never numbers — this store cannot open them any more than
    * Postgres can, which is what makes the rule the same rule in both. */
   numbers: SealedNumbers;
@@ -394,6 +426,58 @@ interface WorkerRow {
  */
 function copyOf(value: SealedNumber | null | undefined): SealedNumber | null {
   return value === null || value === undefined ? null : Buffer.from(value);
+}
+
+/** A month as this store holds it: the record the caller saved, plus the
+ * instant the store stamped on it. */
+type StoredMonth = MonthRecord & { updatedAt: string };
+
+/**
+ * Whether a save changes nothing but when the month was exported — the
+ * condition `private.touch_updated_at` applies in Postgres, so a month edited
+ * here reaches the *corrected* state on the same rule it reaches it there.
+ *
+ * Producing a file is not an edit: without this, every download would move
+ * `updatedAt` past `confirmedAt` and report the month as corrected.
+ */
+function onlyTheExportMoved(before: StoredMonth, after: MonthRecord): boolean {
+  const without = ({
+    exportedAt,
+    updatedAt,
+    ...rest
+  }: Partial<StoredMonth>): unknown => {
+    void exportedAt;
+    void updatedAt;
+    return rest;
+  };
+  return JSON.stringify(without(before)) === JSON.stringify(without(after));
+}
+
+/**
+ * The instant a save stamps on a month, on the rule Postgres applies to the
+ * same save — so `monthState` reads the same four states against either store.
+ *
+ * Three cases, and the first two are the ones that would otherwise report a
+ * month as *corrected* the moment it was filed: **confirming** a month takes the
+ * confirmation's own instant, because two clocks a few milliseconds apart would
+ * otherwise order the confirmation after itself; **exporting** one leaves the
+ * stamp alone, because producing a file is not an edit. Everything else is an
+ * edit and moves it.
+ */
+function stampFor(
+  before: StoredMonth | undefined,
+  record: MonthRecord,
+): string {
+  if (
+    record.confirmedAt !== undefined &&
+    record.confirmedAt !== before?.confirmedAt
+  ) {
+    return record.confirmedAt;
+  }
+  if (before !== undefined && onlyTheExportMoved(before, record)) {
+    return before.updatedAt;
+  }
+  return new Date().toISOString();
 }
 
 export function createInMemoryRepository(
@@ -473,13 +557,19 @@ export function createInMemoryRepository(
       const row = rowOf(workerId);
       const copy = structuredClone(span);
       const at = row.spans.findIndex((existing) => existing.id === span.id);
+      // Both ranges, because a span moved off a month corrects the month it
+      // left as much as the one it landed on.
+      const before = at === -1 ? [] : [row.spans[at]];
       if (at === -1) row.spans.push(copy);
       else row.spans[at] = copy;
+      touchMonthsOf(row, [copy, ...before]);
     },
 
     async deleteSpan(workerId, spanId) {
       const row = rowOf(workerId);
+      const removed = row.spans.filter((span) => span.id === spanId);
       row.spans = row.spans.filter((span) => span.id !== spanId);
+      touchMonthsOf(row, removed);
     },
 
     async getMonth(workerId, month) {
@@ -501,7 +591,12 @@ export function createInMemoryRepository(
 
     async saveMonth(workerId, record) {
       const row = rowOf(workerId);
-      row.months.set(monthKey(record.month), structuredClone(record));
+      const key = monthKey(record.month);
+      const before = row.months.get(key);
+      row.months.set(key, {
+        ...structuredClone(record),
+        updatedAt: stampFor(before, record),
+      });
     },
 
     async listHolidayLists() {
@@ -578,7 +673,14 @@ export function createInMemoryRepository(
       months: new Map(
         (seed.months?.[profile.id] ?? []).map((record) => [
           monthKey(record.month),
-          structuredClone(record),
+          {
+            ...structuredClone(record),
+            // A seeded month was not edited after it was confirmed, so the two
+            // instants are equal and it reads as *confirmed* rather than as
+            // *corrected* (Part 5). A month the seed never confirmed is a draft
+            // and this stamp values nothing.
+            updatedAt: record.confirmedAt ?? new Date().toISOString(),
+          },
         ]),
       ),
     });

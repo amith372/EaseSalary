@@ -244,6 +244,22 @@ export function daysBetween(from: IsoDate, to: IsoDate): number {
 }
 
 /**
+ * Whole years from one date to another — how long an employment has run, which
+ * is the `ותק` of `דף העובד`.
+ *
+ * **Counted by anniversary and not by dividing days**, because a year is not
+ * 365 days: four years of an employment that crosses a leap day are 1,461 days,
+ * and the division reports three years and something on the very morning the
+ * fourth begins. Never negative: a date before the start is nought years in,
+ * which is what a worker whose first day is still ahead has.
+ */
+export function yearsBetween(from: IsoDate, to: IsoDate): number {
+  let years = 0;
+  while (compareIsoDate(addYears(from, years + 1), to) <= 0) years += 1;
+  return years;
+}
+
+/**
  * Whether the calendar month is over — its last day is behind `today`.
  *
  * **This is criterion 21's whole condition**, and it is named for what it tests

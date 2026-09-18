@@ -15,12 +15,8 @@ import type { IsoDate, Worker } from "@/lib/types";
 /**
  * The household's workers — `EaseSalary - העובדות` (specs.md item 11).
  *
- * **Three things the artboard draws are not here.** The status chip on each
- * card ("[חודש] ממתין לחישוב" / "הכול מעודכן") names one of the month's four
- * states, which are Part 5's and which nothing in the application can yet set —
- * a chip here would be a state invented to fill a shape. The
- * "משותף/ת עם [שם]" chip needs the other member's name, which this list is not
- * given. And the header's "להוסיף עובד/ת" button: the dashed card at the foot of
+ * **One thing the artboard draws is not here**: the header's "להוסיף עובד/ת"
+ * button. The dashed card at the foot of
  * the list is the one way in (`DESIGN.md`). That card shows only while the
  * household has room: two workers is item 11's limit and a trigger in the
  * database refuses a third, so a card offering a wizard whose save would be
@@ -44,6 +40,20 @@ export interface WorkerSummary {
   sickDays: number;
   /** What is still owed across every advance she carries (item 20). */
   outstandingAgorot: number;
+  /**
+   * The earliest month of hers that has ended and is still a draft, as the chip
+   * says it — or `null` where every finished month has been confirmed.
+   *
+   * Phrased on the server, because the month's own label is, and a chip that
+   * built its own sentence would be a second place the wording lives.
+   */
+  waitingMonth: string | null;
+  /**
+   * The addresses this worker is shared with, the viewer's own excluded
+   * (`shares.ts`) — empty where she is shared with nobody, and the chip is then
+   * not drawn at all rather than drawn saying so.
+   */
+  sharedWith: string[];
 }
 
 export function WorkersList({
@@ -93,6 +103,8 @@ export function WorkersList({
             vacationDays,
             sickDays,
             outstandingAgorot,
+            waitingMonth,
+            sharedWith,
           }) => (
             <Card
               key={worker.id}
@@ -119,7 +131,39 @@ export function WorkersList({
                         identifier, so translation may have it. */}
                     <Bidi>{country}</Bidi>
                   </p>
+                  {/* Below the line it belongs to rather than beside the status
+                      chip: the two say different kinds of thing, and an address
+                      is long enough to push a chip off a phone. Never
+                      translated — an address is an identifier. */}
+                  {sharedWith.length > 0 ? (
+                    <p
+                      data-row="worker-shared"
+                      translate="no"
+                      className="text-[14px] font-light text-ink-mute sm:text-[15px]"
+                    >
+                      <Bidi>{words.sharedWith(sharedWith)}</Bidi>
+                    </p>
+                  ) : null}
                 </div>
+                {/* The attention colour only while something is waiting: a chip
+                    that reports calm in the same colour as one asking for work
+                    teaches the eye to read neither. */}
+                <span
+                  data-row="worker-status"
+                  data-waiting={waitingMonth === null ? "no" : "yes"}
+                  className={[
+                    "ms-auto flex-none rounded-full px-3.5 py-2 text-[14px] font-semibold whitespace-nowrap sm:text-[15px]",
+                    waitingMonth === null
+                      ? "bg-chip text-ink-warm"
+                      : "bg-band-sun text-clay-ink",
+                  ].join(" ")}
+                >
+                  <Bidi>
+                    {waitingMonth === null
+                      ? words.status.upToDate
+                      : words.status.waiting(waitingMonth)}
+                  </Bidi>
+                </span>
               </div>
 
               {/* A ruled grid: each cell draws its own top and start rules and

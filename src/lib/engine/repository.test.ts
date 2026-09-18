@@ -8,8 +8,10 @@ import {
   UnknownWorkerError,
   wageToCarry,
   type MonthRecord,
+  type SalaryRepository,
   type WorkerProfile,
 } from "@/lib/engine/repository";
+import { monthState, type MonthState } from "@/lib/engine/monthState";
 import { snapshotTerms} from "@/lib/engine/types";
 import type { MonthSpan } from "@/lib/engine/types";
 import { SEEDED_RATES } from "@/lib/datedRates";
@@ -114,6 +116,9 @@ describe("a worker's facts written and read back", () => {
     expect(await repository.getMonth("hanna", JANUARY)).toEqual({
       ...january,
       spans: [],
+      // The store's own stamp, not the caller's: what it is worth is the
+      // subject of "the state a saved month is in" below.
+      updatedAt: expect.any(String),
     });
   });
 
@@ -153,6 +158,121 @@ describe("a worker's facts written and read back", () => {
     );
     expect(await repository.listMonths("hanna")).toHaveLength(1);
     expect(await repository.listSpans("hanna")).toHaveLength(1);
+  });
+});
+
+/**
+ * The stamp the store keeps on a month is the whole of what tells a *corrected*
+ * month from a confirmed one (Part 5), so it is asserted through `monthState`
+ * and not as an instant: the instant is the store's business, the state is what
+ * the application reads.
+ *
+ * What these would catch: a month reported as corrected the moment it was
+ * filed, which is what a stamp of `now()` beside a confirmation sent from
+ * another clock produces; a download counted as an edit, which would make every
+ * exported month corrected; and an edit that failed to move the stamp, which is
+ * criterion 13's chain left standing on a figure nobody moved.
+ */
+describe("the state a saved month is in", () => {
+  const confirmedAt = "2026-01-31T21:00:00.000Z";
+
+  async function stateOf(repository: SalaryRepository): Promise<MonthState> {
+    const [month] = await repository.listMonths("hanna");
+    return monthState(month);
+  }
+
+  it("is a draft while the month only holds facts", async () => {
+    const repository = store();
+    await repository.saveMonth("hanna", record(JANUARY));
+    expect(await stateOf(repository)).toBe("draft");
+  });
+
+  it("is confirmed, not corrected, on the save that confirms it", async () => {
+    const repository = store();
+    await repository.saveMonth("hanna", record(JANUARY));
+    await repository.saveMonth("hanna", record(JANUARY, { confirmedAt }));
+    expect(await stateOf(repository)).toBe("confirmed");
+  });
+
+  it("is exported once a file is recorded, and producing it is no correction", async () => {
+    const repository = store();
+    await repository.saveMonth("hanna", record(JANUARY, { confirmedAt }));
+    await repository.saveMonth(
+      "hanna",
+      record(JANUARY, { confirmedAt, exportedAt: "2026-02-01T08:00:00.000Z" }),
+    );
+    expect(await stateOf(repository)).toBe("exported");
+  });
+
+  it("is corrected once an exported month's facts are edited", async () => {
+    const repository = store();
+    await repository.saveMonth(
+      "hanna",
+      record(JANUARY, { confirmedAt, exportedAt: "2026-02-01T08:00:00.000Z" }),
+    );
+    await repository.saveMonth(
+      "hanna",
+      record(JANUARY, {
+        confirmedAt,
+        exportedAt: "2026-02-01T08:00:00.000Z",
+        userLines: [
+          {
+            id: "late",
+            label: "תיקון",
+            direction: "addition",
+            agorot: 5000,
+          },
+        ],
+      }),
+    );
+    expect(await stateOf(repository)).toBe("corrected");
+  });
+
+  it("is corrected when a day is marked on an exported month", async () => {
+    // **A mark is a span and a span is the worker's, not the month's** (Part
+    // 3), so nothing on the month row moves of its own accord. This is the case
+    // that looks entirely right and is not: the calendar shows the vacation
+    // day, the balance moves, and the month goes on calling itself exported
+    // over a file that no longer matches it.
+    const repository = store();
+    await repository.saveMonth(
+      "hanna",
+      record(JANUARY, { confirmedAt, exportedAt: "2026-02-01T08:00:00.000Z" }),
+    );
+    await repository.saveSpan("hanna", {
+      id: "v1",
+      kind: "vacation",
+      from: "2026-01-14",
+      to: "2026-01-14",
+    });
+    expect(await stateOf(repository)).toBe("corrected");
+  });
+
+  it("is corrected in the month a mark is taken off, not only where it lands", async () => {
+    const repository = store();
+    for (const month of [JANUARY, FEBRUARY]) {
+      await repository.saveMonth(
+        "hanna",
+        record(month, { confirmedAt, exportedAt: "2026-03-01T08:00:00.000Z" }),
+      );
+    }
+    await repository.saveSpan("hanna", {
+      id: "v1",
+      kind: "vacation",
+      from: "2026-01-14",
+      to: "2026-01-14",
+    });
+    await repository.saveSpan("hanna", {
+      id: "v1",
+      kind: "vacation",
+      from: "2026-02-14",
+      to: "2026-02-14",
+    });
+
+    const months = await repository.listMonths("hanna");
+    // January lost the day it was exported with, which changes its figures as
+    // surely as February's gaining it.
+    expect(months.map(monthState)).toEqual(["corrected", "corrected"]);
   });
 });
 

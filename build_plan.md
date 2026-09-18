@@ -80,11 +80,6 @@ not re-opened without her asking.** Stage 7 is done when the first list is empty
 
 ### Still to pay
 
-- **`דף העובד` draws six things the profile does not**: the `צריך לטפל` hero card and the
-  months' status badges (the month's four states, which nothing sets yet), the seniority in
-  the subtitle, day counts on a month row, a month row linking to that month's payslip (the
-  payslip takes no month), the `?` explaining each balance, and the closing links row.
-  `העובדות` likewise draws a status chip and a `משותף/ת עם` chip per card.
 - **`דף המשכורת` omits `להוסיף הערה לחודש`**, settled with the user on 2026-09-10: it needs a
   note on the month as a whole, and a note belongs to a mark or to a line the user added.
 - **The sheet's identity line wording is unconfirmed.** `A4` prints `מספר דרכון: <number>`
@@ -201,6 +196,7 @@ it, here. The list is that section, and it is not copied into this stage.
 
 **Done when** "Still to pay" is empty.
 
+- `דף העובד` and `העובדות`, 2026-09-18.
 - **Waiting on the user:** why the month sheet carries rows 32–38 (`נתוני דיווח נדרשים`, the
   six Wage Protection Act figures `writeReporting` fills in column C). Answered on 2026-09-17;
   the user will come back to whether they stay.

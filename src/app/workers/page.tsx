@@ -2,11 +2,14 @@ import { connection } from "next/server";
 import { WorkersList } from "@/components/WorkersList";
 import type { WorkerSummary } from "@/components/WorkersList";
 import { getRepository } from "@/lib/store";
+import { sharedWith } from "@/lib/shares";
 import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
 import { advanceLedger } from "@/lib/engine/advances";
 import { salaryFor } from "@/lib/engine/salary";
 import { calculateSeries } from "@/lib/engine/series";
-import { monthOf } from "@/lib/dates";
+import { monthHasEnded, monthOf } from "@/lib/dates";
+import { monthLabel } from "@/lib/dateLabels";
+import { monthState } from "@/lib/engine/monthState";
 import { todayInIsrael } from "@/lib/today";
 
 /**
@@ -34,6 +37,9 @@ export default async function WorkersPage() {
   const repository = await getRepository();
   const today = todayInIsrael();
   const workers = await repository.listWorkers();
+  // One query for the whole list, not one per card: a share is the household's
+  // and every worker of a household carries the same addresses.
+  const shares = await sharedWith();
 
   const household: WorkerSummary[] = await Promise.all(
     workers.map(async (profile) => {
@@ -65,6 +71,20 @@ export default async function WorkersPage() {
           (total, standing) => total + standing.outstandingAgorot,
           0,
         ),
+        // The earliest month that has ended and is still a draft — what the
+        // chip on her card names. A month that has not ended cannot be
+        // confirmed (item 21), so it is never what is waiting; a corrected
+        // month is not either, since its figures are current and only the file
+        // is stale, which is the bell's business (item 27).
+        waitingMonth:
+          months
+            .filter(
+              (facts) =>
+                monthHasEnded(facts.month, today) &&
+                monthState(facts) === "draft",
+            )
+            .map((facts) => monthLabel(facts.month))[0] ?? null,
+        sharedWith: shares.get(profile.id) ?? [],
       };
     }),
   );

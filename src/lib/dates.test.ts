@@ -17,6 +17,7 @@ import {
   utcDate,
   weekdayOfFirst,
   WEEK_LENGTH,
+  yearsBetween,
 } from "@/lib/dates";
 import type { YearMonth } from "@/lib/types";
 
@@ -160,5 +161,33 @@ describe("the same day a year later", () => {
     // Israel puts the clocks forward in late March. Built in UTC, so the day
     // is the day (`CLAUDE.md`).
     expect(addYears("2026-03-27", 1)).toBe("2027-03-27");
+  });
+});
+
+/**
+ * `ותק` on `דף העובד`: how long the employment has run, in whole years.
+ *
+ * What these would catch: the division that looks equivalent — days over
+ * 365 — which reports three years on the morning the fourth begins for any
+ * employment that has crossed a leap day, and a negative count for a worker
+ * whose first day is still ahead.
+ */
+describe("whole years from one date to another", () => {
+  it("turns on the anniversary and not the day before it", () => {
+    expect(yearsBetween("2024-03-01", "2025-02-28")).toBe(0);
+    expect(yearsBetween("2024-03-01", "2025-03-01")).toBe(1);
+  });
+
+  it("counts four years across a leap day, where 365-day years count three", () => {
+    // 1 March 2024 to 1 March 2028 is 1,461 days: four years, and 4.003 by
+    // the division — but 28 February 2028 is 1,460 days and divides to 3.999,
+    // so the day before the anniversary and the day of it both read as three.
+    expect(daysBetween("2024-03-01", "2028-03-01")).toBe(1461);
+    expect(yearsBetween("2024-03-01", "2028-03-01")).toBe(4);
+    expect(yearsBetween("2024-03-01", "2028-02-29")).toBe(3);
+  });
+
+  it("is nought for an employment that has not started", () => {
+    expect(yearsBetween("2027-01-01", "2026-09-18")).toBe(0);
   });
 });
