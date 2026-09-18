@@ -1,10 +1,9 @@
 ﻿import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
-import { switchToTestWorker, openSettingsForTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker, TODAY } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { monthOf } from "../src/lib/dates";
 import { formatAgorot } from "../src/lib/money";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The export, through the browser — `specs.md` item 2, criterion 1 and
@@ -137,7 +136,7 @@ function evaluate(sheet: ExcelJS.Worksheet, address: string): number {
  * today, as every count that starts at "the month the screen opens on" does.
  */
 async function openPayslipForAugust(page: Page): Promise<void> {
-  const { year } = monthOf(todayInIsrael());
+  const { year } = monthOf(TODAY);
   await page.goto(
     `/month/payslip?month=${year}-${String(ENDED_MONTH).padStart(2, "0")}`,
   );

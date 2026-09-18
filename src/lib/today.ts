@@ -1,3 +1,4 @@
+import { fromIsoDate, toIsoDate } from "@/lib/dates";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -34,4 +35,38 @@ const formatter = new Intl.DateTimeFormat("en-CA", {
 
 export function todayInIsrael(now: Date = new Date()): IsoDate {
   return formatter.format(now);
+}
+
+/**
+ * The cookie that fixes today for a request, so the browser suite reads the
+ * same day whatever the machine's clock says. Its specs and its seed are
+ * written against one day, and on any other the calendar opens on a different
+ * month and a test either fails for no defect or passes having tested nothing.
+ */
+export const TODAY_COOKIE = "today";
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Today for a request: the fixed day its cookie names, or the clock.
+ *
+ * **Refused in production**, for the reason the `household` cookie is
+ * (`store.ts`): anyone can set a cookie, and a user who set this one would move
+ * which months are running and which exports are allowed.
+ *
+ * **A value that is not a real date raises** rather than falling back to the
+ * clock. The cookie is only ever set by the browser suite, and falling back
+ * would quietly put a spec back on the real date, which is the failure the
+ * cookie exists to prevent.
+ */
+export function todayFor(
+  fixed: string | undefined,
+  production: boolean,
+  now: Date = new Date(),
+): IsoDate {
+  if (fixed === undefined || production) return todayInIsrael(now);
+  if (!ISO_DATE.test(fixed) || toIsoDate(fromIsoDate(fixed)) !== fixed) {
+    throw new Error(`The ${TODAY_COOKIE} cookie is not a date: ${fixed}`);
+  }
+  return fixed;
 }

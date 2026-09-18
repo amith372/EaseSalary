@@ -323,9 +323,9 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     // The tint block at the head of the screen answers the same way, and it
     // was the one place the levels rule had been missed: it drew a ברוטו on
     // every month, so January printed one number twice under two headings.
-    const headline = page.locator("[data-payslip-total]").locator("xpath=..");
+    const headline = page.locator('[data-role="payslip-headline"]');
     await expect(headline).toContainText(he.payslip.total);
-    const block = page.locator("[data-payslip-total]").locator("xpath=../..");
+    const block = page.locator('[data-role="payslip-tint"]');
     await expect(block).toContainText(he.month.preview.gross);
 
     // April repays an advance, so it transfers too and keeps both names.
@@ -341,10 +341,10 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     );
     await expect(row(page, "net")).not.toContainText(he.payslip.total);
 
-    const january = page.locator("[data-payslip-total]").locator("xpath=..");
+    const january = page.locator('[data-role="payslip-headline"]');
     await expect(january).toContainText(he.month.preview.afterWithholding);
     await expect(
-      page.locator("[data-payslip-total]").locator("xpath=../.."),
+      page.locator('[data-role="payslip-tint"]'),
     ).not.toContainText(he.month.preview.gross);
   });
 

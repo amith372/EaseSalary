@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { expect, test as setup } from "@playwright/test";
 import { he } from "../src/lib/i18n/he";
+import { TODAY, useToday } from "./household";
 
 /**
  * **Every spec in this directory now needs a session**, because `src/proxy.ts`
@@ -59,6 +60,9 @@ setup("a confirmed account, signed in through the real screen", async ({ page })
   // around it — the nav is the proof, since the sign-in screen draws none.
   await page.waitForURL("/");
   await expect(page.getByRole("navigation", { name: he.nav.landmark })).toBeVisible();
+
+  // Saved with the session, so every spec starts on the suite's day.
+  await useToday(page, TODAY);
 
   mkdirSync(dirname(STATE_FILE), { recursive: true });
   await page.context().storageState({ path: STATE_FILE });

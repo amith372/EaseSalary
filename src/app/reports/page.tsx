@@ -5,7 +5,7 @@ import { getRepository } from "@/lib/store";
 import { blocksExport } from "@/lib/engine/beforeExport";
 import { monthLevels } from "@/lib/engine/month";
 import { calculateSeries } from "@/lib/engine/series";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * The `דוחות` screen's route — stage 2's step 3.
@@ -32,7 +32,7 @@ export default async function ReportsPage() {
   await connection();
 
   const repository = await getRepository();
-  const today = todayInIsrael();
+  const today = await readToday();
   const workers = await repository.listWorkers();
 
   const household: WorkerReports[] = await Promise.all(

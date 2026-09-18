@@ -6,12 +6,12 @@ import {
   switchToFirstWorker,
   switchToTestWorker,
   useHousehold,
+  TODAY,
 } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { fullDayLabel } from "../src/lib/dateLabels";
 import { formatAgorot, formatDays } from "../src/lib/money";
 import { addMonths, monthOf, yearMonthText } from "../src/lib/dates";
-import { todayInIsrael } from "../src/lib/today";
 import type { YearMonth } from "../src/lib/types";
 
 /**
@@ -163,7 +163,7 @@ test.describe("the settings screen", () => {
 test.describe("a change of salary (specs.md item 3)", () => {
   test("holds from its month and leaves the month before it", async ({ page }) => {
     await useHousehold(page, "settings", "raise");
-    const today = todayInIsrael();
+    const today = TODAY;
 
     await openPayslip(page, addMonths(monthOf(today), -1));
     const before = (await page.locator('[data-row="base"]').textContent()) ?? "";
@@ -241,7 +241,7 @@ test.describe("a change of salary (specs.md item 3)", () => {
 test.describe("the rest-eve supplement (specs.md item 14)", () => {
   test("moves the month's supplement when it is changed", async ({ page }) => {
     await useHousehold(page, "settings", "supplement");
-    const month = monthOf(todayInIsrael());
+    const month = monthOf(TODAY);
     let fridays = 0;
     for (let day = 1; day <= 31; day += 1) {
       const date = new Date(Date.UTC(month.year, month.month - 1, day));

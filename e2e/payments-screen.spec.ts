@@ -1,9 +1,8 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, openPaymentSections } from "./household";
+import { switchToTestWorker, openPaymentSections, TODAY } from "./household";
 import { addMonths, monthOf, SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The rest of stage 4's browser verification (`build_plan.md` step 10, and
@@ -113,7 +112,7 @@ async function stepBack(page: Page, times: number): Promise<void> {
  * this file would start failing on a date nobody changed.
  */
 async function openPayslipMonthsBack(page: Page, times: number): Promise<void> {
-  const month = addMonths(monthOf(todayInIsrael()), -times);
+  const month = addMonths(monthOf(TODAY), -times);
   const label = `${month.year}-${String(month.month).padStart(2, "0")}`;
   await page.goto(`/month/payslip?month=${label}`);
   await switchToTestWorker(page);

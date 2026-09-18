@@ -1,10 +1,9 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections, openSettingsGroups } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections, openSettingsGroups, TODAY } from "./household";
 import { FRIDAY, SATURDAY, monthOf } from "../src/lib/dates";
 import { fullDayLabel } from "../src/lib/dateLabels";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The worker's profile through the browser — the four things step 9 exists to
@@ -96,7 +95,7 @@ const AUGUST_2025 = "2025-08";
 /** The month the demo household opens on, as `YYYY-MM`. Read off the clock
  * rather than written here, so the spec does not pin itself to one month. */
 function thisMonth(): string {
-  const { year, month } = monthOf(todayInIsrael());
+  const { year, month } = monthOf(TODAY);
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 

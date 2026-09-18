@@ -1,10 +1,9 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, openSettingsForTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker, TODAY } from "./household";
 import { addMonths, monthOf, SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { weekdayDayLabel } from "../src/lib/dateLabels";
 import { formatAgorot, formatDays } from "../src/lib/money";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The year's holidays chosen in advance, through the browser — `בחירת חגים`
@@ -141,7 +140,7 @@ async function backTo(page: Page, months: number): Promise<void> {
  * counts from the month the screen opens on.
  */
 async function openPayslipMonthsBack(page: Page, months: number): Promise<void> {
-  const month = addMonths(monthOf(todayInIsrael()), -months);
+  const month = addMonths(monthOf(TODAY), -months);
   const label = `${month.year}-${String(month.month).padStart(2, "0")}`;
   await page.goto(`/month/payslip?month=${label}`);
   await switchToTestWorker(page);

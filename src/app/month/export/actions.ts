@@ -19,7 +19,7 @@ import { calculateSeries } from "@/lib/engine/series";
 import { compareMonth, monthOf as monthOfDate, sameMonth } from "@/lib/dates";
 import { openMonthIfMissing } from "@/lib/openMonth";
 import { parseShekels } from "@/lib/money";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
@@ -70,7 +70,7 @@ async function monthOf(workerId: string, month: YearMonth) {
   const repository = await getRepository();
   const profile = await repository.getWorker(workerId);
   if (profile === null) throw new Error(`No worker with id ${workerId}`);
-  if (compareMonth(month, monthOfDate(todayInIsrael())) <= 0) {
+  if (compareMonth(month, monthOfDate(await readToday())) <= 0) {
     await openMonthIfMissing(repository, profile, month);
   }
   const facts = await repository.getMonth(workerId, month);
@@ -149,7 +149,7 @@ async function taxToConfirm(
   const entry = calculateSeries(
     months,
     profile,
-    todayInIsrael(),
+    await readToday(),
     await repository.listRates(),
   ).find((one) => sameMonth(one.facts.month, month));
   const line = entry?.result.closing.find((row) => row.key === lineKeys.incomeTax);
@@ -211,7 +211,7 @@ export async function confirmMonth(
 
   const { repository, profile, facts } = await monthOf(workerId, month);
 
-  if (blocksExport(facts, todayInIsrael()).length > 0) {
+  if (blocksExport(facts, await readToday()).length > 0) {
     return { ok: false, reason: "blocked" };
   }
 

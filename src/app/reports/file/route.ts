@@ -8,7 +8,7 @@ import {
   recuperationReport,
   yearlySalaryReport,
 } from "@/lib/export/reports";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * The four files the `דוחות` screen offers — stage 2's step 3.
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
   if (worker === null) return new Response("No such worker", { status: 404 });
 
   const months = await repository.listMonths(workerId);
-  const series = calculateSeries(months, worker, todayInIsrael(), await repository.listRates());
+  const series = calculateSeries(months, worker, await readToday(), await repository.listRates());
 
   let bytes: Buffer;
   let filename: string;

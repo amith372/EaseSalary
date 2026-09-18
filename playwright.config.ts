@@ -34,6 +34,10 @@ export default defineConfig({
   // figure is a wrong salary figure.
   retries: 0,
   fullyParallel: false,
+  // One worker. The specs share one dev server and the signed-in account's
+  // household, and files run side by side step on each other: parallel runs
+  // failed a different dozen tests each time while a serial one did not.
+  workers: 1,
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? "github" : [["list"], ["html", { open: "never" }]],
 

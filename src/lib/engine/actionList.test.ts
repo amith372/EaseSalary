@@ -334,7 +334,7 @@ describe("a year with fewer than seven vacation days (item 7)", () => {
     const march = monthOf(ym(2026, 3));
     expect(
       only(listFor({ today: "2026-12-05", months: [march], spans: [...NINE_HOLIDAYS, sixDays] }), "vacationUnderSeven"),
-    ).toEqual([{ list: "blockage", key: "vacationUnderSeven", year: 2026, days: 6, required: 7 }]);
+    ).toEqual([{ list: "warning", key: "vacationUnderSeven", year: 2026, days: 6, required: 7 }]);
   });
 
   it("is not raised at seven", () => {
@@ -359,7 +359,7 @@ describe("a year with fewer than seven vacation days (item 7)", () => {
       firstMonth: { year: 2026, month: 10 },
     };
     expect(only(listFor({ today: "2026-12-05", profile }), "vacationUnderSeven")).toEqual([
-      { list: "blockage", key: "vacationUnderSeven", year: 2026, days: 0, required: 3.5 },
+      { list: "warning", key: "vacationUnderSeven", year: 2026, days: 0, required: 3.5 },
     ]);
   });
 

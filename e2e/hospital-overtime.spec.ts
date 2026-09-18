@@ -1,10 +1,9 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Page } from "@playwright/test";
-import { openPaymentSections, switchToTestWorker } from "./household";
+import { openPaymentSections, switchToTestWorker, TODAY } from "./household";
 import { monthOf } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * Hospital overtime, typed on the payments screen (specs.md item 20).
@@ -113,7 +112,7 @@ test.describe("hospital overtime (specs.md item 20)", () => {
     await useHousehold(page, "export");
     await typeOvertime(page, 1);
 
-    const { year } = monthOf(todayInIsrael());
+    const { year } = monthOf(TODAY);
     await page.goto(
       `/month/payslip?month=${year}-${String(ENDED_MONTH).padStart(2, "0")}`,
     );

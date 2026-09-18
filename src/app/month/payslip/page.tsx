@@ -7,6 +7,7 @@ import { advanceLedger } from "@/lib/engine/advances";
 import { blocksExport, exportQuestions } from "@/lib/engine/beforeExport";
 import { calculateSeries } from "@/lib/engine/series";
 import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * `דף המשכורת` — stage 2's step 4, at `/month/payslip`.
@@ -29,7 +30,7 @@ export default async function PayslipPage() {
   await connection();
 
   const repository = await getRepository();
-  const today = todayInIsrael();
+  const today = await readToday();
   const workers = await repository.listWorkers();
 
   const household: WorkerPayslip[] = await Promise.all(

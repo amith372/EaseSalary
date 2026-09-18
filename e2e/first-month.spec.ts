@@ -1,11 +1,10 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
-import { useHousehold } from "./household";
+import { useHousehold, TODAY } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { addMonths, monthOf, yearMonthText } from "../src/lib/dates";
 import { monthLabel } from "../src/lib/dateLabels";
 import { formatAgorot } from "../src/lib/money";
-import { todayInIsrael } from "../src/lib/today";
 import type { YearMonth } from "../src/lib/types";
 
 /**
@@ -44,7 +43,7 @@ const BASE_ROW = 6;
 const RECUPERATION_ROW = 18;
 
 /** The first month: the month before today's. */
-const FIRST: YearMonth = addMonths(monthOf(todayInIsrael()), -1);
+const FIRST: YearMonth = addMonths(monthOf(TODAY), -1);
 const HIRED: YearMonth = addMonths(FIRST, -28);
 const RECUPERATION_MONTH = addMonths(FIRST, -1).month;
 

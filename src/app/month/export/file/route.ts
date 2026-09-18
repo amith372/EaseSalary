@@ -6,7 +6,7 @@ import { recordOf } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
 import { monthFileOf } from "@/lib/export/monthExport";
 import { readIdentifyingNumbers } from "@/lib/identifyingNumbers";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * The month's file — what the two buttons on `/month/export` point at.
@@ -50,12 +50,12 @@ export async function GET(request: NextRequest) {
   // (item 6, Part 3); one outside it — before her first month or after the
   // current one — does not exist to export.
   const months = await repository.listMonths(workerId);
-  const series = calculateSeries(months, worker, todayInIsrael(), await repository.listRates());
+  const series = calculateSeries(months, worker, await readToday(), await repository.listRates());
   const inSeries = series.find((one) => sameMonth(one.facts.month, month));
   if (inSeries === undefined) {
     return new Response("No such month", { status: 404 });
   }
-  if (blocksExport(inSeries.facts, todayInIsrael()).length > 0) {
+  if (blocksExport(inSeries.facts, await readToday()).length > 0) {
     return new Response("The month has an unanswered question", {
       status: 409,
     });

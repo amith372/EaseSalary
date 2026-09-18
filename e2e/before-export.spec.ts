@@ -1,10 +1,9 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker } from "./household";
+import { switchToTestWorker, TODAY } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 import { monthOf, SATURDAY } from "../src/lib/dates";
 import { dayLabel, fullDayLabel, rangeLabel } from "../src/lib/dateLabels";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The questions that open an export, through the browser — `specs.md` items 18,
@@ -422,7 +421,7 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
     await page.goto("/month/payslip?month=2026-08");
     await switchToTestWorker(page);
     await expect(page.locator("[data-confirmed-on]")).toContainText(
-      fullDayLabel(todayInIsrael()),
+      fullDayLabel(TODAY),
     );
     await page.goto("/month/payslip?month=2026-07");
     await switchToTestWorker(page);
@@ -481,7 +480,7 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
     // the confirmation stored on the month rather than from the table. Read off
     // the payslip, which is where a month is laid out line by line (specs.md
     // item 5) — the opening screen summarises and draws no recuperation row.
-    const { year } = monthOf(todayInIsrael());
+    const { year } = monthOf(TODAY);
     await page.goto(
       `/month/payslip?month=${year}-${String(RECUPERATION_MONTH).padStart(2, "0")}`,
     );

@@ -10,7 +10,7 @@ import { recordOf } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
 import { upcoming } from "@/lib/engine/upcoming";
 import type { IncomeTaxSetting, MonthIncomeTax } from "@/lib/engine/types";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 import type { MonthResult } from "@/lib/types";
 
 /**
@@ -77,7 +77,7 @@ export default async function PaymentsPage() {
   await connection();
 
   const repository = await getRepository();
-  const today = todayInIsrael();
+  const today = await readToday();
   const workers = await repository.listWorkers();
 
   const household: WorkerPayments[] = await Promise.all(

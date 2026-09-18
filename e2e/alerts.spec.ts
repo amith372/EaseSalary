@@ -1,7 +1,6 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { openPaymentSections, switchToTestWorker, useHousehold } from "./household";
+import { openPaymentSections, switchToTestWorker, useHousehold, useToday, TODAY } from "./household";
 import { he } from "../src/lib/i18n/he";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * `/alerts` through the browser (specs.md item 27).
@@ -74,10 +73,10 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await page.getByRole("button", { name: he.alerts.settingsLink }).click();
     const dialog = page.getByRole("dialog", { name: he.alerts.reminders.title });
     await expect(dialog).toBeVisible();
-    // The kinds and nothing else, every one on by default.
+    // The five kinds item 27 names and nothing else, every one on by default.
     const boxes = dialog.getByRole("checkbox");
-    await expect(boxes).toHaveCount(4);
-    for (let i = 0; i < 4; i += 1) await expect(boxes.nth(i)).toBeChecked();
+    await expect(boxes).toHaveCount(5);
+    for (let i = 0; i < 5; i += 1) await expect(boxes.nth(i)).toBeChecked();
     // The blockages are named, so an advance looked for here is explained.
     await expect(dialog.locator('[data-role="always-shown"]')).toHaveText(
       he.alerts.reminders.alwaysShown,
@@ -222,7 +221,7 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await panel.getByRole("button", { name: he.alerts.settingsLink }).click();
     await expect(reminders).toBeVisible();
     const boxes = reminders.getByRole("checkbox");
-    for (let i = 0; i < 4; i += 1) await boxes.nth(i).uncheck();
+    for (let i = 0; i < 5; i += 1) await boxes.nth(i).uncheck();
     await expect(bell.locator('[data-row="warnings"]')).toHaveText("0");
     await reminders.getByRole("button", { name: he.alerts.reminders.close }).click();
     await expect(page).toHaveURL(/\/$/);
@@ -291,9 +290,8 @@ test.describe("the opening screen's blocker strip (specs.md item 27)", () => {
 
 test.describe("the national-insurance quarter, paid through the payments screen (specs.md items 19, 27)", () => {
   // The seed covers January–March 2026 and nothing after (`seed.ts`, month 4),
-  // so April–June is owed from July 2026, the month after that quarter ended.
-  test.skip(todayInIsrael() < "2026-07-01", "April–June 2026 is not owed before July 2026");
-
+  // so April–June is owed from July 2026, the month after that quarter ended —
+  // which the suite's September day is past.
   test("recording April–June takes that quarter off /alerts and the opening screen", async ({
     page,
   }) => {
@@ -322,7 +320,7 @@ test.describe("the national-insurance quarter, paid through the payments screen 
     await group.getByLabel(words.amount).fill("1200");
     await group.getByLabel(words.periodFrom).selectOption("2026-04");
     await group.getByLabel(words.periodTo).selectOption("2026-06");
-    await group.getByLabel(words.paidOn).fill(todayInIsrael());
+    await group.getByLabel(words.paidOn).fill(TODAY);
     await group.getByRole("button", { name: words.submit, exact: true }).click();
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
     await expect(group.getByText(kind, { exact: true }).first()).toBeVisible();
@@ -358,10 +356,6 @@ test.describe("the national-insurance quarter, paid through the payments screen 
 });
 
 test.describe("an account with nothing outstanding (build_plan.md stage 6, done when)", () => {
-  // December asks a worker added that month for the month's vacation she
-  // accrued (item 7), which she has not taken.
-  test.skip(todayInIsrael().slice(5, 7) === "12", "December raises the vacation blockage");
-
   test("a worker added this month with her holidays chosen leaves the opening screen with no blockage", async ({
     page,
   }) => {
@@ -375,7 +369,7 @@ test.describe("an account with nothing outstanding (build_plan.md stage 6, done 
     await page.locator('[data-field="name"]').fill("מריה דה לה קרוס");
     await page.locator('[data-role="add-worker-next"]').click();
     await expect(page.getByRole("heading", { name: he.addWorker.when.title })).toBeVisible();
-    await page.locator('[data-field="employedSince"]').fill(`${todayInIsrael().slice(0, 7)}-01`);
+    await page.locator('[data-field="employedSince"]').fill(`${TODAY.slice(0, 7)}-01`);
     await page.locator('[data-role="add-worker-next"]').click();
     await expect(page.getByRole("heading", { name: he.addWorker.pay.title })).toBeVisible();
     await page.locator('[data-field="baseMonthlySalary"]').fill("6443.85");
@@ -388,7 +382,7 @@ test.describe("an account with nothing outstanding (build_plan.md stage 6, done 
     await expect(
       page.locator('[data-role="blocker"]').filter({
         hasText: he.alerts.entry
-          .holidaysUnchosen(Number(todayInIsrael().slice(0, 4)), "", "")
+          .holidaysUnchosen(Number(TODAY.slice(0, 4)), "", "")
           .title.map((part) => (typeof part === "string" ? part : part.value))
           .join(""),
       }),
@@ -417,5 +411,42 @@ test.describe("an account with nothing outstanding (build_plan.md stage 6, done 
     await page.goto("/alerts");
     await expect(page.locator("h1")).toHaveText(he.alerts.title);
     await expect(page.locator('[data-role="alert"][data-list="blockage"]')).toHaveCount(0);
+  });
+});
+
+test.describe("the December that closes a year (specs.md item 7)", () => {
+  // Expected by hand from item 7, not read off the screen: a worker employed
+  // from 1 December 2026 is in her first calendar year, which accrues fourteen
+  // days a year, so December alone accrues 14 ÷ 12 = 1.1667 days — fewer than
+  // seven, so that is what the law asks her to have taken, and she took none.
+  // It is a warning and never a blockage: item 7 says it without pressing the
+  // point, and item 27 puts it in the bell.
+  test("warns of the vacation a worker added that month has not taken", async ({ page }) => {
+    await useHousehold(page, "empty", "december-vacation");
+    await useToday(page, "2026-12-10");
+
+    await page.goto("/workers/new");
+    await page.locator('[data-field="name"]').fill("מריה דה לה קרוס");
+    await page.locator('[data-role="add-worker-next"]').click();
+    await expect(page.getByRole("heading", { name: he.addWorker.when.title })).toBeVisible();
+    await page.locator('[data-field="employedSince"]').fill("2026-12-01");
+    await page.locator('[data-role="add-worker-next"]').click();
+    await expect(page.getByRole("heading", { name: he.addWorker.pay.title })).toBeVisible();
+    await page.locator('[data-field="baseMonthlySalary"]').fill("6443.85");
+    await page.locator('[data-role="add-worker-next"]').click();
+    await page.locator('[data-role="add-worker-finish"]').click();
+    await expect(page).toHaveURL(/\/workers\/[0-9a-f-]+$/);
+
+    const title = he.alerts.entry
+      .vacationUnderSeven(2026, "0", "1.17")
+      .title.map((part) => (typeof part === "string" ? part : part.value))
+      .join("");
+    await page.goto("/alerts");
+    await expect(
+      page.locator('[data-role="alert"][data-list="warning"]').filter({ hasText: title }),
+    ).toHaveCount(1);
+    await expect(
+      page.locator('[data-role="alert"][data-list="blockage"]').filter({ hasText: title }),
+    ).toHaveCount(0);
   });
 });

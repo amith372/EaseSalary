@@ -411,8 +411,7 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
       .getByLabel(he.workers.profile.terms.incomeTax.rate)
       .fill("2.5");
     await page
-      .locator('[data-terms="incomeTax"]')
-      .locator("xpath=..")
+      .locator('[data-terms="incomeTax"] ~ form')
       .getByRole("button", { name: he.workers.profile.terms.incomeTax.save })
       .click();
     await settled(page);
@@ -455,8 +454,7 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
     await modeChip(page, he.workers.profile.terms.incomeTax.percentage).click();
     await page.getByLabel(he.workers.profile.terms.incomeTax.rate).fill("0");
     await page
-      .locator('[data-terms="incomeTax"]')
-      .locator("xpath=..")
+      .locator('[data-terms="incomeTax"] ~ form')
       .getByRole("button", { name: he.workers.profile.terms.incomeTax.save })
       .click();
     await settled(page);

@@ -52,7 +52,7 @@ import {
 } from "@/lib/spans";
 import { compareMonth, monthOf, orderDates, sameMonth } from "@/lib/dates";
 import { isBeforeFirstMonth, openMonthIfMissing } from "@/lib/openMonth";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
@@ -254,7 +254,7 @@ async function monthToChange(
   profile: WorkerProfile,
   month: YearMonth,
 ) {
-  if (compareMonth(month, monthOf(todayInIsrael())) <= 0) {
+  if (compareMonth(month, monthOf(await readToday())) <= 0) {
     await openMonthIfMissing(await getRepository(), profile, month);
   }
   return (await getRepository()).getMonth(workerId, month);
@@ -585,7 +585,7 @@ async function linesOf(workerId: string, month: YearMonth) {
   const repository = await getRepository();
   const profile = await profileOf(workerId);
   const months = await repository.listMonths(workerId);
-  const series = calculateSeries(months, profile, todayInIsrael(), await repository.listRates());
+  const series = calculateSeries(months, profile, await readToday(), await repository.listRates());
   return series.find((entry) => sameMonth(entry.facts.month, month)) ?? null;
 }
 

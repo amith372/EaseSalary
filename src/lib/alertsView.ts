@@ -15,7 +15,7 @@ import { calculateSeries } from "@/lib/engine/series";
 import { he, type Said } from "@/lib/i18n/he";
 import { legalLink, type LegalLinkKey } from "@/lib/links";
 import { getRepository } from "@/lib/store";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 import { formatAgorot, formatDays } from "@/lib/money";
 import type { IsoDate } from "@/lib/types";
 
@@ -260,7 +260,7 @@ export interface BellView extends FirstOf {
  * request rather than once per reader.
  */
 export const householdAlerts = cache(
-  async (): Promise<AlertsView> => alertsView(await getRepository(), todayInIsrael()),
+  async (): Promise<AlertsView> => alertsView(await getRepository(), await readToday()),
 );
 
 /** The first blockages, which lead the opening screen (item 27). */

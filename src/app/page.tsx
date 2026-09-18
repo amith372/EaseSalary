@@ -5,7 +5,7 @@ import { blockagesOf, householdAlerts } from "@/lib/alertsView";
 import { refreshMinimumWageIfStale } from "@/lib/minimumWageRefresh";
 import { getRepository } from "@/lib/store";
 import { calculateSeries } from "@/lib/engine/series";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * The opening screen's route, and the only place in the application where the
@@ -50,7 +50,7 @@ export default async function HomePage() {
   await connection();
 
   const repository = await getRepository();
-  const today = todayInIsrael();
+  const today = await readToday();
   const workers = await repository.listWorkers();
   const now = new Date();
   after(async () => {

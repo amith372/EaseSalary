@@ -1,9 +1,8 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, openSettingsForTestWorker } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker, TODAY } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot, formatDays } from "../src/lib/money";
 import { monthOf } from "../src/lib/dates";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * Recuperation through the browser — `specs.md` item 15.
@@ -75,7 +74,7 @@ function row(page: Page, key: string) {
  * the current year's months.
  */
 async function openPayslip(page: Page, month: number): Promise<void> {
-  const { year } = monthOf(todayInIsrael());
+  const { year } = monthOf(TODAY);
   await page.goto(
     `/month/payslip?month=${year}-${String(month).padStart(2, "0")}`,
   );
@@ -120,7 +119,7 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
 
   test("draws no recuperation line in an ordinary month", async ({ page }) => {
     await useHousehold(page, "ordinary");
-    await openPayslip(page, monthOf(todayInIsrael()).month);
+    await openPayslip(page, monthOf(TODAY).month);
     // September is the month the demo opens on and is not the recuperation
     // month. A line drawn here would be a payment made twelve times a year.
     await expect(row(page, "recuperation")).toHaveCount(0);

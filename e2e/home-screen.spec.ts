@@ -1,10 +1,9 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { TEST_WORKER_NAME, useHousehold, switchToTestWorker, openPaymentSections } from "./household";
+import { TEST_WORKER_NAME, useHousehold, switchToTestWorker, openPaymentSections, TODAY } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { monthLabel } from "../src/lib/dateLabels";
 import { monthOf, SATURDAY } from "../src/lib/dates";
 import { formatAgorot, formatDays } from "../src/lib/money";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * The opening screen, through the browser: how it is laid out, the month that
@@ -163,7 +162,7 @@ test.describe("the opening screen", () => {
     // calendar pinned to a fixed month — which it was, to August 2026 — fails
     // on every day outside that month. The demo household has a record of the
     // current month, which is what `openingMonthOf` opens on.
-    const today = todayInIsrael();
+    const today = TODAY;
     await expect(page.locator(`[data-date="${today}"]`)).toBeVisible();
     await expect(page.getByText(monthLabel(monthOf(today))).first()).toBeVisible();
   });

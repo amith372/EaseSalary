@@ -48,7 +48,7 @@ export const metadata: Metadata = {
  * so there is one read.
  *
  * It makes every route dynamic, which they already are — the store is a live
- * value and `todayInIsrael()` is a clock, so a page rendered at build time
+ * value and `readToday()` reads a clock, so a page rendered at build time
  * would show the household as it stood when the build ran.
  */
 /**

@@ -1,9 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
-import { useHousehold, switchToTestWorker } from "./household";
+import { useHousehold, switchToTestWorker, TODAY } from "./household";
 import { SATURDAY, addMonths, monthOf } from "../src/lib/dates";
 import { monthLabel } from "../src/lib/dateLabels";
 import { he } from "../src/lib/i18n/he";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * Part 5's four states of a month, driven through the interface end to end —
@@ -34,7 +33,7 @@ const WORKER = "worker-2";
 /** The last month that has ended, which is the only one that can be confirmed
  * (criterion 21). Read off the clock, so the spec is not pinned to a month. */
 function endedMonth() {
-  return addMonths(monthOf(todayInIsrael()), -1);
+  return addMonths(monthOf(TODAY), -1);
 }
 
 function param(month: { year: number; month: number }): string {

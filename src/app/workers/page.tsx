@@ -10,7 +10,7 @@ import { calculateSeries } from "@/lib/engine/series";
 import { monthHasEnded, monthOf } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
 import { monthState } from "@/lib/engine/monthState";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * The list of the household's workers — `EaseSalary - העובדות` (specs.md item
@@ -35,7 +35,7 @@ export default async function WorkersPage() {
   await connection();
 
   const repository = await getRepository();
-  const today = todayInIsrael();
+  const today = await readToday();
   const workers = await repository.listWorkers();
   // One query for the whole list, not one per card: a share is the household's
   // and every worker of a household carries the same addresses.

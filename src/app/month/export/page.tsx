@@ -13,7 +13,7 @@ import {
 } from "@/lib/engine/beforeExport";
 import { MINIMUM_WAGE_SOURCE_URL } from "@/lib/scrape/minimumWage";
 import { refreshMinimumWage } from "@/lib/minimumWageRefresh";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * The questions that open an export — `EaseSalary - לפני הייצוא`
@@ -44,7 +44,7 @@ export default async function BeforeExportPage() {
   await connection();
 
   const repository = await getRepository();
-  const today = todayInIsrael();
+  const today = await readToday();
   const workers = await repository.listWorkers();
   const { rates, failure } = await refreshMinimumWage(repository);
 

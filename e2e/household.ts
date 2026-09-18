@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import { he } from "../src/lib/i18n/he";
+import { TODAY_COOKIE } from "../src/lib/today";
 
 /**
  * The two things every spec in this directory does before it asserts anything.
@@ -30,6 +31,24 @@ export async function useHousehold(
       value: `${spec}-${Date.now()}-${label}`,
       url: "http://localhost:3000",
     },
+  ]);
+}
+
+/**
+ * **The day the whole suite runs on**, whatever the machine's clock says. The
+ * demo seed and the specs are written against September 2026 — the month the
+ * demo runs to, with the test worker's visa falling due in October — so on any
+ * other day the calendar opens on another month and a spec either fails for no
+ * defect or passes having tested nothing. `auth.setup.ts` sets it on the session
+ * every spec starts from; the server honours it outside production only
+ * (`src/lib/today.ts`).
+ */
+export const TODAY = "2026-09-18";
+
+/** A different day for one test, for a rule that only speaks in one month. */
+export async function useToday(page: Page, today: string): Promise<void> {
+  await page.context().addCookies([
+    { name: TODAY_COOKIE, value: today, url: "http://localhost:3000" },
   ]);
 }
 

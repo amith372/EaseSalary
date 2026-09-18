@@ -2,7 +2,6 @@ import { expect, test, type Page } from "@playwright/test";
 import { openPaymentSections, switchToTestWorker, useHousehold } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
-import { todayInIsrael } from "../src/lib/today";
 
 /**
  * "לקראת החודשים הבאים" on the payments screen (specs.md item 15), for the test
@@ -13,9 +12,8 @@ import { todayInIsrael } from "../src/lib/today";
  * 1 April 2024 with July as her recuperation month, so July 2027 completes her
  * third year and owes 6 days (item 15's ladder: 5, then 6 for years two and
  * three); no fee has been paid for her. Counted from September 2026, the
- * twelve months run to August 2027 and hold all three. The test is written for
- * a run in September 2026, as the payments suite is, and says so rather than
- * failing on a later date for a reason that is not a defect.
+ * twelve months run to August 2027 and hold all three. September 2026 is the
+ * suite's own day (`TODAY` in `household.ts`), not the machine's.
  */
 
 const SPEC = "upcoming";
@@ -26,11 +24,6 @@ function upcomingRow(page: Page, title: string) {
 }
 
 test.describe("what falls due in the next twelve months (specs.md item 15)", () => {
-  test.skip(
-    !todayInIsrael().startsWith("2026-09"),
-    "the seed's document dates are read against September 2026",
-  );
-
   test("lists the fees and recuperation by month, and a recorded fee brings its amount", async ({
     page,
   }) => {

@@ -13,7 +13,7 @@ import { holidayAllowanceFor } from "@/lib/engine/leave";
 import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import { fromIsoDate, monthOf } from "@/lib/dates";
 import { readIdentifyingNumbers } from "@/lib/identifyingNumbers";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 import { supabaseOnServer } from "@/lib/supabase/server";
 
 /**
@@ -68,7 +68,7 @@ async function householdInvitations(): Promise<Invitation[]> {
 export default async function SettingsPage() {
   await connection();
 
-  const today = todayInIsrael();
+  const today = await readToday();
   const year = fromIsoDate(today).getUTCFullYear();
   const month = monthOf(today);
 

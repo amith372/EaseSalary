@@ -6,7 +6,7 @@ import { getRepository } from "@/lib/store";
 import { advanceLedger } from "@/lib/engine/advances";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 import {
   saveIdentifyingNumbers,
   type IdentifyingNumbers,
@@ -215,7 +215,7 @@ export async function setEmployedSince(
   dateText: string,
 ): Promise<ProfileActionResult> {
   const profile = await profileOf(workerId);
-  const date = reviewEmployedSince(dateText, todayInIsrael(), profile.firstMonth);
+  const date = reviewEmployedSince(dateText, await readToday(), profile.firstMonth);
   if (date === "invalid") return { ok: false, reason: "date" };
   if (date === "range") return { ok: false, reason: "employedSinceRange" };
   if (date === "afterFirstMonth") {
@@ -643,7 +643,7 @@ export async function createWorker(
   const minimum = await minimumWageNow(repository);
   if (minimum === null) return { ok: false, reason: "belowMinimum" };
 
-  const today = todayInIsrael();
+  const today = await readToday();
   const reviewed = reviewNewWorker(draft, minimum.value, today);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
@@ -682,7 +682,7 @@ async function minimumWageNow(
   return rateInForce(
     await repository.listRates(),
     "minimumWage",
-    monthOf(todayInIsrael()),
+    monthOf(await readToday()),
   );
 }
 

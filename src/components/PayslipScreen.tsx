@@ -197,8 +197,9 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
           tone="tint"
           radius="lg"
           className="flex flex-wrap items-end gap-8.5 px-8 py-6.5"
+          data-role="payslip-tint"
         >
-          <div className="flex flex-col gap-1">
+          <div data-role="payslip-headline" className="flex flex-col gap-1">
             <span className="text-[17px] font-light text-ink-warm">
               <Bidi>{bottomFigure(transfers).label}</Bidi>
             </span>

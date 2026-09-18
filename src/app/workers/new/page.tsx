@@ -4,7 +4,7 @@ import type { Country } from "@/components/AddWorkerScreen";
 import { monthOf } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
 import { getRepository } from "@/lib/store";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * `EaseSalary - הוספת עובד` (`build_plan.md` stage 3).
@@ -44,7 +44,7 @@ export default async function AddWorkerPage() {
     ).values(),
   ].sort((a, b) => a.nameHe.localeCompare(b.nameHe, "he"));
 
-  const minimum = rateInForce(rates, "minimumWage", monthOf(todayInIsrael()));
+  const minimum = rateInForce(rates, "minimumWage", monthOf(await readToday()));
   // The seeded table carries a minimum wage from April 2025 onward and a store
   // only ever adds to it, so this is a corrupted rates table rather than a
   // household that has not fetched one. Raised rather than defaulted: a floor
@@ -58,7 +58,7 @@ export default async function AddWorkerPage() {
     <AddWorkerScreen
       countries={countries}
       minimumWageAgorot={minimum.value}
-      today={todayInIsrael()}
+      today={await readToday()}
     />
   );
 }

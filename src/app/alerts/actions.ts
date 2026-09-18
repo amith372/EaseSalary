@@ -10,7 +10,7 @@ import {
   type WarningKind,
 } from "@/lib/engine/alerts";
 import { getRepository } from "@/lib/store";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * "Not now" on a warning, or "mark as handled" on a month not yet exported
@@ -32,7 +32,7 @@ export async function dismiss(workerId: string, fingerprint: string): Promise<vo
   await repository.deferWarning(
     how === "markHandled"
       ? markedHandledOf(workerId, entry)
-      : deferralOf(workerId, entry, todayInIsrael()),
+      : deferralOf(workerId, entry, await readToday()),
   );
   revalidatePath("/alerts");
 }

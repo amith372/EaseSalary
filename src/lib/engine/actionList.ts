@@ -32,10 +32,10 @@ import type { MonthSpan } from "./types";
  * without which the salary cannot be produced correctly today, or something
  * that has already lapsed, and it leads the opening screen; a `warning` still
  * has time in it and lights the bell. Where item 27's test leaves an entry open,
- * the list it is on was chosen by the user (2026-09-17): recuperation due this
- * month, an advance still being repaid and a year with fewer than seven vacation
- * days go on the opening screen, and a finished month not yet exported goes to
- * the bell. The national-insurance quarter is on the opening screen by item 19.
+ * the list it is on is fixed there: recuperation due this month and an advance
+ * still being repaid go on the opening screen, and a finished month not yet
+ * exported and a year with fewer than seven vacation days go to the bell — item
+ * 7 asks for the vacation to be said without pressing the point. The national-insurance quarter is on the opening screen by item 19.
  *
  * **Data, never words.** Each entry carries the dates and figures the screen
  * needs and nothing in Hebrew, so the opening screen and `/alerts` phrase one
@@ -255,7 +255,7 @@ function vacation({ profile, series, today }: ActionListInput): ActionEntry[] {
     );
   const required = vacationDaysTheLawAsksFor(profile.employedSince, year);
   if (days >= required) return [];
-  return [{ list: "blockage", key: "vacationUnderSeven", year, days, required }];
+  return [{ list: "warning", key: "vacationUnderSeven", year, days, required }];
 }
 
 /** Every month that has ended and that no file was produced from (Part 5). */

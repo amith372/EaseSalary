@@ -14,7 +14,7 @@ import { calculateSeries } from "@/lib/engine/series";
 import { he } from "@/lib/i18n/he";
 import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
 import { formatAgorot, formatDays } from "@/lib/money";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 
 /**
  * One worker's own page — `EaseSalary - דף העובד` (`build_plan.md` stage 4,
@@ -50,7 +50,7 @@ export default async function WorkerPage({
   const profile = await repository.getWorker(id);
   if (profile === null) notFound();
 
-  const today = todayInIsrael();
+  const today = await readToday();
   const months = await repository.listMonths(id);
   const series = calculateSeries(months, profile, today, await repository.listRates());
   const closing = series[series.length - 1]?.result.balances;

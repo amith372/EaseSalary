@@ -9,7 +9,7 @@ import { holidayListFor, type HolidayList } from "@/lib/holidayLists";
 import { holidaySourceChoices, holidaySourceOf } from "@/lib/holidaySources";
 import type { ScrapeFailureKind } from "@/lib/scrape/failure";
 import { fetchHolidayList } from "@/lib/scrape/holidayList";
-import { todayInIsrael } from "@/lib/today";
+import { readToday } from "@/lib/requestToday";
 import { fromIsoDate } from "@/lib/dates";
 import { pickerReturnOf } from "@/lib/pickerReturn";
 
@@ -75,7 +75,7 @@ export default async function HolidaysPage({
   await connection();
 
   const { year: asked, from } = await searchParams;
-  const thisYear = fromIsoDate(todayInIsrael()).getUTCFullYear();
+  const thisYear = fromIsoDate(await readToday()).getUTCFullYear();
   const year = readYear(asked, thisYear);
 
   const repository = await getRepository();
