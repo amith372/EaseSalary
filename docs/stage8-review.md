@@ -10,7 +10,7 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F6. F26–F28 are not approved: each is grilled with the user
+- **Last done:** step 8, F6. F31 (R6.4) is recorded and not approved. F26–F28 are not approved: each is grilled with the user
   before any code.
 - **Next:** step 8 — execute the Fix list from the first unchecked item (F7), one commit
   each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25 (F29 and F30 included).
@@ -383,6 +383,12 @@ Fix list as F29, F30 and an addition to F14.
   (`leave.ts:175`).
 - R6.2 — `moveHoliday` and `setHolidayPart` open with the same eleven lines (state, then the
   holiday span or `entryUnknown`) — `settings/holidays/actions.ts:182,240`.
+- R6.4 — (found while checking F6, 2026-09-19) the browser suite pins today with the
+  `TODAY_COOKIE` (`requestToday.ts`), but the month's stamps read the real clock —
+  `confirmedAt` (`month/export/actions.ts:249`), `exportedAt` (`month/export/file/route.ts:93`),
+  and `repository.ts:394,485,699`. Once the real clock passes the pinned day, an export
+  lands "in the future": `alerts.spec.ts:108,359` lose it from the ninety-day handled list,
+  and `before-export.spec.ts:402` reads "אושר ב־19 בספטמבר". Fails identically on HEAD.
 - R6.3 — "unreachable" tested once per scraper (a throw, an empty body, an error status) in
   four test files; once the guard is in `fetchPage` (F14) it is tested there once.
 
@@ -482,7 +488,7 @@ run had already dropped.
 
 **B. Written rules restored** — each fixes a sentence of `CLAUDE.md`; on screen, only alignment
 and translation can change.
-- [x] 2026-09-19 F6 — `dir="auto"` off `<Bidi>` wrappers, bare text wrapped, amounts in their own
+- [x] 2026-09-19 `5fca141` F6 — `dir="auto"` off `<Bidi>` wrappers, bare text wrapped, amounts in their own
   `translate="no"` element — R2.1, R2.2, R2.3 — check: Browser; screenshots of one fixed row
   before and after (right edge).
 - [ ] F7 — the shadow colour becomes a token, and the scraper's Hebrew moves to `he.ts` — R2.4,
@@ -510,6 +516,10 @@ and translation can change.
   `fetchPage`, and one fetch type; the per-scraper "unreachable" tests fold into one set on
   `fetchPage` — R2.13, R6.3 — check: the parsing tests on the saved pages unedited; each
   failure kind still tested once.
+- [ ] F31 — **not yet approved** — a stamp takes its day from the same pinned today the
+  request reads, so the suite no longer depends on the real date — R6.4 — check: the three
+  specs pass with the real clock past the pinned day. Whether a production stamp may read
+  anything but the real clock is the user's decision, which is why it waits for sign-off.
 - [ ] F30 — one helper for the holiday actions' shared opening — R6.2 — check: unit suite
   unedited; Browser (holiday picker).
 - [ ] F15 — `Field.tsx` gains the button and input classes with their disabled states;
