@@ -162,16 +162,3 @@ export function holidayAllowanceFor(
   const monthsEmployed = MONTHS_PER_YEAR - start.getUTCMonth();
   return (HOLIDAYS_PER_YEAR * monthsEmployed) / MONTHS_PER_YEAR;
 }
-
-/**
- * What is left of the year's entitlement — displayed as it falls, even when it
- * is not a whole number (specs.md item 10), which a part day and a partly
- * worked year both make likely.
- *
- * It never goes below zero: a day beyond the entitlement is refused by
- * `validateMonth` rather than shown as a negative remainder, because a refusal
- * says what to do about it and a minus sign does not.
- */
-export function holidayDaysRemaining(allowance: number, used: number): number {
-  return Math.max(0, allowance - used);
-}

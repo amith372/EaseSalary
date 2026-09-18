@@ -7,19 +7,25 @@ import {
   daysBetween,
   daysInMonth,
   eachDate,
+  everyDayOf,
   isRestEve,
   isRestDay,
   monthGrid,
   orderDates,
   SATURDAY,
-  restDaysOf,
   toIsoDate,
   utcDate,
   weekdayOfFirst,
   WEEK_LENGTH,
   yearsBetween,
 } from "@/lib/dates";
-import type { YearMonth } from "@/lib/types";
+import type { RestDay } from "@/lib/dates";
+import type { IsoDate, YearMonth } from "@/lib/types";
+
+/** A month's rest days, composed as `countMonth` composes them. */
+function restDaysOf(ym: YearMonth, restDay: RestDay): IsoDate[] {
+  return everyDayOf(ym).filter((date) => isRestDay(date, restDay));
+}
 
 const august2026: YearMonth = { year: 2026, month: 8 };
 

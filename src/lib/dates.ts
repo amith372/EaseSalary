@@ -283,10 +283,6 @@ export function everyDayOf(ym: YearMonth): IsoDate[] {
   return eachDate(isoOf(ym, 1), isoOf(ym, daysInMonth(ym)));
 }
 
-export function restDaysOf(ym: YearMonth, restDay: RestDay): IsoDate[] {
-  return everyDayOf(ym).filter((date) => isRestDay(date, restDay));
-}
-
 /**
  * The month laid out as whole Sunday-first weeks, with `null` for the cells
  * before the 1st and after the last day. The leading blanks are derived from

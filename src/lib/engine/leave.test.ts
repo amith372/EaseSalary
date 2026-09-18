@@ -5,7 +5,6 @@ import {
   HOLIDAYS_PER_YEAR,
   holidayAllowanceFor,
   holidayDaysOf,
-  holidayDaysRemaining,
   holidayDaysWorked,
   restDayUnitsOf,
 } from "@/lib/engine/leave";
@@ -317,13 +316,6 @@ describe("the yearly entitlement (specs.md item 10)", () => {
     // including the three before her April anniversary.
     expect(holidayAllowanceFor("2024-04-01", 2025)).toBe(9);
     expect(holidayAllowanceFor("2024-04-01", 2023)).toBe(0);
-  });
-
-  it("shows the remainder as it falls, even when it is not whole", () => {
-    // 6.75 less two and a half days taken is 4.25.
-    expect(holidayDaysRemaining(6.75, 2.5)).toBe(4.25);
-    // A day beyond the entitlement is refused rather than shown as a minus.
-    expect(holidayDaysRemaining(6.75, 8)).toBe(0);
   });
 
   it("refuses a month against the entitlement the worker actually has", () => {

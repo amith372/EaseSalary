@@ -10,9 +10,9 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F5. F26–F28 are not approved: each is grilled with the user
+- **Last done:** step 8, F29. F26–F28 are not approved: each is grilled with the user
   before any code.
-- **Next:** step 8 — execute the Fix list from the first unchecked item (F29, then F6), one commit
+- **Next:** step 8 — execute the Fix list from the first unchecked item (F6), one commit
   each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25 (F29 and F30 included).
 - **Waiting on the user:** the questions under "Needs the user". Three are reproduced money
   errors: two in sickness (run 2), and the household's rates never reaching a month (run 5).
@@ -50,7 +50,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F5 done; F29–F30 added 2026-09-19 |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F5, F29 done; F29–F30 added 2026-09-19 |
 
 ### How each step is run
 
@@ -477,7 +477,7 @@ run had already dropped.
   required, the casts of R1.15, `LegalLinkKey` typed in `alertsView.ts` — R4.1, R1.15, R2.17 —
   check: Browser.
 - [x] 2026-09-18 `2fb135e` F5 — nested ternaries and if-chains become records — R1.7, R1.14 — check: Browser.
-- [ ] F29 — `restDaysOf` and `holidayDaysRemaining` deleted with their tests — R6.1 — check:
+- [x] 2026-09-19 F29 — `restDaysOf` and `holidayDaysRemaining` deleted with their tests — R6.1 — check:
   `knip --production` no longer lists them; the rest of the unit suite unedited.
 
 **B. Written rules restored** — each fixes a sentence of `CLAUDE.md`; on screen, only alignment
