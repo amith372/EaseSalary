@@ -52,14 +52,10 @@ import type { RestDay } from "@/lib/dates";
  * every balance in every month is replayed from (item 6); and the three
  * documents with their expiry dates (item 28).
  *
- * **One of the four identifying numbers is here and three are not** (items 22,
- * 28). The passport number arrived on 2026-09-12 with the flow that adds a
- * worker, and it goes through `setPassportNumber` below rather than through
- * `setDocuments`: the expiry dates are stored in the clear because item 27's
- * warnings have to query them, and the number is sealed with a key held outside
- * the database. The bank account, the work visa and the household's employment
- * permit hold the same columns and the same sealing and have no control yet
- * (`build_plan.md`, "What is still owed").
+ * **The four identifying numbers go through `setIdentifyingNumber`** (items 22,
+ * 28), never through `setDocuments`: the expiry dates are stored in the clear
+ * because item 27's warnings have to query them, and the numbers are sealed
+ * with a key held outside the database.
  *
  * **The browser collects the gesture and the server decides what it means**
  * (Part 3), exactly as `month/actions.ts` does it: the amounts and the dates
@@ -118,11 +114,10 @@ function revalidateWorker(): void {
  *
  * **A term changed on the profile reaches every month that has not been
  * confirmed**, which is Part 5's own definition of a draft: confirming a month
- * is "the moment its figures stop moving with the profile". Nothing in the
- * application can confirm a month yet — the confirmation is item 4's and
- * arrives with the export — so today that is every month she has, and the
- * predicate that will exclude a confirmed one lives in
- * `monthsFollowingProfile` and nowhere else.
+ * is "the moment its figures stop moving with the profile". Today it reaches
+ * every month she has, confirmed ones included — `monthsFollowingProfile` has
+ * no predicate that excludes a confirmed month yet, and that is the one place
+ * it would go.
  *
  * **It writes the snapshot rather than reading the profile at calculation
  * time**, because Part 3's rule holds either way and only one of the two
@@ -574,8 +569,8 @@ export async function removeOpeningAdvance(
  *
  * All three are saved together because they are one panel and one gesture, and
  * because two of them lapsing in the same week is the ordinary case a family
- * meets. **No number is taken and none is stored**: the numbers are encrypted
- * at rest and arrive in stage 3.
+ * meets. **No number is taken and none is stored**: the numbers are sealed at
+ * rest and go through `setIdentifyingNumber`.
  *
  * Nothing is re-snapshotted — a document is not a term of a month, and a
  * passport renewed in June does not restate May.

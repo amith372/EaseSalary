@@ -65,9 +65,8 @@ type SeedName = keyof typeof seeds;
 
 const DEFAULT_SEED: SeedName = "demo";
 
-/** The cookie that says which household the request is in. Stage 3 replaces it
- * with the household the signed-in person belongs to, which is the same
- * question asked of an identity rather than of the browser. */
+/** The cookie that names a seeded in-memory household in development. Without
+ * it the request is in the signed-in person's household (`getRepository`). */
 const HOUSEHOLD_COOKIE = "household";
 
 const STORES = Symbol.for("easesalary.dev.repositories");

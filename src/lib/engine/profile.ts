@@ -43,9 +43,10 @@ import type { IsoDate, WorkerDocuments, YearMonth } from "@/lib/types";
  * a request or a clock. The form runs the same functions while the user types,
  * which is one rule read twice rather than two rules that agree today.
  *
- * **Nothing here reads the profile's identifying numbers, because it holds
- * none** (item 28, item 22). The five encrypted identifiers arrive in stage 3
- * with the key that protects them; this file moves dates and terms.
+ * **Nothing here seals or stores an identifying number** (items 22, 28). The
+ * new worker's passport number passes through the draft untouched; sealing
+ * happens above the repository, in `src/lib/identifyingNumbers.ts`, and this
+ * file moves dates and terms.
  */
 
 /**
@@ -393,13 +394,11 @@ export function reviewOpeningDays(
  * Before that moment there is nothing to reproduce — a draft month is the
  * profile's terms seen through one month's calendar.
  *
- * **Nothing in the application can confirm a month yet**, so today this reaches
- * every month the worker has. That is not a shortcut standing in for the rule:
- * it *is* the rule, applied to a store in which every month is a draft. The
- * confirmation is item 4's and arrives with the export in stage 2, and when it
- * does, the one thing that changes here is the predicate below — a month that
- * has been confirmed keeps the terms it was confirmed with, and the months
- * around it go on following the profile.
+ * **Today this reaches every month the worker has, confirmed ones included**:
+ * there is no predicate below that skips a month with a `confirmedAt`. That
+ * exclusion is where the rule above would land — a confirmed month keeping the
+ * terms it was confirmed with, the months around it following the profile —
+ * and it is an open question put to the user, not settled here.
  *
  * It returns records rather than writing them, so the rule can be checked
  * without a store, and the spans are dropped on the way through because a

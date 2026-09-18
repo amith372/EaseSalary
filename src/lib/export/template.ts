@@ -7,8 +7,9 @@ import path from "node:path";
  * the suite fills real templates without knowing where they live (specs.md
  * Part 4, the idiom the scrapers use for HTML).
  *
- * **These files are committed on purpose and `.gitignore` must never ignore
- * `*.xlsx`** (`CLAUDE.md`). Without them the application still runs and only
+ * **These files are committed on purpose, the only spreadsheets that may be**
+ * (`CLAUDE.md`): `.gitignore` ignores every `*.xlsx` except
+ * `data/templates/template_*.xlsx`, and that exception is never widened. Without them the application still runs and only
  * the export breaks, so the mistake surfaces on someone else's clone rather
  * than here — which is exactly why the failure below names the file it could
  * not find.

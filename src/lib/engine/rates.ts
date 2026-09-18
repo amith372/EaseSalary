@@ -52,7 +52,7 @@ export function hourlyRate(baseMonthlySalaryAgorot: number): number {
  *
  * The rest day of a live-in caregiver is twenty-five hours, not twenty-four, so
  * a plain 150% of the daily rate is short by roughly fifty shekels a day and
- * would quietly underpay every Saturday of the year (specs.md Part 5).
+ * would quietly underpay every rest day of the year (specs.md Part 5).
  */
 export function restDayRate(baseMonthlySalaryAgorot: number): number {
   return (
@@ -74,7 +74,7 @@ export function restDayRate(baseMonthlySalaryAgorot: number): number {
 interface Rates {
   /** What a sick day is worth. Fractional; never rounded here. */
   daily: number;
-  /** What a Saturday worked and a holiday worked are paid at. */
+  /** What a rest day worked and a holiday worked are paid at. */
   restDay: number;
 }
 

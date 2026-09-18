@@ -465,21 +465,13 @@ export interface WorkerDocuments {
   /**
    * היתר העסקה — the employer's, not the worker's.
    *
-   * **It is held per worker here and it is the employer's position** (item 28:
-   * a household with two workers holds one permit and two visas), so two
-   * workers in one household each carry a copy of one date and nothing stops
-   * them disagreeing. That is a known and written-down consequence of there
-   * being no household record to hold it on: the store is keyed by worker and
-   * stage 3 is the stage that builds the household. It moves there with the
-   * schema, and until then the profile labels it as the employer's so the user
-   * is not told it belongs to the worker.
-   *
-   * **The schema has moved it and this type has not yet** (2026-09-10). The
-   * column is `households.employment_permit_expiry`, one per household as item
-   * 28 requires; this field stays here until the Postgres repository lands
-   * beside the in-memory one, which is the commit that has both sides to map
-   * between. So the disagreement above is now a mapping and not a design: the
-   * store keyed by worker holds two copies of a date the database holds once.
+   * **It is carried per worker here and held once per household** (item 28: a
+   * household with two workers holds one permit and two visas). The column is
+   * `households.employment_permit_expiry`; the Postgres repository reads it off
+   * the household into each worker's copy and writes it back there on every
+   * save, so in the database the two copies are one date. The in-memory store
+   * is keyed by worker and holds two, and the profile labels the date as the
+   * employer's so the user is not told it belongs to the worker.
    */
   employmentPermitExpiry: IsoDate | null;
   /** אשרת עבודה, B/1 — the worker's, renewed through the agency against a fee

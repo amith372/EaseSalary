@@ -23,8 +23,9 @@ import { readToday } from "@/lib/requestToday";
  * walk is the defect this guards against: a 2026 file built from 2026's months
  * alone would open that January from zero.
  *
- * Stage 3 adds the household check beside the worker lookup; today the store is
- * per-cookie and there is nothing else to be reached.
+ * The worker lookup is the household check: the repository reads under the
+ * signed-in person's session, so row-level security returns no worker from
+ * another household.
  */
 
 const SPREADSHEET =

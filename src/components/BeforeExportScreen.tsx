@@ -801,7 +801,7 @@ function QuestionRow({
   );
 }
 
-/** The question itself. Only one of the six names a day of the week, and it
+/** The question itself. Only one of the seven names a day of the week, and it
  * names *her* day (specs.md item 5). */
 function askOf(key: ExportQuestionKey, restDay: RestDay): string {
   const words = he.beforeExport.questions;

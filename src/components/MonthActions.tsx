@@ -1353,13 +1353,13 @@ function ThirdPartyControl({
   const [kind, setKind] = useState<ThirdPartyKind | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  /** `null` until she chooses, which is what lets the period follow the kind and
-   * then stop following it. */
   const [paidOn, setPaidOn] = useState("");
   // Empty takes the default `coverExpiryOf` gives the kind — a year for the
   // medical insurance and nothing for anything else. The family types over it
   // only where her own policy ran to some other day.
   const [expiresOn, setExpiresOn] = useState("");
+  /** `null` until she chooses, which is what lets the period follow the kind and
+   * then stop following it. */
   const [chosenPeriod, setChosenPeriod] = useState<{
     from: string;
     to: string;

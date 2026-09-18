@@ -90,10 +90,6 @@ export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
     // moves the rest day in June must not thereby relabel every earlier
     // month's sheet, which is the whole reason the terms are snapshotted.
     restDayWords: he.sheet.restDayTokens(facts.terms.restDay),
-    // The months the quarter's payment was for, read off the line that recorded
-    // it and empty in a month that settled none (specs.md item 19). The screen
-    // draws the same run through `CoveredMonths`, from the same wording, so the
-    // sheet and the payslip cannot name one period two ways (rule 11).
     // The day the quarter's own payment left the account, read off the month's
     // stored payment rather than off the line: a line carries what the sheet
     // prices and the payment carries when it was made (specs.md item 16).
@@ -103,6 +99,10 @@ export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
       );
       return payment === undefined ? "" : fullDayLabel(payment.paidOn);
     })(),
+    // The months the quarter's payment was for, read off the line that recorded
+    // it and empty in a month that settled none (specs.md item 19). The screen
+    // draws the same run through `CoveredMonths`, from the same wording, so the
+    // sheet and the payslip cannot name one period two ways (rule 12).
     niMonths: coveredMonthsLabel(
       result.lines.find(
         (line) => line.key === thirdPartyLineKey("nationalInsurance"),

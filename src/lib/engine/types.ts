@@ -715,6 +715,12 @@ export interface LineOverride {
   note?: string;
 }
 
+/** A month's hospital overtime: a positive amount and the user's own note. */
+export interface HospitalOvertime {
+  agorot: number;
+  note?: string;
+}
+
 /**
  * One month, and everything that changes it.
  *
@@ -724,12 +730,6 @@ export interface LineOverride {
  * month boundary has to be read as one thing (specs.md Part 3, item 8). The
  * engine reads such a span whole and clips it to the month itself.
  */
-/** A month's hospital overtime: a positive amount and the user's own note. */
-export interface HospitalOvertime {
-  agorot: number;
-  note?: string;
-}
-
 export interface MonthFacts {
   month: YearMonth;
   confirmedWage: ConfirmedWage;

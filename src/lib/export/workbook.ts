@@ -18,7 +18,7 @@ import type ExcelJS from "exceljs";
  * a filled workbook back with exceljs, and exceljs's own parser takes the
  * children in any order — so the library agreed with itself about a file Excel
  * would not open. Nothing short of opening the file in Excel could have caught
- * it, which is rule 9's point stated by a file rather than by a screen.
+ * it, which is rule 10's point stated by a file rather than by a screen.
  *
  * **The fix drops `outlinePr` rather than reordering it**, because exceljs
  * offers no way to reorder and because the element is pure default here: both

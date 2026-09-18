@@ -56,7 +56,7 @@ import { readToday } from "@/lib/requestToday";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
- * The three things the month screen can change, and the only way it changes
+ * Everything the month screen can change, and the only way it changes
  * anything.
  *
  * **The browser collects the gesture and the server decides what it means**
@@ -579,7 +579,7 @@ export async function removeThirdPartyPayment(
  * asked of the line rather than of its name — a whitelist in this file would
  * compile clean and quietly stop covering the next row the engine grows.
  *
- * It replays the worker's whole history for the same reason `/month` does:
+ * It replays the worker's whole history for the same reason `/` does:
  * balances are never stored, and a month calculated alone would open from
  * nothing (item 13). Reading the clock is safe here because this is an action
  * and not a render — what `CLAUDE.md` forbids is a clock read while a page is

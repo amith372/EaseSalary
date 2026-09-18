@@ -44,7 +44,7 @@ import type { IsoDate, Worker } from "@/lib/types";
  * what was saved. A screen that counted for itself would be a second quota,
  * agreeing with the first until one of them was corrected.
  *
- * **Three places depart from the artboard on purpose** (`CLAUDE.md`), and each
+ * **Three places depart from the artboard on purpose** (`DESIGN.md`), and each
  * is a decision taken after it was drawn:
  *
  * 1. The chips offer **the four faiths beside the countries**. The artboard

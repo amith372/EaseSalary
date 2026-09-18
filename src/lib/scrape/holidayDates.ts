@@ -35,8 +35,8 @@ export function isoOfDayMonth(
  * A date in a cell, as the Kol Zchut tables write one: with a year when the
  * date moves from year to year, and without when it does not.
  *
- * `hasYear` is what the caller needs to know, because a date printed without
- * one keeps the same day and month every year — which the user confirmed on
+ * `year` is `null` for a date printed without one, and that is what the caller
+ * needs to know, because such a date keeps the same day and month every year — which the user confirmed on
  * 2026-09-09 is exactly what the absence of a year on those pages means.
  */
 interface PrintedDate {

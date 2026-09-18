@@ -643,7 +643,7 @@ export function HomeScreen({
                                 balance: a balance with no days behind it cannot
                                 be checked, and this month's are what the user
                                 just changed by marking a day. v4 draws only the
-                                balance — a departure recorded in `CLAUDE.md`,
+                                balance — a departure recorded in `DESIGN.md`,
                                 and the user's (2026-09-16). */}
                             <span className="text-[13px] font-light text-ink-quiet">
                               <span dir="auto">{he.sheet.reporting.daysUsed}</span>
@@ -751,27 +751,6 @@ function MoneyRow({
 }
 
 /**
- * What the month came to, as `דף הבית v4` draws it: ‏ברוטו‎, what was withheld
- * from it, ‏נטו‎, what was transferred out of that, and the total.
- *
- * **Which of those rows are drawn is the engine's answer and not this card's.**
- * `monthLevels` owns the rule — a level is only real when something below it
- * changes the figure, or two identical figures appear under two headings and
- * read as an error (specs.md Part 5). The artboard was drawn against the same
- * two flags, so nothing here departs from it.
- *
- * **It summarises and does not itemise** (item 5). The lines behind the ‏ברוטו‎
- * are the payslip's and the export's, and the lines the user added are one row
- * however many of them there are (item 20).
- *
- * **The two rows below the total are below it on purpose.** Money paid to a
- * third party never reaches the worker's own total (item 16) and the
- * national-insurance figure is an estimate the family still owes (item 19) —
- * either of them drawn above `סך הכל תשלום לעובד/ת` would read as part of it,
- * which is a sum the family would act on. v4 draws the third-party row among
- * the others; this is a departure recorded in `CLAUDE.md`.
- */
-/**
  * The month's own note (specs.md item 5), written here and shown on the
  * payslip. No artboard draws it on this screen; the payslip's
  * `להוסיף הערה לחודש` opens here at `#month-note`. It is keyed by the stored
@@ -831,6 +810,27 @@ function MonthNote({
   );
 }
 
+/**
+ * What the month came to, as `דף הבית v4` draws it: ‏ברוטו‎, what was withheld
+ * from it, ‏נטו‎, what was transferred out of that, and the total.
+ *
+ * **Which of those rows are drawn is the engine's answer and not this card's.**
+ * `monthLevels` owns the rule — a level is only real when something below it
+ * changes the figure, or two identical figures appear under two headings and
+ * read as an error (specs.md Part 5). The artboard was drawn against the same
+ * two flags, so nothing here departs from it.
+ *
+ * **It summarises and does not itemise** (item 5). The lines behind the ‏ברוטו‎
+ * are the payslip's and the export's, and the lines the user added are one row
+ * however many of them there are (item 20).
+ *
+ * **The two rows below the total are below it on purpose.** Money paid to a
+ * third party never reaches the worker's own total (item 16) and the
+ * national-insurance figure is an estimate the family still owes (item 19) —
+ * either of them drawn above `סך הכל תשלום לעובד/ת` would read as part of it,
+ * which is a sum the family would act on. v4 draws the third-party row among
+ * the others; this is a departure recorded in `DESIGN.md`.
+ */
 function MoneyCard({
   result,
   restDay,
@@ -862,7 +862,7 @@ function MoneyCard({
           row and the payslip has one — but the payslip opens on the last month
           that ended, so without this the running month's counts are readable
           nowhere, and a vacation day wrongly shrinking the standard count would
-          show on no screen at all. A departure recorded in `CLAUDE.md`, and the
+          show on no screen at all. A departure recorded in `DESIGN.md`, and the
           user's (2026-09-16). */}
       <MoneyRow
         {...why}

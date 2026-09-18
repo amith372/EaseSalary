@@ -444,8 +444,8 @@ function buildClosing(
   // confirmed before the export and stored with the month, which is what lets a
   // past month reproduce rather than recalculate. Below *that* is what the
   // engine works out now, and `null` there is a year the application holds no
-  // bracket table for — the line stays at zero and the month says so with a
-  // warning rather than withholding a number nobody can cite.
+  // bracket table for — the line stays at zero rather than withholding a number
+  // nobody can cite. No warning says so yet; that is an open question.
   const tax = taxOverride
     ? taxOverride.agorot
     : (facts.incomeTaxAgorot ?? calculatedTax ?? 0);

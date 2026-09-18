@@ -147,8 +147,8 @@ export interface MonthSheetInput {
    *
    * **It is not the count of holidays she *worked***, which is what row 8 prices
    * and what `G1` counts. The entitlement is drawn against every holiday the
-   * month records, worked or not, less any that fell inside a spell of sickness
-   * — `holidayDaysOf` owns that rule and states it, and it is the same function
+   * month records, worked or not, a holiday inside a spell of sickness included
+   * and one on her weekly rest day left out — `holidayDaysOf` owns that rule and states it, and it is the same function
    * `calculateSeries` counts the year with, so the sheet and the replay can
    * never disagree about it. Filling this from the worked count instead makes
    * the two headings say one thing in a month where a holiday was taken off.
@@ -254,12 +254,12 @@ export async function fillMonthSheet(
 
   sheet.getColumn(NOTES_COLUMN).hidden = !input.showNotes;
 
-  // `Buffer.from` rather than the ArrayBuffer exceljs returns, so the route
-  // hands the browser bytes it can length-check.
   // Without this the worksheet exceljs writes is invalid and Excel opens an
   // empty sheet -- see `workbook.ts` for what it repairs and why.
   prepareForExcel(workbook);
 
+  // `Buffer.from` rather than the ArrayBuffer exceljs returns, so the route
+  // hands the browser bytes it can length-check.
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 

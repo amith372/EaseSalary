@@ -210,7 +210,7 @@ function holidayStateOf(
 }
 
 /**
- * Seven entries. "יום עבודה" is a day she worked, which is every unmarked day
+ * Six entries. "יום עבודה" is a day she worked, which is every unmarked day
  * including an unmarked rest day — so there is no entry for the weekly rest day
  * and no separate fill for it. The holiday takes three, because its weights
  * are the whole of what the month records about one and a month read back later
