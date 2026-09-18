@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { calculateMonth, lineKeys } from "@/lib/engine/month";
+import { lineKeys } from "@/lib/engine/lines";
+import { calculateMonth } from "@/lib/engine/month";
 import {
   plainAugustFacts,
   plainWorker,

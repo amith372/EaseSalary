@@ -35,7 +35,13 @@ import type { MonthSpan } from "@/lib/engine/types";
 import { bottomFigure, he } from "@/lib/i18n/he";
 import { returningTo } from "@/lib/pickerReturn";
 import { formatDays } from "@/lib/money";
-import { endOf, overlapsMonth, type SkippedDay, type SkipReason } from "@/lib/spans";
+import {
+  endOf,
+  overlapsMonth,
+  type MarkIntent,
+  type SkippedDay,
+  type SkipReason,
+} from "@/lib/spans";
 import type {
   Explanation,
   HolidaySpan,
@@ -45,7 +51,6 @@ import type {
   Worker,
   YearMonth,
 } from "@/lib/types";
-import type { SpanIntent } from "@/components/MonthCalendar";
 
 /**
  * The opening screen, built as `EaseSalary - דף הבית v4` draws it: a rail of the
@@ -192,7 +197,7 @@ export function HomeScreen({
     if (!sameMonth(monthOf(date), month)) setMonth(monthOf(date));
   }
 
-  function handleSelectRange(intent: SpanIntent) {
+  function handleSelectRange(intent: MarkIntent) {
     const workerId = worker.id;
     startSaving(async () => {
       const { skipped: refused } = await markRange(workerId, intent);

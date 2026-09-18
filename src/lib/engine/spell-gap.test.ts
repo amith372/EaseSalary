@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { daysUsedIn } from "@/lib/engine/balances";
 import { holidayDaysOf } from "@/lib/engine/leave";
-import { calculateMonth, lineKeys } from "@/lib/engine/month";
+import { lineKeys } from "@/lib/engine/lines";
+import { calculateMonth } from "@/lib/engine/month";
 import { sickDeductionDays, spellsOf } from "@/lib/engine/sick";
 import { snapshotTerms} from "@/lib/engine/types";
 import type {

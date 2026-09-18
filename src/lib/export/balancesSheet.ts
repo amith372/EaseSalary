@@ -63,18 +63,6 @@ function balanceOf(
   return month.result.balances.find((line) => line.kind === kind);
 }
 
-/**
- * Days reach the sheet at full precision and are never pre-rounded.
- *
- * Part 5: the family's own workbook writes the monthly vacation accrual as 1.17
- * in some months and as fourteen twelfths in others, and rounding here is what
- * makes a balance drift a hundredth of a day a year. The cell's own format is
- * what the reader sees; the value under it stays exact.
- */
-function days(value: number | null | undefined): number | null {
-  return value === null || value === undefined ? null : value;
-}
-
 export async function fillBalancesSheet(
   template: ArrayBuffer,
   input: BalancesSheetInput,
@@ -100,11 +88,16 @@ export async function fillBalancesSheet(
       usedThisYear += line.used ?? 0;
 
       sheet.getCell(`A${row}`).value = input.monthLabels[index] ?? null;
-      sheet.getCell(`B${row}`).value = days(line.opening);
-      sheet.getCell(`C${row}`).value = days(line.accrued);
-      sheet.getCell(`D${row}`).value = days(line.used);
+      // Days reach the sheet at full precision and are never pre-rounded
+      // (Part 5): the family's own workbook writes the monthly vacation accrual
+      // as 1.17 in some months and as fourteen twelfths in others, and rounding
+      // here is what makes a balance drift a hundredth of a day a year. The
+      // cell's own format is what the reader sees; the value stays exact.
+      sheet.getCell(`B${row}`).value = line.opening;
+      sheet.getCell(`C${row}`).value = line.accrued;
+      sheet.getCell(`D${row}`).value = line.used;
       sheet.getCell(`E${row}`).value = usedThisYear;
-      sheet.getCell(`F${row}`).value = days(line.closing);
+      sheet.getCell(`F${row}`).value = line.closing;
     });
   }
 

@@ -4,7 +4,8 @@ import {
   plainAugustFacts,
   plainWorker,
 } from "@/lib/engine/august-2025.fixture";
-import { calculateMonth, lineKeys } from "@/lib/engine/month";
+import { lineKeys } from "@/lib/engine/lines";
+import { calculateMonth } from "@/lib/engine/month";
 import type { Advance, MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
 import type { ClosingBlock, MonthResult } from "@/lib/types";
 

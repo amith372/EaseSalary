@@ -1,7 +1,8 @@
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 import { calculateSeries } from "@/lib/engine/series";
-import { isUserLineKey, lineKeys } from "@/lib/engine/month";
+import { lineKeys } from "@/lib/engine/lines";
+import { isUserLineKey } from "@/lib/engine/month";
 import type { MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
 import {
   plainAugustFacts,

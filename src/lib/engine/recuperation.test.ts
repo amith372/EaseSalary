@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
 import { calculateMonth } from "@/lib/engine/month";
-import { lineKeys } from "@/lib/engine/month";
+import { lineKeys } from "@/lib/engine/lines";
 import {
   employmentYearsCompletedBy,
   recuperationDaysFor,

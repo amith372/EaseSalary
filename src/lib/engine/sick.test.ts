@@ -1,7 +1,8 @@
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
-import { calculateMonth, lineKeys } from "@/lib/engine/month";
+import { lineKeys } from "@/lib/engine/lines";
+import { calculateMonth } from "@/lib/engine/month";
 import {
   paidFractionOfSpellDay,
   sickDaysIn,

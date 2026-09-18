@@ -1,4 +1,4 @@
-import { lineKeys } from "@/lib/engine/month";
+import { lineKeys } from "@/lib/engine/lines";
 import { thirdPartyLineKey } from "@/lib/engine/thirdParty";
 
 /**
@@ -110,12 +110,6 @@ const REPORT_ROW = 33;
  * two impossible to disagree.
  */
 export interface SheetLayout {
-  /** How many rows were added to the numbered block for lines the user placed
-   * before the month's total (specs.md item 20). */
-  addedLines: number;
-  /** How many rows the block below `ד` holds. Zero leaves the template's `ה`
-   * row labelled and empty, exactly as rows 11 and 20 are left. */
-  blockRows: number;
   /** The first row a line the user added is written on, and the numbers to put
    * in column A continuing the template's own 1–17. */
   firstAddedRow: number;
@@ -123,7 +117,6 @@ export interface SheetLayout {
   subtotalFRow: number;
   subtotalGRow: number;
   grossRow: number;
-  taxRow: number;
   /** The first and last row of the block below `ד`. Equal when the block holds
    * one row, and both the `ה` row when it holds none. */
   blockFirstRow: number;
@@ -134,6 +127,12 @@ export interface SheetLayout {
   lastLineRow: number;
 }
 
+/**
+ * `addedLines` is how many rows were added to the numbered block for lines the
+ * user placed before the month's total (specs.md item 20); `blockRows` is how
+ * many rows the block below `ד` holds, and zero leaves the template's `ה` row
+ * labelled and empty, exactly as rows 11 and 20 are left.
+ */
 export function layoutOf(addedLines: number, blockRows: number): SheetLayout {
   // The lines the user added go at the foot of the numbered block, which is
   // where a row the template does not hold in advance belongs: they continue
@@ -143,14 +142,11 @@ export function layoutOf(addedLines: number, blockRows: number): SheetLayout {
   const subtotalERow = SUBTOTAL_E_ROW + addedLines;
   const blockFirstRow = BLOCK_ROW + addedLines;
   return {
-    addedLines,
-    blockRows,
     firstAddedRow: LAST_LINE_ROW + 1,
     subtotalERow,
     subtotalFRow: subtotalERow + 1,
     subtotalGRow: subtotalERow + 2,
     grossRow: subtotalERow + 3,
-    taxRow: TAX_ROW,
     blockFirstRow,
     blockLastRow: blockFirstRow + Math.max(blockRows, 1) - 1,
     netRow: blockFirstRow + Math.max(blockRows, 1),
@@ -192,5 +188,5 @@ export function grossFormula(layout: SheetLayout): string {
  * says and can never disagree with the label beside it.
  */
 export function netFormula(layout: SheetLayout): string {
-  return `E${layout.grossRow}+E${layout.taxRow}+SUM(E${layout.blockFirstRow}:E${layout.blockLastRow})`;
+  return `E${layout.grossRow}+E${TAX_ROW}+SUM(E${layout.blockFirstRow}:E${layout.blockLastRow})`;
 }

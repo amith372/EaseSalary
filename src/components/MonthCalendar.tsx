@@ -43,12 +43,6 @@ import type {
  * calculation and lives in `src/lib/spans.ts`.
  */
 
-/**
- * What a sweep hands up. It **is** `MarkIntent` and not a shape beside it: two
- * shapes would drift the first time the picker gained a field.
- */
-export type SpanIntent = MarkIntent;
-
 interface MonthCalendarProps {
   month: YearMonth;
   spans: DaySpan[];
@@ -70,7 +64,7 @@ interface MonthCalendarProps {
    * item 6). */
   earliest?: YearMonth;
   onMonthChange?: (month: YearMonth) => void;
-  onSelectRange?: (intent: SpanIntent) => void;
+  onSelectRange?: (intent: MarkIntent) => void;
   /** Clearing takes a range the way marking does, and the caller decides what a
    * span lying half inside it means. */
   onClearRange?: (from: IsoDate, to: IsoDate) => void;
@@ -469,14 +463,6 @@ export function MonthCalendar({
   const kindTakesPart = (kind: MarkKind) =>
     selection !== null && partIsAllowed({ kind, ...selection, fraction: part });
 
-  // The month is the page's subject and the skip link lands here, so its name
-  // is the page's `h1`.
-  const heading = (
-    <h1 dir="auto" className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
-      <Bidi>{monthLabel(month)}</Bidi>
-    </h1>
-  );
-
   return (
     <div
       className={["flex min-h-0 flex-col gap-2", className ?? ""].filter(Boolean).join(" ")}
@@ -491,7 +477,13 @@ export function MonthCalendar({
           today={today}
           earliest={earliest}
           onMonthChange={(next) => onMonthChange?.(next)}
-          label={heading}
+          // The month is the page's subject and the skip link lands here, so
+          // its name is the page's `h1`.
+          label={
+            <h1 dir="auto" className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
+              <Bidi>{monthLabel(month)}</Bidi>
+            </h1>
+          }
         />
       </CalendarBand>
 

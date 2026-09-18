@@ -9,7 +9,8 @@ import {
   holidayDaysWorked,
   restDayUnitsOf,
 } from "@/lib/engine/leave";
-import { calculateMonth, lineKeys } from "@/lib/engine/month";
+import { lineKeys } from "@/lib/engine/lines";
+import { calculateMonth } from "@/lib/engine/month";
 import { snapshotTerms} from "@/lib/engine/types";
 import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import { validateMonth } from "@/lib/engine/validate";

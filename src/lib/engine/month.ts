@@ -10,10 +10,6 @@ import {
   restDayUnitsOf,
 } from "@/lib/engine/leave";
 import { lineKeys, type LineDraft, toLine } from "@/lib/engine/lines";
-// **Re-exported, not redefined.** The keys live in `lines.ts` so that
-// `balances.ts` can name one without importing this file, which imports
-// `balances.ts` — a cycle for the sake of one string.
-export { lineKeys };
 import { deriveRates } from "@/lib/engine/rates";
 import { recuperationDaysInMonth } from "@/lib/engine/recuperation";
 import { sickDeductionDays } from "@/lib/engine/sick";
