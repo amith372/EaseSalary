@@ -492,26 +492,23 @@ function IncomeTaxControl({
   // inferred from a field that may be empty: a manual figure first, because it
   // wins over everything, and otherwise whichever of the profile's three
   // choices this month was calculated under (item 17).
-  const sourceWords = incomeTaxManual
-    ? words.from.manual
-    : incomeTax.setting.mode === "percentage"
-      ? words.from.percentage(
-          formatPercent(incomeTax.setting.percentage ?? 0),
-        )
-      : words.from[incomeTax.setting.mode];
+  const rate = formatPercent(incomeTax.setting.percentage ?? 0);
+  let sourceWords: string;
+  if (incomeTaxManual) sourceWords = words.from.manual;
+  else if (incomeTax.setting.mode === "percentage") {
+    sourceWords = words.from.percentage(rate);
+  }
+  else sourceWords = words.from[incomeTax.setting.mode];
 
   // **The rule under the card is the rule that actually produced the figure.**
   // The credit-point paragraph is the automatic mode's, and printing it beside
   // a flat-rate month would be a sentence that is untrue of the amount above it
   // — which is the worst kind of help, because it is the kind a family acts on.
-  const ruleWords =
-    incomeTax.setting.mode === "none"
-      ? words.ruleNone
-      : incomeTax.setting.mode === "percentage"
-        ? words.rulePercentage(
-            formatPercent(incomeTax.setting.percentage ?? 0),
-          )
-        : words.rule;
+  let ruleWords: string = words.rule;
+  if (incomeTax.setting.mode === "none") ruleWords = words.ruleNone;
+  else if (incomeTax.setting.mode === "percentage") {
+    ruleWords = words.rulePercentage(rate);
+  }
 
   // **Which unit the correction is typed in**. It is
   // the field's own state and never the worker's setting: a month on the
@@ -532,11 +529,8 @@ function IncomeTaxControl({
       : taxFromPercentage(percentage, gross);
 
   const cleared = text.trim() === "";
-  const parsed = cleared
-    ? null
-    : unit === "percentage"
-      ? converted
-      : parseShekels(text);
+  let parsed: number | null = null;
+  if (!cleared) parsed = unit === "percentage" ? converted : parseShekels(text);
   // Empty is a *change* only where something is stored to clear, and a typed
   // figure only where it differs from what the month already shows — which is
   // how the button says "this is saved" without a message a user could miss.
@@ -1654,15 +1648,15 @@ function ThirdPartyControl({
         </ul>
       )}
 
-      {open === "new" ? (
-        panel
-      ) : open === null && available.length === 0 ? (
+      {open === "new" ? panel : null}
+      {open === null && available.length === 0 ? (
         /* Not a refusal — nothing was refused, there is simply nothing left to
            record — so it stands where the button was rather than under it. */
         <p dir="auto" className="text-[14px] font-light text-ink-quiet">
           {words.allRecorded}
         </p>
-      ) : open === null ? (
+      ) : null}
+      {open === null && available.length > 0 ? (
         <button
           type="button"
           onClick={() => setOpen("new")}

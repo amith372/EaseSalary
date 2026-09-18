@@ -242,26 +242,21 @@ export function HomeScreen({
   );
 
   const marks = he.calendar.marks(shownRestDay);
-  const faceKey: keyof typeof dayFace | undefined =
-    daySpan === undefined
-      ? undefined
-      : daySpan.kind === "holiday"
-        ? daySpan.worked === null
-          ? "holidayUnanswered"
-          : daySpan.worked
-            ? "holidayWorked"
-            : "holidayNotWorked"
-        : daySpan.kind;
-  const kindLabel =
-    faceKey === undefined
-      ? ""
-      : faceKey === "holidayWorked"
-        ? he.calendar.holiday.worked
-        : faceKey === "holidayNotWorked"
-          ? he.calendar.holiday.notWorked
-          : faceKey === "holidayUnanswered"
-            ? he.calendar.holiday.unanswered
-            : marks[faceKey];
+  function faceKeyOf(span: typeof daySpan): keyof typeof dayFace | undefined {
+    if (span === undefined) return undefined;
+    if (span.kind !== "holiday") return span.kind;
+    if (span.worked === null) return "holidayUnanswered";
+    return span.worked ? "holidayWorked" : "holidayNotWorked";
+  }
+  const faceKey = faceKeyOf(daySpan);
+  function kindLabelOf(key: typeof faceKey): string {
+    if (key === undefined) return "";
+    if (key === "holidayWorked") return he.calendar.holiday.worked;
+    if (key === "holidayNotWorked") return he.calendar.holiday.notWorked;
+    if (key === "holidayUnanswered") return he.calendar.holiday.unanswered;
+    return marks[key];
+  }
+  const kindLabel = kindLabelOf(faceKey);
   const weekday = he.calendar.dayNames[fromIsoDate(shownDay).getUTCDay()];
   const details = [
     ...(daySpan !== undefined && (daySpan.fraction ?? 1) < 1

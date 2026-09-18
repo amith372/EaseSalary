@@ -1138,9 +1138,12 @@ function monthNumberOf(iso: string): number | null {
 
 function noteFor(mode: unknown): string {
   const words = he.addWorker.pay;
-  if (mode === "none") return words.noneNote;
-  if (mode === "percentage") return words.percentageNote;
-  return words.automaticNote;
+  const notes = {
+    automatic: words.automaticNote,
+    none: words.noneNote,
+    percentage: words.percentageNote,
+  };
+  return notes[incomeTaxModes.find((known) => known === mode) ?? "automatic"];
 }
 
 /**

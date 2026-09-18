@@ -212,6 +212,18 @@ function holidayStateOf(
  * Built per render rather than held as a module constant, because one entry
  * names her own rest day (item 5).
  */
+/**
+ * How many days an arrow key moves the focus. The document is right-to-left, so
+ * the earlier days of a week sit to the right: ArrowRight steps back in time and
+ * ArrowLeft steps forward.
+ */
+const ARROW_STEP: Readonly<Record<string, number>> = {
+  ArrowRight: -1,
+  ArrowLeft: 1,
+  ArrowUp: -WEEK_LENGTH,
+  ArrowDown: WEEK_LENGTH,
+};
+
 function legendFor(
   restDay: RestDay,
 ): { label: string; swatch: string; icon: TwoToneName }[] {
@@ -420,18 +432,7 @@ export function MonthCalendar({
   }
 
   function handleKeyDown(event: React.KeyboardEvent) {
-    // The document is right-to-left, so the earlier days of a week sit to the
-    // right: ArrowRight steps back in time and ArrowLeft steps forward.
-    const step =
-      event.key === "ArrowRight"
-        ? -1
-        : event.key === "ArrowLeft"
-          ? 1
-          : event.key === "ArrowUp"
-            ? -WEEK_LENGTH
-            : event.key === "ArrowDown"
-              ? WEEK_LENGTH
-              : 0;
+    const step = ARROW_STEP[event.key] ?? 0;
 
     if (step !== 0) {
       event.preventDefault();
@@ -526,23 +527,24 @@ export function MonthCalendar({
           // Half a day is a fill in the cell and words in the label, because a
           // reader who cannot see the fill is told nothing by it.
           const partly = span !== undefined && (span.fraction ?? 1) < 1;
-          const stateName = holidayState !== null
-            ? he.calendar.holiday[holidayState]
-            : span
-              ? `${marks[span.kind as MarkKind]}${
-                  partly ? `, ${he.calendar.picker.part.half}` : ""
-                }`
-              : undefined;
+          let stateName: string | undefined;
+          let fill = "border border-day-line bg-day font-normal text-day-ink";
+          if (holidayState !== null) {
+            stateName = he.calendar.holiday[holidayState];
+            fill = `font-semibold ${HOLIDAY_FACE[holidayState]}`;
+          } else if (span) {
+            const kind = span.kind as MarkKind;
+            stateName = partly
+              ? `${marks[kind]}, ${he.calendar.picker.part.half}`
+              : marks[kind];
+            fill = `font-semibold ${markClass[kind]}`;
+          }
           const label = `${dayNumber} ${monthLabel(month)}${
             stateName ? `, ${stateName}` : ""
           }`;
           const face = [
             "flex min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[10px] text-[15px] transition-colors sm:rounded-day sm:text-[17px]",
-            holidayState !== null
-              ? `font-semibold ${HOLIDAY_FACE[holidayState]}`
-              : span
-                ? `font-semibold ${markClass[span.kind as MarkKind]}`
-                : "border border-day-line bg-day font-normal text-day-ink",
+            fill,
             partly ? PART_DAY : "",
             date === selectedDay && !inSelection
               ? "shadow-[inset_0_0_0_2px_var(--color-selected-day)]"
