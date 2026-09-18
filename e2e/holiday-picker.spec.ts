@@ -504,6 +504,72 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
   });
 });
 
+test.describe("a move once the year's list is in force (specs.md item 10)", () => {
+  // The `filed` seed is the demo with the test worker's January to April 2026
+  // confirmed (`seed.ts`), so 2026's list is in force and a move is an
+  // amendment: it asks when it was agreed and why, refuses a confirmed month,
+  // and is listed on her page. The dates and their order are read off item 10's
+  // own sentence, not off the screen.
+  const AGREED = "2026-07-01";
+  const NOTE = "סוכם איתה לקראת הנסיעה";
+
+  async function openMove(page: Page, date: string): Promise<void> {
+    await page
+      .getByRole("button", { name: he.holidays.row.moveLabel(weekdayDayLabel(date)) })
+      .click();
+  }
+
+  async function submitMove(page: Page, to: string, agreed: string, note: string) {
+    await page.getByLabel(he.holidays.add.date, { exact: true }).fill(to);
+    await page.locator('[data-field="agreed-on"]').fill(agreed);
+    await page.locator('[data-field="amendment-note"]').fill(note);
+    await page.getByRole("button", { name: he.holidays.add.moveSubmit, exact: true }).click();
+    await settled(page);
+  }
+
+  test("asks for the agreement, refuses a confirmed month, and is listed on her page", async ({
+    page,
+  }) => {
+    await page.context().addCookies([
+      { name: "household", value: `filed-e2e-${RUN}-amend`, url: "http://localhost:3000" },
+    ]);
+    await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
+
+    // April is confirmed, so its worked holiday cannot leave it — what this
+    // catches is a filed month rewritten by a move on another screen.
+    await openMove(page, WORKED_HOLIDAY);
+    await expect(page.locator('[data-field="agreed-on"]')).toBeVisible();
+    // No agreement and no note: nothing to send.
+    await page.getByLabel(he.holidays.add.date, { exact: true }).fill(TYPED_BY_HAND);
+    await expect(
+      page.getByRole("button", { name: he.holidays.add.moveSubmit, exact: true }),
+    ).toBeDisabled();
+    await submitMove(page, TYPED_BY_HAND, "2026-03-20", NOTE);
+    await expect(page.locator("main").getByRole("alert")).toHaveText(he.holidays.refused.confirmedMonth);
+    await expect(holidayRow(page, WORKED_HOLIDAY)).toHaveAttribute("data-chosen", "true");
+
+    // August is a draft. Agreed after the day it would land on: refused.
+    await page.getByRole("button", { name: he.holidays.add.cancel }).click();
+    await openMove(page, CHOSEN_WITH_NO_NAME);
+    await submitMove(page, TYPED_BY_HAND, "2026-08-01", NOTE);
+    await expect(page.locator("main").getByRole("alert")).toHaveText(he.holidays.refused.agreedOn);
+
+    // Agreed before both: the move is made.
+    await submitMove(page, TYPED_BY_HAND, AGREED, NOTE);
+    await expect(holidayRow(page, CHOSEN_WITH_NO_NAME)).toHaveCount(0);
+    await expect(holidayRow(page, TYPED_BY_HAND)).toHaveAttribute("data-chosen", "true");
+
+    // And kept, so the list as first agreed can be read back.
+    await page.goto("/workers/worker-2");
+    const listed = page.locator(`[data-amendment="${CHOSEN_WITH_NO_NAME}"]`);
+    await expect(listed).toHaveCount(1);
+    await expect(listed).toContainText(NOTE);
+    await listed.scrollIntoViewIfNeeded();
+    await listed.screenshot({ path: "test-results/worker-holiday-amendment.png" });
+  });
+});
+
 test.describe("the picker's closing button goes back to the screen that opened it", () => {
   const picker = 'a[href^="/settings/holidays"]';
   const back = (at: Page) => at.locator('[data-role="picker-back"]');

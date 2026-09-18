@@ -19,6 +19,7 @@ import { advanceLedger } from "./advances";
 import { holidayYear } from "./holidayYear";
 import { vacationDaysTheLawAsksFor } from "./balances";
 import { holidayAllowanceFor } from "./leave";
+import { monthState } from "./monthState";
 import { recuperationDaysInMonth } from "./recuperation";
 import type { WorkerProfile } from "./repository";
 import type { MonthInSeries } from "./series";
@@ -66,6 +67,7 @@ export type ActionEntry = { list: ActionList } & (
   | { key: "recuperationApproaching"; month: YearMonth }
   | { key: "vacationUnderSeven"; year: number; days: number; required: number }
   | { key: "monthNotExported"; month: YearMonth }
+  | { key: "monthUnconfirmed"; month: YearMonth }
   | {
       key: "minimumWageChanged";
       exportedAtAgorot: number;
@@ -108,6 +110,7 @@ export function actionList(input: ActionListInput): ActionEntry[] {
     ...vacation(input),
     ...unexportedMonths(input),
     ...minimumWage(input),
+    ...unconfirmedMonths(input),
     ...seniority(input),
   ];
 }
@@ -261,8 +264,26 @@ function vacation({ profile, series, today }: ActionListInput): ActionEntry[] {
 /** Every month that has ended and that no file was produced from (Part 5). */
 function unexportedMonths({ series, today }: ActionListInput): ActionEntry[] {
   return series
-    .filter(({ facts }) => monthHasEnded(facts.month, today) && facts.exportedAt === undefined)
+    .filter(
+      ({ facts }) =>
+        monthHasEnded(facts.month, today) &&
+        facts.exportedAt === undefined &&
+        facts.confirmedAt !== undefined,
+    )
     .map(({ facts }) => ({ list: "warning", key: "monthNotExported", month: facts.month }));
+}
+
+/**
+ * A finished month whose facts are incomplete (item 27): its calendar month has
+ * ended and it is still a draft, because the confirmation questions of item 18
+ * were never answered for it. It is a blockage and never also a month not yet
+ * exported, whether or not a file was already produced from it: `/reports`
+ * hands over any month's file without asking the questions.
+ */
+function unconfirmedMonths({ series, today }: ActionListInput): ActionEntry[] {
+  return series
+    .filter(({ facts }) => monthHasEnded(facts.month, today) && monthState(facts) === "draft")
+    .map(({ facts }) => ({ list: "blockage", key: "monthUnconfirmed", month: facts.month }));
 }
 
 /**

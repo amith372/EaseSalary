@@ -142,6 +142,7 @@ export default async function WorkerPage({
       ledger={ledger}
       countryName={countryNameHe(SEEDED_HOLIDAY_LISTS, profile.country)}
       needsYou={needsYou}
+      amendments={await repository.listHolidayAmendments(id)}
     />
   );
 }

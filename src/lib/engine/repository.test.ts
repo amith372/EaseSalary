@@ -228,6 +228,21 @@ describe("the state a saved month is in", () => {
     expect(await stateOf(repository)).toBe("corrected");
   });
 
+  it("stays exported when a note is written on the month (item 5)", async () => {
+    // The note reaches no sheet, so the file already produced still matches the
+    // month. What this would catch: every exported month turned "corrected" by
+    // a sentence the family wrote beside it.
+    const repository = store();
+    const exported = record(JANUARY, {
+      confirmedAt,
+      exportedAt: "2026-02-01T08:00:00.000Z",
+    });
+    await repository.saveMonth("hanna", exported);
+    await repository.saveMonth("hanna", { ...exported, note: "שולם במזומן" });
+    expect(await stateOf(repository)).toBe("exported");
+    expect((await repository.listMonths("hanna"))[0].note).toBe("שולם במזומן");
+  });
+
   it("is corrected when a day is marked on an exported month", async () => {
     // **A mark is a span and a span is the worker's, not the month's** (Part
     // 3), so nothing on the month row moves of its own accord. This is the case

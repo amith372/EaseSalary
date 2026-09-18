@@ -362,6 +362,22 @@ export async function setHospitalOvertime(
 }
 
 /**
+ * The month's own note (specs.md item 5). An empty note removes it, since a
+ * blank note and no note mean the same thing.
+ */
+export async function setMonthNote(
+  workerId: string,
+  month: YearMonth,
+  note: string,
+): Promise<MonthActionResult> {
+  const trimmed = note.trim();
+  return changeMonth(workerId, month, (record) => ({
+    ...record,
+    note: trimmed === "" ? undefined : trimmed,
+  }));
+}
+
+/**
  * A percentage the user typed against one month, turned into the amount that is
  * actually stored (settled with the user on 2026-09-11).
  *

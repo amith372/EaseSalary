@@ -115,7 +115,7 @@ async function sweep(
       .click();
   }
   if (second?.note !== undefined) {
-    await page.getByLabel(he.calendar.picker.note.label).fill(second.note);
+    await page.getByLabel(he.calendar.picker.note.label, { exact: true }).fill(second.note);
   }
   const marks = he.calendar.marks(SATURDAY);
   await page.getByRole("button", { name: marks[kind], exact: true }).click();

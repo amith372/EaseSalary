@@ -214,7 +214,7 @@ function Field({
   );
 }
 
-const inputClass =
+export const inputClass =
   "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
 
 /** A bare text action inside a row. The padding widens what a finger can hit to
@@ -229,7 +229,7 @@ const cancelClass =
   "-my-1 px-2 py-3 text-[14px] text-ink-quiet transition-colors hover:text-ink";
 
 /** The one outlined button of this card, in a form and outside one alike. */
-const outlineButtonClass =
+export const outlineButtonClass =
   "rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
 
 export function MonthActions({

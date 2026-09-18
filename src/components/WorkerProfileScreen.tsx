@@ -11,6 +11,7 @@ import { WorkerSettingsLink } from "@/components/WorkerSettingsLink";
 import type { AlertCard } from "@/lib/alertsView";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import type { AdvanceStanding } from "@/lib/engine/advances";
+import type { HolidayAmendment } from "@/lib/engine/holidayAmendments";
 import type { MonthState } from "@/lib/engine/monthState";
 import type { WorkerProfile } from "@/lib/engine/repository";
 import { he } from "@/lib/i18n/he";
@@ -74,6 +75,8 @@ interface WorkerProfileScreenProps {
   /** The first thing about her that blocks a correct salary today, or `null`
    * when there is none. */
   needsYou: AlertCard | null;
+  /** Her holiday moves agreed once a year's list was in force (item 10). */
+  amendments: HolidayAmendment[];
 }
 
 export function WorkerProfileScreen({
@@ -84,6 +87,7 @@ export function WorkerProfileScreen({
   ledger,
   countryName,
   needsYou,
+  amendments,
 }: WorkerProfileScreenProps) {
   const words = he.workers;
   const page = words.profile;
@@ -303,6 +307,45 @@ export function WorkerProfileScreen({
           </ul>
         )}
       </section>
+
+      {/* Drawn only once there is one: the list as first agreed is otherwise
+          the list she has, and an empty section would say nothing (item 10). */}
+      {amendments.length > 0 ? (
+        <section aria-labelledby="amendments-title" className="flex min-w-0 flex-col gap-3.5">
+          <h2
+            id="amendments-title"
+            dir="auto"
+            className="text-[20px] font-semibold sm:text-[22px]"
+          >
+            {page.amendments.title}
+          </h2>
+          <ul className="flex flex-col gap-2.5">
+            {amendments.map((amendment) => (
+              <li key={amendment.id} data-amendment={amendment.from}>
+                <Card
+                  tone="inset"
+                  radius="sm"
+                  className="flex min-w-0 flex-col gap-1 px-4.5 py-4 sm:px-6.5"
+                >
+                  <span className="text-[17px] font-semibold">
+                    <span dir="auto">{page.amendments.from}</span>
+                    <Bidi>{fullDayLabel(amendment.from)}</Bidi>
+                    <span dir="auto"> {page.amendments.to}</span>
+                    <Bidi>{fullDayLabel(amendment.to)}</Bidi>
+                  </span>
+                  <span className="text-[15px] font-light text-ink-soft">
+                    <span dir="auto">{page.amendments.agreed}</span>
+                    <Bidi>{fullDayLabel(amendment.agreedOn)}</Bidi>
+                  </span>
+                  <p dir="auto" className="text-[15px] font-light text-ink-warm">
+                    {amendment.note}
+                  </p>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {/* The two things about her that live on another screen, which is the
           artboard's closing row. `לשתף` goes to the account section of

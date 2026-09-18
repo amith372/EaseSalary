@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
-import { clearRange, markRange, setHolidayWorked } from "@/app/month/actions";
+import { clearRange, markRange, setHolidayWorked, setMonthNote } from "@/app/month/actions";
+import { inputClass, outlineButtonClass } from "@/components/MonthActions";
 import { Sentence, WorkerName } from "@/components/AlertsScreen";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
@@ -127,8 +128,11 @@ export function HomeScreen({
   household,
   blockages,
   today,
+  askedMonth = null,
 }: {
   household: WorkerMonths[];
+  /** A month the address named, which the screen opens on instead. */
+  askedMonth?: YearMonth | null;
   /** What stops a correct salary, for the whole household (`blockagesOf`). */
   blockages: FirstOf;
   /** Today, read once on the server and handed down, so nothing here reads a
@@ -139,11 +143,13 @@ export function HomeScreen({
   // The current month where anybody has a record of it, and otherwise the last
   // month anybody has — `openingMonthOf` says why, and the payments screen asks
   // the same question so the two never open on different months.
-  const [chosenMonth, setMonth] = useState<YearMonth>(() =>
-    openingMonthOf(
-      household.flatMap((entry) => entry.months.map((m) => m.facts.month)),
-      today,
-    ),
+  const [chosenMonth, setMonth] = useState<YearMonth>(
+    () =>
+      askedMonth ??
+      openingMonthOf(
+        household.flatMap((entry) => entry.months.map((m) => m.facts.month)),
+        today,
+      ),
   );
   const [selected, setSelected] = useState<IsoDate>(today);
   const [editRequest, setEditRequest] = useState<{ date: IsoDate; seq: number }>();
@@ -535,6 +541,15 @@ export function HomeScreen({
             <Chevron towards="next" className="text-chevron-soft" />
           </Link>
 
+          {shown ? (
+            <MonthNote
+              key={`${entry.worker.id} ${shown.facts.month.year}-${shown.facts.month.month} ${shown.facts.note ?? ""}`}
+              workerId={entry.worker.id}
+              month={shown.facts.month}
+              note={shown.facts.note ?? ""}
+            />
+          ) : null}
+
           {/* Worth knowing about this month, and it is drawn nowhere else: the
               payslip lays the figures out and says nothing about what they
               imply. It sits under the link to the payslip, which is read
@@ -765,6 +780,66 @@ function MoneyRow({
  * which is a sum the family would act on. v4 draws the third-party row among
  * the others; this is a departure recorded in `CLAUDE.md`.
  */
+/**
+ * The month's own note (specs.md item 5), written here and shown on the
+ * payslip. No artboard draws it on this screen; the payslip's
+ * `להוסיף הערה לחודש` opens here at `#month-note`. It is keyed by the stored
+ * note, so a save that lands resets the field to what was stored.
+ */
+function MonthNote({
+  workerId,
+  month,
+  note,
+}: {
+  workerId: string;
+  month: YearMonth;
+  note: string;
+}) {
+  const words = he.home.note;
+  const [text, setText] = useState(note);
+  const [saving, startSaving] = useTransition();
+  const changed = text.trim() !== note;
+  return (
+    <Card id="month-note" className="flex flex-none scroll-mt-4 flex-col gap-2 px-3.75 py-3.25">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          startSaving(async () => {
+            await setMonthNote(workerId, month, text);
+          });
+        }}
+        className="flex flex-col gap-2"
+      >
+        <label className="flex flex-col gap-1.5">
+          <span dir="auto" className="text-[16px] font-semibold">
+            {words.title}
+          </span>
+          <textarea
+            dir="auto"
+            rows={3}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            data-field="month-note"
+            className={`${inputClass} resize-y`}
+          />
+        </label>
+        <p dir="auto" className="text-[13px] font-light text-ink-mute">
+          {words.hint}
+        </p>
+        <div>
+          <button
+            type="submit"
+            disabled={!changed || saving}
+            className={`${outlineButtonClass} disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet disabled:hover:border-line`}
+          >
+            <span dir="auto">{words.save}</span>
+          </button>
+        </div>
+      </form>
+    </Card>
+  );
+}
+
 function MoneyCard({
   result,
   restDay,

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { createInMemoryRepository } from "@/lib/engine/repository";
 import type { SalaryRepository } from "@/lib/engine/repository";
-import { devSeed } from "@/lib/dev/seed";
+import { devSeed, filedSeed } from "@/lib/dev/seed";
 import { knownCaseSeed } from "@/lib/dev/known";
 import { INVITATION_COOKIE, invitationToken } from "@/lib/invitationCookie";
 import { createPostgresRepository } from "@/lib/supabase/repository";
@@ -36,17 +36,19 @@ import { supabaseOnServer } from "@/lib/supabase/server";
 /**
  * The households there are, by name.
  *
- * **Three, and two of them hold data.** The demo household is nine months of
+ * **Four, and three of them hold data.** The demo household is nine months of
  * 2026 chosen to be clicked at; the known case is August 2025, whose four
  * totals come from the family's own sheet (`specs.md` Part 4). They are kept
  * apart because mixing them would put the one month that means something into a
  * store whose whole point is that it means nothing — and an account holds no
  * more than two workers anyway (item 11), so a third worker was never the
- * shape. The third seed holds nobody, and why is said where it stands.
+ * shape. `filed` is the demo with two months confirmed and not exported, and
+ * the last seed holds nobody; why each is here is said where it stands.
  */
 const seeds = {
   demo: devSeed,
   known: knownCaseSeed,
+  filed: filedSeed,
   /**
    * A household with nothing in it, which is what every new account is.
    *

@@ -156,6 +156,7 @@ interface MonthRow {
   recuperation_day_rate_agorot: number | null;
   hospital_overtime_agorot: number | null;
   hospital_overtime_note: string | null;
+  note: string | null;
   confirmed_at: string | null;
   exported_at: string | null;
   /** Maintained by the trigger and never sent — it is what tells a corrected
@@ -367,6 +368,7 @@ function recordOfRow(row: MonthRow): Omit<MonthFacts, "spans"> {
               : { note: row.hospital_overtime_note }),
           },
         }),
+    ...(row.note === null ? {} : { note: row.note }),
     ...(row.confirmed_at === null ? {} : { confirmedAt: row.confirmed_at }),
     ...(row.exported_at === null ? {} : { exportedAt: row.exported_at }),
     // Never written back — the trigger maintains it, and `MonthRecord` has no
@@ -397,6 +399,7 @@ function monthRowOf(workerId: string, record: MonthRecord) {
     recuperation_day_rate_agorot: record.recuperationDayRateAgorot ?? null,
     hospital_overtime_agorot: record.hospitalOvertime?.agorot ?? null,
     hospital_overtime_note: record.hospitalOvertime?.note ?? null,
+    note: record.note ?? null,
     confirmed_at: record.confirmedAt ?? null,
     exported_at: record.exportedAt ?? null,
   };
@@ -898,6 +901,37 @@ export function createPostgresRepository(
         { onConflict: "worker_id,fingerprint" },
       );
       raise(error, "could not put the warning off");
+    },
+
+    async listHolidayAmendments(workerId) {
+      await requireWorker(workerId);
+      const { data, error } = await client
+        .from("holiday_amendments")
+        .select("id, agreed_on, from_date, to_date, note")
+        .eq("worker_id", workerId)
+        .order("agreed_on")
+        .order("created_at");
+      raise(error, "could not read the holiday amendments");
+      return (data ?? []).map((row) => ({
+        id: row.id as string,
+        agreedOn: row.agreed_on as IsoDate,
+        from: row.from_date as IsoDate,
+        to: row.to_date as IsoDate,
+        note: row.note as string,
+      }));
+    },
+
+    async saveHolidayAmendment(workerId, amendment) {
+      await requireWorker(workerId);
+      const { error } = await client.from("holiday_amendments").insert({
+        id: amendment.id,
+        worker_id: workerId,
+        agreed_on: amendment.agreedOn,
+        from_date: amendment.from,
+        to_date: amendment.to,
+        note: amendment.note,
+      });
+      raise(error, "could not record the holiday amendment");
     },
   };
 }

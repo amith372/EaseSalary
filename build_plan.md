@@ -80,34 +80,7 @@ not re-opened without her asking.** Stage 7 is done when the first list is empty
 
 ### Still to pay
 
-- **`דף המשכורת` omits `להוסיף הערה לחודש`**, settled with the user on 2026-09-10: it needs a
-  note on the month as a whole, and a note belongs to a mark or to a line the user added.
-- **The sheet's identity line wording is unconfirmed.** `A4` prints `מספר דרכון: <number>`
-  (`he.sheet.passportLine`); the template carries only `{{passport_line}}` and nothing states
-  the words. `C2` (bank name and branch) and `A2` (employer of record) stay empty: no field
-  holds either.
-- **A person in two households puts what is new into the first they joined** — a worker they
-  create, a fetched rate. Shared workers appear beside their own and are written back to their
-  own household.
-- **A chosen holiday can be moved freely, and the user wants it to be a contract amendment.**
-  The regulator's position is that the list is set at the start of the employment and does not
-  change month to month; employer and worker may still agree to amend it. So the move becomes an
-  explicit profile-level action with an effective date, regenerating only months after it and
-  never a closed one, with the change kept as an audit trail. Today `moveHoliday` rewrites the
-  date in place with no record. Asked for by the user on 2026-09-12 and not yet built.
-- **The layout replays every worker's series on every request to draw the bell** (once per
-  request, shared with the page). Not measured; if the browser suite's flakiness grows, this is
-  the first suspect.
-- **A month whose facts are incomplete is not in `actionList`**, though item 27 names it as a
-  blockage: nothing defines "incomplete" beyond what `blocksExport` asks at export time.
-- **Every month exported before 2026-09-17 has no `exported_at`**, so `/alerts` lists each as
-  not exported until it is exported again or marked as handled. An export made in a session
-  carrying the `household` cookie stamps nothing in Supabase, so checking `exported_at` needs a
-  signed-in account without that cookie.
-- **The browser suite is intermittently flaky under load** — `payments-screen`,
-  `before-export`, `month-screen` and `payslip` among them — and each passes when its own file
-  is run alone. Measured on 2026-09-12 against a tree with the sign-in step stashed, so the cause is
-  the dev server compiling routes under load and not the proxy.
+Nothing.
 
 ### Settled open, by the user's own choice
 
@@ -130,6 +103,14 @@ not re-opened without her asking.** Stage 7 is done when the first list is empty
   is what keeps fourteen spec files working. There are three seeds now: the demo, the known
   case, and `empty`, which is the state a new account is in and the only one the add-worker
   flow can start from.
+- **A person in two households puts what is new into the first they joined** — a worker they
+  create, a fetched rate. Shared workers appear beside their own and are written back to their
+  own household. The user accepted this on 2026-09-18.
+- **Every month exported before 2026-09-17 has no `exported_at`**, so `/alerts` lists each as
+  not exported until it is exported again or marked as handled. The user chose on 2026-09-18
+  not to backfill it.
+- **The browser suite runs on one Playwright worker**, because in parallel against the one dev
+  server a different handful of tests failed on each run. Settled by the user on 2026-09-18.
 - **`SalaryRepository` has no `deleteWorker`**, because nothing in the application removes one.
   The live check tidies up through the client instead.
 
@@ -197,6 +178,10 @@ it, here. The list is that section, and it is not copied into this stage.
 **Done when** "Still to pay" is empty.
 
 - `דף העובד` and `העובדות`, 2026-09-18.
+- A finished month never confirmed is a blockage, 2026-09-18.
+- The month's own note, 2026-09-18.
+- A holiday moved once the year's list is in force is an amendment, 2026-09-18.
+- The bell's replay measured at 6.75 ms a request; nothing to fix, 2026-09-18.
 - **Waiting on the user:** why the month sheet carries rows 32–38 (`נתוני דיווח נדרשים`, the
   six Wage Protection Act figures `writeReporting` fills in column C). Answered on 2026-09-17;
   the user will come back to whether they stay.
@@ -261,6 +246,46 @@ where no government page states a rule.
 
 **Done when** every rule has a government or Kol Zchut source that agrees with it, or a
 difference the user has settled.
+
+## Future — חל"ת (unpaid leave) · **not scheduled**
+
+Asked for by the user on 2026-09-18. Headed for `specs.md`'s future-features appendix once its
+wording is approved (working rule 1). `specs.md` currently gives it two words inside the
+partial-months bullet. **Not a fourth kind of mark:** recording the days is the easy part. What
+decides the work is what *stops* while she is on it. In this household the usual case is a
+trip home: a re-entry permit, an absence of at least 21 days, and possibly a replacement
+caregiver hired through the agency.
+
+**What Kol Zchut states** (read 2026-09-18; re-checked against gov.il in stage 10):
+- It needs both sides to agree. Forced, open-ended unpaid leave counts as dismissal.
+- The employment is suspended, not ended. She gets no wage, and no sick pay if she falls ill
+  during it.
+- **No new seniority accrues during it**, but the seniority she already had is kept. Up to 14
+  days in a work year still count towards severance seniority. Days beyond that do not count
+  towards seniority for recuperation, annual leave or notice.
+- **Recuperation is not earned** for the period.
+- **National insurance:** an employer of a household worker is exempt from the rule that
+  makes an employer pay for the first two months. From the third month she pays it herself.
+  Pension is out of scope (Part 1).
+
+**What Kol Zchut does not say**, so these go to the user rather than into code:
+- Whether annual vacation accrues during unpaid leave. The engine accrues by month (item 7),
+  and the page is silent.
+- Whether sick days accrue. The sick-days page gives 1.5 days per *full* month, prorated by
+  days actually worked for a partial month. That points to prorating, but the page never says
+  so for unpaid leave.
+- What happens to a holiday that falls inside it.
+
+**What building it touches:** the partial-month salary (deferred with it in the appendix), the
+seniority year that sets the vacation entitlement and the recuperation days (item 7 and
+recuperation), both accruals in the replay, and the national-insurance line for the months it
+covers.
+
+Sources:
+[חופשה ללא תשלום](https://www.kolzchut.org.il/he/חופשה_ללא_תשלום) ·
+[דמי ביטוח לאומי לעובד שכיר בחופשה ללא תשלום](https://www.kolzchut.org.il/he/דמי_ביטוח_לאומי_לעובד_שכיר_בחופשה_ללא_תשלום) ·
+[ימי מחלה](https://www.kolzchut.org.il/he/ימי_מחלה) ·
+[העסקה זמנית של עובד זר בסיעוד כשהעובד הקבוע יצא לחופשה בחו"ל](https://www.kolzchut.org.il/he/העסקה_זמנית_של_עובד_זר_בסיעוד_כשהעובד_הקבוע_יצא_לחופשה_בחו"ל)
 
 ## Design ↔ spec reconciliation · **closed**
 

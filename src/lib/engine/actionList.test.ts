@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
-import { SATURDAY, isoOf } from "@/lib/dates";
+import { SATURDAY, daysInMonth, isoOf } from "@/lib/dates";
 import { actionList, type ActionEntry } from "@/lib/engine/actionList";
 import { openMonthRecord, type WorkerProfile } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
@@ -103,7 +103,7 @@ function listFor({
     ...facts,
     spans: spans.filter(
       (span) =>
-        span.from <= isoOf(facts.month, 31) && (span.to ?? span.from) >= isoOf(facts.month, 1),
+        span.from <= isoOf(facts.month, daysInMonth(facts.month)) && (span.to ?? span.from) >= isoOf(facts.month, 1),
     ),
   }));
   return actionList({
@@ -378,12 +378,52 @@ describe("a year with fewer than seven vacation days (item 7)", () => {
 });
 
 describe("a finished month not exported (Part 5)", () => {
-  it("lists each ended month no file was produced from, in the bell", () => {
-    // 5 March: January exported, February not, March still running.
-    const january = monthOf(ym(2026, 1), { exportedAt: "2026-02-01T08:00:00Z" });
-    expect(only(listFor({ today: "2026-03-05", months: [january] }), "monthNotExported")).toEqual([
-      { list: "warning", key: "monthNotExported", month: ym(2026, 2) },
+  it("lists each ended, confirmed month no file was produced from, in the bell", () => {
+    // 5 March: January confirmed and exported, February confirmed only, March
+    // still running.
+    const january = monthOf(ym(2026, 1), {
+      confirmedAt: "2026-02-01T08:00:00Z",
+      updatedAt: "2026-02-01T08:00:00Z",
+      exportedAt: "2026-02-01T08:05:00Z",
+    });
+    const february = monthOf(ym(2026, 2), {
+      confirmedAt: "2026-03-01T08:00:00Z",
+      updatedAt: "2026-03-01T08:00:00Z",
+    });
+    expect(
+      only(listFor({ today: "2026-03-05", months: [january, february] }), "monthNotExported"),
+    ).toEqual([{ list: "warning", key: "monthNotExported", month: ym(2026, 2) }]);
+  });
+});
+
+describe("a finished month whose facts are incomplete (item 27)", () => {
+  // 5 March: January confirmed, February never confirmed (nothing stored for
+  // it at all), March still running and so owed nothing yet.
+  const january = monthOf(ym(2026, 1), {
+    confirmedAt: "2026-02-01T08:00:00Z",
+    updatedAt: "2026-02-01T08:00:00Z",
+  });
+
+  it("is a blockage for each ended month still in draft", () => {
+    expect(only(listFor({ today: "2026-03-05", months: [january] }), "monthUnconfirmed")).toEqual([
+      { list: "blockage", key: "monthUnconfirmed", month: ym(2026, 2) },
     ]);
+  });
+
+  it("is not also a month not yet exported", () => {
+    expect(
+      only(listFor({ today: "2026-03-05", months: [january] }), "monthNotExported"),
+    ).toEqual([{ list: "warning", key: "monthNotExported", month: ym(2026, 1) }]);
+  });
+
+  it("is not raised for a corrected month, which was confirmed once", () => {
+    const corrected = monthOf(ym(2026, 2), {
+      confirmedAt: "2026-03-01T08:00:00Z",
+      updatedAt: "2026-03-03T08:00:00Z",
+    });
+    expect(
+      only(listFor({ today: "2026-03-05", months: [january, corrected] }), "monthUnconfirmed"),
+    ).toEqual([]);
   });
 });
 

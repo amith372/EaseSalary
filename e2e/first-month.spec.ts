@@ -139,7 +139,10 @@ test("the arrows stop at her first month", async ({ page }) => {
   await page.goto("/");
   const back = page.getByRole("button", { name: he.calendar.previousMonth });
   await back.click();
-  await expect(page.getByText(monthLabel(FIRST))).toBeVisible();
+  // Read between the arrows, since a blocker on the same screen may name the
+  // month too.
+  const stepper = page.locator("div", { has: back }).last();
+  await expect(stepper.getByText(monthLabel(FIRST))).toBeVisible();
   await expect(back).toBeDisabled();
   // An ordinary month, calculated, although nobody opened it.
   await expect(page.locator('[data-row="net"]')).toBeVisible();

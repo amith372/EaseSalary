@@ -531,9 +531,8 @@ export const he = {
    * lines are grouped by the sheet's columns and carry the sheet's own subtotal
    * names, where the month screen groups them by kind (specs.md item 5).
    *
-   * **`להוסיף הערה לחודש` is not here**, settled with the user on 2026-09-10:
-   * a note belongs to a mark or to a line the user added, and there is no note
-   * on a month as a whole.
+   * The month's own note is shown here and written on the opening screen
+   * (specs.md item 5); the link beside the others leads there.
    */
   payslip: {
     eyebrow: "דף המשכורת",
@@ -569,9 +568,13 @@ export const he = {
     after: {
       title: "אחרי החודש הזה",
     },
-    /** The two links the artboard ends with that have somewhere to go. */
+    /** The three links the artboard ends with. */
     correct: "לתקן את החישוב",
+    addNote: "להוסיף הערה לחודש",
+    editNote: "לערוך את ההערה",
     allReports: "לכל הדוחות",
+    /** The month's own note, above the links, where there is one. */
+    note: "הערה לחודש",
     /** A month with nothing recorded, or one the worker does not have. */
     none: "אין עדיין חודש להראות כאן.",
   },
@@ -790,7 +793,7 @@ export const he = {
       /** The blockages, named so a user looking here for one learns why it
        * has no switch (specs.md item 27). */
       alwaysShown:
-        "מוצגים תמיד, בלי אפשרות לכבות: ביטוח לאומי לרבעון, מסמך שפג תוקפו, חגים שטרם נבחרו, דמי הבראה החודש, מקדמה שעדיין בהחזר, שינוי בשכר המינימום.",
+        "מוצגים תמיד, בלי אפשרות לכבות: ביטוח לאומי לרבעון, מסמך שפג תוקפו, חגים שטרם נבחרו, דמי הבראה החודש, מקדמה שעדיין בהחזר, שינוי בשכר המינימום, חודש שהסתיים ולא אושר.",
       close: "סגירה",
       kinds: {
         documentExpiring: "מסמך או ביטוח שעומד לפוג",
@@ -878,6 +881,11 @@ export const he = {
         note: ["החודש הסתיים וגיליון השכר שלו לא הופק."] as Said,
         action: "לייצא",
       }),
+      monthUnconfirmed: (month: string) => ({
+        title: [{ value: month }, " טרם אושר"] as Said,
+        note: ["החודש הסתיים ושאלות האישור שלפני הייצוא לא נענו."] as Said,
+        action: "לאשר את החודש",
+      }),
       minimumWageChanged: (was: string, now: string, from: string) => ({
         title: ["שכר המינימום השתנה"] as Said,
         note: [
@@ -950,6 +958,14 @@ export const he = {
         holidayNotWorked: "חג שלא נעבד",
         holidayUnanswered: "חג שטרם נענה",
       },
+    },
+    /** The month's own note (specs.md item 5): shown on the payslip and
+     * written nowhere on the sheet. */
+    note: {
+      title: "הערה לחודש",
+      hint: "מופיעה בדף המשכורת, ולא בגיליון שמיוצא.",
+      save: "לשמור",
+      saved: "נשמר",
     },
     paid: {
       title: "מה שולם החודש",
@@ -1703,6 +1719,14 @@ export const he = {
         soFarPartial: (counted: number, listed: number) =>
           `מתוך ${counted} מ־${listed} חודשים שנסגרו`,
       },
+      /** Holiday moves agreed once the year's list was in force (specs.md
+       * item 10), so the list as first agreed can be read back. */
+      amendments: {
+        title: "שינויים מוסכמים ברשימת החגים",
+        from: "הועבר מ־",
+        to: "ל־",
+        agreed: "סוכם ב־",
+      },
       advances: {
         title: "מקדמות פתוחות",
         empty: "אין מקדמה פתוחה.",
@@ -2097,6 +2121,12 @@ export const he = {
        * time: the link that opened the form already says that, and two controls
        * reading the same on one row is a row nobody can act on with confidence. */
       moveSubmit: "להעביר",
+      /** A move once the year's list is in force (specs.md item 10). */
+      amendment: {
+        hint: "חודש מהשנה הזו כבר אושר, ולכן רשימת החגים בתוקף. העברה היא עכשיו שינוי מוסכם בין שני הצדדים, והיא נשמרת ברשימה בדף העובד/ת.",
+        agreedOn: "מתי סוכם",
+        note: "הערה — מה סוכם ומדוע",
+      },
     },
     /** Why a choice was refused, in words (item 25). */
     refused: {
@@ -2106,6 +2136,12 @@ export const he = {
       date: "התאריך אינו תאריך של השנה שמוצגת. הצורה היא שנה-חודש-יום, למשל 2026-05-01.",
       part: "החלק שנבחר אינו מוכר. כדאי לרענן את הדף ולנסות שוב.",
       entryUnknown: "החג הזה כבר לא קיים. כדאי לרענן את הדף ולראות מה נשמר.",
+      amendmentNeeded:
+        "חודש מהשנה הזו כבר אושר, ולכן העברת חג היא שינוי מוסכם. צריך לציין מתי סוכם ולכתוב הערה.",
+      agreedOn: "שני התאריכים — הישן והחדש — צריכים לבוא אחרי יום ההסכמה.",
+      confirmedMonth:
+        "אחד התאריכים נופל בחודש שכבר אושר. חודש שאושר לא משתנה בדיעבד, ולכן החג לא יכול לצאת ממנו או להיכנס אליו.",
+      note: "שינוי מוסכם נשמר עם הערה — מה סוכם ומדוע.",
     },
     /** The artboard's own closing sentence, which is also what saving on each
      * gesture means: nothing here is held as a draft. */

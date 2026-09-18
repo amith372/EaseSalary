@@ -495,3 +495,34 @@ export const devSeed = {
   spans: devSpans,
   months: devMonths,
 };
+
+/**
+ * The demo household with the second worker's January to April 2026 confirmed
+ * and never exported — the only way a finished month becomes a warning in the
+ * bell rather than a blockage (specs.md item 27). Four, so that with the day's
+ * other warnings the bell holds more than it lists.
+ *
+ * **It is a seed because the interface cannot reach it.** The pre-export
+ * screen confirms a month and downloads its file in one gesture, so a month is
+ * confirmed and not exported only when that download never arrived. The demo
+ * itself confirms nothing, because a draft is what a month nobody has taken
+ * through that conversation is.
+ */
+const FILED_ON: Record<number, string> = {
+  1: "2026-02-02T08:00:00.000Z",
+  2: "2026-03-02T08:00:00.000Z",
+  3: "2026-04-02T08:00:00.000Z",
+  4: "2026-05-04T08:00:00.000Z",
+};
+
+export const filedSeed = {
+  ...devSeed,
+  months: {
+    ...devMonths,
+    "worker-2": devMonths["worker-2"].map((record) =>
+      record.month.year === 2026 && FILED_ON[record.month.month] !== undefined
+        ? { ...record, confirmedAt: FILED_ON[record.month.month] }
+        : record,
+    ),
+  },
+};

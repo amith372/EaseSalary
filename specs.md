@@ -199,7 +199,8 @@ Each of these is true or false at a glance.
     20) and the manual overrides — and **payments to third parties** — national
     insurance, medical insurance, fees — are both the payments screen's, and **yearly
     settings** — the nine holidays, the recuperation month — are the settings
-    screen's. Every action can carry a free-text note.
+    screen's. Every action can carry a free-text note. A month as a whole can also carry
+    one free-text note of its own, written on the month screen and shown on `דף המשכורת`.
     This was once written as three groups beside the calendar and is corrected here
     rather than argued with, because the reason is what the screens are *for*: the
     month screen answers "what did this month come to", and every one of those groups
@@ -502,9 +503,14 @@ Each of these is true or false at a glance.
    the family uses. It is also the measure
    item 7 applies to vacation, so the two entitlements are reduced the same way rather
    than by two rules that disagree for no reason. A holiday can be taken as part of a day, paid in
-   the same proportion and drawn from the entitlement in the same proportion. A date can
-   be edited, a day beyond the entitlement is refused, and an incomplete selection is
-   visible at a glance.
+   the same proportion and drawn from the entitlement in the same proportion. A chosen date
+   can be moved freely until any month of that year has been confirmed. After that, moving
+   it is an amendment to the terms of the employment, agreed between the two sides: it
+   records the date it was agreed on and a note, the old and the new date must both fall
+   after that date and outside every confirmed month, and it is kept, with the old date,
+   the new date and the note, in a list under her holidays on the worker's page, so the
+   list as first agreed can always be read back. A day beyond the entitlement is refused,
+   and an incomplete selection is visible at a glance.
 
    **A holiday that falls inside a spell of sickness is a holiday and not a sick day.**
    The day pays the ordinary monthly salary like any holiday she did not work, it is drawn
@@ -1095,7 +1101,10 @@ Each of these is true or false at a glance.
     the opening screen itself carries what has **already** lapsed or what the application
     needs from the user before it can calculate a full salary at all — an expired
     document, holidays not yet chosen, a minimum wage awaiting confirmation, a month whose
-    facts are incomplete. The test that decides which list an item belongs to is whether
+    facts are incomplete — a month whose calendar month has ended and that is still a
+    draft, because the confirmation questions of item 18 were never answered for it. It is
+    listed as a blockage and never also as a month not yet exported, whether or not a file
+    was already produced from it. The test that decides which list an item belongs to is whether
     the salary can be produced correctly today without it: if it can, the item is a
     warning and belongs in the bell; if it cannot, it is a blockage and belongs on the
     screen. Where that test leaves an item open, its list is fixed here: a national-insurance

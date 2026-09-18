@@ -80,6 +80,7 @@ export default async function PayslipPage() {
               month.facts.confirmedAt === undefined
                 ? null
                 : todayInIsrael(new Date(month.facts.confirmedAt)),
+            note: month.facts.note ?? null,
           };
         }),
       };

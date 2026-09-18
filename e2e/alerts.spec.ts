@@ -5,15 +5,17 @@ import { he } from "../src/lib/i18n/he";
 /**
  * `/alerts` through the browser (specs.md item 27).
  *
- * **What every assertion rests on, whatever day the suite runs.** The demo
- * seed records no export on any month (`seed.ts`), and the test worker's first
- * month is January 2026, so from February 2026 onward "January 2026 not yet
- * exported" is a warning on her list, and "February 2026" one beside it from
- * March. Nothing below depends on which other entries today's date raises: the
- * blockages are counted before and after and compared with themselves.
+ * **What every assertion rests on.** The `filed` seed is the demo with the
+ * test worker's January to April 2026 confirmed and never exported
+ * (`seed.ts`), so "January 2026 not yet exported" and the three months after it
+ * are warnings on her list, while every later finished month is still a draft
+ * and so a blockage (item 27). Nothing below depends on which other entries the
+ * day raises: the blockages are counted before and after and compared with
+ * themselves.
  */
 
-const SPEC = "alerts";
+const SPEC = "filed";
+const AUGUST = `${he.calendar.monthNames[7]} 2026`;
 const JANUARY = `${he.calendar.monthNames[0]} 2026`;
 const FEBRUARY = `${he.calendar.monthNames[1]} 2026`;
 
@@ -110,23 +112,21 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await page.goto("/alerts");
     const handled = page.locator('[data-role="handled"]').filter({ hasText: "יוצא" });
     const exportedBefore = await handled.count();
-    const warningsBefore = await page
-      .locator('[data-role="alert"]')
-      .filter({ hasText: "טרם יוצא" })
-      .count();
+    await expect(unexported(page, JANUARY)).toHaveCount(1);
 
     await page.goto("/reports");
     await switchToTestWorker(page);
-    const link = page.getByRole("link", { name: he.reports.previousMonths.excel }).first();
+    const link = page
+      .locator('[data-report-month="2026-1"]')
+      .getByRole("link", { name: he.reports.previousMonths.excel });
     const [download] = await Promise.all([page.waitForEvent("download"), link.click()]);
     await download.path();
 
     await page.goto("/alerts");
     await expect(handled).toHaveCount(exportedBefore + 1);
     await expect(handled.first()).toContainText(he.placeholder.name);
-    await expect(
-      page.locator('[data-role="alert"]').filter({ hasText: "טרם יוצא" }),
-    ).toHaveCount(warningsBefore - 1);
+    await expect(unexported(page, JANUARY)).toHaveCount(0);
+    await expect(unexported(page, FEBRUARY)).toHaveCount(1);
     // Tall enough for the whole list: the page scrolls inside `<main>`, which a
     // full-page screenshot does not reach.
     await page.setViewportSize({ width: 1280, height: 2600 });
@@ -352,6 +352,43 @@ test.describe("the national-insurance quarter, paid through the payments screen 
       await expect(page.locator('[data-role="blockers-more"]')).toHaveCount(0);
     }
     await page.screenshot({ path: "test-results/home-after-quarter-paid.png" });
+  });
+});
+
+test.describe("a finished month never confirmed (specs.md item 27)", () => {
+  test("is a blockage, and stays one after a file is made from the reports", async ({ page }) => {
+    // The demo confirms none of its months (`seed.ts`), so August 2026 — ended
+    // by the suite's day — is a draft. What this would catch: a draft month
+    // shown as merely "not exported" in the bell, or one that a download from
+    // `/reports`, which asks none of item 18's questions, quietly clears.
+    await useHousehold(page, "demo", "unconfirmed");
+    const unconfirmed = page
+      .locator('[data-role="alert"][data-list="blockage"]')
+      .filter({ hasText: `${AUGUST} טרם אושר` })
+      .filter({ hasText: he.placeholder.name });
+
+    await page.goto("/alerts");
+    await expect(unconfirmed).toHaveCount(1);
+    await expect(unexported(page, AUGUST)).toHaveCount(0);
+    await expect(
+      unconfirmed.getByRole("link", { name: he.alerts.entry.monthUnconfirmed("").action }),
+    ).toHaveAttribute("href", "/month/export");
+
+    await page.goto("/reports");
+    await switchToTestWorker(page);
+    const link = page
+      .locator('[data-report-month="2026-8"]')
+      .getByRole("link", { name: he.reports.previousMonths.excel });
+    const [download] = await Promise.all([page.waitForEvent("download"), link.click()]);
+    await download.path();
+
+    await page.goto("/alerts");
+    await expect(
+      page.locator('[data-role="handled"]').filter({ hasText: AUGUST }),
+    ).toHaveCount(1);
+    await expect(unconfirmed).toHaveCount(1);
+    await expect(unexported(page, AUGUST)).toHaveCount(0);
+    await page.screenshot({ path: "test-results/alerts-unconfirmed-after-reports-export.png" });
   });
 });
 

@@ -5,6 +5,7 @@ import { blockagesOf, householdAlerts } from "@/lib/alertsView";
 import { refreshMinimumWageIfStale } from "@/lib/minimumWageRefresh";
 import { getRepository } from "@/lib/store";
 import { calculateSeries } from "@/lib/engine/series";
+import { parseYearMonth } from "@/lib/dates";
 import { readToday } from "@/lib/requestToday";
 
 /**
@@ -46,8 +47,12 @@ import { readToday } from "@/lib/requestToday";
  * value and `today` is read from a clock, and a page that had been rendered at
  * build time would show the household as it stood when the build ran.
  */
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
   await connection();
+  // A month named in the address — the payslip's `להוסיף הערה לחודש` opens its
+  // own month here — and otherwise the one the screen would choose.
+  const { month: asked } = await searchParams;
+  const askedMonth = typeof asked === "string" ? parseYearMonth(asked) : null;
 
   const repository = await getRepository();
   const today = await readToday();
@@ -87,5 +92,12 @@ export default async function HomePage() {
   // page's first blockages and counts the rest.
   const blockages = blockagesOf(await householdAlerts());
 
-  return <HomeScreen household={household} blockages={blockages} today={today} />;
+  return (
+    <HomeScreen
+      household={household}
+      blockages={blockages}
+      today={today}
+      askedMonth={askedMonth}
+    />
+  );
 }

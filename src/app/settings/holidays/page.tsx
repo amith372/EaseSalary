@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { listInForce } from "@/lib/engine/holidayAmendments";
 import { HolidayPickerScreen } from "@/components/HolidayPickerScreen";
 import type { WorkerHolidayYear } from "@/components/HolidayPickerScreen";
 import { getRepository } from "@/lib/store";
@@ -99,6 +100,7 @@ export default async function HolidaysPage({
         countries,
         religions,
         failure,
+        amending: listInForce(year, await repository.listMonths(profile.id)),
         year: holidayYear(
           list?.holidays ?? [],
           spans,

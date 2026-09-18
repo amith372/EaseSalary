@@ -364,3 +364,50 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     );
   });
 });
+
+test.describe("the month's own note (specs.md item 5)", () => {
+  test("is written on the opening screen, shown on the payslip, and kept off the sheet", async ({
+    page,
+  }) => {
+    await useHousehold(page, "note");
+    const note = "שולם במזומן ביד, לבקשתה";
+    await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await switchToTestWorker(page);
+    await expect(page.locator('[data-role="month-note"]')).toHaveCount(0);
+
+    // The payslip's link opens the opening screen on *its* month, not the
+    // running one — the failure this catches is a note written on September
+    // by someone reading August.
+    await page.getByRole("link", { name: he.payslip.addNote }).click();
+    await expect(page).toHaveURL(/\?month=2026-08#month-note$/);
+    const back = page.getByRole("button", { name: he.calendar.previousMonth });
+    await expect(page.locator("div", { has: back }).last()).toContainText(ENDED);
+
+    const field = page.locator('[data-field="month-note"]');
+    await field.fill(note);
+    const save = page.locator("#month-note").getByRole("button", { name: he.home.note.save });
+    await save.click();
+    // Saved and read back: the field is redrawn from the stored note, so the
+    // button has nothing left to save.
+    await expect(save).toBeDisabled();
+    await expect(field).toHaveValue(note);
+    await page.locator("#month-note").screenshot({ path: "test-results/home-month-note.png" });
+
+    await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await expect(page.locator('[data-role="month-note"]')).toContainText(note);
+    await expect(page.getByRole("link", { name: he.payslip.editNote })).toHaveCount(1);
+    await page.locator('[data-role="month-note"]').screenshot({
+      path: "test-results/payslip-month-note.png",
+    });
+
+    // Not on the sheet, in either version: no cell carries it.
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.locator("[data-payslip-export]").click(),
+    ]);
+    const sheet = await openDownload(download);
+    const cells: string[] = [];
+    sheet.eachRow((one) => one.eachCell((cell) => cells.push(String(cell.value ?? ""))));
+    expect(cells.some((text) => text.includes(note))).toBe(false);
+  });
+});

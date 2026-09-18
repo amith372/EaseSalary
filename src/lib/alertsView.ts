@@ -118,6 +118,12 @@ function phrase(entry: ActionEntry, workerId: string) {
         href: "/reports",
         law: "wageProtection" as LegalLinkKey,
       };
+    case "monthUnconfirmed":
+      return {
+        said: words.monthUnconfirmed(monthLabel(entry.month)),
+        href: "/month/export",
+        law: "wageProtection" as LegalLinkKey,
+      };
     case "minimumWageChanged":
       return {
         said: words.minimumWageChanged(

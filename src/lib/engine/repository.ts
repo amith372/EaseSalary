@@ -3,6 +3,7 @@ import { salaryFor } from "@/lib/engine/salary";
 import { SEEDED_RATES, rateInForce, withFetchedRate } from "@/lib/datedRates";
 import type { DatedRate, RateKey } from "@/lib/datedRates";
 import type { Deferral, WarningKind } from "@/lib/engine/alerts";
+import type { HolidayAmendment } from "@/lib/engine/holidayAmendments";
 import { snapshotTerms } from "@/lib/engine/types";
 import type {
   ConfirmedWage,
@@ -240,6 +241,12 @@ export interface SalaryRepository {
   listDeferrals(): Promise<Deferral[]>;
   /** Records the deferral, replacing one held for the same worker and entry. */
   deferWarning(deferral: Deferral): Promise<void>;
+
+  /** The holiday moves recorded as amendments (specs.md item 10), oldest
+   * agreement first. */
+  listHolidayAmendments(workerId: string): Promise<HolidayAmendment[]>;
+  /** Records one. Never edited afterwards: it is the record of what was agreed. */
+  saveHolidayAmendment(workerId: string, amendment: HolidayAmendment): Promise<void>;
 }
 
 /**
@@ -406,6 +413,7 @@ interface WorkerRow {
   /** Sealed bytes, never numbers — this store cannot open them any more than
    * Postgres can, which is what makes the rule the same rule in both. */
   numbers: SealedNumbers;
+  amendments: HolidayAmendment[];
 }
 
 /**
@@ -433,21 +441,24 @@ function copyOf(value: SealedNumber | null | undefined): SealedNumber | null {
 type StoredMonth = MonthRecord & { updatedAt: string };
 
 /**
- * Whether a save changes nothing but when the month was exported — the
- * condition `private.touch_updated_at` applies in Postgres, so a month edited
+ * Whether a save changes nothing but when the month was exported, or its note —
+ * the condition `private.touch_updated_at` applies in Postgres, so a month edited
  * here reaches the *corrected* state on the same rule it reaches it there.
  *
  * Producing a file is not an edit: without this, every download would move
- * `updatedAt` past `confirmedAt` and report the month as corrected.
+ * `updatedAt` past `confirmedAt` and report the month as corrected. Nor is a
+ * note, which reaches no sheet, so the file already produced still matches.
  */
 function onlyTheExportMoved(before: StoredMonth, after: MonthRecord): boolean {
   const without = ({
     exportedAt,
     updatedAt,
+    note,
     ...rest
   }: Partial<StoredMonth>): unknown => {
     void exportedAt;
     void updatedAt;
+    void note;
     return rest;
   };
   return JSON.stringify(without(before)) === JSON.stringify(without(after));
@@ -546,6 +557,7 @@ export function createInMemoryRepository(
         // it, so a save that dropped them would erase a passport every time a
         // rest day changed.
         numbers: existing?.numbers ?? {},
+        amendments: existing?.amendments ?? [],
       });
     },
 
@@ -663,12 +675,23 @@ export function createInMemoryRepository(
         structuredClone(deferral),
       ];
     },
+
+    async listHolidayAmendments(workerId) {
+      return structuredClone(
+        [...rowOf(workerId).amendments].sort((a, b) => a.agreedOn.localeCompare(b.agreedOn)),
+      );
+    },
+
+    async saveHolidayAmendment(workerId, amendment) {
+      rowOf(workerId).amendments.push(structuredClone(amendment));
+    },
   };
 
   for (const profile of seed.workers ?? []) {
     workers.set(profile.id, {
       profile: structuredClone(profile),
       numbers: {},
+      amendments: [],
       spans: structuredClone(seed.spans?.[profile.id] ?? []),
       months: new Map(
         (seed.months?.[profile.id] ?? []).map((record) => [

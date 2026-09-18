@@ -820,6 +820,12 @@ export interface MonthFacts {
    * live-in caregiver has no statutory overtime, so there is no rate to apply.
    */
   hospitalOvertime?: HospitalOvertime;
+  /**
+   * The user's own note on the month as a whole, or absent (specs.md item 5).
+   * **It values nothing and reaches no sheet** — it is shown on `דף המשכורת`
+   * only — so writing one is not a correction of the month (Part 5).
+   */
+  note?: string;
   /** Keyed by the line's explanation key — `base`, `restDays`, `extra.<id>` and
    * the rest — so an override is addressed by the same key the explanation is
    * (specs.md items 17, 24). */

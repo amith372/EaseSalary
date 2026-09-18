@@ -11,6 +11,11 @@ import {
   type HolidayRefusal,
   type HolidayYear,
 } from "@/lib/engine/holidayYear";
+import {
+  listInForce,
+  reviewHolidayAmendment,
+  type AmendmentRefusal,
+} from "@/lib/engine/holidayAmendments";
 import { holidayAllowanceFor } from "@/lib/engine/leave";
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
 import type { MonthSpan } from "@/lib/engine/types";
@@ -44,7 +49,7 @@ import type { IsoDate } from "@/lib/types";
 
 export type HolidayActionResult =
   | { ok: true }
-  | { ok: false; reason: HolidayRefusal | "entryUnknown" };
+  | { ok: false; reason: HolidayRefusal | AmendmentRefusal | "entryUnknown" };
 
 /**
  * Every route a chosen holiday reaches.
@@ -178,12 +183,17 @@ export async function unchooseHoliday(
  * **It keeps its span id**, which is what makes it a move rather than a
  * deletion and a fresh choice: the fact of whether she worked it travels with
  * it, and so does the part of a day it was taken as.
+ *
+ * **Once any month of the year is confirmed the move is an amendment**, and
+ * arrives with the day it was agreed and a note; it is refused without them,
+ * and recorded beside the span when it is made.
  */
 export async function moveHoliday(
   workerId: string,
   spanId: string,
   date: IsoDate,
   year: number,
+  amendment?: { agreedOn: string; note: string },
 ): Promise<HolidayActionResult> {
   const repository = await getRepository();
   const profile = await profileOf(repository, workerId);
@@ -203,7 +213,29 @@ export async function moveHoliday(
   );
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
+  const months = await repository.listMonths(profile.id);
+  const amending = listInForce(year, months);
+  if (amending) {
+    // Staying where it is moves nothing, and so amends nothing.
+    if (date === span.from) return { ok: true };
+    if (amendment === undefined) return { ok: false, reason: "amendmentNeeded" };
+    const agreed = reviewHolidayAmendment(
+      { from: span.from, to: date, agreedOn: amendment.agreedOn, note: amendment.note },
+      months,
+    );
+    if (!agreed.ok) return { ok: false, reason: agreed.reason };
+  }
+
   await repository.saveSpan(profile.id, { ...span, from: date, to: date });
+  if (amending && amendment !== undefined) {
+    await repository.saveHolidayAmendment(profile.id, {
+      id: randomUUID(),
+      agreedOn: amendment.agreedOn as IsoDate,
+      from: span.from,
+      to: date,
+      note: amendment.note.trim(),
+    });
+  }
   revalidateHolidays();
   return { ok: true };
 }

@@ -40,9 +40,9 @@ import type {
  *
  * **`אושר ב[תאריך]` is the day the month was last confirmed before an export**,
  * stored with the month since 2026-09-13 and absent for a month never
- * confirmed, so no date is ever invented. **`להוסיף הערה לחודש` is not built**,
- * settled with the user on 2026-09-10: it needs a note on the month as a whole,
- * and notes belong to a mark or to a line the user added.
+ * confirmed, so no date is ever invented. **The month's own note is shown here
+ * and written on the opening screen** (specs.md item 5), which
+ * `להוסיף הערה לחודש` opens on this month.
  */
 
 /** One month, ready to read. The counts come from `exportQuestions`, which is
@@ -68,6 +68,8 @@ export interface PayslipMonth {
   /** The day the month was last confirmed before an export, in Israel, or
    * `null` for a month never confirmed. */
   confirmedOn: IsoDate | null;
+  /** The month's own note, or `null` (specs.md item 5). */
+  note: string | null;
 }
 
 export interface WorkerPayslip {
@@ -504,6 +506,17 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
           </div>
         </section>
 
+        {shown.note !== null ? (
+          <section data-role="month-note" className="flex flex-col gap-2">
+            <h2 dir="auto" className="text-[22px] font-semibold">
+              {he.payslip.note}
+            </h2>
+            <p dir="auto" className="text-[17px] font-light whitespace-pre-line text-ink-warm">
+              {shown.note}
+            </p>
+          </section>
+        ) : null}
+
         <section className="flex flex-wrap items-center gap-5.5 border-t border-line pt-6">
           {/* Back to the calendar and the figures, which are the opening
               screen's since 2026-09-16 — this sheet is one link further in. */}
@@ -512,6 +525,12 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
             className="text-[17px] font-medium underline-offset-4 hover:underline"
           >
             <Bidi>{he.payslip.correct}</Bidi>
+          </Link>
+          <Link
+            href={`/?month=${shown.month.year}-${String(shown.month.month).padStart(2, "0")}#month-note`}
+            className="text-[17px] text-ink-soft hover:text-forest"
+          >
+            <Bidi>{shown.note === null ? he.payslip.addNote : he.payslip.editNote}</Bidi>
           </Link>
           <Link
             href="/reports"

@@ -67,6 +67,9 @@ export interface WorkerHolidayYear {
   /** Which of the three ways the fetch failed, where it did (item 12). The
    * candidate list is then empty and the dates are typed by hand. */
   failure: ScrapeFailureKind | null;
+  /** Whether a move is an amendment: a month of this year is confirmed
+   * (specs.md item 10). */
+  amending: boolean;
   year: HolidayYear;
 }
 
@@ -334,6 +337,7 @@ export function HolidayPickerScreen({
                     restDay={state.restDay}
                     year={year}
                     workerId={entry.worker.id}
+                    amending={entry.amending}
                     moving={
                       open?.kind === "move" &&
                       open.spanId === row.chosen?.spanId
@@ -477,6 +481,7 @@ function HolidayRowView({
   restDay,
   year,
   workerId,
+  amending,
   moving,
   onMove,
   onCancelMove,
@@ -486,6 +491,7 @@ function HolidayRowView({
   restDay: RestDay;
   year: number;
   workerId: string;
+  amending: boolean;
   moving: boolean;
   onMove: () => void;
   onCancelMove: () => void;
@@ -616,13 +622,15 @@ function HolidayRowView({
       {moving && chosen !== null ? (
         <DateForm
           legend={he.holidays.add.move}
+          hint={amending ? he.holidays.add.amendment.hint : undefined}
           year={year}
           submit={he.holidays.add.moveSubmit}
           initial={row.date}
+          amending={amending}
           onCancel={onCancelMove}
-          onSubmit={(date) =>
+          onSubmit={(date, amendment) =>
             act(row.date, () =>
-              moveHoliday(workerId, chosen.spanId, date, year),
+              moveHoliday(workerId, chosen.spanId, date, year, amendment),
             )
           }
         />
@@ -666,6 +674,7 @@ function DateForm({
   year,
   submit,
   initial,
+  amending = false,
   onCancel,
   onSubmit,
 }: {
@@ -674,10 +683,15 @@ function DateForm({
   year: number;
   submit: string;
   initial?: IsoDate;
+  /** Also asks when the move was agreed and why (specs.md item 10). */
+  amending?: boolean;
   onCancel: () => void;
-  onSubmit: (date: IsoDate) => void;
+  onSubmit: (date: IsoDate, amendment?: { agreedOn: string; note: string }) => void;
 }) {
   const [date, setDate] = useState<string>(initial ?? "");
+  const [agreedOn, setAgreedOn] = useState("");
+  const [note, setNote] = useState("");
+  const ready = date !== "" && (!amending || (agreedOn !== "" && note.trim() !== ""));
 
   return (
     <div className="flex min-w-0 flex-col gap-2 rounded-card-sm border border-line bg-ground px-3.5 py-3">
@@ -709,10 +723,42 @@ function DateForm({
             className="rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
           />
         </label>
+        {amending ? (
+          <>
+            <label className="flex min-w-0 flex-col gap-1">
+              <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+                {he.holidays.add.amendment.agreedOn}
+              </span>
+              <input
+                type="date"
+                dir="ltr"
+                data-field="agreed-on"
+                value={agreedOn}
+                onChange={(event) => setAgreedOn(event.target.value)}
+                className="rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
+              />
+            </label>
+            <label className="flex min-w-0 flex-[1_1_16rem] flex-col gap-1">
+              <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+                {he.holidays.add.amendment.note}
+              </span>
+              <input
+                type="text"
+                dir="auto"
+                data-field="amendment-note"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                className="rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
+              />
+            </label>
+          </>
+        ) : null}
         <button
           type="button"
-          disabled={date === ""}
-          onClick={() => onSubmit(date as IsoDate)}
+          disabled={!ready}
+          onClick={() =>
+            onSubmit(date as IsoDate, amending ? { agreedOn, note } : undefined)
+          }
           className="rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:opacity-50"
         >
           <span dir="auto">{submit}</span>
