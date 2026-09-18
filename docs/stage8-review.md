@@ -12,8 +12,8 @@ the plan table, then stops and reports to the user.
 
 - **Last done:** step 8, F5. F26–F28 are not approved: each is grilled with the user
   before any code.
-- **Next:** step 8 — execute the Fix list from the first unchecked item (F6), one commit
-  each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25.
+- **Next:** step 8 — execute the Fix list from the first unchecked item (F29, then F6), one commit
+  each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25 (F29 and F30 included).
 - **Waiting on the user:** the questions under "Needs the user". Three are reproduced money
   errors: two in sickness (run 2), and the household's rates never reaching a month (run 5).
   None of them blocks the next step.
@@ -50,7 +50,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F5 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F5 done; F29–F30 added 2026-09-19 |
 
 ### How each step is run
 
@@ -374,6 +374,23 @@ cause.
 Dropped: `he.ts` at 2,828 lines (one translations file is `CLAUDE.md`'s rule); `calculateMonth`
 reading both `facts` and `month` (a nit).
 
+## Sweep after F5 — `knip --production`, `jscpd`, test titles, 2026-09-18
+
+Asked for by the user after F5; its three items were approved on 2026-09-19 and are on the
+Fix list as F29, F30 and an addition to F14.
+
+- R6.1 — dead but for their tests: `restDaysOf` (`dates.ts:286`), `holidayDaysRemaining`
+  (`leave.ts:175`).
+- R6.2 — `moveHoliday` and `setHolidayPart` open with the same eleven lines (state, then the
+  holiday span or `entryUnknown`) — `settings/holidays/actions.ts:182,240`.
+- R6.3 — "unreachable" tested once per scraper (a throw, an empty body, an error status) in
+  four test files; once the guard is in `fetchPage` (F14) it is tested there once.
+
+Seen and left: the unwired tax scraper and `pageSections` wait on "Needs the user"; 18
+exports used only in their own file; shared test setup (`balances`/`series`,
+`actionList`/`upcoming`) is a fixture to share, not a test to delete; the saved Kol Zchut
+pages repeat the site's chrome by nature.
+
 ## Needs the user
 
 - **The household's rates never reach a month's calculation** (run 5, reproduced).
@@ -459,7 +476,9 @@ run had already dropped.
 - [x] 2026-09-18 `9a0dcda` F4 — optional props and casts the types already cover: `MonthCalendar`'s five callbacks
   required, the casts of R1.15, `LegalLinkKey` typed in `alertsView.ts` — R4.1, R1.15, R2.17 —
   check: Browser.
-- [x] 2026-09-18 F5 — nested ternaries and if-chains become records — R1.7, R1.14 — check: Browser.
+- [x] 2026-09-18 `2fb135e` F5 — nested ternaries and if-chains become records — R1.7, R1.14 — check: Browser.
+- [ ] F29 — `restDaysOf` and `holidayDaysRemaining` deleted with their tests — R6.1 — check:
+  `knip --production` no longer lists them; the rest of the unit suite unedited.
 
 **B. Written rules restored** — each fixes a sentence of `CLAUDE.md`; on screen, only alignment
 and translation can change.
@@ -488,7 +507,11 @@ and translation can change.
 - [ ] F13 — the export's copies (`balanceOf`, the note into `I`, `coveredMonthsLabel`) and one
   `ReportKind` table — R2.12, R2.16 — check: export suite and `agreement.test.ts` unedited.
 - [ ] F14 — the scraper's copies: `collapse`, `AS_OF`, the empty-body guard moved into
-  `fetchPage`, and one fetch type — R2.13 — check: scraper suite on the saved pages, unedited.
+  `fetchPage`, and one fetch type; the per-scraper "unreachable" tests fold into one set on
+  `fetchPage` — R2.13, R6.3 — check: the parsing tests on the saved pages unedited; each
+  failure kind still tested once.
+- [ ] F30 — one helper for the holiday actions' shared opening — R6.2 — check: unit suite
+  unedited; Browser (holiday picker).
 - [ ] F15 — `Field.tsx` gains the button and input classes with their disabled states;
   `DateField`, `Refusal` and `RuleLink` are shared — R1.9, R1.19, R2.20, R1.3, R1.4 — check:
   Browser.
