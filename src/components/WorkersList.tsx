@@ -116,7 +116,6 @@ export function WorkersList({
                 <WorkerAvatar />
                 <div className="flex min-w-0 flex-col gap-1">
                   <h2
-                    dir="auto"
                     className="text-[22px] leading-[1.2] font-bold tracking-[-0.02em] break-words sm:text-[26px]"
                   >
                     <Bidi>{worker.name}</Bidi>

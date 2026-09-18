@@ -108,7 +108,6 @@ export function WorkerProfileScreen({
         <WorkerAvatar size="lg" />
         <div className="flex min-w-[min(15rem,100%)] flex-[1_1_15rem] flex-col gap-1.25">
           <h1
-            dir="auto"
             className="text-[26px] leading-[1.15] font-bold tracking-[-0.02em] break-words sm:text-[32px]"
           >
             <Bidi>{profile.name}</Bidi>

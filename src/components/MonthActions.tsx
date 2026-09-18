@@ -581,7 +581,7 @@ function IncomeTaxControl({
           {sourceWords}
         </span>
         {incomeTax.sharePercent !== null && incomeTaxAgorot > 0 ? (
-          <span dir="auto" className="text-[13px] font-light text-ink-quiet">
+          <span className="text-[13px] font-light text-ink-quiet">
             <bdi>{words.share(incomeTax.sharePercent)}</bdi>
           </span>
         ) : null}
@@ -650,11 +650,13 @@ function IncomeTaxControl({
           take on trust — and so the sum that is actually stored is the one she
           agreed to. */}
       {unit === "percentage" && percentage !== null ? (
-        <span dir="auto" className="text-[13px] font-light text-ink-warm">
+        <span className="text-[13px] font-light text-ink-warm">
           {converted === null || gross === null ? (
-            words.noGross
+            <span dir="auto">{words.noGross}</span>
           ) : (
-            <bdi>
+            // A formula of three figures: translated, it would be three wrong
+            // figures.
+            <bdi translate="no">
               {words.worksOutTo(
                 formatPercent(percentage),
                 formatAgorot(gross),
@@ -915,7 +917,7 @@ function UserLinesControl({
             what keeps a family from recording the same deduction twelve times,
             or from concluding the application cannot do it at all. */}
         <p dir="auto" className="text-[13px] leading-[1.5] font-light text-ink-quiet text-pretty">
-          {words.oneOffOnly}{" "}
+          <span>{`${words.oneOffOnly} `}</span>
           <Link href="/settings" className="font-medium">
             <span dir="auto">{words.standing}</span>
           </Link>
@@ -968,7 +970,6 @@ function UserLinesControl({
               </div>
               {line.note ? (
                 <span
-                  dir="auto"
                   className="text-[13px] leading-[1.5] font-light text-ink-warm text-pretty"
                 >
                   <Bidi>{line.note}</Bidi>
@@ -1268,7 +1269,6 @@ function AdvancesControl({
                         </div>
                         {advance.note ? (
                           <span
-                            dir="auto"
                             className="text-[13px] leading-[1.5] font-light text-ink-warm text-pretty"
                           >
                             <Bidi>{advance.note}</Bidi>
@@ -1634,7 +1634,6 @@ function ThirdPartyControl({
               </div>
               {payment.note ? (
                 <span
-                  dir="auto"
                   className="text-[13px] leading-[1.5] font-light text-ink-warm text-pretty"
                 >
                   <Bidi>{payment.note}</Bidi>

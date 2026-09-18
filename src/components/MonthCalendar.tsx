@@ -481,7 +481,7 @@ export function MonthCalendar({
           // The month is the page's subject and the skip link lands here, so
           // its name is the page's `h1`.
           label={
-            <h1 dir="auto" className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
+            <h1 className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
               <Bidi>{monthLabel(month)}</Bidi>
             </h1>
           }

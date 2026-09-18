@@ -366,8 +366,7 @@ export function AppShell({
             <span className="sr-only text-[15px] font-medium whitespace-nowrap lg:not-sr-only">
               {part !== null ? (
                 <span dir="auto">
-                  {he.header.greeting[part]}
-                  {userName ? ", " : ""}
+                  {`${he.header.greeting[part]}${userName ? ", " : ""}`}
                 </span>
               ) : null}
               {userName ? <Bidi>{userName}</Bidi> : null}
