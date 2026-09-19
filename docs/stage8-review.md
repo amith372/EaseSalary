@@ -14,6 +14,10 @@ the plan table, then stops and reports to the user.
   before any code.
 - **Next:** step 8 — execute the Fix list from the first unchecked item (F8), one commit
   each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25 (F29 and F30 included).
+- **Expect three browser failures until F31 is settled:** `alerts.spec.ts:108`, `:359` and
+  `before-export.spec.ts:402` fail on HEAD whenever the real date is past the suite's pinned
+  18 Sept (R6.4). Any *other* failure is checked by rerunning it alone, and against HEAD with
+  the change stashed.
 - **Waiting on the user:** the questions under "Needs the user". Three are reproduced money
   errors: two in sickness (run 2), and the household's rates never reaching a month (run 5).
   None of them blocks the next step.
@@ -491,7 +495,7 @@ and translation can change.
 - [x] 2026-09-19 `5fca141` F6 — `dir="auto"` off `<Bidi>` wrappers, bare text wrapped, amounts in their own
   `translate="no"` element — R2.1, R2.2, R2.3 — check: Browser; screenshots of one fixed row
   before and after (right edge).
-- [x] 2026-09-19 F7 — the shadow colour becomes a token, and the scraper's Hebrew moves to `he.ts` — R2.4,
+- [x] 2026-09-19 `af5ffb3` F7 — the shadow colour becomes a token, and the scraper's Hebrew moves to `he.ts` — R2.4,
   R2.5 — check: Browser; the holiday picker shows the same names.
 - [ ] F8 — `saveSpan` raises the error from its `before` read — R1.23 — check: unit suite;
   only the failure path changes.
