@@ -790,13 +790,14 @@ export const he = {
       /** The blockages, named so a user looking here for one learns why it
        * has no switch (specs.md item 27). */
       alwaysShown:
-        "מוצגים תמיד, בלי אפשרות לכבות: ביטוח לאומי לרבעון, מסמך שפג תוקפו, חגים שטרם נבחרו, דמי הבראה החודש, מקדמה שעדיין בהחזר, שינוי בשכר המינימום, חודש שהסתיים ולא אושר.",
+        "מוצגים תמיד, בלי אפשרות לכבות: ביטוח לאומי לרבעון, מסמך שפג תוקפו, חגים שטרם נבחרו, דמי הבראה החודש, שינוי בשכר המינימום, חודש שהסתיים ולא אושר.",
       close: "סגירה",
       kinds: {
         documentExpiring: "מסמך או ביטוח שעומד לפוג",
         recuperationApproaching: "חודש הבראה שמתקרב",
         monthNotExported: "חודש שהסתיים ולא יוצא",
         seniorityYearTurning: "שנת ותק חדשה",
+        advanceOutstanding: "מקדמה שעדיין בהחזר",
         vacationUnderSeven: "פחות משבעה ימי חופשה בשנה",
       } satisfies Record<WarningKind, string>,
     },

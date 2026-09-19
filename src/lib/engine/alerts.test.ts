@@ -112,6 +112,36 @@ describe("a warning kind switched off", () => {
   });
 });
 
+/**
+ * Item 27: an advance still being repaid is a warning — put off with 'not now',
+ * back once an instalment changes what is owed, and switched off by its kind.
+ * Catches it drifting back to a blockage, which neither of these can touch.
+ */
+describe("an advance still being repaid", () => {
+  const owed: ActionEntry = {
+    list: "warning",
+    key: "advanceOutstanding",
+    number: 3,
+    outstandingAgorot: 100000,
+  };
+  const on = (deferrals: Deferral[], switchedOff: "advanceOutstanding"[] = []) =>
+    (entries: ActionEntry[]) =>
+      shownEntries(entries, { workerId: "w", switchedOff, deferrals, today: "2026-09-18" });
+
+  it("is put off with 'not now', and shows again once an instalment is recorded", () => {
+    expect(dismissalOf(owed)).toBe("notNow");
+    const putOff = deferralOf("w", owed, "2026-09-17");
+    expect(on([putOff])([owed])).toEqual([]);
+    // ₪1,000 owed, ₪200 repaid: ₪800 is a different entry.
+    const afterInstalment: ActionEntry = { ...owed, outstandingAgorot: 80000 };
+    expect(on([putOff])([afterInstalment])).toEqual([afterInstalment]);
+  });
+
+  it("is switched off by its kind", () => {
+    expect(on([], ["advanceOutstanding"])([BLOCKAGE, owed])).toEqual([BLOCKAGE]);
+  });
+});
+
 describe("what was already handled", () => {
   // Employed from 10 March 2025, recuperation in July: July 2026 is the first
   // recuperation month that owes days (item 15).

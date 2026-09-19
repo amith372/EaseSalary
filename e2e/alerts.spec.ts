@@ -75,11 +75,11 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await page.getByRole("button", { name: he.alerts.settingsLink }).click();
     const dialog = page.getByRole("dialog", { name: he.alerts.reminders.title });
     await expect(dialog).toBeVisible();
-    // The five kinds item 27 names and nothing else, every one on by default.
+    // The six kinds item 27 names and nothing else, every one on by default.
     const boxes = dialog.getByRole("checkbox");
-    await expect(boxes).toHaveCount(5);
-    for (let i = 0; i < 5; i += 1) await expect(boxes.nth(i)).toBeChecked();
-    // The blockages are named, so an advance looked for here is explained.
+    await expect(boxes).toHaveCount(6);
+    for (let i = 0; i < 6; i += 1) await expect(boxes.nth(i)).toBeChecked();
+    // The blockages are named, so one looked for here is explained.
     await expect(dialog.locator('[data-role="always-shown"]')).toHaveText(
       he.alerts.reminders.alwaysShown,
     );
@@ -182,12 +182,14 @@ test.describe("the alerts page (specs.md item 27)", () => {
     const panel = page.locator('[data-role="bell-panel"]');
     const reminders = page.getByRole("dialog", { name: he.alerts.reminders.title });
 
-    // Every unexported month is what puts the demo over four; without them
-    // what is left is the few the seed's dates raise.
+    // Every unexported month and the seed's advances are what put the demo over
+    // four; without them what is left is the few the seed's dates raise.
     await page.getByRole("button", { name: he.alerts.settingsLink }).click();
-    await reminders
-      .getByRole("checkbox", { name: he.alerts.reminders.kinds.monthNotExported })
-      .uncheck();
+    for (const kind of ["monthNotExported", "advanceOutstanding"] as const) {
+      await reminders
+        .getByRole("checkbox", { name: he.alerts.reminders.kinds[kind] })
+        .uncheck();
+    }
     await reminders.getByRole("button", { name: he.alerts.reminders.close }).click();
     await expect(page.locator('[data-role="alert"]').filter({ hasText: "טרם יוצא" })).toHaveCount(0);
     const titles = await page
@@ -221,7 +223,7 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await panel.getByRole("button", { name: he.alerts.settingsLink }).click();
     await expect(reminders).toBeVisible();
     const boxes = reminders.getByRole("checkbox");
-    for (let i = 0; i < 5; i += 1) await boxes.nth(i).uncheck();
+    for (let i = 0; i < 6; i += 1) await boxes.nth(i).uncheck();
     await expect(bell.locator('[data-row="warnings"]')).toHaveText("0");
     await reminders.getByRole("button", { name: he.alerts.reminders.close }).click();
     await expect(page).toHaveURL(/\/$/);

@@ -251,8 +251,8 @@ describe("an advance still being repaid (item 20)", () => {
       profile,
     );
     expect(only(listFor({ today: "2026-02-10", months: [february], profile }), "advanceOutstanding")).toEqual([
-      { list: "blockage", key: "advanceOutstanding", number: 1, outstandingAgorot: 60000 },
-      { list: "blockage", key: "advanceOutstanding", number: 2, outstandingAgorot: 50000 },
+      { list: "warning", key: "advanceOutstanding", number: 1, outstandingAgorot: 60000 },
+      { list: "warning", key: "advanceOutstanding", number: 2, outstandingAgorot: 50000 },
     ]);
   });
 

@@ -21,6 +21,7 @@ export const warningKinds = [
   "recuperationApproaching",
   "monthNotExported",
   "seniorityYearTurning",
+  "advanceOutstanding",
   "vacationUnderSeven",
 ] as const satisfies readonly ActionEntry["key"][];
 

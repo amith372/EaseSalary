@@ -33,9 +33,10 @@ import type { MonthSpan } from "./types";
  * without which the salary cannot be produced correctly today, or something
  * that has already lapsed, and it leads the opening screen; a `warning` still
  * has time in it and lights the bell. Where item 27's test leaves an entry open,
- * the list it is on is fixed there: recuperation due this month and an advance
- * still being repaid go on the opening screen, and a finished month not yet
- * exported and a year with fewer than seven vacation days go to the bell — item
+ * the list it is on is fixed there: recuperation due this month goes on the
+ * opening screen, and an advance still being repaid, a finished month not yet
+ * exported and a year with fewer than seven vacation days go to the bell — the
+ * advance because item 18's questions already ask about it before every export — item
  * 7 asks for the vacation to be said without pressing the point. The national-insurance quarter is on the opening screen by item 19.
  *
  * **Data, never words.** Each entry carries the dates and figures the screen
@@ -191,7 +192,7 @@ function advances({ profile, series }: ActionListInput): ActionEntry[] {
   )
     .filter((advance) => advance.outstandingAgorot > 0)
     .map((advance) => ({
-      list: "blockage",
+      list: "warning",
       key: "advanceOutstanding",
       number: advance.number,
       outstandingAgorot: advance.outstandingAgorot,

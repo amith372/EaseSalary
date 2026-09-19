@@ -1111,9 +1111,11 @@ Each of these is true or false at a glance.
     the salary can be produced correctly today without it: if it can, the item is a
     warning and belongs in the bell; if it cannot, it is a blockage and belongs on the
     screen. Where that test leaves an item open, its list is fixed here: a national-insurance
-    quarter due (item 19), recuperation due this month and an advance still being repaid go
-    on the opening screen; a finished month not yet exported and a year that passed with
-    fewer than seven vacation days go to the bell. The opening screen shows the first four
+    quarter due (item 19) and recuperation due this month go on the opening screen; an
+    advance still being repaid, a finished month not yet exported and a year that passed
+    with fewer than seven vacation days go to the bell. An advance goes to the bell because
+    the salary can be produced without it and the confirmation questions of item 18 already
+    ask about it before every export. The opening screen shows the first four
     blockages; when there are more it says how many more and links to the page that lists
     them all. The bell warns sixty days before the employment
     permit, the work visa or the medical insurance expires, and in the month before a
@@ -1137,7 +1139,7 @@ Each of these is true or false at a glance.
     **Warnings can be switched off by kind** from the alerts page or the bell's panel, in a pop-up that lists the
     kinds, one checkbox each for a document
     running out, a recuperation month approaching, a finished month not yet exported, a
-    seniority year about to turn and a year that passed with fewer than seven vacation days, kept for the household and on by default. Below the checkboxes the pop-up
+    seniority year about to turn, an advance still being repaid and a year that passed with fewer than seven vacation days, kept for the household and on by default. Below the checkboxes the pop-up
     names the blockages, which are always shown and have no switch, so a user looking there
     for one learns why it is missing. A switched-off
     kind is neither listed nor counted by the bell. Blockages have no switch, for the reason
