@@ -1,7 +1,8 @@
 import ExcelJS from "exceljs";
 import { prepareForExcel } from "@/lib/export/workbook";
 import type { MonthInSeries } from "@/lib/engine/series";
-import type { BalanceKind, BalanceLine } from "@/lib/types";
+import { balanceOf } from "@/lib/engine/balances";
+import type { BalanceKind } from "@/lib/types";
 
 /**
  * The year's balances on their own — specs.md item 23.
@@ -56,13 +57,6 @@ export interface BalancesSheetInput {
   monthLabels: string[];
 }
 
-function balanceOf(
-  month: MonthInSeries,
-  kind: BalanceKind,
-): BalanceLine | undefined {
-  return month.result.balances.find((line) => line.kind === kind);
-}
-
 export async function fillBalancesSheet(
   template: ArrayBuffer,
   input: BalancesSheetInput,
@@ -81,7 +75,7 @@ export async function fillBalancesSheet(
     let usedThisYear = 0;
 
     input.months.slice(0, ROWS_PER_BLOCK).forEach((month, index) => {
-      const line = balanceOf(month, kind);
+      const line = balanceOf(month.result, kind);
       if (line === undefined) return;
       const row = firstRow + index;
 

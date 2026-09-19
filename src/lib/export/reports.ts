@@ -33,7 +33,7 @@ import type { MonthLine } from "@/lib/types";
  * on a numbered criterion, which it does not have.
  */
 
-interface ReportSheet {
+export interface ReportSheet {
   /** Names the tab and heads the sheet, so a file opened months later says what
    * it is without the filename. */
   title: string;

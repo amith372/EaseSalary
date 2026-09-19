@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { daysInMonth } from "@/lib/dates";
+import { balanceOf } from "@/lib/engine/balances";
 import { lineKeys } from "@/lib/engine/lines";
 import { isUserLineKey } from "@/lib/engine/month";
 import {
@@ -7,6 +8,7 @@ import {
   FIRST_LINE_ROW,
   LAST_LINE_ROW,
   NATIONAL_INSURANCE_ROW,
+  NOTE_COLUMN,
   TAX_ROW,
   TEMPLATE_ROWS,
   VACATION_UNITS_ROW,
@@ -318,29 +320,20 @@ function writeHeader(sheet: ExcelJS.Worksheet, input: MonthSheetInput): void {
   // `ניצול יום חג בחודש זה` — what the yearly entitlement was drawn against
   // (item 10), which is not the same count as the holidays she worked in `G1`.
   put(sheet, "H2", input.holidayDaysUsed);
-  put(sheet, "J2", usedOf(result, "sick"));
+  put(sheet, "J2", balanceOf(result, "sick")?.used ?? null);
 
   // Loose text and never a date value, because that is how the sheet writes
   // every date and the family compares the page by eye (Part 5).
   put(sheet, "G3", input.freeRestDays.join(", ") || null);
 }
 
-function usedOf(result: MonthResult, kind: "vacation" | "sick"): number | null {
-  return result.balances.find((line) => line.kind === kind)?.used ?? null;
-}
-
-function closingOf(
-  result: MonthResult,
-  kind: "vacation" | "sick",
-): number | null {
-  return result.balances.find((line) => line.kind === kind)?.closing ?? null;
-}
-
-function accruedOf(
-  result: MonthResult,
-  kind: "vacation" | "sick",
-): number | null {
-  return result.balances.find((line) => line.kind === kind)?.accrued ?? null;
+/** The note a row carries, in column I beside it. */
+function putNote(
+  sheet: ExcelJS.Worksheet,
+  row: number,
+  note: string | undefined,
+): void {
+  if (note !== undefined) sheet.getCell(`${NOTE_COLUMN}${row}`).value = note;
 }
 
 /**
@@ -373,11 +366,8 @@ function writeLines(
   // The vacation row carries its units and no money at all (item 7). Written
   // here rather than as a line, because the engine has no vacation line and a
   // key for one would be the double payment item 7 exists to prevent.
-  put(sheet, `C${VACATION_UNITS_ROW}`, usedOf(result, "vacation"));
-  const vacationNote = notes[VACATION_NOTES_KEY];
-  if (vacationNote !== undefined) {
-    sheet.getCell(`I${VACATION_UNITS_ROW}`).value = vacationNote;
-  }
+  put(sheet, `C${VACATION_UNITS_ROW}`, balanceOf(result, "vacation")?.used ?? null);
+  putNote(sheet, VACATION_UNITS_ROW, notes[VACATION_NOTES_KEY]);
 
   /**
    * **The national-insurance estimate, in the unit-price cell of its own row,
@@ -402,8 +392,8 @@ function writeLines(
   );
 
   // The accruals, under the template's own `צבירת ימי חופשה / מחלה`.
-  put(sheet, `J${VACATION_UNITS_ROW}`, accruedOf(result, "vacation"));
-  put(sheet, `J${TEMPLATE_ROWS[lineKeys.sickDeduction]}`, accruedOf(result, "sick"));
+  put(sheet, `J${VACATION_UNITS_ROW}`, balanceOf(result, "vacation")?.accrued ?? null);
+  put(sheet, `J${TEMPLATE_ROWS[lineKeys.sickDeduction]}`, balanceOf(result, "sick")?.accrued ?? null);
 
   // The rows the template does not hold in advance, at the foot of the numbered
   // block and continuing its own 1–17 in column A.
@@ -424,7 +414,7 @@ function writeLineRow(
   put(sheet, `C${row}`, line.units ?? null);
   put(sheet, `D${row}`, toShekels(line.rate));
   put(sheet, `${line.column}${row}`, toShekels(line.amount));
-  if (note !== undefined) sheet.getCell(`I${row}`).value = note;
+  putNote(sheet, row, note);
 }
 
 /**
@@ -446,8 +436,7 @@ function writeBlock(
     // answer at the minimum wage, where the credit points exceed the tax. A
     // printed 0.00 would read as a figure somebody chose.
     put(sheet, `E${TAX_ROW}`, tax.amount === 0 ? null : toShekels(tax.amount));
-    const note = input.notes[tax.key];
-    if (note !== undefined) sheet.getCell(`I${TAX_ROW}`).value = note;
+    putNote(sheet, TAX_ROW, input.notes[tax.key]);
   }
 
   const lettered = letteredIndexOf(block);
@@ -458,8 +447,7 @@ function writeBlock(
     // template has none to give it.
     if (index !== lettered) sheet.getCell(`B${line}`).value = row.label;
     put(sheet, `E${line}`, toShekels(row.amount));
-    const note = input.notes[row.key];
-    if (note !== undefined) sheet.getCell(`I${line}`).value = note;
+    putNote(sheet, line, input.notes[row.key]);
   });
 }
 
@@ -576,10 +564,10 @@ function writeReporting(
   const figures: (number | null)[] = [
     result.standardDays,
     result.actualDays,
-    usedOf(result, "vacation"),
-    closingOf(result, "vacation"),
-    usedOf(result, "sick"),
-    closingOf(result, "sick"),
+    balanceOf(result, "vacation")?.used ?? null,
+    balanceOf(result, "vacation")?.closing ?? null,
+    balanceOf(result, "sick")?.used ?? null,
+    balanceOf(result, "sick")?.closing ?? null,
   ];
   figures.forEach((figure, index) => {
     put(sheet, `C${layout.reportFirstRow + index}`, figure);

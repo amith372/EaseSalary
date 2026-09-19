@@ -10,9 +10,9 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F12. F31 (R6.4) is recorded and not approved. F26–F28 are not approved: each is grilled with the user
+- **Last done:** step 8, F13. F31 (R6.4) is recorded and not approved. F26–F28 are not approved: each is grilled with the user
   before any code.
-- **Next:** step 8 — execute the Fix list from the first unchecked item (F13), one commit
+- **Next:** step 8 — execute the Fix list from the first unchecked item (F14), one commit
   each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25 (F29 and F30 included); F32 comes last.
 - **Expect three browser failures until F31 is settled:** `alerts.spec.ts:108`, `:361` and
   `before-export.spec.ts:404` fail on HEAD whenever the real date is past the suite's pinned
@@ -54,7 +54,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F12, F29 done; F29–F30 added 2026-09-19 |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F13, F29 done; F29–F30 added 2026-09-19 |
 
 ### How each step is run
 
@@ -459,6 +459,11 @@ pages repeat the site's chrome by nature.
 - **One user-line panel, two looks** (R1.1). `/payments` shows why each placement is chosen
   and uses outlined buttons; `/settings` shows no hint and uses filled ones. Merging them has
   to pick one. Which?
+- **The national-insurance quarter is worded two ways** (F13, 2026-09-19). The month sheet writes
+  the covered months as a range, "אפריל 2025 – יוני 2025" (`coveredMonthsLabel`); the
+  national-insurance report lists each, "אפריל 2025, מאי 2025, יוני 2025"
+  (`reports.ts:170`, asserted by `reports.test.ts:156`). One wording changes a cell of one
+  file. Which?
 - **The income-tax scraper is not wired** (run 0). `fetchTaxBrackets` and
   `fetchCreditPointValue` in `src/lib/scrape/incomeTax.ts` are called by nothing, while
   `specs.md` Part 1 says the brackets and the credit point's value "are fetched per year and
@@ -511,11 +516,12 @@ and translation can change.
 - [x] 2026-09-19 `1f9c6af` F11 — `isOneOf`, one recuperation-month check, `nextAdvanceNumber` reused, one
   `requireWorker` error — R1.12, R1.11, R1.10, R2.19 — check: profile and repository suites
   unedited.
-- [x] 2026-09-19 F12 — span order settled once in `closeSpans`, one clip function, `holidayStateOf`
+- [x] 2026-09-19 `f02acf9` F12 — span order settled once in `closeSpans`, one clip function, `holidayStateOf`
   exported — R5.3, R5.4, R1.6 — check: unit suite unedited; `orderDates` appears once in
   `src/lib/engine`.
-- [ ] F13 — the export's copies (`balanceOf`, the note into `I`, `coveredMonthsLabel`) and one
+- [x] 2026-09-19 F13 — the export's copies (`balanceOf`, the note into `I`, `coveredMonthsLabel`) and one
   `ReportKind` table — R2.12, R2.16 — check: export suite and `agreement.test.ts` unedited.
+  `coveredMonthsLabel` was left: it changes a cell (see "Needs the user").
 - [ ] F14 — the scraper's copies: `collapse`, `AS_OF`, the empty-body guard moved into
   `fetchPage`, and one fetch type; the per-scraper "unreachable" tests fold into one set on
   `fetchPage` — R2.13, R6.3 — check: the parsing tests on the saved pages unedited; each

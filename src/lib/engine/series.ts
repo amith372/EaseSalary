@@ -1,6 +1,7 @@
 import { SEEDED_RATES } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { compareMonth, eachMonth, monthOf, yearMonthText } from "@/lib/dates";
+import { balanceOf } from "@/lib/engine/balances";
 import { holidayDaysOf } from "@/lib/engine/leave";
 import { calculateMonth } from "@/lib/engine/month";
 import { openMonthRecord, wageToCarry } from "@/lib/engine/repository";
@@ -13,7 +14,7 @@ import type {
   WorkerTerms,
 } from "@/lib/engine/types";
 import { overlapsMonth } from "@/lib/spans";
-import type { IsoDate, MonthResult, YearMonth } from "@/lib/types";
+import type { BalanceKind, IsoDate, MonthResult, YearMonth } from "@/lib/types";
 
 /**
  * A worker's months, replayed from the opening position.
@@ -126,12 +127,11 @@ function unopenedMonth(
  * counted again here. Counting them a second time would be a second path to one
  * figure, and the two would disagree the day either is corrected. */
 function vacationDaysUsed(result: MonthResult): number {
-  return result.balances.find((line) => line.kind === "vacation")?.used ?? 0;
+  return balanceOf(result, "vacation")?.used ?? 0;
 }
 
 function closingBalances(result: MonthResult) {
-  const closing = (kind: "vacation" | "sick") =>
-    result.balances.find((line) => line.kind === kind)?.closing ?? 0;
+  const closing = (kind: BalanceKind) => balanceOf(result, kind)?.closing ?? 0;
   return { vacationDays: closing("vacation"), sickDays: closing("sick") };
 }
 

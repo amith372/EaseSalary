@@ -18,7 +18,7 @@ import {
 import type { IsoDate, YearMonth } from "@/lib/types";
 import { advanceLedger } from "./advances";
 import { holidayYear } from "./holidayYear";
-import { vacationDaysTheLawAsksFor } from "./balances";
+import { balanceOf, vacationDaysTheLawAsksFor } from "./balances";
 import { holidayAllowanceFor } from "./leave";
 import { monthState } from "./monthState";
 import { recuperationDaysInMonth } from "./recuperation";
@@ -253,7 +253,7 @@ function vacation({ profile, series, today }: ActionListInput): ActionEntry[] {
     .filter(({ facts }) => facts.month.year === year)
     .reduce(
       (total, { result }) =>
-        total + (result.balances.find((line) => line.kind === "vacation")?.used ?? 0),
+        total + (balanceOf(result, "vacation")?.used ?? 0),
       opening,
     );
   const required = vacationDaysTheLawAsksFor(profile.employedSince, year);

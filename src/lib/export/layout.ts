@@ -87,6 +87,8 @@ export const TEMPLATE_ROWS: Readonly<Record<string, number>> = {
  */
 export const TAX_ROW = 20;
 
+/** Where a row's note goes: `הערות`, beside every numbered and block row. */
+export const NOTE_COLUMN = "I";
 
 /** The template's own rows below the numbered block, before anything is
  * inserted. `BLOCK_ROW` is the `ה` row — the one row the template designs for

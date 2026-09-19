@@ -7,7 +7,10 @@ import {
   nationalInsuranceReport,
   recuperationReport,
   yearlySalaryReport,
+  type ReportSheet,
 } from "@/lib/export/reports";
+import type { WorkerProfile } from "@/lib/engine/repository";
+import type { MonthInSeries } from "@/lib/engine/series";
 import { readToday } from "@/lib/requestToday";
 
 /**
@@ -31,20 +34,57 @@ import { readToday } from "@/lib/requestToday";
 const SPREADSHEET =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-/** The four reports, by the name the screen's links carry. */
-type ReportKind =
-  | "balances"
-  | "yearlySalary"
-  | "recuperation"
-  | "nationalInsurance";
+type ReportInput = {
+  series: MonthInSeries[];
+  year: number;
+  worker: WorkerProfile;
+};
+
+/** A built sheet as a file. The worker's name goes in the filename and never in
+ * the sheet: item 29 keeps identifying numbers out of a file that leaves the
+ * application, and a name is not one of them — it is what tells two workers'
+ * files apart on a shelf, which is the same order `monthExport.ts` chose. */
+async function builtFile(sheet: ReportSheet, worker: WorkerProfile) {
+  return {
+    bytes: await buildReport(sheet),
+    filename: `${sheet.title} - ${worker.name}.xlsx`,
+  };
+}
+
+/**
+ * The four reports, by the name the screen's links carry. The two yearly ones
+ * need a year and the other two do not, so the year is checked only where a
+ * report says it uses one.
+ */
+const REPORTS = {
+  // The one report with a committed template, which is why it goes through a
+  // filler and the other three are built.
+  balances: {
+    needsYear: true,
+    file: ({ series, year, worker }: ReportInput) =>
+      balancesFileOf({ worker: { id: worker.id, name: worker.name }, series, year }),
+  },
+  yearlySalary: {
+    needsYear: true,
+    file: ({ series, year, worker }: ReportInput) =>
+      builtFile(yearlySalaryReport(series, year), worker),
+  },
+  recuperation: {
+    needsYear: false,
+    file: ({ series, worker }: ReportInput) =>
+      builtFile(recuperationReport(series, worker.employedSince), worker),
+  },
+  nationalInsurance: {
+    needsYear: false,
+    file: ({ series, worker }: ReportInput) =>
+      builtFile(nationalInsuranceReport(series), worker),
+  },
+};
+
+type ReportKind = keyof typeof REPORTS;
 
 function isReportKind(value: string | null): value is ReportKind {
-  return (
-    value === "balances" ||
-    value === "yearlySalary" ||
-    value === "recuperation" ||
-    value === "nationalInsurance"
-  );
+  return value !== null && Object.hasOwn(REPORTS, value);
 }
 
 export async function GET(request: NextRequest) {
@@ -56,10 +96,7 @@ export async function GET(request: NextRequest) {
   if (workerId === null || !isReportKind(report)) {
     return new Response("A worker and a report are required", { status: 400 });
   }
-  // The two yearly reports need a year and the other two do not, so it is
-  // checked where it is used rather than for every report.
-  const needsYear = report === "balances" || report === "yearlySalary";
-  if (needsYear && !Number.isInteger(year)) {
+  if (REPORTS[report].needsYear && !Number.isInteger(year)) {
     return new Response("A year is required", { status: 400 });
   }
 
@@ -70,31 +107,7 @@ export async function GET(request: NextRequest) {
   const months = await repository.listMonths(workerId);
   const series = calculateSeries(months, worker, await readToday(), await repository.listRates());
 
-  let bytes: Buffer;
-  let filename: string;
-
-  if (report === "balances") {
-    // The one report with a committed template, which is why it goes through a
-    // filler and the other three are built.
-    ({ bytes, filename } = await balancesFileOf({
-      worker: { id: worker.id, name: worker.name },
-      series,
-      year,
-    }));
-  } else {
-    const sheet =
-      report === "yearlySalary"
-        ? yearlySalaryReport(series, year)
-        : report === "recuperation"
-          ? recuperationReport(series, worker.employedSince)
-          : nationalInsuranceReport(series);
-    bytes = await buildReport(sheet);
-    // The worker's name in the filename and never in the sheet: item 29 keeps
-    // identifying numbers out of a file that leaves the application, and a name
-    // is not one of them — it is what tells two workers' files apart on a
-    // shelf, which is the same order `monthExport.ts` chose.
-    filename = `${sheet.title} - ${worker.name}.xlsx`;
-  }
+  const { bytes, filename } = await REPORTS[report].file({ series, year, worker });
 
   return new Response(new Uint8Array(bytes), {
     headers: {

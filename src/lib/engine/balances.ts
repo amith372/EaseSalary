@@ -21,8 +21,10 @@ import { SEEDED_TAX_BRACKETS, bracketsForYear } from "@/lib/taxBrackets";
 import type { TaxYearBrackets } from "@/lib/taxBrackets";
 import { balanceDaysOf, clipToMonth } from "@/lib/spans";
 import type {
+  BalanceKind,
   BalanceLine,
   IsoDate,
+  MonthResult,
   Warning,
   YearMonth,
 } from "@/lib/types";
@@ -94,6 +96,15 @@ export function seniorityYearOfCalendarYear(
   calendarYear: number,
 ): number {
   return calendarYear - fromIsoDate(employedSince).getUTCFullYear() + 1;
+}
+
+/** A month's balance line of one kind, read off its result — the one place
+ * a sheet, the series and the reminders look a balance up. */
+export function balanceOf(
+  result: MonthResult,
+  kind: BalanceKind,
+): BalanceLine | undefined {
+  return result.balances.find((line) => line.kind === kind);
 }
 
 /** The month's vacation accrual, as a fraction of the year's entitlement and
