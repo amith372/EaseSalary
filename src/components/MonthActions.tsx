@@ -16,7 +16,6 @@ import {
   updateThirdPartyPayment,
   updateUserLine,
   type MonthActionRefusal,
-  type MonthActionResult,
 } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
@@ -28,6 +27,7 @@ import {
   outlineButtonClass,
   RefusalLine,
 } from "@/components/Field";
+import { useAction, type Send } from "@/components/useAction";
 import { RuleLink } from "@/components/WhyDisclosure";
 import { FoldSection, type Fold } from "@/components/FoldSection";
 import { MoneyValue } from "@/components/MoneyValue";
@@ -145,10 +145,7 @@ interface MonthActionsProps {
   /** Runs the change inside the screen's own transition, so the preview dims
    * while the round trip is in flight and the figures are never left looking
    * settled while they are stale. */
-  onSubmit: (
-    action: () => Promise<MonthActionResult>,
-    onResult: (result: MonthActionResult) => void,
-  ) => void;
+  onSubmit: Send<MonthActionRefusal>;
   /** The sections the user has unfolded. Held by the screen rather than here,
    * because this card is keyed on the month and stepping to another month
    * would otherwise fold everything she had just opened. */
@@ -298,28 +295,6 @@ function Refusal({
 }
 
 /**
- * A change on its way to the store, and the refusal it may come back with.
- *
- * The three controls in this file all did the same three things around a server
- * action — clear the last refusal, send, then either keep the new one or run
- * what follows a success — so they do it once here instead. It holds no rule:
- * every rule is on the server, and this is the shape of asking.
- */
-function useMonthAction(onSubmit: MonthActionsProps["onSubmit"]) {
-  const [refusal, setRefusal] = useState<MonthActionRefusal | null>(null);
-
-  function run(action: () => Promise<MonthActionResult>, onDone?: () => void) {
-    setRefusal(null);
-    onSubmit(action, (result) => {
-      if (result.ok) onDone?.();
-      else setRefusal(result.reason);
-    });
-  }
-
-  return { refusal, run, clear: () => setRefusal(null) };
-}
-
-/**
  * Hospital overtime: an amount the family types, never one worked out
  * (specs.md item 20). An empty amount removes it, and the note goes with it.
  */
@@ -336,7 +311,7 @@ function HospitalOvertimeControl({
     hospitalOvertime ? formatAgorot(hospitalOvertime.agorot) : "",
   );
   const [note, setNote] = useState(hospitalOvertime?.note ?? "");
-  const { refusal, run } = useMonthAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
 
   const cleared = amount.trim() === "";
   const parsed = cleared ? null : parseShekels(amount);
@@ -464,7 +439,7 @@ function IncomeTaxControl({
   const [text, setText] = useState(
     incomeTaxManual ? formatAgorot(incomeTaxAgorot) : "",
   );
-  const { refusal, run } = useMonthAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
 
   // **What produced the amount above**, said in the card rather than left to be
   // inferred from a field that may be empty: a manual figure first, because it
@@ -719,7 +694,7 @@ function UserLinesControl({
   // `null` until she chooses, which is what lets the chips follow the direction
   // and then stop following it.
   const [chosen, setChosen] = useState<UserLinePlacement | null>(null);
-  const { refusal, run, clear } = useMonthAction(onSubmit);
+  const { refusal, run, clear } = useAction(onSubmit);
 
   const placement = chosen ?? defaultPlacementFor(direction);
 
@@ -1007,7 +982,7 @@ function AdvancesControl({
   const [open, setOpen] = useState<"granted" | number | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const { refusal, run, clear } = useMonthAction(onSubmit);
+  const { refusal, run, clear } = useAction(onSubmit);
 
   function reset() {
     setOpen(null);
@@ -1325,7 +1300,7 @@ function ThirdPartyControl({
     from: string;
     to: string;
   } | null>(null);
-  const { refusal, run, clear } = useMonthAction(onSubmit);
+  const { refusal, run, clear } = useAction(onSubmit);
 
   const recorded = new Set(thirdPartyPayments.map((payment) => payment.kind));
   // The kinds still open this month, **and the one being corrected**: a panel
@@ -1690,7 +1665,7 @@ function OverridesControl({
   const [open, setOpen] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const { refusal, run, clear } = useMonthAction(onSubmit);
+  const { refusal, run, clear } = useAction(onSubmit);
 
   const overridable = lines.filter((line) => line.overridable);
 

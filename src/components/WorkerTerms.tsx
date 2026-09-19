@@ -36,7 +36,6 @@ import {
   stopStandingLine,
   updateStandingLine,
   type ProfileActionRefusal,
-  type ProfileActionResult,
 } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
@@ -48,6 +47,7 @@ import {
   RefusalLine,
 } from "@/components/Field";
 import { MoneyValue } from "@/components/MoneyValue";
+import { useAction, type Send } from "@/components/useAction";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import { addMonths, compareMonth, yearMonthText } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
@@ -182,26 +182,7 @@ function Empty({ children }: { children: ReactNode }) {
   );
 }
 
-type Submit = (
-  action: () => Promise<ProfileActionResult>,
-  onResult: (result: ProfileActionResult) => void,
-) => void;
-
-/** A change on its way to the store and the refusal it may come back with —
- * `MonthActions`'s own shape, and it holds no rule for the same reason. */
-function useProfileAction(onSubmit: Submit) {
-  const [refusal, setRefusal] = useState<ProfileActionRefusal | null>(null);
-
-  function run(action: () => Promise<ProfileActionResult>, onDone?: () => void) {
-    setRefusal(null);
-    onSubmit(action, (result) => {
-      if (result.ok) onDone?.();
-      else setRefusal(result.reason);
-    });
-  }
-
-  return { refusal, run, clear: () => setRefusal(null) };
-}
+type Submit = Send<ProfileActionRefusal>;
 
 /**
  * The weekly rest day (specs.md item 5).
@@ -226,7 +207,7 @@ export function RestDayControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.restDay;
-  const { refusal, run } = useProfileAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -273,7 +254,7 @@ export function GenderControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.gender;
-  const { refusal, run } = useProfileAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -324,7 +305,7 @@ export function IncomeTaxControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.incomeTax;
-  const { refusal, run } = useProfileAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
   const [mode, setMode] = useState<IncomeTaxMode>(setting.mode);
   // The stored fraction shown back as a percentage, which is the unit the user
   // types in: 0.025 is 2.5. The conversion happens here and on the server, and
@@ -437,7 +418,7 @@ export function RecuperationControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.recuperation;
-  const { refusal, run } = useProfileAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -511,7 +492,7 @@ export function StandingLinesControl({
   const [note, setNote] = useState("");
   const [direction, setDirection] = useState<UserLineDirection>("addition");
   const [chosen, setChosen] = useState<UserLinePlacement | null>(null);
-  const { refusal, run, clear } = useProfileAction(onSubmit);
+  const { refusal, run, clear } = useAction(onSubmit);
 
   const placement = chosen ?? defaultPlacementFor(direction);
 
@@ -732,7 +713,7 @@ export function OpeningPositionControl({
   const [principal, setPrincipal] = useState("");
   const [repaid, setRepaid] = useState("");
   const [note, setNote] = useState("");
-  const { refusal, run, clear } = useProfileAction(onSubmit);
+  const { refusal, run, clear } = useAction(onSubmit);
 
   function closeAdd() {
     setAdding(false);
@@ -918,7 +899,7 @@ export function SalaryControl({
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [from, setFrom] = useState("");
-  const { refusal, run, clear } = useProfileAction(onSubmit);
+  const { refusal, run, clear } = useAction(onSubmit);
   const changes = profile.salaryChanges ?? [];
 
   return (
@@ -1039,7 +1020,7 @@ export function InsurerControl({
 }) {
   const words = he.workers.profile.terms.insurer;
   const [value, setValue] = useState(insurer);
-  const { refusal, run } = useProfileAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -1094,7 +1075,7 @@ export function DocumentsControl({
   const [permit, setPermit] = useState(documents.employmentPermitExpiry ?? "");
   const [visa, setVisa] = useState(documents.workVisaExpiry ?? "");
   const [passport, setPassport] = useState(documents.passportExpiry ?? "");
-  const { refusal, run } = useProfileAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
 
   return (
     <TermRow label={words.title} hint={words.note}>
@@ -1172,9 +1153,8 @@ export function IdentifyingNumberControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms[numberWords[name]];
-  const passportNumber = number;
-  const [typed, setTyped] = useState(passportNumber ?? "");
-  const { refusal, run } = useProfileAction(onSubmit);
+  const [typed, setTyped] = useState(number ?? "");
+  const { refusal, run } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -1190,10 +1170,10 @@ export function IdentifyingNumberControl({
           className={`${inputClass} max-w-48 text-start`}
         />
         <span className="text-[13px] font-light text-ink-quiet">
-          {passportNumber === null ? (
+          {number === null ? (
             <span dir="auto">{words.none}</span>
           ) : (
-            <Bidi noTranslate>{passportNumber}</Bidi>
+            <Bidi noTranslate>{number}</Bidi>
           )}
         </span>
         <button
@@ -1226,7 +1206,7 @@ export function EmployedSinceControl({
 }) {
   const words = he.workers.profile.terms.employedSince;
   const [typed, setTyped] = useState(employedSince);
-  const { refusal, run } = useProfileAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -1282,7 +1262,7 @@ export function RestEveSupplementControl({
   const words = he.workers.profile.terms.restEveSupplement;
   const stored = agorot === 0 ? "" : amountFieldValue(agorot);
   const [typed, setTyped] = useState(stored);
-  const { refusal, run } = useProfileAction(onSubmit);
+  const { refusal, run } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>

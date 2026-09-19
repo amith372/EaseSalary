@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
+import { useAction } from "@/components/useAction";
 import {
   closeSickSpell,
   confirmMonth,
@@ -239,8 +240,7 @@ function MonthConfirmation({
   sourceUrl: string;
 }) {
   const words = he.beforeExport;
-  const [saving, startSaving] = useTransition();
-  const [refusal, setRefusal] = useState<BeforeExportRefusal | null>(null);
+  const { refusal, run, saving } = useAction<BeforeExportRefusal>();
   const [done, setDone] = useState(false);
 
   const [answers, setAnswers] = useState<
@@ -264,15 +264,6 @@ function MonthConfirmation({
 
   const effectiveFrom =
     shown.offeredWage?.effectiveFrom ?? shown.confirmedWage.effectiveFrom;
-
-  function run(action: () => Promise<BeforeExportResult>, onDone?: () => void) {
-    setRefusal(null);
-    startSaving(async () => {
-      const result = await action();
-      if (result.ok) onDone?.();
-      else setRefusal(result.reason);
-    });
-  }
 
   /** Answers that disagree with what the month recorded. A warning and never a
    * refusal, and it names where the missing fact is actually recorded. */

@@ -826,6 +826,15 @@ function OpeningQuestions({
       data-field={field}
     />
   );
+  const setAdvance = (
+    index: number,
+    over: Partial<OpeningDraft["advances"][number]>,
+  ) =>
+    change({
+      advances: opening.advances.map((each, at) =>
+        at === index ? { ...each, ...over } : each,
+      ),
+    });
   const daysRefusal = refusalFor("openingDays");
   const usedRefusal = refusalFor("openingUsed");
 
@@ -940,11 +949,7 @@ function OpeningQuestions({
                 value={advance.principal}
                 placeholder={he.placeholder.amountInput}
                 onChange={(event) =>
-                  change({
-                    advances: opening.advances.map((each, at) =>
-                      at === index ? { ...each, principal: event.target.value } : each,
-                    ),
-                  })
+                  setAdvance(index, { principal: event.target.value })
                 }
                 className={`${INPUT} text-start`}
                 data-field="openingAdvancePrincipal"
@@ -958,11 +963,7 @@ function OpeningQuestions({
                 value={advance.repaid}
                 placeholder={he.placeholder.amountInput}
                 onChange={(event) =>
-                  change({
-                    advances: opening.advances.map((each, at) =>
-                      at === index ? { ...each, repaid: event.target.value } : each,
-                    ),
-                  })
+                  setAdvance(index, { repaid: event.target.value })
                 }
                 className={`${INPUT} text-start`}
                 data-field="openingAdvanceRepaid"

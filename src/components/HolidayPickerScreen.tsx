@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   chooseHoliday,
   moveHoliday,
@@ -16,6 +16,7 @@ import { Card } from "@/components/Card";
 import { Chevron } from "@/components/icons";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { buttonClass, inputClass, RefusalLine } from "@/components/Field";
+import { useAction } from "@/components/useAction";
 import { RuleLink, WhyPanel } from "@/components/WhyDisclosure";
 import { weekdayDayLabel } from "@/lib/dateLabels";
 import type { RestDay } from "@/lib/dates";
@@ -101,23 +102,19 @@ export function HolidayPickerScreen({
     household.find((candidate) => candidate.worker.id === worker.id) ??
     household[0];
 
-  const [saving, startSaving] = useTransition();
   const [open, setOpen] = useState<Open>(null);
+  const { refusal: reason, run, saving } =
+    useAction<keyof typeof words.refused>();
   // A refusal belongs to the gesture that produced it, so it is keyed by the
   // row it happened on rather than shown once at the top of a list of thirty
   // dates (specs.md item 25).
-  const [refusal, setRefusal] = useState<{
-    at: string;
-    reason: keyof typeof words.refused;
-  } | null>(null);
+  const [refusedAt, setRefusedAt] = useState<string | null>(null);
+  const refusal =
+    reason === null || refusedAt === null ? null : { at: refusedAt, reason };
 
   function act(at: string, action: () => Promise<HolidayActionResult>) {
-    setRefusal(null);
-    startSaving(async () => {
-      const result = await action();
-      if (!result.ok) setRefusal({ at, reason: result.reason });
-      else setOpen(null);
-    });
+    setRefusedAt(at);
+    run(action, () => setOpen(null));
   }
 
   const { year: state } = entry;

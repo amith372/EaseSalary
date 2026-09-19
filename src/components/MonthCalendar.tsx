@@ -305,6 +305,13 @@ export function MonthCalendar({
   // decision the picker asks first is only the kind.
   const [moreOpen, setMoreOpen] = useState(false);
 
+  /** The second row back to a whole day, no note, folded. */
+  function resetSecondRow() {
+    setPart(1);
+    setNote("");
+    setMoreOpen(false);
+  }
+
   // A new edit request opens the picker on its day. Adjusted while rendering,
   // against the last request seen, rather than in an effect that would draw the
   // grid once without the picker the user just asked for.
@@ -316,9 +323,7 @@ export function MonthCalendar({
     setAnchor(editRequest.date);
     setCursor(editRequest.date);
     setPicking(true);
-    setPart(1);
-    setNote("");
-    setMoreOpen(false);
+    resetSecondRow();
   }
 
   // The single tab stop follows the month when the month changes under it.
@@ -350,9 +355,7 @@ export function MonthCalendar({
     setAsking(null);
     // The second row belongs to the range that is open, so it goes with it: a
     // note left standing would attach itself to the next range the user drew.
-    setPart(1);
-    setNote("");
-    setMoreOpen(false);
+    resetSecondRow();
   }
 
   /** Escape closes whichever question is open, from the grid or from inside
@@ -390,9 +393,7 @@ export function MonthCalendar({
       setAnchor(date);
       setCursor(null);
       setPicking(false);
-      setPart(1);
-      setNote("");
-      setMoreOpen(false);
+      resetSecondRow();
       return;
     }
     setCursor(date);
