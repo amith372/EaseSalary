@@ -318,6 +318,30 @@ export function overlapsMonth(span: DaySpan, month: YearMonth): boolean {
   );
 }
 
+/** A holiday's answer in its three states (specs.md item 9): `null` is the
+ * holiday nobody has answered for, which stops the export, so it is a state of
+ * its own and never folded into "not worked". */
+export type HolidayState = "worked" | "notWorked" | "unanswered";
+
+export function holidayStateOf(worked: boolean | null): HolidayState {
+  if (worked === null) return "unanswered";
+  return worked ? "worked" : "notWorked";
+}
+
+/** The part of a closed span that falls inside the month, or `null` if none
+ * does. The span keeps everything but its dates, so a caller counts the
+ * clipped days by the same rules as a whole span. */
+export function clipToMonth<S extends ClosedDaySpan>(
+  span: S,
+  month: YearMonth,
+): S | null {
+  const monthStart = isoOf(month, 1);
+  const monthEnd = isoOf(month, daysInMonth(month));
+  const from = compareIsoDate(span.from, monthStart) < 0 ? monthStart : span.from;
+  const to = compareIsoDate(span.to, monthEnd) > 0 ? monthEnd : span.to;
+  return compareIsoDate(from, to) > 0 ? null : { ...span, from, to };
+}
+
 /** Whether a span runs past the month on screen, in either direction. The
  * calendar shows one month and clips it; the overflow is said in words rather
  * than truncated silently (specs.md item 8, Part 3). */

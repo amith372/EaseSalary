@@ -3,7 +3,6 @@ import {
   everyDayOf,
   isRestEve,
   isRestDay,
-  orderDates,
 } from "@/lib/dates";
 import { countsAsWorked } from "@/lib/engine/types";
 import type { ClosedMonthFacts, ClosedSpan } from "@/lib/engine/types";
@@ -46,8 +45,7 @@ export interface MonthCounts {
 }
 
 function covers(span: ClosedSpan, date: IsoDate): boolean {
-  const { from, to } = orderDates(span.from, span.to);
-  return compareIsoDate(date, from) >= 0 && compareIsoDate(date, to) <= 0;
+  return compareIsoDate(date, span.from) >= 0 && compareIsoDate(date, span.to) <= 0;
 }
 
 function spansCovering(spans: ClosedSpan[], date: IsoDate): ClosedSpan[] {

@@ -1,4 +1,4 @@
-import { eachDate, isRestDay, orderDates } from "@/lib/dates";
+import { eachDate, isRestDay } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import type { ClosedSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
@@ -28,8 +28,7 @@ function holidayDatesDrawn(spans: ClosedSpan[]): Set<IsoDate> {
   const dates = new Set<IsoDate>();
   for (const span of spans) {
     if (span.kind !== "holiday") continue;
-    const { from, to } = orderDates(span.from, span.to);
-    for (const date of eachDate(from, to)) dates.add(date);
+    for (const date of eachDate(span.from, span.to)) dates.add(date);
   }
   return dates;
 }

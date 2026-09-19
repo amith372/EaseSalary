@@ -41,6 +41,7 @@ import {
   parseShekels,
 } from "@/lib/money";
 import type { ScrapeFailureKind } from "@/lib/scrape/failure";
+import { holidayStateOf } from "@/lib/spans";
 import type { IsoDate, Worker, YearMonth } from "@/lib/types";
 
 /**
@@ -880,12 +881,7 @@ function detailOf(detail: ExportQuestionDetail): string {
       // Three states and not two (item 9): `null` is the holiday nobody has
       // answered for, and it is the one that stops the export, so it is said in
       // its own words rather than folded into "לא נעבד".
-      const said =
-        detail.worked === null
-          ? words.unanswered
-          : detail.worked
-            ? words.worked
-            : words.notWorked;
+      const said = words[holidayStateOf(detail.worked)];
       return `${dayLabel(detail.on)}${words.separator}${said}`;
     }
     case "money": {

@@ -95,10 +95,7 @@ function owesNoAttendance(spans: ClosedSpan[], restDay: RestDay) {
       // like any other day of attendance — the same reading the money and the
       // counts take, rather than a third one here.
       .filter((span) => span.kind === "holiday" && !countsAsWorked(span))
-      .flatMap((span) => {
-        const { from, to } = orderDates(span.from, span.to);
-        return eachDate(from, to);
-      }),
+      .flatMap((span) => eachDate(span.from, span.to)),
   );
   return (date: IsoDate) => isRestDay(date, restDay) || holidaysOff.has(date);
 }

@@ -1,5 +1,5 @@
 import type { DatedRate } from "@/lib/datedRates";
-import { compareIsoDate, daysInMonth, isoOf } from "@/lib/dates";
+import { compareIsoDate, daysInMonth, isoOf, orderDates } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import type { TaxYearBrackets } from "@/lib/taxBrackets";
 import type {
@@ -100,8 +100,10 @@ export function clipEndOf(month: YearMonth, today?: IsoDate): IsoDate {
 }
 
 /**
- * Every span with its end resolved, so the engine's interior never meets an
- * open one.
+ * Every span with its end resolved and its dates in order, so the engine's
+ * interior never meets an open span or a reversed one — a leftward drag in a
+ * right-to-left calendar moves forward in time (Part 5), and ordering here is
+ * what lets every reader after it take `from` and `to` as they stand.
  *
  * A spell that has not reached `clipAt` yet closes at its own first day rather
  * than before it. That cannot arise from a spell a worker actually took — she
@@ -113,7 +115,7 @@ function closeSpans(spans: MonthSpan[], clipAt: IsoDate): ClosedSpan[] {
   return spans.map((span) =>
     span.to === null
       ? { ...span, to: compareIsoDate(clipAt, span.from) < 0 ? span.from : clipAt }
-      : (span as ClosedSpan),
+      : { ...span, ...orderDates(span.from, span.to) },
   );
 }
 

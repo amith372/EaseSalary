@@ -1,4 +1,4 @@
-import { MONTHS_PER_YEAR, eachDate, fromIsoDate, orderDates } from "@/lib/dates";
+import { MONTHS_PER_YEAR, eachDate, fromIsoDate } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { holidayDatesCounted } from "@/lib/engine/holidayDates";
 import { countsAsWorked } from "@/lib/engine/types";
@@ -56,8 +56,7 @@ function holidayDaysIn(
         span.kind === "holiday" && (!onlyWorked || countsAsWorked(span)),
     )
     .flatMap((span) => {
-      const { from, to } = orderDates(span.from, span.to);
-      return eachDate(from, to)
+      return eachDate(span.from, span.to)
         // A holiday on her weekly rest day is not a holiday (item 9): the day
         // is paid as a rest day, worked or not, and spends nothing from the
         // year's nine.

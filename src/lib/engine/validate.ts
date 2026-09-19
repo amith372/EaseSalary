@@ -2,7 +2,6 @@ import {
   compareIsoDate,
   eachDate,
   isRestDay,
-  orderDates,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { duplicateAdvanceMovements } from "@/lib/engine/advances";
@@ -148,8 +147,7 @@ const LINK_FOR_KIND: Record<SpanKind, LegalLinkKey> = {
  * straddles the boundary is still an overlap.
  */
 function datesOf(span: ClosedSpan): IsoDate[] {
-  const { from, to } = orderDates(span.from, span.to);
-  return eachDate(from, to);
+  return eachDate(span.from, span.to);
 }
 
 /**

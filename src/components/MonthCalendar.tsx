@@ -21,7 +21,13 @@ import { CalendarBand } from "@/components/CalendarBand";
 import { MonthStepper } from "@/components/MonthStepper";
 import { TwoToneIcon, type TwoToneName } from "@/components/icons";
 import { he } from "@/lib/i18n/he";
-import { dayParts, endOf, partIsAllowed, type MarkIntent } from "@/lib/spans";
+import {
+  dayParts,
+  endOf,
+  holidayStateOf,
+  partIsAllowed,
+  type MarkIntent,
+} from "@/lib/spans";
 import type {
   DaySpan,
   HolidaySpan,
@@ -192,15 +198,6 @@ const HOLIDAY_FACE = {
  * because the question has three answers: a predicate returning a boolean is
  * exactly the shape that reads "nobody has said yet" as "she did not work it".
  */
-function holidayStateOf(
-  span: DaySpan,
-): "worked" | "notWorked" | "unanswered" | null {
-  if (span.kind !== "holiday") return null;
-  const worked = (span as HolidaySpan).worked;
-  if (worked === null) return "unanswered";
-  return worked ? "worked" : "notWorked";
-}
-
 /**
  * Six entries. "יום עבודה" is a day she worked, which is every unmarked day
  * including an unmarked rest day — so there is no entry for the weekly rest day
@@ -522,7 +519,10 @@ export function MonthCalendar({
           // A holiday is a state and not a mark, so its cell is not looked up in
           // `markClass` at all: the two weights say which answer the month
           // holds, and the words say it to a reader who cannot see them.
-          const holidayState = span === undefined ? null : holidayStateOf(span);
+          const holidayState =
+            span?.kind === "holiday"
+              ? holidayStateOf((span as HolidaySpan).worked)
+              : null;
           const holiday = holidayState !== null;
           // Half a day is a fill in the cell and words in the label, because a
           // reader who cannot see the fill is told nothing by it.

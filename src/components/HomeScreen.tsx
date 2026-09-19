@@ -37,7 +37,9 @@ import { returningTo } from "@/lib/pickerReturn";
 import { formatDays } from "@/lib/money";
 import {
   endOf,
+  holidayStateOf,
   overlapsMonth,
+  type HolidayState,
   type MarkIntent,
   type SkippedDay,
   type SkipReason,
@@ -111,6 +113,12 @@ const dayFace: Record<
   holidayWorked: { tint: "bg-holiday", ink: "text-holiday-ink", icon: "star" },
   holidayNotWorked: { tint: "bg-holiday", ink: "text-holiday-ink", icon: "star" },
   holidayUnanswered: { tint: "bg-holiday", ink: "text-holiday-ink", icon: "star" },
+};
+
+const holidayFaceKey: Record<HolidayState, keyof typeof dayFace> = {
+  worked: "holidayWorked",
+  notWorked: "holidayNotWorked",
+  unanswered: "holidayUnanswered",
 };
 
 /** The dot beside each worker's name in the balances. Neutral on purpose: a
@@ -245,8 +253,7 @@ export function HomeScreen({
   function faceKeyOf(span: typeof daySpan): keyof typeof dayFace | undefined {
     if (span === undefined) return undefined;
     if (span.kind !== "holiday") return span.kind;
-    if (span.worked === null) return "holidayUnanswered";
-    return span.worked ? "holidayWorked" : "holidayNotWorked";
+    return holidayFaceKey[holidayStateOf(span.worked)];
   }
   const faceKey = faceKeyOf(daySpan);
   function kindLabelOf(key: typeof faceKey): string {

@@ -1,4 +1,4 @@
-import { compareIsoDate, eachDate, fromIsoDate, isRestDay, orderDates } from "@/lib/dates";
+import { compareIsoDate, eachDate, fromIsoDate, isRestDay } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import type { MonthSpan } from "@/lib/engine/types";
 import type { Holiday } from "@/lib/holidayLists";
@@ -113,8 +113,7 @@ function chosenDaysOf(
   const chosen = new Map<IsoDate, HolidayChoice>();
   for (const span of spans) {
     if (span.kind !== "holiday") continue;
-    const { from, to } = orderDates(span.from, span.to);
-    for (const date of eachDate(from, to)) {
+    for (const date of eachDate(span.from, span.to)) {
       if (fromIsoDate(date).getUTCFullYear() !== year) continue;
       chosen.set(date, { spanId: span.id, fraction: span.fraction ?? 1 });
     }

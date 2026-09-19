@@ -1,9 +1,7 @@
 import {
   DECEMBER,
   MONTHS_PER_YEAR,
-  daysInMonth,
   fromIsoDate,
-  isoOf,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
@@ -21,10 +19,9 @@ import { formatAgorot } from "@/lib/money";
 import { he } from "@/lib/i18n/he";
 import { SEEDED_TAX_BRACKETS, bracketsForYear } from "@/lib/taxBrackets";
 import type { TaxYearBrackets } from "@/lib/taxBrackets";
-import { balanceDaysOf } from "@/lib/spans";
+import { balanceDaysOf, clipToMonth } from "@/lib/spans";
 import type {
   BalanceLine,
-  ClosedDaySpan,
   IsoDate,
   Warning,
   YearMonth,
@@ -110,18 +107,6 @@ export function monthlyVacationAccrual(
   return vacationDaysPerYear(year) / MONTHS_PER_YEAR;
 }
 
-/** The part of a span that falls inside the month, or `null` if none does. The
- * clipped span is handed back to `balanceDaysOf`, so the entitlement rules — a
- * vacation span counts its non-rest-days, a sick spell counts every day it ran
- * across — are applied by the module that already owns and tests them. */
-function clipToMonth(span: ClosedSpan, month: YearMonth): ClosedDaySpan | null {
-  const monthStart = isoOf(month, 1);
-  const monthEnd = isoOf(month, daysInMonth(month));
-  const from = span.from < monthStart ? monthStart : span.from;
-  const to = span.to > monthEnd ? monthEnd : span.to;
-  if (from > to) return null;
-  return { ...span, from, to };
-}
 
 /**
  * Days drawn from a balance in this month.
@@ -154,7 +139,7 @@ export function daysUsedIn(
   return spans
     .filter((span) => span.kind === kind)
     .map((span) => clipToMonth(span, month))
-    .filter((span): span is ClosedDaySpan => span !== null)
+    .filter((span) => span !== null)
     .reduce((days, span) => days + balanceDaysOf(span, restDay), 0);
 }
 

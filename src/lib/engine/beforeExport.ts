@@ -2,11 +2,8 @@ import {
   addDays,
   compareIsoDate,
   compareMonth,
-  daysInMonth,
   eachDate,
-  isoOf,
   monthOf,
-  orderDates,
 } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
@@ -20,7 +17,7 @@ import type {
   MonthSpan,
   ThirdPartyKind,
 } from "@/lib/engine/types";
-import { overlapsMonth } from "@/lib/spans";
+import { clipToMonth, overlapsMonth } from "@/lib/spans";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
@@ -160,8 +157,7 @@ function spansOfKind<T extends MonthSpan>(
 }
 
 /**
- * The part of a span that falls inside one month, or `null` where none of it
- * does.
+ * The days of a span that fall inside one month.
  *
  * **It is not `balanceDaysOf`, and the difference matters here.** That function
  * answers what a span costs its balance, over the whole of the spell and
@@ -171,25 +167,13 @@ function spansOfKind<T extends MonthSpan>(
  * neighbouring month's days as well is the kind of figure a user confirms
  * without noticing (Part 5).
  *
- * **The dates the screen lists are clipped by this same function**, so the days
- * it counts and the dates it names can never be two different answers: a
+ * **The dates the screen lists are clipped by the same `clipToMonth`**, so the
+ * days it counts and the dates it names can never be two different answers: a
  * question reading "2 days" above "30 March – 2 April" is a contradiction the
  * user has to resolve herself.
  */
-function insideMonth(
-  span: ClosedSpan,
-  month: YearMonth,
-): { from: IsoDate; to: IsoDate } | null {
-  const monthStart = isoOf(month, 1);
-  const monthEnd = isoOf(month, daysInMonth(month));
-  const { from, to } = orderDates(span.from, span.to);
-  const start = compareIsoDate(from, monthStart) < 0 ? monthStart : from;
-  const end = compareIsoDate(to, monthEnd) > 0 ? monthEnd : to;
-  return compareIsoDate(start, end) > 0 ? null : { from: start, to: end };
-}
-
 function daysInsideMonth(span: ClosedSpan, month: YearMonth): number {
-  const clipped = insideMonth(span, month);
+  const clipped = clipToMonth(span, month);
   if (clipped === null) return 0;
   return eachDate(clipped.from, clipped.to).length * (span.fraction ?? 1);
 }
@@ -233,17 +217,14 @@ export function exportQuestions(
    * that jumps back to the 3rd after the 19th cannot be checked against it. */
   const stretchesOf = (kind: MonthSpan["kind"]): ExportQuestionDetail[] =>
     spansOf(kind)
-      .map((span) => ({ clipped: insideMonth(span, month), span }))
-      .filter(
-        (each): each is { clipped: { from: IsoDate; to: IsoDate }; span: ClosedSpan } =>
-          each.clipped !== null,
-      )
-      .sort((a, b) => compareIsoDate(a.clipped.from, b.clipped.from))
-      .map(({ clipped, span }) => ({
+      .map((span) => clipToMonth(span, month))
+      .filter((clipped) => clipped !== null)
+      .sort((a, b) => compareIsoDate(a.from, b.from))
+      .map((clipped) => ({
         shape: "days",
         from: clipped.from,
         to: clipped.to,
-        ...(span.fraction === undefined ? {} : { fraction: span.fraction }),
+        ...(clipped.fraction === undefined ? {} : { fraction: clipped.fraction }),
       }));
 
   const holidays = spansOf("holiday");
