@@ -2,7 +2,8 @@ import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import type { RestDay } from "@/lib/dates";
 import { advanceKey } from "@/lib/engine/advances";
-import { buildBalances, buildWarnings } from "@/lib/engine/balances";
+import { buildBalances } from "@/lib/engine/balances";
+import { buildWarnings } from "@/lib/engine/warnings";
 import { countMonth, type MonthCounts } from "@/lib/engine/counts";
 import { taxForSetting } from "@/lib/engine/incomeTax";
 import {

@@ -3,7 +3,6 @@ import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY, monthOf } from "@/lib/dates";
 import {
-  belowMinimumWageWarning,
   buildBalances,
   monthlySickAccrual,
   monthlyVacationAccrual,
@@ -11,8 +10,11 @@ import {
   sickDaysAvailable,
   vacationDaysPerYear,
   vacationDaysTheLawAsksFor,
-  vacationYearWarning,
 } from "@/lib/engine/balances";
+import {
+  belowMinimumWageWarning,
+  vacationYearWarning,
+} from "@/lib/engine/warnings";
 import { calculateMonth } from "@/lib/engine/month";
 import { snapshotTerms} from "@/lib/engine/types";
 import type {

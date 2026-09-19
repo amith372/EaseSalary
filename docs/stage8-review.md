@@ -10,10 +10,10 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F18. F26–F28 are not approved: each is grilled with the user
+- **Last done:** step 8, F19. F26–F28 are not approved: each is grilled with the user
   before any code.
-- **Next:** step 8 — execute the Fix list from the first unchecked item (F19), one commit
-  each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25; F32 comes last.
+- **Next:** step 8 — execute the Fix list from the first unchecked item (F20), one commit
+  each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25; F33 (the last sweep) and then F32 come last.
 - **A browser failure** is checked by rerunning it alone, and against HEAD with the change
   stashed. The `auth.setup.ts` server log "The destination stream closed early" is noise.
 - **Waiting on the user:** the questions under "Needs the user". Three are reproduced money
@@ -52,7 +52,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F18, F29–F31 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F19, F29–F31 done |
 
 ### How each step is run
 
@@ -544,7 +544,7 @@ and translation can change.
   identical before and after.
 
 **D. Structure**
-- [x] 2026-09-19 F18 — the closing block gets drafts: `ClosingDraft` and `toClosingLine` beside `toLine`,
+- [x] 2026-09-19 `e9c7f95` F18 — the closing block gets drafts: `ClosingDraft` and `toClosingLine` beside `toLine`,
   and a typed `source` on every row replaces key parsing and prefix positions — R5.5, R2.11,
   R5.6, R2.15 — every row keeps today's output, `calculatedAmount` included — check:
   closing-block, overrides, August 2025 and agreement suites unedited. Two lines of test
@@ -552,7 +552,7 @@ and translation can change.
   `agreement.test.ts` calls `isUserLine(line)` for `isUserLineKey(line.key)`; no expected
   figure changed. The tax row and the advances now carry `calculatedAmount` when replaced,
   as every column line does; neither is overridable, so no screen reads it.
-- [ ] F19 — the warnings move from `balances.ts` into `warnings.ts` — R5.7 — check: unit suite
+- [x] 2026-09-19 F19 — the warnings move from `balances.ts` into `warnings.ts` — R5.7 — check: unit suite
   unedited.
 - [ ] F20 — `saveProfile` works out `termsChanged` by comparing `snapshotTerms` before and
   after — R5.8 — **`setGender` and `setInsurer` stop re-saving every month** — check: profile
@@ -579,6 +579,12 @@ and translation can change.
   restates confirmed months".
 
 **F. Last**
+- [ ] F33 — (added 2026-09-19 at the user's request) a last sweep once F19–F28 are through:
+  `knip --production` for dead code, `jscpd` over `src` for copied blocks, and a read of the
+  components for markup repeated where a shared component should stand. Findings go into a
+  "Sweep after F28" section in rule 3's one-line form and are fixed one commit each, under
+  the same rules as the list; a finding that changes a screen goes under "Needs the user" —
+  check: `knip` and `jscpd` report nothing the sweep left unexplained.
 - [ ] F32 — `/doctor` (added 2026-09-19 at the user's request) — a built-in Claude Code
   command, so the user runs it and the session acts on what it reports; a finding that is
   not a setting goes under "Needs the user" — check: `/doctor` reports nothing left to fix.
