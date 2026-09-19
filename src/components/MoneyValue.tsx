@@ -47,7 +47,12 @@ export function MoneyValue({ agorot, size = "md", chip, manual, className }: Mon
   return (
     // `data-money` names an amount for the browser suite, which otherwise has
     // to find one by matching digits inside a row that also carries a year.
-    <span data-money={agorot ?? ""} className="inline-flex items-baseline gap-2">
+    // `shrink-0` on this span, the flex item a row actually lays out: a long
+    // label beside it wraps instead of squeezing the amount out of its chip.
+    <span
+      data-money={agorot ?? ""}
+      className="inline-flex shrink-0 items-baseline gap-2 whitespace-nowrap"
+    >
       <Bidi
         noTranslate
         className={[
