@@ -24,7 +24,7 @@ import {
 } from "@/lib/dates";
 import { openMonthIfMissing } from "@/lib/openMonth";
 import { parseShekels } from "@/lib/money";
-import { readToday } from "@/lib/requestToday";
+import { readNow, readToday } from "@/lib/requestToday";
 import type { YearMonth } from "@/lib/types";
 
 /**
@@ -248,7 +248,7 @@ export async function confirmMonth(
     incomeTaxAgorot: await taxToConfirm(repository, profile, month),
     // Part 5's *confirmed* event, which `דף המשכורת` prints. Read from the
     // clock here, in the action, and never in the engine or a render.
-    confirmedAt: new Date().toISOString(),
+    confirmedAt: await readNow(),
     confirmedWage: {
       // Item 3: a salary may never sit below the minimum wage, so a profile
       // still holding last year's figure is raised to the wage in force rather

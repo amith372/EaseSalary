@@ -6,7 +6,7 @@ import { recordOf } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
 import { monthFileOf } from "@/lib/export/monthExport";
 import { readIdentifyingNumbers } from "@/lib/identifyingNumbers";
-import { readToday } from "@/lib/requestToday";
+import { readNow, readToday } from "@/lib/requestToday";
 
 /**
  * The month's file — what the two buttons on `/month/export` point at.
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
   if (stored !== undefined) {
     await repository.saveMonth(workerId, {
       ...recordOf(stored),
-      exportedAt: new Date().toISOString(),
+      exportedAt: await readNow(),
     });
   }
 

@@ -1,4 +1,4 @@
-import { isIsoDate } from "@/lib/dates";
+import { daysBetween, isIsoDate } from "@/lib/dates";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -67,4 +67,24 @@ export function todayFor(
     throw new Error(`The ${TODAY_COOKIE} cookie is not a date: ${fixed}`);
   }
   return fixed;
+}
+
+/**
+ * The instant a month is stamped with — confirmed, exported — on the same day
+ * `todayFor` reads: the clock, moved by whole days when the day is fixed.
+ *
+ * **A stamp follows the fixed day**, or the browser suite, whose day is fixed,
+ * files an export "in the future" the moment the real clock passes it, and a
+ * list bounded by today loses it. **The time of day stays the clock's**, because
+ * Postgres stamps an edit with its own `now()` and *corrected* is
+ * `updated_at > confirmed_at`: moving whole days keeps every stamp this request
+ * writes in the order it was written.
+ */
+export function instantFor(
+  fixed: string | undefined,
+  production: boolean,
+  now: Date = new Date(),
+): string {
+  const shift = daysBetween(todayInIsrael(now), todayFor(fixed, production, now));
+  return new Date(now.getTime() + shift * 86_400_000).toISOString();
 }

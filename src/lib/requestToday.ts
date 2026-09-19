@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { TODAY_COOKIE, todayFor } from "@/lib/today";
+import { TODAY_COOKIE, instantFor, todayFor } from "@/lib/today";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -11,4 +11,10 @@ import type { IsoDate } from "@/lib/types";
 export async function readToday(): Promise<IsoDate> {
   const fixed = (await cookies()).get(TODAY_COOKIE)?.value;
   return todayFor(fixed, process.env.NODE_ENV === "production");
+}
+
+/** The instant to stamp a month with, on the day `readToday` reads. */
+export async function readNow(): Promise<string> {
+  const fixed = (await cookies()).get(TODAY_COOKIE)?.value;
+  return instantFor(fixed, process.env.NODE_ENV === "production");
 }
