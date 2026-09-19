@@ -10,9 +10,9 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F20. F26–F28 are not approved: each is grilled with the user
+- **Last done:** step 8, F21. F26–F28 are not approved: each is grilled with the user
   before any code.
-- **Next:** step 8 — execute the Fix list from the first unchecked item (F21), one commit
+- **Next:** step 8 — execute the Fix list from the first unchecked item (F22), one commit
   each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25; F33 (the last sweep) and then F32 come last.
 - **The one uncommitted line** is always the last item's commit hash, written in after its
   commit; it goes into the next item's commit.
@@ -56,7 +56,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F20, F29–F31 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F21, F29–F31 done |
 
 ### How each step is run
 
@@ -558,12 +558,14 @@ and translation can change.
   as every column line does; neither is overridable, so no screen reads it.
 - [x] 2026-09-19 `164bc64` F19 — the warnings move from `balances.ts` into `warnings.ts` — R5.7 — check: unit suite
   unedited.
-- [x] 2026-09-19 F20 — `saveProfile` works out `termsChanged` by comparing `snapshotTerms` before and
+- [x] 2026-09-19 `9d4d996` F20 — `saveProfile` works out `termsChanged` by comparing `snapshotTerms` before and
   after — R5.8 — **`setGender` and `setInsurer` stop re-saving every month** — check: profile
   suite, plus one new test that a gender change writes no month (from `MonthTerms`' own
   field list). `termsDiffer` in `profile.ts`; `saveProfile(before, after)`.
-- [ ] F21 — one `revalidatePath("/", "layout")` replaces the four lists — R3.6, which fixes
-  R2.18 — check: Browser; a holiday change shows on `/payments` without a reload.
+- [x] 2026-09-19 F21 — one `revalidatePath("/", "layout")` replaces the four lists — R3.6, which fixes
+  R2.18 — check: Browser; a holiday change shows on `/payments` without a reload. It
+  showed (a half day took April's worked holiday from ₪439.74 to ₪219.87, after Back and
+  after the nav) — and did at HEAD too, so R2.18's stale screen never reproduced.
 - [ ] F22 — one `saveMonths` upsert, and `touchMonths` as one statement; no migration — R5.9 —
   check: repository suite; Browser against the live e2e household.
 - [ ] F23 — the worker's spans reach the series once and each month still clips to what

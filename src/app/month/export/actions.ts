@@ -56,14 +56,6 @@ export type BeforeExportResult =
   | { ok: true }
   | { ok: false; reason: BeforeExportRefusal };
 
-function revalidateMonth(): void {
-  // Confirming writes the month's wage, and every screen that draws a month
-  // derives its figures from it.
-  revalidatePath("/");
-  revalidatePath("/month/export");
-  revalidatePath("/payments");
-}
-
 /** Asked about a worker or a month the store does not have. Actions are
  * reachable by a crafted request, so both are checked rather than assumed.
  *
@@ -120,7 +112,9 @@ export async function closeSickSpell(
     ...spell,
     to: spellEndFromReturn(returnedOn),
   });
-  revalidateMonth();
+  // Every screen reads the same workers and months, so the whole tree is
+  // revalidated: a list of routes kept by hand is a list that misses one.
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -263,6 +257,6 @@ export async function confirmMonth(
       : { recuperationDayRateAgorot }),
   });
 
-  revalidateMonth();
+  revalidatePath("/", "layout");
   return { ok: true };
 }

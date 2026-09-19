@@ -73,25 +73,6 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * rather than a figure the browser guessed while waiting.
  */
 
-/**
- * Both routes that read the month, revalidated together.
- *
- * **Every action revalidates both, whichever screen called it**, because the
- * two screens are one month seen from its two ends (specs.md item 5): a figure
- * is entered on `/payments` and what it comes to is drawn on the opening
- * screen, and a page left holding the figures from before the change is the one
- * failure the split can produce. Which of the two the user is looking at is not
- * this file's to know, and an action that revalidated only its caller's route
- * would leave the other stale until something else happened to touch it.
- *
- * **The month is drawn at `/`.** Revalidating a path that does not exist is a
- * silent no-op, so a wrong path here would save a day and never show it.
- */
-function revalidateMonth(): void {
-  revalidatePath("/");
-  revalidatePath("/payments");
-}
-
 export async function markRange(
   workerId: string,
   intent: MarkIntent,
@@ -132,7 +113,9 @@ export async function markRange(
     await openMonthIfMissing(repository, profile, monthOf(range.from));
   }
 
-  revalidateMonth();
+  // Every screen reads the same workers and months, so the whole tree is
+  // revalidated: a list of routes kept by hand is a list that misses one.
+  revalidatePath("/", "layout");
   // The days that could not take the mark and why, shown to the user rather
   // than absorbed silently (items 5, 8).
   return { skipped };
@@ -165,7 +148,7 @@ export async function clearRange(
     }
   }
 
-  revalidateMonth();
+  revalidatePath("/", "layout");
 }
 
 /**
@@ -191,7 +174,7 @@ export async function setHolidayWorked(
   if (span === undefined || span.kind !== "holiday") return;
 
   await repository.saveSpan(workerId, { ...span, worked });
-  revalidateMonth();
+  revalidatePath("/", "layout");
 }
 
 /**
@@ -268,7 +251,7 @@ async function changeMonth(
 
   await repository.saveMonth(workerId, change(recordOf(facts)));
 
-  revalidateMonth();
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 

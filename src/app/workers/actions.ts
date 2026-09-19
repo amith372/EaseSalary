@@ -88,24 +88,6 @@ export type ProfileActionResult =
   | { ok: false; reason: ProfileActionRefusal };
 
 /**
- * Every route that reads a worker, revalidated together.
- *
- * **A change to the profile reaches four screens and not one**, which is what
- * makes this a list rather than a call to `revalidatePath` at each site: the
- * profile itself and the list beside it draw the terms, `/` draws the
- * calendar and the figures that follow from them, and `/payments` draws the
- * debt the opening position opens and the standing lines it offers to
- * override. A page left holding the figures from before the change is the one
- * failure a change this wide can produce.
- */
-function revalidateWorker(): void {
-  revalidatePath("/settings");
-  revalidatePath("/workers", "layout");
-  revalidatePath("/");
-  revalidatePath("/payments");
-}
-
-/**
  * Save the worker, and carry the change into the months that follow her
  * profile (`specs.md` Part 5).
  *
@@ -141,7 +123,9 @@ async function saveProfile(
     }
   }
 
-  revalidateWorker();
+  // Every screen reads the same workers and months, so the whole tree is
+  // revalidated: a list of routes kept by hand is a list that misses one.
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -353,7 +337,7 @@ export async function setSalaryChange(
     await repository.saveMonth(workerId, record);
   }
 
-  revalidateWorker();
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -634,8 +618,6 @@ export async function createWorker(
     passport: draft.passportNumber,
   });
 
-  revalidateWorker();
-  // The bar reads the household's workers, and until now it had none.
   revalidatePath("/", "layout");
   return { ok: true, workerId };
 }
@@ -707,6 +689,6 @@ export async function setIdentifyingNumber(
   await requireWorker(workerId);
 
   await saveIdentifyingNumbers(repository, workerId, { [known]: value });
-  revalidateWorker();
+  revalidatePath("/", "layout");
   return { ok: true };
 }

@@ -50,21 +50,6 @@ export type HolidayActionResult =
   | { ok: true }
   | { ok: false; reason: HolidayRefusal | AmendmentRefusal | "entryUnknown" };
 
-/**
- * Every route a chosen holiday reaches.
- *
- * A date chosen here is a span on the worker, so it is drawn on the month's
- * calendar and counted in the month's figures the moment it is written — which
- * is the whole point of choosing the year in advance (item 9). The picker
- * itself is revalidated too, because the quota above the list is what the
- * gesture changed.
- */
-function revalidateHolidays(): void {
-  revalidatePath("/settings/holidays");
-  revalidatePath("/workers", "layout");
-  revalidatePath("/");
-}
-
 type HolidayState = { spans: MonthSpan[]; year: HolidayYear };
 
 /**
@@ -129,7 +114,9 @@ export async function setHolidaySource(
   const repository = await getRepository();
   const profile = await requireWorker(workerId, repository);
   await repository.saveWorker({ ...profile, holidaySource: source });
-  revalidateHolidays();
+  // Every screen reads the same workers and months, so the whole tree is
+  // revalidated: a list of routes kept by hand is a list that misses one.
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -171,7 +158,7 @@ export async function chooseHoliday(
     ...(reviewed.fraction === 1 ? {} : { fraction: reviewed.fraction }),
   };
   await repository.saveSpan(profile.id, span);
-  revalidateHolidays();
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -184,7 +171,7 @@ export async function unchooseHoliday(
   const repository = await getRepository();
   const profile = await requireWorker(workerId, repository);
   await repository.deleteSpan(profile.id, spanId);
-  revalidateHolidays();
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -242,7 +229,7 @@ export async function moveHoliday(
       note: amendment.note.trim(),
     });
   }
-  revalidateHolidays();
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -278,6 +265,6 @@ export async function setHolidayPart(
     ...rest,
     ...(fraction === 1 ? {} : { fraction }),
   });
-  revalidateHolidays();
+  revalidatePath("/", "layout");
   return { ok: true };
 }
