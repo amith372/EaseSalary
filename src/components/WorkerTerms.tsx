@@ -68,7 +68,12 @@ import type {
 import { salaryFor } from "@/lib/engine/salary";
 import { he } from "@/lib/i18n/he";
 import type { IdentifyingNumbers } from "@/lib/identifyingNumbers";
-import { formatAgorot, formatDays, formatPercent } from "@/lib/money";
+import {
+  amountFieldValue,
+  formatAgorot,
+  formatDays,
+  formatPercent,
+} from "@/lib/money";
 
 
 /**
@@ -1295,7 +1300,7 @@ export function RestEveSupplementControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.restEveSupplement;
-  const stored = agorot === 0 ? "" : (agorot / 100).toFixed(2);
+  const stored = agorot === 0 ? "" : amountFieldValue(agorot);
   const [typed, setTyped] = useState(stored);
   const { refusal, run } = useProfileAction(onSubmit);
 

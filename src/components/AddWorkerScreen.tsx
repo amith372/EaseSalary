@@ -33,7 +33,7 @@ import { paymentMonthBeforeFirstMonth } from "@/lib/engine/recuperation";
 import { legalLink, type LegalLinkKey } from "@/lib/links";
 import { genders, incomeTaxModes } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
-import { formatAgorot } from "@/lib/money";
+import { amountFieldValue, formatAgorot } from "@/lib/money";
 
 /**
  * `EaseSalary - הוספת עובד` — the flow that gives a household its first worker.
@@ -136,7 +136,7 @@ export function AddWorkerScreen({
     // The salary opens at the minimum wage, which is what item 3 makes the
     // default rather than an empty field the family has to look a figure up
     // for. It may be raised and may not be lowered.
-    baseMonthlySalary: (minimumWageAgorot / 100).toFixed(2),
+    baseMonthlySalary: amountFieldValue(minimumWageAgorot),
     restEveSupplement: "",
     insurer: "",
     incomeTaxMode: "automatic",

@@ -11,6 +11,7 @@ import { calculateSeries } from "@/lib/engine/series";
 import { upcoming } from "@/lib/engine/upcoming";
 import type { IncomeTaxSetting, MonthIncomeTax } from "@/lib/engine/types";
 import { readToday } from "@/lib/requestToday";
+import { formatPercent } from "@/lib/money";
 import type { MonthResult } from "@/lib/types";
 
 /**
@@ -65,7 +66,7 @@ function incomeTaxOf(
     agorot,
     manual: row?.manual ?? false,
     setting,
-    sharePercent: share === null ? null : (share * 100).toFixed(2),
+    sharePercent: share === null ? null : formatPercent(share, 2),
     // For the field's own preview of a percentage correction. The conversion
     // that is actually stored is made on the server against the gross read
     // again there.

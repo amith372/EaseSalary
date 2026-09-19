@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  amountFieldValue,
   formatAgorot,
   formatDays,
   formatPercent,
@@ -183,6 +184,34 @@ describe("formatPercent", () => {
     expect(formatPercent(0.025)).toBe("2.5");
     expect(formatPercent(0.1)).toBe("10");
     expect(formatPercent(0)).toBe("0");
+  });
+
+  it("keeps exactly the places asked for when a share is stated", () => {
+    // 36,000 agorot withheld from 1,341,500 of ברוטו is 2.6836…%, to two places 2.68.
+    expect(formatPercent(36000 / 1341500, 2)).toBe("2.68");
+    expect(formatPercent(0.025, 2)).toBe("2.50");
+    expect(formatPercent(0, 2)).toBe("0.00");
+  });
+});
+
+describe("amountFieldValue", () => {
+  it("opens a field with the shekels and agorot, no sign or grouping", () => {
+    expect(amountFieldValue(730575)).toBe("7305.75");
+    expect(amountFieldValue(624765)).toBe("6247.65");
+    expect(amountFieldValue(5)).toBe("0.05");
+    expect(amountFieldValue(0)).toBe("0.00");
+    expect(amountFieldValue(-200000)).toBe("-2000.00");
+  });
+
+  it("opens the field empty for an amount not yet known", () => {
+    expect(amountFieldValue(null)).toBe("");
+    expect(amountFieldValue(undefined)).toBe("");
+  });
+
+  it("is what parseShekels reads back", () => {
+    for (const agorot of [730575, 5, 0, 100]) {
+      expect(parseShekels(amountFieldValue(agorot))).toBe(agorot);
+    }
   });
 });
 

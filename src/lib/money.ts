@@ -23,12 +23,32 @@ function groupThousands(digits: string): string {
  * its pieces if it is left to the surrounding paragraph (specs.md Part 5).
  */
 export function formatAgorot(agorot: number): string {
+  const { sign, shekels, fraction } = partsOf(agorot);
+  return `${sign}${groupThousands(shekels)}.${fraction} ${SHEKEL_SIGN}`;
+}
+
+/** The figure a field opens with — the amount without its sign or grouping, so
+ * what is shown is what `parseShekels` reads back: 730575 is "7305.75". An
+ * amount not yet known opens the field empty. */
+export function amountFieldValue(agorot: number | null | undefined): string {
+  if (agorot === null || agorot === undefined) return "";
+  const { sign, shekels, fraction } = partsOf(agorot);
+  return `${sign}${shekels}.${fraction}`;
+}
+
+/** Split in integers rather than by dividing, so no float reaches the digits. */
+function partsOf(agorot: number): {
+  sign: string;
+  shekels: string;
+  fraction: string;
+} {
   const rounded = Math.round(agorot);
-  const sign = rounded < 0 ? "-" : "";
   const absolute = Math.abs(rounded);
-  const shekels = Math.trunc(absolute / AGOROT_PER_SHEKEL);
-  const fraction = absolute % AGOROT_PER_SHEKEL;
-  return `${sign}${groupThousands(String(shekels))}.${String(fraction).padStart(2, "0")} ${SHEKEL_SIGN}`;
+  return {
+    sign: rounded < 0 ? "-" : "",
+    shekels: String(Math.trunc(absolute / AGOROT_PER_SHEKEL)),
+    fraction: String(absolute % AGOROT_PER_SHEKEL).padStart(2, "0"),
+  };
 }
 
 /**
@@ -43,9 +63,16 @@ export function formatDays(days: number): string {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
 }
 
-/** A stored fraction as the percentage the user types: 0.025 is "2.5". */
-export function formatPercent(fraction: number): string {
-  return String(Number((fraction * 100).toFixed(4)));
+/**
+ * A stored fraction as the percentage the user types: 0.025 is "2.5". Given
+ * `places`, a share stated rather than typed keeps exactly that many, so it
+ * does not change width from month to month: 0.025 at two places is "2.50".
+ */
+export function formatPercent(fraction: number, places?: number): string {
+  const percent = fraction * 100;
+  return places === undefined
+    ? String(Number(percent.toFixed(4)))
+    : percent.toFixed(places);
 }
 
 /** Money reaches a sheet in shekels, which is what the family reads. The

@@ -34,7 +34,12 @@ import type {
 import { exportQuestionKeys } from "@/lib/engine/beforeExport";
 import type { ConfirmedWage } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
-import { formatAgorot, formatDays, parseShekels } from "@/lib/money";
+import {
+  amountFieldValue,
+  formatAgorot,
+  formatDays,
+  parseShekels,
+} from "@/lib/money";
 import type { ScrapeFailureKind } from "@/lib/scrape/failure";
 import type { IsoDate, Worker, YearMonth } from "@/lib/types";
 
@@ -127,14 +132,6 @@ function openingExportMonth(
   return ended.length > 0
     ? ended[ended.length - 1]
     : openingMonthOf(months, today);
-}
-
-/** The figure a field opens with — the amount without its sign or grouping, so
- * what is shown is what `parseShekels` reads back. */
-function amountFieldValue(agorot: number | null | undefined): string {
-  return agorot === null || agorot === undefined
-    ? ""
-    : (agorot / 100).toFixed(2);
 }
 
 export function BeforeExportScreen({
