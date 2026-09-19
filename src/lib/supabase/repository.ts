@@ -297,7 +297,8 @@ function workerRowOf(profile: WorkerProfile, householdId: string) {
   };
 }
 
-function spanOf(row: SpanRow): MonthSpan {
+/** @internal Exported for the round-trip test. */
+export function spanOf(row: SpanRow): MonthSpan {
   const span = {
     id: row.id,
     kind: row.kind,
@@ -305,15 +306,19 @@ function spanOf(row: SpanRow): MonthSpan {
     to: row.to,
     ...(row.note === null ? {} : { note: row.note }),
     ...(row.fraction === null ? {} : { fraction: numberOf(row.fraction) }),
-    ...(row.worked === null ? {} : { worked: row.worked }),
+    // A holiday carries `worked` even when it is null: null is *nobody has
+    // said yet*, which stops the export (item 18), and a missing key would
+    // read as neither answered nor unanswered.
+    ...(row.kind === "holiday" ? { worked: row.worked } : {}),
   };
-  // The check constraints of migration 5 are what make this cast a true
-  // statement rather than a hope: only sickness may be open, and a holiday
-  // always says whether she worked it.
+  // The spans table's check constraints are what make this cast a true
+  // statement rather than a hope: only sickness may be open, and only a
+  // holiday carries `worked`.
   return span as MonthSpan;
 }
 
-function spanRowOf(workerId: string, span: MonthSpan) {
+/** @internal Exported for the round-trip test. */
+export function spanRowOf(workerId: string, span: MonthSpan) {
   return {
     worker_id: workerId,
     id: span.id,
