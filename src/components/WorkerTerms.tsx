@@ -41,7 +41,12 @@ import {
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
-import { Field, inputClass } from "@/components/Field";
+import {
+  buttonClass,
+  Field,
+  inputClass,
+  RefusalLine,
+} from "@/components/Field";
 import { MoneyValue } from "@/components/MoneyValue";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import { addMonths, compareMonth, yearMonthText } from "@/lib/dates";
@@ -154,9 +159,6 @@ export function TermRow({
   );
 }
 
-const buttonClass =
-  "rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:opacity-50";
-
 /** A bare text action. The padding widens what a finger can hit to about 44px
  * and the negative margin gives the space back, so the row keeps its layout. */
 const quietButtonClass =
@@ -170,21 +172,6 @@ function Refusal({ reason }: { reason: ProfileActionRefusal }) {
   // refused for that reason.
   if (reason === "employedSinceAfterFirstMonth") return null;
   return <RefusalLine>{he.workers.profile.terms.refused[reason]}</RefusalLine>;
-}
-
-function RefusalLine({ children }: { children: ReactNode }) {
-  return (
-    /* `role="alert"` rather than `aria-live`: the paragraph is mounted with its
-       sentence already in it, and a live region is only announced reliably
-       when its content changes after it exists. */
-    <p
-      role="alert"
-      dir="auto"
-      className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
-    >
-      {children}
-    </p>
-  );
 }
 
 function Empty({ children }: { children: ReactNode }) {
@@ -1244,14 +1231,7 @@ export function EmployedSinceControl({
   return (
     <TermRow label={words.label} hint={words.hint}>
       <div data-terms="employedSince" className="flex flex-wrap items-center gap-2.5">
-        <input
-          type="text"
-          value={typed}
-          onChange={(event) => setTyped(event.target.value)}
-          placeholder={he.workers.profile.terms.documents.format}
-          dir="ltr"
-          className={`${inputClass} max-w-44 text-start`}
-        />
+        <DateInput value={typed} onChange={setTyped} />
         <Bidi className="text-[13px] font-light text-ink-quiet">
           {fullDayLabel(employedSince)}
         </Bidi>
@@ -1342,6 +1322,26 @@ export function RestEveSupplementControl({
  * date beside it is the same value in the words the rest of the application
  * uses, so nobody has to read an ISO date to know what is stored.
  */
+/** A date typed in the profile's one format, left to right. */
+function DateInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={he.workers.profile.terms.documents.format}
+      dir="ltr"
+      className={`${inputClass} max-w-44 text-start`}
+    />
+  );
+}
+
 function DateField({
   label,
   hint,
@@ -1359,14 +1359,7 @@ function DateField({
   return (
     <Field label={label} hint={hint}>
       <span className="flex flex-wrap items-center gap-2.5">
-        <input
-          type="text"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={words.format}
-          dir="ltr"
-          className={`${inputClass} max-w-44 text-start`}
-        />
+        <DateInput value={value} onChange={onChange} />
         <span className="text-[13px] font-light text-ink-quiet">
           {stored === null ? (
             <span dir="auto">{words.none}</span>

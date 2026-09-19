@@ -15,10 +15,10 @@ import { Chip } from "@/components/Chip";
 import { Card } from "@/components/Card";
 import { Chevron } from "@/components/icons";
 import { useWorkerScope } from "@/components/WorkerScope";
-import { WhyPanel } from "@/components/WhyDisclosure";
+import { buttonClass, inputClass, RefusalLine } from "@/components/Field";
+import { RuleLink, WhyPanel } from "@/components/WhyDisclosure";
 import { weekdayDayLabel } from "@/lib/dateLabels";
 import type { RestDay } from "@/lib/dates";
-import { legalLink } from "@/lib/links";
 import type { HolidayRow, HolidayYear } from "@/lib/engine/holidayYear";
 import type { HolidaySourceChoice } from "@/lib/holidaySources";
 import { he } from "@/lib/i18n/he";
@@ -558,17 +558,7 @@ function HolidayRowView({
               >
                 {words.onRestDay(restDay)}
               </span>
-              <a
-                href={legalLink("holidayWork").url}
-                target="_blank"
-                rel="noopener noreferrer"
-                dir="auto"
-                className="text-[13px] font-medium text-forest hover:underline hover:underline-offset-[3px]"
-              >
-                <span>{legalLink("holidayWork").label}</span>
-                <span> — </span>
-                <span>{he.why.linkSuffix}</span>
-              </a>
+              <RuleLink rule="holidayWork" className="text-[13px] text-forest" />
             </span>
           ) : null}
         </span>
@@ -720,7 +710,7 @@ function DateForm({
             min={`${year}-01-01`}
             max={`${year}-12-31`}
             onChange={(event) => setDate(event.target.value)}
-            className="rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
+            className={inputClass}
           />
         </label>
         {amending ? (
@@ -735,7 +725,7 @@ function DateForm({
                 data-field="agreed-on"
                 value={agreedOn}
                 onChange={(event) => setAgreedOn(event.target.value)}
-                className="rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
+                className={inputClass}
               />
             </label>
             <label className="flex min-w-0 flex-[1_1_16rem] flex-col gap-1">
@@ -748,7 +738,7 @@ function DateForm({
                 data-field="amendment-note"
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
-                className="rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest"
+                className={inputClass}
               />
             </label>
           </>
@@ -759,7 +749,7 @@ function DateForm({
           onClick={() =>
             onSubmit(date as IsoDate, amending ? { agreedOn, note } : undefined)
           }
-          className="rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:opacity-50"
+          className={buttonClass}
         >
           <span dir="auto">{submit}</span>
         </button>
@@ -778,16 +768,5 @@ function DateForm({
 /** What the refusal was, as a sentence. Never a code: a refusal carries the
  * reason it was refused (specs.md item 25). */
 function Refusal({ reason }: { reason: keyof typeof he.holidays.refused }): ReactNode {
-  return (
-    /* `role="alert"` rather than `aria-live`: the paragraph is mounted with its
-       sentence already in it, and a live region is only announced reliably
-       when its content changes after it exists. */
-    <p
-      role="alert"
-      dir="auto"
-      className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
-    >
-      {he.holidays.refused[reason]}
-    </p>
-  );
+  return <RefusalLine>{he.holidays.refused[reason]}</RefusalLine>;
 }

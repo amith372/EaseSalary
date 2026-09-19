@@ -22,7 +22,13 @@ import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { CoveredMonths } from "@/components/CoveredMonths";
-import { Field, inputClass } from "@/components/Field";
+import {
+  Field,
+  inputClass,
+  outlineButtonClass,
+  RefusalLine,
+} from "@/components/Field";
+import { RuleLink } from "@/components/WhyDisclosure";
 import { FoldSection, type Fold } from "@/components/FoldSection";
 import { MoneyValue } from "@/components/MoneyValue";
 import { addMonths, yearMonthText } from "@/lib/dates";
@@ -56,7 +62,6 @@ import type {
   UserLinePlacement,
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
-import { legalLink } from "@/lib/links";
 import { formatAgorot, formatPercent, parseShekels } from "@/lib/money";
 import type { OverrideCandidate, YearMonth } from "@/lib/types";
 
@@ -184,10 +189,6 @@ const rowActionClass =
 const cancelClass =
   "-my-1 px-2 py-3 text-[14px] text-ink-quiet transition-colors hover:text-ink";
 
-/** The one outlined button of this card, in a form and outside one alike. */
-export const outlineButtonClass =
-  "rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
-
 export function MonthActions({
   workerId,
   month,
@@ -293,18 +294,7 @@ function Refusal({
     reason === "amount" && amountText !== undefined
       ? amountText
       : he.month.actions.refused[reason];
-  return (
-    /* `role="alert"` rather than `aria-live`: the paragraph is mounted with its
-       sentence already in it, and a live region is only announced reliably
-       when its content changes after it exists. */
-    <p
-      role="alert"
-      dir="auto"
-      className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
-    >
-      {text}
-    </p>
-  );
+  return <RefusalLine>{text}</RefusalLine>;
 }
 
 /**
@@ -347,7 +337,6 @@ function HospitalOvertimeControl({
   );
   const [note, setNote] = useState(hospitalOvertime?.note ?? "");
   const { refusal, run } = useMonthAction(onSubmit);
-  const link = legalLink("hospitalOvertime");
 
   const cleared = amount.trim() === "";
   const parsed = cleared ? null : parseShekels(amount);
@@ -407,7 +396,7 @@ function HospitalOvertimeControl({
           <button
             type="submit"
             disabled={!changed}
-            className={`${outlineButtonClass} disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet disabled:hover:border-line`}
+            className={outlineButtonClass}
           >
             <span dir="auto">{words.save}</span>
           </button>
@@ -427,17 +416,7 @@ function HospitalOvertimeControl({
         >
           {words.rule}
         </span>
-        <a
-          href={link.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          dir="auto"
-          className="text-[13px] font-medium hover:underline hover:underline-offset-[3px]"
-        >
-          <span>{link.label}</span>
-          <span> — </span>
-          <span>{he.why.linkSuffix}</span>
-        </a>
+        <RuleLink rule="hospitalOvertime" />
       </Card>
     </MonthFold>
   );
@@ -486,7 +465,6 @@ function IncomeTaxControl({
     incomeTaxManual ? formatAgorot(incomeTaxAgorot) : "",
   );
   const { refusal, run } = useMonthAction(onSubmit);
-  const link = legalLink("incomeTax");
 
   // **What produced the amount above**, said in the card rather than left to be
   // inferred from a field that may be empty: a manual figure first, because it
@@ -632,7 +610,7 @@ function IncomeTaxControl({
         <button
           type="submit"
           disabled={!changed}
-          className={`flex-none ${outlineButtonClass} disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet disabled:hover:border-line`}
+          className={`flex-none ${outlineButtonClass}`}
         >
           <span dir="auto">{words.save}</span>
         </button>
@@ -687,17 +665,7 @@ function IncomeTaxControl({
         >
           {words.reminder}
         </span>
-        <a
-          href={link.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          dir="auto"
-          className="text-[13px] font-medium hover:underline hover:underline-offset-[3px]"
-        >
-          <span>{link.label}</span>
-          <span> — </span>
-          <span>{he.why.linkSuffix}</span>
-        </a>
+        <RuleLink rule="incomeTax" />
       </Card>
     </MonthFold>
   );
@@ -1558,7 +1526,7 @@ function ThirdPartyControl({
             event.preventDefault();
             submit();
           }}
-          className={`${outlineButtonClass} disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet`}
+          className={outlineButtonClass}
         >
           <span dir="auto">{open === "new" ? words.submit : words.save}</span>
         </button>

@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { clearRange, markRange, setHolidayWorked, setMonthNote } from "@/app/month/actions";
-import { inputClass } from "@/components/Field";
-import { outlineButtonClass } from "@/components/MonthActions";
+import { inputClass, outlineButtonClass } from "@/components/Field";
 import { Sentence, WorkerName } from "@/components/AlertsScreen";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
@@ -802,7 +801,7 @@ function MonthNote({
           <button
             type="submit"
             disabled={!changed || saving}
-            className={`${outlineButtonClass} disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet disabled:hover:border-line`}
+            className={outlineButtonClass}
           >
             <span dir="auto">{words.save}</span>
           </button>

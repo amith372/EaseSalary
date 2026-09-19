@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Card } from "@/components/Card";
 import { he } from "@/lib/i18n/he";
-import { legalLink } from "@/lib/links";
+import { legalLink, type LegalLinkKey } from "@/lib/links";
 import type { Explanation } from "@/lib/types";
 
 /**
@@ -79,7 +79,6 @@ export function WhyPanel({
 }: WhyPanelProps) {
   if (!open) return null;
 
-  const link = explanation.link ? legalLink(explanation.link) : undefined;
 
   return (
     <Card
@@ -95,19 +94,33 @@ export function WhyPanel({
         {explanation.text}
       </span>
       {children}
-      {link ? (
-        <a
-          href={link.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          dir="auto"
-          className="text-[13px] font-medium hover:underline hover:underline-offset-[3px]"
-        >
-          <span>{link.label}</span>
-          <span> — </span>
-          <span>{he.why.linkSuffix}</span>
-        </a>
-      ) : null}
+      {explanation.link ? <RuleLink rule={explanation.link} /> : null}
     </Card>
+  );
+}
+
+/** "דמי הבראה — באתר כל זכות": the page of the rule a figure or a question
+ * rests on. `className` carries the size, and the colour where it departs
+ * from every link's forest. */
+export function RuleLink({
+  rule,
+  className = "text-[13px]",
+}: {
+  rule: LegalLinkKey;
+  className?: string;
+}) {
+  const link = legalLink(rule);
+  return (
+    <a
+      href={link.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      dir="auto"
+      className={`font-medium hover:underline hover:underline-offset-[3px] ${className}`}
+    >
+      <span>{link.label}</span>
+      <span> — </span>
+      <span>{he.why.linkSuffix}</span>
+    </a>
   );
 }

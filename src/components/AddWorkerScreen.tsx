@@ -7,6 +7,7 @@ import { createWorker } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Chip } from "@/components/Chip";
 import { LogoMark } from "@/components/icons";
+import { RuleLink as SharedRuleLink } from "@/components/WhyDisclosure";
 import {
   addMonths,
   compareMonth,
@@ -31,9 +32,9 @@ import {
   type OpeningDraft,
 } from "@/lib/engine/profile";
 import { paymentMonthBeforeFirstMonth } from "@/lib/engine/recuperation";
-import { legalLink, type LegalLinkKey } from "@/lib/links";
 import { genders, incomeTaxModes } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
+import type { LegalLinkKey } from "@/lib/links";
 import { amountFieldValue, formatAgorot } from "@/lib/money";
 
 /**
@@ -664,22 +665,9 @@ function wizardPlan(draft: NewWorkerDraft, today: IsoDate): WizardPlan | null {
   };
 }
 
-/** "דמי הבראה — באתר כל זכות", the rule a question asks about (item 26). */
+/** The rule a question asks about (item 26), a size up to match the wizard. */
 function RuleLink({ rule }: { rule: LegalLinkKey }) {
-  const link = legalLink(rule);
-  return (
-    <a
-      href={link.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      dir="auto"
-      className="text-[14px] font-medium text-forest hover:underline hover:underline-offset-[3px]"
-    >
-      <span>{link.label}</span>
-      <span> — </span>
-      <span>{he.why.linkSuffix}</span>
-    </a>
-  );
+  return <SharedRuleLink rule={rule} className="text-[14px] text-forest" />;
 }
 
 function WhenStep({
