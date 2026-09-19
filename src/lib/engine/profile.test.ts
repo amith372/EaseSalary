@@ -4,6 +4,7 @@ import { FRIDAY, SATURDAY, SUNDAY, THURSDAY } from "@/lib/dates";
 import {
   isAllowedRestDay,
   monthsFollowingProfile,
+  termsDiffer,
   parseDays,
   restDayChoices,
   reviewDate,
@@ -280,6 +281,32 @@ describe("a term changed on the profile reaches the months that follow it (Part 
       [line],
       [line],
     ]);
+  });
+
+  it("rewrites the months only for a change to a term a month copies", () => {
+    // `MonthTerms` holds five fields: the rest day, the rest-eve supplement,
+    // the recuperation month, the income-tax setting and the standing lines.
+    // Each of them changed alone reaches the months; gender and the employment
+    // date live on the profile only, so changing them reaches none.
+    const line = {
+      id: "pocket",
+      label: "דמי כיס",
+      direction: "addition" as const,
+      placement: "beforeGross" as const,
+      agorot: 20000,
+    };
+    const copied: WorkerTerms[] = [
+      { ...TERMS, restDay: FRIDAY },
+      { ...TERMS, restEveSupplementAgorot: 0 },
+      { ...TERMS, recuperationMonth: 8 },
+      { ...TERMS, incomeTax: { mode: "none" } },
+      { ...TERMS, standingLines: [line] },
+    ];
+    for (const after of copied) expect(termsDiffer(TERMS, after)).toBe(true);
+
+    expect(termsDiffer(TERMS, { ...TERMS, gender: "male" })).toBe(false);
+    expect(termsDiffer(TERMS, { ...TERMS, employedSince: "2024-05-01" })).toBe(false);
+    expect(termsDiffer(TERMS, { ...TERMS })).toBe(false);
   });
 
   it("drops the spans, which belong to the worker and not to a month", () => {

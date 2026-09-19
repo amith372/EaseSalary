@@ -379,6 +379,23 @@ export function reviewOpeningDays(
 }
 
 /**
+ * Whether a profile change reaches the terms a month copies (`MonthTerms`), and
+ * so has to be carried into the months that follow the profile.
+ *
+ * **Decided by comparing the two snapshots, never by the caller**: gender, the
+ * insurer and the employment date are on the profile and not on a month, and a
+ * flag picked by hand at each action is how two of them came to re-save every
+ * month. Compared as JSON because the engine runs in the browser too; a
+ * difference in key order alone reads as a change, which costs one needless
+ * re-save and never a missed one.
+ */
+export function termsDiffer(before: WorkerTerms, after: WorkerTerms): boolean {
+  return (
+    JSON.stringify(snapshotTerms(before)) !== JSON.stringify(snapshotTerms(after))
+  );
+}
+
+/**
  * The months a change to the profile's terms reaches (specs.md Part 5).
  *
  * **A month is a draft until the user has confirmed the minimum wage against

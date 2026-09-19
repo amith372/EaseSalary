@@ -17,6 +17,7 @@ import {
   reviewIncomeTax,
   monthsFollowingProfile,
   monthsReachedBySalaryChange,
+  termsDiffer,
   parseRestEveSupplement,
   reviewDocuments,
   reviewOpeningAdvance,
@@ -121,15 +122,19 @@ function revalidateWorker(): void {
  * month is confirmed is that the profile stops writing to it. An engine that
  * reached for the profile would have to learn the difference instead, in every
  * rule that counts a rest day.
+ *
+ * **Whether the months are rewritten is read off `before` and `profile`**
+ * (`termsDiffer`), never told by the caller: only a change to a term a month
+ * copies reaches them.
  */
 async function saveProfile(
+  before: WorkerProfile,
   profile: WorkerProfile,
-  termsChanged: boolean,
 ): Promise<ProfileActionResult> {
   const repository = await getRepository();
   await repository.saveWorker(profile);
 
-  if (termsChanged) {
+  if (termsDiffer(before, profile)) {
     const months = await repository.listMonths(profile.id);
     for (const record of monthsFollowingProfile(months, profile)) {
       await repository.saveMonth(profile.id, record);
@@ -155,7 +160,7 @@ export async function setRestDay(
 ): Promise<ProfileActionResult> {
   if (!isAllowedRestDay(restDay)) return { ok: false, reason: "restDay" };
   const profile = await requireWorker(workerId);
-  return saveProfile({ ...profile, restDay }, true);
+  return saveProfile(profile, { ...profile, restDay });
 }
 
 /**
@@ -174,7 +179,7 @@ export async function setRestEveSupplement(
   const agorot = parseRestEveSupplement(amountText);
   if (agorot === null) return { ok: false, reason: "supplement" };
   const profile = await requireWorker(workerId);
-  return saveProfile({ ...profile, restEveSupplementAgorot: agorot }, true);
+  return saveProfile(profile, { ...profile, restEveSupplementAgorot: agorot });
 }
 
 /**
@@ -203,7 +208,7 @@ export async function setEmployedSince(
   if (date === "afterFirstMonth") {
     return { ok: false, reason: "employedSinceAfterFirstMonth" };
   }
-  return saveProfile({ ...profile, employedSince: date }, false);
+  return saveProfile(profile, { ...profile, employedSince: date });
 }
 
 /**
@@ -227,7 +232,7 @@ export async function setGender(
 ): Promise<ProfileActionResult> {
   if (!isAllowedGender(gender)) return { ok: false, reason: "gender" };
   const profile = await requireWorker(workerId);
-  return saveProfile({ ...profile, gender }, true);
+  return saveProfile(profile, { ...profile, gender });
 }
 
 /**
@@ -255,7 +260,7 @@ export async function setIncomeTaxSetting(
   const reviewed = reviewIncomeTax(mode, percentageText);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
   const profile = await requireWorker(workerId);
-  return saveProfile({ ...profile, incomeTax: reviewed.setting }, true);
+  return saveProfile(profile, { ...profile, incomeTax: reviewed.setting });
 }
 
 /**
@@ -280,7 +285,7 @@ export async function setRecuperationMonth(
     return { ok: false, reason: "recuperationMonth" };
   }
   const profile = await requireWorker(workerId);
-  return saveProfile({ ...profile, recuperationMonth: month }, true);
+  return saveProfile(profile, { ...profile, recuperationMonth: month });
 }
 
 /**
@@ -298,7 +303,7 @@ export async function setInsurer(
   insurer: string,
 ): Promise<ProfileActionResult> {
   const profile = await requireWorker(workerId);
-  return saveProfile({ ...profile, insurer: insurer.trim() }, true);
+  return saveProfile(profile, { ...profile, insurer: insurer.trim() });
 }
 
 /**
@@ -375,8 +380,8 @@ export async function addStandingLine(
 
   const profile = await requireWorker(workerId);
   return saveProfile(
+    profile,
     { ...profile, standingLines: [...profile.standingLines, reviewed.line] },
-    true,
   );
 }
 
@@ -406,13 +411,13 @@ export async function updateStandingLine(
   }
 
   return saveProfile(
+    profile,
     {
       ...profile,
       standingLines: profile.standingLines.map((line) =>
         line.id === lineId ? reviewed.line : line,
       ),
     },
-    true,
   );
 }
 
@@ -439,13 +444,13 @@ export async function stopStandingLine(
 ): Promise<ProfileActionResult> {
   const profile = await requireWorker(workerId);
   return saveProfile(
+    profile,
     {
       ...profile,
       standingLines: profile.standingLines.filter(
         (line) => line.id !== lineId,
       ),
     },
-    true,
   );
 }
 
@@ -471,7 +476,7 @@ export async function setOpeningDays(
   const reviewed = reviewOpeningDays(draft, profile.openingPosition);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  return saveProfile({ ...profile, openingPosition: reviewed.position }, false);
+  return saveProfile(profile, { ...profile, openingPosition: reviewed.position });
 }
 
 /**
@@ -499,6 +504,7 @@ export async function addOpeningAdvance(
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   return saveProfile(
+    profile,
     {
       ...profile,
       openingPosition: {
@@ -506,7 +512,6 @@ export async function addOpeningAdvance(
         advances: [...profile.openingPosition.advances, reviewed.advance],
       },
     },
-    false,
   );
 }
 
@@ -542,6 +547,7 @@ export async function removeOpeningAdvance(
   if (repaidInMonths > 0) return { ok: false, reason: "overRepaid" };
 
   return saveProfile(
+    profile,
     {
       ...profile,
       openingPosition: {
@@ -551,7 +557,6 @@ export async function removeOpeningAdvance(
         ),
       },
     },
-    false,
   );
 }
 
@@ -574,7 +579,7 @@ export async function setDocuments(
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   const profile = await requireWorker(workerId);
-  return saveProfile({ ...profile, documents: reviewed.documents }, false);
+  return saveProfile(profile, { ...profile, documents: reviewed.documents });
 }
 
 /**
