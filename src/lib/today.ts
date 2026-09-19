@@ -1,4 +1,4 @@
-import { fromIsoDate, toIsoDate } from "@/lib/dates";
+import { isIsoDate } from "@/lib/dates";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -45,8 +45,6 @@ export function todayInIsrael(now: Date = new Date()): IsoDate {
  */
 export const TODAY_COOKIE = "today";
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-
 /**
  * Today for a request: the fixed day its cookie names, or the clock.
  *
@@ -65,7 +63,7 @@ export function todayFor(
   now: Date = new Date(),
 ): IsoDate {
   if (fixed === undefined || production) return todayInIsrael(now);
-  if (!ISO_DATE.test(fixed) || toIsoDate(fromIsoDate(fixed)) !== fixed) {
+  if (!isIsoDate(fixed)) {
     throw new Error(`The ${TODAY_COOKIE} cookie is not a date: ${fixed}`);
   }
   return fixed;

@@ -16,11 +16,16 @@ import { recordOf } from "@/lib/engine/repository";
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
 import { lineKeys } from "@/lib/engine/lines";
 import { calculateSeries } from "@/lib/engine/series";
-import { compareMonth, monthOf as monthOfDate, sameMonth } from "@/lib/dates";
+import {
+  compareMonth,
+  isIsoDate,
+  monthOf as monthOfDate,
+  sameMonth,
+} from "@/lib/dates";
 import { openMonthIfMissing } from "@/lib/openMonth";
 import { parseShekels } from "@/lib/money";
 import { readToday } from "@/lib/requestToday";
-import type { IsoDate, YearMonth } from "@/lib/types";
+import type { YearMonth } from "@/lib/types";
 
 /**
  * The two things the pre-export screen can change (specs.md items 4, 15
@@ -78,8 +83,6 @@ async function monthOf(workerId: string, month: YearMonth) {
   return { repository, profile, facts };
 }
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-
 /**
  * The spell of sickness closed by the day the worker came back (specs.md items
  * 8 and 18).
@@ -106,17 +109,16 @@ export async function closeSickSpell(
   if (spell === undefined || spell.to !== null) {
     return { ok: false, reason: "beforeTheSpell" };
   }
-  if (!ISO_DATE.test(returnedOn)) {
+  if (!isIsoDate(returnedOn)) {
     return { ok: false, reason: "beforeTheSpell" };
   }
-  const returned = returnedOn as IsoDate;
-  if (reviewReturnDate(spell.from, returned) !== null) {
+  if (reviewReturnDate(spell.from, returnedOn) !== null) {
     return { ok: false, reason: "beforeTheSpell" };
   }
 
   await repository.saveSpan(workerId, {
     ...spell,
-    to: spellEndFromReturn(returned),
+    to: spellEndFromReturn(returnedOn),
   });
   revalidateMonth();
   return { ok: true };
@@ -201,10 +203,10 @@ export async function confirmMonth(
   // Item 4: the stored date is the official תאריך תחולה, which is always a
   // first of month. Anything else is a value this form never offered, so it is
   // refused rather than stored as a row claiming an impossible date.
-  if (!/^\d{4}-\d{2}-01$/.test(confirmation.effectiveFrom)) {
+  const effectiveFrom = confirmation.effectiveFrom;
+  if (!isIsoDate(effectiveFrom) || !effectiveFrom.endsWith("-01")) {
     return { ok: false, reason: "amount" };
   }
-  const effectiveFrom = confirmation.effectiveFrom as IsoDate;
 
   const { repository, profile, facts } = await monthOf(workerId, month);
 

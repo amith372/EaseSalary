@@ -1,4 +1,5 @@
 import { rateInForce } from "@/lib/datedRates";
+import { MONTHS_PER_YEAR } from "@/lib/dates";
 import type { DatedRate } from "@/lib/datedRates";
 import { bracketsForYear } from "@/lib/taxBrackets";
 import type { TaxBracket, TaxYearBrackets } from "@/lib/taxBrackets";
@@ -116,12 +117,13 @@ interface IncomeTaxInput {
  */
 export function incomeTaxForMonth(input: IncomeTaxInput): number {
   const annualTax = annualTaxBeforeCredits(
-    input.grossAgorot * 12,
+    input.grossAgorot * MONTHS_PER_YEAR,
     input.brackets,
   );
   const monthlyCredit =
-    (creditPointsFor(input.gender) * input.creditPointValueAnnualAgorot) / 12;
-  return Math.max(0, Math.round(annualTax / 12 - monthlyCredit));
+    (creditPointsFor(input.gender) * input.creditPointValueAnnualAgorot) /
+    MONTHS_PER_YEAR;
+  return Math.max(0, Math.round(annualTax / MONTHS_PER_YEAR - monthlyCredit));
 }
 
 /**

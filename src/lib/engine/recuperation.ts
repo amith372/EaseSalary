@@ -1,4 +1,5 @@
 import {
+  MONTHS_PER_YEAR,
   addDays,
   addMonths,
   compareIsoDate,
@@ -190,9 +191,10 @@ export function paymentMonthBeforeFirstMonth(
 ): YearMonth | null {
   const hired = monthOf(employedSince);
   const monthsIn =
-    (firstMonth.year - hired.year) * 12 + (firstMonth.month - hired.month);
+    (firstMonth.year - hired.year) * MONTHS_PER_YEAR +
+    (firstMonth.month - hired.month);
   if (monthsIn < 0) return null;
-  const yearBegan = addMonths(hired, monthsIn - (monthsIn % 12));
+  const yearBegan = addMonths(hired, monthsIn - (monthsIn % MONTHS_PER_YEAR));
   const paymentMonth = addMonths(
     yearBegan,
     (recuperationMonth - yearBegan.month + 12) % 12,

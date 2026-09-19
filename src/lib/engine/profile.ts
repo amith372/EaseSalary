@@ -6,12 +6,11 @@ import {
   compareIsoDate,
   compareMonth,
   daysInMonth,
-  fromIsoDate,
+  isIsoDate,
   isoOf,
   monthOf,
   parseYearMonth,
   sameMonth,
-  toIsoDate,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { reviewTaxPercentage } from "@/lib/engine/incomeTax";
@@ -120,20 +119,14 @@ export function reviewIncomeTax(
  * clearing the field says the family has not typed it in yet and the warning
  * that would have fired simply has nothing to fire on.
  *
- * The date is checked by building it and reading it back, which is the only
- * check that refuses 2026-02-30 — a regular expression accepts it and a `Date`
- * rolls it forward to March, and a permit that silently expires on the wrong
- * day is exactly the class of mistake `specs.md` Part 5 is about. `fromIsoDate`
- * builds in UTC, so nothing here can shift by a day across a daylight-saving
- * boundary (`CLAUDE.md`).
+ * 2026-02-30 is refused (`isIsoDate`) rather than rolled into March: a permit
+ * that silently expires on the wrong day is exactly the class of mistake
+ * `specs.md` Part 5 is about.
  */
 export function reviewDate(text: string): IsoDate | null | "invalid" {
   const trimmed = text.trim();
   if (trimmed === "") return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return "invalid";
-  const date = fromIsoDate(trimmed);
-  if (Number.isNaN(date.getTime())) return "invalid";
-  return toIsoDate(date) === trimmed ? trimmed : "invalid";
+  return isIsoDate(trimmed) ? trimmed : "invalid";
 }
 
 /** The earliest date an employment may have begun (specs.md item 6). */

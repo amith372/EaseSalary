@@ -1,4 +1,4 @@
-import { fromIsoDate, monthOf, sameMonth, toIsoDate } from "@/lib/dates";
+import { isIsoDate, monthOf, sameMonth } from "@/lib/dates";
 import type { MonthFacts } from "./types";
 import type { IsoDate } from "@/lib/types";
 
@@ -33,12 +33,6 @@ export type AmendmentRefusal =
   | "note";
 
 type MonthStamp = Pick<MonthFacts, "month" | "confirmedAt">;
-
-/** A real calendar date in ISO form. It arrives typed, from a request anyone
- * can craft, so "2026-02-30" is refused rather than rolled into March. */
-function isIsoDate(text: string): text is IsoDate {
-  return /^\d{4}-\d{2}-\d{2}$/.test(text) && toIsoDate(fromIsoDate(text)) === text;
-}
 
 function confirmed(months: readonly MonthStamp[]): MonthStamp[] {
   return months.filter((month) => month.confirmedAt !== undefined);

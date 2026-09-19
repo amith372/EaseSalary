@@ -27,6 +27,9 @@ export const SATURDAY = 6;
  * the right. The grid is built in this order and the layout reverses it. */
 export const WEEK_LENGTH = 7;
 
+export const MONTHS_PER_YEAR = 12;
+export const DECEMBER = 12;
+
 /** `month` is 1-12. */
 export function utcDate(year: number, month: number, day: number): Date {
   return new Date(Date.UTC(year, month - 1, day));
@@ -42,6 +45,16 @@ export function toIsoDate(date: Date): IsoDate {
 export function fromIsoDate(iso: IsoDate): Date {
   const [y, m, d] = iso.split("-").map(Number);
   return utcDate(y, m, d);
+}
+
+/**
+ * A real calendar date in ISO form, checked by building it and reading it back:
+ * the only check that refuses 2026-02-30, which a regular expression accepts
+ * and a `Date` rolls forward into March. Text reaching a server action can be
+ * crafted, so this is what stands between it and a date nobody chose.
+ */
+export function isIsoDate(text: string): text is IsoDate {
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) && toIsoDate(fromIsoDate(text)) === text;
 }
 
 export function isoOf(ym: YearMonth, day: number): IsoDate {
@@ -132,8 +145,11 @@ export function addYears(iso: IsoDate, years: number): IsoDate {
 }
 
 export function addMonths(ym: YearMonth, months: number): YearMonth {
-  const zeroBased = ym.year * 12 + (ym.month - 1) + months;
-  return { year: Math.floor(zeroBased / 12), month: (zeroBased % 12) + 1 };
+  const zeroBased = ym.year * MONTHS_PER_YEAR + (ym.month - 1) + months;
+  return {
+    year: Math.floor(zeroBased / MONTHS_PER_YEAR),
+    month: (zeroBased % MONTHS_PER_YEAR) + 1,
+  };
 }
 
 /**
@@ -168,7 +184,7 @@ export function parseYearMonth(text: string): YearMonth | null {
   if (match === null) return null;
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (month < 1 || month > 12) return null;
+  if (month < 1 || month > MONTHS_PER_YEAR) return null;
   return { year, month };
 }
 

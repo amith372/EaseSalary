@@ -1,4 +1,10 @@
-import { daysInMonth, fromIsoDate, isoOf } from "@/lib/dates";
+import {
+  DECEMBER,
+  MONTHS_PER_YEAR,
+  daysInMonth,
+  fromIsoDate,
+  isoOf,
+} from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
@@ -54,8 +60,6 @@ import type {
  * at a year boundary (specs.md items 7, 8). */
 const SICK_DAYS_PER_MONTH = 1.5;
 const SICK_DAY_CEILING = 90;
-
-const MONTHS_PER_YEAR = 12;
 
 /**
  * Vacation days a year, by the seniority year: fourteen through year four,
@@ -263,8 +267,6 @@ export function buildBalances(
 /** The Annual Leave Act, section 7, asks for at least seven vacation days in a
  * year (specs.md item 7). */
 const VACATION_DAYS_A_YEAR_THE_LAW_ASKS_FOR = 7;
-
-const DECEMBER = 12;
 
 /**
  * The vacation days a calendar year must see taken: seven, or what she accrued

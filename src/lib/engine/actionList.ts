@@ -10,6 +10,7 @@ import {
   fromIsoDate,
   isoOf,
   monthHasEnded,
+  DECEMBER,
   monthOf,
   previousQuarter,
   sameMonth,
@@ -85,8 +86,6 @@ const EXPIRY_WARNING_DAYS = 60;
 /** The passport warns while fewer than this many months are left on it, not
  * when it lapses: the employer must see it stays valid that long (item 28). */
 const PASSPORT_MONTHS_REQUIRED = 18;
-
-const DECEMBER = 12;
 
 interface ActionListInput {
   profile: WorkerProfile;

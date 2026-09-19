@@ -55,10 +55,11 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const repository = await getRepository();
   const today = await readToday();
   const workers = await repository.listWorkers();
-  const now = new Date();
   after(async () => {
     try {
-      await refreshMinimumWageIfStale(repository, now);
+      // The real clock, not `today`: staleness is measured against the real
+      // instant of the last fetch, and a pinned day would move it.
+      await refreshMinimumWageIfStale(repository, new Date());
     } catch {
       // A background read that failed changes nothing the user has seen, and
       // the pre-export screen reads the page again before any export.

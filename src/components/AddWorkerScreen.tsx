@@ -11,6 +11,7 @@ import {
   addMonths,
   compareMonth,
   eachMonth,
+  isIsoDate,
   monthOf,
   parseYearMonth,
   sameMonth,
@@ -1132,8 +1133,8 @@ function PayStep({
  * a date. Read off the ISO text the date control produces rather than built
  * through a `Date`, which would shift across a time zone (`CLAUDE.md`). */
 function monthNumberOf(iso: string): number | null {
-  const parts = /^\d{4}-(\d{2})-\d{2}$/.exec(iso.trim());
-  return parts === null ? null : Number(parts[1]);
+  const trimmed = iso.trim();
+  return isIsoDate(trimmed) ? monthOf(trimmed).month : null;
 }
 
 function noteFor(mode: unknown): string {

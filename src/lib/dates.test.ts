@@ -8,6 +8,7 @@ import {
   daysInMonth,
   eachDate,
   everyDayOf,
+  isIsoDate,
   isRestEve,
   isRestDay,
   monthGrid,
@@ -195,5 +196,29 @@ describe("whole years from one date to another", () => {
 
   it("is nought for an employment that has not started", () => {
     expect(yearsBetween("2027-01-01", "2026-09-18")).toBe(0);
+  });
+});
+
+describe("isIsoDate", () => {
+  it("accepts a real date, the 29th of February of a leap year included", () => {
+    expect(isIsoDate("2026-09-19")).toBe(true);
+    expect(isIsoDate("2028-02-29")).toBe(true);
+    expect(isIsoDate("2026-12-31")).toBe(true);
+  });
+
+  it("refuses a date that would roll into the next month", () => {
+    // February 2026 has 28 days and September 30: none of these exists.
+    expect(isIsoDate("2026-02-29")).toBe(false);
+    expect(isIsoDate("2026-02-31")).toBe(false);
+    expect(isIsoDate("2026-09-31")).toBe(false);
+    expect(isIsoDate("2026-13-01")).toBe(false);
+    expect(isIsoDate("2026-00-10")).toBe(false);
+  });
+
+  it("refuses anything not written YYYY-MM-DD", () => {
+    expect(isIsoDate("2026-9-19")).toBe(false);
+    expect(isIsoDate(" 2026-09-19")).toBe(false);
+    expect(isIsoDate("19/09/2026")).toBe(false);
+    expect(isIsoDate("")).toBe(false);
   });
 });

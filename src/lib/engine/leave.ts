@@ -1,4 +1,4 @@
-import { eachDate, fromIsoDate, orderDates } from "@/lib/dates";
+import { MONTHS_PER_YEAR, eachDate, fromIsoDate, orderDates } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { holidayDatesCounted } from "@/lib/engine/holidayDates";
 import { countsAsWorked } from "@/lib/engine/types";
@@ -121,8 +121,6 @@ export function restDayUnitsOf(restDaysWorked: number): number {
 
 /** Nine days for a full year (specs.md item 10). */
 export const HOLIDAYS_PER_YEAR = 9;
-
-const MONTHS_PER_YEAR = 12;
 
 /**
  * The holiday entitlement for one **calendar** year.
