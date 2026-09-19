@@ -4,7 +4,11 @@ import { PayslipScreen } from "@/components/PayslipScreen";
 import type { WorkerPayslip } from "@/components/PayslipScreen";
 import { getRepository } from "@/lib/store";
 import { advanceLedger } from "@/lib/engine/advances";
-import { blocksExport, exportQuestions } from "@/lib/engine/beforeExport";
+import {
+  blocksExport,
+  exportQuestions,
+  monthStillRunning,
+} from "@/lib/engine/beforeExport";
 import { calculateSeries } from "@/lib/engine/series";
 import { todayInIsrael } from "@/lib/today";
 import { readToday } from "@/lib/requestToday";
@@ -72,6 +76,7 @@ export default async function PayslipPage() {
             // debt, so the row is absent instead.
             advanceOwedAgorot: owed === 0 ? null : owed,
             canExport: blocksExport(month.facts, today).length === 0,
+            stillRunning: monthStillRunning(month.facts, today),
             // The Israeli calendar day of the confirmation, worked out here so
             // the screen reads no clock and no time zone (`CLAUDE.md`).
             confirmedOn:

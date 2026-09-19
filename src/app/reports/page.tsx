@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { ReportsScreen } from "@/components/ReportsScreen";
 import type { WorkerReports } from "@/components/ReportsScreen";
 import { getRepository } from "@/lib/store";
-import { blocksExport } from "@/lib/engine/beforeExport";
+import { blocksExport, monthStillRunning } from "@/lib/engine/beforeExport";
 import { monthLevels } from "@/lib/engine/month";
 import { calculateSeries } from "@/lib/engine/series";
 import { readToday } from "@/lib/requestToday";
@@ -59,6 +59,7 @@ export default async function ReportsPage() {
           // the screen and the route cannot disagree about which months have a
           // file — a disagreement offers a month that has not ended.
           blocks: blocksExport(month.facts, today),
+          stillRunning: monthStillRunning(month.facts, today),
         };
       });
 
@@ -66,10 +67,13 @@ export default async function ReportsPage() {
         workerId: profile.id,
         months,
         years,
-        // The latest month that can actually be exported, which is rarely the
-        // latest month recorded: the current one has not ended (item 21).
+        // The latest finished month that can be exported. The current one can be
+        // too, with a warning (item 21), but the one a family comes here for is
+        // the month that is over.
         latest:
-          [...months].reverse().find((month) => month.blocks.length === 0)
+          [...months]
+            .reverse()
+            .find((month) => month.blocks.length === 0 && !month.stillRunning)
             ?.month ?? null,
       };
     }),

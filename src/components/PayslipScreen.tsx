@@ -65,6 +65,9 @@ export interface PayslipMonth {
   /** Whether the month has a file — `blocksExport`'s answer, so the button here
    * and the route behind it cannot disagree (the defect `/reports` had). */
   canExport: boolean;
+  /** The current month before its last day: exported with a warning beside the
+   * button, not refused (item 21). */
+  stillRunning: boolean;
   /** The day the month was last confirmed before an export, in Israel, or
    * `null` for a month never confirmed. */
   confirmedOn: IsoDate | null;
@@ -114,9 +117,9 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
   if (mine === undefined) return null;
 
   // The month comes off the URL where one was named — `/reports` links here
-  // month by month — and otherwise the latest month that has a file. It is
-  // never the latest month recorded: the current one has not ended (item 21),
-  // and the export button would then point at a month the route refuses.
+  // month by month — and otherwise the latest finished month that has a file.
+  // The current one has a file too, with a warning (item 21), but it is not the
+  // month a family opens the payslip to read.
   const wanted = params.get("month");
   const shown =
     mine.months.find(
@@ -124,7 +127,9 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
         wanted ===
         `${entry.month.year}-${String(entry.month.month).padStart(2, "0")}`,
     ) ??
-    [...mine.months].reverse().find((entry) => entry.canExport) ??
+    [...mine.months]
+      .reverse()
+      .find((entry) => entry.canExport && !entry.stillRunning) ??
     mine.months[mine.months.length - 1];
 
   if (shown === undefined) {
@@ -182,6 +187,18 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                 <Bidi>{fullDayLabel(shown.confirmedOn)}</Bidi>
               </p>
             )}
+            {shown.canExport && shown.stillRunning ? (
+              <p
+                data-warning="monthNotEnded"
+                className="max-w-[52ch] text-[15px] leading-[1.5] font-light text-clay-deep text-pretty"
+              >
+                <span dir="auto" className="font-semibold">
+                  {he.beforeExport.notEnded.title}
+                </span>
+                <span>. </span>
+                <span dir="auto">{he.beforeExport.notEnded.note}</span>
+              </p>
+            ) : null}
           </div>
           {shown.canExport ? (
             <a

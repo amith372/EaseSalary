@@ -76,7 +76,7 @@ test.describe("the reports screen (item 23, item 29)", () => {
     ).toBeVisible();
   });
 
-  test("offers the latest month that has ended, and not the one still running", async ({
+  test("leads with the latest month that has ended, and still offers the running one", async ({
     page,
   }) => {
     await useHousehold(page, "hero");
@@ -89,15 +89,15 @@ test.describe("the reports screen (item 23, item 29)", () => {
       page.getByRole("heading", { level: 2 }).first(),
     ).toContainText(ENDED_MONTH);
 
-    // And the row for the month still running says why it has no file, rather
-    // than offering a link that fails.
+    // And the month still running has its file too, with the warning beside it
+    // that it has not ended (item 21).
     const september = page.locator('[data-report-month="2026-9"]');
-    await expect(september).toContainText(
-      he.reports.previousMonths.blocked.monthNotEnded,
+    await expect(september.locator('[data-warning="monthNotEnded"]')).toHaveText(
+      he.beforeExport.notEnded.title,
     );
     await expect(
       september.getByRole("link", { name: he.reports.previousMonths.excel }),
-    ).toHaveCount(0);
+    ).toHaveCount(1);
   });
 
   /**

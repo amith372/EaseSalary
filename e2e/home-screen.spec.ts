@@ -216,7 +216,7 @@ test.describe("a month that has not ended yet (specs.md item 21)", () => {
   test("takes the facts, and raises no warning for it", async ({ page }) => {
     // The demo household's months run through September 2026, so the screen
     // opens on the month still running. Item 21: it can be filled in and it
-    // cannot be exported — the second half is the export's refusal, and this
+    // is exported with a warning — the warning is the export's, and this
     // screen does not repeat it, since a running month is its ordinary state
     // (the user, 2026-09-16).
     await useHousehold(page, "demo", "item21");

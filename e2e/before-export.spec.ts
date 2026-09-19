@@ -11,7 +11,7 @@ import { dayLabel, fullDayLabel, rangeLabel } from "../src/lib/dateLabels";
  *
  * **What this file checks that no unit test can.** The screen is a
  * conversation: seven questions have to be answered before the export is offered
- * at all, a month that has not ended refuses whatever is answered, and
+ * at all, a month still running is offered with a warning, and
  * confirming writes a wage onto the month that the month screen then draws
  * from. Every assertion below is about a *result* — a button's state, a
  * sentence that appeared, a figure on another screen (`CLAUDE.md` rules 9
@@ -27,7 +27,8 @@ import { dayLabel, fullDayLabel, rangeLabel } from "../src/lib/dateLabels";
  * - August 2026 records one holiday worked, on the 20th, and nothing else
  *   (`seed.ts`). That is what the seven questions are answered against.
  * - September 2026 is the month the demo runs to and `today` sits inside it, so
- *   it is the month item 21 refuses; August 2026 is the last one that ended.
+ *   it is the month item 21 exports with a warning; August 2026 is the last one
+ *   that ended.
  * - July 2026 is the first worker's recuperation month (`seed.ts`), and six
  *   days at ₪451.50 is ₪2,709.00 — the figure `recuperation.spec.ts` carries
  *   from the statute.
@@ -104,8 +105,8 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
     await page.goto("/month/export");
     await switchToTestWorker(page);
 
-    // It opens on the last month that ended, and not on the current one — a
-    // month that has not ended could never be exported (item 21).
+    // It opens on the last month that ended, and not on the current one — the
+    // month a family comes here for is the one that is over (item 21).
     await expect(page.locator("h1")).toContainText(
       he.calendar.monthNames[ENDED_MONTH - 1],
     );
@@ -316,11 +317,11 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
   });
 
   /**
-   * Item 21, drawn here as a block where the month screen draws it as a
-   * warning: filling a month in ahead of time is allowed and exporting it is
-   * not. Answering every question must not make the block go away.
+   * Item 21: the current month is exported before its last day, with a warning
+   * and not a refusal. Catches the old block coming back — a disabled button
+   * once every question is answered — and the warning going missing.
    */
-  test("refuses a month that has not ended, however it is answered", async ({
+  test("warns about a month that has not ended, and still allows the export", async ({
     page,
   }) => {
     await useHousehold(page, "notended");
@@ -331,11 +332,12 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
     await expect(page.locator("h1")).toContainText(
       he.calendar.monthNames[CURRENT_MONTH - 1],
     );
-    await expect(page.locator('[data-block="monthNotEnded"]')).toBeVisible();
+    await expect(page.locator('[data-warning="monthNotEnded"]')).toContainText(
+      he.beforeExport.notEnded.note,
+    );
 
     await answerEverything(page);
-    await expect(page.locator("[data-finish]")).toBeDisabled();
-    await expect(page.getByText(he.beforeExport.finish.blocked)).toBeVisible();
+    await expect(page.locator("[data-finish]")).toBeEnabled();
   });
 
   /**

@@ -5,6 +5,7 @@ import {
   blocksExport,
   exportQuestionKeys,
   exportQuestions,
+  monthStillRunning,
   openSickSpellOf,
   recuperationToConfirm,
   baseForMonth,
@@ -353,12 +354,23 @@ describe("the dates and amounts behind the questions", () => {
 });
 
 describe("what stops a month being exported", () => {
-  /** Item 21: a future month may be filled in ahead of time and may only be
-   * exported once it has ended. */
-  it("refuses a month that has not ended, and allows it the day after", () => {
+  /** Item 21: the current month may be exported before its last day, with a
+   * warning; a month after the current one may not, because it is not valued
+   * until it begins. Catches the old block coming back, and the warning
+   * leaking onto a finished month or the refusal off a future one. */
+  it("exports the current month with a warning, and refuses a month not begun", () => {
     const april = facts();
-    expect(blocksExport(april, "2026-04-30")).toContain("monthNotEnded");
-    expect(blocksExport(april, "2026-05-01")).not.toContain("monthNotEnded");
+    // On its first day and its last, April is running: no block, a warning.
+    for (const today of ["2026-04-01", "2026-04-30"]) {
+      expect(blocksExport(april, today)).toEqual([]);
+      expect(monthStillRunning(april, today)).toBe(true);
+    }
+    // The day after, it is an ordinary finished month.
+    expect(blocksExport(april, "2026-05-01")).toEqual([]);
+    expect(monthStillRunning(april, "2026-05-01")).toBe(false);
+    // On the last day of March, April has not begun.
+    expect(blocksExport(april, "2026-03-31")).toEqual(["monthNotBegun"]);
+    expect(monthStillRunning(april, "2026-03-31")).toBe(false);
   });
 
   /** Item 18: the one thing an open spell can get wrong is counting days for a

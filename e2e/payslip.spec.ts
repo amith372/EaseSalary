@@ -35,7 +35,7 @@ const RUN = Date.now().toString(36);
  * the same figure `month-export.spec.ts` names. */
 const ENDED = "אוגוסט 2026";
 const ENDED_QUERY = "2026-08";
-/** September has not ended, so it has no file (item 21). */
+/** September is the month still running: it has a file, with a warning (item 21). */
 const RUNNING_QUERY = "2026-09";
 
 async function useHousehold(
@@ -151,7 +151,17 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     await expect(page.locator("[data-payslip-export]")).toHaveCount(1);
   });
 
-  test("offers no file for a month that has not ended (item 21)", async ({
+  /**
+   * Item 21: the current month is exported before its last day, with a warning.
+   * The file is the same engine result as the screen (rule 12), so its four
+   * totals are the four the screen shows for the same unfinished month.
+   *
+   * **What it would catch**: the old refusal coming back (no button, or a 409
+   * behind it), the warning missing beside a file of a month that is not over,
+   * and a file that valued the running month differently from its preview —
+   * clipping it at today, say, while the screen counts the rest as ordinary.
+   */
+  test("offers the running month's file with a warning, and it says what the screen says", async ({
     page,
   }) => {
     await useHousehold(page, "running");
@@ -160,9 +170,28 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "ספטמבר 2026",
     );
-    // The route answers 409 for it, so a button here would produce an error
-    // page — the defect `/reports` had before the screen read `blocksExport`.
-    await expect(page.locator("[data-payslip-export]")).toHaveCount(0);
+    await expect(
+      page.locator('[data-warning="monthNotEnded"]').filter({ visible: true }),
+    ).toContainText(he.beforeExport.notEnded.title);
+
+    const onScreen = {
+      subtotalE: await row(page, "subtotal-E").innerText(),
+      subtotalF: await row(page, "subtotal-F").innerText(),
+      gross: await row(page, "gross").innerText(),
+      net: await row(page, "net").innerText(),
+    };
+    await page.screenshot({ path: "test-results/payslip-running-month.png", fullPage: true });
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.locator("[data-payslip-export]").click(),
+    ]);
+    const sheet = await openDownload(download);
+
+    expect(onScreen.subtotalE).toContain(said(sheet, "E23"));
+    expect(onScreen.subtotalF).toContain(said(sheet, "F24"));
+    expect(onScreen.gross).toContain(said(sheet, "E26"));
+    expect(onScreen.net).toContain(transferred(sheet));
   });
 
   test("says the same four totals as the workbook it mirrors (rule 11)", async ({

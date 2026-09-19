@@ -1041,8 +1041,11 @@ Each of these is true or false at a glance.
     enters the month's total. Its explanation says that the law requires no such payment
     and links to the rule (item 26). It is not overridable, because there is no calculated
     figure under it to replace: it is corrected by editing the amount.
-21. A future month can be filled in ahead of time through the calendar, but it can only
-    be exported once it has ended.
+21. A future month can be filled in ahead of time through the calendar. The current month
+    can be exported before its last day, with a warning that it has not ended and that the
+    days still ahead of it are counted as ordinary working days; a later event in those
+    days is recorded as a correction and the month is exported again. A month after the
+    current one cannot be exported, because it is not valued until it begins.
 22. Reading the identifying columns straight out of the database shows unreadable values;
     the real numbers appear only on the worker's own screen and in the export. The
     columns are the passport number, the bank account number, the employment permit

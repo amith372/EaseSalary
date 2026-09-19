@@ -55,8 +55,9 @@ import type { IsoDate, Worker, YearMonth } from "@/lib/types";
  * happened, and what item 18 buys is that she was asked.
  *
  * **Two things do block, and each says so in `specs.md` itself.** A month that
- * has not ended cannot be exported (item 21), and a month is not exported over
- * an open spell of sickness (item 18). The open spell is answered here, because
+ * has not begun cannot be exported (item 21), and a month is not exported over
+ * an open spell of sickness (item 18). The current month before its last day is
+ * a warning (item 21), not a block. The open spell is answered here, because
  * the question item 18 names — has she returned, and on what day — is this
  * screen's own.
  */
@@ -72,6 +73,9 @@ export interface MonthBeforeExport {
   baseMonthlySalaryAgorot: number;
   questions: ExportQuestion[];
   blocks: ExportBlockKey[];
+  /** The current month before its last day (`monthStillRunning`): exported
+   * with a warning, not refused (specs.md item 21). */
+  stillRunning: boolean;
   openSpell: { spanId: string; from: IsoDate } | null;
   /** `null` in a month that owes no recuperation, which is eleven months of
    * twelve (specs.md item 15). */
@@ -110,10 +114,10 @@ interface BeforeExportScreenProps {
 /**
  * The month the screen opens on: the latest one that has ended.
  *
- * **Not the current month**, which is what every other screen opens on and what
- * would be wrong here: a month that has not ended cannot be exported, so
- * opening on it would greet every user with a block. The screen is asked for
- * when a month is finished, and the finished one is the one it opens on.
+ * **Not the current month**, which is what every other screen opens on: the
+ * screen is usually asked for when a month is finished, and the finished one is
+ * the one it opens on. The current month is one step away, for a family paying
+ * before its last day (item 21).
  */
 function openingExportMonth(
   months: readonly YearMonth[],
@@ -413,9 +417,9 @@ function MonthConfirmation({
         />
       ) : null}
 
-      {shown.blocks.includes("monthNotEnded") ? (
+      {shown.stillRunning ? (
         <Card
-          data-block="monthNotEnded"
+          data-warning="monthNotEnded"
           className={blockClass}
         >
           <BlockTitle>{words.notEnded.title}</BlockTitle>

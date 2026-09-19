@@ -8,6 +8,7 @@ import { calculateSeries } from "@/lib/engine/series";
 import {
   blocksExport,
   exportQuestions,
+  monthStillRunning,
   openSickSpellOf,
   recuperationToConfirm,
 } from "@/lib/engine/beforeExport";
@@ -67,6 +68,7 @@ export default async function BeforeExportPage() {
           baseMonthlySalaryAgorot: salaryFor(profile, facts.month),
           questions: exportQuestions(facts, today),
           blocks: blocksExport(facts, today),
+          stillRunning: monthStillRunning(facts, today),
           openSpell: openSickSpellOf(facts),
           recuperation: recuperationToConfirm(facts, profile, rates),
           // The row in force during *this* month, which is not the same as the

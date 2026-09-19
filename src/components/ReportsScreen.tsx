@@ -48,11 +48,14 @@ export interface ReportMonth {
    * own answer, which is what `/month/export/file` refuses on.
    *
    * **The screen has to know, because the route answers 409.** A link offered
-   * anyway points at a month that has not ended, and pressing it produces an
+   * anyway points at a month the route refuses, and pressing it produces an
    * error page rather than a file. No type, lint or unit test reaches that —
    * the screen and the route simply disagree.
    */
   blocks: ExportBlockKey[];
+  /** The current month before its last day: it has a file, and the row says it
+   * has not ended beside it (item 21). */
+  stillRunning: boolean;
 }
 
 export interface WorkerReports {
@@ -259,6 +262,15 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                         </Bidi>
                       </span>
                     )}
+                    {entry.blocks[0] === undefined && entry.stillRunning ? (
+                      <span
+                        data-warning="monthNotEnded"
+                        dir="auto"
+                        className="text-[15px] whitespace-nowrap text-clay-deep"
+                      >
+                        {he.beforeExport.notEnded.title}
+                      </span>
+                    ) : null}
                     <Link
                       href={`/month/payslip?month=${entry.month.year}-${String(entry.month.month).padStart(2, "0")}`}
                       className="py-1 text-[16px] whitespace-nowrap text-ink-soft hover:text-forest"

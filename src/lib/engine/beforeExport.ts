@@ -1,10 +1,11 @@
 import {
   addDays,
   compareIsoDate,
+  compareMonth,
   daysInMonth,
   eachDate,
   isoOf,
-  monthHasEnded,
+  monthOf,
   orderDates,
 } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
@@ -37,7 +38,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  *
  * **It holds no clock and no store** (`CLAUDE.md`). `today` arrives from the
  * caller, exactly as it does everywhere else in the engine, because whether a
- * month has ended is the one block that depends on when the question is asked.
+ * month has begun or is still running depends on when the question is asked.
  *
  * **Nothing here decides that an export may proceed.** It says what the *facts*
  * stand in the way of; whether every question has been answered is a fact about
@@ -325,22 +326,23 @@ export function exportQuestions(
 }
 
 /**
- * The two things about a month's own facts that stop it being exported.
+ * What about a month's own facts stops it being exported.
  *
- * **Both are refusals and not warnings, and each says so in `specs.md`
- * itself.** Item 21: a future month may be filled in ahead of time and may only
- * be exported once it has ended. Item 18: a month is not exported over an
+ * **Each is a refusal and not a warning, and says so in `specs.md` itself.**
+ * Item 21: a month after the current one is not valued until it begins, so
+ * there is no sheet to fill. Item 18: a month is not exported over an
  * unanswered open spell, because the one thing an open spell can get wrong is
  * counting days for a worker who was already back.
  *
- * **Everything else on the screen is a warning**, including an answer that
- * disagrees with what the month recorded.
+ * **Everything else on the screen is a warning**, including the current month
+ * still running (`monthStillRunning`) and an answer that disagrees with what
+ * the month recorded.
  * The user is the one who knows what happened, and a month she has looked at
  * and answered for is a month she is entitled to export; what item 18 buys is
  * that she was asked, not that the application overrules her.
  */
 export const exportBlockKeys = [
-  "monthNotEnded",
+  "monthNotBegun",
   "openSickSpell",
   "unansweredHoliday",
 ] as const;
@@ -365,12 +367,22 @@ export function openSickSpellOf(
   return open === undefined ? null : { spanId: open.id, from: open.from };
 }
 
+/**
+ * Whether the month is the current one and has not ended — exported with a
+ * warning and not refused (specs.md item 21): the days still ahead of it are
+ * counted as ordinary working days, as the preview already counts them, and an
+ * event in them later is a correction and a second export.
+ */
+export function monthStillRunning(facts: MonthFacts, today: IsoDate): boolean {
+  return compareMonth(facts.month, monthOf(today)) === 0;
+}
+
 export function blocksExport(
   facts: MonthFacts,
   today: IsoDate,
 ): ExportBlockKey[] {
   const blocks: ExportBlockKey[] = [];
-  if (!monthHasEnded(facts.month, today)) blocks.push("monthNotEnded");
+  if (compareMonth(facts.month, monthOf(today)) > 0) blocks.push("monthNotBegun");
   if (openSickSpellOf(facts) !== null) blocks.push("openSickSpell");
   // Item 9. The preview reads an
   // unanswered holiday as one she worked and pays for it, and this is what

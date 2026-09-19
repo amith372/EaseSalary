@@ -476,7 +476,7 @@ export const he = {
        * one fact.
        */
       blocked: {
-        monthNotEnded: "החודש עדיין לא הסתיים",
+        monthNotBegun: "החודש עדיין לא התחיל",
         openSickSpell: "יש מחלה שעדיין פתוחה",
         /** Item 9: the preview pays for an unanswered holiday, and this is what
          * stops that reaching a filed sheet. */
@@ -2251,12 +2251,12 @@ export const he = {
       },
     },
 
-    /** The month that has not ended (specs.md item 21). It is drawn here as a
-     * block, where the month screen draws the same fact as a warning: filling
-     * the month in ahead of time is allowed and exporting it is not. */
+    /** The current month, exported before its last day (specs.md item 21): a
+     * warning and not a block, which names how the days still ahead are counted
+     * and what to do when one of them turns out otherwise. */
     notEnded: {
       title: "החודש עדיין לא הסתיים",
-      note: "אפשר להמשיך למלא אותו, ואפשר לייצא אותו אחרי שיסתיים.",
+      note: "הימים שנותרו בו מחושבים כימי עבודה רגילים — אם יקרה בהם משהו, אפשר לסמן אותו בלוח ולייצא את החודש שוב.",
     },
     /**
      * Item 9. The figure on this screen
