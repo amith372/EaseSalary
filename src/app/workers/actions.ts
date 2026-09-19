@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getRepository, requireWorker } from "@/lib/store";
-import { advanceLedger } from "@/lib/engine/advances";
+import { advanceLedger, nextAdvanceNumber } from "@/lib/engine/advances";
 import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { readToday } from "@/lib/requestToday";
@@ -33,7 +33,7 @@ import {
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
 import type { Gender } from "@/lib/engine/types";
 import { reviewUserLine, type UserLineDraft, type UserLineRefusal } from "@/lib/engine/userLines";
-import { monthOf, parseYearMonth } from "@/lib/dates";
+import { isMonthNumber, monthOf, parseYearMonth } from "@/lib/dates";
 import {
   reviewSalaryChange,
   withSalaryChange,
@@ -276,7 +276,7 @@ export async function setRecuperationMonth(
   workerId: string,
   month: number,
 ): Promise<ProfileActionResult> {
-  if (!Number.isInteger(month) || month < 1 || month > 12) {
+  if (!isMonthNumber(month)) {
     return { ok: false, reason: "recuperationMonth" };
   }
   const profile = await requireWorker(workerId);
@@ -495,10 +495,7 @@ export async function addOpeningAdvance(
     profile.openingPosition,
     await repository.listMonths(workerId),
   );
-  const next =
-    ledger.reduce((highest, standing) => Math.max(highest, standing.number), 0) + 1;
-
-  const reviewed = reviewOpeningAdvance(draft, next);
+  const reviewed = reviewOpeningAdvance(draft, nextAdvanceNumber(ledger));
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   return saveProfile(

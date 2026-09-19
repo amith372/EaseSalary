@@ -9,6 +9,7 @@ import {
   eachDate,
   everyDayOf,
   isIsoDate,
+  isMonthNumber,
   isRestEve,
   isRestDay,
   monthGrid,
@@ -220,5 +221,17 @@ describe("isIsoDate", () => {
     expect(isIsoDate(" 2026-09-19")).toBe(false);
     expect(isIsoDate("19/09/2026")).toBe(false);
     expect(isIsoDate("")).toBe(false);
+  });
+});
+
+describe("isMonthNumber", () => {
+  it("accepts one to twelve and nothing else", () => {
+    expect(isMonthNumber(1)).toBe(true);
+    expect(isMonthNumber(7)).toBe(true);
+    expect(isMonthNumber(12)).toBe(true);
+    expect(isMonthNumber(0)).toBe(false);
+    expect(isMonthNumber(13)).toBe(false);
+    expect(isMonthNumber(6.5)).toBe(false);
+    expect(isMonthNumber(Number.NaN)).toBe(false);
   });
 });

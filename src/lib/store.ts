@@ -1,5 +1,8 @@
 import { cookies } from "next/headers";
-import { createInMemoryRepository } from "@/lib/engine/repository";
+import {
+  UnknownWorkerError,
+  createInMemoryRepository,
+} from "@/lib/engine/repository";
 import type { SalaryRepository } from "@/lib/engine/repository";
 import { devSeed, filedSeed } from "@/lib/dev/seed";
 import { knownCaseSeed } from "@/lib/dev/known";
@@ -142,7 +145,7 @@ export async function requireWorker(
   repository?: SalaryRepository,
 ) {
   const profile = await (repository ?? (await getRepository())).getWorker(workerId);
-  if (profile === null) throw new Error(`No worker with id ${workerId}`);
+  if (profile === null) throw new UnknownWorkerError(workerId);
   return profile;
 }
 

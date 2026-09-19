@@ -7,6 +7,7 @@ import {
   compareMonth,
   daysInMonth,
   isIsoDate,
+  isMonthNumber,
   isoOf,
   monthOf,
   parseYearMonth,
@@ -21,7 +22,6 @@ import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
 import { genders, incomeTaxModes, snapshotTerms } from "@/lib/engine/types";
 import type {
   Gender,
-  IncomeTaxMode,
   IncomeTaxSetting,
   MonthFacts,
   OpeningAdvance,
@@ -62,20 +62,22 @@ import type { IsoDate, WorkerDocuments, YearMonth } from "@/lib/types";
  */
 export const restDayChoices = [SUNDAY, FRIDAY, SATURDAY] as const satisfies readonly RestDay[];
 
-/** Whether a value the browser sent is one of the three. It arrives as an
- * unknown because a crafted request may send anything; the union cannot check
- * a value that reaches the server as data (item 5). */
-export function isAllowedRestDay(value: unknown): value is RestDay {
-  return restDayChoices.some((day) => day === value);
+/** Whether a value the browser sent is one of a fixed list. It arrives as an
+ * unknown because a crafted request may send anything, and a union cannot
+ * check a value that reaches the server as data. The list checked is the list
+ * offered, so a member added to one cannot be refused by the other. */
+function isOneOf<T>(list: readonly T[], value: unknown): value is T {
+  return list.some((member) => member === value);
 }
 
-/** Whether a value the browser sent is one of the genders (specs.md item 17).
- * It reads `genders` rather than testing the two strings here, for the reason
- * `isAllowedRestDay` reads `restDayChoices`: the offer, the check and the union
- * are one list, and a third member added to it cannot be refused by a guard
- * that never grew. */
+/** One of the three rest days (item 5). */
+export function isAllowedRestDay(value: unknown): value is RestDay {
+  return isOneOf(restDayChoices, value);
+}
+
+/** One of the genders (specs.md item 17). */
 export function isAllowedGender(value: unknown): value is Gender {
-  return genders.some((gender) => gender === value);
+  return isOneOf(genders, value);
 }
 
 /**
@@ -97,11 +99,11 @@ export function reviewIncomeTax(
   mode: unknown,
   percentageText: string,
 ): { ok: true; setting: IncomeTaxSetting } | { ok: false; reason: "incomeTaxMode" | "incomeTaxRate" } {
-  if (!incomeTaxModes.some((known) => known === mode)) {
+  if (!isOneOf(incomeTaxModes, mode)) {
     return { ok: false, reason: "incomeTaxMode" };
   }
   if (mode !== "percentage") {
-    return { ok: true, setting: { mode: mode as IncomeTaxMode } };
+    return { ok: true, setting: { mode } };
   }
   // The same parse the month's own percentage correction uses, so the profile
   // and a single month cannot come to disagree about what "2.5" means.
@@ -609,11 +611,7 @@ export function reviewNewWorker(
   if (!isAllowedRestDay(draft.restDay)) return { ok: false, reason: "restDay" };
 
   const recuperationMonth = Number(draft.recuperationMonth.trim());
-  if (
-    !Number.isInteger(recuperationMonth) ||
-    recuperationMonth < 1 ||
-    recuperationMonth > 12
-  ) {
+  if (!isMonthNumber(recuperationMonth)) {
     return { ok: false, reason: "recuperationMonth" };
   }
 

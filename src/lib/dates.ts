@@ -30,6 +30,11 @@ export const WEEK_LENGTH = 7;
 export const MONTHS_PER_YEAR = 12;
 export const DECEMBER = 12;
 
+/** A month's number, 1-12. */
+export function isMonthNumber(month: number): boolean {
+  return Number.isInteger(month) && month >= 1 && month <= MONTHS_PER_YEAR;
+}
+
 /** `month` is 1-12. */
 export function utcDate(year: number, month: number, day: number): Date {
   return new Date(Date.UTC(year, month - 1, day));
