@@ -508,7 +508,7 @@ export interface Advance {
  * argument `ClosingLine.amount` already makes for the advances.
  *
  * **The list is the source and the union is derived from it**, which is how
- * `userLinePrefixes` in `month.ts` already does it. The chips that offer these
+ * `userLinePrefix` in `month.ts` does it. The chips that offer these
  * choices and the server check that refuses a value outside them read the same
  * list, and the pair must not drift: a value the form can offer but the server
  * refuses is a control that silently does nothing, and a value the server

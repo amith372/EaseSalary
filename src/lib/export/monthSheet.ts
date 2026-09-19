@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { daysInMonth } from "@/lib/dates";
 import { balanceOf } from "@/lib/engine/balances";
 import { lineKeys } from "@/lib/engine/lines";
-import { isUserLineKey } from "@/lib/engine/month";
+import { isUserLine } from "@/lib/engine/month";
 import {
   BLOCK_ROW,
   FIRST_LINE_ROW,
@@ -180,7 +180,7 @@ const NOTES_COLUMN = 9;
 /** A line the user added, which is a row the template does not hold in advance
  * (specs.md item 20). */
 function addedLinesOf(result: MonthResult): MonthLine[] {
-  return result.lines.filter((line) => isUserLineKey(line.key));
+  return result.lines.filter(isUserLine);
 }
 
 /** The rows below `ד`: everything the block changes about the transfer. The
@@ -202,10 +202,9 @@ function blockLinesOf(result: MonthResult) {
  * rows 11 and 20 already do.
  */
 function letteredIndexOf(rows: ReturnType<typeof blockLinesOf>): number {
-  // `advance.<number>.repaid`, which `advanceKey` builds and this reads rather
-  // than testing the sign: a repaid advance is what the sentence describes, and
-  // a granted one is negative in no month.
-  return rows.findIndex((row) => row.key.endsWith(".repaid"));
+  // Asked of the row rather than of its sign: a repaid advance is what the
+  // sentence describes, and a user's deduction is negative too.
+  return rows.findIndex((row) => row.source === "advanceRepaid");
 }
 
 export async function fillMonthSheet(
@@ -353,7 +352,7 @@ function writeLines(
   const { result, notes } = input;
 
   for (const line of result.lines) {
-    if (isUserLineKey(line.key)) continue;
+    if (isUserLine(line)) continue;
     const row = TEMPLATE_ROWS[line.key];
     if (row === undefined) {
       throw new Error(

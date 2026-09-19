@@ -152,9 +152,24 @@ export type SheetColumn = "E" | "F" | "G" | "H";
  * shekels — and is `null` until the engine has supplied it, which is what lets
  * a fixture stand in for a calculation without inventing a figure.
  */
+/**
+ * Where a row's amount comes from, set where the engine builds the row, so a
+ * reader asks the row what it is rather than parsing its key. `engine` is a
+ * figure the application worked out; a user's line is `standingLine` (from the
+ * profile) or `oneOffLine` (this month's alone), item 20.
+ */
+export type LineSource =
+  | "engine"
+  | "thirdParty"
+  | "standingLine"
+  | "oneOffLine"
+  | "advanceGranted"
+  | "advanceRepaid";
+
 export interface MonthLine {
   key: string;
   label: string;
+  source: LineSource;
   /** A secondary line under the label: "[מספר] ימים שסומנו". */
   hint?: string;
   amount: number | null;
@@ -246,6 +261,7 @@ export type OverrideCandidate = Pick<
 export interface ClosingLine {
   key: string;
   label: string;
+  source: LineSource;
   amount: number | null;
   manual: boolean;
   /**

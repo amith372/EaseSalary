@@ -10,9 +10,9 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F17. F26–F28 are not approved: each is grilled with the user
+- **Last done:** step 8, F18. F26–F28 are not approved: each is grilled with the user
   before any code.
-- **Next:** step 8 — execute the Fix list from the first unchecked item (F18), one commit
+- **Next:** step 8 — execute the Fix list from the first unchecked item (F19), one commit
   each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25; F32 comes last.
 - **A browser failure** is checked by rerunning it alone, and against HEAD with the change
   stashed. The `auth.setup.ts` server log "The destination stream closed early" is noise.
@@ -52,7 +52,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F17, F29–F31 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F18, F29–F31 done |
 
 ### How each step is run
 
@@ -537,17 +537,21 @@ and translation can change.
   and giving it one changes the screen.
 - [x] 2026-09-19 `d554393` F16 — one `useAction<R>` hook, the picker reset as one helper, one opening-advance
   `onChange`, the number named for what it is — R1.2, R1.8, R1.16, R1.18 — check: Browser.
-- [x] 2026-09-19 F17 — one `AlertCard`, with a compact form for the home strip and the bell — R5.12 —
+- [x] 2026-09-19 `2eb1973` F17 — one `AlertCard`, with a compact form for the home strip and the bell — R5.12 —
   check: Browser; screenshots of `/` and `/alerts`. Done as `AlertTitle` and `LawLink`, the
   parts the three cards repeat: their layouts share nothing else, and one card drawing all
   three would take a prop per difference. `/`, `/alerts` and the bell's panel screenshot
   identical before and after.
 
 **D. Structure**
-- [ ] F18 — the closing block gets drafts: `ClosingDraft` and `toClosingLine` beside `toLine`,
+- [x] 2026-09-19 F18 — the closing block gets drafts: `ClosingDraft` and `toClosingLine` beside `toLine`,
   and a typed `source` on every row replaces key parsing and prefix positions — R5.5, R2.11,
   R5.6, R2.15 — every row keeps today's output, `calculatedAmount` included — check:
-  closing-block, overrides, August 2025 and agreement suites unedited.
+  closing-block, overrides, August 2025 and agreement suites unedited. Two lines of test
+  code had to move with it: `overrides.test.ts`'s two hand-built rows gain a `source`, and
+  `agreement.test.ts` calls `isUserLine(line)` for `isUserLineKey(line.key)`; no expected
+  figure changed. The tax row and the advances now carry `calculatedAmount` when replaced,
+  as every column line does; neither is overridable, so no screen reads it.
 - [ ] F19 — the warnings move from `balances.ts` into `warnings.ts` — R5.7 — check: unit suite
   unedited.
 - [ ] F20 — `saveProfile` works out `termsChanged` by comparing `snapshotTerms` before and

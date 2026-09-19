@@ -9,7 +9,13 @@ import {
   holidayDaysWorked,
   restDayUnitsOf,
 } from "@/lib/engine/leave";
-import { lineKeys, type LineDraft, toLine } from "@/lib/engine/lines";
+import {
+  type ClosingDraft,
+  lineKeys,
+  type LineDraft,
+  toClosingLine,
+  toLine,
+} from "@/lib/engine/lines";
 import { deriveRates } from "@/lib/engine/rates";
 import { recuperationDaysInMonth } from "@/lib/engine/recuperation";
 import { sickDeductionDays } from "@/lib/engine/sick";
@@ -32,6 +38,7 @@ import type {
   ClosingBlock,
   ClosingLine,
   ColumnSubtotal,
+  LineSource,
   MonthLine,
   MonthResult,
   SheetColumn,
@@ -64,16 +71,16 @@ import type {
  * **The two prefixes are stored values**, because `MonthFacts.overrides` is
  * keyed by them (specs.md item 17), and they are what keeps a standing line and
  * a one-off line from colliding on an override when they share an id. They are
- * written here once and read everywhere — the screen that groups these lines
- * asks `isUserLineKey` rather than testing the strings itself, so a rename is a
- * compile error in one file instead of a row that silently empties.
+ * written here once and only ever built through `userLineKey`: a reader asks
+ * the row's `source` (`isUserLine`) and never parses the key.
  */
-export const userLinePrefixes = ["standing", "extra"] as const;
+export const userLinePrefix = { standing: "standing", oneOff: "extra" } as const;
 
-type UserLinePrefix = (typeof userLinePrefixes)[number];
+type UserLinePrefix = (typeof userLinePrefix)[keyof typeof userLinePrefix];
 
-export function isUserLineKey(key: string): boolean {
-  return userLinePrefixes.some((prefix) => key.startsWith(`${prefix}.`));
+/** Whether a row is one the user added (item 20), asked of the row. */
+export function isUserLine(row: { source: LineSource }): boolean {
+  return row.source === "standingLine" || row.source === "oneOffLine";
 }
 
 /**
@@ -109,10 +116,10 @@ export function monthLevels(result: MonthResult): {
   const changes = (rows: ClosingLine[]) =>
     rows.some((row) => (row.amount ?? 0) !== 0);
 
-  const own = result.closing.filter((row) => !isUserLineKey(row.key));
+  const own = result.closing.filter((row) => !isUserLine(row));
   const withholdingRows = own.filter((row) => row.block === "withholding");
   const transferRows = own.filter((row) => row.block === "transfer");
-  const userAfter = result.closing.filter((row) => isUserLineKey(row.key));
+  const userAfter = result.closing.filter(isUserLine);
 
   return {
     withholdingRows,
@@ -148,8 +155,8 @@ export function userLineKey(prefix: UserLinePrefix, id: string): string {
  */
 function userLineGroups(facts: ClosedMonthFacts | MonthFacts) {
   return [
-    [userLinePrefixes[0], facts.terms.standingLines, "E"],
-    [userLinePrefixes[1], facts.userLines, "G"],
+    [userLinePrefix.standing, facts.terms.standingLines, "E", "standingLine"],
+    [userLinePrefix.oneOff, facts.userLines, "G", "oneOffLine"],
   ] as const;
 }
 
@@ -374,12 +381,13 @@ function buildLines(
   // column E, because that is where what she earns every month lives, and a
   // one-off in G, which is what that column is for.
   const userDrafts: LineDraft[] = [];
-  for (const [prefix, lines, column] of userLineGroups(facts)) {
+  for (const [prefix, lines, column, source] of userLineGroups(facts)) {
     for (const line of lines) {
       if (placementOf(line) !== "beforeGross") continue;
       userDrafts.push({
         key: userLineKey(prefix, line.id),
         label: line.label,
+        source,
         // **The units carry the sign and the rate does not**, exactly as the
         // sickness deduction above does it. The rate is column D of the sheet,
         // which is a unit price: a negative price is the reading Part 5 warns
@@ -392,7 +400,7 @@ function buildLines(
         // override is the only way to say that one month paid something else;
         // a one-off line was typed into this month and is edited instead
         // (specs.md item 17).
-        overridable: prefix === "standing",
+        overridable: source === "standingLine",
         explanation: { text: userLineWhy(prefix, "beforeGross") },
       });
     }
@@ -428,9 +436,8 @@ function buildClosing(
   facts: MonthFacts,
   calculatedTax: number | null,
 ): ClosingLine[] {
-  const rows: ClosingLine[] = [];
+  const drafts: ClosingDraft[] = [];
 
-  const taxOverride = facts.overrides[lineKeys.incomeTax];
   // **Three sources, in the order a month settles them.** An override is the
   // user's own correction and wins outright (item 17). Below it sits the figure
   // confirmed before the export and stored with the month, which is what lets a
@@ -438,24 +445,23 @@ function buildClosing(
   // engine works out now, and `null` there is a year the application holds no
   // bracket table for — the line stays at zero rather than withholding a number
   // nobody can cite. No warning says so yet; that is an open question.
-  const tax = taxOverride
-    ? taxOverride.agorot
-    : (facts.incomeTaxAgorot ?? calculatedTax ?? 0);
-  rows.push({
+  // The override is applied by `toClosingLine`, so the draft carries the
+  // other two.
+  drafts.push({
     key: lineKeys.incomeTax,
     label: he.sheet.lines.incomeTax,
+    source: "engine",
+    agorot: facts.incomeTaxAgorot ?? calculatedTax ?? 0,
     // Withheld, so it subtracts. Held as a positive figure on the facts and
-    // signed here, so a caller cannot enter a tax that pays the worker. The
-    // `|| 0` is not decoration: negating a rounded zero gives -0, which
-    // `Object.is` — and so `toBe` — reports as different from 0.
-    amount: -Math.abs(Math.round(tax)) || 0,
-    // The badge means what it means everywhere else now that the tax is
-    // calculated: an amount the user put over a figure the application worked
-    // out (item 17). A *confirmed* tax is not one of those — confirming the
-    // engine's own figure, or correcting it in the pre-export conversation, is
-    // how the month is settled rather than an override of it, exactly as the
-    // confirmed minimum wage is not a manual line.
-    manual: taxOverride !== undefined,
+    // signed here, so a caller cannot enter a tax that pays the worker.
+    //
+    // The badge (`manual`) means what it means everywhere else now that the
+    // tax is calculated: an amount the user put over a figure the application
+    // worked out (item 17). A *confirmed* tax is not one of those — confirming
+    // the engine's own figure, or correcting it in the pre-export
+    // conversation, is how the month is settled rather than an override of it,
+    // exactly as the confirmed minimum wage is not a manual line.
+    sign: -1,
     // The one row taken out of the ברוטו rather than out of the transfer, and
     // so the only thing standing between the two figures (specs.md Part 5).
     block: "withholding",
@@ -480,31 +486,22 @@ function buildClosing(
   // transferred without reaching the national-insurance estimate. The sign
   // still comes from `direction` rather than from a figure the user could type
   // negative.
-  for (const [prefix, lines] of userLineGroups(facts)) {
+  for (const [prefix, lines, , source] of userLineGroups(facts)) {
     for (const line of lines) {
       if (placementOf(line) !== "afterGross") continue;
-      const key = userLineKey(prefix, line.id);
-      const override = facts.overrides[key];
-      const agorot = override ? override.agorot : Math.abs(line.agorot);
-      const signed = line.direction === "addition" ? 1 : -1;
-      rows.push({
-        key,
+      drafts.push({
+        key: userLineKey(prefix, line.id),
         label: line.label,
-        amount: signed * Math.round(Math.abs(agorot)) || 0,
-        manual: override !== undefined,
+        source,
+        agorot: line.agorot,
+        sign: line.direction === "addition" ? 1 : -1,
         // **The one overridable row of this block** (item 17). A *standing*
         // line reached this month from the profile, so a month that paid
         // something else has no entry here to correct and says so with an
         // override; a one-off line was typed into this month and is edited
         // where it was typed. It is the same division `lines.ts` draws for a
-        // line placed before the total, read from the same prefix.
-        overridable: prefix === "standing",
-        ...(override
-          ? {
-              calculatedAmount:
-                signed * Math.round(Math.abs(line.agorot)) || 0,
-            }
-          : {}),
+        // line placed before the total, read from the same source.
+        overridable: source === "standingLine",
         // Item 20 says such a line "changes only what is transferred at the
         // end" and reaches neither the month's cost nor item 19's estimate,
         // which is the same sentence as an advance — so it sits with them,
@@ -517,16 +514,14 @@ function buildClosing(
 
   for (const advance of facts.advances) {
     const granted = advance.kind === "granted";
-    const key = advanceKey(advance.number, advance.kind);
-    const override = facts.overrides[key];
-    const agorot = override ? override.agorot : Math.abs(advance.agorot);
-    rows.push({
-      key,
+    drafts.push({
+      key: advanceKey(advance.number, advance.kind),
       label: granted
         ? he.sheet.lines.advanceGranted
         : he.sheet.lines.advanceRepaid,
-      amount: granted ? Math.round(agorot) : -Math.round(agorot),
-      manual: override !== undefined,
+      source: granted ? "advanceGranted" : "advanceRepaid",
+      agorot: advance.agorot,
+      sign: granted ? 1 : -1,
       block: "transfer",
       // An amount the month itself recorded, so it is corrected on the advance
       // it belongs to rather than replaced (item 17).
@@ -539,7 +534,7 @@ function buildClosing(
     });
   }
 
-  return rows;
+  return drafts.map((draft) => toClosingLine(draft, facts.overrides));
 }
 
 /** Columns E, F and G alone — H is deliberately excluded (item 16, Part 5). */

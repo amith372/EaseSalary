@@ -1,5 +1,13 @@
 import type { LineOverride } from "@/lib/engine/types";
-import type { Explanation, MonthLine, SheetColumn, YearMonth } from "@/lib/types";
+import type {
+  ClosingBlock,
+  ClosingLine,
+  Explanation,
+  LineSource,
+  MonthLine,
+  SheetColumn,
+  YearMonth,
+} from "@/lib/types";
 
 /**
  * Explanation keys, stable from this commit so another screen can address one
@@ -76,6 +84,8 @@ export interface LineDraft {
    * a new row quietly acquire a control nobody designed for it.
    */
   overridable?: boolean;
+  /** Absent means the engine worked the figure out. */
+  source?: LineSource;
   explanation: Explanation;
 }
 
@@ -108,6 +118,7 @@ export function toLine(
   return {
     key: draft.key,
     label: draft.label,
+    source: draft.source ?? "engine",
     units: draft.units,
     rate: draft.rate,
     column: draft.column,
@@ -118,6 +129,52 @@ export function toLine(
     manual: override !== undefined,
     ...(override ? { calculatedAmount: calculated } : {}),
     overridable: draft.overridable === true,
+    explanation: draft.explanation,
+  };
+}
+
+/**
+ * A row of the block below the columns before it is rounded — the closing
+ * block's `LineDraft`. It has no units and no rate: its figure is an amount,
+ * and the sign is what the row is (withheld, repaid, a deduction) rather than
+ * anything the amount says.
+ */
+export interface ClosingDraft {
+  key: string;
+  label: string;
+  source: LineSource;
+  /** The figure the month arrives at, as a magnitude; `sign` places it. */
+  agorot: number;
+  sign: 1 | -1;
+  block: ClosingBlock;
+  /** Absent means no, as on a `LineDraft`. */
+  overridable?: boolean;
+  explanation: Explanation;
+}
+
+/**
+ * `toLine` for the closing block, and the same three rules: rounded once, an
+ * override is a magnitude signed by the row (item 17), and a replaced row
+ * still carries what it came to as `calculatedAmount`.
+ */
+export function toClosingLine(
+  draft: ClosingDraft,
+  overrides: Record<string, LineOverride>,
+): ClosingLine {
+  const override = overrides[draft.key];
+  // `|| 0` for the reason `toLine` gives: a negated zero is -0.
+  const signed = (agorot: number) =>
+    draft.sign * Math.round(Math.abs(agorot)) || 0;
+  const calculated = signed(draft.agorot);
+  return {
+    key: draft.key,
+    label: draft.label,
+    source: draft.source,
+    amount: override ? signed(override.agorot) : calculated,
+    manual: override !== undefined,
+    ...(override ? { calculatedAmount: calculated } : {}),
+    overridable: draft.overridable === true,
+    block: draft.block,
     explanation: draft.explanation,
   };
 }

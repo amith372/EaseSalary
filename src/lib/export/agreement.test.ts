@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 import { calculateSeries } from "@/lib/engine/series";
 import { lineKeys } from "@/lib/engine/lines";
-import { isUserLineKey } from "@/lib/engine/month";
+import { isUserLine } from "@/lib/engine/month";
 import type { MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
 import {
   plainAugustFacts,
@@ -154,7 +154,7 @@ describe("the preview and the file, from one engine result", () => {
   it("says every line's amount the same way in both", async () => {
     const { sheet, result } = await filled(false);
     const layout = layoutOf(
-      result.lines.filter((line) => isUserLineKey(line.key)).length,
+      result.lines.filter(isUserLine).length,
       result.closing.filter((row) => row.block === "transfer").length,
     );
 

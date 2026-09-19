@@ -1,6 +1,6 @@
 import { advanceKey } from "@/lib/engine/advances";
 import { lineKeys } from "@/lib/engine/lines";
-import { userLineKey, userLinePrefixes } from "@/lib/engine/month";
+import { userLineKey, userLinePrefix } from "@/lib/engine/month";
 import { thirdPartyLineKey } from "@/lib/engine/thirdParty";
 import type { MonthFacts } from "@/lib/engine/types";
 
@@ -63,10 +63,10 @@ export function notesOf(
   // prefixes the overrides are, so a note and an override on one line always
   // agree about which line that is.
   for (const line of facts.terms.standingLines) {
-    add(userLineKey(userLinePrefixes[0], line.id), line.note);
+    add(userLineKey(userLinePrefix.standing, line.id), line.note);
   }
   for (const line of facts.userLines) {
-    add(userLineKey(userLinePrefixes[1], line.id), line.note);
+    add(userLineKey(userLinePrefix.oneOff, line.id), line.note);
   }
 
   return Object.fromEntries(

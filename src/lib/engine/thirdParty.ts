@@ -188,6 +188,7 @@ export function thirdPartyLines(
     .map<LineDraft>((payment) => ({
       key: thirdPartyLineKey(payment.kind),
       label: he.sheet.thirdParty[payment.kind],
+      source: "thirdParty",
       units: 1,
       rate: payment.agorot,
       column: THIRD_PARTY_COLUMN,

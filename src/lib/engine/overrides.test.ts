@@ -22,6 +22,7 @@ import type { ClosingLine, MonthLine } from "@/lib/types";
 const line = (over: Partial<MonthLine> = {}): MonthLine => ({
   key: "restEveSupplement",
   label: "תוספת ערב מנוחה",
+  source: "engine",
   amount: 40000,
   units: 4,
   rate: 10000,
@@ -157,6 +158,7 @@ describe("an override whose row the month no longer draws", () => {
     {
       key: "advance.1.repaid",
       label: "מקדמה שנפרעה",
+      source: "advanceRepaid",
       amount: -20000,
       manual: false,
       block: "transfer",
