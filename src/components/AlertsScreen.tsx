@@ -80,8 +80,7 @@ export function AlertsScreen({ view }: { view: AlertsView }) {
                   </svg>
                 </span>
                 <span className="min-w-0 flex-[1_1_14rem] text-[16px] text-ink-warm">
-                  <Sentence said={row.title} />
-                  <WorkerName name={row.workerName} />
+                  <AlertTitle card={row} />
                 </span>
                 <Bidi className="text-[14px] font-light whitespace-nowrap text-ink-quiet">
                   {row.when}
@@ -116,8 +115,7 @@ function OpenCard({ card }: { card: AlertCard }) {
       <div className="flex min-w-0 flex-[1_1_16rem] flex-col gap-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span data-role="alert-title" className="text-[18px] font-semibold tracking-[-0.01em]">
-            <Sentence said={card.title} />
-            <WorkerName name={card.workerName} />
+            <AlertTitle card={card} />
           </span>
           <span
             className={[
@@ -132,16 +130,7 @@ function OpenCard({ card }: { card: AlertCard }) {
           <Sentence said={card.note} />
         </span>
         {card.law ? (
-          <a
-            href={card.law.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="self-start pt-0.5 text-[14px] text-ink-quiet hover:text-forest hover:underline hover:underline-offset-[3px]"
-          >
-            <span dir="auto">{he.alerts.whatTheLawSays}</span>
-            <span> — </span>
-            <span dir="auto">{card.law.label}</span>
-          </a>
+          <LawLink law={card.law} className="pt-0.5 text-[14px]" />
         ) : null}
       </div>
       <div className="flex items-center gap-4">
@@ -265,7 +254,45 @@ export function Sentence({ said }: { said: Said }) {
   );
 }
 
-export function WorkerName({ name }: { name: string | null }) {
+/** An alert's title and, in a household of two, whose it is. */
+export function AlertTitle({
+  card,
+}: {
+  card: { title: Said; workerName: string | null };
+}) {
+  return (
+    <>
+      <Sentence said={card.title} />
+      <WorkerName name={card.workerName} />
+    </>
+  );
+}
+
+/** "מה אומר החוק — <the page>": the rule an alert rests on. `className`
+ * carries the size and the offset, which differ between the strip and the
+ * list. */
+export function LawLink({
+  law,
+  className,
+}: {
+  law: { label: string; url: string };
+  className: string;
+}) {
+  return (
+    <a
+      href={law.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`self-start text-ink-quiet hover:text-forest hover:underline hover:underline-offset-[3px] ${className}`}
+    >
+      <span dir="auto">{he.alerts.whatTheLawSays}</span>
+      <span> — </span>
+      <span dir="auto">{law.label}</span>
+    </a>
+  );
+}
+
+function WorkerName({ name }: { name: string | null }) {
   if (name === null) return null;
   return (
     <>

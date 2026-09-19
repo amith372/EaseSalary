@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { clearRange, markRange, setHolidayWorked, setMonthNote } from "@/app/month/actions";
 import { inputClass, outlineButtonClass } from "@/components/Field";
-import { Sentence, WorkerName } from "@/components/AlertsScreen";
+import { AlertTitle, LawLink, Sentence } from "@/components/AlertsScreen";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chevron, RailIcon, TwoToneIcon, type TwoToneName } from "@/components/icons";
@@ -293,8 +293,7 @@ export function HomeScreen({
                   <div className="flex min-w-0 items-center gap-2.5">
                     <span aria-hidden="true" className="size-2 flex-none rounded-full bg-clay" />
                     <span data-role="blocker-title" className="min-w-0 flex-auto text-[15px] font-semibold">
-                      <Sentence said={card.title} />
-                      <WorkerName name={card.workerName} />
+                      <AlertTitle card={card} />
                     </span>
                     <Link
                       href={returningTo(card.action.href, "/")}
@@ -307,16 +306,7 @@ export function HomeScreen({
                     <Sentence said={card.note} />
                   </span>
                   {card.law ? (
-                    <a
-                      href={card.law.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="self-start ps-4.5 text-[13px] text-ink-quiet hover:text-forest hover:underline hover:underline-offset-[3px]"
-                    >
-                      <span dir="auto">{he.alerts.whatTheLawSays}</span>
-                      <span> — </span>
-                      <span dir="auto">{card.law.label}</span>
-                    </a>
+                    <LawLink law={card.law} className="ps-4.5 text-[13px]" />
                   ) : null}
                 </Card>
               </li>

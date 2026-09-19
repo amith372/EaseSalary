@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { RemindersDialog, Sentence, WorkerName } from "@/components/AlertsScreen";
+import { AlertTitle, RemindersDialog, Sentence } from "@/components/AlertsScreen";
 import type { BellView } from "@/lib/alertsView";
 import { he } from "@/lib/i18n/he";
 import { returningTo } from "@/lib/pickerReturn";
@@ -112,8 +112,7 @@ export function Bell({ bell }: { bell: BellView }) {
                     />
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="text-[15px] font-semibold">
-                        <Sentence said={card.title} />
-                        <WorkerName name={card.workerName} />
+                        <AlertTitle card={card} />
                       </span>
                       <span className="text-[14px] font-light text-ink-mute">
                         <Sentence said={card.note} />
