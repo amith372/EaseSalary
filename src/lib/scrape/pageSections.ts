@@ -2,6 +2,7 @@ import { NodeType, parse } from "node-html-parser";
 import type { HTMLElement } from "node-html-parser";
 
 import { fetchPage, scrapeFailed } from "@/lib/scrape/failure";
+import type { DatedRate } from "@/lib/datedRates";
 import type { Scraped } from "@/lib/scrape/failure";
 
 /**
@@ -53,6 +54,25 @@ export interface CachedPage {
 }
 
 /**
+ * Both halves of one fetch: the dated row the page was read for, and the page's
+ * own text segmented by its headings.
+ *
+ * **They travel together because Part 3 says the text is kept *beside* the
+ * figure taken from it rather than thrown away**, and because there is only one
+ * request: a caller that wanted both and got one would fetch the page a second
+ * time to get the other, which is the outcome the caching rule exists to
+ * prevent.
+ *
+ * `text` stands on its own — a page whose statement could not be read is still
+ * a page the help screen can answer out of, so a failed reading does not
+ * discard the corpus, and a page that never arrived leaves it `null`.
+ */
+export interface RateFetch {
+  rate: Scraped<DatedRate>;
+  text: Scraped<CachedPage> | null;
+}
+
+/**
  * The address a single section is reached at, which is the form a reference
  * link takes and therefore the form the two are compared in.
  */
@@ -89,7 +109,8 @@ const HEADLINE_SELECTOR = ".mw-headline";
  */
 const NOISE_SELECTORS = [".toc-box", ".mw-editsection", "script", "style"];
 
-function collapse(text: string): string {
+/** Runs of whitespace as one space, and none at either end. */
+export function collapse(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
@@ -128,9 +149,6 @@ function headlineOf(node: HTMLElement): HTMLElement | null {
  * what a link's fragment names.
  */
 export function segmentArticle(html: string, url: string): Scraped<CachedPage> {
-  if (html.trim() === "") {
-    return scrapeFailed<CachedPage>("unreachable", "empty body");
-  }
 
   const root = parse(html);
   const article = root.querySelector(ARTICLE_SELECTOR);

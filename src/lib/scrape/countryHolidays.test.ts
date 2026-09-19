@@ -14,7 +14,6 @@ import {
   countryWithADateMissing,
   countryWithAStrayYear,
   countryWithNoHolidays,
-  emptyBody,
 } from "@/lib/scrape/holiday-pages.fixture";
 
 /**
@@ -113,10 +112,6 @@ describe("the three spoiled pages", () => {
     );
   });
 
-  it("reports an empty body as unreachable", () => {
-    expect(failed(parseCountryHolidaysPage(emptyBody(), 2026))).toBe("unreachable");
-  });
-
   it("reports the source's answer for an unknown address as implausible", () => {
     // The real `.../holidays/UK/2026`: a 200 whose heading names no country and
     // which carries no rows. Believing it would store "this country publishes
@@ -180,21 +175,6 @@ describe("fetching a year", () => {
       serving(countryPage()),
     );
     expect(failed(result)).toBe("notFound");
-  });
-
-  it("reports a request that threw as unreachable", async () => {
-    const impl = (async () => {
-      throw new Error("getaddrinfo ENOTFOUND");
-    }) as unknown as typeof fetch;
-    const result = await fetchCountryHolidays(SEEDED_HOLIDAY_LISTS, "PH", 2027, impl);
-    expect(failed(result)).toBe("unreachable");
-  });
-
-  it("reports an error status as unreachable", async () => {
-    const impl = (async () =>
-      new Response("", { status: 503 })) as unknown as typeof fetch;
-    const result = await fetchCountryHolidays(SEEDED_HOLIDAY_LISTS, "PH", 2027, impl);
-    expect(failed(result)).toBe("unreachable");
   });
 
   it("stores the address it actually fetched, so the next year follows from it", async () => {

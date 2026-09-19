@@ -2,9 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * The two saved holiday source pages, and the three spoiled versions of each
- * that Part 4 requires: markup that moved, an empty or failing response, and a
- * result outside the plausible range.
+ * The two saved holiday source pages, and the spoiled versions of each that
+ * Part 4 requires: markup that moved, and a result outside the plausible range.
+ * An empty or failing response never reaches a parser; `failure.test.ts` covers
+ * it once for every scrape.
  *
  * The saved pages are the real ones, fetched on 2026-09-09 and committed whole
  * rather than trimmed, and the spoiled versions are transforms of them — the
@@ -83,12 +84,6 @@ export function countryTruncated(): string {
   const cut = rows[3]?.index;
   if (cut === undefined) throw new Error("the saved page has too few rows to truncate");
   return page.slice(0, cut) + page.slice(page.lastIndexOf("<hr>"));
-}
-
-/** An empty body: a 200 that carried nothing, which is what a site behind a
- * broken cache or a stripping proxy returns. */
-export function emptyBody(): string {
-  return "";
 }
 
 /**

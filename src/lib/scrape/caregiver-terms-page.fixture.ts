@@ -60,9 +60,3 @@ function spoil(html: string, from: string, to: string): string {
 export function markupMoved(): string {
   return spoil(termsPage(), "mw-parser-output", "kz-article-body");
 }
-
-/** An empty body: a 200 that carried nothing, which is what a site behind a
- * broken cache or a stripping proxy returns. */
-export function emptyBody(): string {
-  return "";
-}

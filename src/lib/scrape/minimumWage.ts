@@ -7,7 +7,7 @@ import { parseShekels } from "@/lib/money";
 import { fetchPage, scrapeFailed } from "@/lib/scrape/failure";
 import type { ScrapeFailure, Scraped } from "@/lib/scrape/failure";
 import { segmentArticle } from "@/lib/scrape/pageSections";
-import type { CachedPage } from "@/lib/scrape/pageSections";
+import type { RateFetch } from "@/lib/scrape/pageSections";
 import type { IsoDate } from "@/lib/types";
 
 /**
@@ -149,9 +149,6 @@ export function parseMinimumWagePage(
   html: string,
   rates: DatedRate[],
 ): ScrapeResult {
-  if (html.trim() === "") {
-    return scrapeFailed<DatedRate>("unreachable", "empty body");
-  }
 
   const statements = parse(html)
     .querySelectorAll(STATEMENT_SELECTOR)
@@ -204,25 +201,6 @@ export function parseMinimumWagePage(
 }
 
 /**
- * Both halves of one fetch: the dated row the page was read for, and the page's
- * own text segmented by its headings.
- *
- * **They travel together because Part 3 says the text is kept *beside* the
- * figure taken from it rather than thrown away**, and because there is only one
- * request: a caller that wanted both and got one would fetch the page a second
- * time to get the other, which is the outcome the caching rule exists to
- * prevent.
- *
- * `text` stands on its own — a page whose statement could not be read is still
- * a page the help screen can answer out of, so a failed reading does not
- * discard the corpus, and a page that never arrived leaves it `null`.
- */
-interface FetchedWage {
-  rate: ScrapeResult;
-  text: Scraped<CachedPage> | null;
-}
-
-/**
  * The request, and nothing else — everything that can be got wrong is in
  * `parseMinimumWagePage` and `segmentArticle`, where a saved page can be handed
  * to either. `fetchImpl` is injected so the suite never reaches the network
@@ -231,7 +209,7 @@ interface FetchedWage {
 export async function fetchMinimumWage(
   rates: DatedRate[],
   fetchImpl: typeof fetch = fetch,
-): Promise<FetchedWage> {
+): Promise<RateFetch> {
   const page = await fetchPage(MINIMUM_WAGE_SOURCE_URL, fetchImpl);
   if (!page.ok) return { rate: page, text: null };
   return {

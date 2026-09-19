@@ -114,22 +114,18 @@ describe("the three spoiled pages", () => {
     );
   });
 
-  it("says the source was unreachable when the body is empty", () => {
-    expect(failureOf(parseMinimumWagePage(emptyBody(), SEEDED_RATES))).toBe(
-      "unreachable",
-    );
-  });
-
   it("says the figure is implausible when the hourly rate takes the monthly slot", () => {
     expect(
       failureOf(parseMinimumWagePage(implausibleFigure(), SEEDED_RATES)),
     ).toBe("implausible");
   });
 
-  it("names the three differently, so the user is told which happened", () => {
+  it("names the three differently, so the user is told which happened", async () => {
+    // An empty body never reaches the parse: the request refuses it.
+    const served = (async () => new Response(emptyBody())) as unknown as typeof fetch;
     const kinds = [
       failureOf(parseMinimumWagePage(markupMoved(), SEEDED_RATES)),
-      failureOf(parseMinimumWagePage(emptyBody(), SEEDED_RATES)),
+      failureOf((await fetchMinimumWage(SEEDED_RATES, served)).rate),
       failureOf(parseMinimumWagePage(implausibleFigure(), SEEDED_RATES)),
     ];
     expect(new Set(kinds).size).toBe(3);
@@ -205,15 +201,6 @@ describe("the fetch", () => {
     // No page arrived, so there is no text to keep — and `null` says that,
     // where a failed segmenting would say the page arrived and was unreadable.
     expect(fetched.text).toBeNull();
-  });
-
-  it("reports a request that threw as unreachable", async () => {
-    const throwing = (async () => {
-      throw new Error("getaddrinfo ENOTFOUND");
-    }) as unknown as typeof fetch;
-    expect(failureOf((await fetchMinimumWage(SEEDED_RATES, throwing)).rate)).toBe(
-      "unreachable",
-    );
   });
 });
 

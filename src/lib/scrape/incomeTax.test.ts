@@ -4,7 +4,6 @@ import { SEEDED_RATES } from "@/lib/datedRates";
 import {
   bracketsPage,
   creditPointPage,
-  emptyBody,
   headingMoved,
   headingsSwapped,
   pointSentenceMoved,
@@ -107,13 +106,6 @@ describe("the tax brackets page", () => {
     if (read.ok) return;
     expect(read.failure.kind).toBe("implausible");
   });
-
-  it("treats an empty body as a source that could not be reached", () => {
-    const read = parseTaxBracketsPage(emptyBody());
-    expect(read.ok).toBe(false);
-    if (read.ok) return;
-    expect(read.failure.kind).toBe("unreachable");
-  });
 });
 
 describe("the credit point page", () => {
@@ -173,12 +165,5 @@ describe("the credit point page", () => {
     expect(read.ok).toBe(false);
     if (read.ok) return;
     expect(read.failure.kind).toBe("implausible");
-  });
-
-  it("treats an empty body as a source that could not be reached", () => {
-    const read = parseCreditPointPage(emptyBody(), SEEDED_RATES);
-    expect(read.ok).toBe(false);
-    if (read.ok) return;
-    expect(read.failure.kind).toBe("unreachable");
   });
 });

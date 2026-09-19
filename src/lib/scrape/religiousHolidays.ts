@@ -11,7 +11,9 @@ import {
   datesIn,
   isRange,
   isoOfDayMonth,
+  withoutAsOf,
 } from "@/lib/scrape/holidayDates";
+import { collapse } from "@/lib/scrape/pageSections";
 import { he } from "@/lib/i18n/he";
 import type { IsoDate } from "@/lib/types";
 
@@ -88,10 +90,7 @@ function datesForYear(text: string, year: number): IsoDate[] {
   const asOf = asOfYear(text);
   if (asOf !== null && asOf !== year) return [];
 
-  // A `(נכון ל-2026)` carries a four-digit number of its own, which the date
-  // reader would otherwise offer as a date's year, so the qualifier is removed
-  // before the cell is read.
-  const dates = datesIn(text.replace(/\(נכון ל-\d{4}\)/g, ""))
+  const dates = datesIn(withoutAsOf(text))
     .filter((date) => date.year === null || date.year === year)
     .map((date) => isoOfDayMonth(date.day, date.month, date.year ?? year))
     .filter((iso): iso is IsoDate => iso !== null);
@@ -116,7 +115,6 @@ export function parseReligiousHolidaysPage(
   html: string,
   year: number,
 ): Scraped<Holiday[]> {
-  if (html.trim() === "") return scrapeFailed("unreachable", "empty body");
 
   const table = parse(html).querySelector(TABLE);
   if (table === null) {
@@ -125,7 +123,7 @@ export function parseReligiousHolidaysPage(
 
   const rows = table.querySelectorAll("tr");
   const headings = (rows[0]?.querySelectorAll("th, td") ?? []).map((cell) =>
-    cell.textContent.replace(/\s+/g, " ").trim(),
+    collapse(cell.textContent),
   );
   if (headings.length < 2) {
     return scrapeFailed("notFound", "the table has no columns of dates");
@@ -134,10 +132,10 @@ export function parseReligiousHolidaysPage(
   const holidays: Holiday[] = [];
   for (const row of rows.slice(1)) {
     const cells = row.querySelectorAll("th, td");
-    const name = cells[0]?.textContent.replace(/\s+/g, " ").trim() ?? "";
+    const name = collapse(cells[0]?.textContent ?? "");
     if (name === "") continue;
     for (let column = 1; column < cells.length; column += 1) {
-      const text = cells[column].textContent.replace(/\s+/g, " ").trim();
+      const text = collapse(cells[column].textContent);
       for (const date of datesForYear(text, year)) {
         holidays.push({ date, name: nameWithColumn(name, headings, column, cells.length) });
       }

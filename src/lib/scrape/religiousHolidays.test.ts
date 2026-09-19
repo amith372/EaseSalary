@@ -4,7 +4,6 @@ import type { Holiday, HolidayList } from "@/lib/holidayLists";
 import type { Scraped } from "@/lib/scrape/failure";
 import {
   druzePage,
-  emptyBody,
   jewishPage,
   muslimPage,
   religiousMarkupMoved,
@@ -207,12 +206,6 @@ describe("the three spoiled pages", () => {
     );
   });
 
-  it("reports an empty body as unreachable", () => {
-    expect(failed(parseReligiousHolidaysPage(emptyBody(), 2026))).toBe(
-      "unreachable",
-    );
-  });
-
   it("refuses a truncated table against the year already stored", async () => {
     // Four dates where sixteen stood. With no stored year there is nothing to
     // judge against, so the check needs one — which is the case the next test
@@ -275,14 +268,5 @@ describe("fetching a religion's year", () => {
       serving(jewishPage()),
     );
     expect(failed(result)).toBe("notFound");
-  });
-
-  it("reports a request that threw as unreachable", async () => {
-    const impl = (async () => {
-      throw new Error("getaddrinfo ENOTFOUND");
-    }) as unknown as typeof fetch;
-    expect(failed(await fetchReligiousHolidays([], "druze", 2026, impl))).toBe(
-      "unreachable",
-    );
   });
 });

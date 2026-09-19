@@ -7,7 +7,7 @@ import { parseShekels } from "@/lib/money";
 import { fetchPage, scrapeFailed } from "@/lib/scrape/failure";
 import type { Scraped } from "@/lib/scrape/failure";
 import { segmentArticle } from "@/lib/scrape/pageSections";
-import type { CachedPage } from "@/lib/scrape/pageSections";
+import type { CachedPage, RateFetch } from "@/lib/scrape/pageSections";
 import type { TaxYearBrackets } from "@/lib/taxBrackets";
 
 /**
@@ -225,9 +225,6 @@ export function checkBracketsPlausible(
  * The whole of the reading of the brackets page, over a string.
  */
 export function parseTaxBracketsPage(html: string): Scraped<TaxYearBrackets> {
-  if (html.trim() === "") {
-    return scrapeFailed("unreachable", "empty body");
-  }
 
   const article = parse(html);
 
@@ -272,9 +269,6 @@ export function parseCreditPointPage(
   html: string,
   rates: DatedRate[],
 ): Scraped<DatedRate> {
-  if (html.trim() === "") {
-    return scrapeFailed("unreachable", "empty body");
-  }
 
   const found = CREDIT_POINT_VALUE.exec(parse(html).textContent);
   if (found === null) {
@@ -327,7 +321,7 @@ export function parseCreditPointPage(
 }
 
 /**
- * Both halves of one fetch, as the wage scrape already returns them: the value
+ * Both halves of one fetch, as `RateFetch` carries them for a rate: the value
  * the page was read for, and the page's own text segmented by its headings.
  *
  * They travel together because Part 3 keeps the text beside the figure taken
@@ -337,11 +331,6 @@ export function parseCreditPointPage(
  */
 export interface TaxBracketsFetch {
   brackets: Scraped<TaxYearBrackets>;
-  text: Scraped<CachedPage> | null;
-}
-
-export interface CreditPointFetch {
-  rate: Scraped<DatedRate>;
   text: Scraped<CachedPage> | null;
 }
 
@@ -359,7 +348,7 @@ export async function fetchTaxBrackets(
 export async function fetchCreditPointValue(
   rates: DatedRate[],
   fetchImpl: typeof fetch = fetch,
-): Promise<CreditPointFetch> {
+): Promise<RateFetch> {
   const page = await fetchPage(CREDIT_POINT_SOURCE_URL, fetchImpl);
   if (!page.ok) return { rate: page, text: null };
   return {

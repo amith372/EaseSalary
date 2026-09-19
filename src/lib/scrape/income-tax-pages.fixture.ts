@@ -3,8 +3,9 @@ import { join } from "node:path";
 
 /**
  * The two income-tax source pages, saved, and the spoiled versions of each that
- * Part 4 requires: markup that moved, an empty response, and a value outside
- * the plausible range. The suite reads these and never the network.
+ * Part 4 requires: markup that moved, and a value outside the plausible range
+ * (an empty response is `failure.test.ts`'s). The suite reads these and never
+ * the network.
  *
  * **The saved pages are the real ones, fetched on 2026-09-10 and committed
  * whole**, for the reason the wage fixture gives: a page trimmed to the
@@ -39,12 +40,6 @@ function spoil(html: string, from: string, to: string): string {
     );
   }
   return html.replaceAll(from, to);
-}
-
-/** An empty body: a 200 that carried nothing, which is what a site behind a
- * broken cache or a stripping proxy returns. */
-export function emptyBody(): string {
-  return "";
 }
 
 /**

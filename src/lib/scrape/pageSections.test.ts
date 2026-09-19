@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { CAREGIVER_TERMS, legalLinks } from "@/lib/links";
 import {
-  emptyBody,
   markupMoved,
   termsPage,
 } from "@/lib/scrape/caregiver-terms-page.fixture";
@@ -162,10 +161,6 @@ describe("the spoiled pages Part 4 requires", () => {
     expect(failureOf(markupMoved())).toBe("notFound");
   });
 
-  it("reports an empty body as unreachable", () => {
-    expect(failureOf(emptyBody())).toBe("unreachable");
-  });
-
   it("reports a page whose article is empty as notFound", () => {
     expect(failureOf(`<html><body><div class="mw-parser-output"></div></body></html>`)).toBe(
       "notFound",
@@ -183,18 +178,5 @@ describe("fetching a page to segment it", () => {
       responding(termsPage()),
     );
     expect(result.ok && result.value.sections.length).toBe(36);
-  });
-
-  it("reports an error status as unreachable without parsing", async () => {
-    const result = await fetchArticleSections(CAREGIVER_TERMS, responding("", 500));
-    expect(result.ok ? "ok" : result.failure.kind).toBe("unreachable");
-  });
-
-  it("reports a request that threw as unreachable", async () => {
-    const throwing = (async () => {
-      throw new Error("dns");
-    }) as unknown as typeof fetch;
-    const result = await fetchArticleSections(CAREGIVER_TERMS, throwing);
-    expect(result.ok ? "ok" : result.failure.kind).toBe("unreachable");
   });
 });

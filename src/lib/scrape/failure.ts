@@ -52,7 +52,10 @@ export function scrapeFailed<T>(
  *
  * `fetchImpl` is injected so the suite never reaches the network (Part 4). A
  * thrown request and an error status are the same answer to the caller, because
- * they are the same thing to the user: the source did not give us a page.
+ * they are the same thing to the user: the source did not give us a page. So is
+ * an empty body — a 200 that carried nothing, which is what a site behind a
+ * protection page or mid-deploy serves — and it is refused here once rather than
+ * by every parse.
  */
 export async function fetchPage(
   url: string,
@@ -70,5 +73,7 @@ export async function fetchPage(
   if (!response.ok) {
     return scrapeFailed("unreachable", `status ${response.status}`);
   }
-  return { ok: true, value: await response.text() };
+  const body = await response.text();
+  if (body.trim() === "") return scrapeFailed("unreachable", "empty body");
+  return { ok: true, value: body };
 }

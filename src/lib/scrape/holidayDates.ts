@@ -80,3 +80,9 @@ export function asOfYear(text: string): number | null {
   const match = AS_OF.exec(text);
   return match === null ? null : Number(match[1]);
 }
+
+/** The text with every `(נכון ל-2026)` taken out: the qualifier carries a
+ * four-digit number of its own, which a date reader would take for a year. */
+export function withoutAsOf(text: string): string {
+  return text.replace(new RegExp(AS_OF.source, "g"), "");
+}

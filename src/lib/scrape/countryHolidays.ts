@@ -161,7 +161,6 @@ export function parseCountryHolidaysPage(
   html: string,
   year: number,
 ): Scraped<Holiday[]> {
-  if (html.trim() === "") return scrapeFailed("unreachable", "empty body");
 
   const page = parse(html);
 
