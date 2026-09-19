@@ -522,7 +522,7 @@ and translation can change.
 - [x] 2026-09-19 `65d0ae4` F13 — the export's copies (`balanceOf`, the note into `I`, `coveredMonthsLabel`) and one
   `ReportKind` table — R2.12, R2.16 — check: export suite and `agreement.test.ts` unedited.
   `coveredMonthsLabel` was left: it changes a cell (see "Needs the user").
-- [x] 2026-09-19 F14 — the scraper's copies: `collapse`, `AS_OF`, the empty-body guard moved into
+- [x] 2026-09-19 `735e45d` F14 — the scraper's copies: `collapse`, `AS_OF`, the empty-body guard moved into
   `fetchPage`, and one fetch type; the per-scraper "unreachable" tests fold into one set on
   `fetchPage` — R2.13, R6.3 — check: the parsing tests on the saved pages unedited; each
   failure kind still tested once.
