@@ -65,6 +65,8 @@ function revalidateHolidays(): void {
   revalidatePath("/");
 }
 
+type HolidayState = { spans: MonthSpan[]; year: HolidayYear };
+
 /**
  * The state a gesture is judged against, read fresh rather than trusted from
  * the screen that sent it.
@@ -77,7 +79,7 @@ async function stateOf(
   repository: SalaryRepository,
   profile: WorkerProfile,
   year: number,
-): Promise<{ spans: MonthSpan[]; year: HolidayYear }> {
+): Promise<HolidayState> {
   const spans = await repository.listSpans(profile.id);
   const stored = holidayListFor(
     await repository.listHolidayLists(),
@@ -94,6 +96,29 @@ async function stateOf(
       profile.restDay,
     ),
   };
+}
+
+/**
+ * A chosen holiday a gesture acts on, with the state it is judged against —
+ * or `null` when the id names no holiday span of this worker, which the
+ * picker is told as `entryUnknown`.
+ */
+async function openChosenHoliday(
+  workerId: string,
+  spanId: string,
+  year: number,
+): Promise<{
+  repository: SalaryRepository;
+  profile: WorkerProfile;
+  state: HolidayState;
+  span: MonthSpan;
+} | null> {
+  const repository = await getRepository();
+  const profile = await requireWorker(workerId, repository);
+  const state = await stateOf(repository, profile, year);
+  const span = state.spans.find((each) => each.id === spanId);
+  if (span === undefined || span.kind !== "holiday") return null;
+  return { repository, profile, state, span };
 }
 
 /** The candidate list a worker's year is drawn from (specs.md item 10). */
@@ -181,14 +206,9 @@ export async function moveHoliday(
   year: number,
   amendment?: { agreedOn: string; note: string },
 ): Promise<HolidayActionResult> {
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId, repository);
-  const state = await stateOf(repository, profile, year);
-
-  const span = state.spans.find((each) => each.id === spanId);
-  if (span === undefined || span.kind !== "holiday") {
-    return { ok: false, reason: "entryUnknown" };
-  }
+  const opened = await openChosenHoliday(workerId, spanId, year);
+  if (opened === null) return { ok: false, reason: "entryUnknown" };
+  const { repository, profile, state, span } = opened;
 
   const reviewed = reviewHolidayMove(
     date,
@@ -239,14 +259,9 @@ export async function setHolidayPart(
   fraction: number,
   year: number,
 ): Promise<HolidayActionResult> {
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId, repository);
-  const state = await stateOf(repository, profile, year);
-
-  const span = state.spans.find((each) => each.id === spanId);
-  if (span === undefined || span.kind !== "holiday") {
-    return { ok: false, reason: "entryUnknown" };
-  }
+  const opened = await openChosenHoliday(workerId, spanId, year);
+  if (opened === null) return { ok: false, reason: "entryUnknown" };
+  const { repository, profile, state, span } = opened;
   const chosen = state.year.rows.find(
     (row) => row.chosen?.spanId === spanId,
   )?.chosen;
