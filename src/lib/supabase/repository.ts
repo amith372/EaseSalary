@@ -637,12 +637,13 @@ export function createPostgresRepository(
       // The span it replaces, if any: moving a mark off a month is an edit to
       // that month as much as to the one it landed on, and after the write
       // there is nothing left to say where it was.
-      const { data: before } = await client
+      const { data: before, error: reading } = await client
         .from("spans")
         .select("from, to")
         .eq("worker_id", workerId)
         .eq("id", span.id)
         .maybeSingle();
+      raise(reading, "could not read the span it replaces");
       const { error } = await client
         .from("spans")
         .upsert(spanRowOf(workerId, span), { onConflict: "worker_id,id" });
