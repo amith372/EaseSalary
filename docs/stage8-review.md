@@ -10,9 +10,9 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F23. F26–F28 are not approved: each is grilled with the user
+- **Last done:** step 8, F24. F26–F28 are not approved: each is grilled with the user
   before any code.
-- **Next:** step 8 — execute the Fix list from the first unchecked item (F24), one commit
+- **Next:** step 8 — execute the Fix list from the first unchecked item (F25), one commit
   each. **Ask the user before each commit** (said on 2026-09-18). Stop after F25; F33 (the last sweep) and then F32 come last.
 - **The one uncommitted line** is always the last item's commit hash, written in after its
   commit; it goes into the next item's commit.
@@ -56,7 +56,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F23, F29–F31 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F24, F29–F31 done |
 
 ### How each step is run
 
@@ -572,13 +572,17 @@ and translation can change.
 - [x] 2026-09-19 `dc466f0` F22 — one `saveMonths` upsert, and `touchMonths` as one statement; no migration — R5.9 —
   check: repository suite; Browser against the live e2e household. The suite never reaches
   Postgres, so the Supabase statements wait on the user's own signed-in check.
-- [x] 2026-09-20 F23 — the worker's spans reach the series once and each month still clips to what
+- [x] 2026-09-20 `981c956` F23 — the worker's spans reach the series once and each month still clips to what
   overlaps it, so the split-spell answer stays open — R5.2 — check: unit suite unedited.
   Narrow scope, chosen by the user 2026-09-20: the series clips; the two stores keep
   assembling a month's spans, so the three filters stay and go with R3.1/F26.
-- [ ] F24 — the wizard and the profile share their field components, and both files end
+- [x] 2026-09-20 F24 — the wizard and the profile share their field components, and both files end
   under 1,000 lines. May take two commits: the fields, then the wizard — R5.10 — check:
-  Browser (add-worker and profile flows).
+  Browser (add-worker and profile flows). Split, not shared: the two draw the same terms at
+  different scales and wirings (`Field`/`ChoiceGroup` at 18px against `Field.tsx` at 15px),
+  so a shared control would have been one component with a flag for which screen it is on.
+  `Field.tsx` was already common. `WorkerOpening.tsx` 461 + `WorkerTerms.tsx` 927;
+  `AddWorkerSteps.tsx` 903 + `AddWorkerScreen.tsx` 364.
 - [ ] F25 — `HomeScreen` and `MonthConfirmation` split along their existing sections — R5.11 —
   check: Browser.
 
