@@ -185,6 +185,29 @@ full suite passing unchanged.
 **Done when** every item on that file's fix list is done or struck by the user, and the checks
 of rule 7 pass.
 
+## Stage 8½ — A rest-day change and the free rest days it strands
+
+`specs.md` item 5's last paragraph before the month screen. Today a change of rest day
+re-snapshots every month and leaves a free rest day on the old day, and the month then throws
+`InvalidMonthError` instead of drawing.
+
+1. **Engine** (`src/lib/engine/profile.ts`): `monthsFollowingProfile` takes `today` and a
+   rest-day change skips months before the current one; a pure function lists the stranded
+   free rest days and, per mark, what each choice would write — the two move dates, and
+   why a move (target marked, another month) or a conversion (vacation balance short) is
+   not offered. Tests in `profile.test.ts`, every date and balance worked by hand.
+2. **Action** (`src/app/workers/actions.ts`): `setRestDay` without answers refuses with the
+   stranded marks; with an answer for every mark it writes the spans and the rest day.
+3. **Screen** (`src/components/WorkerTerms.tsx`, strings in `he.ts`): a panel with one row
+   per mark, its choices, and the reason beside any choice not offered; cancel leaves
+   everything as it was.
+4. **Browser**: a free Saturday, the rest day changed to Friday, each choice in turn — `/`
+   and the payslip show the mark, the counts and the vacation balance; a month before the
+   current one keeps Saturday.
+
+**Done when** the user marks a free Saturday, changes the rest day to Friday, tries each
+choice, and `/` loads every time with the mark she chose.
+
 ## Stage 9 — The help screen, and a possible assistant on top of it
 
 Where the "צריך/ה עזרה?" card goes. The design draws that card on every artboard and points it

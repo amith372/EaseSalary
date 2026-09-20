@@ -192,6 +192,14 @@ Each of these is true or false at a glance.
     and if it fell on a rest-eve the supplement, and if on a rest day the rest-day
     pay. A free rest day is not an entitlement and a month without
     one is unremarkable.
+    A change of the weekly rest day reaches the current month and the months after it,
+    and never a month before. A free rest day already marked in those months on the old
+    rest day is put to the user before the change is saved, each mark on its own, with
+    three choices: delete it; turn it into an ordinary vacation day on the same date,
+    offered only where the vacation balance covers it and otherwise shown as unavailable
+    with the reason; or move it to the new rest day, the user choosing between the nearest
+    one before it and the nearest one after it. A move onto a day already marked, or into
+    another month, is not offered for that mark, and the screen says why.
     **The month screen is the calendar and what the month came to, and nothing that
     records a payment.** Three groups carry the rest, and each is a screen of its own
     rather than a card beside the calendar: **additional payments** — the advances
