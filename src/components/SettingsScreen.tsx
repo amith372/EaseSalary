@@ -23,15 +23,17 @@ import {
   HolidaysRow,
   IncomeTaxControl,
   InsurerControl,
-  OpeningPositionControl,
   IdentifyingNumberControl,
   RecuperationControl,
   RestDayControl,
   RestEveSupplementControl,
   SalaryControl,
-  StandingLinesControl,
   TermRow,
 } from "@/components/WorkerTerms";
+import {
+  OpeningPositionControl,
+  StandingLinesControl,
+} from "@/components/WorkerOpening";
 import { fullDayLabel } from "@/lib/dateLabels";
 import type { DatedRate } from "@/lib/datedRates";
 import type { WorkerProfile } from "@/lib/engine/repository";
