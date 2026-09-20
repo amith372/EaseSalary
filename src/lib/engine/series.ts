@@ -83,8 +83,9 @@ export class MonthBeforeFirstMonthError extends Error {
   }
 }
 
-/** Every span the opened months carry, once each. The store hands a spell to
- * every month it touches, so the same span arrives more than once. */
+/** The worker's own spans, recovered once from the months she has: the store
+ * hands a spell to every month it touches, so the same span arrives more than
+ * once and is taken by id. Each month below clips from this one set. */
 function everySpan(months: MonthFacts[]): MonthSpan[] {
   const byId = new Map<string, MonthSpan>();
   for (const facts of months) {
@@ -107,7 +108,6 @@ function unopenedMonth(
   month: YearMonth,
   worker: WorkerTerms,
   opened: MonthFacts[],
-  spans: MonthSpan[],
   rates: DatedRate[],
 ): MonthFacts {
   const confirmedWage = wageToCarry(opened, month, worker, rates);
@@ -117,10 +117,9 @@ function unopenedMonth(
     // the wizard offers is later than that.
     throw new Error(`No wage is known for ${yearMonthText(month)}`);
   }
-  return {
-    ...openMonthRecord(worker, month, confirmedWage),
-    spans: spans.filter((span) => overlapsMonth(span, month)),
-  };
+  // Its spans are put on by the walk below, which clips every month from the
+  // worker's own set — an opened month and an unopened one the same way.
+  return { ...openMonthRecord(worker, month, confirmedWage), spans: [] };
 }
 
 /** The vacation days the month drew, read off the balance line rather than
@@ -190,9 +189,15 @@ export function calculateSeries(
   let holidayDaysEarlierInYear = worker.openingPosition.holidayUsedThisYear;
 
   return eachMonth(first, last).map((month) => {
-    const facts =
-      opened.get(yearMonthText(month)) ??
-      unopenedMonth(month, worker, ordered, spans, rates);
+    // **Clipped here and not read off the stored month.** A spell crossing a
+    // boundary is one span belonging to the worker (Part 3), so what "in this
+    // month" means is decided once for the whole series rather than once per
+    // month by whoever assembled it.
+    const facts = {
+      ...(opened.get(yearMonthText(month)) ??
+        unopenedMonth(month, worker, ordered, rates)),
+      spans: spans.filter((span) => overlapsMonth(span, month)),
+    };
     if (month.year !== year) {
       year = month.year;
       vacationDaysEarlierInYear = 0;
