@@ -526,22 +526,21 @@ export function createPostgresRepository(
     workerId: string,
     months: YearMonth[],
   ): Promise<void> {
-    const seen = new Set<string>();
-    for (const month of months) {
-      const key = `${month.year}-${month.month}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const { error } = await client
-        .from("months")
-        // The one statement in the application that sends this column. The
-        // trigger honours it for that reason, and discards it from nothing
-        // else.
-        .update({ updated_at: new Date().toISOString() })
-        .eq("worker_id", workerId)
-        .eq("year", month.year)
-        .eq("month", month.month);
-      raise(error, "could not record the change to the month");
-    }
+    if (months.length === 0) return;
+    // One statement over every month named: a year and a month are matched as
+    // a pair, since two `in` lists would also match their cross product.
+    const pairs = [
+      ...new Set(months.map((m) => `and(year.eq.${m.year},month.eq.${m.month})`)),
+    ];
+    const { error } = await client
+      .from("months")
+      // The one statement in the application that sends this column. The
+      // trigger honours it for that reason, and discards it from nothing
+      // else.
+      .update({ updated_at: new Date().toISOString() })
+      .eq("worker_id", workerId)
+      .or(pairs.join(","));
+    raise(error, "could not record the change to the month");
   }
 
   /**
@@ -576,6 +575,23 @@ export function createPostgresRepository(
         (row.employment_permit_expiry as IsoDate | null) ?? null,
       ]),
     );
+  }
+
+  /** Every month in one upsert, which is one statement and so one
+   * transaction: a change reaching them all lands on all of them or on none. */
+  async function saveMonths(
+    workerId: string,
+    records: MonthRecord[],
+  ): Promise<void> {
+    if (records.length === 0) return;
+    await requireWorker(workerId);
+    const { error } = await client
+      .from("months")
+      .upsert(
+        records.map((record) => monthRowOf(workerId, record)),
+        { onConflict: "worker_id,year,month" },
+      );
+    raise(error, "could not save the months");
   }
 
   return {
@@ -722,14 +738,10 @@ export function createPostgresRepository(
     },
 
     async saveMonth(workerId, record) {
-      await requireWorker(workerId);
-      const { error } = await client
-        .from("months")
-        .upsert(monthRowOf(workerId, record), {
-          onConflict: "worker_id,year,month",
-        });
-      raise(error, "could not save the month");
+      await saveMonths(workerId, [record]);
     },
+
+    saveMonths,
 
     async listHolidayLists() {
       const { data, error } = await client.from("holiday_lists").select("*");

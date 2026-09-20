@@ -118,9 +118,10 @@ async function saveProfile(
 
   if (termsDiffer(before, profile)) {
     const months = await repository.listMonths(profile.id);
-    for (const record of monthsFollowingProfile(months, profile)) {
-      await repository.saveMonth(profile.id, record);
-    }
+    await repository.saveMonths(
+      profile.id,
+      monthsFollowingProfile(months, profile),
+    );
   }
 
   // Every screen reads the same workers and months, so the whole tree is
@@ -329,13 +330,10 @@ export async function setSalaryChange(
   await repository.saveWorker(updated);
 
   const months = await repository.listMonths(workerId);
-  for (const record of monthsReachedBySalaryChange(
-    months,
-    updated,
-    reviewed.change.from,
-  )) {
-    await repository.saveMonth(workerId, record);
-  }
+  await repository.saveMonths(
+    workerId,
+    monthsReachedBySalaryChange(months, updated, reviewed.change.from),
+  );
 
   revalidatePath("/", "layout");
   return { ok: true };

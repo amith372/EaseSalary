@@ -164,6 +164,9 @@ export interface SalaryRepository {
    * replays them in. */
   listMonths(workerId: string): Promise<MonthFacts[]>;
   saveMonth(workerId: string, record: MonthRecord): Promise<void>;
+  /** Several months in one write, so a change that reaches them all lands on
+   * all of them or on none — never half re-snapshotted. */
+  saveMonths(workerId: string, records: MonthRecord[]): Promise<void>;
 
   /**
    * The holiday lists the household holds, seeded with what ships and added to
@@ -596,13 +599,19 @@ export function createInMemoryRepository(
     },
 
     async saveMonth(workerId, record) {
+      await repository.saveMonths(workerId, [record]);
+    },
+
+    async saveMonths(workerId, records) {
       const row = rowOf(workerId);
-      const key = monthKey(record.month);
-      const before = row.months.get(key);
-      row.months.set(key, {
-        ...structuredClone(record),
-        updatedAt: stampFor(before, record),
-      });
+      for (const record of records) {
+        const key = monthKey(record.month);
+        const before = row.months.get(key);
+        row.months.set(key, {
+          ...structuredClone(record),
+          updatedAt: stampFor(before, record),
+        });
+      }
     },
 
     async listHolidayLists() {

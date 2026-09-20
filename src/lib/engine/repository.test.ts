@@ -122,6 +122,25 @@ describe("a worker's facts written and read back", () => {
     });
   });
 
+  it("writes several months at once, each as saveMonth would have", async () => {
+    // A profile change reaches every month in one write (R5.9). What comes
+    // back is what went in, month by month, and a month not named is left.
+    const repository = store();
+    const march = record(MARCH, { incomeTaxAgorot: 700 });
+    await repository.saveMonth("hanna", march);
+    const january = record(JANUARY, { incomeTaxAgorot: 100 });
+    const february = record(FEBRUARY, { incomeTaxAgorot: 200 });
+    await repository.saveMonths("hanna", [january, february]);
+
+    const months = await repository.listMonths("hanna");
+    expect(months.map((m) => m.incomeTaxAgorot)).toEqual([100, 200, 700]);
+    expect(await repository.getMonth("hanna", FEBRUARY)).toEqual({
+      ...february,
+      spans: [],
+      updatedAt: expect.any(String),
+    });
+  });
+
   it("has no month before one is written, and no such month is an error", async () => {
     expect(await store().getMonth("hanna", JANUARY)).toBeNull();
   });
