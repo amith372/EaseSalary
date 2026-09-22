@@ -263,6 +263,75 @@ test.describe("the rest-eve supplement (specs.md item 14)", () => {
       formatAgorot(fridays * 15000),
     );
   });
+
+  /**
+   * The other half of the same term: a month already confirmed does not move
+   * with it (`specs.md` Part 5 — confirming is "the moment its figures stop
+   * moving with the profile"; item 2 — a payslip is never a restatement of
+   * months already paid).
+   *
+   * **On the `filed` household**, which is the demo with the second worker's
+   * January to April 2026 confirmed and not exported (`seed.ts`). The interface
+   * cannot reach that state on its own: confirming and downloading are one
+   * gesture, so a month is confirmed-and-unexported only when the download never
+   * arrived.
+   *
+   * **The two figures are worked out on a calendar.** 2026-01-01 is a Thursday,
+   * so 2026-03-01 is a Sunday and March's Fridays are the 6th, 13th, 20th and
+   * 27th — four of them. 2026-05-01 is a Friday, so May's are the 1st, 8th,
+   * 15th, 22nd and 29th — five. She is seeded at ₪100 a rest-eve, which is
+   * ₪400 in March and ₪500 in May; raised to ₪200, March stays at ₪400 and May
+   * becomes ₪1,000.
+   *
+   * **What this catches** is the bug it was written for: until this commit
+   * `saveProfile` re-snapshotted the terms of *every* month the worker had, so
+   * a supplement changed in September rewrote a sheet filed in April — and
+   * re-exporting that month afterwards would have produced a different file
+   * from the one the family had already filed.
+   */
+  test("leaves a month already confirmed at the figure it was filed with", async ({
+    page,
+  }) => {
+    await useHousehold(page, "filed", "confirmed-supplement");
+    const FILED = { year: 2026, month: 3 };
+    const DRAFT = { year: 2026, month: 5 };
+    const SEEDED_PER_EVE = 10000;
+    const RAISED_PER_EVE = 20000;
+    const FRIDAYS_IN_MARCH = 4;
+    const FRIDAYS_IN_MAY = 5;
+    const supplementRow = page.locator('[data-row="restEveSupplement"]');
+
+    // Both months stand at the seeded figure before anything is changed.
+    await openPayslip(page, FILED);
+    await expect(supplementRow).toContainText(
+      formatAgorot(FRIDAYS_IN_MARCH * SEEDED_PER_EVE),
+    );
+    await openPayslip(page, DRAFT);
+    await expect(supplementRow).toContainText(
+      formatAgorot(FRIDAYS_IN_MAY * SEEDED_PER_EVE),
+    );
+
+    await openSettingsForTestWorker(page);
+    const supplement = page.locator('[data-terms="restEveSupplement"]');
+    await supplement.locator("input").fill("200");
+    await supplement
+      .getByRole("button", {
+        name: he.workers.profile.terms.restEveSupplement.save,
+      })
+      .click();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+
+    // March was filed, so it is untouched.
+    await openPayslip(page, FILED);
+    await expect(supplementRow).toContainText(
+      formatAgorot(FRIDAYS_IN_MARCH * SEEDED_PER_EVE),
+    );
+    // May is still a draft, so it follows the profile.
+    await openPayslip(page, DRAFT);
+    await expect(supplementRow).toContainText(
+      formatAgorot(FRIDAYS_IN_MAY * RAISED_PER_EVE),
+    );
+  });
 });
 
 /**

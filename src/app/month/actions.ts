@@ -51,7 +51,7 @@ import {
   type SkippedDay,
 } from "@/lib/spans";
 import { compareMonth, monthOf, orderDates, sameMonth } from "@/lib/dates";
-import { isBeforeFirstMonth, openMonthIfMissing } from "@/lib/openMonth";
+import { isBeforeFirstMonth, openMonthIfMissing } from "@/lib/workerMonths";
 import { readToday } from "@/lib/requestToday";
 import type { IsoDate, YearMonth } from "@/lib/types";
 

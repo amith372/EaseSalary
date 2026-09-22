@@ -257,10 +257,10 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
    * **On the known household, not the demo one.** Both demo workers rest on
    * Saturday since 2026-09-11, when the first was reseeded from the family's
    * workbooks and the second took her ordinary terms (`seed.ts`) — and the
-   * second also carries a free rest day marked on a Saturday, so moving her to
-   * Friday would leave a mark on a day that is no longer hers. Part 4's
-   * household holds one worker and no such mark, so the change is a change and
-   * nothing else.
+   * second also carries a free rest day marked on a Saturday, which since stage
+   * 8.5 raises a question of its own before the change can be saved
+   * (`rest-day-change.spec.ts`). Part 4's household holds one worker and no such
+   * mark, so here the change is a change and nothing else.
    */
   test("names her own rest day in the day counts (item 5)", async ({ page }) => {
     await useHousehold(page, "restday", "known");
@@ -282,9 +282,18 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
       .click();
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
 
-    await page.goto("/month/payslip?month=2025-08");
+    // **The current month and the ones after it** (item 5). September 2026 is
+    // the month the run stands in, so it is the first the change reaches.
+    await page.goto("/month/payslip?month=2026-09");
     await expect(freeRestDays).toContainText("ימי שישי");
     await expect(freeRestDays).not.toContainText("שבתות");
+
+    // **And never a month before it.** August 2025 was lived through as a
+    // Saturday-resting month and stays one: a change of rest day "reaches the
+    // current month and the months after it, and never a month before". Before
+    // stage 8.5 this said "ימי שישי" too, which is the failure it catches.
+    await page.goto("/month/payslip?month=2025-08");
+    await expect(freeRestDays).toContainText("שבתות חופשיות");
   });
 
   test("draws a level only where something below it changes the figure", async ({

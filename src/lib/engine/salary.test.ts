@@ -217,6 +217,21 @@ describe("the stored months a change reaches", () => {
     ]);
   });
 
+  it("never reaches back into a month already confirmed", () => {
+    // Item 2: a payslip is "never a restatement of months already paid", and
+    // Part 5 puts the moment at the confirmation. September here was filed on
+    // 2 October; a raise agreed afterwards and dated back to September leaves
+    // it exactly as the family filed it, and reaches November alone.
+    const filed = [
+      { ...facts(ym(2026, 9), WAGE_2026, WAGE_2026), confirmedAt: "2026-10-02T08:00:00.000Z" },
+      facts(ym(2026, 11), WAGE_2026, WAGE_2026),
+    ];
+    const terms = { ...TERMS, salaryChanges: [{ from: ym(2026, 9), agorot: 700000 }] };
+    const reached = monthsReachedBySalaryChange(filed, terms, ym(2026, 9));
+
+    expect(reached.map((record) => record.month)).toEqual([ym(2026, 11)]);
+  });
+
   it("never writes a month below its own confirmed minimum", () => {
     // A 2025 salary change reaching a month whose confirmed minimum is 2026's.
     const terms = { ...TERMS, salaryChanges: [{ from: ym(2026, 9), agorot: 630000 }] };

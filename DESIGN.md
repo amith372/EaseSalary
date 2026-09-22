@@ -163,6 +163,12 @@ folded sheet.
 - The four groups start folded, each opened from its heading as the payments
   screen's sections are; the group's note is inside the fold. The account
   section below them does not fold. A worker switch folds them again.
+- **The rest-day row can raise a panel the canvas does not draw**: a change that
+  would strand a free rest day already marked on the old day asks about each
+  mark before it saves (`specs.md` item 5). It is drawn inside the row, in an
+  inset `bg-ground` card in the idiom of the rows around it, rather than as a
+  screen or a dialog of its own — the question belongs where the change is being
+  made, and a user sent elsewhere to answer it would have lost the change.
 
 ### Before the export
 

@@ -30,6 +30,8 @@ import {
   setRestDay,
   setSalaryChange,
   type ProfileActionRefusal,
+  type RestDayAnswer,
+  type RestDayAnswers,
 } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
 import { Chip } from "@/components/Chip";
@@ -43,8 +45,12 @@ import { useAction, type Send } from "@/components/useAction";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import { addMonths, compareMonth, yearMonthText } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
-import type { YearMonth } from "@/lib/types";
+import type { IsoDate, YearMonth } from "@/lib/types";
 import { restDayChoices } from "@/lib/engine/profile";
+import type {
+  StrandedFreeRestDay,
+  StrandedRefusal,
+} from "@/lib/engine/profile";
 import type { WorkerProfile } from "@/lib/engine/repository";
 import {
   genders,
@@ -156,6 +162,9 @@ export function Refusal({ reason }: { reason: ProfileActionRefusal }) {
   // control that holds it (`EmployedSinceControl`), and no other control is
   // refused for that reason.
   if (reason === "employedSinceAfterFirstMonth") return null;
+  // Not a sentence either: a change that would strand a free rest day is
+  // answered in `StrandedPanel`, which the control draws beside this line.
+  if (reason === "stranded") return null;
   return <RefusalLine>{he.workers.profile.terms.refused[reason]}</RefusalLine>;
 }
 
@@ -193,16 +202,30 @@ export function RestDayControl({
 }) {
   const words = he.workers.profile.terms.restDay;
   const { refusal, run } = useAction(onSubmit);
+  // The question the change raised, and the day it was going to be changed to.
+  // Set on every attempt, so an answer cannot be sent against a day the user
+  // has since moved away from.
+  const [asking, setAsking] = useState<{
+    day: RestDay;
+    stranded: StrandedFreeRestDay[];
+  } | null>(null);
+
+  function change(day: RestDay, answers: RestDayAnswers = {}) {
+    run(async () => {
+      const result = await setRestDay(workerId, day, answers);
+      // Narrowed on the marks themselves and not on the reason: "stranded" is
+      // in the refusal union so that one hook can carry every term, so the
+      // reason alone no longer says the payload is there.
+      setAsking("stranded" in result ? { day, stranded: result.stranded } : null);
+      return result;
+    });
+  }
 
   return (
     <TermRow label={words.label} hint={words.hint}>
       <div data-terms="restDay" className="flex flex-wrap gap-2">
         {restDayChoices.map((day) => (
-          <Chip
-            key={day}
-            selected={day === restDay}
-            onClick={() => run(() => setRestDay(workerId, day))}
-          >
+          <Chip key={day} selected={day === restDay} onClick={() => change(day)}>
             <Bidi>{words.day(day)}</Bidi>
           </Chip>
         ))}
@@ -210,8 +233,180 @@ export function RestDayControl({
       <p dir="auto" className="text-[13px] font-light text-ink-quiet">
         {words.eveNote(restDay)}
       </p>
+      {asking ? (
+        <StrandedPanel
+          from={restDay}
+          to={asking.day}
+          stranded={asking.stranded}
+          onSave={(answers) => change(asking.day, answers)}
+          onCancel={() => setAsking(null)}
+        />
+      ) : null}
       {refusal ? <Refusal reason={refusal} /> : null}
     </TermRow>
+  );
+}
+
+/**
+ * The free rest days a change of rest day would strand, one row each, with the
+ * three answers item 5 allows and the reason beside any of them not offered.
+ *
+ * **It is on no artboard, and the departure is written in `DESIGN.md`.** The
+ * canvas draws the rest day as three chips and says nothing about the question
+ * behind them, so the panel is built in the idiom of the rows around it rather
+ * than as a screen of its own: the question belongs where the change is made,
+ * and a user sent elsewhere to answer it would have lost the change she was
+ * making.
+ *
+ * **Nothing is saved until every mark has been answered**, because a partial
+ * answer leaves the worker exactly where the change with no answers leaves her.
+ * Cancelling saves nothing at all (`build_plan.md` stage 8.5).
+ */
+function StrandedPanel({
+  from,
+  to,
+  stranded,
+  onSave,
+  onCancel,
+}: {
+  from: RestDay;
+  to: RestDay;
+  stranded: StrandedFreeRestDay[];
+  onSave: (answers: RestDayAnswers) => void;
+  onCancel: () => void;
+}) {
+  const words = he.workers.profile.terms.restDay.stranded;
+  const [answers, setAnswers] = useState<RestDayAnswers>({});
+  const answered = stranded.every((mark) => answers[mark.id] !== undefined);
+
+  return (
+    <div
+      data-terms="strandedFreeRestDays"
+      className="mt-3 rounded-card-sm border border-line bg-ground p-4"
+    >
+      <p dir="auto" className="text-[14px] font-medium text-ink">
+        {words.title}
+      </p>
+      <p dir="auto" className="mt-1 text-[13px] font-light text-ink-quiet">
+        {words.intro(from, to)}
+      </p>
+      <ul className="mt-3 space-y-3">
+        {stranded.map((mark) => (
+          <li key={mark.id} data-stranded={mark.date}>
+            <p className="text-[14px] font-medium text-ink">
+              <Bidi>{fullDayLabel(mark.date)}</Bidi>
+            </p>
+            <div className="mt-2 flex flex-col gap-1">
+              <StrandedChoiceRow
+                markId={mark.id}
+                answer="delete"
+                label={words.delete}
+                offered
+                chosen={answers[mark.id] === "delete"}
+                onChoose={setAnswers}
+              />
+              <StrandedChoiceRow
+                markId={mark.id}
+                answer="convert"
+                label={words.convert}
+                offered={mark.convert.offered}
+                reason={mark.convert.reason}
+                chosen={answers[mark.id] === "convert"}
+                onChoose={setAnswers}
+              />
+              <StrandedChoiceRow
+                markId={mark.id}
+                answer="moveEarlier"
+                label={words.moveEarlier}
+                date={mark.moveEarlier.date}
+                offered={mark.moveEarlier.offered}
+                reason={mark.moveEarlier.reason}
+                chosen={answers[mark.id] === "moveEarlier"}
+                onChoose={setAnswers}
+              />
+              <StrandedChoiceRow
+                markId={mark.id}
+                answer="moveLater"
+                label={words.moveLater}
+                date={mark.moveLater.date}
+                offered={mark.moveLater.offered}
+                reason={mark.moveLater.reason}
+                chosen={answers[mark.id] === "moveLater"}
+                onChoose={setAnswers}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          data-stranded-action="save"
+          disabled={!answered}
+          className={`${buttonClass} disabled:opacity-40`}
+          onClick={() => onSave(answers)}
+        >
+          {words.save}
+        </button>
+        <button
+          type="button"
+          data-stranded-action="cancel"
+          className={quietButtonClass}
+          onClick={onCancel}
+        >
+          {words.cancel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** One answer for one mark. A choice not offered is drawn disabled with the
+ * reason beside it rather than left out, so the user can see that the
+ * application considered it and why it cannot be taken (item 25). */
+function StrandedChoiceRow({
+  markId,
+  answer,
+  label,
+  date,
+  offered,
+  reason,
+  chosen,
+  onChoose,
+}: {
+  markId: string;
+  answer: RestDayAnswer;
+  label: string;
+  date?: IsoDate;
+  offered: boolean;
+  reason?: StrandedRefusal;
+  chosen: boolean;
+  onChoose: (update: (answers: RestDayAnswers) => RestDayAnswers) => void;
+}) {
+  const words = he.workers.profile.terms.restDay.stranded;
+  return (
+    <label
+      data-choice={answer}
+      data-offered={offered ? "yes" : "no"}
+      className={`flex flex-wrap items-baseline gap-2 text-[13px] ${
+        offered ? "text-ink" : "text-ink-quiet"
+      }`}
+    >
+      <input
+        type="radio"
+        name={`stranded-${markId}`}
+        disabled={!offered}
+        checked={chosen}
+        onChange={() => onChoose((current) => ({ ...current, [markId]: answer }))}
+      />
+      <span dir="auto">{label}</span>
+      {date ? <Bidi>{fullDayLabel(date)}</Bidi> : null}
+      {reason ? (
+        <span dir="auto" className="text-ink-quiet">
+          {words.reasons[reason]}
+        </span>
+      ) : null}
+    </label>
   );
 }
 

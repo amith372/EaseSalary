@@ -4,6 +4,7 @@ import { FRIDAY, SATURDAY, SUNDAY, THURSDAY } from "@/lib/dates";
 import {
   isAllowedRestDay,
   monthsFollowingProfile,
+  strandedFreeRestDays,
   termsDiffer,
   parseDays,
   restDayChoices,
@@ -244,16 +245,14 @@ describe("the opening position (specs.md item 6)", () => {
 });
 
 describe("a term changed on the profile reaches the months that follow it (Part 5)", () => {
-  it("re-snapshots every month, because none of them can be confirmed yet", () => {
+  it("re-snapshots every month that is still a draft", () => {
     // Part 5: confirming a month is "the moment its figures stop moving with
-    // the profile". Nothing in the application can confirm one — the
-    // confirmation is item 4's and arrives with the export — so every month a
-    // worker has is a draft and follows her profile.
+    // the profile", so a month nobody has confirmed is a draft and follows her.
     const before = [facts(1, TERMS), facts(2, TERMS)];
     expect(before.every((month) => month.terms.restDay === SATURDAY)).toBe(true);
 
     const moved = { ...TERMS, restDay: FRIDAY } as const;
-    const after = monthsFollowingProfile(before, moved);
+    const after = monthsFollowingProfile(before, moved, "2026-01-01");
 
     expect(after).toHaveLength(2);
     expect(after.every((record) => record.terms.restDay === FRIDAY)).toBe(true);
@@ -276,6 +275,7 @@ describe("a term changed on the profile reaches the months that follow it (Part 
     const after = monthsFollowingProfile(
       [facts(1, TERMS), facts(2, TERMS)],
       { ...TERMS, standingLines: [line] },
+      "2026-01-01",
     );
     expect(after.map((record) => record.terms.standingLines)).toEqual([
       [line],
@@ -309,6 +309,70 @@ describe("a term changed on the profile reaches the months that follow it (Part 
     expect(termsDiffer(TERMS, { ...TERMS })).toBe(false);
   });
 
+  it("leaves a confirmed month exactly as it was confirmed", () => {
+    // Part 5, and `CLAUDE.md`'s own words about the income-tax mode: "changing
+    // it never restates a month already filed". February was filed on 2 March;
+    // January was not. A change of rest day, of the tax mode and of the
+    // standing lines all stop at February's door, and January takes all three.
+    const filed: MonthFacts = {
+      ...facts(2, TERMS),
+      confirmedAt: "2026-03-02T08:00:00.000Z",
+    };
+    const line = {
+      id: "pocket",
+      label: "דמי כיס",
+      direction: "addition" as const,
+      placement: "beforeGross" as const,
+      agorot: 20000,
+    };
+    const after = monthsFollowingProfile(
+      [facts(1, TERMS), filed],
+      {
+        ...TERMS,
+        restDay: FRIDAY,
+        incomeTax: { mode: "none" },
+        standingLines: [line],
+      },
+      "2026-01-01",
+    );
+
+    // February is not written at all — not written back unchanged, which would
+    // move its `updatedAt` and report a filed month as corrected
+    // (`repository.ts`).
+    expect(after.map((record) => record.month.month)).toEqual([1]);
+    expect(after[0].terms.restDay).toBe(FRIDAY);
+    expect(after[0].terms.incomeTax).toEqual({ mode: "none" });
+    expect(after[0].terms.standingLines).toEqual([line]);
+  });
+
+  it("does not ask about a stranded mark in a confirmed month", () => {
+    // The same rule read by the rest-day question: February keeps the day it
+    // was filed with, so its free Saturday is not stranded and putting it to
+    // the user would be asking about a month that is not changing.
+    const free = (id: string, date: string): MonthFacts["spans"][number] => ({
+      id,
+      kind: "freeRestDay",
+      from: date as MonthFacts["spans"][number]["from"],
+      to: date as MonthFacts["spans"][number]["from"],
+    });
+    const months: MonthFacts[] = [
+      {
+        ...facts(2, TERMS),
+        confirmedAt: "2026-03-02T08:00:00.000Z",
+        spans: [free("filed", "2026-02-28")],
+      },
+      { ...facts(3, TERMS), spans: [free("draft", "2026-03-14")] },
+    ];
+
+    const stranded = strandedFreeRestDays(
+      months,
+      FRIDAY,
+      "2026-02-01",
+      new Map([["2026-02", 5], ["2026-03", 5]]),
+    );
+    expect(stranded.map((mark) => mark.id)).toEqual(["draft"]);
+  });
+
   it("drops the spans, which belong to the worker and not to a month", () => {
     // `MonthRecord` is `MonthFacts` without them (`repository.ts`): a spell
     // crossing a boundary is one spell stored once, and writing it back from
@@ -319,8 +383,208 @@ describe("a term changed on the profile reaches the months that follow it (Part 
         { id: "s1", kind: "vacation", from: "2026-03-02", to: "2026-03-04" },
       ],
     };
-    const [record] = monthsFollowingProfile([withSpan], TERMS);
+    const [record] = monthsFollowingProfile([withSpan], TERMS, "2026-01-01");
     expect("spans" in record).toBe(false);
+  });
+});
+
+describe("a change of the weekly rest day (specs.md item 5)", () => {
+  /**
+   * Every date below is read off the 2026 calendar by hand. 2026-01-01 is a
+   * Thursday, so 2026-02-01 and 2026-03-01 are both Sundays: February's
+   * Saturdays are the 7th, 14th, 21st and 28th, and March's are the 7th, 14th,
+   * 21st and 28th with its Fridays on the 6th, 13th, 20th and 27th.
+   */
+  const marks = (month: number, spans: MonthFacts["spans"]): MonthFacts => ({
+    ...facts(month, TERMS),
+    spans,
+  });
+
+  const free = (id: string, date: string): MonthFacts["spans"][number] => ({
+    id,
+    kind: "freeRestDay",
+    from: date as MonthFacts["spans"][number]["from"],
+    to: date as MonthFacts["spans"][number]["from"],
+  });
+
+  /** A balance that covers any conversion asked of it, so a test about the
+   * move dates is not also a test about vacation. */
+  const covered = new Map([
+    ["2026-02", 5],
+    ["2026-03", 5],
+    ["2026-04", 5],
+  ]);
+
+  it("names the nearest new rest day on each side of the stranded mark", () => {
+    // A free Saturday on 2026-03-14 with the rest day moving to Friday: the
+    // nearest Friday before it is the 13th, the day before, and the nearest
+    // after it is the 20th, six days later. Item 5 offers exactly those two.
+    const stranded = strandedFreeRestDays(
+      [marks(3, [free("f1", "2026-03-14")])],
+      FRIDAY,
+      "2026-03-01",
+      covered,
+    );
+
+    expect(stranded).toHaveLength(1);
+    expect(stranded[0]).toEqual({
+      id: "f1",
+      month: { year: 2026, month: 3 },
+      date: "2026-03-14",
+      convert: { date: "2026-03-14", offered: true },
+      moveEarlier: { date: "2026-03-13", offered: true },
+      moveLater: { date: "2026-03-20", offered: true },
+    });
+  });
+
+  it("does not offer a move onto a day that already carries a mark", () => {
+    // Vacation on Friday the 13th, so the move back has nowhere to go; the
+    // 20th is still free. Item 5: "a move onto a day already marked … is not
+    // offered for that mark, and the screen says why".
+    const [stranded] = strandedFreeRestDays(
+      [
+        marks(3, [
+          free("f1", "2026-03-14"),
+          { id: "v1", kind: "vacation", from: "2026-03-13", to: "2026-03-13" },
+        ]),
+      ],
+      FRIDAY,
+      "2026-03-01",
+      covered,
+    );
+
+    expect(stranded.moveEarlier).toEqual({
+      date: "2026-03-13",
+      offered: false,
+      reason: "targetMarked",
+    });
+    expect(stranded.moveLater).toEqual({ date: "2026-03-20", offered: true });
+  });
+
+  it("sees a spell of sickness stored in the month before the target", () => {
+    // A spell is stored whole in the month it began (Part 3), so a spell run
+    // from 2026-02-25 to 2026-03-13 sits in February's spans and never in
+    // March's. Read only off March, Friday the 13th would look free.
+    const [stranded] = strandedFreeRestDays(
+      [
+        marks(2, [
+          { id: "s1", kind: "sick", from: "2026-02-25", to: "2026-03-13" },
+        ]),
+        marks(3, [free("f1", "2026-03-14")]),
+      ],
+      FRIDAY,
+      "2026-03-01",
+      covered,
+    );
+
+    expect(stranded.moveEarlier).toEqual({
+      date: "2026-03-13",
+      offered: false,
+      reason: "targetMarked",
+    });
+  });
+
+  it("does not offer a move that would leave the mark's own month", () => {
+    // A free Saturday on 2026-03-28 moving to Friday: back is the 27th, and
+    // forward is 2026-04-03, which is April. Item 5 does not offer a move
+    // "into another month".
+    const [stranded] = strandedFreeRestDays(
+      [marks(3, [free("f1", "2026-03-28")])],
+      FRIDAY,
+      "2026-03-01",
+      covered,
+    );
+
+    expect(stranded.moveEarlier).toEqual({ date: "2026-03-27", offered: true });
+    expect(stranded.moveLater).toEqual({
+      date: "2026-04-03",
+      offered: false,
+      reason: "otherMonth",
+    });
+  });
+
+  it("counts backwards six days when the new rest day is Sunday", () => {
+    // 2026-02-28 is a Saturday; the nearest Sunday before it is the 22nd, six
+    // days back, and the nearest after it is 2026-03-01 — the next month, so
+    // only the move back is offered. The asymmetry is the point: a mark one
+    // day from its target in one direction is six from it in the other.
+    const [stranded] = strandedFreeRestDays(
+      [marks(2, [free("f1", "2026-02-28")])],
+      SUNDAY,
+      "2026-02-01",
+      covered,
+    );
+
+    expect(stranded.moveEarlier).toEqual({ date: "2026-02-22", offered: true });
+    expect(stranded.moveLater).toEqual({
+      date: "2026-03-01",
+      offered: false,
+      reason: "otherMonth",
+    });
+  });
+
+  it("offers the conversion only where the vacation balance covers a day", () => {
+    // Item 5 offers the conversion "only where the vacation balance covers it
+    // and otherwise shown as unavailable with the reason". A month closing on
+    // half a day cannot fund a whole one; a month the replay never reached has
+    // no balance to draw on at all.
+    const month = [marks(3, [free("f1", "2026-03-14")])];
+    const half = strandedFreeRestDays(month, FRIDAY, "2026-03-01", new Map([["2026-03", 0.5]]));
+    expect(half[0].convert).toEqual({
+      date: "2026-03-14",
+      offered: false,
+      reason: "vacationBalance",
+    });
+
+    const exact = strandedFreeRestDays(month, FRIDAY, "2026-03-01", new Map([["2026-03", 1]]));
+    expect(exact[0].convert).toEqual({ date: "2026-03-14", offered: true });
+
+    const none = strandedFreeRestDays(month, FRIDAY, "2026-03-01", new Map());
+    expect(none[0].convert.offered).toBe(false);
+  });
+
+  it("leaves a month before the current one alone", () => {
+    // Item 5: the change "reaches the current month and the months after it,
+    // and never a month before". February's free Saturday is not stranded when
+    // the change is made in March — that month keeps Saturday.
+    const stranded = strandedFreeRestDays(
+      [marks(2, [free("f1", "2026-02-28")]), marks(3, [free("f2", "2026-03-14")])],
+      FRIDAY,
+      "2026-03-01",
+      covered,
+    );
+
+    expect(stranded.map((mark) => mark.id)).toEqual(["f2"]);
+  });
+
+  it("keeps the earlier month's rest day when the change is written", () => {
+    // The other half of the same rule: February is re-snapshotted with the new
+    // standing line and the old Saturday, while March takes Friday.
+    const after = monthsFollowingProfile(
+      [facts(2, TERMS), facts(3, TERMS)],
+      { ...TERMS, restDay: FRIDAY },
+      "2026-03-01",
+    );
+
+    expect(after.map((record) => record.terms.restDay)).toEqual([SATURDAY, FRIDAY]);
+  });
+
+  it("reports nothing for a mark that is already on the new rest day", () => {
+    // Nothing is stranded by a change that leaves the mark where it belongs,
+    // and a vacation day on a weekday is not a rest-day mark at all.
+    const stranded = strandedFreeRestDays(
+      [
+        marks(3, [
+          free("f1", "2026-03-14"),
+          { id: "v1", kind: "vacation", from: "2026-03-10", to: "2026-03-10" },
+        ]),
+      ],
+      SATURDAY,
+      "2026-03-01",
+      covered,
+    );
+
+    expect(stranded).toEqual([]);
   });
 });
 

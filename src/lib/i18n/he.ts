@@ -1767,6 +1767,32 @@ export const he = {
            * rest day rather than being set beside it (item 14). */
           eveNote: (restDay: RestDay) =>
             `ערב המנוחה הוא ${eve(restDay).bare}, והתוספת השבועית משולמת עליו.`,
+          /**
+           * What is asked before a change of rest day is saved, when a free
+           * rest day is already marked on the old day (specs.md item 5).
+           *
+           * The question is asked per mark, so every sentence here is about one
+           * day and never about "the marks". A date is a mixed run and is
+           * isolated where it is drawn, so no sentence here contains one.
+           */
+          stranded: {
+            title: "יש ימי מנוחה מנוצלים על היום הקודם",
+            intro: (from: RestDay, to: RestDay) =>
+              `יום המנוחה עובר מ${day(from).bare} ל${day(to).bare}. הימים האלה סומנו כיום מנוחה מנוצל על היום הקודם, וצריך להחליט מה לעשות עם כל אחד מהם לפני השמירה.`,
+            delete: "למחוק את הסימון",
+            convert: "יום חופשה באותו תאריך",
+            moveEarlier: "להעביר ליום המנוחה שלפניו",
+            moveLater: "להעביר ליום המנוחה שאחריו",
+            /** Beside a choice that is not offered, so the screen says why
+             * rather than showing a control that does nothing (item 25). */
+            reasons: {
+              targetMarked: "כבר מסומן משהו ביום הזה.",
+              otherMonth: "היום הזה כבר בחודש אחר.",
+              vacationBalance: "אין מספיק ימי חופשה במאזן של החודש הזה.",
+            },
+            save: "לשמור את השינוי",
+            cancel: "ביטול",
+          },
         },
         /**
          * The worker's gender (specs.md item 17).

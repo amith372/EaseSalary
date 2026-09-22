@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
 import { bellOf, householdAlerts, type BellView } from "@/lib/alertsView";
+import { InvalidMonthError } from "@/lib/engine/validate";
 import { WORKER_COOKIE } from "@/lib/workerCookie";
 import { getRepository, NotSignedInError } from "@/lib/store";
 import type { Worker } from "@/lib/types";
@@ -65,16 +66,40 @@ export const metadata: Metadata = {
 async function whatTheBarShows(): Promise<{ workers: Worker[]; bell: BellView | null }> {
   try {
     const repository = await getRepository();
-    const [profiles, alerts] = await Promise.all([
+    const [profiles, bell] = await Promise.all([
       repository.listWorkers(),
-      householdAlerts(),
+      theBell(),
     ]);
     return {
       workers: profiles.map(({ id, name, firstName }) => ({ id, name, firstName })),
-      bell: bellOf(alerts),
+      bell,
     };
   } catch (error) {
     if (error instanceof NotSignedInError) return { workers: [], bell: null };
+    throw error;
+  }
+}
+
+/**
+ * The bell, or none where a month cannot be valued at all.
+ *
+ * **A household the engine refuses still has screens that work.** The bell
+ * counts what the months came to, so it needs the replay and a month that
+ * refuses leaves it with nothing to count — but the bar is drawn on every page,
+ * so letting that refusal out of here takes down the whole application,
+ * `/settings` included, and `/settings` is where the term that caused the
+ * refusal is put right. That is a household with no way back in.
+ *
+ * So the bell goes quiet and the screen underneath draws. Only
+ * `InvalidMonthError` is caught, and only here: it is the engine declining to
+ * value a month, which is a state the user can be in and correct. Anything else
+ * is a fault and still surfaces.
+ */
+async function theBell(): Promise<BellView | null> {
+  try {
+    return bellOf(await householdAlerts());
+  } catch (error) {
+    if (error instanceof InvalidMonthError) return null;
     throw error;
   }
 }

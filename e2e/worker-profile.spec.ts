@@ -28,7 +28,6 @@ import { formatAgorot } from "../src/lib/money";
  * five rest days and two holidays at ₪426.35, and a ₪10,000 advance. */
 const REST_EVE_SUPPLEMENT = 10000; // ₪100 for one, which is ₪500 over five.
 const AUGUST_2025_REST_EVES_AS_SATURDAY_RESTER = 5; // Fridays: 1, 8, 15, 22, 29.
-const AUGUST_2025_REST_EVES_AS_FRIDAY_RESTER = 4; // Thursdays: 7, 14, 21, 28.
 
 /** The demo household's own opening advance, entered rather than seeded: ₪2,000
  * given with ₪500 of it already repaid, so ₪1,500 is still owed (specs.md item
@@ -196,14 +195,30 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
       page.getByText(he.calendar.marks(SATURDAY).freeRestDay, { exact: true }),
     ).toHaveCount(0);
 
-    // **And the money moves with it.** Her rest-eve is now Thursday, and August
-    // 2025 has four Thursdays against five Fridays — so the supplement falls
-    // from ₪500 to ₪400 while nothing else about the month changed. That is the
-    // failure this catches: a rest day the profile stores and the calendar
-    // draws, with the figures still counted against Saturday.
+    // **And the money moves with it, from the current month on.** Her rest-eve
+    // is now Thursday, so the sheet's own row is named for Thursdays rather
+    // than for Fridays. The row name is what is asserted because it is read off
+    // the month's stored rest day and not off a count, so it separates the term
+    // having moved from a month that happens to hold the same number of each.
+    await openPayslip(page, thisMonth());
+    await expect(row(page, "restEveSupplement")).toContainText(
+      he.sheet.lines.restEveSupplement(FRIDAY),
+    );
+
+    // **And never a month before it** (item 5). August 2025 is the month Part 4
+    // states: five Fridays at ₪100, ₪500 of supplement, counted against the
+    // Saturday she rested on then. It keeps that day and that figure, because a
+    // change of rest day "reaches the current month and the months after it,
+    // and never a month before" — a month already lived through did not change
+    // which day she rested on.
     await openPayslip(page, AUGUST_2025);
     await expect(row(page, "restEveSupplement")).toContainText(
-      formatAgorot(AUGUST_2025_REST_EVES_AS_FRIDAY_RESTER * REST_EVE_SUPPLEMENT),
+      he.sheet.lines.restEveSupplement(SATURDAY),
+    );
+    await expect(row(page, "restEveSupplement")).toContainText(
+      formatAgorot(
+        AUGUST_2025_REST_EVES_AS_SATURDAY_RESTER * REST_EVE_SUPPLEMENT,
+      ),
     );
     await page.screenshot({
       path: "test-results/profile-rest-day-friday.png",

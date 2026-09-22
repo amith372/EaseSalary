@@ -15,8 +15,8 @@ import {
   isAllowedGender,
   isAllowedRestDay,
   reviewIncomeTax,
-  monthsFollowingProfile,
-  monthsReachedBySalaryChange,
+  strandedFreeRestDays,
+  type StrandedFreeRestDay,
   termsDiffer,
   parseRestEveSupplement,
   reviewDocuments,
@@ -34,7 +34,14 @@ import {
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
 import type { Gender } from "@/lib/engine/types";
 import { reviewUserLine, type UserLineDraft, type UserLineRefusal } from "@/lib/engine/userLines";
-import { isMonthNumber, monthOf, parseYearMonth } from "@/lib/dates";
+import { isMonthNumber, monthOf, parseYearMonth, yearMonthText } from "@/lib/dates";
+import { balanceOf } from "@/lib/engine/balances";
+import { InvalidMonthError } from "@/lib/engine/validate";
+import { workerInSeries } from "@/lib/householdSeries";
+import {
+  saveMonthsFollowingProfile,
+  saveMonthsReachedBySalaryChange,
+} from "@/lib/workerMonths";
 import {
   reviewSalaryChange,
   withSalaryChange,
@@ -71,6 +78,11 @@ export type ProfileActionRefusal =
   | OpeningRefusal
   | UserLineRefusal
   | "restDay"
+  /** Not a mistake but a question: the change would strand a free rest day and
+   * the answer is owed before it can be saved (item 5). It is in this union so
+   * that one control can send the change through the same hook as every other
+   * term; `SetRestDayResult` is what carries the marks themselves. */
+  | "stranded"
   | "gender"
   | "incomeTaxMode"
   | "incomeTaxRate"
@@ -107,7 +119,8 @@ export type ProfileActionResult =
  *
  * **Whether the months are rewritten is read off `before` and `profile`**
  * (`termsDiffer`), never told by the caller: only a change to a term a month
- * copies reaches them.
+ * copies reaches them. `today` goes with them because the rest day is the one
+ * term that stops at the current month (item 5) and the engine reads no clock.
  */
 async function saveProfile(
   before: WorkerProfile,
@@ -117,11 +130,7 @@ async function saveProfile(
   await repository.saveWorker(profile);
 
   if (termsDiffer(before, profile)) {
-    const months = await repository.listMonths(profile.id);
-    await repository.saveMonths(
-      profile.id,
-      monthsFollowingProfile(months, profile),
-    );
+    await saveMonthsFollowingProfile(repository, profile, await readToday());
   }
 
   // Every screen reads the same workers and months, so the whole tree is
@@ -131,6 +140,35 @@ async function saveProfile(
 }
 
 /**
+ * What the user chose for one free rest day the change would strand (specs.md
+ * item 5). Keyed by the mark's own id, because a list of answers by position
+ * would go wrong the moment the months were read in a different order.
+ */
+export type RestDayAnswers = Record<string, RestDayAnswer>;
+
+export type RestDayAnswer = "delete" | "convert" | "moveEarlier" | "moveLater";
+
+const restDayAnswers = [
+  "delete",
+  "convert",
+  "moveEarlier",
+  "moveLater",
+] as const satisfies readonly RestDayAnswer[];
+
+/**
+ * A change of rest day: saved, refused, or handed back with the marks it would
+ * strand so they can be put to the user one at a time (specs.md item 5).
+ *
+ * **The stranded marks are a third outcome and not a refusal**, because nothing
+ * about the request was wrong: the change is allowed and the application has a
+ * question to ask before it makes it.
+ */
+export type SetRestDayResult =
+  | { ok: true }
+  | { ok: false; reason: ProfileActionRefusal }
+  | { ok: false; reason: "stranded"; stranded: StrandedFreeRestDay[] };
+
+/**
  * The weekly rest day, which is a term of the employment and not a constant
  * (specs.md item 5).
  *
@@ -138,14 +176,118 @@ async function saveProfile(
  * `restDayChoices` rather than trusted from the chip that sent it: item 5 says
  * the profile refuses any other day, and the type that makes a fourth day
  * unstorable cannot check a number arriving as request data.
+ *
+ * **A free rest day already marked on the old day is put to the user before the
+ * change is saved** (item 5). Called with no answers, the action saves nothing
+ * and hands the stranded marks back; called again with an answer for every one
+ * of them, it writes the spans and then the rest day. Refused rather than
+ * saved-and-asked-afterwards, because the months are re-snapshotted in the same
+ * step and a mark left on a day that is no longer a rest day makes its month
+ * refuse to be calculated at all (`validateMonth`) — which closes the screen
+ * the correction would have to be made on.
+ *
+ * **The answers are checked against what was offered and never trusted**
+ * (Part 3): a move onto a marked day or into another month is not storable
+ * however it arrives, and a conversion the vacation balance cannot fund is the
+ * same. The offer is read a second time here rather than remembered from the
+ * first call, so two tabs cannot answer a question the other one has changed.
  */
 export async function setRestDay(
   workerId: string,
   restDay: RestDay,
-): Promise<ProfileActionResult> {
+  answers: RestDayAnswers = {},
+): Promise<SetRestDayResult> {
   if (!isAllowedRestDay(restDay)) return { ok: false, reason: "restDay" };
   const profile = await requireWorker(workerId);
+  const repository = await getRepository();
+  const [months, today] = await Promise.all([
+    repository.listMonths(workerId),
+    readToday(),
+  ]);
+
+  const stranded = strandedFreeRestDays(
+    months,
+    restDay,
+    today,
+    await vacationClosingOf(workerId),
+  );
+  if (stranded.length === 0) {
+    return saveProfile(profile, { ...profile, restDay });
+  }
+
+  const writes: StrandedWrite[] = [];
+  for (const mark of stranded) {
+    const answer = answers[mark.id];
+    if (!isOneOfAnswers(answer)) return { ok: false, reason: "stranded", stranded };
+    if (answer !== "delete" && !mark[answer].offered) {
+      return { ok: false, reason: "stranded", stranded };
+    }
+    writes.push({ mark, answer });
+  }
+
+  // The spans first and the rest day after, so a write that fails leaves a
+  // month whose marks still agree with its own rest day. The reverse order
+  // would leave the worker in exactly the state this action exists to prevent.
+  const spans = await repository.listSpans(workerId);
+  for (const { mark, answer } of writes) {
+    // Narrowed on the kind as well as the id: a free rest day is always a
+    // closed single day, and that is what lets a move write `from` and `to`
+    // without inventing an end for a span that had none.
+    const span = spans.find((candidate) => candidate.id === mark.id);
+    // A mark another tab removed between the offer and the answer: there is
+    // nothing left to move, and nothing to put right either.
+    if (span === undefined || span.kind !== "freeRestDay") continue;
+    if (answer === "delete") {
+      await repository.deleteSpan(workerId, mark.id);
+    } else if (answer === "convert") {
+      await repository.saveSpan(workerId, { ...span, kind: "vacation" });
+    } else {
+      const date = mark[answer].date;
+      await repository.saveSpan(workerId, { ...span, from: date, to: date });
+    }
+  }
+
   return saveProfile(profile, { ...profile, restDay });
+}
+
+/** One answered mark, held until every one of them has been answered: a
+ * half-written set of moves is worse than none. */
+interface StrandedWrite {
+  mark: StrandedFreeRestDay;
+  answer: RestDayAnswer;
+}
+
+function isOneOfAnswers(value: unknown): value is RestDayAnswer {
+  return restDayAnswers.some((answer) => answer === value);
+}
+
+/**
+ * Each month's closing vacation balance, keyed as `strandedFreeRestDays` reads
+ * it. Balances are never stored (item 13), so the only way to know one is the
+ * replay.
+ *
+ * **A replay that refuses hands back nothing rather than throwing**: a worker
+ * already holding a stranded mark from before this check existed cannot be
+ * replayed at all, and that is precisely the worker who needs to answer the
+ * question. With no balance to draw on the conversion is not offered, and the
+ * other two answers still put her right.
+ */
+async function vacationClosingOf(workerId: string): Promise<Map<string, number>> {
+  const closing = new Map<string, number>();
+  try {
+    const worker = await workerInSeries(workerId);
+    for (const entry of worker?.months ?? []) {
+      const line = balanceOf(entry.result, "vacation");
+      // A balance line the sheet leaves blank has nothing to draw on, which is
+      // the same answer as a month the replay never reached.
+      if (line?.closing != null) {
+        closing.set(yearMonthText(entry.facts.month), line.closing);
+      }
+    }
+  } catch (error) {
+    if (!(error instanceof InvalidMonthError)) throw error;
+  }
+  return closing;
 }
 
 /**
@@ -329,11 +471,7 @@ export async function setSalaryChange(
   };
   await repository.saveWorker(updated);
 
-  const months = await repository.listMonths(workerId);
-  await repository.saveMonths(
-    workerId,
-    monthsReachedBySalaryChange(months, updated, reviewed.change.from),
-  );
+  await saveMonthsReachedBySalaryChange(repository, updated, reviewed.change.from);
 
   revalidatePath("/", "layout");
   return { ok: true };

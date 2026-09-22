@@ -2,16 +2,22 @@ import {
   FRIDAY,
   SATURDAY,
   SUNDAY,
+  WEEK_LENGTH,
+  addDays,
   addMonths,
   compareIsoDate,
   compareMonth,
   daysInMonth,
+  eachDate,
+  fromIsoDate,
   isIsoDate,
   isMonthNumber,
+  isRestDay,
   isoOf,
   monthOf,
   parseYearMonth,
   sameMonth,
+  yearMonthText,
 } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { reviewTaxPercentage } from "@/lib/engine/incomeTax";
@@ -19,7 +25,7 @@ import { recuperationDaysCarriedIntoFirstMonth } from "@/lib/engine/recuperation
 import { recordOf } from "@/lib/engine/repository";
 import { salaryFor } from "@/lib/engine/salary";
 import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
-import { genders, incomeTaxModes, snapshotTerms } from "@/lib/engine/types";
+import { closeMonth, genders, incomeTaxModes, snapshotTerms } from "@/lib/engine/types";
 import type {
   Gender,
   IncomeTaxSetting,
@@ -406,11 +412,17 @@ export function termsDiffer(before: WorkerTerms, after: WorkerTerms): boolean {
  * Before that moment there is nothing to reproduce — a draft month is the
  * profile's terms seen through one month's calendar.
  *
- * **Today this reaches every month the worker has, confirmed ones included**:
- * there is no predicate below that skips a month with a `confirmedAt`. That
- * exclusion is where the rule above would land — a confirmed month keeping the
- * terms it was confirmed with, the months around it following the profile —
- * and it is an open question put to the user, not settled here.
+ * **A confirmed month is left exactly as it was confirmed** (`followsProfile`),
+ * so the months around it follow the profile while it keeps the terms its own
+ * sheet was filed with.
+ *
+ * **The rest day is the one term that stops at the current month** (item 5): a
+ * change of it "reaches the current month and the months after it, and never a
+ * month before", so an earlier month keeps the day it was calculated with while
+ * taking the rest of the new terms. Read off the month's own snapshot rather
+ * than off a `before` profile handed in, so a caller cannot get it wrong by
+ * passing the wrong pair — and `today` is a parameter because nothing in the
+ * engine reads a clock (`CLAUDE.md`).
  *
  * It returns records rather than writing them, so the rule can be checked
  * without a store, and the spans are dropped on the way through because a
@@ -419,9 +431,184 @@ export function termsDiffer(before: WorkerTerms, after: WorkerTerms): boolean {
 export function monthsFollowingProfile(
   months: MonthFacts[],
   profile: WorkerTerms,
+  today: IsoDate,
 ): MonthRecord[] {
   const terms = snapshotTerms(profile);
-  return months.map((facts) => ({ ...recordOf(facts), terms }));
+  const current = monthOf(today);
+  return months.filter(followsProfile).map((facts) => ({
+    ...recordOf(facts),
+    terms:
+      compareMonth(facts.month, current) < 0
+        ? { ...terms, restDay: facts.terms.restDay }
+        : terms,
+  }));
+}
+
+/**
+ * Whether a month's figures still move with the profile (`specs.md` Part 5).
+ *
+ * **Confirming is the moment they stop.** Part 5 says it in those words:
+ * confirming copies the base salary off the profile onto the month, and from
+ * then on the month is read against its own stored terms so that re-exporting
+ * August two years later reproduces August (Part 3). Before that moment a month
+ * is a draft — the profile's terms seen through one month's calendar — and
+ * there is nothing to reproduce.
+ *
+ * **A month corrected after it was confirmed stays out too**, and that is the
+ * rule rather than an omission: a correction is a specific one somebody made to
+ * that month, and letting the profile write over it would undo it. `confirmedAt`
+ * alone is therefore the whole test, and `updatedAt` is not consulted.
+ *
+ * It is one predicate because the rule has one meaning: the profile's terms, a
+ * change of salary and the question a rest-day change asks all read it, and
+ * three copies of `confirmedAt === undefined` would be three places for it to
+ * drift.
+ */
+export function followsProfile(facts: Pick<MonthFacts, "confirmedAt">): boolean {
+  return facts.confirmedAt === undefined;
+}
+
+/**
+ * Why one of the three answers to a stranded free rest day is not offered
+ * (specs.md item 5). Carried beside the choice rather than folded into a
+ * sentence, so the screen names the reason in its own words and a test asserts
+ * the rule rather than the wording.
+ */
+export type StrandedRefusal =
+  /** The day the move would write on already carries a mark. */
+  | "targetMarked"
+  /** The move would carry the mark out of its own month. */
+  | "otherMonth"
+  /** The vacation balance does not cover a day taken on that date. */
+  | "vacationBalance";
+
+/** One answer, and the date it would write the mark on. A choice not offered
+ * still names its date, because the screen says which day it would have been
+ * and why that day cannot take it. Not exported: it is reached through
+ * `StrandedFreeRestDay`'s own fields, and nothing names it. */
+interface StrandedChoice {
+  date: IsoDate;
+  offered: boolean;
+  reason?: StrandedRefusal;
+}
+
+/**
+ * A free rest day a change of the weekly rest day would leave on a day that is
+ * no longer one, with what each answer would write.
+ *
+ * **Deleting is not among them because it is never refused**: it needs no date
+ * and no balance, so a fourth field saying `offered: true` for ever would be a
+ * field nobody may read as anything else.
+ */
+export interface StrandedFreeRestDay {
+  /** The mark's own id, so an answer names the mark rather than its position
+   * in a list that a second worker's marks could reorder. */
+  id: string;
+  month: YearMonth;
+  /** The day the mark sits on today — the old rest day. */
+  date: IsoDate;
+  /** Turn it into an ordinary vacation day on the same date. */
+  convert: StrandedChoice;
+  /** The nearest new rest day before the mark, and the nearest after it. */
+  moveEarlier: StrandedChoice;
+  moveLater: StrandedChoice;
+}
+
+/** How many days back the nearest `restDay` lies from a date that is not one:
+ * one to six, never zero, because a date already on the rest day is not
+ * stranded. Built by arithmetic on the weekday rather than by stepping a
+ * `Date`, so a daylight-saving boundary cannot move it (`CLAUDE.md`). */
+function daysBackToRestDay(date: IsoDate, restDay: RestDay): number {
+  return ((fromIsoDate(date).getUTCDay() - restDay + WEEK_LENGTH) % WEEK_LENGTH);
+}
+
+/**
+ * The free rest days a change to `newRestDay` would strand, each with what the
+ * three answers would write (specs.md item 5).
+ *
+ * **Asked before the change is saved, which is what makes it answerable**: the
+ * months still hold the old rest day, so a replay of the worker still runs and
+ * the vacation balances handed in are real figures. Once the change is written
+ * the stranded mark refuses its own month (`validateMonth`), and by then there
+ * is nothing left to ask.
+ *
+ * Only the current month and the ones after it are looked at, and only those
+ * still following the profile, because those are the only months the change
+ * reaches (`monthsFollowingProfile`). A mark on an earlier month, or on a month
+ * already confirmed, is not stranded at all — that month keeps its old rest
+ * day.
+ *
+ * `vacationClosing` is the closing vacation balance of each month, keyed by
+ * `yearMonthText`, as the worker's replay produced it. It is a parameter and
+ * never derived here for the reason the minimum wage is: the balance is the
+ * result of walking every month from the opening position (item 13), and a
+ * function that walked it could not be checked against a balance that was not
+ * this worker's. A month absent from the map has no balance to draw on, so a
+ * conversion there is not offered.
+ *
+ * **Where one month holds two stranded marks, each is measured against the same
+ * balance**, because the user answers them one at a time and may convert only
+ * one. What she actually chose is checked again together when the change is
+ * saved, which is the only moment the combination exists.
+ */
+export function strandedFreeRestDays(
+  months: readonly MonthFacts[],
+  newRestDay: RestDay,
+  today: IsoDate,
+  vacationClosing: ReadonlyMap<string, number>,
+): StrandedFreeRestDay[] {
+  // Every day any mark covers, across all the months handed in and not only the
+  // ones the change reaches: a spell of sickness is stored whole in the month it
+  // began (Part 3), so a January spell running into February marks February days
+  // that February's own spans never mention.
+  const marked = new Set<IsoDate>();
+  for (const facts of months) {
+    for (const span of closeMonth(facts, today).spans) {
+      for (const date of eachDate(span.from, span.to)) marked.add(date);
+    }
+  }
+
+  const current = monthOf(today);
+  const stranded: StrandedFreeRestDay[] = [];
+  for (const facts of months) {
+    if (compareMonth(facts.month, current) < 0) continue;
+    // A confirmed month keeps the rest day it was filed with
+    // (`followsProfile`), so its marks are not stranded and asking about them
+    // would be asking about a month that is not changing.
+    if (!followsProfile(facts)) continue;
+    for (const span of facts.spans) {
+      if (span.kind !== "freeRestDay") continue;
+      if (isRestDay(span.from, newRestDay)) continue;
+
+      const back = daysBackToRestDay(span.from, newRestDay);
+      const move = (target: IsoDate): StrandedChoice => {
+        // The month is checked before the mark, because a target in another
+        // month may well be free and saying so would be answering a question
+        // the user was not asked.
+        if (!sameMonth(monthOf(target), facts.month)) {
+          return { date: target, offered: false, reason: "otherMonth" };
+        }
+        if (marked.has(target)) {
+          return { date: target, offered: false, reason: "targetMarked" };
+        }
+        return { date: target, offered: true };
+      };
+
+      const available = vacationClosing.get(yearMonthText(facts.month)) ?? 0;
+      stranded.push({
+        id: span.id,
+        month: facts.month,
+        date: span.from,
+        convert:
+          available >= 1
+            ? { date: span.from, offered: true }
+            : { date: span.from, offered: false, reason: "vacationBalance" },
+        moveEarlier: move(addDays(span.from, -back)),
+        moveLater: move(addDays(span.from, WEEK_LENGTH - back)),
+      });
+    }
+  }
+  return stranded;
 }
 
 /**
@@ -432,6 +619,11 @@ export function monthsFollowingProfile(
  * still holds from its own month. The month keeps its confirmed minimum and is
  * floored at it, exactly as confirming it does (`baseForMonth`), so a raise can
  * never write a month that pays under its own minimum.
+ *
+ * **And never a month already confirmed** (`followsProfile`), which item 2 puts
+ * plainly: a payslip is never a restatement of months already paid. A raise
+ * agreed today does not reach back into a sheet the family has already filed,
+ * however far back the change is dated.
  */
 export function monthsReachedBySalaryChange(
   months: readonly MonthFacts[],
@@ -439,6 +631,7 @@ export function monthsReachedBySalaryChange(
   from: YearMonth,
 ): MonthRecord[] {
   return months
+    .filter(followsProfile)
     .filter((facts) => compareMonth(facts.month, from) >= 0)
     .map((facts) => ({
       ...recordOf(facts),

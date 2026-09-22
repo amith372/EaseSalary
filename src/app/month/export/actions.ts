@@ -22,7 +22,7 @@ import {
   monthOf as monthOfDate,
   sameMonth,
 } from "@/lib/dates";
-import { openMonthIfMissing } from "@/lib/openMonth";
+import { openMonthIfMissing } from "@/lib/workerMonths";
 import { parseShekels } from "@/lib/money";
 import { readNow, readToday } from "@/lib/requestToday";
 import type { YearMonth } from "@/lib/types";

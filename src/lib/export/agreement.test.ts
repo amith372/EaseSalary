@@ -21,7 +21,7 @@ import { monthLabel } from "@/lib/dateLabels";
 import { formatAgorot } from "@/lib/money";
 import { sameMonth } from "@/lib/dates";
 import { createInMemoryRepository } from "@/lib/engine/repository";
-import { openMonthIfMissing } from "@/lib/openMonth";
+import { openMonthIfMissing } from "@/lib/workerMonths";
 
 /**
  * **The preview and the file, driven from one engine result and asserted to say
