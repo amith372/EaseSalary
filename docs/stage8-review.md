@@ -10,23 +10,44 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-22, F35 — the spell across a month boundary. F1–F25, F29–F31, F34 and
-  F35 are done; nothing on the list is half-built.
-- **Next: F26** with the rates fix folded into it — the order the
-  user set on 2026-09-20 when she approved all three reproduced money errors out of "Needs the
-  user". After it: F27 (still blocked on the user-line look), F28, F33, then F32. Outside
-  this file, `build_plan.md` stage 8½ is approved and not started. **Ask before each commit**
+- **Last done:** 2026-09-22, F26 — the household replay module, with the rates fix folded in.
+  F1–F26, F29–F31, F34 and F35 are done; nothing on the list is half-built.
+- **F26 IS WRITTEN BUT NOT COMMITTED.** Its 25 files plus the new untracked
+  `src/lib/householdSeries.ts` are sitting in the working tree, and typecheck, lint, 1,161 unit
+  tests and 128 browser tests all pass over them. **A fresh session's first move is to show the
+  user what is staged and ask** (below), not to start F27 on top of it. Once it lands, its hash
+  is written in here and goes into the next commit.
+- **THE APPLICATION IS DOWN for the user's own household, and that comes before the list.** She
+  set the rest day to Friday on `/settings` while a `freeRestDay` mark sat on a Saturday.
+  `setRestDay` (`workers/actions.ts:142`) saves through `saveProfile` with no check for stranded
+  marks, so every month holding that mark now throws `InvalidMonthError` — and because there is
+  no `error.tsx` anywhere in `src/app` and the layout replays the household on every page, every
+  route is down, `/settings` included. There is no way back through the interface.
+  **First ask which household she is in:** a seeded in-memory one (the `household` cookie set to
+  `demo`/`known`/`filed`) clears on a `next dev` restart; the live Postgres one needs the span
+  deleted or the rest day reverted by a one-off script under `scripts/`, never by hand-written
+  SQL guessed at. Fixing the *class* is `build_plan.md` stage 8½ — approved, specified, not
+  started — which prevents it but does not repair data already saved this way.
+- **F27 is next on the list and cannot be started**: what is open is now whether the two panels
+  merge at all, not which look wins (question 2 below). **F28 is unblocked** — the
+  confirmed-month rule it waited for was answered on 2026-09-22 — so with the questions still
+  open, **the step to take is F28**, then F33, F36, F32, F37. **Ask before each commit**
   (said on 2026-09-18).
-- **The one uncommitted line** is always the last item's commit hash, written in after its
-  commit; it goes into the next commit, whatever that is. F34's `decbea1` is written in, and
-  F35's is the one owed — it goes into F26's commit.
 - **Outside the list:** `43e0d5a` (an unanswered holiday could not be stored — a missing
   migration, now applied live) waits for the user to mark a holiday signed in and confirm.
 - **A browser failure** is checked by rerunning it alone, and against HEAD with the change
   stashed. The `auth.setup.ts` server log "The destination stream closed early" is noise.
-- **Waiting on the user:** the questions under "Needs the user". The three reproduced money
-  errors are no longer among them — answered 2026-09-20; F34 and F35 are done and the third is
-  a fold into F26. None of what is left blocks the next step.
+  `month-export.spec.ts:190` flaked once in a full run on 2026-09-22 and passed alone.
+- **Waiting on the user**, none of which a session may answer for her:
+  1. Which household the broken one is, so she can be unstuck.
+  2. Whether F27 merges the two user-line panels at all — she picked the `/payments` look *if*
+     they merge, and questioned the merge, since `/payments` shows current state and
+     `/settings` adjusts. R1.1's duplication is the state/`reset`/`openEdit`/`submit` hook
+     rather than the look, and that much can be shared with both looks left standing.
+  3. Nine findings where `specs.md` already decides and only a go/no-go is owed — marked
+     **GO/NO-GO** under "Needs the user". One answer covers all nine.
+  4. The per-worker rates and holiday lists she asked for on 2026-09-22, which owes a PRD
+     before any code (rule 2) and is not a stage 8 item.
 
 ## Ground rules for every step
 
@@ -60,7 +81,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F25, F29–F31, F34–F35 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F26, F29–F31, F34–F35 done |
 
 ### How each step is run
 
@@ -409,7 +430,8 @@ pages repeat the site's chrome by nature.
 
 ## Needs the user
 
-- **The household's rates never reach a month's calculation** (run 5, reproduced).
+- **The household's rates never reach a month's calculation** (run 5, reproduced) — **done as
+  part of F26 on 2026-09-22.**
   `calculateSeries` (`series.ts:204`) builds each month's context without `rates` or
   `taxBrackets`, so every page takes the minimum-wage warning, an unconfirmed month's
   recuperation rate, the NI estimate and the credit point from the seeded table, never the
@@ -428,58 +450,79 @@ pages repeat the site's chrome by nature.
   still asserts the old rule. The fix changes behaviour: skip months with `confirmedAt`? And
   what about a *corrected* month (edited after confirming)? *Run 2:* `setSalaryChange` does the
   same through `monthsReachedBySalaryChange` (`profile.ts:425`) — against item 2's "never a
-  restatement of months already paid".
+  restatement of months already paid". **Answered 2026-09-22: a month with `confirmedAt` is
+  skipped, and a month corrected after confirming stays out too — a correction is a specific
+  one and following the profile would undo it.** Fix as a bug, inside F28.
 - **A rest-day change crashes the month when a free rest day is marked** — answered
   2026-09-19: `specs.md` item 5 now says what happens, and the work is `build_plan.md`
   stage 8½, after this stage.
-- **The income tax is never confirmed, and a month exports unconfirmed** (run 2 ✓). The
+**The nine marked GO/NO-GO below are findings `specs.md` already decides**, so each needs only
+a yes to fixing it in stage 8 or a deferral — no design question is open in any of them, and one
+answer covers all nine. Until that answer comes they stay here and off the Fix list (rule 1).
+
+- **GO/NO-GO** — **The income tax is never confirmed, and a month exports unconfirmed** (run 2 ✓). The
   before-export screen has no tax card; `confirmMonth` stores `taxToConfirm`
   (`month/export/actions.ts:246`) unseen — against "confirmed before every export". And the file
   route checks only `blocksExport` (`month/export/file/route.ts:58`), never `confirmedAt`; the
   payslip and `/reports` link straight to it.
-- **A year with no tax table shows zero silently** (run 2 ✓) — `month.ts:448` folds `null` to 0
+- **GO/NO-GO** — **A year with no tax table shows zero silently** (run 2 ✓) — `month.ts:448` folds `null` to 0
   with no warning; spec: "leaves the line at zero and says so".
 - **Sickness split into two spans restarts its tiers** (run 2, reproduced) — **answered
   2026-09-20: fix as a bug; done as F35 on 2026-09-22.** The spec already decides it ("a spell crossing the end of a
   month needs no gesture"), so nothing was open but the approval. 28–31 Aug + 1–3 Sep as two
   spans: September deducts two days (−₪499.81) as a new spell, because the month is handed only
   the spans overlapping it and `spellsOf` never sees August's.
-- **A salary before the rate table is checked against today's minimum** — `salary.ts:95`
+- **GO/NO-GO** — **A salary before the rate table is checked against today's minimum** — `salary.ts:95`
   (`atFrom ?? now`) (run 2 ✓); spec: such a month "has no figure… says nothing".
-- **The two-worker limit is not checked in `createWorker`** (run 2 ✓) —
+- **GO/NO-GO** — **The two-worker limit is not checked in `createWorker`** (run 2 ✓) —
   `workers/actions.ts:627`; Postgres throws unhandled, the in-memory store accepts a third.
-- **`/month/export` awaits a live fetch, and no scraper has a timeout** (run 2) —
+- **GO/NO-GO** — **`/month/export` awaits a live fetch, and no scraper has a timeout** (run 2) —
   `month/export/page.tsx:49`; spec: "a slow or broken source never delays a screen".
 - **Rates are written to the caller's oldest household** (run 2, read only) — `saveRate`,
   `saveHolidayList` via `householdIdOf`; a member of two households can move another's figures.
   And confirming overwrites a fetched rate's source URL (`export/actions.ts:233`, unconfirmed).
-- **The sheet's gendered wording is fixed** (run 2) — `he.ts:2525` `"עובד/ת"`, and the
+  **Answered 2026-09-22, and it is larger than the finding: the rates table and the holiday list
+  belong to the *worker*, not to the household — two workers of one household may hold
+  different ones — and the user may return to the source URL at any time, entering a rate by
+  hand or fetching it again.** That is a schema change, a migration and a spec change, so it
+  owes a PRD before any code (`CLAUDE.md` rule 2) and does not belong in stage 8.
+- **GO/NO-GO** — **The sheet's gendered wording is fixed** (run 2) — `he.ts:2525` `"עובד/ת"`, and the
   template's `I1`, `F1`, `G1`, `B7`, `B9` are feminine; spec 1304 fills them from the profile,
   which now has `gender`.
 - **Three template labels name Friday/Saturday** (run 2) — `F1`, `F3`, `B23`; spec 1246-1249's
-  list of placeholder cells leaves them out, so the spec needs a decision too.
-- **The fetched page text is not kept** (run 2) — `refreshMinimumWage` drops `text`,
+  list of placeholder cells leaves them out, so the spec needs a decision too. **Answered
+  2026-09-22: the wording follows the day the worker actually rests.** No second template is
+  needed — the labels are written into the cells at export, as the month sheet's other
+  rest-day wording already is. The spec's placeholder list still needs the three cells added,
+  which is a `specs.md` edit and is put to the user with its exact wording first.
+- **GO/NO-GO** — **The fetched page text is not kept** (run 2) — `refreshMinimumWage` drops `text`,
   `fetchArticleSections` is uncalled, no table exists; spec 1344, and Stage 9 relies on it.
-- **Override and hospital-overtime notes never reach column I** (run 2) — `notesOf`
+- **GO/NO-GO** — **Override and hospital-overtime notes never reach column I** (run 2) — `notesOf`
   (`notes.ts:40`) skips them; item 2 writes every action's note.
-- **An advance can be removed but not edited** (run 2 ✓) — spec 781-786 corrects it "by editing
+- **GO/NO-GO** — **An advance can be removed but not edited** (run 2 ✓) — spec 781-786 corrects it "by editing
   the entry".
 - **The "your answer disagrees with the month" card** (run 2, unconfirmed) —
-  `BeforeExportScreen.tsx:277,509`; not in `specs.md` or `DESIGN.md` — check the canvas before
-  calling it invented.
+  `BeforeExportScreen.tsx:277,509`; not in `specs.md` or `DESIGN.md`. **Answered 2026-09-22: it
+  is wanted, but as a popup error and not a card** — what it reports is a conflict between what
+  she confirmed and what the calendar holds, which is a refusal rather than a note beside the
+  figures.
 - **One user-line panel, two looks** (R1.1). `/payments` shows why each placement is chosen
-  and uses outlined buttons; `/settings` shows no hint and uses filled ones. Merging them has
-  to pick one. Which?
+  and uses outlined buttons; `/settings` shows no hint and uses filled ones. **Answered
+  2026-09-22: the `/payments` look, if they are merged at all — but the merge itself is
+  questioned, because `/payments` shows the current state and `/settings` is where things are
+  adjusted, which is two jobs and not one.** F27 therefore needs a decision on whether to merge
+  before it needs a look.
 - **The national-insurance quarter is worded two ways** (F13, 2026-09-19). The month sheet writes
   the covered months as a range, "אפריל 2025 – יוני 2025" (`coveredMonthsLabel`); the
   national-insurance report lists each, "אפריל 2025, מאי 2025, יוני 2025"
   (`reports.ts:170`, asserted by `reports.test.ts:156`). One wording changes a cell of one
-  file. Which?
+  file. **Answered 2026-09-22: the range.** The report reads `coveredMonthsLabel` like the
+  month sheet does, and `reports.test.ts:156` moves with it.
 - **The income-tax scraper is not wired** (run 0). `fetchTaxBrackets` and
   `fetchCreditPointValue` in `src/lib/scrape/incomeTax.ts` are called by nothing, while
   `specs.md` Part 1 says the brackets and the credit point's value "are fetched per year and
-  cached like the minimum wage". Pay it as its own step, or add it to `build_plan.md`'s
-  "Still to pay"?
+  cached like the minimum wage". **Answered 2026-09-22: its own step on this list, placed
+  immediately before F32 (`/doctor`).** On the list below as F36.
 
 ## Fix list
 
@@ -599,19 +642,29 @@ figure, and each is a bug against a rule `specs.md` already states.
   `restDaysWorked` by spell membership and not by the marks — check: `spell-gap.test.ts` gains
   the rest-day line, which reads 213,175 at HEAD and 170,540 with the fix — the ₪426.35 a
   bridged Saturday was paid while the balance drew the same day.
-- [x] 2026-09-22 F35 — a spell is one spell across a month boundary: the series decides the
+- [x] 2026-09-22 `4822355` F35 — a spell is one spell across a month boundary: the series decides the
   spells over the worker's whole set and hands each month the run that led into it, as one
   closed sick span ending where the month's own spans begin — check: `series.test.ts` gains
   the split spell, whose September reads −51,551 at HEAD and no deduction line with the fix —
   the ₪515.51 a family was charged for putting the second mark in September.
 
 **F. Architecture — grilled at step 7 before any code**
-- [ ] F26 — one household replay module under `cache()` — R3.1, R2.9 — check: every page shows
-  the same figures; the home page replays each worker once per request.
+- [x] 2026-09-22 F26 — one household replay module under `cache()`, with the rates fix folded in
+  — R3.1, R2.9, R5.1, R2.22's `?? SEEDED_RATES` — check: Browser, and `series.test.ts` gains the
+  household whose confirmed ₪7,000 never reached its months. `src/lib/householdSeries.ts` holds
+  `householdSeries` / `workerInSeries` / `monthInSeries`; ten of the twelve callers read it.
+  Two still walk their own and say why: `/month/export` values the household against the table
+  its own fetch just returned, and `taxToConfirm` walks months with the tax set aside.
+  `MonthContext.rates` and `.taxBrackets` are required, with `AS_SHIPPED` the one named way to
+  ask for the seed.
 - [ ] F27 — the recorded-entries module on the client — R3.4, R2.21, R1.1 — **blocked** on the
   user-line look question.
-- [ ] F28 — the month-lifecycle module — R3.2 — waits for the answer to "a profile change
-  restates confirmed months".
+- [ ] F28 — the month-lifecycle module — R3.2 — **unblocked 2026-09-22**: a month with
+  `confirmedAt` is skipped by `monthsFollowingProfile` and `monthsReachedBySalaryChange`, and a
+  month corrected after confirming stays out too, because a correction is a specific one and
+  following the profile would undo it. `profile.test.ts:246` asserts the old rule and moves with
+  it — check: a confirmed month keeps its terms when the rest day, the tax mode, a standing line
+  or the salary changes, and an unconfirmed one still follows.
 
 **G. Last**
 - [ ] F33 — (added 2026-09-19 at the user's request) a last sweep once F19–F28 are through:
@@ -620,12 +673,36 @@ figure, and each is a bug against a rule `specs.md` already states.
   "Sweep after F28" section in rule 3's one-line form and are fixed one commit each, under
   the same rules as the list; a finding that changes a screen goes under "Needs the user" —
   check: `knip` and `jscpd` report nothing the sweep left unexplained.
+- [ ] F36 — (added 2026-09-22 at the user's request) wire the income-tax scraper —
+  `fetchTaxBrackets` and `fetchCreditPointValue` in `src/lib/scrape/incomeTax.ts` are called by
+  nothing, while `specs.md` Part 1 says the brackets and the credit point's value are fetched
+  per year and cached like the minimum wage — check: a year's brackets are fetched, cached and
+  read by a month's tax, and the suite reads a saved page rather than the network (Part 4).
 - [ ] F32 — `/doctor` (added 2026-09-19 at the user's request) — a built-in Claude Code
   command, so the user runs it and the session acts on what it reports; a finding that is
   not a setting goes under "Needs the user" — check: `/doctor` reports nothing left to fix.
+- [ ] F37 — (added 2026-09-22 at the user's request) **strip the history out of `specs.md`.**
+  The file carries its own changelog, against `CLAUDE.md` rule 3: these files describe only
+  what stands now, and how a rule came to be what it is belongs in the commit message. What
+  goes is every sentence that dates or narrates a change — "This reverses the rule that stood
+  until …", "was until …", "before then …", "this reversed on …", and the attributions
+  ("decided with the user on …", "asked for by the user on …"). What is left is the rule in
+  force, worded as though it had always been the rule.
+
+  **What the sweep must not touch**, because it looks the same and is not: Part 4's August
+  2025 case and its four totals, which are the only figures a test may measure the engine
+  against; the dated rates' own effective dates, which are content; and any date that is an
+  example inside a rule. A deletion that would change what the application does or must prove
+  is not part of this and goes under "Needs the user" instead.
+
+  **Every deletion is put to the user first** (rule 1), quoted exactly, as one batch for one
+  yes rather than one question per sentence — the sweep is a single decision the user has
+  already described, and the batch is what makes it reviewable. The step is sized when it is
+  reached, not before — check: no date, attribution or "used to" survives in `specs.md`
+  outside the three exceptions above, and the part reads as one statement of what stands.
 
 **Not on the list**
 - R3.3 — needs a migration, so it waits until the two unapplied migrations are live.
 - R3.5 — falls out of F28; on its own it only moves code.
-- R5.1 and R2.22's `?? SEEDED_RATES` — making the rates required *is* the fix for "the
-  household's rates never reach a month", so it waits on that answer under "Needs the user".
+- R5.1 and R2.22's `?? SEEDED_RATES` — done inside F26, which is where making the rates
+  required and fixing "the household's rates never reach a month" turned out to be one move.

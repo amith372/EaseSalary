@@ -1,6 +1,8 @@
+import { SEEDED_RATES } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import { compareIsoDate, daysInMonth, isoOf, orderDates } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import { SEEDED_TAX_BRACKETS } from "@/lib/taxBrackets";
 import type { TaxYearBrackets } from "@/lib/taxBrackets";
 import type {
   DaySpan,
@@ -895,20 +897,23 @@ export interface MonthContext {
   /**
    * The dated-rates table the month is valued against — the rates the
    * application does not derive, each with the date it took effect (specs.md
-   * item 4). Left out, the seeded table is read, which is what the application
-   * ships knowing before any fetch has run; a fetch updates the table rather
-   * than introducing one, so the caller passes it only once there is a stored
-   * one to pass.
+   * item 4).
+   *
+   * **Required, and that is the point.** It was optional with the seeded table
+   * behind it, and a caller that built a context for something else — the
+   * opening balances, the year's holidays — left it out without noticing and
+   * valued the month against the figures the application shipped with rather
+   * than against the household's own. `AS_SHIPPED` below is the one way to ask
+   * for the seed, and it has to be named.
    *
    * It is handed in for the same reason `today` is: the engine reads no clock
    * and no store, and a rate it fetched for itself would be a second
    * calculation path.
    */
-  rates?: DatedRate[];
+  rates: DatedRate[];
   /**
    * The income-tax bracket tables the month is taxed against, one per tax year
-   * (specs.md item 17). Left out, the seeded tables are read, which is what the
-   * application ships knowing before any fetch has run.
+   * (specs.md item 17). Required beside `rates` and for its reason.
    *
    * Handed in beside `rates` and for the same reason: the engine reads no store
    * and a table it fetched for itself would be a second calculation path. It is
@@ -916,7 +921,7 @@ export interface MonthContext {
    * by tax year and the rates by effective date — `taxBrackets.ts` says why a
    * bracket table is a year by definition and cannot honestly carry a date.
    */
-  taxBrackets?: TaxYearBrackets[];
+  taxBrackets: TaxYearBrackets[];
   /**
    * Vacation days drawn from the balance earlier in the same **calendar** year,
    * counted the way this month counts its own. The seven-day warning is a
@@ -925,3 +930,21 @@ export interface MonthContext {
    */
   vacationDaysEarlierInYear?: number;
 }
+
+/**
+ * The tables the application ships knowing, before any fetch has run and before
+ * any household has confirmed anything.
+ *
+ * **It is what a caller names when it means the seed**, and it is the only way
+ * to get it: the fields were optional with this behind them, and "left out"
+ * and "the household has nothing else" looked identical at every call site —
+ * which is how a walk that passed neither valued a whole household against
+ * figures it had already corrected. A month calculated with no context at all
+ * still lands here, because a caller asking for none is asking for exactly
+ * this; what cannot happen any more is a caller building a context for
+ * something else and losing the tables on the way.
+ */
+export const AS_SHIPPED = {
+  rates: SEEDED_RATES,
+  taxBrackets: SEEDED_TAX_BRACKETS,
+} as const satisfies Pick<MonthContext, "rates" | "taxBrackets">;

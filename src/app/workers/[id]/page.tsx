@@ -10,7 +10,7 @@ import { seniorityYearOfCalendarYear } from "@/lib/engine/balances";
 import { advanceLedger } from "@/lib/engine/advances";
 import { exportQuestions } from "@/lib/engine/beforeExport";
 import { monthState } from "@/lib/engine/monthState";
-import { calculateSeries } from "@/lib/engine/series";
+import { workerInSeries } from "@/lib/householdSeries";
 import { he } from "@/lib/i18n/he";
 import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
 import { formatAgorot, formatDays } from "@/lib/money";
@@ -43,13 +43,13 @@ export default async function WorkerPage({
   await connection();
 
   const { id } = await params;
-  const repository = await getRepository();
-  const profile = await repository.getWorker(id);
-  if (profile === null) notFound();
+  const replayed = await workerInSeries(id);
+  if (replayed === null) notFound();
+  const { profile, months: series } = replayed;
 
+  const repository = await getRepository();
   const today = await readToday();
   const months = await repository.listMonths(id);
-  const series = calculateSeries(months, profile, today, await repository.listRates());
   const closing = series[series.length - 1]?.result.balances;
 
   const listed: ProfileMonth[] = series.map(({ facts, result }) => {

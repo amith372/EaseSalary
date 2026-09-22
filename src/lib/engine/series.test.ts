@@ -1,4 +1,6 @@
+import { AS_SHIPPED } from "@/lib/engine/types";
 import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
+import type { DatedRate } from "@/lib/datedRates";
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
@@ -472,6 +474,85 @@ describe("a spell crossing a month boundary, stored once and replayed", () => {
  * 2 days -> 2 × 25,775.4 = 51,550.8 -> ₪515.51 taken off a month that owes
  * nothing, for no reason but where the family put the second mark.
  */
+/**
+ * **The household's own tables reach every month of the walk.**
+ *
+ * `specs.md` item 4: no rate is hardcoded, the minimum wage is the household's
+ * confirmed or fetched figure, and a month is measured against the one in force
+ * during *it*. A walk that valued its months against the table the application
+ * shipped with would show a household that had already corrected a figure the
+ * figure it corrected — and nothing on the screen would look wrong.
+ *
+ * **Where the expected answer comes from.** Item 4 alone: ₪6,247.65 is less than
+ * ₪7,000, so a February 2026 month standing at the first, in a household whose
+ * table says the second from January, is below the minimum wage and says so.
+ * No figure here is read back from the engine.
+ *
+ * **What it catches.** The walk building each month's context without the
+ * tables it was handed, which is how the household's rates stopped reaching
+ * the minimum-wage warning, an unconfirmed month's recuperation rate, the
+ * national-insurance estimate and the credit point at once.
+ */
+describe("the household's own rates reach every month of the walk", () => {
+  const CONFIRMED_SEVEN_THOUSAND: DatedRate[] = [
+    {
+      key: "minimumWage",
+      value: 700000,
+      effectiveFrom: "2026-01-01",
+      source: "the household's own confirmation",
+    },
+  ];
+
+  /** February standing at the seeded figure, which this household has moved on
+   * from. Its own `confirmedWage` is what the month was opened at; the table is
+   * what it is measured against, and the two are allowed to differ — that gap
+   * is exactly what the warning is for. */
+  const february: MonthFacts = {
+    ...facts(month(2026, 2)),
+    confirmedWage: {
+      baseAgorot: 624765,
+      minimumAgorot: 624765,
+      effectiveFrom: "2025-04-01",
+    },
+  };
+
+  function warningsOfFebruary(rates: DatedRate[]) {
+    const series = calculateSeries(
+      [facts(month(2026, 1)), february],
+      HANNA,
+      undefined,
+      rates,
+    );
+    return series
+      .find((entry) => entry.facts.month.month === 2)!
+      .result.warnings.map((warning) => warning.key);
+  }
+
+  it("warns that February is below the wage the household confirmed", () => {
+    expect(warningsOfFebruary(CONFIRMED_SEVEN_THOUSAND)).toContain(
+      "belowMinimumWage",
+    );
+  });
+
+  it("says the same thing the month calculated alone against that table says", () => {
+    // One engine, one answer, however it is reached (Part 3). Before the tables
+    // were passed down, these two disagreed over the same household.
+    const alone = calculateMonth(february, HANNA, {
+      ...AS_SHIPPED,
+      rates: CONFIRMED_SEVEN_THOUSAND,
+    });
+    expect(warningsOfFebruary(CONFIRMED_SEVEN_THOUSAND)).toEqual(
+      alone.warnings.map((warning) => warning.key),
+    );
+  });
+
+  it("is silent where the household's table is the one the month stands at", () => {
+    // Not a warning that fires on every February: against the seeded table the
+    // same month is exactly at the minimum and says nothing.
+    expect(warningsOfFebruary(SEEDED_RATES)).not.toContain("belowMinimumWage");
+  });
+});
+
 describe("a spell entered as two spans is one spell across the boundary", () => {
   const AUGUST = month(2026, 8);
   const SEPTEMBER = month(2026, 9);

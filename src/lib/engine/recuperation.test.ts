@@ -1,3 +1,4 @@
+import { AS_SHIPPED } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 
 import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
@@ -270,7 +271,7 @@ describe("the line the month draws", () => {
     const march2025 = calculateMonth(
       marchFacts({ month: { year: 2025, month: 3 } }),
       EMPLOYMENT,
-      { rates: [] },
+      { ...AS_SHIPPED, rates: [] },
     );
     expect(march2025.lines.some((l) => l.key === lineKeys.recuperation)).toBe(
       false,
@@ -284,7 +285,7 @@ describe("the line the month draws", () => {
     const april = calculateMonth(
       marchFacts({ month: { year: 2025, month: 4 } }),
       EMPLOYMENT,
-      { rates: [] },
+      { ...AS_SHIPPED, rates: [] },
     );
     expect(april.warnings.some((w) => w.key === "recuperationRateMissing")).toBe(
       false,

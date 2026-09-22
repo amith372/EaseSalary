@@ -11,7 +11,7 @@ import {
   type WarningKind,
 } from "@/lib/engine/alerts";
 import type { SalaryRepository } from "@/lib/engine/repository";
-import { calculateSeries } from "@/lib/engine/series";
+import { householdSeries } from "@/lib/householdSeries";
 import { he, type Said } from "@/lib/i18n/he";
 import { legalLink, type LegalLinkKey } from "@/lib/links";
 import { getRepository } from "@/lib/store";
@@ -174,21 +174,19 @@ async function alertsView(
   repository: SalaryRepository,
   today: IsoDate,
 ): Promise<AlertsView> {
-  const [workers, rates, switchedOff, deferrals] = await Promise.all([
-    repository.listWorkers(),
+  // The household's own replay, so the bell and the page it is drawn over read
+  // one walk rather than two that could disagree.
+  const [replayed, rates, switchedOff, deferrals] = await Promise.all([
+    householdSeries(),
     repository.listRates(),
     repository.listSwitchedOffWarnings(),
     repository.listDeferrals(),
   ]);
-  const named = workers.length > 1;
+  const named = replayed.length > 1;
 
   const perWorker = await Promise.all(
-    workers.map(async (profile) => {
-      const [months, spans] = await Promise.all([
-        repository.listMonths(profile.id),
-        repository.listSpans(profile.id),
-      ]);
-      const series = calculateSeries(months, profile, today, rates);
+    replayed.map(async ({ profile, months: series }) => {
+      const spans = await repository.listSpans(profile.id);
       const workerName = named ? profile.firstName : null;
       const entries = shownEntries(actionList({ profile, series, spans, rates, today }), {
         workerId: profile.id,

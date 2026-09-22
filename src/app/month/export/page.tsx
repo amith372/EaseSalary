@@ -48,6 +48,14 @@ export default async function BeforeExportPage() {
       // The replay's months and not the stored ones: a month nobody opened is
       // exported like any other (specs.md item 6, Part 3), and confirming it is
       // what opens it.
+      //
+      // **Walked here and not read from `householdSeries`**, which is where
+      // every other screen gets its months. This screen values the household
+      // against the table the fetch above just returned, and the bar around it
+      // asks for the household's replay too — whichever of the two resolved
+      // first would settle the memo for the request, so the screen that exists
+      // to confirm the minimum wage could show the figure from before the
+      // fetch. The walk is cheap; the race is not visible when it goes wrong.
       const series = calculateSeries(
         await repository.listMonths(profile.id),
         profile,

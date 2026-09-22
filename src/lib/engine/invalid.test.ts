@@ -1,3 +1,4 @@
+import { AS_SHIPPED } from "@/lib/engine/types";
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
@@ -126,9 +127,9 @@ describe("a tenth paid holiday within a year (specs.md item 10, Part 4)", () => 
     // Eight earlier plus two here is ten.
     const two = [holiday("2025-08-13"), holiday("2025-08-14")];
     expect(
-      validateMonth(facts(two), terms, { holidayDaysEarlierInYear: 8 }),
+      validateMonth(facts(two), terms, { ...AS_SHIPPED, holidayDaysEarlierInYear: 8 }),
     ).toHaveLength(1);
-    expect(validateMonth(facts(two), terms, { holidayDaysEarlierInYear: 7 })).toEqual([]);
+    expect(validateMonth(facts(two), terms, { ...AS_SHIPPED, holidayDaysEarlierInYear: 7 })).toEqual([]);
   });
 
   it("draws a part day from the entitlement in its own proportion", () => {
@@ -136,18 +137,18 @@ describe("a tenth paid holiday within a year (specs.md item 10, Part 4)", () => 
     // proportion, so half a day does not consume a whole one.
     const halfDay: ClosedSpan = { ...holiday("2025-08-13"), fraction: 0.5 };
     expect(
-      validateMonth(facts([halfDay]), terms, { holidayDaysEarlierInYear: 8.5 }),
+      validateMonth(facts([halfDay]), terms, { ...AS_SHIPPED, holidayDaysEarlierInYear: 8.5 }),
     ).toEqual([]);
     expect(
-      validateMonth(facts([halfDay]), terms, { holidayDaysEarlierInYear: 9 }),
+      validateMonth(facts([halfDay]), terms, { ...AS_SHIPPED, holidayDaysEarlierInYear: 9 }),
     ).toHaveLength(1);
   });
 
   it("reduces the entitlement for a year only partly worked", () => {
     // Item 10: nine days for a full year, reduced in proportion otherwise.
     const five = nine.slice(0, 5);
-    expect(validateMonth(facts(five), terms, { holidayAllowance: 4.5 })).toHaveLength(1);
-    expect(validateMonth(facts(five), terms, { holidayAllowance: 5 })).toEqual([]);
+    expect(validateMonth(facts(five), terms, { ...AS_SHIPPED, holidayAllowance: 4.5 })).toHaveLength(1);
+    expect(validateMonth(facts(five), terms, { ...AS_SHIPPED, holidayAllowance: 5 })).toEqual([]);
   });
 });
 

@@ -140,6 +140,9 @@ async function taxToConfirm(
     delete overrides[lineKeys.incomeTax];
     return { ...rest, overrides };
   });
+  // Walked here and not read from `householdSeries`: the months handed over are
+  // not the household's own but the ones above with this month's tax set aside,
+  // which is the whole point of the question being asked again.
   const entry = calculateSeries(
     months,
     profile,

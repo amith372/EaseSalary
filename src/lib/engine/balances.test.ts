@@ -1,3 +1,4 @@
+import { AS_SHIPPED } from "@/lib/engine/types";
 import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
@@ -463,6 +464,7 @@ describe("the seven-day vacation warning (specs.md item 7)", () => {
     // handed in — five earlier plus two here is seven.
     const twoTaken = facts(december, [span("vacation", "2025-12-01", "2025-12-02")]);
     const context = (vacationDaysEarlierInYear: number): MonthContext => ({
+      ...AS_SHIPPED,
       vacationDaysEarlierInYear,
     });
     expect(vacationYearWarning(twoTaken, worker, context(5))).toBeNull();
@@ -521,7 +523,7 @@ describe("the month that has not ended yet (specs.md item 21)", () => {
     const running = facts({ year: 2026, month: 9 }, [
       span("sick", "2026-09-01", "2026-09-01"),
     ]);
-    const result = calculateMonth(running, worker, { today: "2026-09-30" });
+    const result = calculateMonth(running, worker, { ...AS_SHIPPED, today: "2026-09-30" });
     expect(result.warnings).toEqual([]);
     expect(result.gross).toBeGreaterThan(0);
     expect(balance("sick", running, worker).used).toBe(1);

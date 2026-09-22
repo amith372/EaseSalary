@@ -12,7 +12,7 @@ import {
   duplicateThirdPartyKinds,
   LINK_FOR_THIRD_PARTY,
 } from "@/lib/engine/thirdParty";
-import { closeMonth } from "@/lib/engine/types";
+import { AS_SHIPPED, closeMonth } from "@/lib/engine/types";
 import type {
   ClosedSpan,
   MonthContext,
@@ -205,7 +205,7 @@ function datesRecordedTwice(
 export function validateMonth(
   facts: MonthFacts,
   employment: Employment,
-  context: MonthContext = {},
+  context: MonthContext = AS_SHIPPED,
 ): Refusal[] {
   const refusals: Refusal[] = [];
   // The same resolution `calculateMonth` makes, and it has to happen here too:

@@ -1,3 +1,4 @@
+import { AS_SHIPPED } from "@/lib/engine/types";
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
@@ -177,7 +178,7 @@ describe("the clip is a fact about the month, not about the present (item 8)", (
     // after the month, one months later, and none at all.
     const settled = figures(calculateMonth(facts(open), worker));
     for (const today of ["2025-09-01", "2025-12-31", "2027-06-15"]) {
-      expect(figures(calculateMonth(facts(open), worker, { today }))).toEqual(
+      expect(figures(calculateMonth(facts(open), worker, { ...AS_SHIPPED, today }))).toEqual(
         settled,
       );
     }
@@ -190,6 +191,7 @@ describe("the clip is a fact about the month, not about the present (item 8)", (
     // shows — which is the next describe's figure, reached from the other
     // side.
     const preview = calculateMonth(facts(open), worker, {
+      ...AS_SHIPPED,
       today: "2025-08-29",
     });
     expect(figures(preview).gross).toBe(850454);

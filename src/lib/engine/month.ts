@@ -1,4 +1,4 @@
-import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
+import { rateInForce } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import type { RestDay } from "@/lib/dates";
 import { advanceKey } from "@/lib/engine/advances";
@@ -24,7 +24,7 @@ import {
   nationalInsuranceEstimateOf,
   thirdPartyLines,
 } from "@/lib/engine/thirdParty";
-import { closeMonth, placementOf } from "@/lib/engine/types";
+import { AS_SHIPPED, closeMonth, placementOf } from "@/lib/engine/types";
 import type { UserLinePlacement } from "@/lib/engine/types";
 import type {
   ClosedMonthFacts,
@@ -33,7 +33,6 @@ import type {
   Employment,
 } from "@/lib/engine/types";
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
-import { SEEDED_TAX_BRACKETS } from "@/lib/taxBrackets";
 import { he } from "@/lib/i18n/he";
 import type {
   ClosingBlock,
@@ -569,7 +568,7 @@ function buildSubtotals(
 export function calculateMonth(
   facts: MonthFacts,
   employment: Employment,
-  context: MonthContext = {},
+  context: MonthContext = AS_SHIPPED,
 ): MonthResult {
   const refusals = validateMonth(facts, employment, context);
   if (refusals.length > 0) throw new InvalidMonthError(refusals, facts.month);
@@ -580,7 +579,7 @@ export function calculateMonth(
   // when the month ends and never moves because of when it is looked at.
   const month = closeMonth(facts, context.today);
 
-  const rates = context.rates ?? SEEDED_RATES;
+  const { rates } = context;
   const counts = countMonth(month);
   const lines = buildLines(month, counts, employment, rates);
 
@@ -601,7 +600,7 @@ export function calculateMonth(
       facts.month,
       employment.gender,
       rates,
-      context.taxBrackets ?? SEEDED_TAX_BRACKETS,
+      context.taxBrackets,
     ),
   );
 

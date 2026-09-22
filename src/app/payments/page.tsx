@@ -2,12 +2,12 @@ import { connection } from "next/server";
 import { PaymentsScreen } from "@/components/PaymentsScreen";
 import type { WorkerPayments } from "@/components/PaymentsScreen";
 import { getRepository } from "@/lib/store";
+import { householdSeries } from "@/lib/householdSeries";
 import { advanceLedger } from "@/lib/engine/advances";
 import { effectiveTaxRate } from "@/lib/engine/incomeTax";
 import { lineKeys } from "@/lib/engine/lines";
 import { orphanedOverrides } from "@/lib/engine/overrides";
 import { recordOf } from "@/lib/engine/repository";
-import { calculateSeries } from "@/lib/engine/series";
 import { upcoming } from "@/lib/engine/upcoming";
 import type { IncomeTaxSetting, MonthIncomeTax } from "@/lib/engine/types";
 import { readToday } from "@/lib/requestToday";
@@ -79,15 +79,13 @@ export default async function PaymentsPage() {
 
   const repository = await getRepository();
   const today = await readToday();
-  const workers = await repository.listWorkers();
+  const replayed = await householdSeries();
 
   const household: WorkerPayments[] = await Promise.all(
-    workers.map(async (profile) => {
-      // The whole of her history, for the reason `/month` gives: balances are
-      // never stored, so a month calculated alone would open from nothing
-      // (item 13).
+    replayed.map(async ({ profile, months: series }) => {
+      // The months as they are stored, for the ledger below: it sums what was
+      // recorded, and a month nobody opened records nothing.
       const months = await repository.listMonths(profile.id);
-      const series = calculateSeries(months, profile, today, await repository.listRates());
       return {
         worker: {
           id: profile.id,

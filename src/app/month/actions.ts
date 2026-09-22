@@ -24,7 +24,7 @@ import {
 } from "@/lib/engine/incomeTax";
 import type { TaxCorrectionUnit } from "@/lib/engine/incomeTax";
 import { lineKeys } from "@/lib/engine/lines";
-import { calculateSeries } from "@/lib/engine/series";
+import { monthInSeries } from "@/lib/householdSeries";
 import {
   reviewThirdPartyPayment,
   thirdPartyLineKey,
@@ -561,18 +561,14 @@ export async function removeThirdPartyPayment(
  * asked of the line rather than of its name — a whitelist in this file would
  * compile clean and quietly stop covering the next row the engine grows.
  *
- * It replays the worker's whole history for the same reason `/` does:
- * balances are never stored, and a month calculated alone would open from
- * nothing (item 13). Reading the clock is safe here because this is an action
- * and not a render — what `CLAUDE.md` forbids is a clock read while a page is
- * being drawn, which is what makes the server and the browser disagree.
+ * The month comes from the household's replay, which is where the whole
+ * history is walked and the clock is read once for the request. The worker is
+ * still checked by name first: an action is reachable by a crafted request, and
+ * an unknown id is a throw rather than a month that merely was not found.
  */
 async function linesOf(workerId: string, month: YearMonth) {
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId);
-  const months = await repository.listMonths(workerId);
-  const series = calculateSeries(months, profile, await readToday(), await repository.listRates());
-  return series.find((entry) => sameMonth(entry.facts.month, month)) ?? null;
+  await requireWorker(workerId);
+  return monthInSeries(workerId, month);
 }
 
 /**

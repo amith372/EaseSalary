@@ -3,13 +3,13 @@ import { Suspense } from "react";
 import { PayslipScreen } from "@/components/PayslipScreen";
 import type { WorkerPayslip } from "@/components/PayslipScreen";
 import { getRepository } from "@/lib/store";
+import { householdSeries } from "@/lib/householdSeries";
 import { advanceLedger } from "@/lib/engine/advances";
 import {
   blocksExport,
   exportQuestions,
   monthStillRunning,
 } from "@/lib/engine/beforeExport";
-import { calculateSeries } from "@/lib/engine/series";
 import { todayInIsrael } from "@/lib/today";
 import { readToday } from "@/lib/requestToday";
 
@@ -33,12 +33,13 @@ export default async function PayslipPage() {
 
   const repository = await getRepository();
   const today = await readToday();
-  const workers = await repository.listWorkers();
+  const replayed = await householdSeries();
 
   const household: WorkerPayslip[] = await Promise.all(
-    workers.map(async (profile) => {
+    replayed.map(async ({ profile, months: series }) => {
+      // The stored months as they stand, for the ledger below: it sums what was
+      // recorded and not what the replay came to.
       const stored = await repository.listMonths(profile.id);
-      const series = calculateSeries(stored, profile, today, await repository.listRates());
       // What is still owed after every month, which is a figure that carries
       // across the whole employment rather than sitting in one of them. The
       // payments screen walks the same ledger.

@@ -2,9 +2,9 @@ import { after, connection } from "next/server";
 import { HomeScreen } from "@/components/HomeScreen";
 import type { WorkerMonths } from "@/components/HomeScreen";
 import { blockagesOf, householdAlerts } from "@/lib/alertsView";
+import { householdSeries } from "@/lib/householdSeries";
 import { refreshMinimumWageIfStale } from "@/lib/minimumWageRefresh";
 import { getRepository } from "@/lib/store";
-import { calculateSeries } from "@/lib/engine/series";
 import { parseYearMonth } from "@/lib/dates";
 import { readToday } from "@/lib/requestToday";
 
@@ -54,7 +54,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
   const repository = await getRepository();
   const today = await readToday();
-  const workers = await repository.listWorkers();
+  const replayed = await householdSeries();
   after(async () => {
     try {
       // The real clock, not `today`: staleness is measured against the real
@@ -66,25 +66,22 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     }
   });
 
+  // The whole of each worker's history, because a month's opening balances are
+  // the previous month's closing ones and balances are never stored (item 13).
+  // `today` reaches every month and only the one still running is clipped by it
+  // (item 8) — `householdSeries` is where both of those are arranged.
   const household: WorkerMonths[] = await Promise.all(
-    workers.map(async (profile) => {
-      // The whole of her history, because a month's opening balances are the
-      // previous month's closing ones and balances are never stored (item 13).
-      // `today` reaches every month and only the one still running is clipped
-      // by it (item 8).
-      const months = await repository.listMonths(profile.id);
-      return {
-        worker: {
-          id: profile.id,
-          name: profile.name,
-          firstName: profile.firstName,
-        },
-        restDay: profile.restDay,
-        firstMonth: profile.firstMonth,
-        months: calculateSeries(months, profile, today, await repository.listRates()),
-        spans: await repository.listSpans(profile.id),
-      };
-    }),
+    replayed.map(async ({ profile, months }) => ({
+      worker: {
+        id: profile.id,
+        name: profile.name,
+        firstName: profile.firstName,
+      },
+      restDay: profile.restDay,
+      firstMonth: profile.firstMonth,
+      months,
+      spans: await repository.listSpans(profile.id),
+    })),
   );
 
   // The strip reads the view `/alerts` and the bell read, so it lists the

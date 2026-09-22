@@ -3,7 +3,7 @@ import { parseYearMonth, sameMonth } from "@/lib/dates";
 import { getRepository } from "@/lib/store";
 import { blocksExport } from "@/lib/engine/beforeExport";
 import { recordOf } from "@/lib/engine/repository";
-import { calculateSeries } from "@/lib/engine/series";
+import { workerInSeries } from "@/lib/householdSeries";
 import { monthFileOf } from "@/lib/export/monthExport";
 import { readIdentifyingNumbers } from "@/lib/identifyingNumbers";
 import { readNow, readToday } from "@/lib/requestToday";
@@ -41,17 +41,17 @@ export async function GET(request: NextRequest) {
     return new Response("A worker and a month are required", { status: 400 });
   }
 
+  const replayed = await workerInSeries(workerId);
+  if (replayed === null) return new Response("No such worker", { status: 404 });
+  const { profile: worker, months: series } = replayed;
   const repository = await getRepository();
-  const worker = await repository.getWorker(workerId);
-  if (worker === null) return new Response("No such worker", { status: 404 });
+  const months = await repository.listMonths(workerId);
 
   // The whole history, because a month's opening balances are the previous
   // month's closing ones and no balance is ever stored (item 13). The month is
   // looked up in the replay, which values a month nobody opened as well
   // (item 6, Part 3); one outside it — before her first month or after the
   // current one — does not exist to export.
-  const months = await repository.listMonths(workerId);
-  const series = calculateSeries(months, worker, await readToday(), await repository.listRates());
   const inSeries = series.find((one) => sameMonth(one.facts.month, month));
   if (inSeries === undefined) {
     return new Response("No such month", { status: 404 });

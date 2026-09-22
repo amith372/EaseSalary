@@ -1,3 +1,4 @@
+import { AS_SHIPPED } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import {
   PLAIN_GROSS,
@@ -170,6 +171,7 @@ describe("the tax the engine works out (specs.md item 17)", () => {
   it("leaves the line at zero and warns where the year has no table", () => {
     const w = plainWorker();
     const result = calculateMonth(facts(w, unconfirmed), w, {
+      ...AS_SHIPPED,
       taxBrackets: [],
     });
     const tax = result.closing.find((row) => row.key === lineKeys.incomeTax);

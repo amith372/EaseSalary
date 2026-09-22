@@ -1,10 +1,9 @@
 import { connection } from "next/server";
 import { ReportsScreen } from "@/components/ReportsScreen";
 import type { WorkerReports } from "@/components/ReportsScreen";
-import { getRepository } from "@/lib/store";
+import { householdSeries } from "@/lib/householdSeries";
 import { blocksExport, monthStillRunning } from "@/lib/engine/beforeExport";
 import { monthLevels } from "@/lib/engine/month";
-import { calculateSeries } from "@/lib/engine/series";
 import { readToday } from "@/lib/requestToday";
 
 /**
@@ -27,14 +26,11 @@ import { readToday } from "@/lib/requestToday";
 export default async function ReportsPage() {
   await connection();
 
-  const repository = await getRepository();
   const today = await readToday();
-  const workers = await repository.listWorkers();
+  const replayed = await householdSeries();
 
   const household: WorkerReports[] = await Promise.all(
-    workers.map(async (profile) => {
-      const stored = await repository.listMonths(profile.id);
-      const series = calculateSeries(stored, profile, today, await repository.listRates());
+    replayed.map(async ({ profile, months: series }) => {
       // Newest first, because the two yearly reports open on the latest year
       // the worker has rather than on the current calendar year: a family
       // downloading in January is almost always after the year that just

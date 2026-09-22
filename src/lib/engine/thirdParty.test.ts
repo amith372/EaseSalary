@@ -1,3 +1,4 @@
+import { AS_SHIPPED } from "@/lib/engine/types";
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
@@ -257,6 +258,7 @@ describe("the national-insurance estimate (specs.md item 19)", () => {
     // 930,575 × 0.02 = 18,611.5 agorot, rounded once to 18,612 — which proves
     // the percentage travels from the table and is not baked into the engine.
     const result = calculateMonth(facts(), terms, {
+      ...AS_SHIPPED,
       rates: [
         {
           key: "nationalInsurance",

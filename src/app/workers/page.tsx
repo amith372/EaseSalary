@@ -2,11 +2,11 @@ import { connection } from "next/server";
 import { WorkersList } from "@/components/WorkersList";
 import type { WorkerSummary } from "@/components/WorkersList";
 import { getRepository } from "@/lib/store";
+import { householdSeries } from "@/lib/householdSeries";
 import { sharedWith } from "@/lib/shares";
 import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
 import { advanceLedger } from "@/lib/engine/advances";
 import { salaryFor } from "@/lib/engine/salary";
-import { calculateSeries } from "@/lib/engine/series";
 import { monthHasEnded, monthOf } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
 import { monthState } from "@/lib/engine/monthState";
@@ -33,15 +33,18 @@ export default async function WorkersPage() {
 
   const repository = await getRepository();
   const today = await readToday();
-  const workers = await repository.listWorkers();
+  const replayed = await householdSeries();
   // One query for the whole list, not one per card: a share is the household's
   // and every worker of a household carries the same addresses.
   const shares = await sharedWith();
 
   const household: WorkerSummary[] = await Promise.all(
-    workers.map(async (profile) => {
+    replayed.map(async ({ profile, months: series }) => {
+      // The months as they are stored, for the two answers below that are about
+      // what was recorded rather than about what the replay came to: a month
+      // nobody opened is in the replay (item 6) and is not a month waiting to
+      // be confirmed.
       const months = await repository.listMonths(profile.id);
-      const series = calculateSeries(months, profile, today, await repository.listRates());
       // The closing balances of her last month, which is what "how many days
       // has she left" means. A worker with no months at all has her opening
       // position and nothing has happened to it yet (item 6).

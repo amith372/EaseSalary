@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server";
-import { getRepository } from "@/lib/store";
-import { calculateSeries } from "@/lib/engine/series";
+import { workerInSeries } from "@/lib/householdSeries";
 import { balancesFileOf } from "@/lib/export/balancesExport";
 import {
   buildReport,
@@ -11,7 +10,6 @@ import {
 } from "@/lib/export/reports";
 import type { WorkerProfile } from "@/lib/engine/repository";
 import type { MonthInSeries } from "@/lib/engine/series";
-import { readToday } from "@/lib/requestToday";
 
 /**
  * The four files the `דוחות` screen offers.
@@ -100,12 +98,9 @@ export async function GET(request: NextRequest) {
     return new Response("A year is required", { status: 400 });
   }
 
-  const repository = await getRepository();
-  const worker = await repository.getWorker(workerId);
-  if (worker === null) return new Response("No such worker", { status: 404 });
-
-  const months = await repository.listMonths(workerId);
-  const series = calculateSeries(months, worker, await readToday(), await repository.listRates());
+  const replayed = await workerInSeries(workerId);
+  if (replayed === null) return new Response("No such worker", { status: 404 });
+  const { profile: worker, months: series } = replayed;
 
   const { bytes, filename } = await REPORTS[report].file({ series, year, worker });
 

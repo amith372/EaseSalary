@@ -4,6 +4,7 @@ import type { DatedRate } from "@/lib/datedRates";
 import { lineKeys } from "@/lib/engine/lines";
 import { daysUsedIn, vacationDaysTheLawAsksFor } from "@/lib/engine/balances";
 import { recuperationDaysInMonth } from "@/lib/engine/recuperation";
+import { AS_SHIPPED } from "@/lib/engine/types";
 import type {
   ClosedMonthFacts,
   MonthContext,
@@ -11,7 +12,7 @@ import type {
 } from "@/lib/engine/types";
 import { formatAgorot } from "@/lib/money";
 import { he } from "@/lib/i18n/he";
-import { SEEDED_TAX_BRACKETS, bracketsForYear } from "@/lib/taxBrackets";
+import { bracketsForYear } from "@/lib/taxBrackets";
 import type { TaxYearBrackets } from "@/lib/taxBrackets";
 import type { Warning } from "@/lib/types";
 
@@ -37,7 +38,7 @@ import type { Warning } from "@/lib/types";
 export function vacationYearWarning(
   facts: ClosedMonthFacts,
   employment: Pick<Employment, "employedSince">,
-  context: MonthContext = {},
+  context: MonthContext = AS_SHIPPED,
 ): Warning | null {
   if (facts.month.month !== DECEMBER) return null;
   const required = vacationDaysTheLawAsksFor(
@@ -198,18 +199,14 @@ export function buildWarnings(
   facts: ClosedMonthFacts,
   employment: Employment,
   rates: DatedRate[],
-  context: MonthContext = {},
+  context: MonthContext = AS_SHIPPED,
 ): Warning[] {
   return [
     belowMinimumWageWarning(facts, rates),
     vacationYearWarning(facts, employment, context),
     recuperationRateMissingWarning(facts, employment, rates),
     insurerMissingWarning(facts, employment),
-    taxBracketsMissingWarning(
-      facts,
-      rates,
-      context.taxBrackets ?? SEEDED_TAX_BRACKETS,
-    ),
+    taxBracketsMissingWarning(facts, rates, context.taxBrackets),
   ].filter(
     (warning): warning is Warning => warning !== null,
   );

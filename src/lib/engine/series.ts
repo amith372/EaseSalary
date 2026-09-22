@@ -1,12 +1,12 @@
-import { SEEDED_RATES } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
+import type { TaxYearBrackets } from "@/lib/taxBrackets";
 import { compareMonth, eachMonth, monthOf, yearMonthText } from "@/lib/dates";
 import { balanceOf } from "@/lib/engine/balances";
 import { holidayDaysOf } from "@/lib/engine/leave";
 import { calculateMonth } from "@/lib/engine/month";
 import { openMonthRecord, wageToCarry } from "@/lib/engine/repository";
 import { spellsLeadingInto } from "@/lib/engine/sick";
-import { closeMonth, closeSpans, clipEndOf } from "@/lib/engine/types";
+import { AS_SHIPPED, closeMonth, closeSpans, clipEndOf } from "@/lib/engine/types";
 import type {
   Employment,
   MonthContext,
@@ -153,8 +153,10 @@ function closingBalances(result: MonthResult) {
  * month that was opened is still read off its own.
  *
  * `rates` is the household's dated-rates table, which a month nobody opened
- * takes its wage from; an action opening a month reads the same table, so the
- * two agree. Left out, the seeded table is read.
+ * takes its wage from and which every month is then valued against; an action
+ * opening a month reads the same table, so the two agree. `taxBrackets` is the
+ * same for the income tax. Left out, the seeded tables are read — which is what
+ * the application ships knowing before any fetch has run.
  *
  * A refused month stops the walk, and the `InvalidMonthError` says which month
  * it was. That is not a limitation to work around: a month that cannot be
@@ -165,7 +167,8 @@ export function calculateSeries(
   months: MonthFacts[],
   worker: WorkerTerms & Employment,
   today?: IsoDate,
-  rates: DatedRate[] = SEEDED_RATES,
+  rates: DatedRate[] = AS_SHIPPED.rates,
+  taxBrackets: TaxYearBrackets[] = AS_SHIPPED.taxBrackets,
 ): MonthInSeries[] {
   const ordered = [...months].sort((a, b) => compareMonth(a.month, b.month));
   for (let i = 1; i < ordered.length; i += 1) {
@@ -224,6 +227,15 @@ export function calculateSeries(
 
     const result = calculateMonth(facts, employment, {
       today,
+      // **Both tables reach the month**, which is what makes them the
+      // household's rather than the ones the application shipped with: the
+      // minimum-wage warning, an unconfirmed month's recuperation rate, the
+      // national-insurance estimate and the credit point are all read off them.
+      // A walk that left them out valued every month against the seed, and a
+      // household that had confirmed or fetched anything else was shown a
+      // figure it had already corrected.
+      rates,
+      taxBrackets,
       openingBalances,
       vacationDaysEarlierInYear,
       holidayDaysEarlierInYear,
