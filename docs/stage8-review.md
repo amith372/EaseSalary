@@ -10,44 +10,44 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-22, F26 — the household replay module, with the rates fix folded in.
-  F1–F26, F29–F31, F34 and F35 are done; nothing on the list is half-built.
-- **F26 IS WRITTEN BUT NOT COMMITTED.** Its 25 files plus the new untracked
-  `src/lib/householdSeries.ts` are sitting in the working tree, and typecheck, lint, 1,161 unit
-  tests and 128 browser tests all pass over them. **A fresh session's first move is to show the
-  user what is staged and ask** (below), not to start F27 on top of it. Once it lands, its hash
-  is written in here and goes into the next commit.
-- **THE APPLICATION IS DOWN for the user's own household, and that comes before the list.** She
-  set the rest day to Friday on `/settings` while a `freeRestDay` mark sat on a Saturday.
-  `setRestDay` (`workers/actions.ts:142`) saves through `saveProfile` with no check for stranded
-  marks, so every month holding that mark now throws `InvalidMonthError` — and because there is
-  no `error.tsx` anywhere in `src/app` and the layout replays the household on every page, every
-  route is down, `/settings` included. There is no way back through the interface.
-  **First ask which household she is in:** a seeded in-memory one (the `household` cookie set to
-  `demo`/`known`/`filed`) clears on a `next dev` restart; the live Postgres one needs the span
-  deleted or the rest day reverted by a one-off script under `scripts/`, never by hand-written
-  SQL guessed at. Fixing the *class* is `build_plan.md` stage 8½ — approved, specified, not
-  started — which prevents it but does not repair data already saved this way.
-- **F27 is next on the list and cannot be started**: what is open is now whether the two panels
-  merge at all, not which look wins (question 2 below). **F28 is unblocked** — the
-  confirmed-month rule it waited for was answered on 2026-09-22 — so with the questions still
-  open, **the step to take is F28**, then F33, F36, F32, F37. **Ask before each commit**
-  (said on 2026-09-18).
+- **Last done:** 2026-09-22, **F33's sweep** — its findings are the "Sweep after F28"
+  section below, S1–S7, none of them fixed yet. **Stage 8½ and F28 are committed together as
+  `be4511f`**: they could not be split, because F28's `followsProfile` is what stage 8½'s
+  `strandedFreeRestDays` reads, so no state of `workers/actions.ts` exists in which stage 8½
+  stands without it (the user chose the single commit, 2026-09-22). F1–F26, F28–F31, F34 and
+  F35 are done; nothing on the list is half-built.
+- **Outside stage 8, built 2026-09-22 and committed on its own:** the picker withholds a mark
+  kind no day of the selection can take (`specs.md` item 5).
+- **Next is the rest of F33** — S1–S7 are fixed one commit each, and only then is F33 ticked.
+  **F27 is unblocked and narrowed**: the two user-line panels **do not merge** (the user,
+  2026-09-22) — `/payments` shows the current state and `/settings` adjusts, which is two jobs
+  — so both looks stand and only the state/`reset`/`openEdit`/`submit` hook is shared, which
+  is S7's 61 lines. Then F36, then **the per-worker rates and holiday lists PRD**, which the
+  user placed before `/doctor` (2026-09-22), then F32, then F37. **Stop before F32 (`/doctor`)
+  and ask** — she may want to change model for it; reaching it is not licence to start it.
+  **The nine GO/NO-GO findings are a GO** (2026-09-22), to be taken up after the next `/clear`.
+  **Ask before each commit** (said on 2026-09-18).
 - **Outside the list:** `43e0d5a` (an unanswered holiday could not be stored — a missing
   migration, now applied live) waits for the user to mark a holiday signed in and confirm.
 - **A browser failure** is checked by rerunning it alone, and against HEAD with the change
   stashed. The `auth.setup.ts` server log "The destination stream closed early" is noise.
-  `month-export.spec.ts:190` flaked once in a full run on 2026-09-22 and passed alone.
+  **The switcher flake's mechanism is known** (found 2026-09-22): `stepUntilShowing`
+  (`e2e/household.ts:84`) presses "next" **once** and then asserts, so a press that lands
+  before hydration does nothing and the assertion waits out its five seconds on the *first*
+  worker's name — which is why the failure names "האנה מונטנה Hanna Montana" and looks like
+  stale data rather than a lost click. `openSettingsGroups` twenty lines below already retries
+  for that reason. Retrying the press would end it; that is test code, not product, and it is
+  not on the Fix list. On 2026-09-22 it took `holiday-picker.spec.ts:257` out of a full run
+  (134/135) and three of a trio run, all of which passed alone.
 - **Waiting on the user**, none of which a session may answer for her:
-  1. Which household the broken one is, so she can be unstuck.
-  2. Whether F27 merges the two user-line panels at all — she picked the `/payments` look *if*
-     they merge, and questioned the merge, since `/payments` shows current state and
-     `/settings` adjusts. R1.1's duplication is the state/`reset`/`openEdit`/`submit` hook
-     rather than the look, and that much can be shared with both looks left standing.
-  3. Nine findings where `specs.md` already decides and only a go/no-go is owed — marked
-     **GO/NO-GO** under "Needs the user". One answer covers all nine.
-  4. The per-worker rates and holiday lists she asked for on 2026-09-22, which owes a PRD
+  1. What a screen shows for a month the engine refuses — first entry under "Needs the user".
+     Stage 8½ removed one cause of one refusal; it did not settle how a refusal arrives, and
+     the layout's catch is a guard rather than an answer.
+  2. The per-worker rates and holiday lists she asked for on 2026-09-22, which owes a PRD
      before any code (rule 2) and is not a stage 8 item.
+
+  **Answered already, so do not ask again:** which household the broken one is — the live
+  Postgres one, and she is no longer locked out of it.
 
 ## Ground rules for every step
 
@@ -81,7 +81,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F26, F29–F31, F34–F35 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F26, F28–F31, F34–F35 done; F33's sweep run, its S1–S7 unfixed |
 
 ### How each step is run
 
@@ -428,6 +428,52 @@ exports used only in their own file; shared test setup (`balances`/`series`,
 `actionList`/`upcoming`) is a fixture to share, not a test to delete; the saved Kol Zchut
 pages repeat the site's chrome by nature.
 
+## Sweep after F28 — `knip`, `jscpd`, a read of the components, 2026-09-22
+
+F33. `npx knip` and `npx knip --production`; `npx jscpd src --min-lines 12 --min-tokens 80`
+(11 clones, 291 lines, 0.52%); then the components read for markup one component should hold.
+Findings only — each is fixed as its own commit under the list's rules.
+
+**Dead or over-exported** (`knip`, tests included, so these have no reader at all)
+- S1 — `followsProfile` is exported and read only inside its own file — `engine/profile.ts:467`
+  — F28 added it as the one place the confirmed-month rule lives, and all three readers are in
+  that file; R0.7 un-exported 54 of these.
+- S2 — `rateKeys` and `exportBlockKeys` are exported for nobody — `datedRates.ts:37`,
+  `beforeExport.ts:325` — each is the source array its own `RateKey`/`ExportBlockKey` is
+  derived from, so the const stays and only the `export` goes.
+
+**Duplication** (`jscpd`, src only — the six test-file clones are the shared fixtures run 6
+already left, not tests to delete)
+- S3 — the amount field — `<Field>` + `inputMode="decimal"` + `dir="ltr"` +
+  `he.placeholder.amountInput` + `inputClass` — is written 13 times across five files —
+  `MonthActions.tsx:356,778,1027,1426,1715`, `WorkerOpening.tsx:146,399,410`,
+  `MonthConfirmation.tsx:215,294` (which builds `Field`'s own label markup by hand),
+  `AddWorkerSteps.tsx:657,671` — one `AmountField` in `Field.tsx`, which already holds the
+  field's shared parts (F15). **The wizard's two stay out**: they take its own `Field`, the one
+  with a `refusal` prop at the wizard's larger scale, which F24 kept apart on purpose. Eleven
+  sites, not thirteen. `MonthActions.tsx:572` stays out too — its placeholder is a percentage
+  when the mode says so.
+- S4 — the panel's save/cancel pair is written four times in one file, identical to the
+  character — `MonthActions.tsx:827,1039,1496,1727` — `outlineButtonClass` + `cancelClass` +
+  `open === "new" ? words.submit : words.save`; one `PanelButtons` inside the file changes no
+  screen. The fifth, `WorkerOpening.tsx:188`, uses the filled button and is the look question
+  F27 waits on — it stays out.
+- S5 — the money row's `.map` twice per screen — `HomeScreen.tsx:712,753`,
+  `PayslipScreen.tsx:321,350` — the withholding rows and the transfer rows draw the same row
+  from the same shape; one local `rowsOf(lines)` per screen, each keeping its own size.
+- S6 — the wizard's refusal paragraph, hand-built three times —
+  `AddWorkerSteps.tsx:180,215,691` — `Field.tsx` exports `RefusalLine`, but at 13px against
+  the wizard's 14px, so this is the wizard's own one-line component and not that one (F24
+  kept the two scales apart on purpose).
+- S7 — also seen here: `StandingLinesControl` still copies `UserLinesControl` for 61 lines,
+  the largest clone in `src` — `MonthActions.tsx:684`, `WorkerOpening.tsx:78` (the file R1.1
+  named as `WorkerTerms.tsx:507`) — F27, blocked on the look question; the state /`reset`
+  /`openEdit`/`submit` hook is the 61 lines, and the looks are not.
+
+Seen and left: `MonthActions.tsx` at 1,937 lines (R2.21, inside F27); the unwired income-tax
+scraper's five exports (F36); nine exported types read only in their own file, and the
+`scripts/` live checks and `e2e` fixtures `knip` cannot see (run 0 left both).
+
 ## Needs the user
 
 - **The household's rates never reach a month's calculation** (run 5, reproduced) — **done as
@@ -456,6 +502,19 @@ pages repeat the site's chrome by nature.
 - **A rest-day change crashes the month when a free rest day is marked** — answered
   2026-09-19: `specs.md` item 5 now says what happens, and the work is `build_plan.md`
   stage 8½, after this stage.
+- **Every refusal reaches the user as a crash and not as the sentence it was written to be**
+  (found 2026-09-22, while unblocking the rest-day bug). `InvalidMonthError` carries `refusals`,
+  each with a `message` written in Hebrew for the user to read — the sick-balance floor, the
+  holiday entitlement, two marks on one day, a free rest day on the wrong day. Nothing renders
+  any of them. `calculateMonth` throws, `calculateSeries` propagates, and the seven pages that
+  replay have no boundary: `src/app` holds no `error.tsx` and no `global-error.tsx` at all. So a
+  refusal the engine states carefully arrives as a stack trace, which is the opposite of
+  "refused with a reason and named… worth saying out loud rather than deducting in silence".
+  Stage 8½ removes one cause of one refusal; it leaves every other refusal arriving the same
+  way. **What should a screen show for a month the engine refuses — the refusal in place of the
+  figures, a card above them, something else?** `DESIGN.md` and the canvas say nothing, so this
+  is not a thing to invent (rule 4).
+
 **The nine marked GO/NO-GO below are findings `specs.md` already decides**, so each needs only
 a yes to fixing it in stage 8 or a deferral — no design question is open in any of them, and one
 answer covers all nine. Until that answer comes they stay here and off the Fix list (rule 1).
@@ -478,6 +537,10 @@ answer covers all nine. Until that answer comes they stay here and off the Fix l
   `workers/actions.ts:627`; Postgres throws unhandled, the in-memory store accepts a third.
 - **GO/NO-GO** — **`/month/export` awaits a live fetch, and no scraper has a timeout** (run 2) —
   `month/export/page.tsx:49`; spec: "a slow or broken source never delays a screen".
+  **What a failed fetch shows, answered 2026-09-22:** the cached figure, said plainly to be
+  cached because the fetch did not answer, put to her as "is it still this?" — with the option
+  to enter it by hand instead, and a way back out of that. It is the minimum wage this was
+  asked about; whether the same shape serves the other fetched figures is not settled.
 - **Rates are written to the caller's oldest household** (run 2, read only) — `saveRate`,
   `saveHolidayList` via `householdIdOf`; a member of two households can move another's figures.
   And confirming overwrites a fetched rate's source URL (`export/actions.ts:233`, unconfirmed).
@@ -649,7 +712,7 @@ figure, and each is a bug against a rule `specs.md` already states.
   the ₪515.51 a family was charged for putting the second mark in September.
 
 **F. Architecture — grilled at step 7 before any code**
-- [x] 2026-09-22 F26 — one household replay module under `cache()`, with the rates fix folded in
+- [x] 2026-09-22 `4f7dd3a` F26 — one household replay module under `cache()`, with the rates fix folded in
   — R3.1, R2.9, R5.1, R2.22's `?? SEEDED_RATES` — check: Browser, and `series.test.ts` gains the
   household whose confirmed ₪7,000 never reached its months. `src/lib/householdSeries.ts` holds
   `householdSeries` / `workerInSeries` / `monthInSeries`; ten of the twelve callers read it.
@@ -657,17 +720,21 @@ figure, and each is a bug against a rule `specs.md` already states.
   its own fetch just returned, and `taxToConfirm` walks months with the tax set aside.
   `MonthContext.rates` and `.taxBrackets` are required, with `AS_SHIPPED` the one named way to
   ask for the seed.
-- [ ] F27 — the recorded-entries module on the client — R3.4, R2.21, R1.1 — **blocked** on the
-  user-line look question.
-- [ ] F28 — the month-lifecycle module — R3.2 — **unblocked 2026-09-22**: a month with
-  `confirmedAt` is skipped by `monthsFollowingProfile` and `monthsReachedBySalaryChange`, and a
-  month corrected after confirming stays out too, because a correction is a specific one and
-  following the profile would undo it. `profile.test.ts:246` asserts the old rule and moves with
-  it — check: a confirmed month keeps its terms when the rest day, the tax mode, a standing line
-  or the salary changes, and an unconfirmed one still follows.
+- [ ] F27 — the recorded-entries module on the client — R3.4, R2.21, R1.1 — **the two panels
+  do not merge** (the user, 2026-09-22): `/payments` shows the current state and `/settings`
+  adjusts, which is two jobs. Both looks stand; what is shared is the
+  state/`reset`/`openEdit`/`submit` hook the two copy for 61 lines (S7) — check: the two
+  panels screenshot identical before and after, and `knip` reports nothing the move added.
+- [x] 2026-09-22 `be4511f` F28 — the month-lifecycle module, and the confirmed-month rule it had nowhere
+  to land — R3.2, R3.5 — `followsProfile` in `profile.ts` is the one place the rule lives, read
+  by `monthsFollowingProfile`, `monthsReachedBySalaryChange` and `strandedFreeRestDays`;
+  `src/lib/openMonth.ts` becomes `src/lib/workerMonths.ts` and absorbs the two `listMonths` +
+  `saveMonths` loops that sat in `workers/actions.ts` — check: `settings.spec.ts:292` on the
+  `filed` seed — March 2026 filed at ₪400 of supplement stays there while May moves from ₪500
+  to ₪1,000 — plus three unit tests that each fail when the predicate is neutered.
 
 **G. Last**
-- [ ] F33 — (added 2026-09-19 at the user's request) a last sweep once F19–F28 are through:
+- [ ] F33 — **swept 2026-09-22; S1–S7 in "Sweep after F28" are unfixed** — (added 2026-09-19 at the user's request) a last sweep once F19–F28 are through:
   `knip --production` for dead code, `jscpd` over `src` for copied blocks, and a read of the
   components for markup repeated where a shared component should stand. Findings go into a
   "Sweep after F28" section in rule 3's one-line form and are fixed one commit each, under
@@ -703,6 +770,6 @@ figure, and each is a bug against a rule `specs.md` already states.
 
 **Not on the list**
 - R3.3 — needs a migration, so it waits until the two unapplied migrations are live.
-- R3.5 — falls out of F28; on its own it only moves code.
+- R3.5 — fell out of F28 (2026-09-22).
 - R5.1 and R2.22's `?? SEEDED_RATES` — done inside F26, which is where making the rates
   required and fixing "the household's rates never reach a month" turned out to be one move.
