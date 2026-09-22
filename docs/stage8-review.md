@@ -10,19 +10,23 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** step 8, F25 — the stop point the user set. F1–F25 are done. F26–F28 are not approved: each is grilled with the user
-  before any code.
-- **Next:** nothing runs without the user. F26–F28 are each grilled with her first; F33 (the
-  last sweep) and then F32 come last. **Ask before each commit** (said on 2026-09-18).
+- **Last done:** 2026-09-20, F34 — the bridged rest day. F1–F25, F29–F31 and F34 are done;
+  nothing on the list is half-built.
+- **Next: F35**, then F26 with the rates fix folded into it — the order the
+  user set on 2026-09-20 when she approved all three reproduced money errors out of "Needs the
+  user". After those: F27 (still blocked on the user-line look), F28, F33, then F32. Outside
+  this file, `build_plan.md` stage 8½ is approved and not started. **Ask before each commit**
+  (said on 2026-09-18).
 - **The one uncommitted line** is always the last item's commit hash, written in after its
-  commit; it goes into the next item's commit.
+  commit; it goes into the next commit, whatever that is. F25's `0f262c8` is written in, and
+  F34's is the one owed — it goes into F35's commit.
 - **Outside the list:** `43e0d5a` (an unanswered holiday could not be stored — a missing
   migration, now applied live) waits for the user to mark a holiday signed in and confirm.
 - **A browser failure** is checked by rerunning it alone, and against HEAD with the change
   stashed. The `auth.setup.ts` server log "The destination stream closed early" is noise.
-- **Waiting on the user:** the questions under "Needs the user". Three are reproduced money
-  errors: two in sickness (run 2), and the household's rates never reaching a month (run 5).
-  None of them blocks the next step.
+- **Waiting on the user:** the questions under "Needs the user". The three reproduced money
+  errors are no longer among them — answered 2026-09-20 and on the list as F34, F35 and a
+  fold into F26. None of what is left blocks the next step.
 
 ## Ground rules for every step
 
@@ -412,7 +416,9 @@ pages repeat the site's chrome by nature.
   household's confirmed or fetched one. Reproduced: with a household minimum wage of ₪7,000
   from January 2026, a February month at ₪6,247.65 gets `belowMinimumWage` from
   `calculateMonth` but no warning from `calculateSeries` over the same table. Fixing it moves
-  figures for any household whose table departs from the seed. Fix as a bug?
+  figures for any household whose table departs from the seed. **Answered 2026-09-20: fix as a
+  bug, inside F26** — making both required on `MonthContext` is R5.1, and its compile errors land
+  on the twelve callers F26 replaces, so paying it separately would be paying it twice.
 - **A profile change restates confirmed months** (run 1). `saveProfile`
   (`workers/actions.ts:141`) re-snapshots the terms of *every* month through
   `monthsFollowingProfile` (`profile.ts:408`), which has no confirmed-month check: it was
@@ -433,11 +439,11 @@ pages repeat the site's chrome by nature.
   payslip and `/reports` link straight to it.
 - **A year with no tax table shows zero silently** (run 2 ✓) — `month.ts:448` folds `null` to 0
   with no warning; spec: "leaves the line at zero and says so".
-- **Sickness split into two spans restarts its tiers** (run 2, reproduced). 28–31 Aug + 1–3 Sep
-  as two spans: September deducts two days (−₪499.81) as a new spell; `spellsOf` sees only the
-  month's own spans. Spec: a spell crossing a month end "needs no gesture".
-- **A bridged rest day in a spell is paid** (run 2, reproduced). Sick Fri 8 + Sun 10 Aug, Sat
-  unmarked: +₪426.35 on the rest-day line, while also drawn from the balance — `counts.ts:130`.
+- **Sickness split into two spans restarts its tiers** (run 2, reproduced) — **answered
+  2026-09-20: fix as a bug, F35.** The spec already decides it ("a spell crossing the end of a
+  month needs no gesture"), so nothing was open but the approval. 28–31 Aug + 1–3 Sep as two
+  spans: September deducts two days (−₪499.81) as a new spell, because the month is handed only
+  the spans overlapping it and `spellsOf` never sees August's.
 - **A salary before the rate table is checked against today's minimum** — `salary.ts:95`
   (`atFrom ?? now`) (run 2 ✓); spec: such a month "has no figure… says nothing".
 - **The two-worker limit is not checked in `createWorker`** (run 2 ✓) —
@@ -583,11 +589,21 @@ and translation can change.
   so a shared control would have been one component with a flag for which screen it is on.
   `Field.tsx` was already common. `WorkerOpening.tsx` 461 + `WorkerTerms.tsx` 927;
   `AddWorkerSteps.tsx` 903 + `AddWorkerScreen.tsx` 364.
-- [x] 2026-09-20 F25 — `HomeScreen` and `MonthConfirmation` split along their existing sections — R5.11 —
+- [x] 2026-09-20 `0f262c8` F25 — `HomeScreen` and `MonthConfirmation` split along their existing sections — R5.11 —
   check: Browser. `HomeSections.tsx` 236 (the blockers and the balances rail) leaves
   `HomeScreen.tsx` 817; `MonthConfirmation.tsx` 734 leaves `BeforeExportScreen.tsx` 200.
 
-**E. Architecture — grilled at step 7 before any code**
+**E. Reproduced money errors** — approved 2026-09-20 out of "Needs the user"; each moves a
+figure, and each is a bug against a rule `specs.md` already states.
+- [x] 2026-09-20 `(uncommitted)` F34 — a rest day the spell bridged is not paid — `counts.ts` counts it out of
+  `restDaysWorked` by spell membership and not by the marks — check: `spell-gap.test.ts` gains
+  the rest-day line, which reads 213,175 at HEAD and 170,540 with the fix — the ₪426.35 a
+  bridged Saturday was paid while the balance drew the same day.
+- [ ] F35 — a spell is one spell across a month boundary: the series hands each month the spans
+  its spells need and not only the ones overlapping it — opens what F23 left open, and F28
+  follows — check: a spell split 28–31 Aug + 1–3 Sep costs what the one span costs.
+
+**F. Architecture — grilled at step 7 before any code**
 - [ ] F26 — one household replay module under `cache()` — R3.1, R2.9 — check: every page shows
   the same figures; the home page replays each worker once per request.
 - [ ] F27 — the recorded-entries module on the client — R3.4, R2.21, R1.1 — **blocked** on the
@@ -595,7 +611,7 @@ and translation can change.
 - [ ] F28 — the month-lifecycle module — R3.2 — waits for the answer to "a profile change
   restates confirmed months".
 
-**F. Last**
+**G. Last**
 - [ ] F33 — (added 2026-09-19 at the user's request) a last sweep once F19–F28 are through:
   `knip --production` for dead code, `jscpd` over `src` for copied blocks, and a read of the
   components for markup repeated where a shared component should stand. Findings go into a

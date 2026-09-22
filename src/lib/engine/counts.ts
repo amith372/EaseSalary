@@ -1,9 +1,11 @@
 import {
   compareIsoDate,
+  eachDate,
   everyDayOf,
   isRestEve,
   isRestDay,
 } from "@/lib/dates";
+import { spellsOf } from "@/lib/engine/sick";
 import { countsAsWorked } from "@/lib/engine/types";
 import type { ClosedMonthFacts, ClosedSpan } from "@/lib/engine/types";
 import type { IsoDate } from "@/lib/types";
@@ -107,6 +109,19 @@ export function countMonth(facts: ClosedMonthFacts): MonthCounts {
   const restEves = days.filter((date) => isRestEve(date, restDay));
   const standardDaysList = days.filter((date) => !isRestDay(date, restDay));
 
+  // **A rest day the spell bridged carries no span of its own.** The natural
+  // way to record an illness is to mark the days she was absent from work, so
+  // a family marks Friday and Sunday and leaves the Saturday between them
+  // alone — and that Saturday is a day of the period, not a day she attended
+  // (specs.md item 8). Read off the marks alone it would be paid at the
+  // rest-day rate while the balance is drawing it for the same day, which
+  // collapses two of the four separate things item 8 keeps apart. Only the
+  // rest day needs this: a gap is made of days she owed no attendance, and the
+  // other kind — a holiday she did not work — carries a span of its own.
+  const spellDays = new Set(
+    spellsOf(spans, restDay).flatMap((spell) => eachDate(spell.from, spell.to)),
+  );
+
   return {
     standardDays: standardDaysList.length,
     actualDays: standardDaysList.reduce(
@@ -124,7 +139,10 @@ export function countMonth(facts: ClosedMonthFacts): MonthCounts {
     restDays: restDays.length,
     // A free rest day is not worked (item 5), and neither is a rest day inside
     // a spell of sickness: those count toward the spell and are drawn from the
-    // balance, but are not paid (item 8). Both fall out of `notWorked`.
-    restDaysWorked: restDays.filter((date) => !notWorked(spans, date)).length,
+    // balance, but are not paid (item 8). A marked one falls out of
+    // `notWorked`; one the spell bridged falls out of `spellDays`.
+    restDaysWorked: restDays.filter(
+      (date) => !notWorked(spans, date) && !spellDays.has(date),
+    ).length,
   };
 }

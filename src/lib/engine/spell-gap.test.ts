@@ -38,6 +38,13 @@ import type { YearMonth } from "@/lib/types";
  *   two days deducted   2   × 24,990.6 = 49,981.2  -> 49,981 agorot
  *   one and a half      1.5 × 24,990.6 = 37,485.9  -> 37,486 agorot
  *
+ *   an hour   = S / 182 = 3,432.7747...           Part 5
+ *   a rest day worked = (24,990.6 + 3,432.7747...) × 1.5 = 42,635.0620...
+ *                                                          item 5, Part 5
+ *
+ *   four rest days worked  4 × 42,635.0620... = 170,540.2483... -> 170,540
+ *   five                   5 × 42,635.0620... = 213,175.3104... -> 213,175
+ *
  * August 2025 read off the calendar: Fri 1, Sat 2, Sun 3 ... Fri 8, Sat 9,
  * Sun 10, Mon 11, Tue 12, Wed 13, Thu 14 ... and Saturdays on 2, 9, 16, 23, 30.
  */
@@ -112,6 +119,12 @@ function sickDrawn(spans: ClosedSpan[]) {
   return daysUsedIn(spans, AUGUST_2025, "sick", SATURDAY);
 }
 
+function restDayPay(spans: ClosedSpan[]) {
+  return calculateMonth(facts(spans), worker).lines.find(
+    (line) => line.key === lineKeys.restDays,
+  )?.amount;
+}
+
 describe("the weekly rest day sits inside the period, not across its break", () => {
   // Friday the 8th and Sunday the 10th reported, Saturday the 9th left alone —
   // which is how a family records an illness, by marking the days she was
@@ -140,6 +153,27 @@ describe("the weekly rest day sits inside the period, not across its break", () 
     expect(sickDrawn(marked)).toBe(3);
   });
 
+  /**
+   * **The bridged Saturday is not paid** — the second of the four separate
+   * things item 8 says a rest day inside a spell does, and the one that goes
+   * wrong when the count is read off the marks instead of off the spell.
+   *
+   * August 2025 holds five Saturdays — 2, 9, 16, 23, 30 — and a rest day is
+   * paid unless she was off it (item 5), so four are paid here and the ninth
+   * is not. Reading the 9th as a day she attended would pay it at the rest-day
+   * rate while `sickDrawn` above is drawing the very same day from the sick
+   * balance: paid for and spent from the quota at once.
+   */
+  it("does not pay the bridged Saturday at the rest-day rate", () => {
+    // 4 × 42,635.0620... = 170,540.2483... -> 170,540.
+    expect(restDayPay(marked)).toBe(170540);
+
+    // Five where no spell covers a Saturday, so the assertion above is not
+    // passing against a month that pays four either way.
+    // 5 × 42,635.0620... = 213,175.3104... -> 213,175.
+    expect(restDayPay([])).toBe(213175);
+  });
+
   it("costs exactly what the same three days swept in one gesture cost", () => {
     // The property the rule exists for: what she drew and what she was paid stop
     // depending on how the days happened to be entered.
@@ -147,6 +181,10 @@ describe("the weekly rest day sits inside the period, not across its break", () 
     expect(spellsOf(marked, SATURDAY)).toEqual(spellsOf(swept, SATURDAY));
     expect(deduction(marked)).toBe(deduction(swept));
     expect(sickDrawn(marked)).toBe(sickDrawn(swept));
+    // The rest-day line is where the two readings came apart: the swept span
+    // covers the Saturday and the marks do not, so one was paid ₪426.35 more
+    // than the other for the same illness.
+    expect(restDayPay(marked)).toBe(restDayPay(swept));
   });
 
   it("still ends the spell on a working day nobody reported", () => {
