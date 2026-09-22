@@ -2,6 +2,7 @@ import {
   addDays,
   compareIsoDate,
   eachDate,
+  isoOf,
   isRestDay,
   monthOf,
   orderDates,
@@ -153,6 +154,73 @@ export function spellsOf(spans: ClosedSpan[], restDay: RestDay): SickSpell[] {
     spells.push({ from: span.from, to: span.to });
   }
   return spells;
+}
+
+/**
+ * The part of each spell that ran **before** this month, as one closed sick
+ * span apiece.
+ *
+ * A month is handed the spans that touch it, which is enough while the spell
+ * was entered as one range — a span running 29 August to 3 September reaches
+ * September whole and the tiers count from its own first day. It is not enough
+ * when the same illness was entered as two ranges, one either side of the
+ * boundary: September would see only its own, read it as a spell beginning on
+ * the 1st, and restart the tiers the spec counts from the spell's first day
+ * (specs.md item 8) — which underpays her on days four and five for no reason
+ * but how the days happened to be marked.
+ *
+ * So the walk decides the spells once over the worker's whole set and hands
+ * each month the run that led into it. **One span covering the whole of the
+ * earlier part**, rather than the spans it was made of: a spell bridges days
+ * she owed no attendance, and those days are carried by spans of other kinds
+ * (an unworked holiday) which belong to the month they fell in and must not be
+ * counted again in this one. Covering the run closed absorbs the bridging that
+ * already happened, so `spellsOf` below joins it to the month's own spans with
+ * no gap left to bridge.
+ *
+ * Every day of it falls before the month, so nothing that reads the month's
+ * spans by date sees it at all; only the tiers, which count from the spell's
+ * first day wherever that day fell, do.
+ */
+export function spellsLeadingInto(
+  spans: ClosedSpan[],
+  month: YearMonth,
+  restDay: RestDay,
+): ClosedSpan[] {
+  const monthStart = isoOf(month, 1);
+  const ordered = spans
+    .filter((span) => span.kind === "sick")
+    .map((span) => orderDates(span.from, span.to))
+    .sort((a, b) => compareIsoDate(a.from, b.from));
+
+  const carried: ClosedSpan[] = [];
+  for (const spell of spellsOf(spans, restDay)) {
+    if (compareIsoDate(spell.to, monthStart) < 0) continue;
+    // **Only the part the month has not already been handed.** A spell entered
+    // as one range reaches the month whole, and a second span over the same
+    // days would be two marks on one day — which the month refuses, and
+    // rightly (item 5). So the run stops the day before the spell's earliest
+    // span the month already holds, and where that is the spell's own first
+    // day nothing is carried at all.
+    const held = ordered.find(
+      (span) =>
+        compareIsoDate(span.from, spell.from) >= 0 &&
+        compareIsoDate(span.to, spell.to) <= 0 &&
+        compareIsoDate(span.to, monthStart) >= 0,
+    );
+    const firstHeld = held?.from ?? monthStart;
+    if (compareIsoDate(spell.from, firstHeld) >= 0) continue;
+    carried.push({
+      // Derived from the spell's own first day, so the same spell replayed
+      // twice produces the same id and a caller taking spans by id cannot end
+      // up with two of it.
+      id: `spell-before-${spell.from}`,
+      kind: "sick",
+      from: spell.from,
+      to: addDays(firstHeld, -1),
+    });
+  }
+  return carried;
 }
 
 /** One day of a spell, with the position that decides what it is worth. */

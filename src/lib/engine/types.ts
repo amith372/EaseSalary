@@ -111,7 +111,7 @@ export function clipEndOf(month: YearMonth, today?: IsoDate): IsoDate {
  * future month would otherwise hand the counting an inverted range, and a range
  * that runs backwards is the kind of thing that produces a plausible number.
  */
-function closeSpans(spans: MonthSpan[], clipAt: IsoDate): ClosedSpan[] {
+export function closeSpans(spans: MonthSpan[], clipAt: IsoDate): ClosedSpan[] {
   return spans.map((span) =>
     span.to === null
       ? { ...span, to: compareIsoDate(clipAt, span.from) < 0 ? span.from : clipAt }

@@ -2,6 +2,7 @@ import { SEEDED_RATES, rateInForce } from "@/lib/datedRates";
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
+import { lineKeys } from "@/lib/engine/lines";
 import { calculateMonth } from "@/lib/engine/month";
 import {
   createInMemoryRepository,
@@ -437,6 +438,101 @@ describe("a spell crossing a month boundary, stored once and replayed", () => {
         expect(error.month).toEqual(month(2026, 2));
       },
     );
+  });
+});
+
+/**
+ * **A spell is one spell however many ranges it was entered as** (`specs.md`
+ * item 8: the tiers are counted from the spell's own first day through to its
+ * last, across a month boundary). The family that marks the August days in
+ * August and the September days in September has recorded one illness, and it
+ * must cost what the same illness swept in one gesture costs.
+ *
+ * **Where every expected figure comes from.** Item 8's tiers, at the seeded
+ * minimum wage in force from April 2026 — there is no workbook month with a
+ * spell split across a boundary in it, which is the condition `CLAUDE.md` names
+ * for deriving on paper first.
+ *
+ *   S = ₪6,443.85 = 644,385 agorot      `datedRates.ts`, from 1.4.2026
+ *   a sick day = S / 25 = 25,775.4      item 8
+ *
+ * 28.8.2026 is a Friday and 29.8 the Saturday after it, so the spell runs:
+ *
+ *   Fri 28 Aug  day 1  nothing paid      -> a whole day taken back
+ *   Sat 29 Aug  day 2  her rest day      -> nothing taken back, position advances
+ *   Sun 30 Aug  day 3  half paid         -> half a day taken back
+ *   Mon 31 Aug  day 4  paid in full      -> nothing taken back
+ *   Tue 1 – Thu 3 Sep  days 5 to 7       -> nothing taken back
+ *
+ *   August    1 + 0 + 0.5 = 1.5 days -> 1.5 × 25,775.4 = 38,663.1 -> 38,663
+ *   September 0 days                 -> no deduction line at all
+ *
+ * **What it catches.** Handing September only the spans that overlap it: its
+ * three days are then read as a spell of their own and priced 1 + 0.5 + 0.5 =
+ * 2 days -> 2 × 25,775.4 = 51,550.8 -> ₪515.51 taken off a month that owes
+ * nothing, for no reason but where the family put the second mark.
+ */
+describe("a spell entered as two spans is one spell across the boundary", () => {
+  const AUGUST = month(2026, 8);
+  const SEPTEMBER = month(2026, 9);
+
+  const sick = (id: string, from: string, to: string): MonthSpan => ({
+    id,
+    kind: "sick",
+    from,
+    to,
+  });
+
+  /** The store hands a span to every month it touches, so the swept spell
+   * reaches both months and each half of the split one reaches its own. */
+  const split = [
+    facts(AUGUST, [sick("aug", "2026-08-28", "2026-08-31")]),
+    facts(SEPTEMBER, [sick("sep", "2026-09-01", "2026-09-03")]),
+  ];
+  const swept = [
+    facts(AUGUST, [sick("both", "2026-08-28", "2026-09-03")]),
+    facts(SEPTEMBER, [sick("both", "2026-08-28", "2026-09-03")]),
+  ];
+
+  function deductions(months: MonthFacts[]) {
+    return calculateSeries(months, HANNA)
+      .slice(-2)
+      .map(
+        (entry) =>
+          entry.result.lines.find((line) => line.key === lineKeys.sickDeduction)
+            ?.amount ?? null,
+      );
+  }
+
+  it("prices the September days as days five to seven and takes nothing back", () => {
+    expect(deductions(split)).toEqual([-38663, null]);
+  });
+
+  it("costs exactly what the same seven days swept in one gesture cost", () => {
+    // The property the rule exists for: what she was paid stops depending on
+    // how the days happened to be entered.
+    expect(deductions(split)).toEqual(deductions(swept));
+  });
+
+  it("draws the same days from the balance either way", () => {
+    // Four days in August and three in September, and no day drawn twice —
+    // the balance was already right before the fix, which is what makes the
+    // deduction above the whole of the error.
+    const [august, september] = calculateSeries(split, HANNA).slice(-2);
+    expect(balance(august, "sick").used).toBe(4);
+    expect(balance(september, "sick").used).toBe(3);
+  });
+
+  it("still restarts the tiers over a working day nobody reported", () => {
+    // Friday 4 September is a day she owed attendance on, so it ends the spell
+    // and Monday the 7th begins a new one: day 1, a whole day taken back.
+    // 1 × 25,775.4 = 25,775.4 -> 25,775. Without this the fix would be reading
+    // any two spans as one, which is the mistake in the other direction.
+    const separate = [
+      facts(AUGUST, [sick("aug", "2026-08-28", "2026-08-31")]),
+      facts(SEPTEMBER, [sick("sep", "2026-09-07", "2026-09-07")]),
+    ];
+    expect(deductions(separate)).toEqual([-38663, -25775]);
   });
 });
 

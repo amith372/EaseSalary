@@ -5,7 +5,8 @@ import { balanceOf } from "@/lib/engine/balances";
 import { holidayDaysOf } from "@/lib/engine/leave";
 import { calculateMonth } from "@/lib/engine/month";
 import { openMonthRecord, wageToCarry } from "@/lib/engine/repository";
-import { closeMonth } from "@/lib/engine/types";
+import { spellsLeadingInto } from "@/lib/engine/sick";
+import { closeMonth, closeSpans, clipEndOf } from "@/lib/engine/types";
 import type {
   Employment,
   MonthContext,
@@ -182,6 +183,11 @@ export function calculateSeries(
 
   const opened = new Map(ordered.map((facts) => [yearMonthText(facts.month), facts]));
   const spans = everySpan(ordered);
+  // The same spans with their open spells resolved, for deciding the spells
+  // alone. The months below are still handed `spans` as they stand, because an
+  // open spell is a state the screens and the export block on (item 8) and a
+  // spell closed here would hide it.
+  const closedSpans = closeSpans(spans, clipEndOf(last, today));
 
   let openingBalances: MonthContext["openingBalances"];
   let year = first.year;
@@ -193,10 +199,20 @@ export function calculateSeries(
     // boundary is one span belonging to the worker (Part 3), so what "in this
     // month" means is decided once for the whole series rather than once per
     // month by whoever assembled it.
+    //
+    // The days that touch the month, and in front of them the run each spell
+    // led in with — `spellsLeadingInto` says why the tiers need it and why it
+    // arrives as one span rather than as the spans it was entered as. The
+    // spells are read against the profile's rest day, because they are decided
+    // for the worker rather than for one month, and a month's own snapshot is
+    // what every rule below this line still reads.
     const facts = {
       ...(opened.get(yearMonthText(month)) ??
         unopenedMonth(month, worker, ordered, rates)),
-      spans: spans.filter((span) => overlapsMonth(span, month)),
+      spans: [
+        ...spellsLeadingInto(closedSpans, month, worker.restDay),
+        ...spans.filter((span) => overlapsMonth(span, month)),
+      ],
     };
     if (month.year !== year) {
       year = month.year;

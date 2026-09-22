@@ -10,23 +10,23 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-20, F34 — the bridged rest day. F1–F25, F29–F31 and F34 are done;
-  nothing on the list is half-built.
-- **Next: F35**, then F26 with the rates fix folded into it — the order the
+- **Last done:** 2026-09-22, F35 — the spell across a month boundary. F1–F25, F29–F31, F34 and
+  F35 are done; nothing on the list is half-built.
+- **Next: F26** with the rates fix folded into it — the order the
   user set on 2026-09-20 when she approved all three reproduced money errors out of "Needs the
-  user". After those: F27 (still blocked on the user-line look), F28, F33, then F32. Outside
+  user". After it: F27 (still blocked on the user-line look), F28, F33, then F32. Outside
   this file, `build_plan.md` stage 8½ is approved and not started. **Ask before each commit**
   (said on 2026-09-18).
 - **The one uncommitted line** is always the last item's commit hash, written in after its
-  commit; it goes into the next commit, whatever that is. F25's `0f262c8` is written in, and
-  F34's is the one owed — it goes into F35's commit.
+  commit; it goes into the next commit, whatever that is. F34's `decbea1` is written in, and
+  F35's is the one owed — it goes into F26's commit.
 - **Outside the list:** `43e0d5a` (an unanswered holiday could not be stored — a missing
   migration, now applied live) waits for the user to mark a holiday signed in and confirm.
 - **A browser failure** is checked by rerunning it alone, and against HEAD with the change
   stashed. The `auth.setup.ts` server log "The destination stream closed early" is noise.
 - **Waiting on the user:** the questions under "Needs the user". The three reproduced money
-  errors are no longer among them — answered 2026-09-20 and on the list as F34, F35 and a
-  fold into F26. None of what is left blocks the next step.
+  errors are no longer among them — answered 2026-09-20; F34 and F35 are done and the third is
+  a fold into F26. None of what is left blocks the next step.
 
 ## Ground rules for every step
 
@@ -60,7 +60,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F25, F29–F31 done |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F25, F29–F31, F34–F35 done |
 
 ### How each step is run
 
@@ -440,7 +440,7 @@ pages repeat the site's chrome by nature.
 - **A year with no tax table shows zero silently** (run 2 ✓) — `month.ts:448` folds `null` to 0
   with no warning; spec: "leaves the line at zero and says so".
 - **Sickness split into two spans restarts its tiers** (run 2, reproduced) — **answered
-  2026-09-20: fix as a bug, F35.** The spec already decides it ("a spell crossing the end of a
+  2026-09-20: fix as a bug; done as F35 on 2026-09-22.** The spec already decides it ("a spell crossing the end of a
   month needs no gesture"), so nothing was open but the approval. 28–31 Aug + 1–3 Sep as two
   spans: September deducts two days (−₪499.81) as a new spell, because the month is handed only
   the spans overlapping it and `spellsOf` never sees August's.
@@ -595,13 +595,15 @@ and translation can change.
 
 **E. Reproduced money errors** — approved 2026-09-20 out of "Needs the user"; each moves a
 figure, and each is a bug against a rule `specs.md` already states.
-- [x] 2026-09-20 `(uncommitted)` F34 — a rest day the spell bridged is not paid — `counts.ts` counts it out of
+- [x] 2026-09-20 `decbea1` F34 — a rest day the spell bridged is not paid — `counts.ts` counts it out of
   `restDaysWorked` by spell membership and not by the marks — check: `spell-gap.test.ts` gains
   the rest-day line, which reads 213,175 at HEAD and 170,540 with the fix — the ₪426.35 a
   bridged Saturday was paid while the balance drew the same day.
-- [ ] F35 — a spell is one spell across a month boundary: the series hands each month the spans
-  its spells need and not only the ones overlapping it — opens what F23 left open, and F28
-  follows — check: a spell split 28–31 Aug + 1–3 Sep costs what the one span costs.
+- [x] 2026-09-22 F35 — a spell is one spell across a month boundary: the series decides the
+  spells over the worker's whole set and hands each month the run that led into it, as one
+  closed sick span ending where the month's own spans begin — check: `series.test.ts` gains
+  the split spell, whose September reads −51,551 at HEAD and no deduction line with the fix —
+  the ₪515.51 a family was charged for putting the second mark in September.
 
 **F. Architecture — grilled at step 7 before any code**
 - [ ] F26 — one household replay module under `cache()` — R3.1, R2.9 — check: every page shows
