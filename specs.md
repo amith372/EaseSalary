@@ -192,6 +192,9 @@ Each of these is true or false at a glance.
     and if it fell on a rest-eve the supplement, and if on a rest day the rest-day
     pay. A free rest day is not an entitlement and a month without
     one is unremarkable.
+    A mark kind that no day of the selection can take is not offered, and the reason is
+    shown in its place; where some days can take it and others cannot, it is offered and
+    the skipped days are reported as above.
     A change of the weekly rest day reaches the current month and the months after it,
     and never a month before. A free rest day already marked in those months on the old
     rest day is put to the user before the change is saved, each mark on its own, with

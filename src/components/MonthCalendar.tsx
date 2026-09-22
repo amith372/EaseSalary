@@ -25,6 +25,7 @@ import {
   dayParts,
   endOf,
   holidayStateOf,
+  kindRefusedThroughout,
   partIsAllowed,
   type MarkIntent,
 } from "@/lib/spans";
@@ -461,6 +462,26 @@ export function MonthCalendar({
     partIsAllowed({ kind: "vacation", ...selection, fraction: 0.5 });
   const kindTakesPart = (kind: MarkKind) =>
     selection !== null && partIsAllowed({ kind, ...selection, fraction: part });
+  /**
+   * Why a kind is withheld from this selection, or `null` where it is offered.
+   *
+   * **The same function the server marks with** (`spans.ts`), so the picker
+   * cannot offer what `markRange` would then drop: a free rest day on a day
+   * that is not her rest day is skipped there, and a chip that was pressed,
+   * marked nothing and answered afterwards is the dead control this removes.
+   * A selection holding even one day that can take the kind still offers it,
+   * because those days are marked and the rest reported (specs.md item 8).
+   */
+  const kindWithheld = (kind: MarkKind) =>
+    selection === null
+      ? null
+      : kindRefusedThroughout(kind, selection.from, selection.to, restDay);
+  /** The first reason standing against any kind, which is the sentence the row
+   * carries. The kinds refuse for one reason each, so there is never a second
+   * to lose. */
+  const withheldReason = selection
+    ? (pickerKinds.map(kindWithheld).find((reason) => reason !== null) ?? null)
+    : null;
 
   return (
     <div
@@ -682,9 +703,11 @@ export function MonthCalendar({
           <div className="flex flex-auto flex-wrap items-center gap-2">
             {pickerKinds.map((kind, index) => {
               // A kind that cannot be taken in part is not offered while a part
-              // stands (specs.md item 7), and the sentence under the row says
-              // why rather than leaving a dead control to be puzzled over.
-              const refused = !kindTakesPart(kind);
+              // stands (specs.md item 7), and neither is one no day of the
+              // selection can take at all (items 5, 8). The sentence under the
+              // row says why rather than leaving a dead control to be puzzled
+              // over.
+              const refused = !kindTakesPart(kind) || kindWithheld(kind) !== null;
               return (
                 <button
                   key={kind}
@@ -716,6 +739,15 @@ export function MonthCalendar({
             <span dir="auto">{he.calendar.picker.cancel}</span>
           </button>
           </div>
+
+          {/* Why a kind went grey for this selection — shown whenever one is
+              withheld, and not behind the "more" button, because the user is
+              looking for the control it explains the absence of. */}
+          {withheldReason ? (
+            <span dir="auto" className="text-[13px] font-light text-ink-quiet text-pretty">
+              {he.calendar.skipped(restDay)[withheldReason]}
+            </span>
+          ) : null}
 
           {/* The second row: how much of the day was taken (specs.md item 7)
               and the note every action can carry (item 5). Both are chosen

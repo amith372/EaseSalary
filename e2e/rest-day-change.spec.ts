@@ -301,3 +301,102 @@ test.describe("a change of rest day asks about the marks it would strand (item 5
     );
   });
 });
+
+/**
+ * A kind no day of the selection can take is not offered (`specs.md` items 5,
+ * 8), which is the picker's side of the same rule the panel above answers for
+ * marks already made.
+ *
+ * **What this catches.** The picker offered all three kinds on every day, so a
+ * Friday-resting worker was shown "שישי חופשי" on a Saturday, pressed it, and
+ * got nothing marked and a skipped-day sentence afterwards — a control offered
+ * and then refused. It also catches the over-correction: a swept week holding
+ * one Friday must still offer the kind, because item 8 marks the days that can
+ * take it and reports the rest.
+ */
+test.describe("the picker withholds a kind no selected day can take (items 5, 8)", () => {
+  /** Sets the rest day to Friday on a worker with nothing marked, so the
+   * stranded panel has nothing to ask about and the change saves outright. */
+  async function restOnFriday(page: Page): Promise<void> {
+    await page.goto("/settings");
+    await switchToTestWorker(page);
+    await openSettingsGroups(page);
+    await page
+      .locator('[data-terms="restDay"]')
+      .getByRole("button", {
+        name: he.workers.profile.terms.restDay.day(FRIDAY),
+        exact: true,
+      })
+      .click();
+    await settled(page);
+    await expect(
+      page.locator('[data-terms="strandedFreeRestDays"]'),
+    ).toHaveCount(0);
+  }
+
+  /** Opens the picker over one day, as two presses on it do. */
+  async function pick(page: Page, date: string) {
+    await page.locator(`[data-date="${date}"]`).click();
+    await page.locator(`[data-date="${date}"]`).click();
+    return page.getByRole("button", {
+      name: he.calendar.marks(FRIDAY).freeRestDay,
+      exact: true,
+    });
+  }
+
+  test("greys it on a Saturday and says why, and offers it on her Friday", async ({
+    page,
+  }) => {
+    await useHousehold(page, "rest-day-change", "picker");
+    await restOnFriday(page);
+    await page.goto("/");
+    await switchToTestWorker(page);
+
+    // A Saturday: she does not rest on it, so the chip is there and dead no
+    // longer — it is greyed, with the sentence that says only Friday can be it.
+    const onSaturday = await pick(page, FREE_SATURDAY);
+    await expect(onSaturday).toBeDisabled();
+    await expect(page.getByText(he.calendar.skipped(FRIDAY).notRestDay)).toBeVisible();
+    await page.screenshot({
+      path: "test-results/picker-withholds-free-rest-day.png",
+      fullPage: true,
+    });
+
+    // Her own Friday: offered, and it marks.
+    await page.keyboard.press("Escape");
+    const onFriday = await pick(page, FRIDAY_AFTER);
+    await expect(onFriday).toBeEnabled();
+    await onFriday.click();
+    await settled(page);
+    await expect(day(page, FRIDAY_AFTER)).toContainText(
+      he.calendar.marks(FRIDAY).freeRestDay,
+    );
+  });
+
+  test("still offers it over a week that holds one Friday", async ({ page }) => {
+    await useHousehold(page, "rest-day-change", "picker-week");
+    await restOnFriday(page);
+    await page.goto("/");
+    await switchToTestWorker(page);
+
+    // 12–18 September is Saturday to Friday: six days refuse the mark and the
+    // 18th takes it, so the kind stays offered and the six are reported.
+    await page.locator(`[data-date="${FREE_SATURDAY}"]`).click();
+    await page.locator(`[data-date="${FRIDAY_AFTER}"]`).click();
+    const chip = page.getByRole("button", {
+      name: he.calendar.marks(FRIDAY).freeRestDay,
+      exact: true,
+    });
+    await expect(chip).toBeEnabled();
+    await chip.click();
+    await settled(page);
+
+    // The Friday alone carries it, and the Saturday does not.
+    await expect(day(page, FRIDAY_AFTER)).toContainText(
+      he.calendar.marks(FRIDAY).freeRestDay,
+    );
+    await expect(day(page, FREE_SATURDAY)).not.toContainText(
+      he.calendar.marks(FRIDAY).freeRestDay,
+    );
+  });
+});

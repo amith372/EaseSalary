@@ -48,6 +48,12 @@ fits without scrolling.
   nothing else teaches the second press.
 - The picker folds its part-of-day and note row behind one button, so its first
   question is only the kind.
+- A kind no day of the selection can take is drawn greyed rather than removed,
+  with one quiet line under the row saying why — a Friday-resting worker's
+  Saturday offers no free rest day. The canvas draws one worker, who rests on
+  Saturday, so it never meets the case. Greyed and not hidden, because a control
+  that vanishes leaves the user looking for it, and the row already greys a kind
+  that cannot be taken in part.
 
 ### The top bar (owed to the canvas, which draws none of it)
 

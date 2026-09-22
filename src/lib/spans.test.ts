@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { SATURDAY } from "@/lib/dates";
+import { FRIDAY, SATURDAY } from "@/lib/dates";
 import {
   applyMark,
   balanceDaysOf,
+  kindRefusedThroughout,
   markableDays,
   partIsAllowed,
   spanOverflow,
@@ -362,5 +363,79 @@ describe("an open sick spell covers every day from its first onward (item 8)", (
     expect(spans.map((s) => [s.from, s.to])).toEqual([
       ["2026-08-10", "2026-08-10"],
     ]);
+  });
+});
+
+/**
+ * **A kind no day of the selection can take is not offered** (specs.md items 5,
+ * 8). August 2026 as the rest of this file has it: the 1st is a Saturday, so
+ * the Saturdays are 1, 8, 15, 22 and 29 and the Fridays are 7, 14, 21 and 28.
+ * Every date below is read off that calendar and not off the function.
+ *
+ * **What this catches.** The picker offered all three kinds on every day, so a
+ * Friday-resting worker was shown "שבת חופשית" on a Saturday, pressed it, and
+ * got nothing marked and a skipped-day sentence after the fact. A predicate
+ * that answered for the *first* day of a range, or for any day rather than
+ * every day, would grey a swept week that does contain her rest day — which
+ * item 8 requires to be marked and its other days reported.
+ */
+describe("a kind no day of the selection can take (items 5, 8)", () => {
+  it("refuses a free rest day on a single Saturday when she rests on Friday", () => {
+    expect(
+      kindRefusedThroughout("freeRestDay", "2026-08-01", "2026-08-01", FRIDAY),
+    ).toBe("notRestDay");
+  });
+
+  it("offers it on her own Friday", () => {
+    expect(
+      kindRefusedThroughout("freeRestDay", "2026-08-07", "2026-08-07", FRIDAY),
+    ).toBeNull();
+  });
+
+  it("offers it over a week that holds one Friday, so the week's other days are reported rather than hidden", () => {
+    // 1–7 August is Saturday to Friday: six days refuse it and the 7th takes it.
+    expect(
+      kindRefusedThroughout("freeRestDay", "2026-08-01", "2026-08-07", FRIDAY),
+    ).toBeNull();
+  });
+
+  it("withholds it over a week that holds none", () => {
+    // 8–13 August is Saturday to Thursday: no Friday in it at all.
+    expect(
+      kindRefusedThroughout("freeRestDay", "2026-08-08", "2026-08-13", FRIDAY),
+    ).toBe("notRestDay");
+  });
+
+  it("is her own day and not everyone's: the same Friday is refused where she rests on Saturday", () => {
+    expect(
+      kindRefusedThroughout("freeRestDay", "2026-08-07", "2026-08-07", SATURDAY),
+    ).toBe("notRestDay");
+    expect(
+      kindRefusedThroughout("freeRestDay", "2026-08-08", "2026-08-08", SATURDAY),
+    ).toBeNull();
+  });
+
+  it("withholds a vacation day on the rest day alone, and offers it over a week", () => {
+    expect(
+      kindRefusedThroughout("vacation", "2026-08-01", "2026-08-01", SATURDAY),
+    ).toBe("weeklyRest");
+    expect(
+      kindRefusedThroughout("vacation", "2026-08-01", "2026-08-05", SATURDAY),
+    ).toBeNull();
+  });
+
+  it("never withholds sickness, which no day refuses by kind", () => {
+    expect(
+      kindRefusedThroughout("sick", "2026-08-01", "2026-08-01", SATURDAY),
+    ).toBeNull();
+  });
+
+  it("answers the same for a range drawn backwards, as a leftward drag in a right-to-left calendar is", () => {
+    expect(
+      kindRefusedThroughout("freeRestDay", "2026-08-07", "2026-08-01", FRIDAY),
+    ).toBeNull();
+    expect(
+      kindRefusedThroughout("freeRestDay", "2026-08-13", "2026-08-08", FRIDAY),
+    ).toBe("notRestDay");
   });
 });

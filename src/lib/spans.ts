@@ -226,6 +226,37 @@ export function markableDays(
   return { taken, skipped };
 }
 
+/**
+ * The reason a kind can be marked on **no** day of a selection, or `null` where
+ * at least one day would take it.
+ *
+ * **Only where no day can take it.** A range holding one Friday and six other
+ * days still takes the free rest day on the Friday, and the six are reported as
+ * skipped (specs.md item 8) — so a kind is withheld from the picker only when
+ * the whole selection refuses it, and the partial case keeps the report it
+ * already had. What this removes is the control that is offered, pressed, and
+ * marks nothing: a Friday-resting worker's Saturday.
+ *
+ * `alreadyMarked` is deliberately not consulted. It is a fact about a day and
+ * not about the kind, and a picker greyed by it would say "Saturday cannot be a
+ * free rest day" about a day that simply already carries one.
+ */
+export function kindRefusedThroughout(
+  kind: MarkKind,
+  from: IsoDate,
+  to: IsoDate,
+  restDay: RestDay,
+): SkipReason | null {
+  const range = orderDates(from, to);
+  let refusal: SkipReason | null = null;
+  for (const date of eachDate(range.from, range.to)) {
+    const refused = refusedByKind(kind, date, restDay);
+    if (!refused) return null;
+    refusal ??= refused;
+  }
+  return refusal;
+}
+
 /** The surviving days as runs of consecutive dates. */
 function runsOf(dates: IsoDate[]): { from: IsoDate; to: IsoDate }[] {
   const runs: { from: IsoDate; to: IsoDate }[] = [];
