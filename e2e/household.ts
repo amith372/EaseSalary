@@ -86,12 +86,20 @@ async function stepUntilShowing(page: Page, name: string): Promise<void> {
     name: he.header.workerSwitcher.showing,
   });
   await expect(group).toBeVisible();
-  if (!(await group.innerText()).includes(name)) {
-    await page
-      .getByRole("button", { name: he.header.workerSwitcher.next })
-      .click();
-  }
-  await expect(group).toContainText(name);
+  const next = page.getByRole("button", { name: he.header.workerSwitcher.next });
+  // **Pressed until the switcher agrees, and only while it still shows someone
+  // else.** A single press dropped before hydration left the assertion waiting
+  // out its timeout on the *first* worker's name, which reads as stale data or
+  // a dirty household rather than as a lost click — the flake that cost a rerun
+  // on most full runs. The guard inside the retry is what keeps a press React
+  // replays after hydration from stepping straight past her, since with two
+  // workers "next" wraps.
+  await expect(async () => {
+    if (!(await group.innerText()).includes(name)) {
+      await next.click();
+    }
+    await expect(group).toContainText(name, { timeout: 1500 });
+  }).toPass({ timeout: 15000 });
 }
 
 /**
