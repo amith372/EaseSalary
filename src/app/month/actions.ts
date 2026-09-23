@@ -6,10 +6,16 @@ import { getRepository, requireWorker } from "@/lib/store";
 import {
   advanceLedger,
   reviewAdvance,
+  reviewAdvanceEdit,
   whyRemovalIsRefused,
+  withUpdatedAdvance,
   withoutAdvance,
 } from "@/lib/engine/advances";
-import type { AdvanceDraft, AdvanceRefusal } from "@/lib/engine/advances";
+import type {
+  AdvanceDraft,
+  AdvanceEditDraft,
+  AdvanceRefusal,
+} from "@/lib/engine/advances";
 import {
   reviewOverride,
   withOverride,
@@ -495,6 +501,56 @@ export async function removeAdvance(
 
   return changeMonth(workerId, month, (record) =>
     withoutAdvance(record, advanceNumber, kind),
+  );
+}
+
+/**
+ * A movement corrected in place (specs.md item 20).
+ *
+ * **What the month itself recorded is edited and never overridden**, which is
+ * the division item 17 draws: the amount of an advance *is* what the user
+ * typed, so an override on it would be a second amount standing in front of the
+ * first with nothing on screen to say which is which. Removing it and recording
+ * it again is not the same gesture either — a grant would be minted a new
+ * number, and the number is what the closing block's row and the family's own
+ * workbook call the advance.
+ *
+ * **It reads the whole history, for the reason `addAdvance` gives**: what is
+ * still owed is a fact about the employment and not about the month on screen,
+ * and a correction can break the ledger from either side — a grant made smaller
+ * than what has been repaid, or a repayment made larger than the debt.
+ */
+export async function updateAdvance(
+  workerId: string,
+  month: YearMonth,
+  advanceNumber: number,
+  kind: AdvanceKind,
+  draft: AdvanceEditDraft,
+): Promise<MonthActionResult> {
+  const repository = await getRepository();
+  const profile = await requireWorker(workerId);
+  const months = await repository.listMonths(workerId);
+  const facts = months.find((candidate) => sameMonth(candidate.month, month));
+  if (facts === undefined) return { ok: false, reason: "noMonth" };
+
+  const movement = facts.advances.find(
+    (advance) => advance.number === advanceNumber && advance.kind === kind,
+  );
+  const standing = advanceLedger(profile.openingPosition, months).find(
+    (candidate) => candidate.number === advanceNumber,
+  );
+  // A page held open over a movement another tab has since removed. Refused
+  // rather than recorded again, as `updateUserLine` refuses it: she is looking
+  // at a form for something that is gone.
+  if (movement === undefined || standing === undefined) {
+    return { ok: false, reason: "entryUnknown" };
+  }
+
+  const reviewed = reviewAdvanceEdit(draft, movement, standing);
+  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+  return changeMonth(workerId, month, (record) =>
+    withUpdatedAdvance(record, reviewed.advance),
   );
 }
 

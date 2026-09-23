@@ -154,6 +154,13 @@ folded sheet.
   five forms at once were too much to take in on arrival. What is open stays
   open while the month is stepped. A heading's side item — the tax amount, the
   `לתת מקדמה` button — shows only while its section is open.
+- **A movement of an advance carries a לתקן beside its להסיר**, which the
+  canvas draws on a line the user added and not here. The amount of an advance is
+  what she typed, so it is corrected rather than overridden (`specs.md` item 20),
+  and without the action the only correction was to remove the movement and record
+  it again — which mints a grant a new number. The panel is the group's own, opened
+  under the movement it corrects and prefilled with what it holds, in the idiom the
+  line she adds already uses.
 
 ### The forms on payments, settings, the holiday picker, before the export and sign-in
 

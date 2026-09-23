@@ -13,6 +13,7 @@ import {
   setHospitalOvertime,
   setIncomeTax,
   setOverride,
+  updateAdvance,
   updateThirdPartyPayment,
   updateUserLine,
   type MonthActionRefusal,
@@ -62,7 +63,12 @@ import type {
   UserLine,
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
-import { formatAgorot, formatPercent, parseShekels } from "@/lib/money";
+import {
+  amountFieldValue,
+  formatAgorot,
+  formatPercent,
+  parseShekels,
+} from "@/lib/money";
 import type { OverrideCandidate, YearMonth } from "@/lib/types";
 
 /**
@@ -932,6 +938,21 @@ function UserLinesControl({
  * and nothing else; a repayment is chosen by pressing the button on the advance
  * it belongs to, so the number is read and never remembered (item 20).
  */
+/**
+ * Which of the three panels is open, if any: a new advance, a repayment of the
+ * advance named, or a movement the month already records, corrected in place
+ * (specs.md item 20).
+ *
+ * **A correction is addressed by the number and the kind together**, because a
+ * month may grant one advance and repay another, and a month that granted and
+ * repaid the same advance draws two rows the panel has to be able to tell
+ * apart — which is the pair `advanceKey` is built from for the same reason.
+ */
+type OpenAdvancePanel =
+  | { gesture: "grant" }
+  | { gesture: "repay"; number: number }
+  | { gesture: "edit"; number: number; kind: AdvanceKind };
+
 function AdvancesControl({
   fold,
   workerId,
@@ -945,10 +966,9 @@ function AdvancesControl({
   "workerId" | "month" | "ledger" | "monthAdvances" | "onSubmit"
 >) {
   const words = he.month.actions.advances;
-  /** `null` when nothing is open, `"granted"` for a new advance, and a number
-   * for a repayment of that advance — one panel at a time, so two half-filled
+  /** `null` when nothing is open — one panel at a time, so two half-filled
    * forms cannot both be on screen claiming the same month. */
-  const [open, setOpen] = useState<"granted" | number | null>(null);
+  const [open, setOpen] = useState<OpenAdvancePanel | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const { refusal, run, clear } = useAction(onSubmit);
@@ -960,17 +980,33 @@ function AdvancesControl({
     clear();
   }
 
+  /** The panel reopened over a movement the month already records, with what it
+   * holds already in the fields (item 20). */
+  function openEdit(advance: Advance) {
+    clear();
+    setOpen({ gesture: "edit", number: advance.number, kind: advance.kind });
+    setAmount(amountFieldValue(advance.agorot));
+    setNote(advance.note ?? "");
+  }
+
+  /** One call for all three gestures: what is open is what tells them apart,
+   * and a correction keeps the number and the kind it was opened on. */
   function submit() {
     if (open === null) return;
     run(
       () =>
-        addAdvance(
-          workerId,
-          month,
-          open === "granted"
-            ? { kind: "granted", amount, note }
-            : { kind: "repaid", number: open, amount, note },
-        ),
+        open.gesture === "edit"
+          ? updateAdvance(workerId, month, open.number, open.kind, {
+              amount,
+              note,
+            })
+          : addAdvance(
+              workerId,
+              month,
+              open.gesture === "grant"
+                ? { kind: "granted", amount, note }
+                : { kind: "repaid", number: open.number, amount, note },
+            ),
       reset,
     );
   }
@@ -998,7 +1034,13 @@ function AdvancesControl({
         onChange={setNote}
       />
       <PanelButtons
-        submitLabel={open === "granted" ? words.submitGrant : words.submitRepay}
+        submitLabel={
+          open?.gesture === "edit"
+            ? words.save
+            : open?.gesture === "grant"
+              ? words.submitGrant
+              : words.submitRepay
+        }
         onSubmit={submit}
         cancelLabel={words.cancel}
         onCancel={reset}
@@ -1015,7 +1057,7 @@ function AdvancesControl({
         open === null ? (
           <button
             type="button"
-            onClick={() => setOpen("granted")}
+            onClick={() => setOpen({ gesture: "grant" })}
             className="rounded-full border border-line-strong bg-surface px-3 py-1.5 text-[13px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
           >
             <span dir="auto">{words.grant}</span>
@@ -1024,7 +1066,7 @@ function AdvancesControl({
       }
     >
 
-      {open === "granted" ? panel : null}
+      {open?.gesture === "grant" ? panel : null}
 
       {ledger.length === 0 ? (
         <p dir="auto" className="text-[14px] font-light text-ink-quiet">
@@ -1114,7 +1156,9 @@ function AdvancesControl({
                   {canRepay ? (
                     <button
                       type="button"
-                      onClick={() => setOpen(standing.number)}
+                      onClick={() =>
+                        setOpen({ gesture: "repay", number: standing.number })
+                      }
                       aria-label={words.repayLabel(standing.number)}
                       className={`ms-auto font-medium hover:text-ink ${rowActionClass}`}
                     >
@@ -1123,7 +1167,9 @@ function AdvancesControl({
                   ) : null}
                 </div>
 
-                {open === standing.number ? panel : null}
+                {open?.gesture === "repay" && open.number === standing.number
+                  ? panel
+                  : null}
 
                 {here.length > 0 ? (
                   <ul className="flex flex-col gap-1.5 border-t border-line pt-1.5">
@@ -1145,12 +1191,23 @@ function AdvancesControl({
                           <span dir="auto">{words.thisMonth}</span>
                           <button
                             type="button"
+                            onClick={() => openEdit(advance)}
+                            aria-label={words.editLabel(
+                              standing.number,
+                              advance.kind,
+                            )}
+                            className={`ms-auto font-medium hover:text-ink ${rowActionClass}`}
+                          >
+                            <span dir="auto">{words.edit}</span>
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => remove(standing.number, advance.kind)}
                             aria-label={words.removeLabel(
                               standing.number,
                               advance.kind,
                             )}
-                            className={`ms-auto hover:text-clay-deep ${rowActionClass}`}
+                            className={`hover:text-clay-deep ${rowActionClass}`}
                           >
                             <span dir="auto">{words.remove}</span>
                           </button>
@@ -1162,6 +1219,13 @@ function AdvancesControl({
                             <Bidi>{advance.note}</Bidi>
                           </span>
                         ) : null}
+                        {/* Opened under the movement it corrects, so the fields
+                            and the row they belong to are read together. */}
+                        {open?.gesture === "edit" &&
+                        open.number === standing.number &&
+                        open.kind === advance.kind
+                          ? panel
+                          : null}
                       </li>
                     ))}
                   </ul>

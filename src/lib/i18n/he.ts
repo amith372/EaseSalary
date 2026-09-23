@@ -1272,6 +1272,16 @@ export const he = {
         noteHint: "לא חובה, אבל זה מה שיסביר את השורה בעוד שנה",
         submitGrant: "לתת",
         submitRepay: "לפרוע",
+        /** The same panel, reopened over a movement the month already records
+         * (item 20). The amount of a movement is what she typed, so it is
+         * corrected rather than overridden — and the verb changes because the
+         * gesture does. */
+        edit: "לתקן",
+        editLabel: (advanceNumber: number, kind: AdvanceKind) =>
+          kind === "granted"
+            ? `לתקן את מקדמה ${advanceNumber} שניתנה החודש`
+            : `לתקן את הפירעון של מקדמה ${advanceNumber} החודש`,
+        save: "לשמור",
         cancel: "ביטול",
         remove: "להסיר",
         removeLabel: (advanceNumber: number, kind: AdvanceKind) =>
@@ -1465,6 +1475,11 @@ export const he = {
           "הסכום גדול ממה שנותר לפרוע מהמקדמה. פירעון מעבר לחוב אינו מקדמה — אם נוכה סכום נוסף, אפשר לרשום אותו כהורדה בשורה משלך.",
         advanceRepaidAlready:
           "כבר נרשמו פירעונות של המקדמה הזו, ולכן אי אפשר להסיר אותה עכשיו — היו נשארים החזרים של חוב שאינו קיים. צריך להסיר קודם את הפירעונות, ואז את המקדמה עצמה.",
+        /** The same state, reached by correcting the grant instead of removing
+         * it: what she needs to know here is which figure her amount is too
+         * small for, and not that an advance cannot be removed. */
+        advanceBelowRepaid:
+          "הסכום קטן ממה שכבר נפרע מהמקדמה, ולכן היו נשארים החזרים של חוב שאינו קיים. צריך לתקן או להסיר קודם את הפירעונות, ואז את סכום המקדמה.",
         /**
          * **It says "the kind you chose" rather than naming it, and that is a
          * decision.** Every other sentence in this record is a plain string, and

@@ -5,7 +5,9 @@ import {
   duplicateAdvanceMovements,
   nextAdvanceNumber,
   reviewAdvance,
+  reviewAdvanceEdit,
   whyRemovalIsRefused,
+  withUpdatedAdvance,
   withoutAdvance,
 } from "@/lib/engine/advances";
 import type { AdvanceDraft, AdvanceStanding } from "@/lib/engine/advances";
@@ -450,6 +452,137 @@ describe("removing a grant", () => {
       monthOf(february, [granted(1, 300000)]),
     ]);
     expect(whyRemovalIsRefused(unrepaid[0], granted(1, 300000))).toBeNull();
+  });
+});
+
+/**
+ * A movement is corrected **by editing the entry** (specs.md item 20): the
+ * amount of an advance is what the user typed, so there is no derived figure
+ * for an override to stand in front of.
+ *
+ * The figures are ₪3,000 given in February and ₪1,000 repaid in each of March
+ * and April — the same debt the removal group above is built on, so what each
+ * correction is allowed to reach is read off one ledger worked out by hand:
+ * principal ₪3,000, repaid ₪2,000, ₪1,000 still owed.
+ */
+describe("correcting a movement", () => {
+  const ledger = advanceLedger(opening(), [
+    monthOf(february, [granted(1, 300000)]),
+    monthOf(march, [repaid(1, 100000)]),
+    monthOf(april, [repaid(1, 100000)]),
+  ]);
+  const standing = ledger[0];
+  const edit = (amount: string, note = "") => ({ amount, note });
+
+  /** The number is the application's and the kind is the gesture: neither is in
+   * the draft, so a correction cannot turn a grant into a repayment or mint a
+   * second debt. */
+  it("keeps the number and the kind, and takes the new amount and reason", () => {
+    const reviewed = reviewAdvanceEdit(
+      edit("2500", "  תוקן: ₪2,500 ולא ₪3,000  "),
+      granted(1, 300000),
+      standing,
+    );
+    expect(reviewed).toEqual({
+      ok: true,
+      advance: {
+        number: 1,
+        kind: "granted",
+        agorot: 250000,
+        note: "תוקן: ₪2,500 ולא ₪3,000",
+      },
+    });
+  });
+
+  it("drops a reason emptied out, rather than storing an empty one", () => {
+    const reviewed = reviewAdvanceEdit(edit("2500"), granted(1, 300000, "ישן"), standing);
+    expect(reviewed).toEqual({
+      ok: true,
+      advance: { number: 1, kind: "granted", agorot: 250000 },
+    });
+  });
+
+  it("refuses an amount that is not one, a minus, and zero", () => {
+    for (const amount of ["", "כן", "-100", "0"]) {
+      expect(reviewAdvanceEdit(edit(amount), granted(1, 300000), standing)).toEqual({
+        ok: false,
+        reason: "amount",
+      });
+    }
+  });
+
+  /** ₪2,000 has been repaid, so the grant may come down to ₪2,000 and no
+   * further — below it the advance owes a negative balance, which is the state
+   * item 20 refuses whichever gesture reaches it. */
+  it("refuses a grant corrected below what has already been repaid", () => {
+    expect(reviewAdvanceEdit(edit("1999.99"), granted(1, 300000), standing)).toEqual({
+      ok: false,
+      reason: "advanceBelowRepaid",
+    });
+    expect(reviewAdvanceEdit(edit("2000"), granted(1, 300000), standing)).toEqual({
+      ok: true,
+      advance: { number: 1, kind: "granted", agorot: 200000 },
+    });
+  });
+
+  /** ₪1,000 is still owed **beside** the ₪1,000 this movement itself repaid, so
+   * April's instalment may grow to ₪2,000 and no further. The comparison is
+   * against what the standing would become, because the movement being
+   * corrected is already inside the figures the ledger counted — an edit judged
+   * against the ₪1,000 outstanding alone would refuse raising it by an agora. */
+  it("refuses a repayment corrected past the debt, and takes what exactly clears it", () => {
+    expect(reviewAdvanceEdit(edit("2000.01"), repaid(1, 100000), standing)).toEqual({
+      ok: false,
+      reason: "advanceOverRepaid",
+    });
+    expect(reviewAdvanceEdit(edit("2000"), repaid(1, 100000), standing)).toEqual({
+      ok: true,
+      advance: { number: 1, kind: "repaid", agorot: 200000 },
+    });
+  });
+
+  /** A grant raised is never refused: it only ever makes the debt larger. */
+  it("takes a grant corrected upwards", () => {
+    expect(reviewAdvanceEdit(edit("4000"), granted(1, 300000), standing)).toEqual({
+      ok: true,
+      advance: { number: 1, kind: "granted", agorot: 400000 },
+    });
+  });
+});
+
+describe("a month with a movement corrected", () => {
+  const month = {
+    advances: [granted(1, 300000), repaid(1, 100000), repaid(2, 50000)],
+    overrides: {
+      [advanceKey(1, "repaid")]: { agorot: 90000 },
+      base: { agorot: 624765 },
+    },
+  } satisfies Pick<MonthFacts, "advances" | "overrides">;
+
+  it("replaces that movement in place and leaves every other one", () => {
+    const after = withUpdatedAdvance(month, repaid(1, 120000));
+    expect(after.advances).toEqual([
+      granted(1, 300000),
+      repaid(1, 120000),
+      repaid(2, 50000),
+    ]);
+  });
+
+  /** The row keeps its key, so an override left on it would print the old
+   * figure over the corrected one, marked manual (items 17, 20). */
+  it("takes the amount the user typed over that row, and leaves every other one", () => {
+    const after = withUpdatedAdvance(month, repaid(1, 120000));
+    expect(after.overrides).toEqual({ base: { agorot: 624765 } });
+  });
+
+  it("leaves the month it was given the same object never mutated", () => {
+    withUpdatedAdvance(month, repaid(1, 120000));
+    expect(month.advances).toEqual([
+      granted(1, 300000),
+      repaid(1, 100000),
+      repaid(2, 50000),
+    ]);
+    expect(Object.keys(month.overrides)).toHaveLength(2);
   });
 });
 

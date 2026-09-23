@@ -262,6 +262,81 @@ test.describe("an advance given and repaid, walked across months (item 20)", () 
   });
 });
 
+/**
+ * **A movement is corrected by editing the entry** (specs.md item 20): its
+ * amount is what the user typed, so there is nothing derived under it for an
+ * override to replace.
+ *
+ * The seeded advance is ₪3,000 given in February 2026 and repaid at ₪1,000 in
+ * each of March, April and May, so ₪3,000 stands against it. Raising the grant
+ * to ₪3,500 therefore leaves ₪3,500 − ₪3,000 = ₪500 still owed, and lowering it
+ * to ₪2,000 would leave ₪1,000 of repayments against a debt that never existed,
+ * which is refused.
+ *
+ * **What it would catch**: the correction minting a second advance rather than
+ * editing the first, which is what removing and re-recording it does — the row
+ * would be `advance 2` and the ₪3,000 debt would still be there; the amount
+ * reaching the screen without reaching the debt, since the standing is walked
+ * from every month and not read off this one; and the ledger's own refusal not
+ * being asked at all on this path, which would let a grant fall below what has
+ * been repaid.
+ */
+test.describe("an advance corrected in place (item 20)", () => {
+  test("keeps its number, moves what is owed, and refuses a grant below what was repaid", async ({
+    page,
+  }) => {
+    await useHousehold(page, "advance-edit");
+    await page.goto("/payments");
+    await switchToTestWorker(page);
+    await openPaymentSections(page);
+    await stepBack(page, 7); // September 2026 → February 2026, where it was given
+
+    const words = he.month.actions.advances;
+    const advances = page.locator('[data-group="advances"]');
+    const advance = advances.locator('[data-advance="1"]');
+    await expect(advance).toContainText(formatAgorot(ADVANCE_PRINCIPAL));
+
+    // The grant February itself records, reopened with what it holds.
+    await advances
+      .getByRole("button", { name: words.editLabel(1, "granted") })
+      .click();
+    await advances
+      .getByRole("textbox", { name: words.amount, exact: true })
+      .fill("3500");
+    await advances
+      .getByRole("textbox", { name: words.note, exact: true })
+      .fill("תוקן: ניתנו 3,500");
+    await advances.getByRole("button", { name: words.save, exact: true }).click();
+    await settled(page);
+
+    // **The same advance and not a second one**, with ₪500 of the corrected
+    // ₪3,500 still owed against the ₪3,000 repaid in March, April and May.
+    await expect(advances.locator('[data-advance="2"]')).toHaveCount(0);
+    await expect(advance).toContainText(formatAgorot(350000));
+    await expect(advance).toContainText(formatAgorot(50000));
+    await expect(advance).toContainText("תוקן: ניתנו 3,500");
+    await expect(advance).not.toContainText(words.settled);
+
+    // ₪2,000 is less than the ₪3,000 already repaid, so it would leave
+    // repayments of a debt that never existed. Refused, and said on the screen.
+    await advances
+      .getByRole("button", { name: words.editLabel(1, "granted") })
+      .click();
+    await advances
+      .getByRole("textbox", { name: words.amount, exact: true })
+      .fill("2000");
+    await advances.getByRole("button", { name: words.save, exact: true }).click();
+    await expect(
+      page.getByText(he.month.actions.refused.advanceBelowRepaid),
+    ).toBeVisible();
+    await expect(advance).toContainText(formatAgorot(350000));
+    await page.screenshot({
+      path: "test-results/advance-corrected.png",
+      fullPage: true,
+    });
+  });
+});
+
 test.describe("a payment to a third party, corrected in place (item 16)", () => {
   /**
    * **A payment records the day it was made, and is refused without one** (the

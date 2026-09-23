@@ -216,7 +216,17 @@ export type AdvanceRefusal =
   | "advanceOverRepaid"
   /** A grant removed while a later month still repays it (see
    * `whyRemovalIsRefused`). */
-  | "advanceRepaidAlready";
+  | "advanceRepaidAlready"
+  /**
+   * A grant corrected to less than what has already been repaid against it
+   * (see `reviewAdvanceEdit`).
+   *
+   * **It is the same state `advanceRepaidAlready` refuses and it is not the
+   * same sentence**, because what the user must do about it differs: there she
+   * is removing the advance and is told to take the repayments off first, here
+   * she has typed a figure and needs to know which figure it is too small for.
+   */
+  | "advanceBelowRepaid";
 
 type ReviewedAdvance =
   | { ok: true; advance: Advance }
@@ -430,4 +440,94 @@ export function duplicateAdvanceMovements(
     else seen.add(key);
   }
   return [...twice.values()];
+}
+
+/**
+ * A movement being corrected (specs.md item 20). **Its number and its kind are
+ * not in it**: they are what addresses the movement, so changing either would
+ * be a different movement rather than a correction of this one — the number is
+ * the application's to mint, and a grant turned into a repayment is the grant
+ * removed and a repayment recorded.
+ */
+export interface AdvanceEditDraft {
+  amount: string;
+  note: string;
+}
+
+/**
+ * The movement as it is corrected, or the reason it cannot be (specs.md item
+ * 20). Pure, like `reviewAdvance`, so both directions of the ledger can be
+ * tested without a store.
+ *
+ * **Each of the two kinds is refused from the side its correction can break
+ * the ledger on**, and the comparison is against what the standing would
+ * *become* rather than against what it is — the movement being edited is
+ * already inside the figures the ledger counted, which is the same care
+ * `whyRemovalIsRefused` takes.
+ *
+ * A grant corrected downwards is a removal that stops part of the way: dropping
+ * February's ₪3,000 to ₪1,500 while March has repaid ₪2,000 leaves the negative
+ * balance item 20 refuses. A repayment corrected upwards is the over-repayment
+ * refused when it is first entered, arriving by the other gesture.
+ */
+export function reviewAdvanceEdit(
+  draft: AdvanceEditDraft,
+  movement: Advance,
+  standing: AdvanceStanding,
+): ReviewedAdvance {
+  const agorot = parseShekels(draft.amount);
+  // Zero is refused as it is on a new movement: a movement of nothing is not
+  // one, and removing it is the gesture that means what zero would mean.
+  if (agorot === null || agorot === 0) return { ok: false, reason: "amount" };
+
+  const corrected = agorot - movement.agorot;
+  if (
+    movement.kind === "granted" &&
+    standing.principalAgorot + corrected < standing.repaidAgorot
+  ) {
+    return { ok: false, reason: "advanceBelowRepaid" };
+  }
+  if (movement.kind === "repaid" && corrected > standing.outstandingAgorot) {
+    return { ok: false, reason: "advanceOverRepaid" };
+  }
+
+  const note = draft.note.trim();
+  return {
+    ok: true,
+    advance: {
+      number: movement.number,
+      kind: movement.kind,
+      agorot,
+      ...(note === "" ? {} : { note }),
+    },
+  };
+}
+
+/**
+ * A month with one movement corrected in place, **and any amount the user typed
+ * over that row dropped with it** (specs.md items 17, 20).
+ *
+ * The row keeps its key, so an override addressed to it would survive the
+ * correction and stand in front of the figure she just corrected — the amount
+ * on the sheet would be the old one, marked manual, with nothing on the screen
+ * to say why. No advance row is overridable (`month.ts`), so this can only
+ * reach an amount stored before that division was drawn, which is exactly the
+ * amount nobody would think to look for — the same argument
+ * `updateThirdPartyPayment` makes for a changed kind.
+ */
+export function withUpdatedAdvance<T extends WhereAdvancesLive>(
+  month: T,
+  corrected: Advance,
+): T {
+  const overrides = { ...month.overrides };
+  delete overrides[advanceKey(corrected.number, corrected.kind)];
+  return {
+    ...month,
+    advances: month.advances.map((advance) =>
+      advance.number === corrected.number && advance.kind === corrected.kind
+        ? corrected
+        : advance,
+    ),
+    overrides,
+  };
 }
