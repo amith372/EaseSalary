@@ -147,6 +147,24 @@ const INPUT =
  * `reviewNewWorker` names the field it refused and a sentence far from the
  * field it is about is a sentence the user has to hunt for.
  */
+/** A refusal in the wizard's own voice. `Field.tsx` exports `RefusalLine` for
+ * the same sentence elsewhere, but at 13px against the wizard's 14px, and the
+ * two scales are kept apart on purpose — so this is the wizard's copy and not a
+ * caller of that one.
+ *
+ * A `<span>` rather than a `<p>`, because one of the three sits inside a
+ * `<label>`, whose content model takes phrasing content only. In a flex column
+ * it lays out as the paragraph did. `role="alert"` rather than `aria-live`: the
+ * element is mounted with its sentence already in it, and a live region is only
+ * announced reliably when its content changes after it exists. */
+function WizardRefusal({ children }: { children: ReactNode }) {
+  return (
+    <span dir="auto" role="alert" className="text-[14px] text-clay-deep">
+      {children}
+    </span>
+  );
+}
+
 function Field({
   label,
   hint,
@@ -176,11 +194,7 @@ function Field({
         </span>
       ) : null}
       {children}
-      {refusal ? (
-        <span dir="auto" role="alert" className="text-[14px] text-clay-deep">
-          {refusal}
-        </span>
-      ) : null}
+      {refusal ? <WizardRefusal>{refusal}</WizardRefusal> : null}
     </label>
   );
 }
@@ -211,11 +225,7 @@ function ChoiceGroup({
         </p>
       ) : null}
       <div className="mt-1 flex flex-wrap gap-2">{children}</div>
-      {refusal ? (
-        <p dir="auto" role="alert" className="text-[14px] text-clay-deep">
-          {refusal}
-        </p>
-      ) : null}
+      {refusal ? <WizardRefusal>{refusal}</WizardRefusal> : null}
     </fieldset>
   );
 }
@@ -688,9 +698,7 @@ function OpeningQuestions({
           <span dir="auto">{advanceWords.addAdvance}</span>
         </button>
         {refusalFor("openingAdvance") ? (
-          <p dir="auto" role="alert" className="text-[14px] text-clay-deep">
-            {refusalFor("openingAdvance")}
-          </p>
+          <WizardRefusal>{refusalFor("openingAdvance")}</WizardRefusal>
         ) : null}
         <RuleLink rule="wageDeductions" />
       </fieldset>
