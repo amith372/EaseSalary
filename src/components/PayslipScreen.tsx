@@ -14,6 +14,7 @@ import { useWorkerScope } from "@/components/WorkerScope";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import type { RestDay } from "@/lib/dates";
 import { monthLevels } from "@/lib/engine/month";
+import type { ClosingLine } from "@/lib/types";
 import { bottomFigure, he } from "@/lib/i18n/he";
 import { formatAgorot, formatDays } from "@/lib/money";
 import type {
@@ -160,6 +161,21 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
   // disagree about the same month (`monthLevels`).
   const { withholdingRows, transferRows, userAfter, withholds, transfers } =
     monthLevels(result);
+  /** The withholding lines and the transfer lines are the same ruled row drawn
+   * from the same shape; only which list it is drawn from differs. */
+  const rowsOf = (lines: ClosingLine[]) =>
+    lines.map((row) => (
+      <div key={row.key} className="border-b border-line py-3.5">
+        <SummaryRow
+          {...why}
+          size="sheet"
+          label={row.label}
+          whyKey={row.key}
+          explanation={row.explanation}
+          value={<MoneyValue agorot={row.amount} manual={row.manual} size="sheet" />}
+        />
+      </div>
+    ));
 
   return (
     /* A `div` and not a `main`: the shell already provides the page's one main
@@ -318,20 +334,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                 </div>
               ) : null}
               {withholds
-                ? withholdingRows.map((row) => (
-                    <div key={row.key} className="border-b border-line py-3.5">
-                      <SummaryRow
-                        {...why}
-                  size="sheet"
-                        label={row.label}
-                        whyKey={row.key}
-                        explanation={row.explanation}
-                        value={
-                          <MoneyValue agorot={row.amount} manual={row.manual} size="sheet" />
-                        }
-                      />
-                    </div>
-                  ))
+                ? rowsOf(withholdingRows)
                 : null}
               {transfers ? (
                 <div className="border-b border-line py-3.5">
@@ -347,20 +350,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
                 </div>
               ) : null}
               {transfers
-                ? [...userAfter, ...transferRows].map((row) => (
-                    <div key={row.key} className="border-b border-line py-3.5">
-                      <SummaryRow
-                        {...why}
-                  size="sheet"
-                        label={row.label}
-                        whyKey={row.key}
-                        explanation={row.explanation}
-                        value={
-                          <MoneyValue agorot={row.amount} manual={row.manual} size="sheet" />
-                        }
-                      />
-                    </div>
-                  ))
+                ? rowsOf([...userAfter, ...transferRows])
                 : null}
               <div className="pt-4.5">
                 <SummaryRow

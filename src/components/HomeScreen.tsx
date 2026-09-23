@@ -30,6 +30,7 @@ import type { RestDay } from "@/lib/dates";
 import { monthLevels } from "@/lib/engine/month";
 import type { MonthInSeries } from "@/lib/engine/series";
 import { clipEndOf } from "@/lib/engine/types";
+import type { ClosingLine } from "@/lib/types";
 import type { MonthSpan } from "@/lib/engine/types";
 import { bottomFigure, he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
@@ -669,6 +670,21 @@ function MoneyCard({
   const why = { openWhy, onToggleWhy };
   const { withholdingRows, transferRows, userAfter, withholds, transfers } =
     monthLevels(result);
+  /** The withholding lines and the transfer lines are the same row drawn from
+   * the same shape; only which list it is drawn from differs. */
+  const rowsOf = (lines: ClosingLine[]) =>
+    lines.map((line) => (
+      <MoneyRow
+        {...why}
+        key={line.key}
+        label={line.label}
+        value={
+          <MoneyValue agorot={line.amount} chip="warm" manual={line.manual} />
+        }
+        whyKey={line.key}
+        explanation={line.explanation}
+      />
+    ));
   const thirdPartySubtotal = result.subtotals.find(
     (subtotal) => subtotal.column === "H",
   );
@@ -709,16 +725,7 @@ function MoneyCard({
             explanation={{ text: he.sheet.why.gross }}
             strong
           />
-          {withholdingRows.map((line) => (
-            <MoneyRow
-              {...why}
-              key={line.key}
-              label={line.label}
-              value={<MoneyValue agorot={line.amount} chip="warm" manual={line.manual} />}
-              whyKey={line.key}
-              explanation={line.explanation}
-            />
-          ))}
+          {rowsOf(withholdingRows)}
         </>
       ) : null}
 
@@ -750,16 +757,7 @@ function MoneyCard({
               explanation={{ text: he.month.preview.userLinesWhy }}
             />
           ) : null}
-          {transferRows.map((line) => (
-            <MoneyRow
-              {...why}
-              key={line.key}
-              label={line.label}
-              value={<MoneyValue agorot={line.amount} chip="warm" manual={line.manual} />}
-              whyKey={line.key}
-              explanation={line.explanation}
-            />
-          ))}
+          {rowsOf(transferRows)}
         </>
       ) : null}
 
