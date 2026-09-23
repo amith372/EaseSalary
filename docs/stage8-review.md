@@ -60,7 +60,12 @@ the plan table, then stops and reports to the user.
      2026-09-23), for quality and for what could be better. Report-only, like runs 0–5: it
      writes its findings into this file and changes no code, and what it proposes is put to the
      user before anything is built. It comes after the refusal card so that it reviews the
-     screens as they will stand, and before F32.
+     screens as they will stand, and before F32. **One judgment call is already waiting for
+     it:** the rate row on `/settings` now prints its stored source verbatim, which for the
+     seeded minimum wage is the workbook citation `שכר_חודשי_להאנה2026.xlsx → חודש  4.26
+     → D6`. It is the family's own file and it is the honest answer to "where did this come
+     from", but a workbook path on a settings screen was left as this review's to decide
+     rather than settled in passing (2026-09-23).
   5. **F32 (`/doctor`)**. **Stop before it and ask** — she may want to change model for it;
      reaching it is not licence to start it.
   6. **F37.**
@@ -78,12 +83,17 @@ the plan table, then stops and reports to the user.
   for that reason. Retrying the press would end it; that is test code, not product, and it is
   not on the Fix list. On 2026-09-22 it took `holiday-picker.spec.ts:257` out of a full run
   (134/135) and three of a trio run, all of which passed alone.
-- **Waiting on the user**, none of which a session may answer for her: the sign-off on the
-  per-worker rates and holiday lists PRD, which is step 1 above and cannot be written past.
+- **Waiting on the user**, none of which a session may answer for her: **step 1's own check
+  (rule 8) has not been run yet** — open `/settings`, unfold `תעריפים`, and confirm the
+  minimum-wage row says where it was read from; export a month accepting the offered wage and
+  confirm that source is still there; export another after typing a different figure and
+  confirm that one flips to `אושר על ידי המשתמש/ת`. It is committed but not pushed, and
+  nothing is pushed until she confirms. **A session does not re-run step 1 over this** — it
+  reports the check as outstanding and moves on to step 2 unless she says otherwise.
 
-  **Answered already, so do not ask again:** where stage 8¾ sits, which is step 3 above; and
-  which household the broken one is — the live
-  Postgres one, and she is no longer locked out of it.
+  **Answered already, so do not ask again:** where stage 8¾ sits, which is step 3 above; the
+  sign-off on step 1, given 2026-09-23 and built; and which household the broken one is — the
+  live Postgres one, and she is no longer locked out of it.
 
 ## Ground rules for every step
 
