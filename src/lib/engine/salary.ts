@@ -75,15 +75,22 @@ export type SalaryChangeRefusal =
  * recorded late for 2025 is checked against 2025's minimum, or a correct
  * historical figure would be refused for a law that came after it. A salary a
  * later minimum overtakes is item 3's other case — the month is floored when it
- * is confirmed and the family is told, not refused here. Where the table has no
- * row that early, today's minimum is the floor, and with neither the salary is
- * refused as uncheckable rather than accepted against nothing.
+ * is confirmed and the family is told, not refused here.
+ *
+ * **A month earlier than every row the table holds has no floor at all, and the
+ * change is accepted rather than measured against a figure that was not in force
+ * during it.** That is the dated table's own rule — such a month has no figure
+ * and the application says nothing rather than guessing one — and today's
+ * minimum is precisely the guess it forbids: it would refuse a true figure about
+ * 2024 for a law passed in 2026. Nothing is let through by it, because the floor
+ * is applied again where it actually binds: `baseForMonth` raises the month to
+ * the minimum confirmed for *it* before the export.
  */
 export function reviewSalaryChange(
   amountText: string,
   from: YearMonth | null,
   employedSince: WorkerTerms["employedSince"],
-  minimumAgorot: { atFrom: number | null; now: number | null },
+  minimumAtFromAgorot: number | null,
 ): { ok: true; change: SalaryChange } | { ok: false; reason: SalaryChangeRefusal } {
   if (from === null || compareMonth(from, monthOf(employedSince)) < 0) {
     return { ok: false, reason: "salaryFrom" };
@@ -92,8 +99,7 @@ export function reviewSalaryChange(
   const agorot = parseShekels(amountText);
   if (agorot === null || agorot === 0) return { ok: false, reason: "salary" };
 
-  const floor = minimumAgorot.atFrom ?? minimumAgorot.now;
-  if (floor === null || agorot < floor) {
+  if (minimumAtFromAgorot !== null && agorot < minimumAtFromAgorot) {
     return { ok: false, reason: "belowMinimum" };
   }
 

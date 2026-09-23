@@ -458,11 +458,12 @@ export async function setSalaryChange(
   const from = parseYearMonth(fromText.trim());
   const rates = await repository.listRates();
 
-  const reviewed = reviewSalaryChange(amountText, from, profile.employedSince, {
-    atFrom:
-      from === null ? null : (rateInForce(rates, "minimumWage", from)?.value ?? null),
-    now: (await minimumWageNow(repository))?.value ?? null,
-  });
+  const reviewed = reviewSalaryChange(
+    amountText,
+    from,
+    profile.employedSince,
+    from === null ? null : (rateInForce(rates, "minimumWage", from)?.value ?? null),
+  );
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   const updated: WorkerProfile = {

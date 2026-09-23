@@ -115,7 +115,7 @@ describe("recording a change", () => {
 });
 
 describe("what the user typed (item 3: never below the minimum wage)", () => {
-  const floors = { atFrom: WAGE_2026, now: WAGE_2026 };
+  const floors = WAGE_2026;
 
   it("accepts the minimum wage itself", () => {
     expect(
@@ -133,29 +133,19 @@ describe("what the user typed (item 3: never below the minimum wage)", () => {
     // ₪6,300 in May 2025 was above that month's ₪6,247.65 and is below today's
     // ₪6,443.85. It is a true figure about 2025 and must be recordable.
     expect(
-      reviewSalaryChange("6300", ym(2025, 5), TERMS.employedSince, {
-        atFrom: WAGE_2025,
-        now: WAGE_2026,
-      }),
+      reviewSalaryChange("6300", ym(2025, 5), TERMS.employedSince, WAGE_2025),
     ).toEqual({ ok: true, change: { from: ym(2025, 5), agorot: 630000 } });
   });
 
-  it("falls back to today's minimum where the table has no row that early", () => {
+  it("accepts where the table has no row that early, rather than judging by today's", () => {
+    // June 2024 is before the seeded table's first row, so there is no figure
+    // to judge it by. ₪6,300 is below today's ₪6,443.85, which is the reading
+    // that would refuse a true statement about 2024 for a law passed after it.
+    // The month is floored again at its own confirmation, which is where the
+    // rule binds.
     expect(
-      reviewSalaryChange("6300", ym(2024, 6), TERMS.employedSince, {
-        atFrom: null,
-        now: WAGE_2026,
-      }),
-    ).toEqual({ ok: false, reason: "belowMinimum" });
-  });
-
-  it("refuses rather than accepts when there is no minimum to check against", () => {
-    expect(
-      reviewSalaryChange("9000", ym(2026, 10), TERMS.employedSince, {
-        atFrom: null,
-        now: null,
-      }),
-    ).toEqual({ ok: false, reason: "belowMinimum" });
+      reviewSalaryChange("6300", ym(2024, 6), TERMS.employedSince, null),
+    ).toEqual({ ok: true, change: { from: ym(2024, 6), agorot: 630000 } });
   });
 
   it("refuses an amount that is not one, or zero", () => {
