@@ -46,34 +46,64 @@ export function scrapeFailed<T>(
 }
 
 /**
+ * How long a source is given to answer before the scrape is given up on
+ * (specs.md Part 3: a slow or broken source never delays a screen).
+ *
+ * **A source that never answers is a source that is down**, and the difference
+ * to the user is only how long she waits to be told so. Five seconds is the
+ * figure because the screens that scrape draw a figure the application already
+ * holds: the cached rate is right until the statute changes, so the whole value
+ * of waiting is the day the page has been rewritten — and against that, a
+ * pre-export screen that hangs on a government site is the one failure that
+ * stops the family filing at all.
+ *
+ * **It bounds one request and not a screen's whole work.** The pre-export
+ * screen reads up to three pages, the two tax ones only on a day's staleness,
+ * so a day when every source is down costs three of these one after another.
+ */
+export const SCRAPE_TIMEOUT_MS = 5000;
+
+/**
  * The request half of every scrape, and nothing else — everything that can be
  * got wrong lives in the parse the caller hands in, where a saved page can be
  * given to it instead.
  *
  * `fetchImpl` is injected so the suite never reaches the network (Part 4). A
- * thrown request and an error status are the same answer to the caller, because
- * they are the same thing to the user: the source did not give us a page. So is
- * an empty body — a 200 that carried nothing, which is what a site behind a
- * protection page or mid-deploy serves — and it is refused here once rather than
- * by every parse.
+ * thrown request, a request that ran out of time, and an error status are the
+ * same answer to the caller, because they are the same thing to the user: the
+ * source did not give us a page. So is an empty body — a 200 that carried
+ * nothing, which is what a site behind a protection page or mid-deploy serves —
+ * and it is refused here once rather than by every parse.
+ *
+ * **The timeout is asked of the signal and not of the error**, because what a
+ * runtime throws on an abort differs between them and an injected `fetchImpl`
+ * may throw anything at all: `signal.aborted` is the one answer that is the
+ * same everywhere. **The body is read inside the same attempt**, since a source
+ * that answers and then trickles is a source that did not give us a page either,
+ * and the signal covers both halves.
  */
 export async function fetchPage(
   url: string,
   fetchImpl: typeof fetch = fetch,
+  timeoutMs: number = SCRAPE_TIMEOUT_MS,
 ): Promise<Scraped<string>> {
-  let response: Response;
+  const signal = AbortSignal.timeout(timeoutMs);
+  let body: string;
   try {
-    response = await fetchImpl(url);
+    const response = await fetchImpl(url, { signal });
+    if (!response.ok) {
+      return scrapeFailed("unreachable", `status ${response.status}`);
+    }
+    body = await response.text();
   } catch (error) {
+    if (signal.aborted) {
+      return scrapeFailed("unreachable", `no answer within ${timeoutMs}ms`);
+    }
     return scrapeFailed(
       "unreachable",
       error instanceof Error ? error.message : "request failed",
     );
   }
-  if (!response.ok) {
-    return scrapeFailed("unreachable", `status ${response.status}`);
-  }
-  const body = await response.text();
   if (body.trim() === "") return scrapeFailed("unreachable", "empty body");
   return { ok: true, value: body };
 }
