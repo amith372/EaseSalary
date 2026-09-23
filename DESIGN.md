@@ -175,6 +175,13 @@ folded sheet.
   inset `bg-ground` card in the idiom of the rows around it, rather than as a
   screen or a dialog of its own — the question belongs where the change is being
   made, and a user sent elsewhere to answer it would have lost the change.
+- **A rate row carries where its figure was read from**, which the canvas does
+  not draw: `נקרא מ־` beside the figure and its date, an address as a link and a
+  figure confirmed by hand as the sentence it was stored with. It is `specs.md`
+  item 4's fourth thing, and until now the only screen that showed it was the
+  one confirming an export — so the answer to "which figure is the application
+  holding, and out of where" existed nowhere the user could go and look. The
+  failed-fetch sentence before an export now sends her here for it.
 
 ### Before the export
 
@@ -189,6 +196,12 @@ folded sheet.
 - Every card that blocks or warns wears the open spell's look — the warmer
   fill and the clay dot — so a block is told from a confirmation at a glance.
   The artboard draws only the spell, since it draws no other block.
+- **A failed fetch's sentence ends in a link to `/settings#rates`**, which the
+  artboard does not draw. The sentence already said the figure shown is the last
+  one the application knows and that another may be typed; what it could not say
+  is *which* figure that is and where it came from, because this screen shows
+  only the month being exported. The link is the way to that, and the rates group
+  is where it lands.
 
 ### The reports screen
 

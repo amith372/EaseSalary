@@ -1,5 +1,10 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, TODAY } from "./household";
+import {
+  openSettingsForTestWorker,
+  openSettingsGroups,
+  switchToTestWorker,
+  TODAY,
+} from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 import { monthOf, SATURDAY } from "../src/lib/dates";
@@ -491,4 +496,107 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
       formatAgorot(RECUPERATION_PAYMENT),
     );
   });
+});
+
+/**
+ * Item 4's third thing — **where the figure was read from** — and the one way it
+ * used to be lost.
+ *
+ * `confirmMonth` writes the confirmed wage into the dated-rates table, and that
+ * table is keyed by `(key, effective_from)`: a write at a date the table already
+ * holds *replaces* the row, source and all. So confirming a month at the very
+ * figure the fetch had put there used to overwrite the address it came from with
+ * the sentence "אושר על ידי המשתמש/ת", and the first export of any month
+ * took the provenance of every later one with it.
+ *
+ * **Both branches are driven, because "never write" would pass one of them.**
+ * Confirming the offered figure must leave the source alone; typing a different
+ * one must claim it, since that figure really did come from the user.
+ *
+ * The expected strings come from `SEEDED_RATES` and from `he.ts`, neither of
+ * which is the code under test. The seeded 1.4.2026 row is cited to
+ * `שכר_חודשי_להאנה2026.xlsx` → `חודש  4.26` → D6, which is the row in force
+ * during September 2026 and therefore the one `/settings` draws.
+ */
+test.describe("a confirmation keeps where the wage came from (item 4)", () => {
+  const SEEDED_SOURCE = "שכר_חודשי_להאנה2026.xlsx";
+  const CONFIRMED_BY_HAND = "אושר על ידי המשתמש/ת";
+
+  async function wageSource(page: Page): Promise<string> {
+    // The groups all start folded, so the row is in the document and not on the
+    // screen until they are opened.
+    await openSettingsForTestWorker(page);
+    const row = page.locator('[data-setting="minimum-wage"] [data-source]');
+    await expect(row).toBeVisible();
+    return (await row.textContent()) ?? "";
+  }
+
+  test("leaves the source alone when the offered figure is confirmed", async ({
+    page,
+  }) => {
+    await useHousehold(page, "source-kept");
+
+    expect(await wageSource(page)).toContain(SEEDED_SOURCE);
+
+    await page.goto("/month/export");
+    await switchToTestWorker(page);
+    await answerEverything(page, AUGUST_AGREES);
+    await page.locator("[data-finish]").click();
+    await settled(page);
+    await expect(page.locator("[data-confirmed]")).toBeVisible();
+
+    const after = await wageSource(page);
+    expect(after).toContain(SEEDED_SOURCE);
+    expect(after).not.toContain(CONFIRMED_BY_HAND);
+
+    await page.screenshot({
+      path: "test-results/settings-wage-source.png",
+      fullPage: true,
+    });
+  });
+
+  test("claims the source when a different figure is typed", async ({ page }) => {
+    await useHousehold(page, "source-typed");
+
+    await page.goto("/month/export");
+    await switchToTestWorker(page);
+    const wage = page.locator("[data-wage]");
+    await wage.getByRole("button", { name: he.beforeExport.wage.correct }).click();
+    await page.locator("[data-wage-input]").fill("6500.00");
+    await answerEverything(page, AUGUST_AGREES);
+    await page.locator("[data-finish]").click();
+    await settled(page);
+    await expect(page.locator("[data-confirmed]")).toBeVisible();
+
+    const after = await wageSource(page);
+    expect(after).toContain(CONFIRMED_BY_HAND);
+    expect(after).not.toContain(SEEDED_SOURCE);
+  });
+});
+
+/**
+ * A failed fetch says so **and says where to look** (the user, 2026-09-23). The
+ * sentence already named the cached figure and offered the field; what it did
+ * not do was point at the one screen that says which figure that is, from when
+ * and out of where.
+ *
+ * The fetch cannot be made to fail from the browser, so this drives the link's
+ * destination rather than the failure: the rates group on `/settings` answers to
+ * the `#rates` the sentence links to, and it carries the source the sentence
+ * promises. A link into a group that had no source line is exactly the broken
+ * promise this asserts against.
+ */
+test("the rates group answers the failed-fetch link", async ({ page }) => {
+  await useHousehold(page, "rates-anchor");
+  await page.goto("/settings#rates");
+  await switchToTestWorker(page);
+  await openSettingsGroups(page);
+
+  await expect(page.locator('[data-group="rates"]')).toBeVisible();
+  await expect(
+    page.locator('[data-setting="minimum-wage"] [data-source]'),
+  ).toContainText(he.settings.readFrom);
+  await expect(
+    page.locator('[data-setting="national-insurance"] [data-source]'),
+  ).toContainText(he.settings.sourceLink);
 });

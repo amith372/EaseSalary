@@ -10,7 +10,22 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-23, **F36** — the income-tax scraper is wired. Nothing was missing but
+- **Last done:** 2026-09-23, **step 1 of the order — the rate PRD, which the user's answers
+  reduced to two fixes and no schema change.** The PRD asked four questions and each one closed
+  a branch of it: the fetched tables stay shared, the holiday lists already answer per worker
+  through `holidaySource`, the tax brackets are the state's, and the base wage above the minimum
+  — the flexibility the user was after — is `SalaryControl` on `/settings`, built since stage 7.
+  No migration, no new table, no repository change. What was left was the finding's other half:
+  `confirmMonth` now writes the wage row **only where that date does not already hold the
+  figure**, so confirming an offered wage no longer replaces the address it was fetched from
+  with "אושר על ידי המשתמש/ת" under one primary key; and the failed-fetch sentence
+  before an export now links to `/settings#rates`. **That link needed a screen to land on**, so
+  the rate rows there gained `נקרא מ־` — item 4's fourth thing, which no screen but the export
+  confirmation had ever shown. `DESIGN.md` carries both departures. Three browser tests, and the
+  source one was checked against the restored bug. The `specs.md` sentence for the rate row's
+  source was put to the user with its exact wording and approved on 2026-09-23; item 4 carries
+  it, and nothing is owed.
+  Before that, 2026-09-23, **F36** — the income-tax scraper is wired. Nothing was missing but
   the wiring: the scraper, its parser suite, the `tax_brackets` table and the `creditPointValue`
   rate key have all stood since stage 3, and `npx supabase migration list` says every local
   migration is live, so **no migration was needed**. The repository gained `listTaxBrackets`,
@@ -34,16 +49,20 @@ the plan table, then stops and reports to the user.
   put to the user with its exact wording before it is written (rule 1).
 - **The order from here, settled with the user on 2026-09-23**, and the whole of it — a session
   does the first of these that is not done, and only that one:
-  1. **The per-worker rates and holiday lists PRD.** It owes a PRD before any code (rule 2) and
-     is not a stage 8 item. Its substance is under "Needs the user" below, in the entry
-     beginning "Rates are written to the caller's oldest household".
+  1. ~~**The per-worker rate override PRD.**~~ **Done 2026-09-23** — see "Last done" above.
+     It closed as two fixes and no schema change; the override layer was not wanted.
   2. **The nine GO/NO-GO findings**, which are a **GO** (2026-09-22). They are listed under
      "Needs the user" below, each marked `GO/NO-GO`; `specs.md` already decides every one, so
      each is a fix and none is a design question.
   3. **Stage 8¾, the refusal card** — `build_plan.md` has its steps.
-  4. **F32 (`/doctor`)**. **Stop before it and ask** — she may want to change model for it;
+  4. **A review of the layout and the UI/UX methods the application uses** (asked for on
+     2026-09-23), for quality and for what could be better. Report-only, like runs 0–5: it
+     writes its findings into this file and changes no code, and what it proposes is put to the
+     user before anything is built. It comes after the refusal card so that it reviews the
+     screens as they will stand, and before F32.
+  5. **F32 (`/doctor`)**. **Stop before it and ask** — she may want to change model for it;
      reaching it is not licence to start it.
-  5. **F37.**
+  6. **F37.**
 
   **Ask before each commit** (said on 2026-09-18).
 - **Outside the list:** `43e0d5a` (an unanswered holiday could not be stored — a missing
@@ -582,6 +601,28 @@ answer covers all nine. Until that answer comes they stay here and off the Fix l
   different ones — and the user may return to the source URL at any time, entering a rate by
   hand or fetching it again.** That is a schema change, a migration and a spec change, so it
   owes a PRD before any code (`CLAUDE.md` rule 2) and does not belong in stage 8.
+
+  **Answered 2026-09-23, and it is smaller than the sentence above: the fetched tables stay
+  shared and are fetched once — what belongs to the worker is an *override* the family sets
+  where it wants to pay differently.** The holiday lists need no change at all: which list a
+  worker's year is drawn from is already hers (`holidaySource`), so one worker may take her own
+  country's list and the other a religious one out of the same shared table. The income-tax
+  brackets stay shared too — they are the state's table and do not depend on the salary; what
+  differs per worker is her own gross and her credit points, and both already come from the
+  month and the profile. A rate's **source address is kept** when a month is confirmed, and is
+  overwritten only where the figure was actually typed. Manual entry lives on `/settings`; a
+  failed fetch on the export screen says it failed and links there. **The oldest-household
+  write is not part of this** — it is `build_plan.md`'s "a person in two households puts what
+  is new into the first they joined", which the user accepted on 2026-09-18.
+
+  **Asked on 2026-09-23 and already built, so it is not work:** that the family may set a base
+  wage above the minimum, the minimum being only the automatic default. `SalaryControl` on
+  `/settings` (`SettingsScreen.tsx:153`) is that control — per worker, dated from a chosen
+  month, floored by the server at the minimum in force in that month
+  (`workers/actions.ts:451`). **That it was looked for elsewhere is a finding for the UI/UX
+  review**, step 4 of the order: the wage the family sets sits in the `העסקה` group and the
+  minimum it is floored by sits in `תעריפים` further down, so the relation between the
+  two figures is not visible on the screen that holds both.
 - **GO/NO-GO** — **The sheet's gendered wording is fixed** (run 2) — `he.ts:2525` `"עובד/ת"`, and the
   template's `I1`, `F1`, `G1`, `B7`, `B9` are feminine; spec 1304 fills them from the profile,
   which now has `gender`.

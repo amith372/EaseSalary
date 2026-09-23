@@ -181,10 +181,15 @@ interface MonthConfirmation {
  * it was valued at (item 15). One gesture, because they are one answer: a month
  * half-confirmed is a month that would have to say which half.
  *
- * **The confirmed wage also enters the household's rates table**, dated. A
- * figure the user typed because the fetch failed is then known the next time a
- * month is confirmed rather than typed again, and it is dated because an
- * undated figure is what that table exists to refuse (item 4).
+ * **The confirmed wage also enters the household's rates table**, dated, and
+ * only where that date does not already hold it. A figure the user typed
+ * because the fetch failed is then known the next time a month is confirmed
+ * rather than typed again, and it is dated because an undated figure is what
+ * that table exists to refuse (item 4). Confirming an offered figure writes
+ * nothing, because the row is already there and rewriting it would replace the
+ * address it was fetched from with this action's own source -- one primary key,
+ * so the write is a replacement -- and that address is what `/settings` shows
+ * and what item 4 requires every row to carry.
  *
  * **The blocks are re-checked here rather than trusted from the screen.** A
  * disabled button is a courtesy; item 18's rule is that a month *is not
@@ -216,11 +221,8 @@ export async function confirmMonth(
     return { ok: false, reason: "amount" };
   }
 
-  const owed = recuperationToConfirm(
-    facts,
-    profile,
-    await repository.listRates(),
-  );
+  const rates = await repository.listRates();
+  const owed = recuperationToConfirm(facts, profile, rates);
   let recuperationDayRateAgorot = facts.recuperationDayRateAgorot;
   if (owed !== null) {
     const typed = parseShekels(confirmation.recuperationRateText ?? "");
@@ -230,16 +232,26 @@ export async function confirmMonth(
     recuperationDayRateAgorot = typed;
   }
 
-  await repository.saveRate({
-    key: "minimumWage",
-    value: minimumAgorot,
-    effectiveFrom,
-    // Where the figure came from, which every row in that table carries. This
-    // one came from the person exporting the month, which is a source as much
-    // as an address is and is more honest than naming a page it may not have
-    // been read from.
-    source: "אושר על ידי המשתמש/ת",
-  });
+  // **The row is written only where the figure is new to that date.** Confirming
+  // an offered figure changes nothing about it, so a table whose row already
+  // holds it is left alone -- and with it the address the fetch recorded, which
+  // the same primary key would otherwise replace with the sentence below. A
+  // figure the user typed instead is hers and carries her as its source.
+  const held = rates.find(
+    (rate) => rate.key === "minimumWage" && rate.effectiveFrom === effectiveFrom,
+  );
+  if (held?.value !== minimumAgorot) {
+    await repository.saveRate({
+      key: "minimumWage",
+      value: minimumAgorot,
+      effectiveFrom,
+      // Where the figure came from, which every row in that table carries. This
+      // one came from the person exporting the month, which is a source as much
+      // as an address is and is more honest than naming a page it may not have
+      // been read from.
+      source: "אושר על ידי המשתמש/ת",
+    });
+  }
 
   await repository.saveMonth(workerId, {
     ...recordOf(facts),

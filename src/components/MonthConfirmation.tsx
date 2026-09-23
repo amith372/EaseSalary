@@ -172,9 +172,16 @@ export function MonthConfirmation({
         {failure !== null ? (
           <p
             dir="auto"
+            data-wage-failure={failure}
             className="text-[14px] leading-[1.55] font-light text-clay-deep text-pretty"
           >
-            {words.wage.failed[failure]}
+            <span>{words.wage.failed[failure]} </span>
+            <Link
+              href="/settings#rates"
+              className="font-medium underline underline-offset-2 hover:text-forest"
+            >
+              <span dir="auto">{words.wage.failedWhere}</span>
+            </Link>
           </p>
         ) : null}
         {shown.offeredWage === null ? (

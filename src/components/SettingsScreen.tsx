@@ -228,6 +228,7 @@ export function SettingsScreen({
             hint={words.rates.minimumWage.hint}
             value={minimumWage === null ? null : formatAgorot(minimumWage.value)}
             since={minimumWage?.effectiveFrom}
+            source={minimumWage?.source}
             rowKey="minimum-wage"
             derived
           />
@@ -240,6 +241,7 @@ export function SettingsScreen({
                 : percentOf(nationalInsurance.value)
             }
             since={nationalInsurance?.effectiveFrom}
+            source={nationalInsurance?.source}
             rowKey="national-insurance"
             derived
           />
@@ -524,6 +526,7 @@ function ValueRow({
   hint,
   value,
   since,
+  source,
   rowKey,
   derived = false,
 }: {
@@ -531,6 +534,10 @@ function ValueRow({
   hint: string;
   value: string | null;
   since?: string;
+  /** The stored source of a dated rate (item 4). An address becomes a link; a
+   * figure confirmed by hand carries a Hebrew sentence instead, which is shown
+   * as it is. */
+  source?: string;
   rowKey: string;
   derived?: boolean;
 }) {
@@ -564,6 +571,23 @@ function ValueRow({
             {words.derived}
           </span>
         ) : null}
+        {source === undefined ? null : (
+          <span data-source="" className="font-light text-ink-mute">
+            <span dir="auto">{words.readFrom} </span>
+            {source.startsWith("http") ? (
+              <a
+                href={source}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2 hover:text-forest"
+              >
+                <span dir="auto">{words.sourceLink}</span>
+              </a>
+            ) : (
+              <span dir="auto">{source}</span>
+            )}
+          </span>
+        )}
       </div>
     </TermRow>
   );

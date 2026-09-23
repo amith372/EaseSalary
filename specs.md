@@ -124,6 +124,17 @@ Each of these is true or false at a glance.
    what is known, and fetching is what keeps it current (Part 3); a rate the application
    has never fetched is still dated, because a seeded figure has an effective date as
    surely as a fetched one.
+   **Where a figure came from is shown on the settings screen and not only before an
+   export.** The table stores the source of every row, and the export confirmation puts it
+   in front of the user for the month being exported — but a user who wants to know which
+   figure the application is holding, from when, and out of where has no month in hand and
+   no export in progress. So each rate the settings screen draws carries its source beside
+   its date: an address as a link back to it, and a figure the user confirmed by hand as
+   the sentence it was stored with. **A confirmation that agrees with the figure already
+   held writes nothing**, because the table's row is identified by its rate and its
+   effective date alone, so a rewrite would replace the address the fetch recorded with the
+   confirmation's own source and the first export would take the provenance of every later
+   month with it.
    **The date stored is the official תאריך תחולה, which is always the first of a
    month.** A rise ordinarily applies from the first of the month after it was published,
    so that employers have time to prepare, and where it applies retroactively the notice

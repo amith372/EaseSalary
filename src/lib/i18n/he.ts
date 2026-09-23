@@ -1512,6 +1512,15 @@ export const he = {
     /** A dated rate the table has no row in force for (`rateInForce`'s `null`). */
     noRate: "אין נתון",
     since: "מ־",
+    /**
+     * Where a dated rate was read from -- item 4's fourth thing, which every
+     * row in that table carries and which no screen showed until the failed
+     * fetch on `/month/export` began sending the user here to see it. A row
+     * whose source is an address is a link; one confirmed by hand says so in
+     * words, and that sentence is the stored source itself.
+     */
+    readFrom: "נקרא מ־",
+    sourceLink: "המקור",
     employment: {
       title: "תנאי ההעסקה",
       note: "לכל עובד/ת בנפרד — כרגע מוצג/ת",
@@ -2225,6 +2234,14 @@ export const he = {
         implausible:
           "הסכום שקראנו מהאתר רחוק מדי מהשכר שהיה בתוקף עד כה, ולכן לא סמכנו עליו. הסכום למטה הוא האחרון שהיישום מכיר, ואפשר גם להקליד סכום אחר.",
       },
+      /**
+       * Beside any of the three, pointing at the rates group on `/settings`.
+       * The sentences above say the figure below is the cached one; this is
+       * where the user sees *which* figure that is, from when it took effect
+       * and where it was read from, which is the question the failure raises
+       * and which this screen answers only for the month being exported.
+       */
+      failedWhere: "לראות מהו הסכום השמור ומאיפה נקרא",
       /**
        * Item 3: a salary may sit above the minimum wage and may never sit below
        * it. So a profile still holding last year's figure does not stop the
