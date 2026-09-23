@@ -21,7 +21,7 @@ import {
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
-import { inputClass } from "@/components/Field";
+import { AmountField, inputClass } from "@/components/Field";
 import { SheetBadge } from "@/components/icons";
 import {
   yearMonthText,
@@ -201,21 +201,13 @@ export function MonthConfirmation({
         ) : null}
 
         {editingWage ? (
-          <label className="flex max-w-[280px] flex-col gap-1">
-            <span dir="auto" className="text-[13px] font-medium text-ink-warm">
-              {words.wage.amountLabel}
-            </span>
-            <input
-              type="text"
-              inputMode="decimal"
-              dir="ltr"
-              data-wage-input=""
-              value={wageText}
-              onChange={(event) => setWageText(event.target.value)}
-              placeholder={he.placeholder.amountInput}
-              className={inputClass}
-            />
-          </label>
+          <AmountField
+            label={words.wage.amountLabel}
+            fieldClassName="max-w-[280px]"
+            data-wage-input=""
+            value={wageText}
+            onChange={(event) => setWageText(event.target.value)}
+          />
         ) : null}
 
         <p
@@ -280,21 +272,13 @@ export function MonthConfirmation({
                 <span dir="auto">{he.units.days}</span>
               </span>
             </span>
-            <label className="flex max-w-[220px] flex-none flex-col gap-1">
-              <span dir="auto" className="text-[13px] font-medium text-ink-warm">
-                {words.recuperation.amountLabel}
-              </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                dir="ltr"
-                data-recuperation-input=""
-                value={rateText}
-                onChange={(event) => setRateText(event.target.value)}
-                placeholder={he.placeholder.amountInput}
-                className={inputClass}
-              />
-            </label>
+            <AmountField
+              label={words.recuperation.amountLabel}
+              fieldClassName="max-w-[220px] flex-none"
+              data-recuperation-input=""
+              value={rateText}
+              onChange={(event) => setRateText(event.target.value)}
+            />
           </div>
           {shown.recuperation.offeredAgorot === null ? (
             <p

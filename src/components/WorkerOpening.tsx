@@ -23,9 +23,16 @@ import {
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
-import { buttonClass, Field, inputClass } from "@/components/Field";
+import {
+  AmountField,
+  buttonClass,
+  Field,
+  NoteField,
+  inputClass,
+} from "@/components/Field";
 import { MoneyValue } from "@/components/MoneyValue";
 import { useAction } from "@/components/useAction";
+import { useUserLineForm } from "@/components/useUserLineForm";
 import {
   Empty,
   quietButtonClass,
@@ -34,19 +41,13 @@ import {
   type Submit,
 } from "@/components/WorkerTerms";
 import {
-  defaultPlacementFor,
-  placementOf,
   userLineDirections,
   userLinePlacements,
 } from "@/lib/engine/types";
-import type {
-  UserLine,
-  UserLineDirection,
-  UserLinePlacement,
-} from "@/lib/engine/types";
+import type { UserLine } from "@/lib/engine/types";
 import type { WorkerProfile } from "@/lib/engine/repository";
 import { he } from "@/lib/i18n/he";
-import { formatAgorot, formatDays } from "@/lib/money";
+import { formatDays } from "@/lib/money";
 
 /**
  * The lines set once on the profile that appear in every month afterwards
@@ -76,49 +77,32 @@ export function StandingLinesControl({
 }) {
   const words = he.workers.profile.terms.standing;
   const lineWords = he.month.actions.lines;
-  const [open, setOpen] = useState<"new" | string | null>(null);
-  const [label, setLabel] = useState("");
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-  const [direction, setDirection] = useState<UserLineDirection>("addition");
-  const [chosen, setChosen] = useState<UserLinePlacement | null>(null);
-  const { refusal, run, clear } = useAction(onSubmit);
-
-  const placement = chosen ?? defaultPlacementFor(direction);
-
-  function reset() {
-    setOpen(null);
-    setLabel("");
-    setAmount("");
-    setNote("");
-    setDirection("addition");
-    setChosen(null);
-    clear();
-  }
-
-  function openEdit(line: UserLine) {
-    clear();
-    setOpen(line.id);
-    setLabel(line.label);
-    setAmount(formatAgorot(line.agorot));
-    setNote(line.note ?? "");
-    setDirection(line.direction);
-    // Set rather than left to follow the direction: what is stored is what she
-    // chose, and a panel reopened to fix a typo must not move the line.
-    setChosen(placementOf(line));
-  }
-
-  function submit() {
-    if (open === null) return;
-    const draft = { label, amount, direction, placement, note };
-    run(
-      () =>
-        open === "new"
-          ? addStandingLine(workerId, draft)
-          : updateStandingLine(workerId, open, draft),
-      reset,
-    );
-  }
+  const {
+    open,
+    setOpen,
+    label,
+    setLabel,
+    amount,
+    setAmount,
+    note,
+    setNote,
+    direction,
+    setDirection,
+    placement,
+    setChosen,
+    refusal,
+    run,
+    clear,
+    reset,
+    openEdit,
+    submit,
+  } = useUserLineForm({
+    send: onSubmit,
+    save: (open, draft) =>
+      open === "new"
+        ? addStandingLine(workerId, draft)
+        : updateStandingLine(workerId, open, draft),
+  });
 
   const panel = (
     <Card
@@ -137,17 +121,12 @@ export function StandingLinesControl({
         />
       </Field>
 
-      <Field label={lineWords.amount}>
-        <input
-          type="text"
-          inputMode="decimal"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          placeholder={he.placeholder.amountInput}
-          dir="ltr"
-          className={`${inputClass} text-start`}
-        />
-      </Field>
+      <AmountField
+        label={lineWords.amount}
+        value={amount}
+        onChange={(event) => setAmount(event.target.value)}
+        className="text-start"
+      />
 
       <div className="flex flex-wrap gap-2">
         {userLineDirections.map((value) => (
@@ -173,15 +152,12 @@ export function StandingLinesControl({
         ))}
       </div>
 
-      <Field label={lineWords.note} hint={lineWords.noteHint}>
-        <input
-          type="text"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          dir="auto"
-          className={inputClass}
-        />
-      </Field>
+      <NoteField
+        label={lineWords.note}
+        hint={lineWords.noteHint}
+        value={note}
+        onChange={setNote}
+      />
 
       {refusal ? <Refusal reason={refusal} /> : null}
 
@@ -390,37 +366,24 @@ export function OpeningPositionControl({
             as="form"
             className="flex flex-col gap-2.5 px-3.5 py-3"
           >
-            <Field label={words.principal}>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={principal}
-                onChange={(event) => setPrincipal(event.target.value)}
-                placeholder={he.placeholder.amountInput}
-                dir="ltr"
-                className={`${inputClass} text-start`}
-              />
-            </Field>
-            <Field label={words.repaid} hint={words.repaidHint}>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={repaid}
-                onChange={(event) => setRepaid(event.target.value)}
-                placeholder={he.placeholder.amountInput}
-                dir="ltr"
-                className={`${inputClass} text-start`}
-              />
-            </Field>
-            <Field label={words.note}>
-              <input
-                type="text"
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-                dir="auto"
-                className={inputClass}
-              />
-            </Field>
+            <AmountField
+              label={words.principal}
+              value={principal}
+              onChange={(event) => setPrincipal(event.target.value)}
+              className="text-start"
+            />
+            <AmountField
+              label={words.repaid}
+              hint={words.repaidHint}
+              value={repaid}
+              onChange={(event) => setRepaid(event.target.value)}
+              className="text-start"
+            />
+            <NoteField
+              label={words.note}
+              value={note}
+              onChange={setNote}
+            />
             {refusal ? <Refusal reason={refusal} /> : null}
             <div className="flex items-center gap-3">
               <button

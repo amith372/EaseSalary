@@ -22,12 +22,15 @@ import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { CoveredMonths } from "@/components/CoveredMonths";
 import {
+  AmountField,
   Field,
+  NoteField,
   inputClass,
   outlineButtonClass,
   RefusalLine,
 } from "@/components/Field";
 import { useAction, type Send } from "@/components/useAction";
+import { useUserLineForm } from "@/components/useUserLineForm";
 import { RuleLink } from "@/components/WhyDisclosure";
 import { FoldSection, type Fold } from "@/components/FoldSection";
 import { MoneyValue } from "@/components/MoneyValue";
@@ -45,7 +48,6 @@ import type { TaxCorrectionUnit } from "@/lib/engine/incomeTax";
 import type { MonthIncomeTax } from "@/lib/engine/types";
 import { offeredPeriodFor } from "@/lib/engine/thirdParty";
 import {
-  defaultPlacementFor,
   placementOf,
   thirdPartyKinds,
   userLineDirections,
@@ -58,8 +60,6 @@ import type {
   ThirdPartyKind,
   ThirdPartyPayment,
   UserLine,
-  UserLineDirection,
-  UserLinePlacement,
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import { formatAgorot, formatPercent, parseShekels } from "@/lib/money";
@@ -185,6 +185,45 @@ const rowActionClass =
  * actions, without growing the button row. */
 const cancelClass =
   "-my-1 px-2 py-3 text-[14px] text-ink-quiet transition-colors hover:text-ink";
+
+/** The pair a panel ends with: the button that writes what was typed, and the
+ * one that shuts the panel without writing it. Four panels draw it, and what
+ * differs between them is the submit button's wording and, in one, whether it
+ * can be pressed at all — never the markup. The submit is `type="submit"` so
+ * Enter inside the panel works, and its own handler stops the form's default
+ * because the panel writes through an action rather than a POST. */
+function PanelButtons({
+  submitLabel,
+  onSubmit,
+  cancelLabel,
+  onCancel,
+  disabled,
+}: {
+  submitLabel: string;
+  onSubmit: () => void;
+  cancelLabel: string;
+  onCancel: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="submit"
+        disabled={disabled}
+        onClick={(event) => {
+          event.preventDefault();
+          onSubmit();
+        }}
+        className={outlineButtonClass}
+      >
+        <span dir="auto">{submitLabel}</span>
+      </button>
+      <button type="button" onClick={onCancel} className={cancelClass}>
+        <span dir="auto">{cancelLabel}</span>
+      </button>
+    </div>
+  );
+}
 
 export function MonthActions({
   workerId,
@@ -346,26 +385,17 @@ function HospitalOvertimeControl({
         className="flex flex-col gap-2.5"
       >
         <div className="grid gap-2.5 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)]">
-          <Field label={words.amount} hint={words.amountHint}>
-            <input
-              type="text"
-              inputMode="decimal"
-              dir="ltr"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-              placeholder={he.placeholder.amountInput}
-              className={inputClass}
-            />
-          </Field>
-          <Field label={words.note}>
-            <input
-              type="text"
-              dir="auto"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              className={inputClass}
-            />
-          </Field>
+          <AmountField
+            label={words.amount}
+            hint={words.amountHint}
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+          />
+          <NoteField
+            label={words.note}
+            value={note}
+            onChange={setNote}
+          />
         </div>
         <div>
           <button
@@ -682,70 +712,31 @@ function UserLinesControl({
   onSubmit,
 }: FoldProps & Pick<MonthActionsProps, "workerId" | "month" | "userLines" | "onSubmit">) {
   const words = he.month.actions.lines;
-  /** `null` when nothing is open, `"new"` for a line being added, and a line's
-   * id when that line is being corrected — one panel at a time, so two
-   * half-filled forms cannot both be on screen claiming the same month. It is
-   * `AdvancesControl`'s own shape, and for the same reason. */
-  const [open, setOpen] = useState<"new" | string | null>(null);
-  const [label, setLabel] = useState("");
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-  const [direction, setDirection] = useState<UserLineDirection>("addition");
-  // `null` until she chooses, which is what lets the chips follow the direction
-  // and then stop following it.
-  const [chosen, setChosen] = useState<UserLinePlacement | null>(null);
-  const { refusal, run, clear } = useAction(onSubmit);
-
-  const placement = chosen ?? defaultPlacementFor(direction);
-
-  /**
-   * Closes the panel and empties it, the last refusal included. It is reached
-   * both by a successful save and by the cancel button, and a refusal left
-   * standing after the panel that produced it has gone would be an error about
-   * a field the user can no longer see.
-   */
-  function reset() {
-    setOpen(null);
-    setLabel("");
-    setAmount("");
-    setNote("");
-    setDirection("addition");
-    setChosen(null);
-    clear();
-  }
-
-  /**
-   * The panel reopened over a line that already exists, with what it holds
-   * already in the fields (item 20).
-   *
-   * **The placement is set rather than left to follow the direction.** What is
-   * stored is what she chose, so a panel that let the default take it again
-   * would silently move a line she had deliberately placed, the moment she
-   * reopened it to correct a typo in its words.
-   */
-  function openEdit(line: UserLine) {
-    clear();
-    setOpen(line.id);
-    setLabel(line.label);
-    setAmount(formatAgorot(line.agorot));
-    setNote(line.note ?? "");
-    setDirection(line.direction);
-    setChosen(placementOf(line));
-  }
-
-  /** One call for both gestures: the id is what tells them apart, and the
-   * server keeps it rather than minting a new one. */
-  function submit() {
-    if (open === null) return;
-    const draft = { label, amount, direction, placement, note };
-    run(
-      () =>
-        open === "new"
-          ? addUserLine(workerId, month, draft)
-          : updateUserLine(workerId, month, open, draft),
-      reset,
-    );
-  }
+  const {
+    open,
+    setOpen,
+    label,
+    setLabel,
+    amount,
+    setAmount,
+    note,
+    setNote,
+    direction,
+    setDirection,
+    placement,
+    setChosen,
+    refusal,
+    run,
+    reset,
+    openEdit,
+    submit,
+  } = useUserLineForm({
+    send: onSubmit,
+    save: (open, draft) =>
+      open === "new"
+        ? addUserLine(workerId, month, draft)
+        : updateUserLine(workerId, month, open, draft),
+  });
 
   function remove(lineId: string) {
     run(() => removeUserLine(workerId, month, lineId));
@@ -768,17 +759,11 @@ function UserLinesControl({
         />
       </Field>
 
-      <Field label={words.amount}>
-        <input
-          type="text"
-          inputMode="decimal"
-          dir="ltr"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          placeholder={he.placeholder.amountInput}
-          className={inputClass}
-        />
-      </Field>
+      <AmountField
+        label={words.amount}
+        value={amount}
+        onChange={(event) => setAmount(event.target.value)}
+      />
 
       <div className="flex flex-wrap gap-2">
         {userLineDirections.map((candidate) => (
@@ -814,35 +799,19 @@ function UserLinesControl({
         </span>
       </div>
 
-      <Field label={words.note} hint={words.noteHint}>
-        <input
-          type="text"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          dir="auto"
-          className={inputClass}
-        />
-      </Field>
+      <NoteField
+        label={words.note}
+        hint={words.noteHint}
+        value={note}
+        onChange={setNote}
+      />
 
-      <div className="flex items-center gap-2">
-        <button
-          type="submit"
-          onClick={(event) => {
-            event.preventDefault();
-            submit();
-          }}
-          className={outlineButtonClass}
-        >
-          <span dir="auto">{open === "new" ? words.submit : words.save}</span>
-        </button>
-        <button
-          type="button"
-          onClick={reset}
-          className={cancelClass}
-        >
-          <span dir="auto">{words.cancel}</span>
-        </button>
-      </div>
+      <PanelButtons
+        submitLabel={open === "new" ? words.submit : words.save}
+        onSubmit={submit}
+        cancelLabel={words.cancel}
+        onCancel={reset}
+      />
     </Card>
   );
 
@@ -1017,47 +986,23 @@ function AdvancesControl({
       as="form"
       className="mt-1 flex flex-col gap-2.5 px-3.5 py-3"
     >
-      <Field label={words.amount}>
-        <input
-          type="text"
-          inputMode="decimal"
-          dir="ltr"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          placeholder={he.placeholder.amountInput}
-          className={inputClass}
-        />
-      </Field>
-      <Field label={words.note} hint={words.noteHint}>
-        <input
-          type="text"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          dir="auto"
-          className={inputClass}
-        />
-      </Field>
-      <div className="flex items-center gap-2">
-        <button
-          type="submit"
-          onClick={(event) => {
-            event.preventDefault();
-            submit();
-          }}
-          className={outlineButtonClass}
-        >
-          <span dir="auto">
-            {open === "granted" ? words.submitGrant : words.submitRepay}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={reset}
-          className={cancelClass}
-        >
-          <span dir="auto">{words.cancel}</span>
-        </button>
-      </div>
+      <AmountField
+        label={words.amount}
+        value={amount}
+        onChange={(event) => setAmount(event.target.value)}
+      />
+      <NoteField
+        label={words.note}
+        hint={words.noteHint}
+        value={note}
+        onChange={setNote}
+      />
+      <PanelButtons
+        submitLabel={open === "granted" ? words.submitGrant : words.submitRepay}
+        onSubmit={submit}
+        cancelLabel={words.cancel}
+        onCancel={reset}
+      />
     </Card>
   );
 
@@ -1416,17 +1361,11 @@ function ThirdPartyControl({
         </div>
       </div>
 
-      <Field label={words.amount}>
-        <input
-          type="text"
-          inputMode="decimal"
-          dir="ltr"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          placeholder={he.placeholder.amountInput}
-          className={inputClass}
-        />
-      </Field>
+      <AmountField
+        label={words.amount}
+        value={amount}
+        onChange={(event) => setAmount(event.target.value)}
+      />
 
       <div className="flex flex-col gap-1">
         <span dir="auto" className="text-[13px] font-medium text-ink-warm">
@@ -1483,36 +1422,20 @@ function ThirdPartyControl({
         </Field>
       ) : null}
 
-      <Field label={words.note} hint={words.noteHint}>
-        <input
-          type="text"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          dir="auto"
-          className={inputClass}
-        />
-      </Field>
+      <NoteField
+        label={words.note}
+        hint={words.noteHint}
+        value={note}
+        onChange={setNote}
+      />
 
-      <div className="flex items-center gap-2">
-        <button
-          type="submit"
-          disabled={kind === null}
-          onClick={(event) => {
-            event.preventDefault();
-            submit();
-          }}
-          className={outlineButtonClass}
-        >
-          <span dir="auto">{open === "new" ? words.submit : words.save}</span>
-        </button>
-        <button
-          type="button"
-          onClick={reset}
-          className={cancelClass}
-        >
-          <span dir="auto">{words.cancel}</span>
-        </button>
-      </div>
+      <PanelButtons
+        submitLabel={open === "new" ? words.submit : words.save}
+        onSubmit={submit}
+        cancelLabel={words.cancel}
+        onCancel={reset}
+        disabled={kind === null}
+      />
     </Card>
   );
 
@@ -1705,45 +1628,24 @@ function OverridesControl({
       <span dir="auto" className="text-[13px] font-medium text-ink-warm">
         {words.panelTitle}
       </span>
-      <Field label={words.amount} hint={words.amountHint}>
-        <input
-          type="text"
-          inputMode="decimal"
-          dir="ltr"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          placeholder={he.placeholder.amountInput}
-          className={inputClass}
-        />
-      </Field>
-      <Field label={words.note} hint={words.noteHint}>
-        <input
-          type="text"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          dir="auto"
-          className={inputClass}
-        />
-      </Field>
-      <div className="flex items-center gap-2">
-        <button
-          type="submit"
-          onClick={(event) => {
-            event.preventDefault();
-            save(key);
-          }}
-          className={outlineButtonClass}
-        >
-          <span dir="auto">{words.save}</span>
-        </button>
-        <button
-          type="button"
-          onClick={reset}
-          className={cancelClass}
-        >
-          <span dir="auto">{words.cancel}</span>
-        </button>
-      </div>
+      <AmountField
+        label={words.amount}
+        hint={words.amountHint}
+        value={amount}
+        onChange={(event) => setAmount(event.target.value)}
+      />
+      <NoteField
+        label={words.note}
+        hint={words.noteHint}
+        value={note}
+        onChange={setNote}
+      />
+      <PanelButtons
+        submitLabel={words.save}
+        onSubmit={() => save(key)}
+        cancelLabel={words.cancel}
+        onCancel={reset}
+      />
     </Card>
   );
 
