@@ -444,7 +444,8 @@ function buildClosing(
   // past month reproduce rather than recalculate. Below *that* is what the
   // engine works out now, and `null` there is a year the application holds no
   // bracket table for — the line stays at zero rather than withholding a number
-  // nobody can cite. No warning says so yet; that is an open question.
+  // nobody can cite, and `taxBracketsMissingWarning` says so beside the figures
+  // rather than leaving the zero to be read as an answer (spec 733).
   // The override is applied by `toClosingLine`, so the draft carries the
   // other two.
   drafts.push({
