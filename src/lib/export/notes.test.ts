@@ -90,6 +90,41 @@ describe("the notes the month's actions carry", () => {
     expect(notes["extra.phone"]).toBe("החודש בלבד");
   });
 
+  it("puts an override's note on the row whose amount it replaced", () => {
+    // The mark says the figure is manual; only the note says why, and without
+    // it the sheet carries a number that departs from the calculation with
+    // nothing beside it.
+    const notes = notesOf(
+      facts({
+        overrides: {
+          [lineKeys.restDays]: { agorot: 50000, note: "סוכם בעל פה" },
+        },
+      }),
+    );
+    expect(notes[lineKeys.restDays]).toBe("סוכם בעל פה");
+  });
+
+  it("joins an override's note with the note the same row's action carried", () => {
+    const notes = notesOf(
+      facts({
+        spans: [
+          { id: "s", kind: "sick", from: "2025-08-04", to: "2025-08-05", note: "שפעת" },
+        ],
+        overrides: {
+          [lineKeys.sickDeduction]: { agorot: 10000, note: "עיגול לפי ההסכם" },
+        },
+      }),
+    );
+    expect(notes[lineKeys.sickDeduction]).toBe("שפעת · עיגול לפי ההסכם");
+  });
+
+  it("puts the hospital overtime's note on its own row", () => {
+    const notes = notesOf(
+      facts({ hospitalOvertime: { agorot: 30000, note: "שני לילות בבית חולים" } }),
+    );
+    expect(notes[lineKeys.hospitalOvertime]).toBe("שני לילות בבית חולים");
+  });
+
   it("holds no key for an action that carried no note", () => {
     const notes = notesOf(
       facts({

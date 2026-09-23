@@ -69,6 +69,21 @@ export function notesOf(
     add(userLineKey(userLinePrefix.oneOff, line.id), line.note);
   }
 
+  // **An override's note is the one the sheet most needs**, and it was the one
+  // note the column never carried. Item 17 lets any computed amount be replaced
+  // and marks it manual; the reason it was replaced is what the mark cannot
+  // say, and a figure that departs from the calculation with nothing beside it
+  // is exactly the cell a later reader cannot reconstruct. The override is
+  // already addressed by the line's own key, so its note lands on the row whose
+  // amount it explains.
+  for (const [key, override] of Object.entries(facts.overrides)) {
+    add(key, override.note);
+  }
+
+  // The hospital overtime is a line of its own (item 20) and its note is the
+  // only thing that says what the hours were.
+  add(lineKeys.hospitalOvertime, facts.hospitalOvertime?.note);
+
   return Object.fromEntries(
     [...gathered].map(([key, notes]) => [key, notes.join(JOIN)]),
   );
