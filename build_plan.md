@@ -187,6 +187,41 @@ of rule 7 pass.
 
 ## Stage 8½ — A rest-day change and the free rest days it strands · **done** 2026-09-22
 
+## Stage 8¾ — A refused month says so, as a card above the figures
+
+`InvalidMonthError` carries a Hebrew sentence per refusal and the dates it names
+(`validate.ts`), and nothing renders any of them: `calculateMonth` throws, `calculateSeries`
+propagates, and `src/app` holds no `error.tsx`, so a sentence written for the user arrives as
+a stack trace. `specs.md` item 25 and Part 4's invalid case are the rules; the card is the
+user's answer of 2026-09-22 to how a refusal arrives.
+
+**The card sits above the month's content, and where nothing can be computed it stands alone
+with the calendar still drawn beneath it.** The calendar reads the marks and not the engine,
+so it survives the refusal — and it must, because the mark to correct is on it.
+
+1. **The card** (`src/components/RefusalCard.tsx`, strings in `he.ts`): the month it concerns,
+   one sentence per refusal, the dates each names, and the law link where the refusal carries
+   one. Two refusals in one month are two sentences and not two cards.
+2. **The screens that replay** — `/`, the payslip, `/payments`, `/reports` — catch
+   `InvalidMonthError` around the replay and draw the card in place of the figures, the
+   calendar untouched where there is one. One helper, not four inventions. The payslip and the
+   export have no calendar, so there the card is the screen. **A refusal in a past month stops
+   the replay for every later month**, so the card names its month — which is why the error
+   carries it.
+3. **`DESIGN.md`**: the departure, since the canvas draws no such card.
+4. **Tests.** Unit: the card's input built from an `InvalidMonthError` for each refusal kind.
+   Browser: mark a free rest day, change the rest day so it is stranded without answering the
+   panel, open `/` — the card names the day and the month, and the calendar still draws.
+5. **A `specs.md` sentence is owed** and is put to the user with its exact wording before it is
+   written (rule 1).
+
+**Out of scope:** changing any refusal's wording or its rules, adding refusals, and a
+general-purpose `error.tsx`, which would swallow real bugs in development. **Open:** whether
+the export file route refuses with the same card; it is not a screen.
+
+**Done when** the user puts a household into a refused state and `/`, the payslip and
+`/payments` each say what is wrong and which month, with `/` still letting her fix it.
+
 ## Stage 9 — The help screen, and a possible assistant on top of it
 
 Where the "צריך/ה עזרה?" card goes. The design draws that card on every artboard and points it
