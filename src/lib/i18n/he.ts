@@ -2,7 +2,7 @@ import { restEveOf, SATURDAY, SUNDAY, THURSDAY, FRIDAY } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import type { ExpiringDocument } from "@/lib/engine/actionList";
 import type { WarningKind } from "@/lib/engine/alerts";
-import type { AdvanceKind } from "@/lib/engine/types";
+import type { AdvanceKind, Gender } from "@/lib/engine/types";
 import { formatAgorot, formatDays } from "@/lib/money";
 
 /**
@@ -2557,16 +2557,30 @@ export const he = {
    */
   sheet: {
     /**
-     * How the sheet names the worker where a label needs a noun — the
-     * `{{worker_role}}` the template carries in four of its own sentences.
+     * The sheet's own sentences worded for the worker's gender — the four
+     * placeholders its labels carry (specs.md Part 3: wording that names the
+     * worker by gender is filled from the profile rather than fixed in the
+     * template, so a sheet never calls a man a woman).
      *
-     * **Part 3 asks for this to be filled from the profile so a sheet never
-     * calls a man a woman, and the profile has no gender field yet.** The
-     * inclusive form is what the rest of the application already writes, and it
-     * is correct rather than merely safe; it becomes a choice when the profile
-     * can hold one.
+     * **Whole words and never a suffix.** Hebrew inflects a verb in more than
+     * its ending — `שעבדה` and `שעבד` differ at the end, `אליה` and
+     * `אליו` do not — so each form is written out, as `restDayTokens`
+     * writes each day out. The inclusive `עובד/ת` the template used to carry
+     * is not among them: it was a stand-in for a profile field that did not
+     * exist yet, and a sheet that knows which it is has no reason to offer both.
      */
-    workerRole: "עובד/ת",
+    genderTokens: (gender: Gender) => ({
+      /** The noun a label needs — `ביטוח רפואי ל{{worker_role}}`. */
+      worker_role: gender === "female" ? "עובדת" : "עובד",
+      /** The definite noun, in `I1`'s instruction to the person preparing the
+       * sheet: have the worker sign it. */
+      worker_definite: gender === "female" ? "העובדת" : "העובד",
+      /** And send *her* a copy — the same sentence's pronoun. */
+      to_worker: gender === "female" ? "אליה" : "אליו",
+      /** The verb four of the day-count labels end on: the Saturdays she
+       * worked that month. */
+      worked: gender === "female" ? "שעבדה" : "שעבד",
+    }),
 
     /** The sheet's identity line, `{{passport_line}}` in `A4` — the passport
      * number item 22 says is written into it. The account number beside it

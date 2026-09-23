@@ -8,7 +8,7 @@ import { holidayDaysOf } from "@/lib/engine/leave";
 import { thirdPartyLineKey } from "@/lib/engine/thirdParty";
 import type { MonthInSeries } from "@/lib/engine/series";
 import { closeMonth } from "@/lib/engine/types";
-import type { WorkerTerms } from "@/lib/engine/types";
+import type { Gender, WorkerTerms } from "@/lib/engine/types";
 import { fillMonthSheet } from "@/lib/export/monthSheet";
 import type { MonthSheetInput } from "@/lib/export/monthSheet";
 import { notesOf } from "@/lib/export/notes";
@@ -47,6 +47,15 @@ interface MonthFileRequest {
    */
   insurer: string;
   /**
+   * Her gender, which the sheet's own sentences are worded from (Part 3: a
+   * sheet never calls a man a woman).
+   *
+   * Beside `employment` and not inside the month, for the reason `insurer` is:
+   * it is a fact about the person and not a term of one month, so correcting it
+   * corrects every sheet rather than only the months after it.
+   */
+  gender: Gender;
+  /**
    * Her passport and bank account numbers, already opened on the server
    * (specs.md item 22: the real numbers appear on her screen and in the export,
    * and nowhere else). Only the two the month sheet prints; the visa and permit
@@ -63,7 +72,6 @@ export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
     identity: {
       monthYear: monthLabel(facts.month),
       workerName: request.worker.name,
-      workerRole: he.sheet.workerRole,
       employmentStart: fullDayLabel(request.employment.employedSince),
       // Off the profile, which is where it lives: it names who the premium goes
       // to and values nothing, so no month snapshots it (specs.md item 16).
@@ -90,6 +98,10 @@ export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
     // moves the rest day in June must not thereby relabel every earlier
     // month's sheet, which is the whole reason the terms are snapshotted.
     restDayWords: he.sheet.restDayTokens(facts.terms.restDay),
+    // Off the profile, like the insurer: gender is a fact about the person and
+    // not a term of a month, so a profile corrected today corrects every sheet
+    // rather than only the months that follow it.
+    genderWords: he.sheet.genderTokens(request.gender),
     // The day the quarter's own payment left the account, read off the month's
     // stored payment rather than off the line: a line carries what the sheet
     // prices and the payment carries when it was made (specs.md item 16).

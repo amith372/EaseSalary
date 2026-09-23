@@ -60,8 +60,6 @@ export interface MonthSheetIdentity {
   /** "אוגוסט 2025" — loose text, as the sheet writes every date (Part 5). */
   monthYear: string;
   workerName: string;
-  /** How the sheet names the worker where a label needs a noun: "עובד/ת". */
-  workerRole: string;
   /** When the employment began, as text. */
   employmentStart: string;
   /**
@@ -118,6 +116,20 @@ export interface MonthSheetInput {
    * counts her Fridays and calls them Saturdays.
    */
   restDayWords: Record<string, string>;
+  /**
+   * The template's four gendered placeholders, already worded — the noun, its
+   * definite form, the pronoun and the verb the day-count labels end on.
+   *
+   * Built by the caller from the profile's gender, exactly as `restDayWords` is
+   * built from the month's rest day and for the same two reasons: the Hebrew
+   * belongs to `he.ts`, and the filler learns no words. `he.sheet.genderTokens`
+   * is the one place that builds it.
+   *
+   * Written from the *profile* and not from the month, which is where it
+   * differs from the rest day: gender is a fact about the person rather than a
+   * term of one month, so correcting it corrects every sheet (specs.md Part 3).
+   */
+  genderWords: Record<string, string>;
   /**
    * The months a national-insurance payment covers, already worded, or "" in a
    * month that settled no quarter (specs.md item 19).
@@ -248,7 +260,7 @@ export async function fillMonthSheet(
   fillPlaceholders(
     sheet,
     identity,
-    input.restDayWords,
+    { ...input.restDayWords, ...input.genderWords },
     input.niMonths,
     input.niPaidOn,
   );
@@ -585,17 +597,16 @@ function writeReporting(
 function fillPlaceholders(
   sheet: ExcelJS.Worksheet,
   identity: MonthSheetIdentity,
-  restDayWords: Record<string, string>,
+  wordedTokens: Record<string, string>,
   niMonths: string,
   niPaidOn: string,
 ): void {
   const values: Record<string, string> = {
-    ...restDayWords,
+    ...wordedTokens,
     ni_months: niMonths,
     ni_paid_on: niPaidOn,
     month_year: identity.monthYear,
     worker_name: identity.workerName,
-    worker_role: identity.workerRole,
     employment_start: identity.employmentStart,
     insurer: identity.insurer,
     employer_line: identity.employerLine ?? "",

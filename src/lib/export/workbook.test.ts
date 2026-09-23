@@ -96,6 +96,7 @@ async function filesOf() {
         },
         insurer: "סוכנות ביטוח לדוגמה",
         employment: { employedSince: worker.employedSince },
+        gender: worker.gender,
         month,
         showNotes: false,
       })

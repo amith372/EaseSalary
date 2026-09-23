@@ -87,6 +87,7 @@ async function sheetFor(restDay: RestDay): Promise<ExcelJS.Worksheet> {
       worker: { id: "w", name: "חנה", firstName: "חנה" },
       insurer: "סוכנות ביטוח לדוגמה",
       employment: { employedSince: worker.employedSince },
+      gender: worker.gender,
       month,
       showNotes: false,
     }),

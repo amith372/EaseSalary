@@ -28,6 +28,7 @@ async function sheetWith(numbers?: { passport?: string; bankAccount?: string }) 
     worker: { id: "w", name: "עובדת לדוגמה", firstName: "עובדת" },
     insurer: "",
     employment: { employedSince: worker.employedSince },
+    gender: worker.gender,
     month,
     showNotes: false,
     numbers,

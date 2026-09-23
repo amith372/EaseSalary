@@ -83,7 +83,6 @@ function inputFor(
     identity: {
       monthYear: "אוגוסט 2025",
       workerName: "חנה",
-      workerRole: "עובד/ת",
       employmentStart: "1 באפריל 2024",
       insurer: "סוכנות ביטוח לדוגמה",
     },
@@ -99,6 +98,14 @@ function inputFor(
       rest_days_definite: "השבתות",
       rest_eve_days: "ימי שישי",
       rest_eve_days_definite: "ימי השישי",
+    },
+    // Hanna is a woman, so these are the words the template carried literally
+    // before they became placeholders.
+    genderWords: {
+      worker_role: "עובדת",
+      worker_definite: "העובדת",
+      to_worker: "אליה",
+      worked: "שעבדה",
     },
     // August settled no quarter, which is the ordinary month (specs.md item
     // 19): the row's blank stays blank and the sentence reads as the family's
@@ -317,7 +324,38 @@ describe("the August 2025 month tab, filled (specs.md Part 4, criterion 1)", () 
     expect(String(sheet.getCell("C1").value)).toBe("אוגוסט 2025");
     expect(String(sheet.getCell("A3").value)).toBe("חנה");
     expect(String(sheet.getCell("F28").value)).toContain("שולם לחנה");
-    expect(String(sheet.getCell("B10").value)).toContain("ביטוח רפואי לעובד/ת");
+    expect(String(sheet.getCell("B10").value)).toContain("ביטוח רפואי לעובדת");
+  });
+
+  /**
+   * The sheet's own sentences, worded for the worker (specs.md Part 3:
+   * "Wording that names the worker by gender is filled from the profile rather
+   * than fixed in the template, so a sheet never calls a man a woman").
+   *
+   * **What this would catch**: a template cell that kept its feminine wording
+   * instead of becoming a placeholder, which prints a man a sheet calling him
+   * a woman in four of its labels and in the instruction to have him sign it —
+   * and which nothing else here looks at, because every figure on such a sheet
+   * is right.
+   */
+  it("words its own sentences for the worker's gender", async () => {
+    const male = await sheetOf(
+      inputFor(result, {
+        genderWords: {
+          worker_role: "עובד",
+          worker_definite: "העובד",
+          to_worker: "אליו",
+          worked: "שעבד",
+        },
+      }),
+    );
+
+    expect(String(male.getCell("B10").value)).toContain("ביטוח רפואי לעובד");
+    expect(String(male.getCell("F29").value)).toBe("חתימת עובד");
+    expect(String(male.getCell("G1").value)).toContain("שעבד בחודש זה");
+    expect(String(male.getCell("B9").value)).toContain("שעבד באותו חודש");
+    expect(String(male.getCell("I1").value)).toContain("להחתים  את  העובד");
+    expect(String(male.getCell("I1").value)).toContain("ולשלוח  אליו");
   });
 });
 

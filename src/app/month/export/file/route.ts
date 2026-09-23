@@ -70,6 +70,9 @@ export async function GET(request: NextRequest) {
     },
     employment: { employedSince: worker.employedSince },
     insurer: worker.insurer,
+    // The sheet's own sentences are worded from it (Part 3), and it is read off
+    // the profile rather than the month for the reason the insurer is.
+    gender: worker.gender,
     // Opened here, on the server, for the file and nothing else (item 22). The
     // visa and permit numbers are not read: the month sheet does not print them.
     numbers: await (async () => {
