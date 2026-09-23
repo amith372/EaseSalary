@@ -576,7 +576,8 @@ scraper's five exports (F36); nine exported types read only in their own file, a
 
 **The nine marked GO/NO-GO below are findings `specs.md` already decides**, so each needs only
 a yes to fixing it in stage 8 or a deferral — no design question is open in any of them, and one
-answer covers all nine. Until that answer comes they stay here and off the Fix list (rule 1).
+answer covers all nine. **Answered GO on 2026-09-22**, so each is on the Fix list below as one
+of F38–F46; the detail stays here rather than being copied, and each Fix-list entry names it.
 
 - **GO/NO-GO** — **The income tax is never confirmed, and a month exports unconfirmed** (run 2 ✓). The
   before-export screen has no tax card; `confirmMonth` stores `taxToConfirm`
@@ -853,6 +854,44 @@ figure, and each is a bug against a rule `specs.md` already states.
   already described, and the batch is what makes it reviewable. The step is sized when it is
   reached, not before — check: no date, attribution or "used to" survives in `specs.md`
   outside the three exceptions above, and the part reads as one statement of what stands.
+
+**H. The nine GO/NO-GO findings** — approved as one **GO** on 2026-09-22 and moved here on
+2026-09-23, which is step 2 of the order. Each one's detail stays under "Needs the user"; the
+entry below names it and says what its fix is checked by. Each changes behaviour, and each
+change is one `specs.md` already states — no design question is open in any of them.
+- [ ] F38 — a year with no tax bracket table leaves the line at zero **and says so** — spec 733
+  — `buildClosing` (`month.ts`) folds `null` to 0 with no warning, and its own comment calls
+  the warning an open question — check: a month in a year the table does not reach draws a
+  warning naming the year, and its tax line is still zero.
+- [ ] F39 — a salary change dated before the rate table reaches is refused as uncheckable and
+  not measured against today's minimum — `reviewSalaryChange` (`salary.ts`, `atFrom ?? now`)
+  — check: a change dated to a month before the table's first row is refused, and one inside
+  it is unaffected.
+- [ ] F40 — `createWorker` refuses a third worker itself — `workers/actions.ts:737` — Postgres
+  throws unhandled and the in-memory store accepts it — check: a third worker is refused with
+  a sentence in both stores, and the two-worker case still passes.
+- [ ] F41 — the sheet's gendered wording follows the profile's `gender` — `he.ts`'s
+  `workerRole` and the template's `I1`, `F1`, `G1`, `B7`, `B9`, which spec 1304 fills from the
+  profile — check: the export suite reads a male worker's sheet and a female one's and they
+  differ in those cells only.
+- [ ] F42 — the fetched page's text is kept — spec 1344; `refreshMinimumWage` drops `text` and
+  `fetchArticleSections` is called by nothing — check: a fetch stores the text it read, and a
+  failed fetch stores nothing.
+- [ ] F43 — an override's note and the hospital-overtime note reach column I — `notesOf`
+  (`notes.ts`) gathers neither; item 2 writes every action's note — check: the export suite
+  finds both notes in `I`, on the rows their figures sit on.
+- [ ] F44 — an advance movement is corrected by **editing the entry** — spec 800-809; the month
+  has `addAdvance` and `removeAdvance` and no edit — check: an advance's amount and note are
+  changed in place, its number is unchanged, and a repaid advance still refuses what it
+  refuses.
+- [ ] F45 — a slow or broken source never delays a screen — `/month/export` awaits the wage's
+  and the tax's live fetches in front of the render and no scraper has a timeout — check: a
+  source that never answers leaves the screen drawn on the cached figures within the timeout.
+- [ ] F46 — the income tax is confirmed before every export, and the file route refuses an
+  unconfirmed month — `confirmMonth` stores `taxToConfirm` unseen and
+  `month/export/file/route.ts` checks only `blocksExport` — check: the tax appears on the
+  before-export screen as the wage does, what is confirmed is what the sheet prints, and the
+  file address refuses a month nobody confirmed.
 
 **Not on the list**
 - R3.3 — needs a migration, so it waits until the two unapplied migrations are live.
