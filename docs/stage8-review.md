@@ -32,12 +32,19 @@ the plan table, then stops and reports to the user.
 - **The refusal card is approved and is `build_plan.md` stage 8¾**, not a stage 8 item: its
   PRD was signed off 2026-09-22 and is committed as `fb6176f`. It owes a `specs.md` sentence,
   put to the user with its exact wording before it is written (rule 1).
-- **Next is the per-worker rates and holiday lists PRD**, which the
-  user placed before `/doctor` (2026-09-22), then F32, then F37. **Stop before F32 (`/doctor`)
-  and ask** — she may want to change model for it; reaching it is not licence to start it.
-  **The nine GO/NO-GO findings are a GO** (2026-09-22), to be taken up after the next `/clear`.
-  **Where stage 8¾ (the refusal card) sits against all of this is the user's to say** — it is
-  approved but unplaced, and it is the difference between a careful sentence and a stack trace.
+- **The order from here, settled with the user on 2026-09-23**, and the whole of it — a session
+  does the first of these that is not done, and only that one:
+  1. **The per-worker rates and holiday lists PRD.** It owes a PRD before any code (rule 2) and
+     is not a stage 8 item. Its substance is under "Needs the user" below, in the entry
+     beginning "Rates are written to the caller's oldest household".
+  2. **The nine GO/NO-GO findings**, which are a **GO** (2026-09-22). They are listed under
+     "Needs the user" below, each marked `GO/NO-GO`; `specs.md` already decides every one, so
+     each is a fix and none is a design question.
+  3. **Stage 8¾, the refusal card** — `build_plan.md` has its steps.
+  4. **F32 (`/doctor`)**. **Stop before it and ask** — she may want to change model for it;
+     reaching it is not licence to start it.
+  5. **F37.**
+
   **Ask before each commit** (said on 2026-09-18).
 - **Outside the list:** `43e0d5a` (an unanswered holiday could not be stored — a missing
   migration, now applied live) waits for the user to mark a holiday signed in and confirm.
@@ -51,13 +58,11 @@ the plan table, then stops and reports to the user.
   for that reason. Retrying the press would end it; that is test code, not product, and it is
   not on the Fix list. On 2026-09-22 it took `holiday-picker.spec.ts:257` out of a full run
   (134/135) and three of a trio run, all of which passed alone.
-- **Waiting on the user**, none of which a session may answer for her:
-  1. The per-worker rates and holiday lists she asked for on 2026-09-22, which owes a PRD
-     before any code (rule 2) and is not a stage 8 item.
-  2. Where stage 8¾, the refusal card, sits in the order. Its PRD is approved and its steps
-     are in `build_plan.md`; only its place is open.
+- **Waiting on the user**, none of which a session may answer for her: the sign-off on the
+  per-worker rates and holiday lists PRD, which is step 1 above and cannot be written past.
 
-  **Answered already, so do not ask again:** which household the broken one is — the live
+  **Answered already, so do not ask again:** where stage 8¾ sits, which is step 3 above; and
+  which household the broken one is — the live
   Postgres one, and she is no longer locked out of it.
 
 ## Ground rules for every step
@@ -561,6 +566,10 @@ answer covers all nine. Until that answer comes they stay here and off the Fix l
   `workers/actions.ts:627`; Postgres throws unhandled, the in-memory store accepts a third.
 - **GO/NO-GO** — **`/month/export` awaits a live fetch, and no scraper has a timeout** (run 2) —
   `month/export/page.tsx:49`; spec: "a slow or broken source never delays a screen".
+  **F36 widened this on 2026-09-23**: the screen now awaits the income tax's two pages in front
+  of the wage's, so a stale day is up to three sequential live fetches rather than one. They are
+  stale-gated to a day, so most requests fetch nothing — but the day they do, this is the
+  finding that decides what the user waits for, and the timeout it asks for is now worth three.
   **What a failed fetch shows, answered 2026-09-22:** the cached figure, said plainly to be
   cached because the fetch did not answer, put to her as "is it still this?" — with the option
   to enter it by hand instead, and a way back out of that. It is the minimum wage this was
