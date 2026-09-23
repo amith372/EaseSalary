@@ -40,9 +40,11 @@ export const householdSeries = cache(async (): Promise<WorkerInSeries[]> => {
   const repository = await getRepository();
   // One rates read for the household and not one per worker: the table is the
   // household's (item 4), so a second read could only return the same rows.
-  const [workers, rates, today] = await Promise.all([
+  // The bracket tables are the household's for the same reason (item 17).
+  const [workers, rates, taxBrackets, today] = await Promise.all([
     repository.listWorkers(),
     repository.listRates(),
+    repository.listTaxBrackets(),
     readToday(),
   ]);
   return Promise.all(
@@ -53,6 +55,7 @@ export const householdSeries = cache(async (): Promise<WorkerInSeries[]> => {
         profile,
         today,
         rates,
+        taxBrackets,
       ),
     })),
   );

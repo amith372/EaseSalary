@@ -148,6 +148,7 @@ async function taxToConfirm(
     profile,
     await readToday(),
     await repository.listRates(),
+    await repository.listTaxBrackets(),
   ).find((one) => sameMonth(one.facts.month, month));
   const line = entry?.result.closing.find((row) => row.key === lineKeys.incomeTax);
   return Math.abs(line?.amount ?? 0);

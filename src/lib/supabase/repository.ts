@@ -32,6 +32,8 @@ import {
   type Religion,
 } from "@/lib/holidayLists";
 import { overlapsMonth } from "@/lib/spans";
+import { SEEDED_TAX_BRACKETS, withFetchedBrackets } from "@/lib/taxBrackets";
+import type { TaxBracket, TaxYearBrackets } from "@/lib/taxBrackets";
 import type { IsoDate, SpanKind, YearMonth } from "@/lib/types";
 
 /**
@@ -75,6 +77,10 @@ function ratesOver(stored: DatedRate[]): DatedRate[] {
 
 function listsOver(stored: HolidayList[]): HolidayList[] {
   return stored.reduce(withFetchedList, SEEDED_HOLIDAY_LISTS);
+}
+
+function bracketsOver(stored: TaxYearBrackets[]): TaxYearBrackets[] {
+  return stored.reduce(withFetchedBrackets, SEEDED_TAX_BRACKETS);
 }
 
 /** Just the two dates of a span, which is all that says which months it
@@ -170,6 +176,12 @@ interface HolidayListRow {
   source_url: string;
   name_he: string;
   holidays: Holiday[];
+}
+
+interface TaxBracketsRow {
+  tax_year: number;
+  brackets: TaxBracket[];
+  source: string;
 }
 
 interface RateRow {
@@ -419,6 +431,17 @@ function listOf(row: HolidayListRow): HolidayList {
     sourceUrl: row.source_url,
     nameHe: row.name_he,
     holidays: row.holidays,
+  };
+}
+
+function taxBracketsOf(row: TaxBracketsRow): TaxYearBrackets {
+  return {
+    year: row.tax_year,
+    // `rate` is `numeric` inside the jsonb, and jsonb — unlike a `numeric`
+    // column — comes back as a JSON number already, so `numberOf` has nothing
+    // to do here. The bound is agorot and integral by the same route.
+    brackets: row.brackets,
+    source: row.source,
   };
 }
 
@@ -875,6 +898,37 @@ export function createPostgresRepository(
         .limit(1)
         .maybeSingle();
       raise(error, "could not read when the rate was fetched");
+      return (data?.fetched_at as string | undefined) ?? null;
+    },
+
+    async listTaxBrackets() {
+      const { data, error } = await client.from("tax_brackets").select("*");
+      raise(error, "could not read the tax brackets");
+      return bracketsOver(((data ?? []) as TaxBracketsRow[]).map(taxBracketsOf));
+    },
+
+    async saveTaxBrackets(table) {
+      const { error } = await client.from("tax_brackets").upsert(
+        {
+          household_id: householdId,
+          tax_year: table.year,
+          brackets: table.brackets,
+          source: table.source,
+          fetched_at: new Date().toISOString(),
+        },
+        { onConflict: "household_id,tax_year" },
+      );
+      raise(error, "could not save the tax brackets");
+    },
+
+    async lastFetchedBrackets() {
+      const { data, error } = await client
+        .from("tax_brackets")
+        .select("fetched_at")
+        .order("fetched_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      raise(error, "could not read when the tax brackets were fetched");
       return (data?.fetched_at as string | undefined) ?? null;
     },
 

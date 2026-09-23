@@ -3,6 +3,7 @@ import { HomeScreen } from "@/components/HomeScreen";
 import type { WorkerMonths } from "@/components/HomeScreen";
 import { blockagesOf, householdAlerts } from "@/lib/alertsView";
 import { householdSeries } from "@/lib/householdSeries";
+import { refreshIncomeTaxIfStale } from "@/lib/incomeTaxRefresh";
 import { refreshMinimumWageIfStale } from "@/lib/minimumWageRefresh";
 import { getRepository } from "@/lib/store";
 import { parseYearMonth } from "@/lib/dates";
@@ -56,14 +57,19 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const today = await readToday();
   const replayed = await householdSeries();
   after(async () => {
-    try {
-      // The real clock, not `today`: staleness is measured against the real
-      // instant of the last fetch, and a pinned day would move it.
-      await refreshMinimumWageIfStale(repository, new Date());
-    } catch {
-      // A background read that failed changes nothing the user has seen, and
-      // the pre-export screen reads the page again before any export.
-    }
+    // The real clock, not `today`: staleness is measured against the real
+    // instant of the last fetch, and a pinned day would move it.
+    //
+    // **Settled, and that is what swallows a failure.** A background read that
+    // failed changes nothing the user has seen, and the pre-export screen reads
+    // the pages again before any export. The income tax's two figures are read
+    // on the same daily staleness as the wage — they are yearly figures like it
+    // (item 17) — but from their own pages, so a wage page that threw must not
+    // mean the brackets were never asked for at all.
+    await Promise.allSettled([
+      refreshMinimumWageIfStale(repository, new Date()),
+      refreshIncomeTaxIfStale(repository, new Date()),
+    ]);
   });
 
   // The whole of each worker's history, because a month's opening balances are

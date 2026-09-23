@@ -13,6 +13,7 @@ import {
   recuperationToConfirm,
 } from "@/lib/engine/beforeExport";
 import { MINIMUM_WAGE_SOURCE_URL } from "@/lib/scrape/minimumWage";
+import { refreshIncomeTaxIfStale } from "@/lib/incomeTaxRefresh";
 import { refreshMinimumWage } from "@/lib/minimumWageRefresh";
 import { readToday } from "@/lib/requestToday";
 
@@ -41,6 +42,12 @@ export default async function BeforeExportPage() {
   const repository = await getRepository();
   const today = await readToday();
   const workers = await repository.listWorkers();
+  // **Before the wage and not beside it.** The tax refresh may write the credit
+  // point's row, and `refreshMinimumWage` returns the table as it stands when
+  // it reads it — so running this second would hand the screen a table missing
+  // the row that had just been learned. The real clock and not `today`:
+  // staleness is measured against the instant of the last fetch (`/`).
+  const { taxBrackets } = await refreshIncomeTaxIfStale(repository, new Date());
   const { rates, failure } = await refreshMinimumWage(repository);
 
   const household: WorkerBeforeExport[] = await Promise.all(
@@ -61,6 +68,7 @@ export default async function BeforeExportPage() {
         profile,
         today,
         rates,
+        taxBrackets,
       );
       return {
         worker: {

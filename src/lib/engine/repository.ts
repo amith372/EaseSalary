@@ -18,6 +18,8 @@ import {
   type HolidaySource,
 } from "@/lib/holidayLists";
 import type { SealedNumber } from "@/lib/encryption";
+import { SEEDED_TAX_BRACKETS, withFetchedBrackets } from "@/lib/taxBrackets";
+import type { TaxYearBrackets } from "@/lib/taxBrackets";
 import { overlapsMonth } from "@/lib/spans";
 import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
 
@@ -205,6 +207,35 @@ export interface SalaryRepository {
    * ever was. The source is named because a figure the user confirmed is saved
    * to the same table and says nothing about when the page was last read. */
   lastFetched(key: RateKey, source: string): Promise<string | null>;
+
+  /**
+   * The income-tax bracket tables, one per tax year (specs.md item 17).
+   *
+   * **Seeded and never empty**, exactly as `listRates` is and for its reason:
+   * a household that has never fetched anything still taxes a month at the
+   * table the application ships knowing, and a fetch updates that table rather
+   * than introducing one.
+   *
+   * **They belong to the household and not to a worker**, like the rates and
+   * the holiday lists: the brackets are the state's table and not one
+   * worker's.
+   */
+  listTaxBrackets(): Promise<TaxYearBrackets[]>;
+  /** Records the year's table, replacing any held for the same year rather
+   * than being appended beside it (`withFetchedBrackets`). */
+  saveTaxBrackets(table: TaxYearBrackets): Promise<void>;
+  /**
+   * When a bracket table was last saved from a fetch, or `null` if none ever
+   * was — the newest such stamp across every year held.
+   *
+   * **Not keyed by year, because the year is what the fetch returns.** The
+   * source page publishes one year's table and names the year in its own
+   * heading, so a caller asking "is this due to be read again" has no year to
+   * ask about yet; what it wants to know is when the page was last read, and
+   * that is one stamp. The seeded tables carry none, so a household that has
+   * never fetched reads as due.
+   */
+  lastFetchedBrackets(): Promise<string | null>;
 
   /**
    * The four identifying numbers, **as sealed bytes and never as numbers**
@@ -498,6 +529,8 @@ export function createInMemoryRepository(
     holidayLists?: HolidayList[];
     /** Defaults to `SEEDED_RATES`, for the same reason (item 4). */
     rates?: DatedRate[];
+    /** Defaults to `SEEDED_TAX_BRACKETS`, for the same reason (item 17). */
+    taxBrackets?: TaxYearBrackets[];
   } = {},
 ): SalaryRepository {
   const workers = new Map<string, WorkerRow>();
@@ -512,7 +545,9 @@ export function createInMemoryRepository(
     seed.holidayLists ?? SEEDED_HOLIDAY_LISTS,
   );
   let rates = structuredClone(seed.rates ?? SEEDED_RATES);
+  let taxBrackets = structuredClone(seed.taxBrackets ?? SEEDED_TAX_BRACKETS);
   const fetchedAt = new Map<string, string>();
+  let bracketsFetchedAt: string | null = null;
   let switchedOff: WarningKind[] = [];
   let deferrals: Deferral[] = [];
 
@@ -633,6 +668,19 @@ export function createInMemoryRepository(
 
     async lastFetched(key, source) {
       return fetchedAt.get(`${key} ${source}`) ?? null;
+    },
+
+    async listTaxBrackets() {
+      return structuredClone(taxBrackets);
+    },
+
+    async saveTaxBrackets(table) {
+      taxBrackets = withFetchedBrackets(taxBrackets, structuredClone(table));
+      bracketsFetchedAt = new Date().toISOString();
+    },
+
+    async lastFetchedBrackets() {
+      return bracketsFetchedAt;
     },
 
     async sealedNumbers(workerId) {
