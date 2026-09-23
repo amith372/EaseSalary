@@ -34,7 +34,13 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * to a hand-kept union would compile clean against a hand-kept array that had
  * not grown with it.
  */
-export const rateKeys = [
+// The list is the source and the union below is derived from it, so nothing
+// reads the array at run time today — the `export` that once made it a used
+// value had no importer anywhere. The rule is switched off for this one
+// declaration rather than the array deleted, because the union is spelled in
+// one place either way and a reader of the rates will iterate it.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const rateKeys = [
   "minimumWage",
   "nationalInsurance",
   "recuperationDayRate",
