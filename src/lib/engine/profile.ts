@@ -464,7 +464,7 @@ export function monthsFollowingProfile(
  * three copies of `confirmedAt === undefined` would be three places for it to
  * drift.
  */
-export function followsProfile(facts: Pick<MonthFacts, "confirmedAt">): boolean {
+function followsProfile(facts: Pick<MonthFacts, "confirmedAt">): boolean {
   return facts.confirmedAt === undefined;
 }
 
