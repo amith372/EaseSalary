@@ -85,6 +85,22 @@ function store() {
   return createInMemoryRepository({ workers: [HANNA] });
 }
 
+describe("the two-worker limit (specs.md item 11)", () => {
+  /**
+   * The predicate `createWorker` refuses a third worker by. Without it the
+   * limit lived in one place only — the list, which withholds the control —
+   * and the two stores disagreed about a request made past it: Postgres threw
+   * its own error and this store accepted the third worker.
+   */
+  it("has room beside one worker and none beside two", async () => {
+    const one = store();
+    expect(await one.hasRoomForWorker()).toBe(true);
+
+    await one.saveWorker({ ...HANNA, id: "second", name: "שנייה" });
+    expect(await one.hasRoomForWorker()).toBe(false);
+  });
+});
+
 describe("a worker's facts written and read back", () => {
   it("returns the profile it was given", async () => {
     expect(await store().getWorker("hanna")).toEqual(HANNA);

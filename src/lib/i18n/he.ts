@@ -384,6 +384,9 @@ export const he = {
       openingAdvance: "צריך סכום, וההחזר לא יכול להיות גדול ממנו.",
       /** The save itself failed, which is not a field the user can correct. */
       save: "לא הצלחנו לשמור. אפשר לנסות שוב.",
+      /** The household already holds two workers (item 11). Not a field either,
+       * and unlike `save` trying again will not help. */
+      householdFull: "בחשבון הזה כבר יש שתי עובדות, וזה המספר המרבי.",
     },
   },
 

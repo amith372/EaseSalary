@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { createWorker } from "@/app/workers/actions";
+import { createWorker, type CreateWorkerRefusal } from "@/app/workers/actions";
 import { LogoMark } from "@/components/icons";
 import {
   DoneStep,
@@ -116,7 +116,11 @@ export function AddWorkerScreen({
 
   const [step, setStep] = useState(0);
   const [workerId, setWorkerId] = useState<string | null>(null);
-  const [failedToSave, setFailedToSave] = useState(false);
+  /** Why the save was refused, or none. The reason is kept and not a flag,
+   * because a full household is refused for something no field says. */
+  const [saveRefusal, setSaveRefusal] = useState<CreateWorkerRefusal | null>(
+    null,
+  );
 
   const [draft, setDraft] = useState<NewWorkerDraft>(() => ({
     name: "",
@@ -171,7 +175,7 @@ export function AddWorkerScreen({
       return next;
     });
     setShown(false);
-    setFailedToSave(false);
+    setSaveRefusal(null);
   };
 
   /** A refusal is held back until the user tries to leave the step. Marking a
@@ -248,8 +252,11 @@ export function AddWorkerScreen({
       const saved = await createWorker(effective);
       if (!saved.ok) {
         setShown(true);
-        setFailedToSave(true);
-        setStep(STEP_OF[saved.reason]);
+        setSaveRefusal(saved.reason);
+        // A full household belongs to no step: there is no field to go back to
+        // and no edit that would help, so the wizard stays where it is and the
+        // sentence below says why.
+        if (saved.reason !== "householdFull") setStep(STEP_OF[saved.reason]);
         return;
       }
       setWorkerId(saved.workerId);
@@ -325,14 +332,16 @@ export function AddWorkerScreen({
           ) : null}
           {step === LAST_STEP ? <DoneStep headingRef={heading} workerId={workerId} /> : null}
 
-          {failedToSave ? (
+          {saveRefusal !== null ? (
             <p
               dir="auto"
               role="alert"
               data-role="add-worker-error"
               className="rounded-card-sm bg-chip px-3.5 py-2.5 text-[15px] text-clay-deep"
             >
-              {words.errors.save}
+              {saveRefusal === "householdFull"
+                ? words.errors.householdFull
+                : words.errors.save}
             </p>
           ) : null}
 

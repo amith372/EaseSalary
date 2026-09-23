@@ -704,6 +704,14 @@ export async function setDocuments(
 }
 
 /**
+ * Why a new worker was not created: any of the wizard's own field refusals, or
+ * a household that already holds two (item 11). The second belongs to the
+ * action and not to `reviewNewWorker`, which reads a draft and cannot know how
+ * many workers stand beside it.
+ */
+export type CreateWorkerRefusal = NewWorkerRefusal | "householdFull";
+
+/**
  * Create the household's worker — the last step of `הוספת עובד`.
  *
  * **Nothing is written until here**, which is what the artboard's "לצאת בלי
@@ -734,13 +742,26 @@ export async function setDocuments(
  * repository by `saveIdentifyingNumbers` and written as bytes, so the object
  * this function saves — the one every screen and the switcher pass around —
  * carries no identifier at all (items 22, 28).
+ *
+ * **The two-worker limit is checked here and not only on the list** (item 11),
+ * for the reason the export route re-checks its blocks: the list withholds the
+ * control, and a request for this action can be made past it. Without the check
+ * Postgres refuses the insert with an error nobody worded and the in-memory
+ * store accepts a third worker outright — one household then behaves differently
+ * from the other, which is the class of difference no test would look for.
+ * `hasRoomForWorker` and not `listWorkers().length`, because a worker shared
+ * from another household is listed here and is not counted against this one.
  */
 export async function createWorker(
   draft: NewWorkerDraft,
 ): Promise<
-  { ok: true; workerId: string } | { ok: false; reason: NewWorkerRefusal }
+  { ok: true; workerId: string } | { ok: false; reason: CreateWorkerRefusal }
 > {
   const repository = await getRepository();
+
+  if (!(await repository.hasRoomForWorker())) {
+    return { ok: false, reason: "householdFull" };
+  }
 
   const minimum = await minimumWageNow(repository);
   if (minimum === null) return { ok: false, reason: "belowMinimum" };
