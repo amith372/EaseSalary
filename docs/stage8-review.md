@@ -10,13 +10,20 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-23, **all of F33's sweep, S1–S8**, plus F27, which S7 was the whole
+- **Last done:** 2026-09-23, **F36** — the income-tax scraper is wired. Nothing was missing but
+  the wiring: the scraper, its parser suite, the `tax_brackets` table and the `creditPointValue`
+  rate key have all stood since stage 3, and `npx supabase migration list` says every local
+  migration is live, so **no migration was needed**. The repository gained `listTaxBrackets`,
+  `saveTaxBrackets` and `lastFetchedBrackets` in both implementations; `src/lib/incomeTaxRefresh.ts`
+  reads each of the two pages on a day's staleness, independently, and saves what came back; and
+  the three `calculateSeries` call sites that had all been falling through to `AS_SHIPPED`
+  — `householdSeries`, the pre-export screen and `taxToConfirm` — now pass the household's own
+  tables. The browser suite ran whole, 137/137, no flake. Committed as `d1d9b91`.
+  Before that, 2026-09-23, **all of F33's sweep, S1–S8**, plus F27, which S7 was the whole
   of once the two panels were told not to merge. Committed as `b453175` (S1), `2290b31` (S2),
   `3720209` (S5), `409bfab` (S6) and `eb552e9` (S3, S4, S7, S8 and F27 together — they share
-  three files and no split of them compiles). The browser suite ran whole twice, after S7 and
-  again after S8, 137/137 both times and no flake in either, which is also what the switcher
-  retry (`9b678d1`) was for. **F33 and F27 are the last of the Fix list's middle**; what
-  remains is F36, F32 and F37.
+  three files and no split of them compiles). **F33 and F27 were the last of the Fix list's
+  middle**; what remains is F32 and F37.
   Earlier, **stage 8½ and F28 went in together as `be4511f`**, for the same reason: F28's
   `followsProfile` is what stage 8½'s `strandedFreeRestDays` reads. F1–F31, F33–F35 are done;
   nothing on the list is half-built.
@@ -25,7 +32,7 @@ the plan table, then stops and reports to the user.
 - **The refusal card is approved and is `build_plan.md` stage 8¾**, not a stage 8 item: its
   PRD was signed off 2026-09-22 and is committed as `fb6176f`. It owes a `specs.md` sentence,
   put to the user with its exact wording before it is written (rule 1).
-- **Next is F36**, then **the per-worker rates and holiday lists PRD**, which the
+- **Next is the per-worker rates and holiday lists PRD**, which the
   user placed before `/doctor` (2026-09-22), then F32, then F37. **Stop before F32 (`/doctor`)
   and ask** — she may want to change model for it; reaching it is not licence to start it.
   **The nine GO/NO-GO findings are a GO** (2026-09-22), to be taken up after the next `/clear`.
@@ -85,7 +92,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F26, F28–F31, F34–F35 done; F33's sweep run, its S1–S7 unfixed |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F31, F33–F36 done; F32 and F37 remain |
 
 ### How each step is run
 
@@ -758,7 +765,7 @@ figure, and each is a bug against a rule `specs.md` already states.
   "Sweep after F28" section in rule 3's one-line form and are fixed one commit each, under
   the same rules as the list; a finding that changes a screen goes under "Needs the user" —
   check: `knip` and `jscpd` report nothing the sweep left unexplained.
-- [ ] F36 — (added 2026-09-22 at the user's request) wire the income-tax scraper —
+- [x] 2026-09-23 F36 — (added 2026-09-22 at the user's request) wire the income-tax scraper —
   `fetchTaxBrackets` and `fetchCreditPointValue` in `src/lib/scrape/incomeTax.ts` are called by
   nothing, while `specs.md` Part 1 says the brackets and the credit point's value are fetched
   per year and cached like the minimum wage — check: a year's brackets are fetched, cached and
