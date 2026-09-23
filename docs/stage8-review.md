@@ -24,7 +24,8 @@ the plan table, then stops and reports to the user.
   confirmation had ever shown. `DESIGN.md` carries both departures. Three browser tests, and the
   source one was checked against the restored bug. The `specs.md` sentence for the rate row's
   source was put to the user with its exact wording and approved on 2026-09-23; item 4 carries
-  it, and nothing is owed.
+  it, and nothing is owed. The browser suite ran whole, 140/140, no flake.
+  Committed as `a97dedc`.
   Before that, 2026-09-23, **F36** — the income-tax scraper is wired. Nothing was missing but
   the wiring: the scraper, its parser suite, the `tax_brackets` table and the `creditPointValue`
   rate key have all stood since stage 3, and `npx supabase migration list` says every local
