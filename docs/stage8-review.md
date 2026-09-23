@@ -10,22 +10,27 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-22, **F33's sweep** — its findings are the "Sweep after F28"
-  section below, S1–S7, none of them fixed yet. **Stage 8½ and F28 are committed together as
-  `be4511f`**: they could not be split, because F28's `followsProfile` is what stage 8½'s
-  `strandedFreeRestDays` reads, so no state of `workers/actions.ts` exists in which stage 8½
-  stands without it (the user chose the single commit, 2026-09-22). F1–F26, F28–F31, F34 and
-  F35 are done; nothing on the list is half-built.
+- **Last done:** 2026-09-23, **all of F33's sweep, S1–S8**, plus F27, which S7 was the whole
+  of once the two panels were told not to merge. Committed as `b453175` (S1), `2290b31` (S2),
+  `3720209` (S5), `409bfab` (S6) and `eb552e9` (S3, S4, S7, S8 and F27 together — they share
+  three files and no split of them compiles). The browser suite ran whole twice, after S7 and
+  again after S8, 137/137 both times and no flake in either, which is also what the switcher
+  retry (`9b678d1`) was for. **F33 and F27 are the last of the Fix list's middle**; what
+  remains is F36, F32 and F37.
+  Earlier, **stage 8½ and F28 went in together as `be4511f`**, for the same reason: F28's
+  `followsProfile` is what stage 8½'s `strandedFreeRestDays` reads. F1–F31, F33–F35 are done;
+  nothing on the list is half-built.
 - **Outside stage 8, built 2026-09-22 and committed on its own:** the picker withholds a mark
   kind no day of the selection can take (`specs.md` item 5).
-- **Next is the rest of F33** — S1–S7 are fixed one commit each, and only then is F33 ticked.
-  **F27 is unblocked and narrowed**: the two user-line panels **do not merge** (the user,
-  2026-09-22) — `/payments` shows the current state and `/settings` adjusts, which is two jobs
-  — so both looks stand and only the state/`reset`/`openEdit`/`submit` hook is shared, which
-  is S7's 61 lines. Then F36, then **the per-worker rates and holiday lists PRD**, which the
+- **The refusal card is approved and is `build_plan.md` stage 8¾**, not a stage 8 item: its
+  PRD was signed off 2026-09-22 and is committed as `fb6176f`. It owes a `specs.md` sentence,
+  put to the user with its exact wording before it is written (rule 1).
+- **Next is F36**, then **the per-worker rates and holiday lists PRD**, which the
   user placed before `/doctor` (2026-09-22), then F32, then F37. **Stop before F32 (`/doctor`)
   and ask** — she may want to change model for it; reaching it is not licence to start it.
   **The nine GO/NO-GO findings are a GO** (2026-09-22), to be taken up after the next `/clear`.
+  **Where stage 8¾ (the refusal card) sits against all of this is the user's to say** — it is
+  approved but unplaced, and it is the difference between a careful sentence and a stack trace.
   **Ask before each commit** (said on 2026-09-18).
 - **Outside the list:** `43e0d5a` (an unanswered holiday could not be stored — a missing
   migration, now applied live) waits for the user to mark a holiday signed in and confirm.
@@ -40,11 +45,10 @@ the plan table, then stops and reports to the user.
   not on the Fix list. On 2026-09-22 it took `holiday-picker.spec.ts:257` out of a full run
   (134/135) and three of a trio run, all of which passed alone.
 - **Waiting on the user**, none of which a session may answer for her:
-  1. What a screen shows for a month the engine refuses — first entry under "Needs the user".
-     Stage 8½ removed one cause of one refusal; it did not settle how a refusal arrives, and
-     the layout's catch is a guard rather than an answer.
-  2. The per-worker rates and holiday lists she asked for on 2026-09-22, which owes a PRD
+  1. The per-worker rates and holiday lists she asked for on 2026-09-22, which owes a PRD
      before any code (rule 2) and is not a stage 8 item.
+  2. Where stage 8¾, the refusal card, sits in the order. Its PRD is approved and its steps
+     are in `build_plan.md`; only its place is open.
 
   **Answered already, so do not ask again:** which household the broken one is — the live
   Postgres one, and she is no longer locked out of it.
@@ -435,16 +439,21 @@ F33. `npx knip` and `npx knip --production`; `npx jscpd src --min-lines 12 --min
 Findings only — each is fixed as its own commit under the list's rules.
 
 **Dead or over-exported** (`knip`, tests included, so these have no reader at all)
-- S1 — `followsProfile` is exported and read only inside its own file — `engine/profile.ts:467`
-  — F28 added it as the one place the confirmed-month rule lives, and all three readers are in
-  that file; R0.7 un-exported 54 of these.
-- S2 — `rateKeys` and `exportBlockKeys` are exported for nobody — `datedRates.ts:37`,
-  `beforeExport.ts:325` — each is the source array its own `RateKey`/`ExportBlockKey` is
-  derived from, so the const stays and only the `export` goes.
+- S1 — **done 2026-09-23** — `followsProfile` is exported and read only inside its own file —
+  `engine/profile.ts:467` — F28 added it as the one place the confirmed-month rule lives, and
+  all three readers are in that file; R0.7 un-exported 54 of these.
+- S2 — **done 2026-09-23** — `rateKeys` and `exportBlockKeys` were exported for nobody —
+  `datedRates.ts:37`, `beforeExport.ts:325` — each is the source array its own
+  `RateKey`/`ExportBlockKey` is derived from, and nothing iterates either at run time, so
+  dropping the `export` leaves a value no code reads and lint warns on it. The rule is
+  switched off for those two declarations with the reason beside them (`CLAUDE.md` rule 7),
+  rather than the arrays deleted: the union is spelled in one place either way, and a reader
+  of the rates will iterate it. These are the first two `eslint-disable` lines in `src`; the
+  user chose the un-export knowing that (2026-09-23).
 
 **Duplication** (`jscpd`, src only — the six test-file clones are the shared fixtures run 6
 already left, not tests to delete)
-- S3 — the amount field — `<Field>` + `inputMode="decimal"` + `dir="ltr"` +
+- S3 — **done 2026-09-23** — the amount field — `<Field>` + `inputMode="decimal"` + `dir="ltr"` +
   `he.placeholder.amountInput` + `inputClass` — is written 13 times across five files —
   `MonthActions.tsx:356,778,1027,1426,1715`, `WorkerOpening.tsx:146,399,410`,
   `MonthConfirmation.tsx:215,294` (which builds `Field`'s own label markup by hand),
@@ -453,22 +462,29 @@ already left, not tests to delete)
   with a `refusal` prop at the wizard's larger scale, which F24 kept apart on purpose. Eleven
   sites, not thirteen. `MonthActions.tsx:572` stays out too — its placeholder is a percentage
   when the mode says so.
-- S4 — the panel's save/cancel pair is written four times in one file, identical to the
+- S4 — **done 2026-09-23** — the panel's save/cancel pair is written four times in one file, identical to the
   character — `MonthActions.tsx:827,1039,1496,1727` — `outlineButtonClass` + `cancelClass` +
   `open === "new" ? words.submit : words.save`; one `PanelButtons` inside the file changes no
   screen. The fifth, `WorkerOpening.tsx:188`, uses the filled button and is the look question
   F27 waits on — it stays out.
-- S5 — the money row's `.map` twice per screen — `HomeScreen.tsx:712,753`,
+- S5 — **done 2026-09-23** — the money row's `.map` twice per screen — `HomeScreen.tsx:712,753`,
   `PayslipScreen.tsx:321,350` — the withholding rows and the transfer rows draw the same row
   from the same shape; one local `rowsOf(lines)` per screen, each keeping its own size.
-- S6 — the wizard's refusal paragraph, hand-built three times —
+- S6 — **done 2026-09-23** — the wizard's refusal paragraph, hand-built three times —
   `AddWorkerSteps.tsx:180,215,691` — `Field.tsx` exports `RefusalLine`, but at 13px against
   the wizard's 14px, so this is the wizard's own one-line component and not that one (F24
   kept the two scales apart on purpose).
-- S7 — also seen here: `StandingLinesControl` still copies `UserLinesControl` for 61 lines,
+- S7 — **done 2026-09-23, and F27 with it** — also seen here: `StandingLinesControl` still copies `UserLinesControl` for 61 lines,
   the largest clone in `src` — `MonthActions.tsx:684`, `WorkerOpening.tsx:78` (the file R1.1
   named as `WorkerTerms.tsx:507`) — F27, blocked on the look question; the state /`reset`
   /`openEdit`/`submit` hook is the 61 lines, and the looks are not.
+
+- S8 — **found while fixing S3, and done with it, 2026-09-23** — the note field — `<Field>` +
+  `dir="auto"` + `inputClass` — is written seven times across two files —
+  `MonthActions.tsx:393,805,1000,1434,1649`, `WorkerOpening.tsx:154,384` — one `NoteField` in
+  `Field.tsx`, beside `AmountField`. It is not the amount field and S3 did not name it: `jscpd`
+  only reported it once the amount field and the button pair had gone and what was left of each
+  panel fell under its twelve-line floor. With it, `src` has no `tsx` clone left at all.
 
 Seen and left: `MonthActions.tsx` at 1,937 lines (R2.21, inside F27); the unwired income-tax
 scraper's five exports (F36); nine exported types read only in their own file, and the
@@ -511,9 +527,10 @@ scraper's five exports (F36); nine exported types read only in their own file, a
   refusal the engine states carefully arrives as a stack trace, which is the opposite of
   "refused with a reason and named… worth saying out loud rather than deducting in silence".
   Stage 8½ removes one cause of one refusal; it leaves every other refusal arriving the same
-  way. **What should a screen show for a month the engine refuses — the refusal in place of the
-  figures, a card above them, something else?** `DESIGN.md` and the canvas say nothing, so this
-  is not a thing to invent (rule 4).
+  way. **Answered 2026-09-22: a card above the figures.** Where nothing can be computed the
+  card stands alone and the calendar stays usable, since the calendar reads the marks and not
+  the engine, and the mark she must correct is on it. It owes a PRD before any code (rule 2)
+  and is not a stage 8 item; `DESIGN.md` and the canvas draw no such card.
 
 **The nine marked GO/NO-GO below are findings `specs.md` already decides**, so each needs only
 a yes to fixing it in stage 8 or a deferral — no design question is open in any of them, and one
@@ -720,11 +737,12 @@ figure, and each is a bug against a rule `specs.md` already states.
   its own fetch just returned, and `taxToConfirm` walks months with the tax set aside.
   `MonthContext.rates` and `.taxBrackets` are required, with `AS_SHIPPED` the one named way to
   ask for the seed.
-- [ ] F27 — the recorded-entries module on the client — R3.4, R2.21, R1.1 — **the two panels
-  do not merge** (the user, 2026-09-22): `/payments` shows the current state and `/settings`
-  adjusts, which is two jobs. Both looks stand; what is shared is the
-  state/`reset`/`openEdit`/`submit` hook the two copy for 61 lines (S7) — check: the two
-  panels screenshot identical before and after, and `knip` reports nothing the move added.
+- [x] 2026-09-23 F27 — the recorded-entries module on the client — R3.4, R2.21, R1.1 — **the two
+  panels do not merge** (the user, 2026-09-22): `/payments` shows the current state and
+  `/settings` adjusts, which is two jobs. Both looks stand; what is shared is
+  `src/components/useUserLineForm.ts`, generic over the refusal because the two screens'
+  actions answer with different ones, and taking one `save(open, draft)`. `MonthActions.tsx`
+  is 1,854 lines, not 1,937 (R2.21 is smaller, not gone).
 - [x] 2026-09-22 `be4511f` F28 — the month-lifecycle module, and the confirmed-month rule it had nowhere
   to land — R3.2, R3.5 — `followsProfile` in `profile.ts` is the one place the rule lives, read
   by `monthsFollowingProfile`, `monthsReachedBySalaryChange` and `strandedFreeRestDays`;
@@ -734,7 +752,7 @@ figure, and each is a bug against a rule `specs.md` already states.
   to ₪1,000 — plus three unit tests that each fail when the predicate is neutered.
 
 **G. Last**
-- [ ] F33 — **swept 2026-09-22; S1–S7 in "Sweep after F28" are unfixed** — (added 2026-09-19 at the user's request) a last sweep once F19–F28 are through:
+- [x] 2026-09-23 F33 — **swept 2026-09-22; S1–S8 closed 2026-09-23** — (added 2026-09-19 at the user's request) a last sweep once F19–F28 are through:
   `knip --production` for dead code, `jscpd` over `src` for copied blocks, and a read of the
   components for markup repeated where a shared component should stand. Findings go into a
   "Sweep after F28" section in rule 3's one-line form and are fixed one commit each, under
