@@ -3,7 +3,10 @@ import { sameMonth } from "@/lib/dates";
 import type { WorkerProfile } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
 import type { MonthInSeries } from "@/lib/engine/series";
+import { InvalidMonthError } from "@/lib/engine/validate";
 import { readToday } from "@/lib/requestToday";
+import { refusedMonthOf } from "@/lib/refusalView";
+import type { RefusedMonth } from "@/lib/refusalView";
 import { getRepository } from "@/lib/store";
 import type { YearMonth } from "@/lib/types";
 
@@ -88,4 +91,36 @@ export async function monthInSeries(
   return (
     worker?.months.find((entry) => sameMonth(entry.facts.month, month)) ?? null
   );
+}
+
+/**
+ * The household's replay, or the refusal that stopped it (`specs.md` item 25,
+ * Part 4).
+ *
+ * **A refused month is a state the user is in and can correct, not a fault.**
+ * `calculateMonth` throws rather than returning a number nobody asked to be
+ * wrong, and every screen that shows a figure runs that replay — so without
+ * this the Hebrew sentence written for her arrives as a stack trace. The four
+ * screens that replay call this instead and draw the card
+ * (`RefusalCard.tsx`), so the wording and the catching are decided once rather
+ * than four times.
+ *
+ * **Only `InvalidMonthError` is caught, and the whole household goes behind the
+ * card.** `calculateSeries` runs per worker, so in a household of two the
+ * second worker's figures are hidden by a refusal that is not hers. That is the
+ * conservative answer and the same one the bell already takes
+ * (`app/layout.tsx`): the card names the month it concerns, and the screen
+ * underneath still lets her reach the mark that caused it. Anything other than
+ * a refusal is a bug and still surfaces.
+ */
+export async function householdSeriesOrRefusal(): Promise<
+  | { series: WorkerInSeries[]; refused: null }
+  | { series: null; refused: RefusedMonth }
+> {
+  try {
+    return { series: await householdSeries(), refused: null };
+  } catch (error) {
+    if (!(error instanceof InvalidMonthError)) throw error;
+    return { series: null, refused: refusedMonthOf(error) };
+  }
 }

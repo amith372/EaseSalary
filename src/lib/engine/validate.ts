@@ -84,7 +84,7 @@ type RefusalCode =
    */
   | "advanceRecordedTwice";
 
-interface Refusal {
+export interface Refusal {
   code: RefusalCode;
   /** Hebrew, and it says why rather than only what. */
   message: string;

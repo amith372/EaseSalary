@@ -10,6 +10,7 @@ import { BalancesRail, Blockers } from "@/components/HomeSections";
 import { Chevron, RailIcon, TwoToneIcon, type TwoToneName } from "@/components/icons";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { MoneyValue } from "@/components/MoneyValue";
+import { RefusalCard } from "@/components/RefusalCard";
 import { notBefore, openingMonthOf } from "@/components/MonthStepper";
 import { SpanOverflowNotes } from "@/components/SpanOverflow";
 import { ValueChip } from "@/components/ValueChip";
@@ -34,6 +35,7 @@ import type { ClosingLine } from "@/lib/types";
 import type { MonthSpan } from "@/lib/engine/types";
 import { bottomFigure, he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
+import type { RefusedMonth } from "@/lib/refusalView";
 import {
   endOf,
   holidayStateOf,
@@ -138,12 +140,17 @@ export function HomeScreen({
   blockages,
   today,
   askedMonth = null,
+  refused = null,
 }: {
   household: WorkerMonths[];
   /** A month the address named, which the screen opens on instead. */
   askedMonth?: YearMonth | null;
   /** What stops a correct salary, for the whole household (`blockagesOf`). */
   blockages: FirstOf;
+  /** The month the engine refused, where it refused one (`specs.md` item 25).
+   * The whole household has no figures then — one refused month stops the
+   * replay — and the card above the columns says which month and why. */
+  refused?: RefusedMonth | null;
   /** Today, read once on the server and handed down, so nothing here reads a
    * clock during a render (`CLAUDE.md`). */
   today: IsoDate;
@@ -186,10 +193,14 @@ export function HomeScreen({
   // corrected past month shades the column that month was calculated against
   // (specs.md Part 3).
   const shownRestDay = shown?.facts.terms.restDay ?? entry.restDay;
-  // A month ahead is not valued, so its marks come off her spans directly.
-  const spans = future
-    ? entry.spans.filter((span) => overlapsMonth(span, month))
-    : (shown?.facts.spans ?? []);
+  // The marks of the month on screen. Where there is a valued month they are
+  // the ones it was valued from; where there is none — a month ahead, which the
+  // replay does not value (item 21), or a month the engine refused — they come
+  // off her spans directly, which is what keeps the calendar drawn when nothing
+  // else on the screen can be.
+  const spans =
+    shown?.facts.spans ??
+    entry.spans.filter((span) => overlapsMonth(span, month));
 
   // The panel follows the month: browsing away from the selected day's month
   // shows that month's first day rather than a day the grid no longer draws.
@@ -274,6 +285,11 @@ export function HomeScreen({
   return (
     <>
       <Blockers blockages={blockages} />
+
+      {/* Above the month's content and not inside the money column: it is the
+          whole screen's state and not one figure's, and the calendar beneath it
+          is where the mark that caused it is corrected. */}
+      {refused === null ? null : <RefusalCard refused={refused} />}
 
       {/* One column on a phone, in the order a phone reads it: the calendar,
           the day and the money, then the rail. Two columns from `lg`, where
@@ -438,6 +454,10 @@ export function HomeScreen({
                 {he.month.future}
               </p>
             </Card>
+          ) : refused !== null ? (
+            // The card above already says why there are no figures, and a
+            // second card saying the month is empty would contradict it.
+            null
           ) : (
             <Card className="flex flex-none flex-col gap-1.5 px-3.75 py-3.25">
               <h2 dir="auto" className="text-[16px] font-semibold">

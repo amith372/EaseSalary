@@ -10,8 +10,40 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-24, **step 2 of the order in full — F38 through F46. Step 2 is
-  closed, and the next session starts at step 3, stage 8¾, the refusal card.** The nine are
+- **Last done:** 2026-09-24, **step 3 of the order — stage 8¾, the refusal card. It is
+  closed, and the next session starts at step 4, the layout and UI/UX review.** It is
+  committed and not pushed.
+  `src/lib/refusalView.ts`'s `refusedMonthOf` turns the thrown `InvalidMonthError` into the
+  card's input — the month written out in Hebrew, one reason per refusal with its dates
+  written out beside the sentence and the rule behind it — and `householdSeriesOrRefusal`
+  is the one place the throw is caught, so `/`, the payslip, `/payments` and `/reports` do
+  not each invent a catch. On `/` the card sits above the columns and the calendar still
+  draws with its marks, because the mark to correct is on it: `HomeScreen`'s spans now fall
+  back to the worker's own spans wherever there is no valued month, which is what a month
+  ahead already needed. On the other three the card is the screen.
+  **No gesture in the interface can produce a refused month** — the calendar stops a second
+  mark, the picker withholds a kind no selected day can take, and stage 8½'s panel answers a
+  stranded mark before saving — so `refusedSeed` in `src/lib/dev/seed.ts` puts two marks on
+  2026-08-20 and `e2e/refusal-card.spec.ts` works from it. August and not September on
+  purpose: it proves the card names the month at fault and not the month asked for.
+  Six unit tests in `refusalView.test.ts`, every refusal in them raised by the engine rather
+  than assembled by hand, and all six checked against three mutations of the mapping. Four
+  browser tests, and the calendar assertion was checked against the restored bug. Unit suite
+  1,225/1,225; the browser suite ran whole, 147/147, no flake.
+  The `specs.md` paragraph stage 8¾ owed was put to the user with its exact wording and
+  approved on 2026-09-24; item 25 carries it. `DESIGN.md` carries the departure, as its own
+  section, since the canvas draws no such card. **Two debts moved to `build_plan.md`'s "What
+  is still owed":** the two file routes still throw on a refused month, and a refusal hides
+  the other worker's figures too.
+  **What it owes is the user's own check (rule 8):** open `/` on a household whose August is
+  refused — the card names אוגוסט 2026, says a day was marked twice, names 20 באוגוסט 2026
+  beside the sentence and links the rule, and the calendar below it still draws August with
+  its marks and no figures beside it; the payslip, `/payments` and `/דוחות` say the same
+  thing and `/דוחות` offers no file; then sweep 19–20 August, press `לנקות סימון`, and the
+  card goes and the figures come back for September as well as August. A failure looks like
+  a stack trace on any of the four, a card with no month or no dates in it, a calendar that
+  draws August empty, or figures that stay away after the day is cleared.
+  Before that, 2026-09-24, **step 2 of the order in full — F38 through F46.** The nine are
   committed and none is pushed.
   **F42 last, on 2026-09-24** (`b0f3514`), and its PRD was signed off the same day (three open questions,
   each answered as recommended): the fetch stores what it reads and no caregiver-terms fetch is
@@ -140,9 +172,9 @@ the plan table, then stops and reports to the user.
   nothing on the list is half-built.
 - **Outside stage 8, built 2026-09-22 and committed on its own:** the picker withholds a mark
   kind no day of the selection can take (`specs.md` item 5).
-- **The refusal card is approved and is `build_plan.md` stage 8¾**, not a stage 8 item: its
-  PRD was signed off 2026-09-22 and is committed as `fb6176f`. It owes a `specs.md` sentence,
-  put to the user with its exact wording before it is written (rule 1).
+- **The refusal card was `build_plan.md` stage 8¾, not a stage 8 item, and it is done**
+  (2026-09-24). Its PRD was signed off 2026-09-22 (`fb6176f`) and the `specs.md` sentence it
+  owed was approved and written on 2026-09-24, so neither is asked again.
 - **The order from here, settled with the user on 2026-09-23**, and the whole of it — a session
   does the first of these that is not done, and only that one:
   1. ~~**The per-worker rate override PRD.**~~ **Done 2026-09-23** — see "Last done" above.
@@ -153,7 +185,11 @@ the plan table, then stops and reports to the user.
      `specs.md` decided every one, so each was a fix and none
      was a design question — the two screen questions F46 raised were put to the user and
      answered (2026-09-24), and its departures are in `DESIGN.md` as F44's are.
-  3. **Stage 8¾, the refusal card** — `build_plan.md` has its steps.
+  3. ~~**Stage 8¾, the refusal card.**~~ **Done 2026-09-24** — see "Last done" above. Its
+     browser scenario had to be rewritten: the plan's "strand a free rest day without
+     answering the panel" is a state stage 8½ closed, so the suite seeds the refusal
+     instead. Its own "Open" question — whether the export file route refuses with the same
+     card — is not answered and is now a debt in `build_plan.md`.
   4. **A review of the layout and the UI/UX methods the application uses** (asked for on
      2026-09-23), for quality and for what could be better. Report-only, like runs 0–5: it
      writes its findings into this file and changes no code, and what it proposes is put to the
@@ -228,7 +264,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F31, F33–F46 done; F32 and F37 remain |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F31, F33–F46 done; F32 and F37 remain. Stage 8¾ landed between step 2 and step 4 |
 
 ### How each step is run
 

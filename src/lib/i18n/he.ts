@@ -1036,6 +1036,30 @@ export const he = {
     /** A month after the current one (specs.md item 21): its calendar can be
      * marked, and it is not valued until it begins. */
     future: "החודש הזה עוד לא התחיל — המשכורת תחושב כשיגיע.",
+    /**
+     * A month the engine refused (specs.md item 25, Part 4), as the card above
+     * the figures says it.
+     *
+     * **It says why the application stopped rather than only that it did.** A
+     * refusal is the one moment the family is shown nothing at all, so the card
+     * has to answer "what now" without them knowing anything about the
+     * calculation: the reason itself is the engine's own sentence, and these
+     * words are the frame around it.
+     */
+    refused: {
+      /** Before the month's own name, which the card isolates (`CLAUDE.md`). */
+      title: "אי אפשר לחשב את חודש",
+      body: "היישום עצר ולא חישב את החודש הזה, כדי לא להציג סכום שנראה רגיל לגמרי אבל אינו נכון. אחרי תיקון הרישום החישוב ממשיך מעצמו.",
+      /** Before the dates one refusal names, each of them isolated. */
+      dates: "התאריכים שבהם מדובר:",
+      /**
+       * Why a screen showing a later month is showing this card. The balances
+       * are replayed from the opening position (item 13), so the first month
+       * that cannot be valued stops every month after it.
+       */
+      stopsLater:
+        "כל החודשים שאחריו ממתינים לתיקון הזה, כי היתרות נגררות מחודש לחודש.",
+    },
     preview: {
       /**
        * The lines the user added, summed. One heading covers both directions,

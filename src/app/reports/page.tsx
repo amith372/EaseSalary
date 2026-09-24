@@ -1,7 +1,8 @@
 import { connection } from "next/server";
 import { ReportsScreen } from "@/components/ReportsScreen";
 import type { WorkerReports } from "@/components/ReportsScreen";
-import { householdSeries } from "@/lib/householdSeries";
+import { householdSeriesOrRefusal } from "@/lib/householdSeries";
+import { RefusalCard } from "@/components/RefusalCard";
 import { blocksExport, monthStillRunning } from "@/lib/engine/beforeExport";
 import { monthLevels } from "@/lib/engine/month";
 import { readToday } from "@/lib/requestToday";
@@ -27,7 +28,11 @@ export default async function ReportsPage() {
   await connection();
 
   const today = await readToday();
-  const replayed = await householdSeries();
+  // Every figure and every file on this screen comes off the replay, so a
+  // refused month leaves it with nothing to list — and offering a file for a
+  // month the engine declined to value is the one thing it may not do.
+  const { series: replayed, refused } = await householdSeriesOrRefusal();
+  if (refused !== null) return <RefusalCard refused={refused} />;
 
   const household: WorkerReports[] = await Promise.all(
     replayed.map(async ({ profile, months: series }) => {

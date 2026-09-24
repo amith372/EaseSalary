@@ -2,7 +2,8 @@ import { connection } from "next/server";
 import { PaymentsScreen } from "@/components/PaymentsScreen";
 import type { WorkerPayments } from "@/components/PaymentsScreen";
 import { getRepository } from "@/lib/store";
-import { householdSeries } from "@/lib/householdSeries";
+import { householdSeriesOrRefusal } from "@/lib/householdSeries";
+import { RefusalCard } from "@/components/RefusalCard";
 import { advanceLedger } from "@/lib/engine/advances";
 import { effectiveTaxRate } from "@/lib/engine/incomeTax";
 import { lineKeys } from "@/lib/engine/lines";
@@ -79,7 +80,11 @@ export default async function PaymentsPage() {
 
   const repository = await getRepository();
   const today = await readToday();
-  const replayed = await householdSeries();
+  // A month the engine refused says so instead of the figures: this screen
+  // records against a month it cannot value, and there is nothing to record
+  // onto until the mark is put right on `/`.
+  const { series: replayed, refused } = await householdSeriesOrRefusal();
+  if (refused !== null) return <RefusalCard refused={refused} />;
 
   const household: WorkerPayments[] = await Promise.all(
     replayed.map(async ({ profile, months: series }) => {

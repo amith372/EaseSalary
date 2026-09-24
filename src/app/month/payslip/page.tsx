@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import { PayslipScreen } from "@/components/PayslipScreen";
 import type { WorkerPayslip } from "@/components/PayslipScreen";
 import { getRepository } from "@/lib/store";
-import { householdSeries } from "@/lib/householdSeries";
+import { householdSeriesOrRefusal } from "@/lib/householdSeries";
+import { RefusalCard } from "@/components/RefusalCard";
 import { advanceLedger } from "@/lib/engine/advances";
 import {
   blocksExport,
@@ -33,7 +34,11 @@ export default async function PayslipPage() {
 
   const repository = await getRepository();
   const today = await readToday();
-  const replayed = await householdSeries();
+  // The sheet is the month laid out row by row, so a month that could not be
+  // valued has no rows: here the card is the screen, and the calendar it
+  // would be corrected on is one link away on `/`.
+  const { series: replayed, refused } = await householdSeriesOrRefusal();
+  if (refused !== null) return <RefusalCard refused={refused} />;
 
   const household: WorkerPayslip[] = await Promise.all(
     replayed.map(async ({ profile, months: series }) => {

@@ -61,7 +61,7 @@ function termsSection(anchor: string): string {
   return `${CAREGIVER_TERMS}#${anchor}`;
 }
 
-interface LegalLink {
+export interface LegalLink {
   /** The label the interface shows, before " — באתר כל זכות". */
   label: string;
   url: string;

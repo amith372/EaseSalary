@@ -539,6 +539,41 @@ export const confirmedSeed = {
   ),
 };
 
+/**
+ * The demo with one day of August 2026 carrying two marks, which the engine
+ * refuses (`specs.md` item 25, Part 4).
+ *
+ * **It is a seed because no gesture in the interface can produce it**, and that
+ * is the point rather than a shortcoming: `src/lib/spans.ts` stops a second
+ * mark at the calendar, the picker withholds a kind no selected day can take,
+ * and the rest-day panel answers a stranded mark before the change is saved.
+ * The engine refuses all the same, because the calendar is one caller and the
+ * repository is another — so a household in this state is one whose data
+ * arrived another way, which is exactly what the refusal card is for.
+ *
+ * **August and not the current month**, so a screen opened on September is
+ * still the card: one refused month stops the replay of every month after it
+ * (item 13), and the card has to say which month is at fault.
+ */
+export const refusedSeed = {
+  ...devSeed,
+  spans: {
+    ...devSpans,
+    "worker-2": [
+      ...devSpans["worker-2"],
+      // The same day as `w2-holiday-0820`, which already holds a worked
+      // holiday: one day cannot be both worked and not worked, and the engine
+      // will not choose between them.
+      {
+        id: "w2-sick-0820",
+        kind: "sick" as const,
+        from: "2026-08-20",
+        to: "2026-08-20",
+      },
+    ],
+  },
+};
+
 export const filedSeed = {
   ...devSeed,
   months: {

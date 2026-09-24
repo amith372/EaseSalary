@@ -2,7 +2,8 @@ import { after, connection } from "next/server";
 import { HomeScreen } from "@/components/HomeScreen";
 import type { WorkerMonths } from "@/components/HomeScreen";
 import { blockagesOf, householdAlerts } from "@/lib/alertsView";
-import { householdSeries } from "@/lib/householdSeries";
+import { householdSeriesOrRefusal } from "@/lib/householdSeries";
+import type { WorkerInSeries } from "@/lib/householdSeries";
 import { refreshIncomeTaxIfStale } from "@/lib/incomeTaxRefresh";
 import { refreshMinimumWageIfStale } from "@/lib/minimumWageRefresh";
 import { getRepository } from "@/lib/store";
@@ -55,7 +56,11 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
   const repository = await getRepository();
   const today = await readToday();
-  const replayed = await householdSeries();
+  // **A refused month does not take this screen down**, because this is the
+  // screen the mark that caused it is corrected on (`specs.md` item 25). The
+  // calendar reads her spans and not the engine, so it draws either way; what
+  // the refusal costs is the figures beside it, and the card says why.
+  const { series: replayed, refused } = await householdSeriesOrRefusal();
   after(async () => {
     // The real clock, not `today`: staleness is measured against the real
     // instant of the last fetch, and a pinned day would move it.
@@ -76,8 +81,16 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   // the previous month's closing ones and balances are never stored (item 13).
   // `today` reaches every month and only the one still running is clipped by it
   // (item 8) — `householdSeries` is where both of those are arranged.
+  //
+  // **Where the replay refused there are no months**, and each worker is drawn
+  // from her profile and her marks alone. `listWorkers` is what the replay
+  // itself walks, so the rail and the switcher hold the same household either
+  // way.
+  const drawn: WorkerInSeries[] =
+    replayed ??
+    (await repository.listWorkers()).map((profile) => ({ profile, months: [] }));
   const household: WorkerMonths[] = await Promise.all(
-    replayed.map(async ({ profile, months }) => ({
+    drawn.map(async ({ profile, months }) => ({
       worker: {
         id: profile.id,
         name: profile.name,
@@ -91,15 +104,22 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   );
 
   // The strip reads the view `/alerts` and the bell read, so it lists the
-  // page's first blockages and counts the rest.
-  const blockages = blockagesOf(await householdAlerts());
+  // page's first blockages and counts the rest. They are counted off the same
+  // replay, so a household the engine refused has none to count — the card is
+  // what that household is told, and an empty strip above it would say nothing.
+  const blockages = refused === null
+    ? blockagesOf(await householdAlerts())
+    : { shown: [], more: 0 };
 
   return (
     <HomeScreen
       household={household}
       blockages={blockages}
       today={today}
-      askedMonth={askedMonth}
+      // A refused month opens the screen on itself: it is the month the mark to
+      // correct is in, and the address's own month cannot be valued either.
+      askedMonth={refused?.month ?? askedMonth}
+      refused={refused}
     />
   );
 }

@@ -1106,6 +1106,14 @@ Each of these is true or false at a glance.
     link for it would send her to a page that does not mention what stopped her, which is
     worse than the sentence alone. The test is item 26's own: a refusal carries a link
     exactly where the action it refused would have carried one.
+    **A refused month is shown to the user, and is shown where she can act on it.** The
+    engine declines to value a month it cannot value correctly rather than valuing it
+    wrongly in silence, and a refusal nobody draws is the same as no refusal at all:
+    every screen that replays her months says which month was refused, one sentence per
+    refusal with the dates it names and the rule behind it. One refused month stops the
+    replay of every month after it, so the sentence names the month at fault and not the
+    month the screen was asked for. Where the screen draws her calendar it keeps drawing
+    it, because the mark to correct is on it.
 26. Every action that rests on a legal rule carries a link to the page that states it —
     the minimum wage, the rest-day and holiday premium, annual leave, sick pay,
     recuperation, national insurance — so a user who wants to check a figure can read

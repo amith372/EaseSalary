@@ -4,7 +4,7 @@ import {
   createInMemoryRepository,
 } from "@/lib/engine/repository";
 import type { SalaryRepository } from "@/lib/engine/repository";
-import { confirmedSeed, devSeed, filedSeed } from "@/lib/dev/seed";
+import { confirmedSeed, devSeed, filedSeed, refusedSeed } from "@/lib/dev/seed";
 import { knownCaseSeed } from "@/lib/dev/known";
 import { INVITATION_COOKIE, invitationToken } from "@/lib/invitationCookie";
 import { createPostgresRepository } from "@/lib/supabase/repository";
@@ -56,6 +56,9 @@ const seeds = {
    * confirmed, which is what a month with a file looks like now that the file
    * address refuses a month nobody confirmed (items 4, 17). */
   confirmed: confirmedSeed,
+  /** The demo with one day of August 2026 marked twice, which the engine
+   * refuses — the state the refusal card is drawn in (`seed.ts`). */
+  refused: refusedSeed,
   /**
    * A household with nothing in it, which is what every new account is.
    *

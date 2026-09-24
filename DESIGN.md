@@ -42,6 +42,22 @@ canonical for the home screen and supersedes the v3 departures recorded in
 Measured after the cuts: nothing scrolls sideways at any width, and 1440×700
 fits without scrolling.
 
+### A refused month (the opening screen, the payslip, the payments screen and `דוחות`)
+
+**The canvas draws no such card, because it draws no refused month.** The engine
+declines to value a month it cannot value correctly (`specs.md` item 25, Part 4)
+and carries a Hebrew sentence per refusal, the dates each names and the rule
+behind it; until stage 8¾ nothing drew any of them, so what reached the user was
+a stack trace.
+
+| Departure | Why |
+|---|---|
+| One card, carrying the month at fault, one sentence per refusal with its dates and its rule, and a line saying the months after it are waiting on the same correction | Two refusals in one month are one month's state; stacked cards would read as two separate failures. The month is named because one refused month stops the replay of every later one (item 13), so the screen catching it is usually asking about a different month |
+| On the opening screen the card sits **above** the columns and the calendar still draws beneath it, with its marks | That calendar is where the mark that caused the refusal is corrected, and it reads her spans rather than the engine, so it survives. A screen that drew only the card would state a problem and withhold the one control that fixes it |
+| The money column draws nothing at all while the card stands — not the `החודש הזה עדיין ריק` card it would otherwise fall back to | A refused month is not an empty one, and the fallback would contradict the card above it |
+| On the payslip, the payments screen and `דוחות` the card **is** the screen | None of the three has a calendar, every figure on them comes off the replay, and `דוחות` would otherwise offer a file for a month the engine declined to value |
+| The blocker strip is not drawn while the card stands | The alerts are counted off the same replay, so there is nothing to count |
+
 ### The calendar (on every screen that draws it)
 
 - A line under the grid after the first press says to press the last day —
