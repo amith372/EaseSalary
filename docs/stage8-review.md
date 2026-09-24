@@ -10,12 +10,23 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-24, **step 4 of the order — the layout and UI/UX review, and the
-  writing-up of its fixes. All seventeen were approved the same day and the next session
-  executes them, one commit each, in order: F47–F53 first, then F54–F63.** Only after all
+- **Last done:** 2026-09-24, **F47, the first of step 4½'s seventeen.** The next session does
+  **F48** and then the rest in order — F49–F53, then F54–F63, one commit each. Only after all
   seventeen does it reach step 5, F32 (`/doctor`), which it must stop before and ask about as
-  step 5 says. The review itself changed no code: its edits are run 7's section in this file,
-  the seventeen Fix-list items, this block and the plan table.
+  step 5 says.
+  F47 drops `dir="auto"` from the wrapper around a holiday's name in
+  `HolidayPickerScreen.tsx`, whose only child is a `<Bidi>` — the pattern `CLAUDE.md` forbids,
+  and the last instance in the application. The name and its date now share an edge; they were
+  **649px apart**, measured. The row's name and date each gained a `data-role`, and the
+  assertion measures the *text* with a `Range` rather than the element, because both sit in a
+  stretched flex column whose box reports the column's edge whichever way the text inside it
+  resolved. `holiday-picker.spec.ts` 15/15, and the new test was checked against the restored
+  bug, where it fails at 649. Nothing is owed to `DESIGN.md`: the fix restores the alignment
+  the canvas already draws.
+  Before that, 2026-09-24, **step 4 of the order — the layout and UI/UX review, and the
+  writing-up of its fixes. All seventeen were approved the same day.** The review itself changed
+  no code: its edits are run 7's section in this file, the seventeen Fix-list items, this block
+  and the plan table.
   **F47–F53 are defects against a rule already written down** (`CLAUDE.md`, `DESIGN.md`, WCAG),
   so none of them needed a design answer. **F54–F63 change a screen**, and each was approved
   as run 7 recommended it (the user, 2026-09-24, on all ten at once); each Fix-list entry
@@ -218,7 +229,8 @@ the plan table, then stops and reports to the user.
      as R7.17.
   4½. **Execute F47–F63**, the review's seventeen fixes, one commit each and in that order —
      the seven rule defects first, then the ten screen changes she approved on 2026-09-24.
-     **All of them come before F32**, which she said the same day.
+     **All of them come before F32**, which she said the same day. **F47 done 2026-09-24;
+     F48 is next.**
   5. **F32 (`/doctor`)**. **Stop before it and ask** — she may want to change model for it;
      reaching it is not licence to start it.
   6. **F37.**
@@ -284,7 +296,8 @@ the plan table, then stops and reports to the user.
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
 | 8 | Execute the Fix list, one item at a time | under way — F1–F31, F33–F46 done; F32 and F37 remain. Stage 8¾ landed between step 2 and step 4 |
-| 9 | Layout and UI/UX review (step 4 of the order, asked for 2026-09-23) | **done** 2026-09-24 — run 7's section. All seventeen findings approved the same day and none built: sections I (F47–F53, rule defects) and J (F54–F63, screen changes), executed before F32 |
+| 9 | Layout and UI/UX review (step 4 of the order, asked for 2026-09-23) | **done** 2026-09-24 — run 7's section. All seventeen findings approved the same day: sections I (F47–F53, rule defects) and J (F54–F63, screen changes), executed before F32 |
+| 10 | Execute run 7's seventeen (step 4½) | under way — F47 done 2026-09-24; F48–F63 remain |
 
 ### How each step is run
 
@@ -1169,7 +1182,7 @@ here** — each changes a screen, so each is a question under "Needs the user" a
 after she answers it. Do these seven first, in order; F49 and F50 are the two that are more than
 a line.
 
-- [ ] F47 — a holiday's name is drawn at the same edge as its own date — R7.1 —
+- [x] 2026-09-24 F47 — a holiday's name is drawn at the same edge as its own date — R7.1 —
   `HolidayPickerScreen.tsx:530` carries `dir="auto"` on a `<span>` whose only child is
   `<Bidi>{row.name}</Bidi>`, which is the pattern `CLAUDE.md` forbids: the wrapper sees a
   neutral isolate, resolves left-to-right, and `text-align: start` then means *left*, so the

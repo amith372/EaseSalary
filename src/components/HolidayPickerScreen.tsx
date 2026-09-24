@@ -527,8 +527,14 @@ function HolidayRowView({
         </button>
 
         <span className="flex min-w-0 flex-[1_1_240px] flex-col gap-0.5">
+          {/*
+            No dir="auto" here: the branch below is a lone <Bidi>, an isolate the
+            parent reads as neutral, so dir="auto" would find no strong character
+            and resolve left-to-right — aligning the name against the far edge of
+            an RTL row. The inner spans carry it instead.
+          */}
           <span
-            dir="auto"
+            data-role="holiday-name"
             className={[
               "text-[16px]",
               chosen !== null ? "font-semibold" : "font-normal",
@@ -540,7 +546,9 @@ function HolidayRowView({
               <Bidi>{row.name}</Bidi>
             )}
           </span>
-          <Bidi className="text-[14px] font-light text-ink-quiet">{label}</Bidi>
+          <span data-role="holiday-date" className="text-[14px] font-light text-ink-quiet">
+            <Bidi>{label}</Bidi>
+          </span>
           {/*
             Item 9: a holiday on her rest day is explained where it falls rather
             than refused, with the rule it rests on beside it (item 25). Shown

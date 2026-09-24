@@ -118,6 +118,27 @@ async function tick(page: Page, date: string): Promise<void> {
   await settled(page);
 }
 
+/**
+ * The right edge of one piece of a row's text, in page pixels.
+ *
+ * A Range over the element's contents hugs the glyphs; the element's own box is
+ * a stretched flex item and would report the column's edge whichever way the
+ * text inside it resolved, which is the failure this measures.
+ */
+async function textRightEdge(
+  page: Page,
+  date: string,
+  part: string,
+): Promise<number> {
+  return holidayRow(page, date)
+    .locator(`[data-role="${part}"]`)
+    .evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return range.getBoundingClientRect().right;
+    });
+}
+
 function row(page: Page, key: string) {
   return page.locator(`[data-row="${key}"]`);
 }
@@ -315,6 +336,32 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
    * rest day is Saturday. What this would catch is the family watching the
    * quota not move with no reason given, and reading it as a broken screen.
    */
+  test("a row's name is drawn at the same edge as its own date", async ({
+    page,
+  }) => {
+    await useHousehold(page, "nameedge");
+    await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
+
+    // Both names are Latin inside a right-to-left row, which is the case a
+    // left-to-right wrapper flips: the name goes to the far edge while its own
+    // date stays at the near one. Measured on a chosen row as well as an
+    // unchosen one, because the two disagreed — the name moved 250px sideways
+    // when the row gained its controls.
+    for (const [date, chosen] of [
+      [CANDIDATE_IN_JUNE, false],
+      [WORKED_HOLIDAY, true],
+    ] as const) {
+      await expect(holidayRow(page, date).getByRole("checkbox")).toHaveAttribute(
+        "aria-checked",
+        String(chosen),
+      );
+      const name = await textRightEdge(page, date, "holiday-name");
+      const written = await textRightEdge(page, date, "holiday-date");
+      expect(Math.abs(name - written)).toBeLessThan(1);
+    }
+  });
+
   test("a holiday on her rest day is explained, and the quota does not move", async ({
     page,
   }) => {
