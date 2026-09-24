@@ -10,7 +10,33 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-23, **step 2 of the order, five of its nine: F38, F39, F40, F41 and
+- **Last done:** 2026-09-24, **step 2 of the order in full — F38 through F46. Step 2 is
+  closed, and the next session starts at step 3, stage 8¾, the refusal card.** The nine are
+  committed and none is pushed.
+  **F42 last, on 2026-09-24**, and its PRD was signed off the same day (three open questions,
+  each answered as recommended): the fetch stores what it reads and no caregiver-terms fetch is
+  invented for it, the table is per household, and a page is one row. Nothing was missing but
+  the far end — `segmentArticle` has stood since stage 5 and all three article fetches already
+  produced a `text`, so three scrapes a day segmented a page and discarded the result.
+  `supabase/migrations/20260924120000_the_text_of_a_fetched_page_is_kept.sql` adds
+  `cached_pages`, keyed `(household_id, url)` so a re-fetch replaces the page; `listCachedPages`
+  and `saveCachedPage` are in both repositories; and `src/lib/pageCorpus.ts`'s `keepPageText`
+  is called from `refreshMinimumWage` and from both halves of `refreshIncomeTaxIfStale`.
+  **It cannot fail the refresh that called it** — the figure is load-bearing and the corpus is
+  not — so a refused write is swallowed there, and that is one of the seven tests in
+  `pageCorpus.test.ts`. The text is kept even when the *figure* could not be read, which the
+  `RateFetch` comment already promised and nothing honoured. Unit suite 1,219/1,219; the five
+  positive tests were checked against the unwired code and all five fail there. No screen
+  changed, so nothing is owed to `DESIGN.md`, but `home-screen`, `before-export` and
+  `month-export` were run anyway because all three trigger a refresh: 32/32.
+  **It owes the user two things: `npx supabase db push`, which only she can run, and the check
+  under rule 8** — run the push, open the home screen so the daily refresh runs, and confirm in
+  the Supabase table editor that `cached_pages` holds a row for the wage page with a title and a
+  non-empty `sections` array; re-open the home screen and confirm the row count has not grown.
+  A failure looks like an empty table after a refresh, a growing row count, or a home screen
+  that errors.
+  What the eight before it were, oldest first:
+  2026-09-23, **five of the nine: F38, F39, F40, F41 and
   F43.** The nine were moved onto the Fix list first (`0036a40`), where the GO of 2026-09-22
   had already put them in principle. Each of the five was checked against the code before it
   was built, and **F38 turned out to be built already** — `taxBracketsMissingWarning` has
@@ -41,7 +67,7 @@ the plan table, then stops and reports to the user.
   a throwing `text()` used to leave `fetchPage` by exception rather than as one of its three
   failures. Unit suite 1,201/1,201; `before-export` and `month-export` 19/19. No screen changed,
   so nothing is owed to `DESIGN.md`.
-  **F46 followed on 2026-09-24** (`COMMIT`), and it was the largest of the nine.
+  **F46 followed on 2026-09-24** (`4ac69b6`), and it was the largest of the nine.
   `src/lib/engine/taxConfirmation.ts` is one calculation with two readers — the card and
   `confirmMonth` — so the figure she is shown is the figure that is stored (rule 12). It works
   the tax out afresh, setting aside what the month already carries, and asks the missing-table
@@ -61,9 +87,7 @@ the plan table, then stops and reports to the user.
   `/דוחות` offer the confirmation for an unconfirmed month and no file. `alerts.spec.ts`'s
   "stays a blockage after a file is made from the reports" is now "the reports have no file to
   make".
-  **What is left of step 2: F42 alone**, and it is **last because it adds a table**: it brings a
-  migration and an `npx supabase db push` that only the user can run.
-  **The seven owe the user's own check (rule 8), which has not been run.** For F46: open
+  **The eight owe the user's own check (rule 8), which has not been run.** For F46: open
   `/דוחות` on a household whose months are drafts — each ended month offers `לאשר ולייצא` and no
   Excel link, and pressing it opens the confirmation on that month; take a month through it and
   the row offers its file. On the confirmation screen itself, the income-tax card says what will
@@ -123,10 +147,10 @@ the plan table, then stops and reports to the user.
   does the first of these that is not done, and only that one:
   1. ~~**The per-worker rate override PRD.**~~ **Done 2026-09-23** — see "Last done" above.
      It closed as two fixes and no schema change; the override layer was not wanted.
-  2. **The nine GO/NO-GO findings**, which are a **GO** (2026-09-22) and are the Fix list's
+  2. ~~**The nine GO/NO-GO findings.**~~ **Done 2026-09-24.** They are a **GO** (2026-09-22) and are the Fix list's
      F38–F46; the detail of each stays under "Needs the user" below, marked `GO/NO-GO`.
-     **Under way: F38, F39, F40, F41, F43 are done (2026-09-23) and F44, F45, F46 on
-     2026-09-24; F42 alone remains.** `specs.md` decided every one, so each was a fix and none
+     **Done in full: F38–F41 and F43 on 2026-09-23, F44–F46 and F42 on 2026-09-24.**
+     `specs.md` decided every one, so each was a fix and none
      was a design question — the two screen questions F46 raised were put to the user and
      answered (2026-09-24), and its departures are in `DESIGN.md` as F44's are.
   3. **Stage 8¾, the refusal card** — `build_plan.md` has its steps.
@@ -145,6 +169,10 @@ the plan table, then stops and reports to the user.
   6. **F37.**
 
   **Ask before each commit** (said on 2026-09-18).
+- **One migration is unapplied.** The user ran `npx supabase db push` on 2026-09-24, and F42
+  added `20260924120000_the_text_of_a_fetched_page_is_kept.sql` after it. Only she can run it,
+  and until she does the live household stores no page text — nothing else behaves differently,
+  since the corpus is never load-bearing.
 - **Outside the list:** `43e0d5a` (an unanswered holiday could not be stored — a missing
   migration, now applied live) waits for the user to mark a holiday signed in and confirm.
 - **A browser failure** is checked by rerunning it alone, and against HEAD with the change
@@ -201,7 +229,7 @@ the plan table, then stops and reports to the user.
 | 5 | `thermo-nuclear-code-quality-review` | **done** 2026-09-18 |
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
-| 8 | Execute the Fix list, one item at a time | under way — F1–F31, F33–F36 done; F32 and F37 remain |
+| 8 | Execute the Fix list, one item at a time | under way — F1–F31, F33–F46 done; F32 and F37 remain |
 
 ### How each step is run
 
@@ -949,7 +977,7 @@ change is one `specs.md` already states — no design question is open in any of
   `workerRole` and the template's `I1`, `F1`, `G1`, `B7`, `B9`, which spec 1304 fills from the
   profile — check: the export suite reads a male worker's sheet and a female one's and they
   differ in those cells only.
-- [ ] F42 — the fetched page's text is kept — spec 1344; `refreshMinimumWage` drops `text` and
+- [x] 2026-09-24 F42 — the fetched page's text is kept — spec 1344; `refreshMinimumWage` drops `text` and
   `fetchArticleSections` is called by nothing — check: a fetch stores the text it read, and a
   failed fetch stores nothing.
 - [x] 2026-09-23 `16a0439` F43 — an override's note and the hospital-overtime note reach column I — `notesOf`
@@ -963,14 +991,15 @@ change is one `specs.md` already states — no design question is open in any of
   the wage's and the tax's live fetches in front of the render and no scraper had a timeout —
   check: a source that never answers leaves the screen drawn on the cached figures within the
   timeout.
-- [x] 2026-09-24 `COMMIT` F46 — the income tax is confirmed before every export, and the file route refuses an
+- [x] 2026-09-24 `4ac69b6` F46 — the income tax is confirmed before every export, and the file route refuses an
   unconfirmed month — `confirmMonth` stored `taxToConfirm` unseen and
   `month/export/file/route.ts` checked only `blocksExport` — check: the tax appears on the
   before-export screen as the wage does, what is confirmed is what the sheet prints, and the
   file address refuses a month nobody confirmed.
 
 **Not on the list**
-- R3.3 — needs a migration, so it waits until the two unapplied migrations are live.
+- R3.3 — needs a migration of its own. The local ones are live as of 2026-09-24, so what it
+  waits on now is being wanted, not being unblocked.
 - R3.5 — fell out of F28 (2026-09-22).
 - R5.1 and R2.22's `?? SEEDED_RATES` — done inside F26, which is where making the rates
   required and fixing "the household's rates never reach a month" turned out to be one move.

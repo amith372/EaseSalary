@@ -31,6 +31,7 @@ import {
   type HolidaySource,
   type Religion,
 } from "@/lib/holidayLists";
+import type { CachedPage, PageSection } from "@/lib/scrape/pageSections";
 import { overlapsMonth } from "@/lib/spans";
 import { SEEDED_TAX_BRACKETS, withFetchedBrackets } from "@/lib/taxBrackets";
 import type { TaxBracket, TaxYearBrackets } from "@/lib/taxBrackets";
@@ -182,6 +183,12 @@ interface TaxBracketsRow {
   tax_year: number;
   brackets: TaxBracket[];
   source: string;
+}
+
+interface CachedPageRow {
+  url: string;
+  title: string;
+  sections: PageSection[];
 }
 
 interface RateRow {
@@ -443,6 +450,12 @@ function taxBracketsOf(row: TaxBracketsRow): TaxYearBrackets {
     brackets: row.brackets,
     source: row.source,
   };
+}
+
+function cachedPageOf(row: CachedPageRow): CachedPage {
+  // The sections are jsonb, which PostgREST returns as parsed JSON, so the
+  // stored array is already the shape `segmentArticle` produced.
+  return { url: row.url, title: row.title, sections: row.sections };
 }
 
 function rateOf(row: RateRow): DatedRate {
@@ -919,6 +932,26 @@ export function createPostgresRepository(
         { onConflict: "household_id,tax_year" },
       );
       raise(error, "could not save the tax brackets");
+    },
+
+    async listCachedPages() {
+      const { data, error } = await client.from("cached_pages").select("*");
+      raise(error, "could not read the cached pages");
+      return ((data ?? []) as CachedPageRow[]).map(cachedPageOf);
+    },
+
+    async saveCachedPage(page) {
+      const { error } = await client.from("cached_pages").upsert(
+        {
+          household_id: householdId,
+          url: page.url,
+          title: page.title,
+          sections: page.sections,
+          fetched_at: new Date().toISOString(),
+        },
+        { onConflict: "household_id,url" },
+      );
+      raise(error, "could not save the cached page");
     },
 
     async lastFetchedBrackets() {

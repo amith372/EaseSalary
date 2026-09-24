@@ -1,5 +1,6 @@
 import type { DatedRate } from "@/lib/datedRates";
 import type { SalaryRepository } from "@/lib/engine/repository";
+import { keepPageText } from "@/lib/pageCorpus";
 import {
   CREDIT_POINT_SOURCE_URL,
   fetchCreditPointValue,
@@ -58,6 +59,7 @@ export async function refreshIncomeTaxIfStale(
     if (fetched.brackets.ok) {
       await repository.saveTaxBrackets(fetched.brackets.value);
     }
+    await keepPageText(repository, fetched.text);
   }
 
   if (isStale(lastPoint, now)) {
@@ -69,6 +71,7 @@ export async function refreshIncomeTaxIfStale(
       fetchImpl,
     );
     if (fetched.rate.ok) await repository.saveRate(fetched.rate.value);
+    await keepPageText(repository, fetched.text);
   }
 
   const [rates, taxBrackets] = await Promise.all([

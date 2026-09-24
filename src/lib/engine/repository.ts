@@ -18,6 +18,7 @@ import {
   type HolidaySource,
 } from "@/lib/holidayLists";
 import type { SealedNumber } from "@/lib/encryption";
+import type { CachedPage } from "@/lib/scrape/pageSections";
 import { SEEDED_TAX_BRACKETS, withFetchedBrackets } from "@/lib/taxBrackets";
 import type { TaxYearBrackets } from "@/lib/taxBrackets";
 import { overlapsMonth } from "@/lib/spans";
@@ -236,6 +237,25 @@ export interface SalaryRepository {
    * never fetched reads as due.
    */
   lastFetchedBrackets(): Promise<string | null>;
+
+  /**
+   * The corpus: the text of the article pages a fetch has read, segmented by
+   * each page's own headings (specs.md Part 3).
+   *
+   * **Kept beside the figure taken from it rather than thrown away**, because
+   * the help screen answers out of it and a corpus discarded at the moment of
+   * the fetch would have to be scraped a second time to get it back. It is
+   * never load-bearing: nothing calculated is read from here, so a household
+   * that has stored none values its months exactly as one that has.
+   *
+   * **Empty until something has been fetched**, which is where this differs
+   * from the rates and the brackets: there is nothing to seed it with, and
+   * nothing goes wrong while it is empty.
+   */
+  listCachedPages(): Promise<CachedPage[]>;
+  /** Records the page, replacing any held for the same address rather than
+   * being appended beside it — a re-fetch is the page as it now reads. */
+  saveCachedPage(page: CachedPage): Promise<void>;
 
   /**
    * The four identifying numbers, **as sealed bytes and never as numbers**
@@ -548,6 +568,7 @@ export function createInMemoryRepository(
   let taxBrackets = structuredClone(seed.taxBrackets ?? SEEDED_TAX_BRACKETS);
   const fetchedAt = new Map<string, string>();
   let bracketsFetchedAt: string | null = null;
+  const cachedPages = new Map<string, CachedPage>();
   let switchedOff: WarningKind[] = [];
   let deferrals: Deferral[] = [];
 
@@ -681,6 +702,16 @@ export function createInMemoryRepository(
 
     async lastFetchedBrackets() {
       return bracketsFetchedAt;
+    },
+
+    async listCachedPages() {
+      return structuredClone([...cachedPages.values()]);
+    },
+
+    async saveCachedPage(page) {
+      // Keyed by the address, so a re-fetch replaces the page rather than
+      // standing beside the way it read last year.
+      cachedPages.set(page.url, structuredClone(page));
     },
 
     async sealedNumbers(workerId) {

@@ -1,5 +1,6 @@
 import type { DatedRate } from "@/lib/datedRates";
 import type { SalaryRepository } from "@/lib/engine/repository";
+import { keepPageText } from "@/lib/pageCorpus";
 import type { ScrapeFailureKind } from "@/lib/scrape/failure";
 import { MINIMUM_WAGE_SOURCE_URL, fetchMinimumWage } from "@/lib/scrape/minimumWage";
 
@@ -18,7 +19,8 @@ export function minimumWageIsStale(lastFetched: string | null, now: Date): boole
 }
 
 /**
- * Reads the minimum wage from its source and saves it (specs.md item 4, Part 3).
+ * Reads the minimum wage from its source and saves it, and keeps the page's own
+ * text beside it (specs.md item 4, Part 3).
  *
  * **A fetched figure is written into the table and a failed fetch is not.** The
  * table is seeded and a fetch updates it, so the next reader starts from what
@@ -34,6 +36,10 @@ export async function refreshMinimumWage(
 ): Promise<{ rates: DatedRate[]; failure: ScrapeFailureKind | null }> {
   const stored = await repository.listRates();
   const fetched = await fetchMinimumWage(stored, fetchImpl);
+  // The text is kept whether or not the statement was readable: a page whose
+  // figure this parser could not find is still a page the help screen answers
+  // out of, so a failed *reading* does not discard the corpus.
+  await keepPageText(repository, fetched.text);
   if (!fetched.rate.ok) {
     return { rates: stored, failure: fetched.rate.failure.kind };
   }
