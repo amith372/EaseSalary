@@ -14,13 +14,11 @@ import {
 } from "@/lib/engine/beforeExport";
 import { recordOf } from "@/lib/engine/repository";
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
-import { lineKeys } from "@/lib/engine/lines";
-import { calculateSeries } from "@/lib/engine/series";
+import { taxToConfirm } from "@/lib/engine/taxConfirmation";
 import {
   compareMonth,
   isIsoDate,
   monthOf as monthOfDate,
-  sameMonth,
 } from "@/lib/dates";
 import { openMonthIfMissing } from "@/lib/workerMonths";
 import { parseShekels } from "@/lib/money";
@@ -120,38 +118,31 @@ export async function closeSickSpell(
 
 /**
  * The income tax the month is confirmed with (specs.md item 17): what the
- * engine works out for it now, from the same replay the preview draws.
+ * engine works out for it now, from the same replay the screen showed her.
  *
- * **Worked out afresh at every confirmation**, so the figure a correction moved
- * is the one stored: the month's earlier confirmed figure and any override are
- * set aside for the calculation. An override still wins on the sheet — it is
- * kept on the month, and only the figure under it is refreshed.
+ * **The calculation is `taxConfirmation.ts`'s and not this action's**, because
+ * the before-export screen puts the very same figure to the user before this
+ * runs: two copies of it would agree today and drift the first time either was
+ * corrected, and the family would confirm one number and file another
+ * (`CLAUDE.md` rule 12).
  */
-async function taxToConfirm(
+async function taxConfirmedFor(
   repository: SalaryRepository,
   profile: WorkerProfile,
   month: YearMonth,
 ): Promise<number> {
-  const months = (await repository.listMonths(profile.id)).map((facts) => {
-    if (!sameMonth(facts.month, month)) return facts;
-    const { incomeTaxAgorot, ...rest } = facts;
-    void incomeTaxAgorot;
-    const overrides = { ...facts.overrides };
-    delete overrides[lineKeys.incomeTax];
-    return { ...rest, overrides };
-  });
-  // Walked here and not read from `householdSeries`: the months handed over are
-  // not the household's own but the ones above with this month's tax set aside,
-  // which is the whole point of the question being asked again.
-  const entry = calculateSeries(
-    months,
+  const confirmed = taxToConfirm(
+    await repository.listMonths(profile.id),
     profile,
     await readToday(),
     await repository.listRates(),
     await repository.listTaxBrackets(),
-  ).find((one) => sameMonth(one.facts.month, month));
-  const line = entry?.result.closing.find((row) => row.key === lineKeys.incomeTax);
-  return Math.abs(line?.amount ?? 0);
+    month,
+  );
+  // A month outside the series cannot be reached from this action — the
+  // confirmation reads it first — and a tax of nothing is the safe reading of
+  // a month the engine will not value.
+  return confirmed?.agorot ?? 0;
 }
 
 /** The figures the confirmation carries. Text, because they are what was typed
@@ -255,7 +246,7 @@ export async function confirmMonth(
 
   await repository.saveMonth(workerId, {
     ...recordOf(facts),
-    incomeTaxAgorot: await taxToConfirm(repository, profile, month),
+    incomeTaxAgorot: await taxConfirmedFor(repository, profile, month),
     // Part 5's *confirmed* event, which `דף המשכורת` prints. Read from the
     // clock here, in the action, and never in the engine or a render.
     confirmedAt: await readNow(),

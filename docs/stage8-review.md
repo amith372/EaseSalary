@@ -10,7 +10,78 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-23, **step 1 of the order — the rate PRD, which the user's answers
+- **Last done:** 2026-09-23, **step 2 of the order, five of its nine: F38, F39, F40, F41 and
+  F43.** The nine were moved onto the Fix list first (`0036a40`), where the GO of 2026-09-22
+  had already put them in principle. Each of the five was checked against the code before it
+  was built, and **F38 turned out to be built already** — `taxBracketsMissingWarning` has
+  stood since the rates reached the series, and only a comment in `month.ts` still called it
+  an open question, so that item is a corrected comment and no behaviour (`7d85953`). F39 is
+  the salary floor, **answered by the user on 2026-09-23**: a change dated before every row
+  of the rate table is accepted rather than judged by today's minimum, since the month is
+  floored again at its own confirmation (`cb6233a`). F40 gives `createWorker` the two-worker
+  check the list already had, so the two stores stop disagreeing about a request made past
+  the withheld control (`c748563`). F41 made the template's six gendered labels placeholders,
+  by the same ZipArchive method `7227e91` used, and `workerRole`'s inclusive stand-in goes
+  with them (`580e981`). F43 gathers the override and hospital-overtime notes into column I
+  (`16a0439`). Unit suite 1,190/1,190 through every commit.
+  **F44 followed on 2026-09-24** (`b2c0cf1`): `updateAdvance` and `reviewAdvanceEdit` correct a
+  movement in place, keeping its number and its kind, and the ledger is asked from both sides —
+  a grant lowered below what has been repaid is refused as `advanceBelowRepaid`, a sentence of
+  its own because `advanceRepaidAlready` tells her to remove the repayments first, which is not
+  what she is doing. `DESIGN.md` carries the departure: the canvas draws `לתקן` on a line the
+  user added and not on a movement. Unit suite 1,199/1,199; `payments-screen.spec.ts` 7/7,
+  including the new browser flow.
+  **F45 followed on 2026-09-24** (`b981ae3`): `fetchPage` runs under `AbortSignal.timeout`, five
+  seconds, which covers every scrape because every scrape goes through it. **It bounds one
+  request and not the screen's whole work** — the pre-export screen reads up to three pages, the
+  two tax ones only on a day's staleness, so a day when all three sources are down still costs
+  fifteen seconds; the budget across a screen was put to the user and not built, and the five
+  seconds is the agent's figure, reasoned in the constant's own comment. The abort is read from
+  `signal.aborted` rather than from the error, and the body read moved inside the same attempt —
+  a throwing `text()` used to leave `fetchPage` by exception rather than as one of its three
+  failures. Unit suite 1,201/1,201; `before-export` and `month-export` 19/19. No screen changed,
+  so nothing is owed to `DESIGN.md`.
+  **F46 followed on 2026-09-24** (`COMMIT`), and it was the largest of the nine.
+  `src/lib/engine/taxConfirmation.ts` is one calculation with two readers — the card and
+  `confirmMonth` — so the figure she is shown is the figure that is stored (rule 12). It works
+  the tax out afresh, setting aside what the month already carries, and asks the missing-table
+  question on that same basis: the month's own warning falls silent on exactly the re-export
+  that would store a zero. The card shows **what the sheet will print**, which is an override
+  where one stands — ₪0.00 in front of a file saying ₪450 is the one thing a confirmation may
+  not do — and it carries no field, because item 17 puts that gesture on `/payments` and the
+  card links there (the user, 2026-09-24). `/month/export/file` now refuses a month nobody
+  confirmed, so the payslip and `/דוחות` offer **לאשר ולייצא** to `/month/export?month=…`
+  instead, and that screen opens on the month the address names — read as a server
+  `searchParams` prop, since a client subtree resolving after hydration replaced the questions
+  mid-answer. Both departures are in `DESIGN.md`.
+  **The rule cost eight browser tests, and that was the finding rather than a cost**: the demo
+  seed confirms nothing, so its every screen had been handing over files for months nobody had
+  confirmed. `store.ts` gained a `confirmed` household (the demo with 2026 filed) for the tests
+  that download a month, and two of the eight became F46's own assertions — the payslip and
+  `/דוחות` offer the confirmation for an unconfirmed month and no file. `alerts.spec.ts`'s
+  "stays a blockage after a file is made from the reports" is now "the reports have no file to
+  make".
+  **What is left of step 2: F42 alone**, and it is **last because it adds a table**: it brings a
+  migration and an `npx supabase db push` that only the user can run.
+  **The seven owe the user's own check (rule 8), which has not been run.** For F46: open
+  `/דוחות` on a household whose months are drafts — each ended month offers `לאשר ולייצא` and no
+  Excel link, and pressing it opens the confirmation on that month; take a month through it and
+  the row offers its file. On the confirmation screen itself, the income-tax card says what will
+  be filed — for a month carrying a manual correction it says her figure and calls it hers, and
+  the exported sheet prints that same figure. And for F44: open `/payments` on a
+  month that records a movement of an advance, press `לתקן` beside it, change the amount and the
+  reason and save — the row says the new figure, the advance keeps the number it had, and what is
+  still owed moves with it in that month and in every later one; then reopen it and type an
+  amount smaller than what has already been repaid, which is refused on the screen and leaves the
+  figure as it was. And for the five before it: open `/settings`
+  and record a salary change dated to a month before April 2025 — it is accepted now, where
+  it used to be refused as below the minimum; export a month and open the sheet — `B10`,
+  `F29`, `G1`, `B9` and `I1` should read for a woman exactly as they did before, and a
+  worker whose profile says male should get the masculine wording throughout; and export a
+  month carrying an override and a hospital-overtime entry with notes on them, unhide column
+  I, and confirm both notes sit beside their own rows. F40 has no screen to check from — the
+  list withholds the control, which is the whole reason the action now checks too.
+  Before that, 2026-09-23, **step 1 of the order — the rate PRD, which the user's answers
   reduced to two fixes and no schema change.** The PRD asked four questions and each one closed
   a branch of it: the fetched tables stay shared, the holiday lists already answer per worker
   through `holidaySource`, the tax brackets are the state's, and the base wage above the minimum
@@ -52,9 +123,12 @@ the plan table, then stops and reports to the user.
   does the first of these that is not done, and only that one:
   1. ~~**The per-worker rate override PRD.**~~ **Done 2026-09-23** — see "Last done" above.
      It closed as two fixes and no schema change; the override layer was not wanted.
-  2. **The nine GO/NO-GO findings**, which are a **GO** (2026-09-22). They are listed under
-     "Needs the user" below, each marked `GO/NO-GO`; `specs.md` already decides every one, so
-     each is a fix and none is a design question.
+  2. **The nine GO/NO-GO findings**, which are a **GO** (2026-09-22) and are the Fix list's
+     F38–F46; the detail of each stays under "Needs the user" below, marked `GO/NO-GO`.
+     **Under way: F38, F39, F40, F41, F43 are done (2026-09-23) and F44, F45, F46 on
+     2026-09-24; F42 alone remains.** `specs.md` decided every one, so each was a fix and none
+     was a design question — the two screen questions F46 raised were put to the user and
+     answered (2026-09-24), and its departures are in `DESIGN.md` as F44's are.
   3. **Stage 8¾, the refusal card** — `build_plan.md` has its steps.
   4. **A review of the layout and the UI/UX methods the application uses** (asked for on
      2026-09-23), for quality and for what could be better. Report-only, like runs 0–5: it
@@ -859,37 +933,39 @@ figure, and each is a bug against a rule `specs.md` already states.
 2026-09-23, which is step 2 of the order. Each one's detail stays under "Needs the user"; the
 entry below names it and says what its fix is checked by. Each changes behaviour, and each
 change is one `specs.md` already states — no design question is open in any of them.
-- [ ] F38 — a year with no tax bracket table leaves the line at zero **and says so** — spec 733
+- [x] 2026-09-23 `7d85953` F38 — **was already built; only a false comment was left** — a year with no tax bracket table leaves the line at zero **and says so** — spec 733
   — `buildClosing` (`month.ts`) folds `null` to 0 with no warning, and its own comment calls
   the warning an open question — check: a month in a year the table does not reach draws a
   warning naming the year, and its tax line is still zero.
-- [ ] F39 — a salary change dated before the rate table reaches is refused as uncheckable and
-  not measured against today's minimum — `reviewSalaryChange` (`salary.ts`, `atFrom ?? now`)
-  — check: a change dated to a month before the table's first row is refused, and one inside
-  it is unaffected.
-- [ ] F40 — `createWorker` refuses a third worker itself — `workers/actions.ts:737` — Postgres
+- [x] 2026-09-23 `cb6233a` F39 — a salary change dated before the rate table reaches is not measured against
+  today's minimum — `reviewSalaryChange` (`salary.ts`, `atFrom ?? now`) — **accepted without a
+  check, answered by the user 2026-09-23**: such a month has no figure and the application says
+  nothing, and the floor still binds at the month's own confirmation — check: a change dated to
+  a month before the table's first row is accepted, and one inside it is unaffected.
+- [x] 2026-09-23 `c748563` F40 — `createWorker` refuses a third worker itself — `workers/actions.ts:737` — Postgres
   throws unhandled and the in-memory store accepts it — check: a third worker is refused with
   a sentence in both stores, and the two-worker case still passes.
-- [ ] F41 — the sheet's gendered wording follows the profile's `gender` — `he.ts`'s
+- [x] 2026-09-23 `580e981` F41 — the sheet's gendered wording follows the profile's `gender` — `he.ts`'s
   `workerRole` and the template's `I1`, `F1`, `G1`, `B7`, `B9`, which spec 1304 fills from the
   profile — check: the export suite reads a male worker's sheet and a female one's and they
   differ in those cells only.
 - [ ] F42 — the fetched page's text is kept — spec 1344; `refreshMinimumWage` drops `text` and
   `fetchArticleSections` is called by nothing — check: a fetch stores the text it read, and a
   failed fetch stores nothing.
-- [ ] F43 — an override's note and the hospital-overtime note reach column I — `notesOf`
+- [x] 2026-09-23 `16a0439` F43 — an override's note and the hospital-overtime note reach column I — `notesOf`
   (`notes.ts`) gathers neither; item 2 writes every action's note — check: the export suite
   finds both notes in `I`, on the rows their figures sit on.
-- [ ] F44 — an advance movement is corrected by **editing the entry** — spec 800-809; the month
-  has `addAdvance` and `removeAdvance` and no edit — check: an advance's amount and note are
-  changed in place, its number is unchanged, and a repaid advance still refuses what it
+- [x] 2026-09-24 `b2c0cf1` F44 — an advance movement is corrected by **editing the entry** — spec 800-809;
+  the month had `addAdvance` and `removeAdvance` and no edit — check: an advance's amount and
+  note are changed in place, its number is unchanged, and a repaid advance still refuses what it
   refuses.
-- [ ] F45 — a slow or broken source never delays a screen — `/month/export` awaits the wage's
-  and the tax's live fetches in front of the render and no scraper has a timeout — check: a
-  source that never answers leaves the screen drawn on the cached figures within the timeout.
-- [ ] F46 — the income tax is confirmed before every export, and the file route refuses an
-  unconfirmed month — `confirmMonth` stores `taxToConfirm` unseen and
-  `month/export/file/route.ts` checks only `blocksExport` — check: the tax appears on the
+- [x] 2026-09-24 `b981ae3` F45 — a slow or broken source never delays a screen — `/month/export` awaited
+  the wage's and the tax's live fetches in front of the render and no scraper had a timeout —
+  check: a source that never answers leaves the screen drawn on the cached figures within the
+  timeout.
+- [x] 2026-09-24 `COMMIT` F46 — the income tax is confirmed before every export, and the file route refuses an
+  unconfirmed month — `confirmMonth` stored `taxToConfirm` unseen and
+  `month/export/file/route.ts` checked only `blocksExport` — check: the tax appears on the
   before-export screen as the wage does, what is confirmed is what the sheet prints, and the
   file address refuses a month nobody confirmed.
 

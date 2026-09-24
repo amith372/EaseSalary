@@ -216,7 +216,23 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               </p>
             ) : null}
           </div>
-          {shown.canExport ? (
+          {/* **A month nobody confirmed has no file yet, so the link is to the
+              screen that confirms it** (specs.md items 4, 17). The route
+              refuses such a month, and a control that answers a click with a
+              refusal is a control that should not have been drawn — but unlike
+              a block, this is something she can do from here, so it is offered
+              rather than withheld. */}
+          {shown.canExport && shown.confirmedOn === null ? (
+            <Link
+              href={`/month/export?${monthQuery}`}
+              data-payslip-confirm
+              className="flex items-center gap-2.5 rounded-tint bg-forest px-6 py-3.5 text-[17px] font-semibold whitespace-nowrap text-white hover:bg-forest-deep hover:text-white"
+            >
+              <SheetBadge className="size-5 flex-none text-forest" />
+              <Bidi>{he.beforeExport.confirmAndExport}</Bidi>
+            </Link>
+          ) : null}
+          {shown.canExport && shown.confirmedOn !== null ? (
             <a
               href={`/month/export/file?${monthQuery}`}
               data-payslip-export

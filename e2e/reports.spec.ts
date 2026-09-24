@@ -39,11 +39,22 @@ const RECUPERATION_AGOROT = 270900;
  * therefore offer rather than September. */
 const ENDED_MONTH = "אוגוסט 2026";
 
-async function useHousehold(page: Page, label: string): Promise<void> {
+/**
+ * `confirmed` is the demo with its months filed (`store.ts`). **A file requires
+ * a confirmation** — `/month/export/file` refuses a month nobody confirmed
+ * (specs.md items 4, 17) — so every test here that downloads a month takes that
+ * household, and the one below that asks what an unconfirmed month offers takes
+ * the plain demo.
+ */
+async function useHousehold(
+  page: Page,
+  label: string,
+  seed: "demo" | "confirmed" = "confirmed",
+): Promise<void> {
   await page.context().addCookies([
     {
       name: "household",
-      value: `demo-e2e-${RUN}-${label}`,
+      value: `${seed}-e2e-${RUN}-${label}`,
       url: "http://localhost:3000",
     },
   ]);
@@ -98,6 +109,32 @@ test.describe("the reports screen (item 23, item 29)", () => {
     await expect(
       september.getByRole("link", { name: he.reports.previousMonths.excel }),
     ).toHaveCount(1);
+  });
+
+  /**
+   * **A month nobody confirmed offers the confirmation and not a file**
+   * (specs.md items 4, 17): the wage and the tax are confirmed before every
+   * export and stored by that confirmation, so the file address refuses such a
+   * month and this screen may not link to it.
+   *
+   * **What it would catch**: the excel link drawn anyway, which is what stood
+   * until 2026-09-24 — `/דוחות` handed over a file for a month that had answered
+   * none of item 18's questions, and the link worked.
+   */
+  test("offers the confirmation for a month nobody confirmed, and no file", async ({
+    page,
+  }) => {
+    await useHousehold(page, "unconfirmed", "demo");
+    await page.goto("/reports");
+    await switchToTestWorker(page);
+
+    const august = page.locator('[data-report-month="2026-8"]');
+    await expect(
+      august.getByRole("link", { name: he.reports.previousMonths.excel }),
+    ).toHaveCount(0);
+    const confirm = august.locator("[data-confirm-month]");
+    await expect(confirm).toHaveText(he.beforeExport.confirmAndExport);
+    await expect(confirm).toHaveAttribute("href", "/month/export?month=2026-08");
   });
 
   /**

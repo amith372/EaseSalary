@@ -507,6 +507,38 @@ const FILED_ON: Record<number, string> = {
   4: "2026-05-04T08:00:00.000Z",
 };
 
+/**
+ * The demo as a family that has been filing as it goes: every month of 2026
+ * that has ended is confirmed, for both workers.
+ *
+ * **It exists because a file now requires a confirmation** — `/month/export/file`
+ * refuses a month nobody confirmed (specs.md items 4, 17), so a household whose
+ * months are all drafts has no file anywhere, and the screens that hand one over
+ * had nothing to be checked against. **The month still running is confirmed
+ * too**, because item 21 lets a family file before the month is out and the
+ * screens that offer that file have to be checkable as well.
+ */
+export const confirmedSeed = {
+  ...devSeed,
+  months: Object.fromEntries(
+    Object.entries(devMonths).map(([workerId, records]) => [
+      workerId,
+      records.map((record) =>
+        record.month.year === 2026
+          ? {
+              ...record,
+              // Late in the month itself, so the month still running is
+              // confirmed too. The instant matters only in that a month is not
+              // reported as corrected afterwards, which `monthState` reads from
+              // `updatedAt` against this.
+              confirmedAt: `2026-${String(record.month.month).padStart(2, "0")}-28T08:00:00.000Z`,
+            }
+          : record,
+      ),
+    ]),
+  ),
+};
+
 export const filedSeed = {
   ...devSeed,
   months: {

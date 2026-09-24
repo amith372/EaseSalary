@@ -56,6 +56,10 @@ export default async function ReportsPage() {
           // file — a disagreement offers a month that has not ended.
           blocks: blocksExport(month.facts, today),
           stillRunning: monthStillRunning(month.facts, today),
+          // The other half of what `/month/export/file` refuses on: the wage
+          // and the tax are confirmed before every export and stored by that
+          // confirmation, so a month without one has no file yet (items 4, 17).
+          confirmed: month.facts.confirmedAt !== undefined,
         };
       });
 

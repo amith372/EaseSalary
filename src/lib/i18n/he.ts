@@ -2204,6 +2204,17 @@ export const he = {
    */
   beforeExport: {
     eyebrow: "לפני הייצוא",
+    /**
+     * What the payslip and `/דוחות` offer instead of the file, for a month
+     * nobody has confirmed yet (specs.md items 4, 17).
+     *
+     * **It says both halves, because the family did not ask to confirm
+     * anything** — she came for a file, and the sentence has to tell her the
+     * file is one press further on rather than that something is missing. The
+     * words live here, beside the screen the link goes to, and both screens
+     * read them: two wordings for one link is two places for it to drift.
+     */
+    confirmAndExport: "לאשר ולייצא",
     /** `[חודש] [שנה] של [שם העובד/ת]`, as the artboard draws it. The three
      * parts are separate elements, so nothing here is a sentence with a name
      * inside it (`CLAUDE.md`). */
@@ -2273,6 +2284,32 @@ export const he = {
       refused: {
         amount: "צריך להקליד סכום גדול מאפס.",
       },
+    },
+
+    /**
+     * The income tax the month is about to be confirmed with (specs.md item
+     * 17: the tax is confirmed before an export and stored with the month like
+     * the minimum wage is).
+     *
+     * **It is shown and explained here and corrected elsewhere**, which is the
+     * division item 17 already draws: a month departs from the worker's setting
+     * through the field on the payments screen, and a second field here would be
+     * a second way to write the same override — two screens to look at when a
+     * figure is wrong, and one of them beside a button that files the month.
+     * How the figure was arrived at is said in `month.actions.incomeTax.from`,
+     * the same words the payments card uses, so the two cannot drift apart.
+     */
+    incomeTax: {
+      title: "מס ההכנסה שיישמר עם החודש הזה",
+      /** What confirming does with it, said plainly: the figure stops moving,
+       * which is what lets a past month reproduce rather than recalculate. */
+      note: "הסכום מחושב עכשיו לפי תנאי ההעסקה של החודש, ונשמר יחד עם שכר המינימום ברגע שמאשרים. מכאן והלאה החודש הזה יופק תמיד עם הסכום הזה, גם אם משהו ישתנה בהמשך.",
+      /** Where she has typed an amount over the row: what the sheet prints is
+       * hers, and it stands until she removes it (item 17). */
+      manualNote: "הסכום הזה הוזן ידנית לחודש הזה, והוא מה שיופיע בדף המשכורת גם אחרי האישור. הסכום שהיישום חישב נשמר תחתיו, כך שהסרת התיקון מחזירה אותו.",
+      /** A month that departs from the setting is corrected where item 17 puts
+       * that gesture, and the card says where rather than offering it twice. */
+      correct: "לתקן את המס לחודש הזה",
     },
 
     /**

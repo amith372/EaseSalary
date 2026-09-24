@@ -358,11 +358,20 @@ test.describe("the national-insurance quarter, paid through the payments screen 
 });
 
 test.describe("a finished month never confirmed (specs.md item 27)", () => {
-  test("is a blockage, and stays one after a file is made from the reports", async ({ page }) => {
+  /**
+   * **And `/דוחות` has no file to hand over for it** (specs.md items 4, 17).
+   * Until 2026-09-24 it had one: the list linked straight to the file address,
+   * which asked none of item 18's questions, and the blockage then stood beside
+   * a month the family had already filed. The route refuses such a month now, so
+   * the list offers the confirmation instead — and the blockage is what it was.
+   *
+   * **What it would catch**: the file link coming back for an unconfirmed month;
+   * and a download of it clearing the alert, which was the older failure this
+   * test was written for.
+   */
+  test("is a blockage, and the reports offer the confirmation rather than a file", async ({ page }) => {
     // The demo confirms none of its months (`seed.ts`), so August 2026 — ended
-    // by the suite's day — is a draft. What this would catch: a draft month
-    // shown as merely "not exported" in the bell, or one that a download from
-    // `/reports`, which asks none of item 18's questions, quietly clears.
+    // by the suite's day — is a draft.
     await useHousehold(page, "demo", "unconfirmed");
     const unconfirmed = page
       .locator('[data-role="alert"][data-list="blockage"]')
@@ -378,19 +387,19 @@ test.describe("a finished month never confirmed (specs.md item 27)", () => {
 
     await page.goto("/reports");
     await switchToTestWorker(page);
-    const link = page
-      .locator('[data-report-month="2026-8"]')
-      .getByRole("link", { name: he.reports.previousMonths.excel });
-    const [download] = await Promise.all([page.waitForEvent("download"), link.click()]);
-    await download.path();
+    const august = page.locator('[data-report-month="2026-8"]');
+    await expect(
+      august.getByRole("link", { name: he.reports.previousMonths.excel }),
+    ).toHaveCount(0);
+    await expect(august.locator("[data-confirm-month]")).toHaveAttribute(
+      "href",
+      "/month/export?month=2026-08",
+    );
 
     await page.goto("/alerts");
-    await expect(
-      page.locator('[data-role="handled"]').filter({ hasText: AUGUST }),
-    ).toHaveCount(1);
     await expect(unconfirmed).toHaveCount(1);
     await expect(unexported(page, AUGUST)).toHaveCount(0);
-    await page.screenshot({ path: "test-results/alerts-unconfirmed-after-reports-export.png" });
+    await page.screenshot({ path: "test-results/alerts-unconfirmed-no-file.png" });
   });
 });
 

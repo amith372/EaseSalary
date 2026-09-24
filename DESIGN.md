@@ -171,6 +171,17 @@ folded sheet.
   space back with a negative margin, so the rows are drawn as the artboards
   have them.
 
+### The payslip and `דוחות`
+
+- **A month nobody has confirmed offers `לאשר ולייצא` where a confirmed one
+  offers its file** (the user, 2026-09-24). `/month/export/file` refuses such a
+  month, since the wage and the tax are confirmed before every export and stored
+  by that confirmation, and neither screen may offer a link the route answers
+  with a refusal. It is a link and not a withheld control, which is what tells it
+  apart from a blocked month: nothing is wrong with the month, and the file is one
+  press further on. The link names the month, and `/month/export` opens on the
+  month the URL names rather than on the one it would choose for itself.
+
 ### The settings screen
 
 - The four groups start folded, each opened from its heading as the payments
@@ -191,6 +202,17 @@ folded sheet.
   failed-fetch sentence before an export now sends her here for it.
 
 ### Before the export
+
+- **The income tax has a card of its own, which the canvas does not draw.** The
+  tax is confirmed before every export and stored with the month exactly as the
+  minimum wage is (`specs.md` item 17), and it had no surface at all: the figure
+  was worked out and written when the export button was pressed. The card shows
+  the amount, names which of the three settings produced it in the payments
+  card's own words, and says where the year has no bracket table. **It carries no
+  field**, unlike the wage's and the recuperation's: a month departs from the
+  worker's setting through the field on the payments screen (item 17), and a
+  second one beside the button that files the month would be a second way to
+  write the same override. The card links there instead (the user, 2026-09-24).
 
 - The yes/no answers are the shared `Chip`, filled sage when chosen. The
   artboard draws a chosen answer in the warm tint, a step from an unchosen one

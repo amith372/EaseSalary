@@ -4,7 +4,7 @@ import {
   createInMemoryRepository,
 } from "@/lib/engine/repository";
 import type { SalaryRepository } from "@/lib/engine/repository";
-import { devSeed, filedSeed } from "@/lib/dev/seed";
+import { confirmedSeed, devSeed, filedSeed } from "@/lib/dev/seed";
 import { knownCaseSeed } from "@/lib/dev/known";
 import { INVITATION_COOKIE, invitationToken } from "@/lib/invitationCookie";
 import { createPostgresRepository } from "@/lib/supabase/repository";
@@ -52,6 +52,10 @@ const seeds = {
   demo: devSeed,
   known: knownCaseSeed,
   filed: filedSeed,
+  /** The demo as a family that has been filing as it goes — every ended month
+   * confirmed, which is what a month with a file looks like now that the file
+   * address refuses a month nobody confirmed (items 4, 17). */
+  confirmed: confirmedSeed,
   /**
    * A household with nothing in it, which is what every new account is.
    *

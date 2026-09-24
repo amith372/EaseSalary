@@ -7,6 +7,7 @@ import { SheetBadge, TwoToneIcon } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { monthLabel } from "@/lib/dateLabels";
+import { sameMonth } from "@/lib/dates";
 import type { ExportBlockKey } from "@/lib/engine/beforeExport";
 import { he } from "@/lib/i18n/he";
 import type { YearMonth } from "@/lib/types";
@@ -56,6 +57,15 @@ export interface ReportMonth {
   /** The current month before its last day: it has a file, and the row says it
    * has not ended beside it (item 21). */
   stillRunning: boolean;
+  /**
+   * Whether the month has been confirmed, which is the other thing
+   * `/month/export/file` refuses on (specs.md items 4, 17).
+   *
+   * **A row offers the confirmation screen where this is false**, rather than
+   * withholding the link as a block does: nothing is wrong with the month, and
+   * the file is one press further on.
+   */
+  confirmed: boolean;
 }
 
 export interface WorkerReports {
@@ -140,6 +150,12 @@ function monthHref(workerId: string, month: YearMonth, notes = true): string {
   return `/month/export/file?${query.toString()}`;
 }
 
+/** The confirmation screen, opened on one month: what a month nobody has
+ * confirmed offers in place of its file (specs.md items 4, 17). */
+function confirmHref(month: YearMonth): string {
+  return `/month/export?month=${month.year}-${String(month.month).padStart(2, "0")}`;
+}
+
 export function ReportsScreen({ household }: ReportsScreenProps) {
   const { worker } = useWorkerScope();
   const words = he.reports;
@@ -147,6 +163,14 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
     household.find((entry) => entry.workerId === worker?.id) ?? household[0];
 
   if (mine === undefined) return null;
+
+  // Whether the month the hero points at has a file yet, which is the same
+  // question its own row answers.
+  const latestHasFile =
+    mine.latest !== null &&
+    (mine.months.find((entry) => sameMonth(entry.month, mine.latest!))
+      ?.confirmed ??
+      false);
 
   // Newest first: a family looking for a month is looking for a recent one, and
   // the replay hands them over oldest first because that is the order balances
@@ -197,7 +221,12 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
               )}
             </h2>
           </div>
-          {mine.latest !== null ? (
+          {/* **The hero leads to the file where the month has one, and to the
+              confirmation where it has not** — the same rule as the rows below
+              it, and the reason the two are read from one field: the month a
+              family comes here for is often the one they have not filed yet,
+              and a hero pointing at a refusal is the worst place to learn it. */}
+          {mine.latest !== null && latestHasFile ? (
             <a
               href={monthHref(mine.workerId, mine.latest)}
               className="flex flex-none items-center justify-center gap-3 rounded-tint bg-forest px-8 py-4 text-[19px] font-semibold whitespace-nowrap text-white transition-colors hover:bg-forest-deep hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest max-sm:w-full"
@@ -205,6 +234,16 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
               <SheetBadge className="size-5.5 text-forest" />
               <Bidi>{words.thisMonth.action}</Bidi>
             </a>
+          ) : null}
+          {mine.latest !== null && !latestHasFile ? (
+            <Link
+              href={confirmHref(mine.latest)}
+              data-confirm-month
+              className="flex flex-none items-center justify-center gap-3 rounded-tint bg-forest px-8 py-4 text-[19px] font-semibold whitespace-nowrap text-white transition-colors hover:bg-forest-deep hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest max-sm:w-full"
+            >
+              <SheetBadge className="size-5.5 text-forest" />
+              <Bidi>{he.beforeExport.confirmAndExport}</Bidi>
+            </Link>
           ) : null}
         </Card>
 
@@ -247,7 +286,17 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                     ))}
                   </span>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    {entry.blocks[0] === undefined ? (
+                    {entry.blocks[0] === undefined && !entry.confirmed ? (
+                      <Link
+                        href={confirmHref(entry.month)}
+                        data-confirm-month
+                        className="flex items-center gap-2 py-1 text-[16px] font-semibold whitespace-nowrap hover:underline hover:underline-offset-4"
+                      >
+                        <SheetBadge tile="fill-sage-soft" className="size-4.5 text-forest" />
+                        <Bidi>{he.beforeExport.confirmAndExport}</Bidi>
+                      </Link>
+                    ) : null}
+                    {entry.blocks[0] === undefined && entry.confirmed ? (
                       <a
                         href={monthHref(mine.workerId, entry.month)}
                         className="flex items-center gap-2 py-1 text-[16px] font-semibold whitespace-nowrap hover:underline hover:underline-offset-4"
@@ -255,7 +304,8 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                         <SheetBadge tile="fill-sage-soft" className="size-4.5 text-forest" />
                         <Bidi>{words.previousMonths.excel}</Bidi>
                       </a>
-                    ) : (
+                    ) : null}
+                    {entry.blocks[0] === undefined ? null : (
                       <span className="text-[16px] whitespace-nowrap text-ink-quiet">
                         <Bidi>
                           {words.previousMonths.blocked[entry.blocks[0]]}

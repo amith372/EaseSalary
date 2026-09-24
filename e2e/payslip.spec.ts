@@ -41,7 +41,7 @@ const RUNNING_QUERY = "2026-09";
 async function useHousehold(
   page: Page,
   label: string,
-  seed: "demo" | "known" = "demo",
+  seed: "demo" | "known" | "confirmed" = "demo",
 ): Promise<void> {
   await page.context().addCookies([
     {
@@ -141,10 +141,16 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     ).toContainText(ENDED);
   });
 
+  /**
+   * **The export link is drawn for a month that has been confirmed**, which is
+   * why this household is the filed one (`store.ts`): the file address refuses
+   * a month nobody confirmed (items 4, 17), and the screen may not offer a link
+   * the route would answer with a refusal.
+   */
   test("opens on the latest month that has ended, not the one still running", async ({
     page,
   }) => {
-    await useHousehold(page, "default");
+    await useHousehold(page, "default", "confirmed");
     await page.goto("/month/payslip");
     await switchToTestWorker(page);
     await expect(page.getByRole("heading", { level: 1 })).toContainText(ENDED);
@@ -164,7 +170,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
   test("offers the running month's file with a warning, and it says what the screen says", async ({
     page,
   }) => {
-    await useHousehold(page, "running");
+    await useHousehold(page, "running", "confirmed");
     await page.goto(`/month/payslip?month=${RUNNING_QUERY}`);
     await switchToTestWorker(page);
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
@@ -197,7 +203,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
   test("says the same four totals as the workbook it mirrors (rule 11)", async ({
     page,
   }) => {
-    await useHousehold(page, "totals");
+    await useHousehold(page, "totals", "confirmed");
     await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
     await switchToTestWorker(page);
 
@@ -220,6 +226,38 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     expect(onScreen.subtotalF).toContain(said(sheet, "F24"));
     expect(onScreen.gross).toContain(said(sheet, "E26"));
     expect(onScreen.net).toContain(transferred(sheet));
+  });
+
+  /**
+   * **A month nobody confirmed offers the confirmation and not the file**
+   * (specs.md items 4, 17). The demo household confirms nothing, so August 2026
+   * — ended by the suite's day — is a draft with every question answerable and
+   * nothing blocking it.
+   *
+   * **What it would catch**: the file link drawn for such a month, which is a
+   * button that answers a click with a 409; and the link losing its month, which
+   * would open the confirmation screen on whichever month it chooses for itself
+   * and file the wrong one.
+   */
+  test("offers the confirmation, not the file, for a month nobody confirmed", async ({
+    page,
+  }) => {
+    await useHousehold(page, "unconfirmed");
+    await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
+    await switchToTestWorker(page);
+
+    await expect(page.locator("[data-payslip-export]")).toHaveCount(0);
+    const confirm = page.locator("[data-payslip-confirm]");
+    await expect(confirm).toHaveText(he.beforeExport.confirmAndExport);
+    await confirm.click();
+    // The payslip addresses a month by worker and month together, and the
+    // confirmation screen reads the month off it.
+    await expect(page).toHaveURL(
+      new RegExp(`/month/export\\?.*month=${ENDED_QUERY}$`),
+    );
+    // And the screen opened on that month rather than on the one it picks for
+    // itself.
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(ENDED);
   });
 
   test("carries the sheet's own subtotal names, grouped by its columns", async ({
@@ -407,7 +445,7 @@ test.describe("the month's own note (specs.md item 5)", () => {
   test("is written on the opening screen, shown on the payslip, and kept off the sheet", async ({
     page,
   }) => {
-    await useHousehold(page, "note");
+    await useHousehold(page, "note", "confirmed");
     const note = "שולם במזומן ביד, לבקשתה";
     await page.goto(`/month/payslip?month=${ENDED_QUERY}`);
     await switchToTestWorker(page);

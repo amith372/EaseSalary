@@ -61,6 +61,17 @@ export async function GET(request: NextRequest) {
       status: 409,
     });
   }
+  // **A month nobody confirmed has no file** (specs.md items 4, 17). The
+  // minimum wage and the income tax are confirmed before every export and
+  // stored on the month by that confirmation, so a month without one would be
+  // filed with figures nobody agreed to and would not reproduce: the same
+  // address tomorrow would hand back a different sheet. The rule is the
+  // route's because the route is the address — the payslip and `/דוחות` link
+  // straight to it, and each withholds its link for the same reason a blocked
+  // month gets none.
+  if (inSeries.facts.confirmedAt === undefined) {
+    return new Response("The month has not been confirmed", { status: 409 });
+  }
 
   const { bytes, filename } = await monthFileOf({
     worker: {

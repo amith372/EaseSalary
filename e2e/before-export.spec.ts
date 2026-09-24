@@ -1,4 +1,5 @@
-﻿import { expect, test, type Page } from "@playwright/test";
+﻿import ExcelJS from "exceljs";
+import { expect, test, type Page } from "@playwright/test";
 import {
   openSettingsForTestWorker,
   openSettingsGroups,
@@ -463,6 +464,64 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
    * no unit test can see — a confirmation that wrote nothing would leave every
    * screen looking exactly as it does now.
    */
+  /**
+   * **The income tax is put to the user before the export, like the minimum
+   * wage** (specs.md item 17: it is confirmed before an export and stored with
+   * the month). Until 2026-09-24 it was worked out and written when the export
+   * button was pressed, and no screen ever said what it would be.
+   *
+   * August 2026 carries an override of ₪450 on the tax row (`seed.ts`), which
+   * is the case that decides what the card must show: an override is what the
+   * sheet prints, so a card showing the figure underneath it would put ₪0.00 in
+   * front of a file that says ₪450. The ₪450 is the seed's own figure and the
+   * -45000 below is that amount in agorot, signed as the closing block signs a
+   * withholding.
+   *
+   * **What it would catch**: the card missing altogether; the card showing the
+   * derived figure where an override stands; and the sheet disagreeing with the
+   * card it was confirmed from, which is the one failure the family would carry
+   * to the tax authority.
+   */
+  test("shows the income tax it will file, and the sheet says the same", async ({
+    page,
+  }) => {
+    await useHousehold(page, "tax-card");
+    await page.goto("/month/export");
+    await switchToTestWorker(page);
+    // August, the month that has ended, is what the screen opens on.
+    await answerEverything(page);
+
+    const card = page.locator("[data-income-tax]");
+    await expect(card).toContainText(he.beforeExport.incomeTax.title);
+    await expect(card.locator("[data-income-tax-amount]")).toContainText(
+      formatAgorot(45000),
+    );
+    // Named as hers, because it is: the amount was typed over the row for this
+    // month alone.
+    await expect(card).toContainText(he.month.actions.incomeTax.from.manual);
+    await page.screenshot({
+      path: "test-results/before-export-income-tax.png",
+      fullPage: true,
+    });
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.locator("[data-finish]").click(),
+    ]);
+    const path = await download.path();
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(path);
+    const sheet = workbook.worksheets[0]!;
+    const amounts: number[] = [];
+    sheet.eachRow((row) =>
+      row.eachCell((cell) => {
+        if (typeof cell.value === "number") amounts.push(cell.value);
+      }),
+    );
+    // The sheet writes shekels, and withholding subtracts (specs.md Part 5).
+    expect(amounts).toContain(-450);
+  });
+
   test("confirms the month, and the month screen agrees with what was confirmed", async ({
     page,
   }) => {

@@ -20,6 +20,7 @@ import type {
   ExportQuestion,
 } from "@/lib/engine/beforeExport";
 import type { ConfirmedWage } from "@/lib/engine/types";
+import type { TaxToConfirm } from "@/lib/engine/taxConfirmation";
 import { he } from "@/lib/i18n/he";
 import {
 } from "@/lib/money";
@@ -75,6 +76,12 @@ export interface MonthBeforeExport {
   /** The minimum wage in force during *this* month, which is not the latest row
    * the table holds (item 4). `null` where the table begins after it. */
   offeredWage: DatedRate | null;
+  /**
+   * The income tax this month would be confirmed with, which item 17 has
+   * confirmed before every export as the minimum wage is. `null` for a month
+   * the engine does not value, which this screen never draws a card for.
+   */
+  incomeTax: TaxToConfirm | null;
 }
 
 export interface WorkerBeforeExport {
@@ -97,6 +104,16 @@ interface BeforeExportScreenProps {
   /** The page the figure is read from, shown beside it (item 4: where it came
    * from is part of what the user is confirming). */
   sourceUrl: string;
+  /**
+   * The month to open on, where the address named one — the payslip and
+   * `/דוחות` link here month by month for a month nobody has confirmed yet.
+   *
+   * **Read on the server and handed down**, rather than pulled off the URL
+   * here: the screen is one the suite drives through several months in a row,
+   * and a subtree that resolves after hydration replaces the questions under
+   * the user's cursor.
+   */
+  namedMonth: YearMonth | null;
 }
 
 /**
@@ -122,13 +139,18 @@ export function BeforeExportScreen({
   today,
   failure,
   sourceUrl,
+  namedMonth,
 }: BeforeExportScreenProps) {
   const { worker } = useWorkerScope();
-  const [chosenMonth, setMonth] = useState<YearMonth>(() =>
-    openingExportMonth(
-      household.flatMap((entry) => entry.months.map((each) => each.month)),
-      today,
-    ),
+  // The month the address named, and otherwise the one this screen opens on by
+  // itself.
+  const [chosenMonth, setMonth] = useState<YearMonth>(
+    () =>
+      namedMonth ??
+      openingExportMonth(
+        household.flatMap((entry) => entry.months.map((each) => each.month)),
+        today,
+      ),
   );
 
   const entry =

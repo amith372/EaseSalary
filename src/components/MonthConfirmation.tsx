@@ -23,6 +23,7 @@ import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import { AmountField, inputClass } from "@/components/Field";
 import { SheetBadge } from "@/components/icons";
+import { MoneyValue } from "@/components/MoneyValue";
 import {
   yearMonthText,
 } from "@/lib/dates";
@@ -34,12 +35,14 @@ import type {
   ExportQuestionKey,
 } from "@/lib/engine/beforeExport";
 import { exportQuestionKeys } from "@/lib/engine/beforeExport";
+import type { IncomeTaxSetting } from "@/lib/engine/types";
 import type { MonthBeforeExport } from "@/components/BeforeExportScreen";
 import { he } from "@/lib/i18n/he";
 import {
   amountFieldValue,
   formatAgorot,
   formatDays,
+  formatPercent,
   parseShekels,
 } from "@/lib/money";
 import type { ScrapeFailureKind } from "@/lib/scrape/failure";
@@ -257,6 +260,68 @@ export function MonthConfirmation({
           </p>
         </Card>
       ) : null}
+
+      {/* Item 17: the tax is confirmed before an export and stored with the
+          month like the minimum wage is. **It is shown and explained and not
+          typed here** — a month departs from the worker's setting through the
+          field on the payments screen, and a second field beside the button
+          that files the month would be a second way to write the same
+          override. */}
+      {shown.incomeTax === null ? null : (
+        <Card
+          data-income-tax=""
+          className="flex flex-col gap-3 px-5 py-5 sm:px-6.5"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <span className="flex min-w-0 flex-col gap-1">
+              <span dir="auto" className="text-[17px] font-semibold">
+                {words.incomeTax.title}
+              </span>
+              {/* The same words the payments card says it with, so the two
+                  screens cannot come to name the figure's source differently. */}
+              <span dir="auto" className="text-[15px] font-light text-ink-warm">
+                {shown.incomeTax.manualAgorot === null
+                  ? taxSourceWords(shown.incomeTax.setting)
+                  : he.month.actions.incomeTax.from.manual}
+              </span>
+            </span>
+            {/* **The figure the sheet will print**, which is the amount she
+                typed where she typed one: a card saying ₪0.00 in front of a file
+                that prints ₪450 is the one thing a confirmation may not do. The
+                figure underneath is still what is stored (item 17). */}
+            <span data-income-tax-amount="">
+              <MoneyValue
+                agorot={shown.incomeTax.manualAgorot ?? shown.incomeTax.agorot}
+              />
+            </span>
+          </div>
+          {shown.incomeTax.missingTableYear === null ? null : (
+            <p
+              data-income-tax-missing=""
+              dir="auto"
+              className="text-[14px] leading-[1.55] font-light text-clay-deep text-pretty"
+            >
+              {he.sheet.warnings.taxBracketsMissing(
+                shown.incomeTax.missingTableYear,
+              )}
+            </p>
+          )}
+          <p
+            dir="auto"
+            className="text-[14px] leading-[1.55] font-light text-ink-mute text-pretty"
+          >
+            {shown.incomeTax.manualAgorot === null
+              ? words.incomeTax.note
+              : words.incomeTax.manualNote}
+          </p>
+          <Link
+            href="/payments"
+            className="self-start text-[14px] font-medium hover:underline hover:underline-offset-4"
+          >
+            <span dir="auto">{words.incomeTax.correct}</span>
+          </Link>
+        </Card>
+      )}
 
       {/* Item 15: the days come from her seniority and are reported; the day
           rate is the figure the application cannot derive, so it is confirmed
@@ -712,6 +777,24 @@ function detailOf(detail: ExportQuestionDetail): string {
  */
 const blockClass =
   "flex flex-col gap-2.5 border border-line-strong bg-chip px-5 py-5 sm:px-6.5";
+
+/**
+ * Which of the worker's three settings produced the figure the card shows
+ * (specs.md item 17).
+ *
+ * **The words are the payments card's own** (`month.actions.incomeTax.from`),
+ * because the two screens name one thing: a second wording here would be a
+ * second place for "לפי ההגדרה בפרופיל" to be corrected alone. `manual` is not
+ * among them: an override is what the sheet prints and not what is confirmed,
+ * and this card is about the figure being stored under it.
+ */
+function taxSourceWords(setting: IncomeTaxSetting): string {
+  const words = he.month.actions.incomeTax.from;
+  if (setting.mode === "percentage") {
+    return words.percentage(formatPercent(setting.percentage ?? 0));
+  }
+  return words[setting.mode];
+}
 
 function BlockTitle({ children }: { children: string }) {
   return (
