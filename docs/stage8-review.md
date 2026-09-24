@@ -13,7 +13,7 @@ the plan table, then stops and reports to the user.
 - **Last done:** 2026-09-24, **step 2 of the order in full — F38 through F46. Step 2 is
   closed, and the next session starts at step 3, stage 8¾, the refusal card.** The nine are
   committed and none is pushed.
-  **F42 last, on 2026-09-24**, and its PRD was signed off the same day (three open questions,
+  **F42 last, on 2026-09-24** (`b0f3514`), and its PRD was signed off the same day (three open questions,
   each answered as recommended): the fetch stores what it reads and no caregiver-terms fetch is
   invented for it, the table is per household, and a page is one row. Nothing was missing but
   the far end — `segmentArticle` has stood since stage 5 and all three article fetches already
@@ -29,12 +29,12 @@ the plan table, then stops and reports to the user.
   positive tests were checked against the unwired code and all five fail there. No screen
   changed, so nothing is owed to `DESIGN.md`, but `home-screen`, `before-export` and
   `month-export` were run anyway because all three trigger a refresh: 32/32.
-  **It owes the user two things: `npx supabase db push`, which only she can run, and the check
-  under rule 8** — run the push, open the home screen so the daily refresh runs, and confirm in
-  the Supabase table editor that `cached_pages` holds a row for the wage page with a title and a
-  non-empty `sections` array; re-open the home screen and confirm the row count has not grown.
-  A failure looks like an empty table after a refresh, a growing row count, or a home screen
-  that errors.
+  **The user ran `npx supabase db push` on 2026-09-24 and `migration list` says the migration is
+  live, so what F42 still owes is the check under rule 8** — open the home screen so the daily
+  refresh runs, and confirm in the Supabase table editor that `cached_pages` holds a row for the
+  wage page with a title and a non-empty `sections` array; re-open the home screen and confirm
+  the row count has not grown. A failure looks like an empty table after a refresh, a growing
+  row count, or a home screen that errors.
   What the eight before it were, oldest first:
   2026-09-23, **five of the nine: F38, F39, F40, F41 and
   F43.** The nine were moved onto the Fix list first (`0036a40`), where the GO of 2026-09-22
@@ -169,10 +169,9 @@ the plan table, then stops and reports to the user.
   6. **F37.**
 
   **Ask before each commit** (said on 2026-09-18).
-- **One migration is unapplied.** The user ran `npx supabase db push` on 2026-09-24, and F42
-  added `20260924120000_the_text_of_a_fetched_page_is_kept.sql` after it. Only she can run it,
-  and until she does the live household stores no page text — nothing else behaves differently,
-  since the corpus is never load-bearing.
+- **The migrations are live.** The user ran `npx supabase db push` twice on 2026-09-24, the
+  second time for F42's `cached_pages`, and `npx supabase migration list` shows every local
+  migration remote. Nothing is unapplied.
 - **Outside the list:** `43e0d5a` (an unanswered holiday could not be stored — a missing
   migration, now applied live) waits for the user to mark a holiday signed in and confirm.
 - **A browser failure** is checked by rerunning it alone, and against HEAD with the change
@@ -977,7 +976,7 @@ change is one `specs.md` already states — no design question is open in any of
   `workerRole` and the template's `I1`, `F1`, `G1`, `B7`, `B9`, which spec 1304 fills from the
   profile — check: the export suite reads a male worker's sheet and a female one's and they
   differ in those cells only.
-- [x] 2026-09-24 F42 — the fetched page's text is kept — spec 1344; `refreshMinimumWage` drops `text` and
+- [x] 2026-09-24 `b0f3514` F42 — the fetched page's text is kept — spec 1344; `refreshMinimumWage` drops `text` and
   `fetchArticleSections` is called by nothing — check: a fetch stores the text it read, and a
   failed fetch stores nothing.
 - [x] 2026-09-23 `16a0439` F43 — an override's note and the hospital-overtime note reach column I — `notesOf`
