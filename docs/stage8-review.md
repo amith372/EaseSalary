@@ -12,7 +12,7 @@ the plan table, then stops and reports to the user.
 
 - **Last done:** 2026-09-24, **step 3 of the order — stage 8¾, the refusal card. It is
   closed, and the next session starts at step 4, the layout and UI/UX review.** It is
-  committed and not pushed.
+  committed as `6b131d5` and not pushed.
   `src/lib/refusalView.ts`'s `refusedMonthOf` turns the thrown `InvalidMonthError` into the
   card's input — the month written out in Hebrew, one reason per refusal with its dates
   written out beside the sentence and the rule behind it — and `householdSeriesOrRefusal`
