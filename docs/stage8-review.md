@@ -10,9 +10,31 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-- **Last done:** 2026-09-24, **step 3 of the order — stage 8¾, the refusal card. It is
-  closed, and the next session starts at step 4, the layout and UI/UX review.** It is
-  committed as `6b131d5` and not pushed.
+- **Last done:** 2026-09-24, **step 4 of the order — the layout and UI/UX review, and the
+  writing-up of its fixes. All seventeen were approved the same day and the next session
+  executes them, one commit each, in order: F47–F53 first, then F54–F63.** Only after all
+  seventeen does it reach step 5, F32 (`/doctor`), which it must stop before and ask about as
+  step 5 says. The review itself changed no code: its edits are run 7's section in this file,
+  the seventeen Fix-list items, this block and the plan table.
+  **F47–F53 are defects against a rule already written down** (`CLAUDE.md`, `DESIGN.md`, WCAG),
+  so none of them needed a design answer. **F54–F63 change a screen**, and each was approved
+  as run 7 recommended it (the user, 2026-09-24, on all ten at once); each Fix-list entry
+  carries the decision itself, so nothing has to be read back out of the recommendation.
+  Each of the ten owes its departure to `DESIGN.md` in the same commit. **Two of them owe a
+  `specs.md` sentence before they are code** — F58's grouping of repeated alerts (item 27) and
+  F59's question of whether a month that has not ended may be confirmed — and that sentence is
+  put to her with its exact wording first: **no `specs.md` wording has been approved**, only the
+  change.
+  Seventeen findings, and **every figure in them is the browser's rather than a reading of the
+  markup** — contrast, pointer targets hit-tested with `elementFromPoint` so a pseudo-element hit
+  area counts, computed direction, and cell size against viewport — over the ten screens at 390,
+  768, 1024, 1279 and 1440 wide and at four heights, on the `demo` and `refused` seeds at the
+  pinned day. That is what a later session should not redo: the measuring is in run 7's section
+  and each finding names the file and the figure. **The judgment call step 4 was left is
+  answered as R7.17** and is one of the ten. There is nothing for the user to check (rule 8),
+  since no behaviour changed.
+  Before that, 2026-09-24, **step 3 of the order — stage 8¾, the refusal card**, committed as
+  `6b131d5` and not pushed.
   `src/lib/refusalView.ts`'s `refusedMonthOf` turns the thrown `InvalidMonthError` into the
   card's input — the month written out in Hebrew, one reason per refusal with its dates
   written out beside the sentence and the rule behind it — and `householdSeriesOrRefusal`
@@ -190,16 +212,13 @@ the plan table, then stops and reports to the user.
      answering the panel" is a state stage 8½ closed, so the suite seeds the refusal
      instead. Its own "Open" question — whether the export file route refuses with the same
      card — is not answered and is now a debt in `build_plan.md`.
-  4. **A review of the layout and the UI/UX methods the application uses** (asked for on
-     2026-09-23), for quality and for what could be better. Report-only, like runs 0–5: it
-     writes its findings into this file and changes no code, and what it proposes is put to the
-     user before anything is built. It comes after the refusal card so that it reviews the
-     screens as they will stand, and before F32. **One judgment call is already waiting for
-     it:** the rate row on `/settings` now prints its stored source verbatim, which for the
-     seeded minimum wage is the workbook citation `שכר_חודשי_להאנה2026.xlsx → חודש  4.26
-     → D6`. It is the family's own file and it is the honest answer to "where did this come
-     from", but a workbook path on a settings screen was left as this review's to decide
-     rather than settled in passing (2026-09-23).
+  4. ~~**A review of the layout and the UI/UX methods the application uses.**~~ **Done
+     2026-09-24** — see "Last done" above. Its seventeen findings are run 7's section, and the
+     judgment call it was left — the rate row's verbatim workbook citation — is answered there
+     as R7.17.
+  4½. **Execute F47–F63**, the review's seventeen fixes, one commit each and in that order —
+     the seven rule defects first, then the ten screen changes she approved on 2026-09-24.
+     **All of them come before F32**, which she said the same day.
   5. **F32 (`/doctor`)**. **Stop before it and ask** — she may want to change model for it;
      reaching it is not licence to start it.
   6. **F37.**
@@ -265,6 +284,7 @@ the plan table, then stops and reports to the user.
 | 6 | Consolidate into the Fix list | **done** 2026-09-18 |
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
 | 8 | Execute the Fix list, one item at a time | under way — F1–F31, F33–F46 done; F32 and F37 remain. Stage 8¾ landed between step 2 and step 4 |
+| 9 | Layout and UI/UX review (step 4 of the order, asked for 2026-09-23) | **done** 2026-09-24 — run 7's section. All seventeen findings approved the same day and none built: sections I (F47–F53, rule defects) and J (F54–F63, screen changes), executed before F32 |
 
 ### How each step is run
 
@@ -669,7 +689,116 @@ Seen and left: `MonthActions.tsx` at 1,937 lines (R2.21, inside F27); the unwire
 scraper's five exports (F36); nine exported types read only in their own file, and the
 `scripts/` live checks and `e2e` fixtures `knip` cannot see (run 0 left both).
 
+## Run 7 — layout and UI/UX, 2026-09-24 (step 4 of the order)
+
+Report-only; no code changed. Every screen was opened in headless Chrome against the `demo`
+and `refused` seeds on the pinned day, at 390, 768, 1024, 1279 and 1440 wide and at four
+heights, and the measurements below are the browser's rather than a reading of the markup —
+contrast, pointer targets (hit-tested with `elementFromPoint`, so a pseudo-element hit area
+counts), computed direction, and cell size against viewport. Nothing scrolls sideways at any
+width and no screen logs a console error. **The `?` disclosure was checked and is not a
+finding**: its `after:-inset-2.5` gives a real 40px target though the circle is drawn at 20.
+
+**Against a rule already written down** — these need no design decision.
+- R7.1 — a holiday's name sits at the opposite edge of its row from its own date, and moves
+  250px sideways depending on whether the row is chosen — `HolidayPickerScreen.tsx:530` — the
+  `dir="auto"` wrapper holds only a `<Bidi>`, so it resolves **left**-to-right (`CLAUDE.md`,
+  "Never put `dir=auto` on an element whose only child is a `<bdi>`"); measured `dir=ltr` on
+  the name against `dir=rtl` on the date inside one box. F6 swept the wrappers R2.1 listed and
+  this one was not among them. It is the only instance left in the application, and it flips a
+  Hebrew list (`תאריך שהוסף`) exactly as it flips the Philippine one.
+- R7.2 — `text-ink-faint` (#9a8874) carries body sentences at 3.23:1, under 4.5 —
+  `ReportsScreen.tsx:382` (16px), `WorkersList.tsx:235` (15/16px), `WorkerProfileScreen.tsx:209`
+  (13px) — the token's own comment in `globals.css` scopes it to "the line under the greeting",
+  and these three are the only text in the application that fails a contrast sweep of every
+  screen.
+- R7.3 — seven inputs on `/settings` have no accessible name, and four of them are the
+  identifying numbers — `WorkerTerms.tsx:124` — `TermRow` draws the row's name as an `<h3>` and
+  the control under it is a bare `<input>`, so passport, employment permit, work visa and bank
+  are four fields a screen reader announces alike; the other three are the rest-eve supplement,
+  the employment start date and the insurer. `Field.tsx` already associates a label and is what
+  the panels use.
+- R7.4 — pointer targets under 24×24 (WCAG 2.2 AA 2.5.8), measured: the blocker strip's actions
+  and `הצג הכל` at 21px (`HomeSections.tsx`), `RuleLink` at 19–23px wherever it stands on a line
+  of its own (`WhyDisclosure.tsx:114`, on `/`, `/alerts`, `/month/export`), `להתנתק` and
+  `להוריד סיכום שנתי` at 23px, the holiday tick at 24×23 — `DESIGN.md` already holds the fix
+  ("padded out to a finger's height and given back with a negative margin"), applied to the forms
+  and not to these.
+- R7.5 — a disabled filled button reads as a second, lighter *enabled* one — `Field.tsx:15` —
+  `buttonClass` disables with `opacity-50` alone, which turns forest into a sage indistinguishable
+  from a quiet action; on `/settings` with the groups open, three saves are dark and three sage,
+  and only the sage ones are dead. `outlineButtonClass` four lines below gets border, ink and
+  `cursor-not-allowed`.
+- R7.6 — `/` draws its `h1` after an `h2`: the opening screen's outline starts at `צריך לטפל`
+  and reaches `ספטמבר 2026`, the calendar's month, second. Every other screen's first heading is
+  its own `h1`.
+- R7.7 — one action, two words, on one screen — `he.ts:1117` `שמירה` in `hospitalOvertime`
+  against `לשמור` in the six sibling groups of `/payments`.
+
+**Layout the viewport breaks**
+- R7.8 — a day cell's height is the window's and not the content's: 91×83 at 1440×900, 91×105 at
+  1440×1080, 77×177 at 1280×1440 — the grid stretches inside `md:h-screen`, so the artboard's
+  near-square day holds at about one window height and becomes a tall rectangle above it, the
+  number floating in the middle of an empty cell.
+- R7.9 — `<main>` is the scroller from `md` up — `AppShell.tsx:383` with
+  `md:h-screen md:overflow-hidden` — so the document never scrolls: back-navigation restores no
+  position (press a blocker card from the foot of `/` and come back to the top), `Ctrl+P` prints
+  one screenful of the payslip, and a full-page capture takes one screenful. Worth weighing
+  against what the lock buys, which is a bar that never leaves.
+
+**What the screens do with what they hold** — each of these changes a screen, so each is a
+proposal and not a fix (ground rule 1).
+- R7.10 — a folded section says nothing about what is inside it: `/payments` opens as six
+  headings and no figure, and the five advances under `מקדמות` are invisible until it is opened
+  — `FoldSection.tsx` draws `aside` only while the section is open, which is the one place a
+  count or a sum could sit.
+- R7.11 — the same fold reads as two controls: `/payments` puts its headings inside the white
+  card, `/settings` leaves them on the page ground above four separate cards, so on `/settings` a
+  heading is not visibly attached to what it opens and its chevron sits 800px away from it.
+- R7.12 — one recurring alert reads as a screen of separate problems: the strip shows 4 of 28 and
+  `/alerts` draws all 28 at full height (7,135px at 390 wide), a dozen of them the same sentence
+  about a different month with the same button.
+- R7.13 — `חודשים קודמים` on `/דוחות` is 17 rows and one longer every month, with no year break
+  and `לאשר ולייצא` + `לדף המשכורת` on each; September's row carries `החודש עדיין לא הסתיים` and
+  the confirm-and-export link beside it.
+- R7.14 — a save dims the whole screen: `opacity-60` on the page, and `pointer-events-none` too
+  on `/payments` — `PaymentsScreen.tsx:215`, `SettingsScreen.tsx:138`, `HomeScreen.tsx:361`,
+  `MonthConfirmation.tsx:122`, `HolidayPickerScreen.tsx:150` — so saving one note greys the
+  calendar and every other row, which on a slow answer reads as the page failing rather than as
+  one field being written.
+- R7.15 — a refused month leaves the balances rail drawing `[מספר] ימים` four times —
+  `HomeSections.tsx:160,200` — `DESIGN.md` withholds the money column while the card stands and
+  says nothing about the rail; a bracketed placeholder on screen is the thing `[השם שלך]` was
+  cut for.
+- R7.16 — `מדינת מקור` opens on `אוזבקיסטן`, the first of six, and it is what decides the
+  worker's holiday list — `AddWorkerSteps.tsx:315` — a default nobody chose is saved as an answer.
+
+**The judgment call step 4 was left** (the rate row's source, 2026-09-23)
+- R7.17 — **the verbatim string should not be printed; the row should carry a sentence.**
+  `SettingsScreen.tsx:574` branches on `source.startsWith("http")`: a URL becomes the link
+  `המקור`, and anything else is printed as it was stored — which for the seeded minimum wage is
+  `שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6`. Two things decide it, and neither is taste. It
+  is not a source she can go to: the link branch keeps the row's promise and the other hands her
+  a path into a file the application does not hold. And printed it is not even exact — the mixed
+  Hebrew and Latin filename reorders in the right-to-left span and renders as
+  `xlsx.2026שכר_חודשי_להאנה`, the extension in front of the name, and it carries no
+  `translate="no"`, so a translated page rewrites a cell address. So: keep the fact — read from
+  the family's own sheet, typed by hand, read from the law — and keep the citation itself in the
+  test and the commit message, which is `CLAUDE.md` rule 6's own division.
+
+Seen and left: the demo's two placeholder names (`[שם]`, `[שם העובד/ת השני/ה]`) make every
+screenshot of the application read as unfinished, but they are seed data and not a screen; the
+`·` separators that fail contrast are `aria-hidden` decoration; `MonthActions.tsx` at 1,903
+lines (R2.21, which F27 took as far as it goes).
+
 ## Needs the user
+
+**Run 7's ten screen changes — answered 2026-09-24: every one as recommended, and all of them
+before F32.** They are the Fix list's section J, F54–F63, and the detail of each is there rather
+than repeated here. Two of them owe a `specs.md` sentence before they are code — the grouping of
+repeated alerts (item 27) and whether a month that has not ended may be confirmed — and that
+sentence is put to the user with its exact wording when the item is reached (working rule 1).
+What she said yes to is the change; no wording in `specs.md` has been approved.
 
 - **The household's rates never reach a month's calculation** (run 5, reproduced) — **done as
   part of F26 on 2026-09-22.**
@@ -1031,6 +1160,176 @@ change is one `specs.md` already states — no design question is open in any of
   `month/export/file/route.ts` checked only `blocksExport` — check: the tax appears on the
   before-export screen as the wage does, what is confirmed is what the sheet prints, and the
   file address refuses a month nobody confirmed.
+
+**I. Run 7 — the written rules the layout broke.** Seven items from the layout and UI/UX
+review of 2026-09-24, each a defect against `CLAUDE.md`, `DESIGN.md` or WCAG 2.2 AA and none of
+them a design question; the user asked for them to be written up as work on 2026-09-24. One item
+is one commit, and `pre-commit` is every item's floor. **Run 7's other ten findings are not
+here** — each changes a screen, so each is a question under "Needs the user" and is built only
+after she answers it. Do these seven first, in order; F49 and F50 are the two that are more than
+a line.
+
+- [ ] F47 — a holiday's name is drawn at the same edge as its own date — R7.1 —
+  `HolidayPickerScreen.tsx:530` carries `dir="auto"` on a `<span>` whose only child is
+  `<Bidi>{row.name}</Bidi>`, which is the pattern `CLAUDE.md` forbids: the wrapper sees a
+  neutral isolate, resolves left-to-right, and `text-align: start` then means *left*, so the
+  name sits against the far edge while the Hebrew date beneath it sits against the near one, and
+  slides 250px sideways when the row gains its controls. **Drop `dir="auto"` from that wrapper
+  and leave it on the inner `<span>{words.own}</span>`**, which carries Hebrew text of its own
+  and needs it. It is the last instance in the application — F6 fixed the eight R2.1 listed and
+  this one was not among them — check: a browser assertion in `holiday-picker.spec.ts` that a
+  row's name and its date share a right edge, measured rather than looked at, and that it holds
+  for a chosen row and an unchosen one (the two that disagree today); it fails on HEAD.
+
+- [ ] F48 — three body paragraphs are drawn at 3.23:1 — R7.2 — `ReportsScreen.tsx:382` (16px),
+  `WorkersList.tsx:235` (15/16px) and `WorkerProfileScreen.tsx:209` (13px) take
+  `text-ink-faint` (#9a8874), which `globals.css` scopes in its own comment to "the line under
+  the greeting". **Move the three to `text-ink-soft`** (#7b6a59, 4.90:1 on the page's ground and
+  5.19 on a card) — the faintest token that passes, so the hierarchy the screens draw is kept
+  and only the failure goes. The token itself does not change: the greeting's line is 14px and
+  decorative and stays as it is — check: a contrast sweep of every screen reports nothing, and
+  the `·` separators that also measure 3.23 stay out of it because they are `aria-hidden`
+  decoration.
+
+- [ ] F49 — seven inputs on `/settings` have no accessible name, four of them the identifying
+  numbers — R7.3 — `TermRow` (`WorkerTerms.tsx:124`) draws the row's name as an `<h3>` and the
+  control under it is a bare `<input>`, so passport, employment permit, work visa and bank
+  account are four fields a screen reader announces alike, and the rest-eve supplement, the
+  employment start date and the insurer are three more. **`TermRow` mints an id for its `<h3>`
+  and hands it down**, and each control inside takes `aria-labelledby` from it — not a `Field`
+  label, which would draw the row's name a second time under the heading and change the screen.
+  `Field.tsx` already does the association for the panels, so nothing new is invented — check: a
+  browser assertion that every input on `/settings` has an accessible name, and that the four
+  number fields' names differ from one another; it fails on HEAD. No screenshot changes.
+
+- [ ] F50 — six pointer targets are under 24×24 (WCAG 2.2 AA 2.5.8) — R7.4 — the blocker
+  strip's actions and `הצג הכל` at 21px (`HomeSections.tsx`), `RuleLink` at 19–23px
+  (`WhyDisclosure.tsx:114`), `להתנתק` and `להוריד סיכום שנתי` at 23px (`SettingsScreen.tsx`) and
+  the holiday tick at 24×23 (`HolidayPickerScreen.tsx`). **Use the idiom `DESIGN.md` already
+  records** — "padded out to a finger's height and given back with a negative margin" — which
+  the forms have and these do not, so the rows are drawn exactly as they are now. **`RuleLink`
+  is padded only where it stands on a line of its own**, not where it sits inside a sentence
+  (`/month/export`'s `כל זכות`): WCAG's inline exception covers that one, and padding an inline
+  link would overlap the hit areas of the lines above and below it — check: the hit-test sweep
+  reports nothing under 24 on `/`, `/alerts`, `/settings` and the holiday picker, and
+  screenshots of the blocker strip and an alert card before and after are identical.
+
+- [ ] F51 — a disabled filled button reads as a second, quieter *enabled* one — R7.5 —
+  `buttonClass` (`Field.tsx:15`) disables with `disabled:opacity-50` alone, which turns forest
+  into a sage indistinguishable from a deliberate quiet action: on `/settings` with the groups
+  open, three saves are dark and three sage, and only the sage ones are dead.
+  **`disabled:bg-chip disabled:text-ink-quiet disabled:cursor-not-allowed`, replacing the
+  opacity** — the same three things `outlineButtonClass` four lines below already says, in
+  tokens that exist. It is a visible change to a disabled state, so the screenshot goes to the
+  user with the commit — check: Browser; a screenshot of `/settings` with the groups open,
+  where the disabled saves must no longer read as a second button style.
+
+- [ ] F52 — `/` draws its `h1` after an `h2` — R7.6 — the outline opens at `צריך לטפל` and
+  reaches `ספטמבר 2026`, the calendar's month, second; every other screen's first heading is its
+  own `h1`. **The blocker strip's heading becomes the `h1`** rather than a heading being added:
+  `DESIGN.md` records that the home screen deliberately opens straight onto the calendar with no
+  heading of its own, so a new visible one would undo a departure, and `specs.md` item 27 says
+  this screen leads with what blocks a correct salary — which is what `צריך לטפל` names. The
+  month then becomes the `h2` it reads as. **Where the strip is not drawn** — a household with
+  nothing blocked, and a refused month — the `h1` has to fall to whatever leads the screen
+  instead, so check both — check: a browser assertion on `/` that the first heading is the
+  `h1`, on a household with blockers, one with none, and a refused one.
+
+- [ ] F53 — one action, two words, on one screen — R7.7 — `he.ts:1117` says `שמירה` in
+  `hospitalOvertime` where the six sibling groups of `/payments` all say `לשמור`. One word
+  changes — check: `payments-screen.spec.ts`, whose hospital-overtime step addresses the button
+  by its text and so moves with it.
+
+**J. Run 7 — the ten that change a screen.** Approved on 2026-09-24, each as the review
+recommended, and **all of them before F32**. Each entry carries the decision itself, so no
+session has to go back to the recommendation to know what was chosen. The departures they create
+go into `DESIGN.md` in the same commit (working rule 3), since the canvas draws none of them.
+**Two owe a `specs.md` sentence first** — F58 and F59 — and that sentence is put to the user with
+its exact wording and built only after a direct yes to it (working rule 1): no wording has been
+approved, only the change.
+
+- [ ] F54 — **cap the calendar day cell's height** so the cell keeps roughly the proportion the
+  artboard draws and the slack goes to the page instead of into the grid — R7.8 — measured
+  91×83 at 1440×900, 91×105 at 1440×1080 and 77×177 at 1280×1440, the grid stretching inside
+  `md:h-screen`, so above about one window height the day is a tall rectangle with its number
+  floating in an empty cell — check: the cell measured at four heights from 800 to 1440 stays
+  within a step of its 1440×900 size, and screenshots at 1440×900 are unchanged.
+
+- [ ] F55 — **keep the desktop height lock and restore the scroll position by hand** — R7.9 —
+  `<main>` is the scroller from `md` up (`AppShell.tsx:383`, `md:h-screen md:overflow-hidden`),
+  so the document never scrolls and a Back lands at the top: press a blocker card from the foot
+  of `/` and come back. The lock buys a bar that never leaves, which is the switcher and the
+  bell, and that is worth more than the position. **What it does not pay back is printing** —
+  `Ctrl+P` still gives one screenful of the payslip — so if the family is ever meant to print a
+  payslip this returns as a question rather than being quietly solved here — check: scroll `/`
+  to its foot, follow a blocker, come Back, and the screen is where it was; at HEAD it is at the
+  top.
+
+- [ ] F56 — **a folded section says what is inside it**: `FoldSection` draws its `aside` folded
+  as well as open — R7.10 — `/payments` opens as six headings and no figure, and the five
+  advances under `מקדמות` are invisible until it is opened. The `aside` is the one place a count
+  or a sum can sit and it is already there for the open state. **What each section's folded line
+  says is part of this item**, not a later one: `מקדמות` says how many are outstanding, `מס
+  הכנסה` the amount, and a section with nothing recorded says its existing `none` wording —
+  check: `/payments` on arrival names the five advances without a click, and a household with
+  none says so; Browser.
+
+- [ ] F57 — **`/settings`' folds take `/payments`' arrangement**, the heading inside the white
+  card it opens — R7.11 — today the four group headings sit on the page ground above four
+  separate cards, so a heading is not visibly attached to what it opens and its chevron sits at
+  the far end of an 800px row. One fold, one reading — check: Browser; screenshots of
+  `/settings` folded and open, and `/payments` unchanged.
+
+- [ ] F58 — **alerts of one kind that differ only by month become one card naming the months**,
+  with the action on the card — R7.12 — the strip shows 4 of 28 and `/alerts` draws all 28 at
+  full height (7,135px at 390 wide), a dozen of them the same sentence about a different month
+  with the same button, so one recurring alert reads as a screen of separate problems. **It is
+  `specs.md` item 27's territory and owes a sentence there first** — check: a household with a
+  dozen unconfirmed months draws one card naming them, the count in the bell and the strip
+  agrees with what is drawn, and a household with one such month is unchanged.
+
+- [ ] F59 — **`חודשים קודמים` on `/דוחות` gets a heading between the years**, and the row of a
+  month that has not ended stops offering `לאשר ולייצא` beside `החודש עדיין לא הסתיים` — R7.13 —
+  the list is 17 rows now and one longer every month. **The second half is a rule and not a
+  layout**: whether a month that has not ended may be confirmed at all is not something
+  `specs.md` decides, so it owes a sentence there first, and the answer decides whether the row
+  withholds the link or the screen stops saying the month has not ended — check: the list draws
+  a year heading at each boundary, and September's row says one thing rather than two.
+
+- [ ] F60 — **the busy state moves onto the control that was pressed**, `aria-busy` staying on
+  the screen — R7.14 — `opacity-60` on the whole page, and `pointer-events-none` too on
+  `/payments` (`PaymentsScreen.tsx:215`, `SettingsScreen.tsx:138`, `HomeScreen.tsx:361`,
+  `MonthConfirmation.tsx:122`, `HolidayPickerScreen.tsx:150`), so saving one note greys the
+  calendar and every other row and on a slow answer reads as the page failing — check: Browser
+  with the action delayed, where the pressed button says it is working and nothing else on the
+  screen changes.
+
+- [ ] F61 — **a refused month withholds the balances rail** as it already withholds the money
+  column — R7.15 — `HomeSections.tsx:160,200` draw `[מספר] ימים` four times instead, and a
+  bracketed placeholder on screen is the thing `[השם שלך]` was cut for. A balance cannot be
+  derived from a month the engine declined to value (item 13), so an empty figure beside a real
+  one is worse than no figure — check: `refusal-card.spec.ts` gains the assertion that no
+  balance is drawn while the card stands, and that the rail returns with the figures when the
+  day is cleared; `DESIGN.md`'s refused-month table gains the row.
+
+- [ ] F62 — **`מדינת מקור` opens on nothing and the wizard step is refused until she chooses** —
+  R7.16 — `AddWorkerSteps.tsx:315` opens on `אוזבקיסטן`, the first of six, and that field is
+  what decides the worker's holiday list, so a default nobody chose is saved as an answer. The
+  artboard marks the field optional; it is not — check: the step refuses with a sentence when
+  nothing is chosen, and `add-worker.spec.ts` chooses a country explicitly.
+
+- [ ] F63 — **the rate row carries a sentence and never the stored string** — R7.17, the
+  judgment call step 4 was left on 2026-09-23 — `SettingsScreen.tsx:574` branches on
+  `source.startsWith("http")`: a URL becomes the link `המקור`, anything else is printed as
+  stored, which for the seeded minimum wage is `שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6`.
+  That branch hands her a path into a file the application does not hold, and printed it is not
+  even exact — the mixed Hebrew and Latin filename reorders in the right-to-left span and
+  renders as `xlsx.2026שכר_חודשי_להאנה`, the extension in front of the name, with no
+  `translate="no"` on it. What the row says is the *fact*: read from the family's own sheet,
+  typed by hand, or read from the law. The citation itself stays in the test and the commit
+  message, which is `CLAUDE.md` rule 6's own division. **It touches the seed as well as the
+  screen** — check: the rate row on `/settings` names a source in words for the seeded wage and
+  still links the address for a fetched one, and no workbook path appears on any screen.
 
 **Not on the list**
 - R3.3 — needs a migration of its own. The local ones are live as of 2026-09-24, so what it
