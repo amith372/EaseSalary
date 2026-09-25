@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { SEEDED_HOLIDAY_LISTS } from "@/lib/holidayLists";
-import { holidaySourceChoices } from "@/lib/holidaySources";
+import {
+  countriesWithLists,
+  holidaySourceChoices,
+  holidaySourceOf,
+} from "@/lib/holidaySources";
 import { religiousSources } from "@/lib/scrape/religiousHolidays";
 
 /**
@@ -114,5 +118,100 @@ describe("the lists a worker's year can be drawn from", () => {
     expect(
       religions.find((choice) => choice.selected)?.nameHe,
     ).toBe(religiousSources.christian.nameHe);
+  });
+});
+
+/**
+ * The countries a worker may be said to come from (specs.md items 10, 12) — the
+ * wizard's offer and, since the country became correctable, `/settings`'s.
+ *
+ * The six names are read off the shipped `data/holidays/XX-2026.json` files and
+ * their order is the Hebrew alphabet's, worked out here rather than taken from
+ * what the function returned.
+ */
+describe("the countries a holiday list is stored for", () => {
+  it("names all six, ordered by their Hebrew names", () => {
+    expect(countriesWithLists(SEEDED_HOLIDAY_LISTS)).toEqual([
+      { code: "UZ", nameHe: "אוזבקיסטן" },
+      { code: "UA", nameHe: "אוקראינה" },
+      { code: "IN", nameHe: "הודו" },
+      { code: "PH", nameHe: "הפיליפינים" },
+      { code: "NP", nameHe: "נפאל" },
+      { code: "LK", nameHe: "סרי לנקה" },
+    ]);
+  });
+
+  /**
+   * One country, not one per year. Catches an offer built straight off the
+   * lists: the household fetches a year at a time, so the day it holds 2026 and
+   * 2027 for the Philippines the picker would offer הפיליפינים twice and
+   * `setCountry` would still take either.
+   */
+  it("counts a country once however many years are stored for it", () => {
+    const philippines = SEEDED_HOLIDAY_LISTS.filter(
+      (list) => list.source.kind === "country" && list.source.code === "PH",
+    );
+    const nextYear = philippines.map((list) => ({ ...list, year: list.year + 1 }));
+
+    expect(countriesWithLists([...philippines, ...nextYear])).toEqual([
+      { code: "PH", nameHe: "הפיליפינים" },
+    ]);
+  });
+
+  /** A faith's list is not a country. It is offered beside them by
+   * `holidaySourceChoices` and is no answer to "where is she from". */
+  it("leaves a faith's list out", () => {
+    const withReligion = [
+      ...SEEDED_HOLIDAY_LISTS,
+      {
+        ...SEEDED_HOLIDAY_LISTS[0],
+        source: { kind: "religion", religion: "jewish" } as const,
+        nameHe: "חגים יהודיים",
+      },
+    ];
+
+    expect(countriesWithLists(withReligion).map((country) => country.nameHe)).not.toContain(
+      "חגים יהודיים",
+    );
+    expect(countriesWithLists(withReligion)).toHaveLength(6);
+  });
+});
+
+/**
+ * What a correction to the country moves, and what it must not (`build_plan.md`
+ * stage 8⅞).
+ */
+describe("the list a corrected country is drawn from", () => {
+  /** Never moved, so the default is hers and the correction reaches it. */
+  it("follows the country for a worker never moved off it", () => {
+    expect(holidaySourceOf({ country: "PH" })).toEqual({
+      kind: "country",
+      code: "PH",
+    });
+    expect(holidaySourceOf({ country: "IN" })).toEqual({
+      kind: "country",
+      code: "IN",
+    });
+  });
+
+  /**
+   * Moved deliberately, so the correction leaves her where she was put. Catches
+   * a `setCountry` that wrote `holidaySource` as well as `country`: a family
+   * fixing a typo in her country would silently undo the list they had chosen
+   * for her, and the picker would say nothing about it.
+   */
+  it("leaves a worker moved to another list where she was put", () => {
+    expect(
+      holidaySourceOf({
+        country: "IN",
+        holidaySource: { kind: "country", code: "NP" },
+      }),
+    ).toEqual({ kind: "country", code: "NP" });
+    expect(
+      holidaySourceOf({
+        country: "IN",
+        holidaySource: { kind: "religion", religion: "christian" },
+      }),
+    ).toEqual({ kind: "religion", religion: "christian" });
   });
 });

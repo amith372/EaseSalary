@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getRepository, requireWorker } from "@/lib/store";
 import { advanceLedger, nextAdvanceNumber } from "@/lib/engine/advances";
 import { rateInForce } from "@/lib/datedRates";
+import { countriesWithLists } from "@/lib/holidaySources";
 import type { DatedRate } from "@/lib/datedRates";
 import { readToday } from "@/lib/requestToday";
 import {
@@ -84,6 +85,7 @@ export type ProfileActionRefusal =
    * term; `SetRestDayResult` is what carries the marks themselves. */
   | "stranded"
   | "gender"
+  | "country"
   | "incomeTaxMode"
   | "incomeTaxRate"
   | "recuperationMonth"
@@ -360,6 +362,39 @@ export async function setGender(
   if (!isAllowedGender(gender)) return { ok: false, reason: "gender" };
   const profile = await requireWorker(workerId);
   return saveProfile(profile, { ...profile, gender });
+}
+
+/**
+ * The worker's country of origin (specs.md item 10).
+ *
+ * **It is correctable, and correcting it is not restating anything.** The
+ * country is the default her holiday list is drawn from and a fact printed
+ * about her on `/workers` and on her page, so a family that chose wrong in the
+ * wizard would otherwise hold a profile permanently wrong about who she is. No
+ * month carries it — `MonthTerms` does not — so nothing already filed moves.
+ *
+ * **A worker deliberately moved to another source stays where she was put**,
+ * which is `holidaySourceOf`'s own rule and needs nothing here: the correction
+ * changes the default, and a stored `holidaySource` outranks the default.
+ *
+ * Checked against the countries a list is actually stored for, and not trusted
+ * from the chip that sent it, for the reason `setRestDay` gives. A code nothing
+ * is stored for has no address a year can be fetched at (`holidaySources.ts`),
+ * so storing it would be storing a holiday list that can never be filled.
+ */
+export async function setCountry(
+  workerId: string,
+  code: string,
+): Promise<ProfileActionResult> {
+  const country = code.trim();
+  if (country === "") return { ok: false, reason: "country" };
+  const repository = await getRepository();
+  const offered = countriesWithLists(await repository.listHolidayLists());
+  if (!offered.some((candidate) => candidate.code === country)) {
+    return { ok: false, reason: "country" };
+  }
+  const profile = await requireWorker(workerId);
+  return saveProfile(profile, { ...profile, country });
 }
 
 /**

@@ -500,7 +500,16 @@ Each of these is true or false at a glance.
    how a list is filed and is nothing a family has any reason to read. The name comes
    from the stored list itself, which publishes it, so no second table of country names
    is kept; a country nothing is stored for falls back to its code, because inventing a
-   name for it would be a guess. **A religion's list may be chosen in place of a
+   name for it would be a guess.
+
+   **The country of origin is correctable after the worker is added** (asked for by the
+   user on 2026-09-25). It is a term of the employment like any other and is changed where
+   the rest are changed, offering exactly the countries a holiday list is stored for.
+   Correcting it moves the *default* the holiday list is drawn from and nothing else: a
+   worker deliberately moved to another country's list or to a faith's stays where she was
+   put, and no month carries the country, so nothing already filed is restated.
+
+   **A religion's list may be chosen in place of a
    country's** (decided with the user on 2026-09-09): the candidate list is either the
    holidays of a country or the holidays of a faith — Jewish, Muslim, Christian or
    Druze — and the two are one choice with two kinds of answer rather than two separate

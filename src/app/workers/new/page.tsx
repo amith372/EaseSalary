@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { AddWorkerScreen } from "@/components/AddWorkerScreen";
-import type { Country } from "@/components/AddWorkerScreen";
+import { countriesWithLists } from "@/lib/holidaySources";
 import { monthOf } from "@/lib/dates";
 import { rateInForce } from "@/lib/datedRates";
 import { getRepository } from "@/lib/store";
@@ -31,18 +31,9 @@ export default async function AddWorkerPage() {
     repository.listRates(),
   ]);
 
-  // One entry per country, and the same country's list for two years is one
-  // country: the lists are per source *and* per year (item 12).
-  const countries: Country[] = [
-    ...new Map(
-      lists
-        .filter((list) => list.source.kind === "country")
-        .map((list) => [
-          list.source.kind === "country" ? list.source.code : "",
-          { code: list.source.kind === "country" ? list.source.code : "", nameHe: list.nameHe },
-        ]),
-    ).values(),
-  ].sort((a, b) => a.nameHe.localeCompare(b.nameHe, "he"));
+  // The same offer `/settings` makes, from the same function: the wizard's
+  // choice and the correction of it must not be able to disagree (item 10).
+  const countries = countriesWithLists(lists);
 
   const minimum = rateInForce(rates, "minimumWage", monthOf(await readToday()));
   // The seeded table carries a minimum wage from April 2025 onward and a store

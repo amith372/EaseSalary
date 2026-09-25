@@ -12,6 +12,7 @@ import Link from "next/link";
 import type { ReactNode, RefObject } from "react";
 import { Bidi } from "@/components/Bidi";
 import { Chip } from "@/components/Chip";
+import type { Country } from "@/lib/holidaySources";
 import { RuleLink as SharedRuleLink } from "@/components/WhyDisclosure";
 import {
   addMonths,
@@ -73,11 +74,6 @@ import { formatAgorot } from "@/lib/money";
  * the employment anywhere in the spec; item 16's `insurer` — who the premium is
  * paid *through* — is, and is what the sheet actually prints.
  */
-
-export interface Country {
-  code: string;
-  nameHe: string;
-}
 
 /** Four bars and "שלב 2 מתוך 4". The two numbers are separate elements, so
  * neither is a bare string beside another node and neither is translated. */

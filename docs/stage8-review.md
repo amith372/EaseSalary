@@ -10,31 +10,58 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-> ### ⚠ The work below is **in the working tree and not committed.**
-> On 2026-09-24 the user said to commit run 7's interface work **all at once**, so F48 onward
-> are waiting in 40 modified files plus two new ones (`e2e/pointer-targets.spec.ts` from F50 and
-> `e2e/busy-state.spec.ts` from F60). **A fresh session must not stash, revert or
-> `git checkout` anything** — `git status` is the batch.
-> F47 alone is committed (`e492ddf`), because it went in before she said it. **F63 is done, so
-> the batch is ready to be offered — and she is asked before any commit.**
-> **The whole suite ran green over the finished batch on 2026-09-25**, after F63 and after the
-> three wizard helpers F62 broke were corrected: **161/161 in 11.7 minutes, no flake.** Unit
-> suite 1,241/1,241, typecheck and lint clean. A later fix in the batch makes that evidence
-> stale again: it is run once more before the commit is offered. **The run before it is what
-> found the F62 regression** — five failures in two spec files F62 never touched — which is
-> why a per-file run is not evidence for a batch.
+> ### ✅ Run 7's seventeen are committed.
+> F47 as `e492ddf` on 2026-09-24, and **F48–F63 as `591a67b` on 2026-09-25** — one commit,
+> which is what the user asked for on 2026-09-24. **Nothing is pushed**; she decides that.
+> The evidence that commit rests on: browser suite **161/161 in 11.7 minutes, no flake**, unit
+> suite **1,241/1,241**, typecheck and lint clean, all on the committed tree.
 > **A run measures one code state and nothing else** — a source file written while the suite is
 > going makes the dev server recompile underneath it, and the run that follows is evidence of
 > neither state. One such run was discarded on 2026-09-25 and re-run clean; its six "failures"
 > were all `worker process exited unexpectedly`, which is a crashed browser and never an
 > assertion.
+> **A per-file run is not evidence for a batch.** The whole-suite run before the commit found
+> F62's regression — five failures in two spec files F62 never touched.
 
-- **Last done: all seventeen of run 7 — F47–F63.** F47–F59 on 2026-09-24; F58's per-month
-  `סמן כטופל`, F60, F61, F62 and F63 on 2026-09-25. **Step 4½ is closed.**
-  The next session does **stage 8⅞** — the country of origin is correctable, in
-  `build_plan.md`, PRD approved 2026-09-25 — and only then step 5, F32 (`/doctor`), which it
-  must stop before and ask about as step 5 says. **Before either, the batch is offered to the
-  user for commit**, which is what she asked for on 2026-09-24.
+> ### → A fresh session told "continue" does this
+> **Step 5 — F32 (`/doctor`).** It is the next item on the Fix list, and the step says to
+> **stop before it and ask the user**, which a session does rather than starting it.
+> **Stage 8⅞ is done** — the country of origin is correctable — and `build_plan.md` holds it
+> as one line.
+> **Uncommitted and deliberate, waiting to be folded into the next commit:** this file's
+> header, corrected after `591a67b`, plus the whole of stage 8⅞ — `setCountry`,
+> `CountryControl`, `countriesWithLists`, `e2e/country-change.spec.ts`, the `specs.md`
+> paragraph and the `DESIGN.md` row. The user said on 2026-09-25 to fold the header in rather
+> than commit it alone; do not revert any of it, and **ask before committing**.
+> **One question is open and is the user's** — see "Needs the user" below: whether F48's
+> contrast sweep joins the suite. **Do not decide it.**
+> **Never push.**
+
+- **Last done: stage 8⅞ — the country of origin is correctable**, on 2026-09-25, whole.
+  `setCountry` sits beside `setGender` and checks the code against `countriesWithLists`, which
+  is now the one offer `/workers/new` and `/settings` both read — the wizard's inline
+  dedup-and-sort moved into `holidaySources.ts` with the `Country` type, which had been
+  declared twice in the two wizard components and is now declared once. `CountryControl` is a
+  row of chips in the **employment** group beside `מין`, as the user asked, and a select was
+  not used for the reason `RecuperationControl` gives. **Nothing else was needed**:
+  `holidaySourceOf` already derives the list from the country rather than storing a default,
+  so a worker never moved follows the correction and one moved on purpose does not — and
+  `setCountry` writing `holidaySource` too is exactly the bug the second browser test was
+  **checked against**, where it fails on `NP` and the rest pass. `e2e/country-change.spec.ts`
+  is new and holds all three halves of the done-when: the correction reaching `/workers`, her
+  page and the picker's default; the worker moved to נפאל staying there; and the month's
+  `נטו` figure not moving — read as the amount alone, since the row carries its label and its
+  "why" button beside it. Five new unit tests in `holidaySources.test.ts`, whose six country
+  names come off the shipped `data/holidays/XX-2026.json` files and whose order is the Hebrew
+  alphabet's, worked out rather than read back. `specs.md` item 10 gained the approved
+  paragraph — put to the user as its own question and answered yes on 2026-09-25 — and
+  `DESIGN.md`'s settings section carries the row the canvas does not draw.
+  **Its evidence, on the finished tree:** browser suite **164/164 in 11.6 minutes, no flake**
+  — the 161 that stood before plus this stage's three — unit suite **1,246/1,246**, typecheck
+  and lint clean.
+  **Before it: all seventeen of run 7 — F47–F63**, committed as `e492ddf` and `591a67b` on
+  2026-09-24–25, not pushed. **Step 4½ is closed.**
+  What comes next is in the box above.
   **F63** stops the rates group printing the stored source string. `datedRates.ts` gains
   `rateSources` — `familyWorkbook` and `userConfirmed`, names and not prose — and
   `drawnRateSource`, which answers an address, a name, or **nothing**. The two seeded wage
@@ -1014,6 +1041,20 @@ screenshot of the application read as unfinished, but they are seed data and not
 lines (R2.21, which F27 took as far as it goes).
 
 ## Needs the user
+
+**F48's contrast sweep — in the suite, parked, or deleted? Asked 2026-09-25, unanswered.**
+`contrast-sweep.spec.ts`, 133 lines, is in the F48 session's scratchpad, under
+`AppData\Local\Temp\claude\d--school-LLM-vibe-coding-EaseSalary\551c64fe-4943-4745-a3ff-0a2b31f49b92\scratchpad\`.
+It walks ten screens and, for every run of visible text, measures the real foreground against
+the nearest actually-painted background, computes the WCAG ratio and fails anything under AA
+(4.5, or 3.0 for large text), skipping `aria-hidden` decoration. It is what found F48's three
+`text-ink-faint` paragraphs at 3.23:1, and it would catch the next token used for body text.
+Its own header says "TEMPORARY — delete before committing", so F48 parked it rather than
+decide. **A session must not decide this either** — keeping it costs suite time, and a
+whole-screen sweep is not a check a fix may add on its own authority (ground rule 1).
+It sits in a session scratchpad, which is not forever: if it is wanted, it is wanted before
+that directory is cleared.
+
 
 **Run 7's ten screen changes — answered 2026-09-24: every one as recommended, and all of them
 before F32.** They are the Fix list's section J, F54–F63, and the detail of each is there rather

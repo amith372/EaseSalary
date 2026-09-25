@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createWorker, type CreateWorkerRefusal } from "@/app/workers/actions";
 import { LogoMark } from "@/components/icons";
+import type { Country } from "@/lib/holidaySources";
 import {
   DoneStep,
   monthNumberOf,
@@ -86,11 +87,6 @@ const STEP_OF: Record<NewWorkerRefusal, number> = {
 };
 
 const LAST_STEP = 3;
-
-export interface Country {
-  code: string;
-  nameHe: string;
-}
 
 interface AddWorkerScreenProps {
   /** The countries the household holds a holiday list for (item 12). Read on

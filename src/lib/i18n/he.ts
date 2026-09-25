@@ -1900,6 +1900,17 @@ export const he = {
          * with, and saying so is what makes it an answerable question rather
          * than a personal one.
          */
+        /**
+         * Her country of origin (specs.md item 10), correctable here.
+         *
+         * The hint says what the answer decides rather than what it is: the
+         * country is the default her holiday list is drawn from, and a worker
+         * already moved to another list stays where she was put.
+         */
+        country: {
+          label: "ארץ מוצא",
+          hint: "ממנה נלקחת ברירת המחדל של רשימת החגים שלה. אם כבר נבחרה עבורה רשימה אחרת, היא נשארת.",
+        },
         gender: {
           label: "מין",
           hint: "קובע את נקודות הזיכוי במס הכנסה — עובד/ת זר/ה בסיעוד מקבל/ת 2.25 נקודות, ואישה מקבלת חצי נקודה נוספת — ואת לשון הפנייה בדף המשכורת.",
@@ -2101,6 +2112,9 @@ export const he = {
           belowMinimum: "השכר לא יכול להיות נמוך משכר המינימום שהיה בתוקף בחודש שממנו הוא חל.",
           salaryFrom: "צריך חודש בצורה שנה-חודש, ולא לפני תחילת ההעסקה.",
           gender: "אפשר לבחור אישה או גבר.",
+          /** The offer is the countries a holiday list is stored for, so a code
+           * outside it is a stale screen rather than a mistake she made. */
+          country: "אפשר לבחור רק מדינה שיש לה רשימת חגים שמורה. כדאי לרענן את הדף ולנסות שוב.",
           incomeTaxMode: "אפשר לבחור חישוב אוטומטי, ללא ניכוי, או אחוז קבוע.",
           incomeTaxRate: "האחוז צריך להיות מספר גדול מאפס ולא יותר מ־100. אם לא מנוכה מס בכלל, אפשר לבחור \"לא מנוכה מס\".",
           recuperationMonth: "צריך לבחור אחד מחודשי השנה.",

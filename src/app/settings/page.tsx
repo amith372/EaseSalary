@@ -9,6 +9,7 @@ import {
   vacationDaysPerYear,
 } from "@/lib/engine/balances";
 import { holidayYear } from "@/lib/engine/holidayYear";
+import { countriesWithLists } from "@/lib/holidaySources";
 import { holidayAllowanceFor } from "@/lib/engine/leave";
 import { recuperationDaysFor } from "@/lib/engine/recuperation";
 import { fromIsoDate, monthOf } from "@/lib/dates";
@@ -76,6 +77,10 @@ export default async function SettingsPage() {
   const minimumWage = rateInForce(rates, "minimumWage", month);
   const nationalInsurance = rateInForce(rates, "nationalInsurance", month);
 
+  // The same offer `/workers/new` makes, from the same store: a country is
+  // correctable only to one a year of holidays can actually be drawn from.
+  const countries = countriesWithLists(await repository.listHolidayLists());
+
   const workers = await repository.listWorkers();
   const household: WorkerSettings[] = await Promise.all(
     workers.map(async (profile) => {
@@ -116,6 +121,7 @@ export default async function SettingsPage() {
       month={month}
       // A year's accrual at a balance nowhere near the ceiling (item 8).
       sickDaysPerYear={monthlySickAccrual(0) * 12}
+      countries={countries}
       minimumWage={minimumWage}
       nationalInsurance={nationalInsurance}
     />

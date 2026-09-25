@@ -98,3 +98,35 @@ export function holidaySourceOf(worker: {
 }): HolidaySource {
   return worker.holidaySource ?? { kind: "country", code: worker.country };
 }
+
+/** A country the household can draw a year of holidays from, under the name
+ * its own stored list publishes (specs.md item 10). */
+export interface Country {
+  code: string;
+  nameHe: string;
+}
+
+/**
+ * The countries a worker may be said to come from: those a list of some year is
+ * stored for, by name (specs.md items 10, 12).
+ *
+ * **One entry per country, and the same country's list for two years is one
+ * country** — the lists are per source *and* per year.
+ *
+ * It is the offer the wizard makes and the offer `/settings` makes, and it is
+ * what `setCountry` checks a sent code against, so the three cannot drift: a
+ * country offered nowhere must not be storable, and a country with no stored
+ * list has no address to fetch a year at (the reason `holidaySourceChoices`
+ * gives above).
+ */
+export function countriesWithLists(lists: HolidayList[]): Country[] {
+  const named = new Map<string, string>();
+  for (const list of lists) {
+    if (list.source.kind === "country" && !named.has(list.source.code)) {
+      named.set(list.source.code, list.nameHe);
+    }
+  }
+  return [...named]
+    .map(([code, nameHe]) => ({ code, nameHe }))
+    .sort((a, b) => a.nameHe.localeCompare(b.nameHe, "he"));
+}

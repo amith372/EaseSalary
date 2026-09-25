@@ -250,6 +250,14 @@ folded sheet.
   inset `bg-ground` card in the idiom of the rows around it, rather than as a
   screen or a dialog of its own — the question belongs where the change is being
   made, and a user sent elsewhere to answer it would have lost the change.
+- **The employment group carries an `ארץ מוצא` row the canvas does not draw**, beside
+  `מין` and in the same chips: the country was written once by the wizard and by
+  nothing since, so a family that chose wrong held a profile permanently wrong
+  about where she is from, and printed it on `/workers` and on her own page. The
+  chips offer exactly the countries a holiday list is stored for — the same offer
+  the wizard makes — and the hint says what the answer decides, since the country
+  is only the *default* her holiday list is drawn from: a worker already moved to
+  another list keeps it.
 - **A rate row carries where its figure was read from**, which the canvas does
   not draw: `נקרא מ־` and the link `המקור` where the source is an address, and
   otherwise **a sentence of the screen's own** — `נקרא מהגיליון של המשפחה`, or

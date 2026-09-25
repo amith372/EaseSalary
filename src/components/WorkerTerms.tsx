@@ -19,6 +19,7 @@
 import Link from "next/link";
 import { useId, useState, type ReactNode } from "react";
 import {
+  setCountry,
   setDocuments,
   setInsurer,
   setGender,
@@ -48,6 +49,7 @@ import { addMonths, compareMonth, yearMonthText } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import type { IsoDate, YearMonth } from "@/lib/types";
 import { restDayChoices } from "@/lib/engine/profile";
+import type { Country } from "@/lib/holidaySources";
 import type {
   StrandedFreeRestDay,
   StrandedRefusal,
@@ -436,6 +438,60 @@ function StrandedChoiceRow({
         </span>
       ) : null}
     </label>
+  );
+}
+
+/**
+ * The worker's country of origin (specs.md item 10).
+ *
+ * **It is here because it is correctable, and it was not before**: the wizard
+ * wrote it once and nothing since could change it, so a family that chose wrong
+ * held a profile permanently wrong about where she is from — and the country is
+ * printed as a fact about her on `/workers` and on her page.
+ *
+ * **Chips and not the wizard's select**, for the reason `RecuperationControl`
+ * gives: every choice on this screen is a row of chips, and a dropdown would be
+ * the only one on the page. The offer is exactly the countries a holiday list
+ * is stored for, read on the server — the same offer the wizard makes — and the
+ * server checks the code against it all the same, because the offer is never
+ * the rule (Part 3).
+ *
+ * **Changing it moves the default and not a chosen list.** A worker moved to
+ * another country's list or to a faith's keeps it (`holidaySourceOf`), which is
+ * what the hint says; a worker never moved follows the correction.
+ */
+export function CountryControl({
+  workerId,
+  country,
+  countries,
+  onSubmit,
+}: {
+  workerId: string;
+  country: string;
+  countries: Country[];
+  onSubmit: Submit;
+}) {
+  const words = he.workers.profile.terms.country;
+  const { refusal, run, busyAt } = useAction(onSubmit);
+
+  return (
+    <TermRow label={words.label} hint={words.hint}>
+      <div data-terms="country" className="flex flex-wrap gap-2">
+        {countries.map((choice) => (
+          <Chip
+            key={choice.code}
+            selected={choice.code === country}
+            busy={busyAt(choice.code)}
+            onClick={() =>
+              run(() => setCountry(workerId, choice.code), undefined, choice.code)
+            }
+          >
+            <Bidi>{choice.nameHe}</Bidi>
+          </Chip>
+        ))}
+      </div>
+      {refusal ? <Refusal reason={refusal} /> : null}
+    </TermRow>
   );
 }
 

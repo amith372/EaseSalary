@@ -17,6 +17,7 @@ import { TwoToneIcon } from "@/components/icons";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { INVITATION_TOKEN_PARAM } from "@/lib/invitationCookie";
 import {
+  CountryControl,
   DocumentsControl,
   EmployedSinceControl,
   GenderControl,
@@ -39,6 +40,7 @@ import { fullDayLabel } from "@/lib/dateLabels";
 import { drawnRateSource } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import type { WorkerProfile } from "@/lib/engine/repository";
+import type { Country } from "@/lib/holidaySources";
 import { he } from "@/lib/i18n/he";
 import type { IdentifyingNumbers } from "@/lib/identifyingNumbers";
 import { formatAgorot, formatDays } from "@/lib/money";
@@ -74,6 +76,10 @@ interface SettingsScreenProps {
   /** This month, for the salary in force during it. */
   month: YearMonth;
   sickDaysPerYear: number;
+  /** The countries a holiday list is stored for, read on the server as
+   * `/workers/new` reads them: the correction offers what the wizard offered
+   * (item 10). */
+  countries: Country[];
   minimumWage: DatedRate | null;
   nationalInsurance: DatedRate | null;
   /** The household's invitations, pending and accepted (item 11). */
@@ -85,6 +91,7 @@ export function SettingsScreen({
   year,
   month,
   sickDaysPerYear,
+  countries,
   minimumWage,
   nationalInsurance,
   invitations,
@@ -181,6 +188,12 @@ export function SettingsScreen({
           <GenderControl
             workerId={profile.id}
             gender={profile.gender}
+            onSubmit={handleAction}
+          />
+          <CountryControl
+            workerId={profile.id}
+            country={profile.country}
+            countries={countries}
             onSubmit={handleAction}
           />
           <IncomeTaxControl
