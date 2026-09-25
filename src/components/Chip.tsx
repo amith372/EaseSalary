@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 
+import { busyAttrs } from "@/components/Field";
+
 /**
  * The chip every picker in this application is built from — the rest day, the
  * gender, how the income tax is arrived at, the holiday source, the marks on a
@@ -23,11 +25,15 @@ import type { ReactNode } from "react";
 export function Chip({
   selected,
   onClick,
+  busy = false,
   children,
   ...rest
 }: {
   selected: boolean;
   onClick: () => void;
+  /** This chip's own change is on its way to the store, so this chip is what
+   * says so — not the card around it (`busyAttrs` in `Field.tsx`). */
+  busy?: boolean;
   children: ReactNode;
   /** For the e2e suite, which finds a source by the code it is filed under. */
   "data-source"?: string;
@@ -38,12 +44,15 @@ export function Chip({
       aria-pressed={selected}
       onClick={onClick}
       data-source={rest["data-source"]}
-      className={[
-        "rounded-full border px-3.25 py-1.75 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
-        selected
-          ? "border-sage-hover bg-sage font-semibold text-sage-ink hover:bg-sage-hover hover:text-sage-ink-hover"
-          : "border-line bg-surface font-medium text-day-ink hover:border-line-hover hover:bg-hover hover:text-ink",
-      ].join(" ")}
+      {...busyAttrs(
+        busy,
+        [
+          "rounded-full border px-3.25 py-1.75 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
+          selected
+            ? "border-sage-hover bg-sage font-semibold text-sage-ink hover:bg-sage-hover hover:text-sage-ink-hover"
+            : "border-line bg-surface font-medium text-day-ink hover:border-line-hover hover:bg-hover hover:text-ink",
+        ].join(" "),
+      )}
     >
       {children}
     </button>

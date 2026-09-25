@@ -17,7 +17,7 @@
  */
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   setDocuments,
   setInsurer,
@@ -36,6 +36,7 @@ import {
 import { Bidi } from "@/components/Bidi";
 import { Chip } from "@/components/Chip";
 import {
+  busyAttrs,
   buttonClass,
   Field,
   inputClass,
@@ -121,6 +122,19 @@ export function HolidaysRow({
 }
 
 
+/**
+ * One term, its heading, and the control that changes it.
+ *
+ * **The heading is the control's accessible name.** The row draws its name once,
+ * as the `<h3>`, and the control under it is a bare field — so without this the
+ * passport, the employment permit, the work visa and the bank account are four
+ * boxes a screen reader announces alike. A `Field` label would draw the row's
+ * name a second time under the heading and change the screen, so the heading's
+ * id goes to the control instead: a row whose control needs a name takes
+ * `children` as a function and passes the id on. A control already inside a
+ * `Field` must not take it — `aria-labelledby` would override that label rather
+ * than add to it.
+ */
 export function TermRow({
   label,
   hint,
@@ -128,12 +142,13 @@ export function TermRow({
 }: {
   label: string;
   hint?: string;
-  children: ReactNode;
+  children: ReactNode | ((labelId: string) => ReactNode);
 }) {
+  const labelId = useId();
   return (
     <section className="flex min-w-0 flex-col gap-1.5 border-t border-line-soft py-4 first:border-t-0 sm:py-4.5">
       <div className="flex flex-col gap-0.5">
-        <h3 dir="auto" className="text-[15px] font-semibold">
+        <h3 id={labelId} dir="auto" className="text-[15px] font-semibold">
           {label}
         </h3>
         {hint ? (
@@ -145,7 +160,7 @@ export function TermRow({
           </p>
         ) : null}
       </div>
-      {children}
+      {typeof children === "function" ? children(labelId) : children}
     </section>
   );
 }
@@ -201,7 +216,7 @@ export function RestDayControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.restDay;
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, busyAt } = useAction(onSubmit);
   // The question the change raised, and the day it was going to be changed to.
   // Set on every attempt, so an answer cannot be sent against a day the user
   // has since moved away from.
@@ -211,21 +226,31 @@ export function RestDayControl({
   } | null>(null);
 
   function change(day: RestDay, answers: RestDayAnswers = {}) {
-    run(async () => {
-      const result = await setRestDay(workerId, day, answers);
-      // Narrowed on the marks themselves and not on the reason: "stranded" is
-      // in the refusal union so that one hook can carry every term, so the
-      // reason alone no longer says the payload is there.
-      setAsking("stranded" in result ? { day, stranded: result.stranded } : null);
-      return result;
-    });
+    run(
+      async () => {
+        const result = await setRestDay(workerId, day, answers);
+        // Narrowed on the marks themselves and not on the reason: "stranded" is
+        // in the refusal union so that one hook can carry every term, so the
+        // reason alone no longer says the payload is there.
+        setAsking("stranded" in result ? { day, stranded: result.stranded } : null);
+        return result;
+      },
+      undefined,
+      // The chip she pressed, or — once the panel is up — the panel's own save.
+      Object.keys(answers).length === 0 ? String(day) : "stranded",
+    );
   }
 
   return (
     <TermRow label={words.label} hint={words.hint}>
       <div data-terms="restDay" className="flex flex-wrap gap-2">
         {restDayChoices.map((day) => (
-          <Chip key={day} selected={day === restDay} onClick={() => change(day)}>
+          <Chip
+            key={day}
+            selected={day === restDay}
+            busy={busyAt(String(day))}
+            onClick={() => change(day)}
+          >
             <Bidi>{words.day(day)}</Bidi>
           </Chip>
         ))}
@@ -239,6 +264,7 @@ export function RestDayControl({
           to={asking.day}
           stranded={asking.stranded}
           onSave={(answers) => change(asking.day, answers)}
+          busy={busyAt("stranded")}
           onCancel={() => setAsking(null)}
         />
       ) : null}
@@ -267,12 +293,15 @@ function StrandedPanel({
   to,
   stranded,
   onSave,
+  busy,
   onCancel,
 }: {
   from: RestDay;
   to: RestDay;
   stranded: StrandedFreeRestDay[];
   onSave: (answers: RestDayAnswers) => void;
+  /** The answers are on their way to the store. */
+  busy: boolean;
   onCancel: () => void;
 }) {
   const words = he.workers.profile.terms.restDay.stranded;
@@ -343,7 +372,7 @@ function StrandedPanel({
           type="button"
           data-stranded-action="save"
           disabled={!answered}
-          className={`${buttonClass} disabled:opacity-40`}
+          {...busyAttrs(busy, `${buttonClass} disabled:opacity-40`)}
           onClick={() => onSave(answers)}
         >
           {words.save}
@@ -434,7 +463,7 @@ export function GenderControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.gender;
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, busyAt } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -443,7 +472,8 @@ export function GenderControl({
           <Chip
             key={choice}
             selected={choice === gender}
-            onClick={() => run(() => setGender(workerId, choice))}
+            busy={busyAt(choice)}
+            onClick={() => run(() => setGender(workerId, choice), undefined, choice)}
           >
             <Bidi>{words[choice]}</Bidi>
           </Chip>
@@ -485,7 +515,7 @@ export function IncomeTaxControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.incomeTax;
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, busyAt } = useAction(onSubmit);
   const [mode, setMode] = useState<IncomeTaxMode>(setting.mode);
   // The stored fraction shown back as a percentage, which is the unit the user
   // types in: 0.025 is 2.5. The conversion happens here and on the server, and
@@ -507,7 +537,7 @@ export function IncomeTaxControl({
     // A mode with nothing to say is saved at once; the percentage waits for its
     // own number, which is what the field below is for.
     if (next !== "percentage") {
-      run(() => setIncomeTaxSetting(workerId, next, ""));
+      run(() => setIncomeTaxSetting(workerId, next, ""), undefined, next);
     }
   }
 
@@ -518,6 +548,7 @@ export function IncomeTaxControl({
           <Chip
             key={choice}
             selected={choice === mode}
+            busy={busyAt(choice)}
             onClick={() => choose(choice)}
           >
             <Bidi>{words[choice]}</Bidi>
@@ -529,7 +560,11 @@ export function IncomeTaxControl({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            run(() => setIncomeTaxSetting(workerId, "percentage", rate));
+            run(
+              () => setIncomeTaxSetting(workerId, "percentage", rate),
+              undefined,
+              "percentage:save",
+            );
           }}
           className="flex items-end gap-2"
         >
@@ -548,7 +583,10 @@ export function IncomeTaxControl({
           </div>
           <button
             type="submit"
-            className="flex-none rounded-full border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+            {...busyAttrs(
+              busyAt("percentage:save"),
+              "flex-none rounded-full border border-line bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
+            )}
           >
             <span dir="auto">{words.save}</span>
           </button>
@@ -598,7 +636,7 @@ export function RecuperationControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.recuperation;
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, busyAt } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -607,7 +645,10 @@ export function RecuperationControl({
           <Chip
             key={name}
             selected={index + 1 === recuperationMonth}
-            onClick={() => run(() => setRecuperationMonth(workerId, index + 1))}
+            busy={busyAt(name)}
+            onClick={() =>
+              run(() => setRecuperationMonth(workerId, index + 1), undefined, name)
+            }
           >
             <Bidi>{name}</Bidi>
           </Chip>
@@ -668,7 +709,7 @@ export function SalaryControl({
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [from, setFrom] = useState("");
-  const { refusal, run, clear } = useAction(onSubmit);
+  const { refusal, run, clear, saving } = useAction(onSubmit);
   const changes = profile.salaryChanges ?? [];
 
   return (
@@ -737,7 +778,7 @@ export function SalaryControl({
                   setFrom("");
                 })
               }
-              className={buttonClass}
+              {...busyAttrs(saving, buttonClass)}
             >
               <span dir="auto">{words.save}</span>
             </button>
@@ -789,29 +830,32 @@ export function InsurerControl({
 }) {
   const words = he.workers.profile.terms.insurer;
   const [value, setValue] = useState(insurer);
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
-      <div data-terms="insurer" className="flex flex-col gap-2.5">
-        <input
-          type="text"
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          placeholder={words.placeholder}
-          dir="auto"
-          className={inputClass}
-        />
-        {refusal ? <Refusal reason={refusal} /> : null}
-        <button
-          type="button"
-          onClick={() => run(() => setInsurer(workerId, value))}
-          disabled={value.trim() === insurer}
-          className={`${buttonClass} self-start`}
-        >
-          <span dir="auto">{words.save}</span>
-        </button>
-      </div>
+      {(labelId) => (
+        <div data-terms="insurer" className="flex flex-col gap-2.5">
+          <input
+            type="text"
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder={words.placeholder}
+            aria-labelledby={labelId}
+            dir="auto"
+            className={inputClass}
+          />
+          {refusal ? <Refusal reason={refusal} /> : null}
+          <button
+            type="button"
+            onClick={() => run(() => setInsurer(workerId, value))}
+            disabled={value.trim() === insurer}
+            {...busyAttrs(saving, `${buttonClass} self-start`)}
+          >
+            <span dir="auto">{words.save}</span>
+          </button>
+        </div>
+      )}
     </TermRow>
   );
 }
@@ -844,7 +888,7 @@ export function DocumentsControl({
   const [permit, setPermit] = useState(documents.employmentPermitExpiry ?? "");
   const [visa, setVisa] = useState(documents.workVisaExpiry ?? "");
   const [passport, setPassport] = useState(documents.passportExpiry ?? "");
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.title} hint={words.note}>
@@ -882,7 +926,7 @@ export function DocumentsControl({
               }),
             )
           }
-          className={`${buttonClass} self-start`}
+          {...busyAttrs(saving, `${buttonClass} self-start`)}
         >
           <span dir="auto">{words.save}</span>
         </button>
@@ -923,37 +967,40 @@ export function IdentifyingNumberControl({
 }) {
   const words = he.workers.profile.terms[numberWords[name]];
   const [typed, setTyped] = useState(number ?? "");
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
-      <div data-terms={`${name}Number`} className="flex flex-wrap items-center gap-2.5">
-        <input
-          type="text"
-          value={typed}
-          onChange={(event) => setTyped(event.target.value)}
-          dir="ltr"
-          translate="no"
-          autoComplete="off"
-          data-field={`${name}Number`}
-          className={`${inputClass} max-w-48 text-start`}
-        />
-        <span className="text-[13px] font-light text-ink-quiet">
-          {number === null ? (
-            <span dir="auto">{words.none}</span>
-          ) : (
-            <Bidi noTranslate>{number}</Bidi>
-          )}
-        </span>
-        <button
-          type="button"
-          onClick={() => run(() => setIdentifyingNumber(workerId, name, typed))}
-          className={buttonClass}
-        >
-          <span dir="auto">{words.save}</span>
-        </button>
-        {refusal ? <Refusal reason={refusal} /> : null}
-      </div>
+      {(labelId) => (
+        <div data-terms={`${name}Number`} className="flex flex-wrap items-center gap-2.5">
+          <input
+            type="text"
+            value={typed}
+            onChange={(event) => setTyped(event.target.value)}
+            aria-labelledby={labelId}
+            dir="ltr"
+            translate="no"
+            autoComplete="off"
+            data-field={`${name}Number`}
+            className={`${inputClass} max-w-48 text-start`}
+          />
+          <span className="text-[13px] font-light text-ink-quiet">
+            {number === null ? (
+              <span dir="auto">{words.none}</span>
+            ) : (
+              <Bidi noTranslate>{number}</Bidi>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => run(() => setIdentifyingNumber(workerId, name, typed))}
+            {...busyAttrs(saving, buttonClass)}
+          >
+            <span dir="auto">{words.save}</span>
+          </button>
+          {refusal ? <Refusal reason={refusal} /> : null}
+        </div>
+      )}
     </TermRow>
   );
 }
@@ -975,33 +1022,35 @@ export function EmployedSinceControl({
 }) {
   const words = he.workers.profile.terms.employedSince;
   const [typed, setTyped] = useState(employedSince);
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
-      <div data-terms="employedSince" className="flex flex-wrap items-center gap-2.5">
-        <DateInput value={typed} onChange={setTyped} />
-        <Bidi className="text-[13px] font-light text-ink-quiet">
-          {fullDayLabel(employedSince)}
-        </Bidi>
-        <button
-          type="button"
-          onClick={() => run(() => setEmployedSince(workerId, typed))}
-          disabled={typed.trim() === employedSince}
-          className={buttonClass}
-        >
-          <span dir="auto">{words.save}</span>
-        </button>
-        {refusal === "employedSinceAfterFirstMonth" ? (
-          <RefusalLine>
-            <span>{words.afterFirstMonth.before}</span>
-            <bdi>{monthLabel(firstMonth)}</bdi>
-            <span>{words.afterFirstMonth.after}</span>
-          </RefusalLine>
-        ) : refusal ? (
-          <Refusal reason={refusal} />
-        ) : null}
-      </div>
+      {(labelId) => (
+        <div data-terms="employedSince" className="flex flex-wrap items-center gap-2.5">
+          <DateInput value={typed} onChange={setTyped} labelledBy={labelId} />
+          <Bidi className="text-[13px] font-light text-ink-quiet">
+            {fullDayLabel(employedSince)}
+          </Bidi>
+          <button
+            type="button"
+            onClick={() => run(() => setEmployedSince(workerId, typed))}
+            disabled={typed.trim() === employedSince}
+            {...busyAttrs(saving, buttonClass)}
+          >
+            <span dir="auto">{words.save}</span>
+          </button>
+          {refusal === "employedSinceAfterFirstMonth" ? (
+            <RefusalLine>
+              <span>{words.afterFirstMonth.before}</span>
+              <bdi>{monthLabel(firstMonth)}</bdi>
+              <span>{words.afterFirstMonth.after}</span>
+            </RefusalLine>
+          ) : refusal ? (
+            <Refusal reason={refusal} />
+          ) : null}
+        </div>
+      )}
     </TermRow>
   );
 }
@@ -1031,33 +1080,36 @@ export function RestEveSupplementControl({
   const words = he.workers.profile.terms.restEveSupplement;
   const stored = agorot === 0 ? "" : amountFieldValue(agorot);
   const [typed, setTyped] = useState(stored);
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
-      <div data-terms="restEveSupplement" className="flex flex-wrap items-center gap-2.5">
-        <input
-          type="text"
-          inputMode="decimal"
-          value={typed}
-          onChange={(event) => setTyped(event.target.value)}
-          dir="ltr"
-          translate="no"
-          className={`${inputClass} max-w-40 text-start`}
-        />
-        <Bidi noTranslate className="text-[13px] font-light text-ink-quiet">
-          {formatAgorot(agorot)}
-        </Bidi>
-        <button
-          type="button"
-          onClick={() => run(() => setRestEveSupplement(workerId, typed))}
-          disabled={typed.trim() === stored}
-          className={buttonClass}
-        >
-          <span dir="auto">{words.save}</span>
-        </button>
-        {refusal ? <Refusal reason={refusal} /> : null}
-      </div>
+      {(labelId) => (
+        <div data-terms="restEveSupplement" className="flex flex-wrap items-center gap-2.5">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={typed}
+            onChange={(event) => setTyped(event.target.value)}
+            aria-labelledby={labelId}
+            dir="ltr"
+            translate="no"
+            className={`${inputClass} max-w-40 text-start`}
+          />
+          <Bidi noTranslate className="text-[13px] font-light text-ink-quiet">
+            {formatAgorot(agorot)}
+          </Bidi>
+          <button
+            type="button"
+            onClick={() => run(() => setRestEveSupplement(workerId, typed))}
+            disabled={typed.trim() === stored}
+            {...busyAttrs(saving, buttonClass)}
+          >
+            <span dir="auto">{words.save}</span>
+          </button>
+          {refusal ? <Refusal reason={refusal} /> : null}
+        </div>
+      )}
     </TermRow>
   );
 }
@@ -1071,13 +1123,18 @@ export function RestEveSupplementControl({
  * date beside it is the same value in the words the rest of the application
  * uses, so nobody has to read an ISO date to know what is stored.
  */
-/** A date typed in the profile's one format, left to right. */
+/** A date typed in the profile's one format, left to right.
+ *
+ * `labelledBy` is passed only where the field stands alone under a `TermRow`
+ * heading. Inside a `Field` the wrapping label already names it. */
 function DateInput({
   value,
   onChange,
+  labelledBy,
 }: {
   value: string;
   onChange: (next: string) => void;
+  labelledBy?: string;
 }) {
   return (
     <input
@@ -1085,6 +1142,7 @@ function DateInput({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={he.workers.profile.terms.documents.format}
+      aria-labelledby={labelledBy}
       dir="ltr"
       className={`${inputClass} max-w-44 text-start`}
     />

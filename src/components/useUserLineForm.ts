@@ -55,7 +55,7 @@ export function useUserLineForm<Reason>({
   // `null` until she chooses, which is what lets the chips follow the direction
   // and then stop following it.
   const [chosen, setChosen] = useState<UserLinePlacement | null>(null);
-  const { refusal, run, clear } = useAction(send);
+  const { refusal, run, clear, busyAt } = useAction(send);
 
   const placement = chosen ?? defaultPlacementFor(direction);
 
@@ -98,7 +98,13 @@ export function useUserLineForm<Reason>({
    * server keeps it rather than minting a new one. */
   function submit() {
     if (open === null) return;
-    run(() => save(open, { label, amount, direction, placement, note }), reset);
+    // Named by the panel it was pressed in, so the busy state sits on that
+    // panel's own button and not on a row's action beside it.
+    run(
+      () => save(open, { label, amount, direction, placement, note }),
+      reset,
+      open,
+    );
   }
 
   return {
@@ -116,6 +122,9 @@ export function useUserLineForm<Reason>({
     setChosen,
     refusal,
     run,
+    /** Whether the control named is the one waiting — the panel is named by
+     * its `open`, and a row's action by whatever the caller calls it. */
+    busyAt,
     /** Drops a refusal without closing anything — for a caller that opens the
      * panel from a button and does not want last time's reason greeting her. */
     clear,

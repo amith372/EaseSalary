@@ -55,6 +55,7 @@ a stack trace.
 | One card, carrying the month at fault, one sentence per refusal with its dates and its rule, and a line saying the months after it are waiting on the same correction | Two refusals in one month are one month's state; stacked cards would read as two separate failures. The month is named because one refused month stops the replay of every later one (item 13), so the screen catching it is usually asking about a different month |
 | On the opening screen the card sits **above** the columns and the calendar still draws beneath it, with its marks | That calendar is where the mark that caused the refusal is corrected, and it reads her spans rather than the engine, so it survives. A screen that drew only the card would state a problem and withhold the one control that fixes it |
 | The money column draws nothing at all while the card stands — not the `החודש הזה עדיין ריק` card it would otherwise fall back to | A refused month is not an empty one, and the fallback would contradict the card above it |
+| The balances card goes with it, and the rail is left holding `לייצא לאקסל` alone, drawn full width | A balance is derived by replaying the months (item 13), so a month the engine declined to value leaves nothing to derive one from, and the rail drew `[מספר] ימים` in every row instead — a bracketed placeholder on screen, which is what `[השם שלך]` was cut for. An empty figure beside a real one is worse than no figure |
 | On the payslip, the payments screen and `דוחות` the card **is** the screen | None of the three has a calendar, every figure on them comes off the replay, and `דוחות` would otherwise offer a file for a month the engine declined to value |
 | The blocker strip is not drawn while the card stands | The alerts are counted off the same replay, so there is nothing to count |
 
@@ -107,6 +108,8 @@ a stack trace.
 | `להגדיר אילו תזכורות לקבל` opens a pop-up of the four warning kinds, one checkbox each, rather than leading to `הגדרות` | The user, 2026-09-17: the settings rows did not say clearly what is on and what is off (item 27) |
 | The artboard's `[חודש] מוכן לחישוב` card is not drawn | No entry of item 27 says a month is ready; a finished month not yet exported is the one that exists |
 | `כבר טופל` lists exports, third-party payments and confirmed recuperation months of the last ninety days | Those are the handled events the months record (item 27) |
+| Entries of one kind that differ only in the month they are about are one card, its title counting them, and it carries one action. The artboard draws a card per entry | The user, 2026-09-24 (F58): a dozen cards saying one sentence about a different month read as a screen of separate problems — `/alerts` was 7,135px tall at 390 wide. `specs.md` item 27 carries the rule, and the count the bell and the strip give is the number of cards drawn |
+| Where such a card offers `סמן כטופל`, it draws one button per month — a row of month chips under the note, each named `סמן את <חודש> כטופל` — and the note then lists no months. A card standing for one month keeps the single plain button | The user, 2026-09-25: the gesture removes a month's warning for good and cannot be undone from the screen, so no press may answer four months at once. Item 27's "one action on it" is the way in (`לייצא`), not the putting-off |
 
 ### The export badge (every screen that draws it)
 
@@ -185,7 +188,45 @@ folded sheet.
   1.24:1 against the white card, under WCAG's 3:1 for a control's boundary.
 - The bare text actions are padded out to a finger's height and give the
   space back with a negative margin, so the rows are drawn as the artboards
-  have them.
+  have them. **The idiom is `touchTargetClass` in `Field.tsx` and it is not the
+  forms' alone**: every bare action on `/`, `/alerts`, `/settings` and the
+  holiday picker takes it, since a link drawn as a line of text is about 20px
+  tall and WCAG 2.2 AA asks 24 (2.5.8). A link *inside a sentence* does not
+  take it — WCAG's own inline exception — because an enlarged area there would
+  overlap the lines above and below it. A control drawn at a fixed size takes a
+  pseudo-element hit area instead (`after:-inset-*`), as the `?` disclosure,
+  the month stepper and the holiday tick do, since padding a fixed box shrinks
+  what it draws rather than growing what it answers.
+- **A disabled filled button goes to the chip grey**, not to a lighter forest.
+  `opacity-50` turned it into a sage indistinguishable from a deliberate quiet
+  action, so a screen with three saves dark and three sage read as two button
+  styles rather than as three dead controls.
+- **Each term's heading is its control's accessible name.** The row draws its
+  name once, as the `<h3>`, and the control under it is a bare field; a `Field`
+  label would draw that name a second time and change the screen, so the
+  heading's id goes to the control instead.
+- **A change on its way to the store is said by the control that was pressed,
+  never by the region around it.** The control dims and takes `cursor-wait`
+  (`busyAttrs` in `Field.tsx`); the region keeps `aria-busy` alone, which says
+  the same thing without repainting anything. `/payments` used to put
+  `opacity-60` and `pointer-events-none` on the card holding all six sections
+  and `/settings` on the card holding all four groups, so saving one note
+  greyed every other row and, on a slow answer, read as the page failing rather
+  than as one field being written. **The busy control is not drawn as a
+  disabled one** — disabled is the chip grey above and means it cannot be
+  pressed — and the repeat press it therefore admits is dropped by `useAction`,
+  where one change at a time is enforced. **Where the gesture closes the control
+  that made it**, as the calendar's mark panel on `/` does, nothing is left to
+  wear it and the column keeps `aria-busy` alone.
+
+### The home screen
+
+- **The screen's `h1` goes to whatever leads it**, rather than a heading being
+  added: the blocker strip where it is drawn (`specs.md` item 27 puts what
+  blocks a correct salary first), then a refused month's card, then the
+  calendar's month. The screen opens straight onto the calendar with no heading
+  of its own, which is a departure this one keeps — so the level moves instead
+  of a title appearing above the calendar.
 
 ### The payslip and `דוחות`
 
@@ -210,12 +251,21 @@ folded sheet.
   screen or a dialog of its own — the question belongs where the change is being
   made, and a user sent elsewhere to answer it would have lost the change.
 - **A rate row carries where its figure was read from**, which the canvas does
-  not draw: `נקרא מ־` beside the figure and its date, an address as a link and a
-  figure confirmed by hand as the sentence it was stored with. It is `specs.md`
-  item 4's fourth thing, and until now the only screen that showed it was the
-  one confirming an export — so the answer to "which figure is the application
-  holding, and out of where" existed nowhere the user could go and look. The
-  failed-fetch sentence before an export now sends her here for it.
+  not draw: `נקרא מ־` and the link `המקור` where the source is an address, and
+  otherwise **a sentence of the screen's own** — `נקרא מהגיליון של המשפחה`, or
+  `הוזן ואושר על ידך`. It is `specs.md` item 4's fourth thing, and until now the
+  only screen that showed it was the one confirming an export — so the answer to
+  "which figure is the application holding, and out of where" existed nowhere the
+  user could go and look. The failed-fetch sentence before an export sends her
+  here for it.
+- **The row never prints the stored source string.** It used to, and for the
+  seeded wage that was `שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6`: a path into
+  a file the application does not hold, and one the right-to-left run reordered
+  so the extension was drawn in front of the name. What a family can use is the
+  *fact* — whose sheet, or whose confirmation — and the citation belongs in the
+  test and the commit message (`CLAUDE.md` rule 6). A source the screen has no
+  sentence for draws no line at all, rather than the string or a guess at whose
+  it was.
 
 ### Before the export
 
@@ -260,7 +310,23 @@ folded sheet.
 - The hero carries no lead sentence under its heading, where the artboard
   draws one: the heading and the list below it already say what the screen
   holds.
+- `חודשים קודמים` carries a heading per year, newest first, where the artboard draws one
+  unbroken list. The user, 2026-09-24 (F59): the list is seventeen rows and one longer every
+  month, and the year is the only boundary in it a reader can aim at.
+- On a month that has not ended, `החודש עדיין לא הסתיים` is drawn under `לאשר ולייצא`
+  as that link's own note and not beside it. `specs.md` item 21 makes it the condition the
+  month is filed under, so the row says one thing rather than two.
 - The closing line says that the data is kept, not the file (see `he.ts`).
+
+### The add-worker wizard
+
+| Departure | Why |
+|---|---|
+| `מדינת מקור` is required where the artboard marks it optional, and its select **opens on `לבחור מדינה` rather than on the first country** | It is what her holiday list is drawn from (item 12), so the first of six offered as an answer is a country nobody chose — and a step whose fields all look answered is one a family presses past without reading. `reviewNewWorker` refuses an empty one, in the browser and again in the action |
+
+Its other two departures are about what a step *asks* rather than how it looks —
+step 2's first month and step 3's insurer — and are in `AddWorkerScreen.tsx`'s
+own header, beside the spec items that decide them.
 
 ### The sign-in screen
 

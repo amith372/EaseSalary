@@ -87,7 +87,7 @@ describe("the daily read", () => {
       key: "minimumWage",
       value: 644385,
       effectiveFrom: "2026-04-01",
-      source: "אושר על ידי המשתמש/ת",
+      source: "userConfirmed",
     });
     const page = countedFetch(sourcePage);
     await refreshMinimumWageIfStale(repository, new Date(), page.impl);

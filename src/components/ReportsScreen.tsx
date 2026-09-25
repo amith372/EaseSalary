@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Fragment } from "react";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { SheetBadge, TwoToneIcon } from "@/components/icons";
@@ -107,7 +108,11 @@ function figuresOf(
   const words = he.reports.previousMonths;
   const figures = [];
   if (entry.withholds) {
-    figures.push({ key: "gross", label: words.gross, agorot: entry.grossAgorot });
+    figures.push({
+      key: "gross",
+      label: words.gross,
+      agorot: entry.grossAgorot,
+    });
   }
   figures.push({
     key: "afterWithholding",
@@ -120,11 +125,7 @@ function figuresOf(
   return figures;
 }
 
-function fileHref(
-  workerId: string,
-  report: string,
-  year?: number,
-): string {
+function fileHref(workerId: string, report: string, year?: number): string {
   const query = new URLSearchParams({ worker: workerId, report });
   if (year !== undefined) query.set("year", String(year));
   return `/reports/file?${query.toString()}`;
@@ -177,6 +178,20 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
   // carry in.
   const months = [...mine.months].reverse();
 
+  // The same list under a heading per year. It is one row longer every month,
+  // and a year is the only boundary in it a reader can aim at; the grouping is
+  // done here rather than by comparing a row with the one before it, so the
+  // heading cannot fall to a row that is not a year's first.
+  const years = months.reduce<{ year: number; months: ReportMonth[] }[]>(
+    (groups, entry) => {
+      const last = groups.at(-1);
+      if (last?.year === entry.month.year) last.months.push(entry);
+      else groups.push({ year: entry.month.year, months: [entry] });
+      return groups;
+    },
+    [],
+  );
+
   return (
     /* A `div` and not a `main`: the shell already provides the page's one main
        landmark, and a second one nested inside it leaves a screen reader with
@@ -192,9 +207,7 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
               <Bidi>{words.title}</Bidi>
             </h1>
           </div>
-          <p
-            className="max-w-[60ch] text-[17px] font-light text-pretty text-ink-soft sm:text-[18px]"
-          >
+          <p className="max-w-[60ch] text-[17px] font-light text-pretty text-ink-soft sm:text-[18px]">
             <Bidi>{words.lead}</Bidi>
           </p>
         </section>
@@ -257,78 +270,100 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                 <Bidi>{words.previousMonths.none}</Bidi>
               </p>
             ) : (
-              months.map((entry) => (
-                <div
-                  key={`${entry.month.year}-${entry.month.month}`}
-                  data-report-month={`${entry.month.year}-${entry.month.month}`}
-                  className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line-soft px-5 py-4.5 first:border-t-0 sm:px-6"
-                >
-                  <span
-                    className="w-[130px] flex-none text-[18px] font-semibold"
+              years.map((group) => (
+                <Fragment key={group.year}>
+                  <h3
+                    data-report-year={group.year}
+                    className="border-t border-line-soft bg-ground px-5 py-2 text-[14px] font-semibold text-ink-quiet first:border-t-0 sm:px-6"
                   >
-                    <Bidi>{monthLabel(entry.month)}</Bidi>
-                  </span>
-                  {/* One figure, two or three, by what the month actually did.
+                    <Bidi>{String(group.year)}</Bidi>
+                  </h3>
+                  {group.months.map((entry) => (
+                    <div
+                      key={`${entry.month.year}-${entry.month.month}`}
+                      data-report-month={`${entry.month.year}-${entry.month.month}`}
+                      className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line-soft px-5 py-4.5 sm:px-6"
+                    >
+                      <span className="w-[130px] flex-none text-[18px] font-semibold">
+                        <Bidi>{monthLabel(entry.month)}</Bidi>
+                      </span>
+                      {/* One figure, two or three, by what the month actually did.
                       Each label is its own element beside its own amount, which
                       is the Chrome-translate rule and also what lets a figure
                       drop out without disturbing its neighbours. */}
-                  <span className="flex min-w-0 flex-[1_1_200px] flex-wrap items-baseline gap-x-1.5 text-[16px] font-light text-ink-mute">
-                    {figuresOf(entry).map((figure, index) => (
-                      <span
-                        key={figure.key}
-                        data-figure={figure.key}
-                        className="flex items-baseline gap-1.5"
-                      >
-                        {index > 0 ? <span aria-hidden="true">· </span> : null}
-                        <span dir="auto">{figure.label}</span>
-                        <MoneyValue agorot={figure.agorot} />
+                      <span className="flex min-w-0 flex-[1_1_200px] flex-wrap items-baseline gap-x-1.5 text-[16px] font-light text-ink-mute">
+                        {figuresOf(entry).map((figure, index) => (
+                          <span
+                            key={figure.key}
+                            data-figure={figure.key}
+                            className="flex items-baseline gap-1.5"
+                          >
+                            {index > 0 ? (
+                              <span aria-hidden="true">· </span>
+                            ) : null}
+                            <span dir="auto">{figure.label}</span>
+                            <MoneyValue agorot={figure.agorot} />
+                          </span>
+                        ))}
                       </span>
-                    ))}
-                  </span>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    {entry.blocks[0] === undefined && !entry.confirmed ? (
-                      <Link
-                        href={confirmHref(entry.month)}
-                        data-confirm-month
-                        className="flex items-center gap-2 py-1 text-[16px] font-semibold whitespace-nowrap hover:underline hover:underline-offset-4"
-                      >
-                        <SheetBadge tile="fill-sage-soft" className="size-4.5 text-forest" />
-                        <Bidi>{he.beforeExport.confirmAndExport}</Bidi>
-                      </Link>
-                    ) : null}
-                    {entry.blocks[0] === undefined && entry.confirmed ? (
-                      <a
-                        href={monthHref(mine.workerId, entry.month)}
-                        className="flex items-center gap-2 py-1 text-[16px] font-semibold whitespace-nowrap hover:underline hover:underline-offset-4"
-                      >
-                        <SheetBadge tile="fill-sage-soft" className="size-4.5 text-forest" />
-                        <Bidi>{words.previousMonths.excel}</Bidi>
-                      </a>
-                    ) : null}
-                    {entry.blocks[0] === undefined ? null : (
-                      <span className="text-[16px] whitespace-nowrap text-ink-quiet">
-                        <Bidi>
-                          {words.previousMonths.blocked[entry.blocks[0]]}
-                        </Bidi>
-                      </span>
-                    )}
-                    {entry.blocks[0] === undefined && entry.stillRunning ? (
-                      <span
-                        data-warning="monthNotEnded"
-                        dir="auto"
-                        className="text-[15px] whitespace-nowrap text-clay-deep"
-                      >
-                        {he.beforeExport.notEnded.title}
-                      </span>
-                    ) : null}
-                    <Link
-                      href={`/month/payslip?month=${entry.month.year}-${String(entry.month.month).padStart(2, "0")}`}
-                      className="py-1 text-[16px] whitespace-nowrap text-ink-soft hover:text-forest"
-                    >
-                      <Bidi>{words.previousMonths.payslip}</Bidi>
-                    </Link>
-                  </div>
-                </div>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        {/* **One statement and not two.** A month still running
+                        offers its file under the condition it is filed on
+                        (item 21), so the warning is that link's own note,
+                        beneath it, rather than a second thing said beside it. */}
+                        {entry.blocks[0] === undefined ? (
+                          <span className="flex flex-col items-start gap-0.5">
+                            {entry.confirmed ? (
+                              <a
+                                href={monthHref(mine.workerId, entry.month)}
+                                className="flex items-center gap-2 py-1 text-[16px] font-semibold whitespace-nowrap hover:underline hover:underline-offset-4"
+                              >
+                                <SheetBadge
+                                  tile="fill-sage-soft"
+                                  className="size-4.5 text-forest"
+                                />
+                                <Bidi>{words.previousMonths.excel}</Bidi>
+                              </a>
+                            ) : (
+                              <Link
+                                href={confirmHref(entry.month)}
+                                data-confirm-month
+                                className="flex items-center gap-2 py-1 text-[16px] font-semibold whitespace-nowrap hover:underline hover:underline-offset-4"
+                              >
+                                <SheetBadge
+                                  tile="fill-sage-soft"
+                                  className="size-4.5 text-forest"
+                                />
+                                <Bidi>{he.beforeExport.confirmAndExport}</Bidi>
+                              </Link>
+                            )}
+                            {entry.stillRunning ? (
+                              <span
+                                data-warning="monthNotEnded"
+                                dir="auto"
+                                className="text-[13px] font-light text-clay-deep"
+                              >
+                                {he.beforeExport.notEnded.title}
+                              </span>
+                            ) : null}
+                          </span>
+                        ) : (
+                          <span className="text-[16px] whitespace-nowrap text-ink-quiet">
+                            <Bidi>
+                              {words.previousMonths.blocked[entry.blocks[0]]}
+                            </Bidi>
+                          </span>
+                        )}
+                        <Link
+                          href={`/month/payslip?month=${entry.month.year}-${String(entry.month.month).padStart(2, "0")}`}
+                          className="py-1 text-[16px] whitespace-nowrap text-ink-soft hover:text-forest"
+                        >
+                          <Bidi>{words.previousMonths.payslip}</Bidi>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </Fragment>
               ))
             )}
           </Card>
@@ -378,9 +413,7 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
           </div>
         </section>
 
-        <p
-          className="max-w-[66ch] text-[16px] font-light text-pretty text-ink-faint"
-        >
+        <p className="max-w-[66ch] text-[16px] font-light text-pretty text-ink-soft">
           <Bidi>{words.closing}</Bidi>
         </p>
       </div>

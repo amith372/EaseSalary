@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
-import { switchToTestWorker } from "./household";
+import { switchToTestWorker, useToday, TODAY } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
@@ -109,6 +109,67 @@ test.describe("the reports screen (item 23, item 29)", () => {
     await expect(
       september.getByRole("link", { name: he.reports.previousMonths.excel }),
     ).toHaveCount(1);
+  });
+
+  /**
+   * **The list is one row longer every month**, so it carries a heading at each
+   * year boundary — and the month still running says one thing rather than two:
+   * item 21 lets a family file before the month is out *with a warning that it
+   * has not ended*, so the warning is the condition on `לאשר ולייצא` and is
+   * drawn as that link's own note rather than beside it as a second statement.
+   *
+   * **Where the expected rows come from**: the demo seeds the first worker from
+   * May 2025 (`seed.ts`) and the day is pinned to September 2026, so the list is
+   * those seventeen months newest first under two headings. Nothing here is read
+   * back off the screen.
+   *
+   * **What it would catch**: a heading drawn per row or lost at the boundary,
+   * the order reversing, and the warning drifting back out beside the link.
+   */
+  test("heads each year, and says the running month's warning as the link's own note", async ({
+    page,
+  }) => {
+    await useHousehold(page, "years", "demo");
+    await useToday(page, TODAY);
+    await page.goto("/reports");
+
+    const drawn = await page
+      .locator("[data-report-year], [data-report-month]")
+      .evaluateAll((nodes) =>
+        nodes.map(
+          (node) =>
+            node.getAttribute("data-report-year") ?? node.getAttribute("data-report-month"),
+        ),
+      );
+    expect(drawn).toEqual([
+      "2026",
+      ...[9, 8, 7, 6, 5, 4, 3, 2, 1].map((month) => `2026-${month}`),
+      "2025",
+      ...[12, 11, 10, 9, 8, 7, 6, 5].map((month) => `2025-${month}`),
+    ]);
+
+    // September has not ended, and the demo confirms nothing, so its row offers
+    // the confirmation with the warning under it.
+    const september = page.locator('[data-report-month="2026-9"]');
+    await expect(september.locator('[data-warning="monthNotEnded"]')).toHaveText(
+      he.beforeExport.notEnded.title,
+    );
+    // Measured rather than read off the markup: the note sits below the link it
+    // belongs to and starts at the same edge, which is what makes the two read
+    // as one statement in a right-to-left row.
+    const placed = await september.evaluate((row) => {
+      const note = row.querySelector('[data-warning="monthNotEnded"]');
+      const link = note?.parentElement?.querySelector("a");
+      if (note == null || link == null) return null;
+      const under = note.getBoundingClientRect();
+      const over = link.getBoundingClientRect();
+      return {
+        below: under.top >= over.bottom - 1,
+        sameEdge: Math.abs(under.right - over.right) < 2,
+      };
+    });
+    expect(placed).toEqual({ below: true, sameEdge: true });
+    await page.screenshot({ path: "test-results/reports-years.png" });
   });
 
   /**

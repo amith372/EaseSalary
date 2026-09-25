@@ -51,6 +51,18 @@ export function coveredMonthsLabel(months: readonly YearMonth[]): string {
   return `${monthLabel(first)} – ${monthLabel(last)}`;
 }
 
+/**
+ * "מאי 2025, יוני 2025, יולי 2025" — the months one alert is about (item 27).
+ *
+ * Every month is named rather than the run's two ends, which is what
+ * `coveredMonthsLabel` above gives a quarter: the months an alert gathers need
+ * not be contiguous — a month confirmed between two that were not leaves a gap
+ * — and a range would claim a month that is not on the card.
+ */
+export function monthListLabel(months: readonly YearMonth[]): string {
+  return months.map(monthLabel).join(", ");
+}
+
 /** "26 באוגוסט" — the same wording `rangeLabel` gives a range of one day. */
 export function dayLabel(iso: IsoDate): string {
   const date = fromIsoDate(iso);

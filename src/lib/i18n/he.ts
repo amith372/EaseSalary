@@ -267,6 +267,10 @@ export const he = {
       passportPlaceholder: "מספר",
       country: "מדינת מקור",
       countryHint: "ממנה נלקחת רשימת החגים שלה.",
+      /** The option the select opens on, which is a prompt and not an answer:
+       * the country decides the worker's holiday list, so it is chosen and
+       * never inherited from whichever country happens to be first. */
+      countryPlaceholder: "לבחור מדינה",
     },
 
     when: {
@@ -811,6 +815,13 @@ export const he = {
     notNow: "לא עכשיו",
     /** In place of "not now" on a month not yet exported. */
     markHandled: "סמן כטופל",
+    /** The same, over the months of a card that stands for several: each is put
+     * off by its own press (item 27's grouping), so the word leads a row of
+     * months rather than sitting on one button. */
+    markHandledEach: "סמן כטופל:",
+    /** One such press, named for the month it answers — four buttons drawn
+     * alike are four buttons a screen reader cannot tell apart. */
+    markHandledMonth: (month: string) => `סמן את ${month} כטופל`,
     whatTheLawSays: "מה אומר החוק",
     /** The chip beside a title. A blockage stops a correct salary; a warning
      * still has time in it. */
@@ -886,6 +897,28 @@ export const he = {
         title: [{ value: month }, " טרם אושר"] as Said,
         note: ["החודש הסתיים ושאלות האישור שלפני הייצוא לא נענו."] as Said,
         action: "לאשר את החודש",
+      }),
+      /**
+       * The same two, where several months of one worker say the same thing:
+       * one entry naming the months, with one action on it (item 27). The
+       * action is a way in and not a promise to do them all at once — the
+       * confirmation is answered a month at a time.
+       */
+      /** Its months are named on the buttons that put each of them off, so the
+       * note says what is true of all of them and lists none. */
+      monthsNotExported: (count: number) => ({
+        title: [{ value: String(count) }, " חודשים טרם יוצאו"] as Said,
+        note: ["החודשים הסתיימו וגיליונות השכר שלהם לא הופקו."] as Said,
+        action: "לייצא",
+      }),
+      monthsUnconfirmed: (count: number, months: string) => ({
+        title: [{ value: String(count) }, " חודשים טרם אושרו"] as Said,
+        note: [
+          "החודשים הסתיימו ושאלות האישור שלפני הייצוא לא נענו: ",
+          { value: months },
+          ".",
+        ] as Said,
+        action: "לאישור החודשים",
       }),
       minimumWageChanged: (was: string, now: string, from: string) => ({
         title: ["שכר המינימום השתנה"] as Said,
@@ -1114,7 +1147,7 @@ export const he = {
         amount: "סכום לתשלום",
         amountHint: "ריק — אין תשלום החודש",
         note: "הערה (לא חובה)",
-        save: "שמירה",
+        save: "לשמור",
         rule: "עובד/ת סיעוד שגר/ה בבית המטופל אינו/ה זכאי/ת לפי החוק לתשלום על שעות נוספות, גם כשהמטופל מאושפז. אם המשפחה בוחרת לשלם על השעות בבית החולים, הסכום נרשם כאן, מופיע בגיליון החודש ונכלל בברוטו.",
       },
       incomeTax: {
@@ -1563,6 +1596,18 @@ export const he = {
      */
     readFrom: "נקרא מ־",
     sourceLink: "המקור",
+    /**
+     * A source that is not an address, said as a whole sentence rather than as
+     * a noun after `readFrom` — "נקרא מ־" before "אושר על ידי המשתמש/ת" is not
+     * Hebrew anyone writes. The names are `rateSources`, and the citation of
+     * the workbook a seeded figure was read out of stays in the test and the
+     * commit message (`CLAUDE.md` rule 6): a path into a file the application
+     * does not hold is nothing a family can go and look at.
+     */
+    sourceSaid: {
+      familyWorkbook: "נקרא מהגיליון של המשפחה",
+      userConfirmed: "הוזן ואושר על ידך",
+    },
     employment: {
       title: "תנאי ההעסקה",
       note: "לכל עובד/ת בנפרד — כרגע מוצג/ת",

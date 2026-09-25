@@ -27,11 +27,15 @@ import type { RefusedMonth } from "@/lib/refusalView";
 export function RefusalCard({
   refused,
   className = "",
+  heading: Heading = "h2",
 }: {
   refused: RefusedMonth;
   /** The placement, which differs between the screen that keeps its calendar
    * and the three where the card is the screen. */
   className?: string;
+  /** The level, not a style. Where the card leads a screen it carries that
+   * screen's `h1`; where a strip stands above it, it stays an `h2`. */
+  heading?: "h1" | "h2";
 }) {
   return (
     <Card
@@ -39,10 +43,10 @@ export function RefusalCard({
       data-role="refusal"
       className={`flex min-w-0 flex-none flex-col gap-2 px-4.5 py-3.5 ${className}`}
     >
-      <h2 data-role="refusal-month" dir="auto" className="text-[17px] font-semibold">
+      <Heading data-role="refusal-month" dir="auto" className="text-[17px] font-semibold">
         <span>{he.month.refused.title} </span>
         <bdi translate="no">{refused.monthLabel}</bdi>
-      </h2>
+      </Heading>
       <p dir="auto" className="text-[15px] leading-[1.5] font-light text-ink-mute text-pretty">
         {he.month.refused.body}
       </p>

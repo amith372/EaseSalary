@@ -17,6 +17,11 @@ import { readToday } from "@/lib/requestToday";
  * (specs.md item 27) — whichever the entry offers. The entry comes back as the
  * fingerprint the page was drawn from; a blockage is refused, because it cannot
  * be put off, and so is a worker the household does not hold.
+ *
+ * **One entry, even where the card standing over it names several months**
+ * (item 27's grouping): each month is put off by its own press and keeps its own
+ * record, because "mark as handled" cannot be undone from the screen (the user,
+ * 2026-09-25).
  */
 export async function dismiss(workerId: string, fingerprint: string): Promise<void> {
   let entry: ActionEntry;

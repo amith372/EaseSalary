@@ -164,7 +164,12 @@ test.describe("the payments screen", () => {
       fullPage: true,
     });
 
-    await page.getByRole("button", { name: words.save, exact: true }).click();
+    // Scoped to the group: every group of `/payments` says `לשמור`, so the word
+    // alone matches two buttons on one screen.
+    await page
+      .locator('[data-group="incomeTax"]')
+      .getByRole("button", { name: words.save, exact: true })
+      .click();
     await settled(page);
 
     await expect(

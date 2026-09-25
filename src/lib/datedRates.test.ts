@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   SEEDED_RATES,
+  drawnRateSource,
   rateInForce,
   type DatedRate,
 } from "@/lib/datedRates";
@@ -51,13 +52,13 @@ const wages: DatedRate[] = [
     key: "minimumWage",
     value: WAGE_2026,
     effectiveFrom: "2026-04-01",
-    source: "שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6",
+    source: "familyWorkbook",
   },
   {
     key: "minimumWage",
     value: WAGE_2025,
     effectiveFrom: "2025-04-01",
-    source: "שכר_חודשי_להאנה2025.xlsx → חודש  4.25 → D6",
+    source: "familyWorkbook",
   },
 ];
 
@@ -100,8 +101,8 @@ describe("the figure in force during a month (specs.md item 4)", () => {
   it("carries the source of the figure it answers with", () => {
     // A figure without its source is a figure nobody can check, which is what
     // Part 3 asks the table to hold beside the date.
-    expect(rateInForce(wages, "minimumWage", APRIL_2026)?.source).toContain(
-      "חודש  4.26",
+    expect(rateInForce(wages, "minimumWage", APRIL_2026)?.source).toBe(
+      "familyWorkbook",
     );
   });
 });
@@ -138,6 +139,65 @@ describe("what the application ships knowing", () => {
     for (const rate of SEEDED_RATES) {
       expect(rate.effectiveFrom).toMatch(/^\d{4}-\d{2}-01$/);
       expect(rate.source).not.toBe("");
+    }
+  });
+});
+
+/**
+ * What the rates group on `/settings` is allowed to say about a source.
+ *
+ * **The defect this stands against is a stored string printed verbatim.** The
+ * seed used to carry `שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6` in this
+ * field — the citation belongs here and in the commit message (`CLAUDE.md`
+ * rule 6) and never on a screen, both because it is a path into a file the
+ * application does not hold and because a mixed Hebrew-and-Latin run drawn in a
+ * right-to-left span reorders: it rendered with `.xlsx` in front of the name.
+ *
+ * The expected values are this file's, stated before the resolver is called,
+ * and none is read back from what it returned.
+ */
+describe("what a row may say about where a figure came from", () => {
+  it("makes an address a link and never words", () => {
+    expect(drawnRateSource("https://www.kolzchut.org.il/he/דמי_הבראה")).toEqual({
+      kind: "address",
+      url: "https://www.kolzchut.org.il/he/דמי_הבראה",
+    });
+  });
+
+  it("names the two sources that are not an address", () => {
+    expect(drawnRateSource("familyWorkbook")).toEqual({
+      kind: "named",
+      name: "familyWorkbook",
+    });
+    expect(drawnRateSource("userConfirmed")).toEqual({
+      kind: "named",
+      name: "userConfirmed",
+    });
+  });
+
+  it("reads a row written before the names as the user's own confirmation", () => {
+    // The only sentence the column has ever held, written by `confirmMonth`
+    // before the names existed. It means what `userConfirmed` means.
+    expect(drawnRateSource("אושר על ידי המשתמש/ת")).toEqual({
+      kind: "named",
+      name: "userConfirmed",
+    });
+  });
+
+  it("says nothing at all for a source it does not know", () => {
+    // Not the stored string, which is how the workbook path reached the
+    // screen, and not the user's confirmation either — that would be a claim
+    // about provenance nobody checked.
+    expect(
+      drawnRateSource("שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6"),
+    ).toBe(null);
+  });
+
+  it("leaves no seeded row unsayable", () => {
+    // Every shipped figure has to be able to state its own source, or the row
+    // silently drops the line for one of them.
+    for (const rate of SEEDED_RATES) {
+      expect(drawnRateSource(rate.source)).not.toBe(null);
     }
   });
 });

@@ -558,3 +558,43 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     );
   });
 });
+
+/**
+ * A folded section says what is inside it.
+ *
+ * Until 2026-09-24 `/payments` opened as six headings and no figure, and the
+ * advances under `מקדמות` were invisible until the section was pressed. The
+ * `aside` is the one place a count can sit, and it was drawn only while the
+ * section was open — which for `מקדמות` is where the control sits, so the
+ * folded line needed one of its own.
+ *
+ * What it catches: the folded summary dropped, and a control drawn into it —
+ * a button inside a folded section acts on what the user cannot see.
+ */
+test("the folded sections say what is inside them", async ({ page }) => {
+  await useHousehold(page, "folded-summary");
+  await page.goto("/payments");
+  await switchToTestWorker(page);
+
+  const advances = page.locator('[data-group="advances"]');
+  await expect(advances.locator("button[aria-expanded]")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  // Read without a click: how many advances are still being repaid.
+  await expect(advances).toContainText(
+    he.month.actions.advances.outstanding,
+  );
+  // And the control that grants one is not offered on a section nobody opened.
+  await expect(
+    advances.getByRole("button", { name: he.month.actions.advances.grant }),
+  ).toHaveCount(0);
+
+  // The tax group's own figure is there folded too.
+  const tax = page.locator('[data-group="incomeTax"]');
+  await expect(tax.locator("button[aria-expanded]")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  await expect(tax.locator("[data-money]").first()).toBeVisible();
+});

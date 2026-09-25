@@ -239,8 +239,9 @@ export async function confirmMonth(
       // Where the figure came from, which every row in that table carries. This
       // one came from the person exporting the month, which is a source as much
       // as an address is and is more honest than naming a page it may not have
-      // been read from.
-      source: "אושר על ידי המשתמש/ת",
+      // been read from. A name and not a sentence: `/settings` draws this field
+      // and the words for it are in `he.ts` (`rateSources`).
+      source: "userConfirmed",
     });
   }
 

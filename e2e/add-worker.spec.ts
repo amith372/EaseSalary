@@ -33,6 +33,12 @@ const MINIMUM_WAGE = "6443.85";
 const NAME = "מריה דה לה קרוס";
 const PASSPORT = "P7781234";
 
+/** The Philippines, one of the six lists the repository ships in
+ * `data/holidays/` — which is what the wizard's options are read from
+ * (`workers/new/page.tsx`), so the code is the data's and not this file's. */
+const COUNTRY = "PH";
+const COUNTRY_NAME = "הפיליפינים";
+
 /**
  * A household of this test's own, seeded with nobody.
  *
@@ -91,6 +97,43 @@ test("an empty name keeps the wizard on its first step", async ({ page }) => {
   await expect(page.getByText(he.addWorker.errors.name)).toBeVisible();
   await expect(page.getByRole("heading", { name: he.addWorker.who.title })).toBeVisible();
   await expect(page.locator('[data-role="add-worker-step"]')).toContainText("1");
+});
+
+/**
+ * **`מדינת מקור` opens on nothing, and the step is not left until she chooses.**
+ *
+ * The country is what the worker's holiday list is drawn from (`specs.md`
+ * item 12), so a select that opens on the first of six saves a country nobody
+ * chose — and the family would never see the field at all, since a wizard step
+ * whose fields all look answered is one they press past. The artboard marks it
+ * optional and it cannot be.
+ *
+ * **What this would catch**: the select given a country as its initial value
+ * again. The name is filled first, so the refusal the step reports is the
+ * country's own and not the name's — `reviewNewWorker` reports one reason at a
+ * time, in its own order.
+ */
+test("the country is chosen and not defaulted", async ({ page }) => {
+  await page.goto("/workers/new");
+
+  const country = page.locator('[data-field="country"]');
+  await expect(country).toHaveValue("");
+  await expect(country.locator("option").first()).toHaveText(
+    he.addWorker.who.countryPlaceholder,
+  );
+
+  await page.locator('[data-field="name"]').fill(NAME);
+  await page.locator('[data-role="add-worker-next"]').click();
+
+  await expect(page.getByText(he.addWorker.errors.country)).toBeVisible();
+  await expect(country).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator('[data-role="add-worker-step"]')).toContainText("1");
+
+  // Chosen, and the step is left.
+  await country.selectOption(COUNTRY);
+  await expect(country).toHaveValue(COUNTRY);
+  await page.locator('[data-role="add-worker-next"]').click();
+  await expect(page.getByRole("heading", { name: he.addWorker.when.title })).toBeVisible();
 });
 
 /**
@@ -217,6 +260,9 @@ test("the passport number survives the round trip", async ({ page }) => {
   await page.locator('[data-role="add-worker-finish"]').click();
 
   await expect(page.getByRole("heading", { name: NAME })).toBeVisible();
+  // The country chosen in step 1 is the country saved: her profile names the
+  // Philippines and not whichever list happens to sort first.
+  await expect(page.getByText(COUNTRY_NAME)).toBeVisible();
   // Opened where it is shown: `/settings`, since the terms moved there on
   // 2026-09-13. She is the household's only worker, so it opens on her.
   await page.goto("/settings");
@@ -227,6 +273,10 @@ test("the passport number survives the round trip", async ({ page }) => {
 async function fillWho(page: Page): Promise<void> {
   await page.locator('[data-field="name"]').fill(NAME);
   await page.locator('[data-field="passportNumber"]').fill(PASSPORT);
+  // Chosen, because the step will not be left without it. `PH` is one of the
+  // six lists in `data/holidays/`, which is where the wizard's options come
+  // from — never a code this file invented.
+  await page.locator('[data-field="country"]').selectOption(COUNTRY);
   await page.locator('[data-role="add-worker-next"]').click();
   await expect(page.getByRole("heading", { name: he.addWorker.when.title })).toBeVisible();
 }

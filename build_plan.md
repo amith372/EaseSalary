@@ -197,6 +197,30 @@ of rule 7 pass.
 
 ## Stage 8¾ — A refused month says so, as a card above the figures · **done** 2026-09-24
 
+## Stage 8⅞ — The country of origin is correctable
+
+**Approved 2026-09-25, and it runs after `docs/stage8-review.md`'s F63 and before F32.**
+`profile.country` is written once by the wizard and by nothing since: no settings row, no
+action. It is the default her holiday list is drawn from and it is printed as a fact about
+her on `/workers` and on her page, so a family that chose wrong has a profile permanently
+wrong about who she is. It is not a wrong *list* — item 10's "another country's list
+selectable instead" is built — and `MonthTerms` does not carry the country, so nothing
+already filed is restated.
+
+- `setCountry` in `src/app/workers/actions.ts`, beside `setGender`, refusing an empty code
+  and one no stored list names; `"country"` joins `ProfileActionRefusal`.
+- `CountryControl` in `WorkerTerms.tsx`, built as `GenderControl` is, in the **employment**
+  group beside `מין` (the user, 2026-09-25) — where the wizard asks it and where the other
+  facts about her sit. The stored countries reach `/settings` as they reach `/workers/new`.
+- A worker deliberately moved to another source does **not** follow the correction, which is
+  `holidaySourceOf`'s own rule; one never moved does. The browser test asserts both.
+- **A `specs.md` sentence is owed** — item 10 says the list is her country's and nothing says
+  the country may be corrected — and its exact wording is put to the user first (rule 1).
+
+**Done when** the country can be changed on `/settings`, `/workers` and her page follow it,
+the picker's default follows it for a worker never moved, and no exported month's figures
+move.
+
 ## Stage 9 — The help screen, and a possible assistant on top of it
 
 Where the "צריך/ה עזרה?" card goes. The design draws that card on every artboard and points it

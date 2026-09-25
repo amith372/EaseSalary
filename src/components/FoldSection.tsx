@@ -16,14 +16,25 @@ export function FoldSection({
   group,
   title,
   aside,
+  summary,
   fold,
   className,
   children,
 }: {
   group: string;
   title: string;
-  /** Beside the heading, and shown only while the section is open. */
+  /** Beside the heading while the section is open. */
   aside?: ReactNode;
+  /**
+   * Beside the heading while it is **folded** — what is inside, said without
+   * opening it. A screen of headings and no figures says nothing about itself,
+   * and five advances under a folded `מקדמות` are five things nobody can see.
+   *
+   * It falls back to `aside` where a section's aside is already a figure, and
+   * is given separately where the aside is a control: a button inside a folded
+   * section is a gesture on something the user cannot see.
+   */
+  summary?: ReactNode;
   fold: Fold;
   className: string;
   children: ReactNode;
@@ -58,7 +69,7 @@ export function FoldSection({
             <span dir="auto">{title}</span>
           </button>
         </h2>
-        {fold.open ? aside : null}
+        {fold.open ? aside : (summary ?? aside)}
       </div>
       <div id={bodyId} hidden={!fold.open} className="flex min-w-0 flex-col gap-2.5">
         {children}

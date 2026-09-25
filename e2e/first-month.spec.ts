@@ -57,6 +57,10 @@ test.beforeEach(async ({ page }) => {
 async function addWorker(page: Page, recuperationPaid: boolean): Promise<void> {
   await page.goto("/workers/new");
   await page.locator('[data-field="name"]').fill("רוזה למפה");
+  // Chosen, because the step will not be left without it: the country decides
+  // her holiday list and the select opens on nothing. `PH` is one of the lists
+  // in `data/holidays/`, which is where the wizard's options come from.
+  await page.locator('[data-field="country"]').selectOption("PH");
   await page.locator('[data-role="add-worker-next"]').click();
   await expect(page.getByRole("heading", { name: he.addWorker.when.title })).toBeVisible();
 

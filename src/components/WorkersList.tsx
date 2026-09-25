@@ -232,7 +232,7 @@ export function WorkersList({
 
       <p
         dir="auto"
-        className="max-w-[70ch] text-[15px] leading-[1.55] font-light text-ink-faint text-pretty sm:text-[16px]"
+        className="max-w-[70ch] text-[15px] leading-[1.55] font-light text-ink-soft text-pretty sm:text-[16px]"
       >
         {words.limit}
       </p>

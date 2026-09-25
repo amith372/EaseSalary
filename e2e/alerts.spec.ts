@@ -1,6 +1,6 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
 import { openPaymentSections, switchToTestWorker, useHousehold, useToday, TODAY } from "./household";
-import { he } from "../src/lib/i18n/he";
+import { he, type Said } from "../src/lib/i18n/he";
 
 /**
  * `/alerts` through the browser (specs.md item 27).
@@ -18,16 +18,32 @@ const SPEC = "filed";
 const AUGUST = `${he.calendar.monthNames[7]} 2026`;
 const JANUARY = `${he.calendar.monthNames[0]} 2026`;
 const FEBRUARY = `${he.calendar.monthNames[1]} 2026`;
+const MARCH = `${he.calendar.monthNames[2]} 2026`;
+const APRIL = `${he.calendar.monthNames[3]} 2026`;
 
-function unexported(page: Page, month: string) {
+/** A sentence from `he.ts` as the screen renders it, each part in its own
+ * element. */
+function text(said: Said): string {
+  return said.map((part) => (typeof part === "string" ? part : part.value)).join("");
+}
+
+/**
+ * The test worker's card for months confirmed and never exported — one card
+ * whether it stands for one month or several, since entries of a kind that
+ * differ only in the month they are about are drawn as one (item 27). The
+ * singular "טרם יוצא" opens the plural "טרם יוצאו" as well, so it finds both.
+ */
+function notExported(page: Page) {
   return page
     .locator('[data-role="alert"][data-list="warning"]')
-    .filter({ hasText: `${month} טרם יוצא` })
+    .filter({ hasText: "טרם יוצא" })
     .filter({ hasText: he.placeholder.name });
 }
 
 test.describe("the alerts page (specs.md item 27)", () => {
-  test("'mark as handled' removes a month not yet exported and leaves the rest", async ({ page }) => {
+  test("four months not yet exported are one card, and each is marked handled on its own", async ({
+    page,
+  }) => {
     await useHousehold(page, SPEC, "not-now");
     await page.goto("/alerts");
     await expect(page.locator("h1")).toHaveText(he.alerts.title);
@@ -41,35 +57,86 @@ test.describe("the alerts page (specs.md item 27)", () => {
       ).toHaveCount(0);
     }
 
-    await expect(unexported(page, JANUARY)).toHaveCount(1);
-    await expect(unexported(page, FEBRUARY)).toHaveCount(1);
+    // The seed's January to April are four months saying one sentence about a
+    // different month, so they are one card naming them with one action on it
+    // (item 27). Four cards here is the failure this catches.
+    const months = notExported(page);
+    await expect(months).toHaveCount(1);
+    await expect(months.locator('[data-role="alert-title"]')).toContainText(
+      text(he.alerts.entry.monthsNotExported(4).title),
+    );
+    // **One press per month and never one that answers all four**: the gesture
+    // removes a month's warning for good (the user, 2026-09-25). Each button is
+    // named for its own month, which is what a screen reader and this locator
+    // both read.
+    for (const month of [JANUARY, FEBRUARY, MARCH, APRIL]) {
+      await expect(
+        months.getByRole("button", { name: he.alerts.markHandledMonth(month) }),
+      ).toHaveCount(1);
+    }
+    await expect(months.getByRole("button", { name: he.alerts.markHandled, exact: true })).toHaveCount(
+      0,
+    );
+    await expect(months.getByRole("button", { name: he.alerts.notNow })).toHaveCount(0);
     await page.screenshot({ path: "test-results/alerts-before-not-now.png" });
 
-    // A month not yet exported offers 'mark as handled' and not 'not now'.
+    // January alone leaves, and the card stays over the three still owed.
+    await months.getByRole("button", { name: he.alerts.markHandledMonth(JANUARY) }).click();
+    await expect(months).toHaveCount(1);
+    await expect(months.locator('[data-role="alert-title"]')).toContainText(
+      text(he.alerts.entry.monthsNotExported(3).title),
+    );
     await expect(
-      unexported(page, JANUARY).getByRole("button", { name: he.alerts.notNow }),
+      months.getByRole("button", { name: he.alerts.markHandledMonth(JANUARY) }),
     ).toHaveCount(0);
-    await unexported(page, JANUARY).getByRole("button", { name: he.alerts.markHandled }).click();
+    await expect(blockages).toHaveCount(blockagesBefore);
 
-    await expect(unexported(page, JANUARY)).toHaveCount(0);
-    await expect(unexported(page, FEBRUARY)).toHaveCount(1);
+    // The last of them takes the card with it, and the one left before it is
+    // the plain button a single month has always drawn.
+    for (const month of [FEBRUARY, MARCH]) {
+      await months.getByRole("button", { name: he.alerts.markHandledMonth(month) }).click();
+      await expect(
+        months.getByRole("button", { name: he.alerts.markHandledMonth(month) }),
+      ).toHaveCount(0);
+    }
+    await expect(months.locator('[data-role="alert-title"]')).toContainText(
+      `${APRIL} טרם יוצא`,
+    );
+    await months.getByRole("button", { name: he.alerts.markHandled, exact: true }).click();
+    await expect(months).toHaveCount(0);
     await expect(blockages).toHaveCount(blockagesBefore);
 
     // It is remembered, not a state of the page, and records no export.
     await page.reload();
-    await expect(unexported(page, FEBRUARY)).toHaveCount(1);
-    await expect(unexported(page, JANUARY)).toHaveCount(0);
-    await expect(
-      page.locator('[data-role="handled"]').filter({ hasText: JANUARY }),
-    ).toHaveCount(0);
+    await expect(notExported(page)).toHaveCount(0);
+    for (const month of [JANUARY, FEBRUARY, MARCH, APRIL]) {
+      await expect(page.locator('[data-role="handled"]').filter({ hasText: month })).toHaveCount(0);
+    }
+  });
+
+  test("one such month is drawn as one month, in the singular", async ({ page }) => {
+    // Ten days into February 2026: of the four the seed confirmed, January
+    // alone has ended, so the card stands for one month and says what it always
+    // said. It catches the grouping reaching a card that gathers nothing.
+    await useHousehold(page, SPEC, "one-month");
+    await useToday(page, "2026-02-10");
+    await page.goto("/alerts");
+
+    const month = notExported(page);
+    await expect(month).toHaveCount(1);
+    await expect(month.locator('[data-role="alert-title"]')).toContainText(
+      `${JANUARY} טרם יוצא`,
+    );
+    await expect(month).not.toContainText(FEBRUARY);
+    await expect(month).toContainText(text(he.alerts.entry.monthNotExported("").note));
   });
 
   test("a warning kind switched off in the pop-up is not listed", async ({ page }) => {
     await useHousehold(page, SPEC, "switch");
     await page.goto("/alerts");
     const blockages = page.locator('[data-role="alert"][data-list="blockage"]');
-    const notExported = page.locator('[data-role="alert"]').filter({ hasText: "טרם יוצא" });
-    await expect(unexported(page, JANUARY)).toHaveCount(1);
+    const anyNotExported = page.locator('[data-role="alert"]').filter({ hasText: "טרם יוצא" });
+    await expect(notExported(page)).toHaveCount(1);
     const blockagesBefore = await blockages.count();
 
     await page.getByRole("button", { name: he.alerts.settingsLink }).click();
@@ -91,12 +158,12 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await dialog.getByRole("button", { name: he.alerts.reminders.close }).click();
     await expect(dialog).toBeHidden();
 
-    await expect(notExported).toHaveCount(0);
+    await expect(anyNotExported).toHaveCount(0);
     await expect(blockages).toHaveCount(blockagesBefore);
 
     // Saved, and not only drawn.
     await page.reload();
-    await expect(notExported).toHaveCount(0);
+    await expect(anyNotExported).toHaveCount(0);
     await page.getByRole("button", { name: he.alerts.settingsLink }).click();
     await expect(
       page
@@ -112,7 +179,8 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await page.goto("/alerts");
     const handled = page.locator('[data-role="handled"]').filter({ hasText: "יוצא" });
     const exportedBefore = await handled.count();
-    await expect(unexported(page, JANUARY)).toHaveCount(1);
+    const months = notExported(page);
+    await expect(months).toContainText(JANUARY);
 
     await page.goto("/reports");
     await switchToTestWorker(page);
@@ -125,8 +193,14 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await page.goto("/alerts");
     await expect(handled).toHaveCount(exportedBefore + 1);
     await expect(handled.first()).toContainText(he.placeholder.name);
-    await expect(unexported(page, JANUARY)).toHaveCount(0);
-    await expect(unexported(page, FEBRUARY)).toHaveCount(1);
+    // The card is one month shorter: January leaves it and the three behind it
+    // stay, which is what a card standing for several months has to do.
+    await expect(months).toHaveCount(1);
+    await expect(months.locator('[data-role="alert-title"]')).toContainText(
+      text(he.alerts.entry.monthsNotExported(3).title),
+    );
+    await expect(months).not.toContainText(JANUARY);
+    await expect(months).toContainText(FEBRUARY);
     // Tall enough for the whole list: the page scrolls inside `<main>`, which a
     // full-page screenshot does not reach.
     await page.setViewportSize({ width: 1280, height: 2600 });
@@ -141,7 +215,7 @@ test.describe("the alerts page (specs.md item 27)", () => {
     const bell = page.locator('[data-role="bell"]');
     const count = bell.locator('[data-row="warnings"]');
     const warnings = page.locator('[data-role="alert"][data-list="warning"]');
-    await expect(unexported(page, JANUARY)).toHaveCount(1);
+    await expect(notExported(page)).toHaveCount(1);
 
     // Warnings only: a blockage is the opening screen's, not the bell's.
     const before = await warnings.count();
@@ -149,8 +223,15 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await expect(count).toHaveText(String(before));
 
     // The bar is the layout's, which a server action refreshes with the page.
-    await unexported(page, JANUARY).getByRole("button", { name: he.alerts.markHandled }).click();
-    await expect(unexported(page, JANUARY)).toHaveCount(0);
+    // 'Not now' on the first warning that offers it — an advance — because the
+    // gathered card puts its months off one at a time and a month leaving it
+    // takes no card off the list.
+    const putOff = warnings
+      .filter({ has: page.getByRole("button", { name: he.alerts.notNow }) })
+      .first();
+    const putOffTitle = await putOff.locator('[data-role="alert-title"]').innerText();
+    await putOff.getByRole("button", { name: he.alerts.notNow }).click();
+    await expect(warnings.filter({ hasText: putOffTitle })).toHaveCount(0);
     await expect(count).toHaveText(String(before - 1));
 
     // The same figure on another screen. The panel lists the page's first
@@ -373,16 +454,19 @@ test.describe("a finished month never confirmed (specs.md item 27)", () => {
     // The demo confirms none of its months (`seed.ts`), so August 2026 — ended
     // by the suite's day — is a draft.
     await useHousehold(page, "demo", "unconfirmed");
+    // Every month of hers is a draft, so the blockage is one card naming them
+    // all, August among them (item 27's grouping).
     const unconfirmed = page
       .locator('[data-role="alert"][data-list="blockage"]')
-      .filter({ hasText: `${AUGUST} טרם אושר` })
+      .filter({ hasText: "טרם אושר" })
       .filter({ hasText: he.placeholder.name });
 
     await page.goto("/alerts");
     await expect(unconfirmed).toHaveCount(1);
-    await expect(unexported(page, AUGUST)).toHaveCount(0);
+    await expect(unconfirmed).toContainText(AUGUST);
+    await expect(notExported(page)).toHaveCount(0);
     await expect(
-      unconfirmed.getByRole("link", { name: he.alerts.entry.monthUnconfirmed("").action }),
+      unconfirmed.getByRole("link", { name: he.alerts.entry.monthsUnconfirmed(0, "").action }),
     ).toHaveAttribute("href", "/month/export");
 
     await page.goto("/reports");
@@ -398,7 +482,8 @@ test.describe("a finished month never confirmed (specs.md item 27)", () => {
 
     await page.goto("/alerts");
     await expect(unconfirmed).toHaveCount(1);
-    await expect(unexported(page, AUGUST)).toHaveCount(0);
+    await expect(unconfirmed).toContainText(AUGUST);
+    await expect(notExported(page)).toHaveCount(0);
     await page.screenshot({ path: "test-results/alerts-unconfirmed-no-file.png" });
   });
 });
@@ -415,6 +500,9 @@ test.describe("an account with nothing outstanding (build_plan.md stage 6, done 
     // salary is April 2026's minimum wage, as in `add-worker.spec.ts`.
     await page.goto("/workers/new");
     await page.locator('[data-field="name"]').fill("מריה דה לה קרוס");
+    // The step will not be left without a country: it decides her holiday list
+    // and the select opens on nothing (`add-worker.spec.ts`).
+    await page.locator('[data-field="country"]').selectOption("PH");
     await page.locator('[data-role="add-worker-next"]').click();
     await expect(page.getByRole("heading", { name: he.addWorker.when.title })).toBeVisible();
     await page.locator('[data-field="employedSince"]').fill(`${TODAY.slice(0, 7)}-01`);
@@ -475,6 +563,9 @@ test.describe("the December that closes a year (specs.md item 7)", () => {
 
     await page.goto("/workers/new");
     await page.locator('[data-field="name"]').fill("מריה דה לה קרוס");
+    // The step will not be left without a country: it decides her holiday list
+    // and the select opens on nothing (`add-worker.spec.ts`).
+    await page.locator('[data-field="country"]').selectOption("PH");
     await page.locator('[data-role="add-worker-next"]').click();
     await expect(page.getByRole("heading", { name: he.addWorker.when.title })).toBeVisible();
     await page.locator('[data-field="employedSince"]').fill("2026-12-01");

@@ -384,6 +384,50 @@ test.describe("the identifying numbers (specs.md items 22, 28)", () => {
 });
 
 /**
+ * Every field on the screen is announced by the row it sits in.
+ *
+ * A term draws its name once, as the row's heading, and the control under it is
+ * a bare input — so until 2026-09-24 seven fields had no accessible name at
+ * all, four of them the identifying numbers. A screen reader read four
+ * different boxes alike, and the one holding the passport was told apart from
+ * the one holding the bank account only by counting.
+ *
+ * What it catches: a new term whose control is dropped under a `TermRow`
+ * without taking its heading's id, and the four numbers collapsing onto one
+ * name again. The name is Playwright's own accessible-name computation and not
+ * a reading of the markup, which is the whole point — the markup looked fine.
+ */
+test.describe("every field is announced by its own row", () => {
+  test("no input on the settings screen is left unnamed", async ({ page }) => {
+    await useHousehold(page, "settings", "names");
+    await openSettingsForTestWorker(page);
+
+    const words = he.workers.profile.terms;
+    const boxes = page.getByRole("textbox");
+    await expect(boxes).not.toHaveCount(0);
+    // `/\S/` matches any non-empty accessible name, so the two counts agree
+    // only when every field has one.
+    await expect(page.getByRole("textbox", { name: /\S/ })).toHaveCount(
+      await boxes.count(),
+    );
+
+    // And the four numbers are four names rather than one repeated.
+    const numbers = [
+      words.passportNumber.label,
+      words.workVisaNumber.label,
+      words.employmentPermitNumber.label,
+      words.bankAccountNumber.label,
+    ];
+    expect(new Set(numbers).size).toBe(4);
+    for (const label of numbers) {
+      await expect(
+        page.getByRole("textbox", { name: label, exact: true }),
+      ).toHaveCount(1);
+    }
+  });
+});
+
+/**
  * The switcher on a worker's own page (`build_plan.md` stage 3). That page takes
  * its worker from the address, so switching there has to change the address.
  *
@@ -442,4 +486,41 @@ test.describe("the start of the employment", () => {
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
     await expect(vacation).toContainText(formatDays(21));
   });
+});
+
+/**
+ * A group's heading and what it opens are one card.
+ *
+ * Until 2026-09-24 the four headings sat on the page ground above four separate
+ * cards, so a heading was not visibly attached to what it opened. They take
+ * `/payments`' arrangement now: one card, the folds divided by a hairline.
+ *
+ * What it catches: a group given a card of its own again, which separates it
+ * from its heading without any test noticing.
+ */
+test("a group's heading sits inside the card it opens", async ({ page }) => {
+  await useHousehold(page, "settings", "one-card");
+  await openSettingsForTestWorker(page);
+
+  const groups = page.locator("[data-group]");
+  await expect(groups).toHaveCount(4);
+  // Every group, heading and rows alike, is inside one card — so the number of
+  // cards holding a group is one.
+  const holders = await page.evaluate(() => {
+    const parents = new Set<Element | null>();
+    for (const group of Array.from(document.querySelectorAll("[data-group]"))) {
+      parents.add(group.parentElement);
+    }
+    // One holder, and it is a card: white, against the page's warm ground.
+    const only = [...parents][0];
+    return {
+      count: parents.size,
+      background:
+        only === null || only === undefined
+          ? ""
+          : getComputedStyle(only).backgroundColor,
+    };
+  });
+  expect(holders.count).toBe(1);
+  expect(holders.background).toBe("rgb(255, 255, 255)");
 });

@@ -282,14 +282,24 @@ export function HomeScreen({
     ...(daySpan?.note ? [{ label: he.home.day.note, value: daySpan.note }] : []),
   ];
 
+  // Whatever a reader meets first is this screen's `h1`, and the screen opens
+  // on the calendar with no heading of its own (`DESIGN.md`), so the level goes
+  // to whichever of the three leads rather than a heading being added. The
+  // strip leads where it is drawn — `specs.md` item 27 puts what blocks a
+  // correct salary first — then a refused month's card, then the month.
+  const leads =
+    blockages.shown.length > 0 ? "blockers" : refused !== null ? "refusal" : "month";
+
   return (
     <>
-      <Blockers blockages={blockages} />
+      <Blockers blockages={blockages} heading={leads === "blockers" ? "h1" : "h2"} />
 
       {/* Above the month's content and not inside the money column: it is the
           whole screen's state and not one figure's, and the calendar beneath it
           is where the mark that caused it is corrected. */}
-      {refused === null ? null : <RefusalCard refused={refused} />}
+      {refused === null ? null : (
+        <RefusalCard refused={refused} heading={leads === "refusal" ? "h1" : "h2"} />
+      )}
 
       {/* One column on a phone, in the order a phone reads it: the calendar,
           the day and the money, then the rail. Two columns from `lg`, where
@@ -313,6 +323,7 @@ export function HomeScreen({
             selectedDay={shownDay}
             onSelectDay={setSelected}
             editRequest={editRequest}
+            heading={leads === "month" ? "h1" : "h2"}
             className="flex-1"
           />
 
@@ -350,18 +361,16 @@ export function HomeScreen({
           ) : null}
         </Card>
 
-        {/* Dimmed while a gesture is on its way to the store and back. The
-            figures here are the engine's answer to what was saved, so between
-            the click and the answer they are the *previous* month's — saying so
-            is better than letting a stale number look settled. */}
+        {/* `aria-busy` while a gesture is on its way to the store and back:
+            the figures here are the engine's answer to what was saved, so
+            between the click and the answer they are the *previous* month's.
+            The dim that used to say it is on the control that was pressed
+            instead (`busyAttrs` in `Field.tsx`) — a column greying itself
+            because a day was marked on the calendar beside it reads as the
+            page failing rather than as one mark being written. */}
         <div
           aria-busy={saving}
-          className={[
-            "order-2 flex min-w-0 flex-col gap-3 transition-opacity lg:col-start-2 lg:row-start-1 xl:col-start-3",
-            saving ? "opacity-60" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+          className="order-2 flex min-w-0 flex-col gap-3 lg:col-start-2 lg:row-start-1 xl:col-start-3"
         >
           <Card className="flex flex-col gap-2.5 px-3.75 py-3">
             <div className="flex items-center justify-between gap-2.5">
@@ -529,6 +538,7 @@ export function HomeScreen({
           household={household}
           month={month}
           fallbackRestDay={entry.restDay}
+          refused={refused !== null}
           openWhy={openWhy}
           toggleWhy={toggleWhy}
         />

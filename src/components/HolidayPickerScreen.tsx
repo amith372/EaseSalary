@@ -15,7 +15,7 @@ import { Chip } from "@/components/Chip";
 import { Card } from "@/components/Card";
 import { Chevron } from "@/components/icons";
 import { useWorkerScope } from "@/components/WorkerScope";
-import { buttonClass, inputClass, RefusalLine } from "@/components/Field";
+import { busyAttrs, buttonClass, inputClass, RefusalLine } from "@/components/Field";
 import { useAction } from "@/components/useAction";
 import { RuleLink, WhyPanel } from "@/components/WhyDisclosure";
 import { weekdayDayLabel } from "@/lib/dateLabels";
@@ -103,7 +103,7 @@ export function HolidayPickerScreen({
     household[0];
 
   const [open, setOpen] = useState<Open>(null);
-  const { refusal: reason, run, saving } =
+  const { refusal: reason, run, saving, busyAt } =
     useAction<keyof typeof words.refused>();
   // A refusal belongs to the gesture that produced it, so it is keyed by the
   // row it happened on rather than shown once at the top of a list of thirty
@@ -112,9 +112,17 @@ export function HolidayPickerScreen({
   const refusal =
     reason === null || refusedAt === null ? null : { at: refusedAt, reason };
 
-  function act(at: string, action: () => Promise<HolidayActionResult>) {
+  // The control is named apart from the refusal's anchor because it is finer:
+  // a row anchors its refusal once and holds three controls — the tick, the two
+  // day parts and the move form — and the source chips all anchor theirs to the
+  // card, while the busy state belongs to the chip that was pressed.
+  function act(
+    at: string,
+    action: () => Promise<HolidayActionResult>,
+    control: string = at,
+  ) {
     setRefusedAt(at);
-    run(action, () => setOpen(null));
+    run(action, () => setOpen(null), control);
   }
 
   const { year: state } = entry;
@@ -145,12 +153,7 @@ export function HolidayPickerScreen({
 
       <div
         aria-busy={saving}
-        className={[
-          "flex min-w-0 flex-col gap-2.5 transition-opacity",
-          saving ? "opacity-60" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className="flex min-w-0 flex-col gap-2.5"
       >
         <Card
           tone="tint"
@@ -236,10 +239,13 @@ export function HolidayPickerScreen({
                   key={`country-${choice.source.kind === "country" ? choice.source.code : ""}`}
                   choice={choice}
                   onPick={() =>
-                    act("source", () =>
-                      setHolidaySource(entry.worker.id, choice.source),
+                    act(
+                      "source",
+                      () => setHolidaySource(entry.worker.id, choice.source),
+                      sourceKey(choice),
                     )
                   }
+                  busy={busyAt(sourceKey(choice))}
                 />
               ))}
             </div>
@@ -265,10 +271,13 @@ export function HolidayPickerScreen({
                 key={`religion-${choice.source.kind === "religion" ? choice.source.religion : ""}`}
                 choice={choice}
                 onPick={() =>
-                  act("source", () =>
-                    setHolidaySource(entry.worker.id, choice.source),
+                  act(
+                    "source",
+                    () => setHolidaySource(entry.worker.id, choice.source),
+                    sourceKey(choice),
                   )
                 }
+                busy={busyAt(sourceKey(choice))}
               />
             ))}
           </div>
@@ -280,6 +289,7 @@ export function HolidayPickerScreen({
               year={year}
               submit={words.add.submit}
               onCancel={() => setOpen(null)}
+              busy={busyAt("add")}
               onSubmit={(date) =>
                 act("add", () => chooseHoliday(entry.worker.id, date, year))
               }
@@ -348,6 +358,7 @@ export function HolidayPickerScreen({
                     }
                     onCancelMove={() => setOpen(null)}
                     act={act}
+                    busyAt={busyAt}
                   />
                   {refusal?.at === row.date ? (
                     <Refusal reason={refusal.reason} />
@@ -449,17 +460,29 @@ function QuotaBar({ allowance, chosen }: { allowance: number; chosen: number }) 
 
 /** One list to choose the year's candidates from — a country's or a faith's
  * (item 10). */
+/** A chip's own name, so the one that was pressed is the one that says it is
+ * working. The refusal stays anchored to the card, where the sentence is
+ * drawn. */
+function sourceKey(choice: HolidaySourceChoice) {
+  return choice.source.kind === "country"
+    ? `country:${choice.source.code}`
+    : `religion:${choice.source.religion}`;
+}
+
 function SourceChip({
   choice,
   onPick,
+  busy,
 }: {
   choice: HolidaySourceChoice;
   onPick: () => void;
+  busy: boolean;
 }) {
   return (
     <Chip
       selected={choice.selected}
       onClick={onPick}
+      busy={busy}
       data-source={
         choice.source.kind === "country"
           ? choice.source.code
@@ -483,6 +506,7 @@ function HolidayRowView({
   onMove,
   onCancelMove,
   act,
+  busyAt,
 }: {
   row: HolidayRow;
   restDay: RestDay;
@@ -492,7 +516,12 @@ function HolidayRowView({
   moving: boolean;
   onMove: () => void;
   onCancelMove: () => void;
-  act: (at: string, action: () => Promise<HolidayActionResult>) => void;
+  act: (
+    at: string,
+    action: () => Promise<HolidayActionResult>,
+    control?: string,
+  ) => void;
+  busyAt: (control: string) => boolean;
 }) {
   const words = he.holidays.row;
   const chosen = row.chosen;
@@ -508,20 +537,30 @@ function HolidayRowView({
           aria-label={chosen === null ? words.choose(label) : words.unchoose(label)}
           disabled={row.blocked}
           onClick={() =>
-            act(row.date, () =>
-              chosen === null
-                ? chooseHoliday(workerId, row.date, year)
-                : unchooseHoliday(workerId, chosen.spanId),
+            act(
+              row.date,
+              () =>
+                chosen === null
+                  ? chooseHoliday(workerId, row.date, year)
+                  : unchooseHoliday(workerId, chosen.spanId),
+              `${row.date}:tick`,
             )
           }
-          className={[
-            "flex size-6 flex-none items-center justify-center rounded-chip border-[1.5px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
-            chosen !== null
-              ? "border-holiday bg-holiday"
-              : row.blocked
-                ? "border-line bg-ground"
-                : "border-line-strong bg-surface hover:border-line-hover",
-          ].join(" ")}
+          {...busyAttrs(
+            busyAt(`${row.date}:tick`),
+            [
+              // The box is drawn at 24 and hit at 40: a fixed-size control cannot
+              // be padded out without shrinking what it draws, so the hit area is
+              // a pseudo-element, as the `?` disclosure and the month stepper
+              // already do it (WCAG 2.2 AA 2.5.8).
+              "relative flex size-6 flex-none items-center justify-center rounded-chip border-[1.5px] transition-colors after:absolute after:-inset-2 after:content-[''] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
+              chosen !== null
+                ? "border-holiday bg-holiday"
+                : row.blocked
+                  ? "border-line bg-ground"
+                  : "border-line-strong bg-surface hover:border-line-hover",
+            ].join(" "),
+          )}
         >
           {chosen !== null ? <Tick /> : null}
         </button>
@@ -577,16 +616,21 @@ function HolidayRowView({
                 data-part={part}
                 aria-pressed={chosen.fraction === part}
                 onClick={() =>
-                  act(row.date, () =>
-                    setHolidayPart(workerId, chosen.spanId, part, year),
+                  act(
+                    row.date,
+                    () => setHolidayPart(workerId, chosen.spanId, part, year),
+                    `${row.date}:part:${part}`,
                   )
                 }
-                className={[
-                  "rounded-full border bg-surface px-3.25 py-1.5 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
-                  chosen.fraction === part
-                    ? "border-line-hover font-semibold text-ink"
-                    : "border-line font-medium text-day-ink hover:border-line-hover hover:text-ink",
-                ].join(" ")}
+                {...busyAttrs(
+                  busyAt(`${row.date}:part:${part}`),
+                  [
+                    "rounded-full border bg-surface px-3.25 py-1.5 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
+                    chosen.fraction === part
+                      ? "border-line-hover font-semibold text-ink"
+                      : "border-line font-medium text-day-ink hover:border-line-hover hover:text-ink",
+                  ].join(" "),
+                )}
               >
                 <span dir="auto">
                   {part === 1 ? words.part.whole : words.part.half}
@@ -623,9 +667,12 @@ function HolidayRowView({
           initial={row.date}
           amending={amending}
           onCancel={onCancelMove}
+          busy={busyAt(`${row.date}:move`)}
           onSubmit={(date, amendment) =>
-            act(row.date, () =>
-              moveHoliday(workerId, chosen.spanId, date, year, amendment),
+            act(
+              row.date,
+              () => moveHoliday(workerId, chosen.spanId, date, year, amendment),
+              `${row.date}:move`,
             )
           }
         />
@@ -670,6 +717,7 @@ function DateForm({
   submit,
   initial,
   amending = false,
+  busy,
   onCancel,
   onSubmit,
 }: {
@@ -680,6 +728,8 @@ function DateForm({
   initial?: IsoDate;
   /** Also asks when the move was agreed and why (specs.md item 10). */
   amending?: boolean;
+  /** This form's own write is on its way to the store. */
+  busy: boolean;
   onCancel: () => void;
   onSubmit: (date: IsoDate, amendment?: { agreedOn: string; note: string }) => void;
 }) {
@@ -754,7 +804,7 @@ function DateForm({
           onClick={() =>
             onSubmit(date as IsoDate, amending ? { agreedOn, note } : undefined)
           }
-          className={buttonClass}
+          {...busyAttrs(busy, buttonClass)}
         >
           <span dir="auto">{submit}</span>
         </button>

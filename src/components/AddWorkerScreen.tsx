@@ -126,7 +126,10 @@ export function AddWorkerScreen({
     name: "",
     gender: "female",
     passportNumber: "",
-    country: countries[0]?.code ?? "",
+    // **Empty, and not the first country on the list.** It is what her holiday
+    // list is drawn from, so a country nobody chose would be saved as an
+    // answer; `reviewNewWorker` refuses an empty one and the step says so.
+    country: "",
     employedSince: "",
     restDay: restDayChoices.find((day) => day === 6) ?? restDayChoices[0],
     recuperationMonth: "7",

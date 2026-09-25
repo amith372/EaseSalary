@@ -5,6 +5,7 @@ import type { ActionEntry } from "@/lib/engine/actionList";
 import {
   deferralOf,
   dismissalOf,
+  groupedEntries,
   handledList,
   markedHandledOf,
   shownEntries,
@@ -96,6 +97,99 @@ describe("'mark as handled' on a month not yet exported", () => {
     expect(
       shownEntries([september], { workerId: "w", switchedOff: [], deferrals: [marked], today: "2026-10-02" }),
     ).toEqual([september]);
+  });
+});
+
+/**
+ * Item 27: entries of one kind that differ only in the month they are about are
+ * drawn as one entry naming those months, and count as one. Every group below
+ * is written out by hand from that sentence; what the function returns decides
+ * nothing.
+ */
+describe("months of one kind gathered into one entry", () => {
+  const unconfirmed = (year: number, month: number): ActionEntry => ({
+    list: "blockage",
+    key: "monthUnconfirmed",
+    month: { year, month },
+  });
+  const unexported = (year: number, month: number): ActionEntry => ({
+    list: "warning",
+    key: "monthNotExported",
+    month: { year, month },
+  });
+
+  it("draws three unconfirmed months as one entry carrying all three", () => {
+    const three = [unconfirmed(2026, 6), unconfirmed(2026, 7), unconfirmed(2026, 8)];
+    expect(groupedEntries(three)).toEqual([
+      { lead: three[0], entries: three },
+    ]);
+  });
+
+  it("leaves a single month exactly as it was", () => {
+    expect(groupedEntries([unconfirmed(2026, 8)])).toEqual([
+      { lead: unconfirmed(2026, 8), entries: [unconfirmed(2026, 8)] },
+    ]);
+  });
+
+  it("keeps the months it gathers in the order they came, gaps and all", () => {
+    // July was confirmed between June and August, so the three months are not a
+    // run: a card naming them by their two ends would claim a month that is not
+    // on it.
+    const gapped = [unconfirmed(2026, 5), unconfirmed(2026, 6), unconfirmed(2026, 8)];
+    expect(groupedEntries(gapped)[0]?.entries).toEqual(gapped);
+  });
+
+  it("gathers by kind, so an unconfirmed month never joins an unexported one", () => {
+    const mixed = [unconfirmed(2026, 6), unexported(2026, 4), unconfirmed(2026, 7)];
+    expect(groupedEntries(mixed)).toEqual([
+      { lead: mixed[0], entries: [mixed[0], mixed[2]] },
+      { lead: mixed[1], entries: [mixed[1]] },
+    ]);
+  });
+
+  it("gathers nothing else, and each quarter stays an entry of its own", () => {
+    // Two national-insurance quarters and two documents: four entries, four
+    // cards. Only the two kinds a replay raises month after month are gathered.
+    const secondQuarter: ActionEntry = {
+      list: "blockage",
+      key: "nationalInsurance",
+      quarter: { from: { year: 2026, month: 1 }, to: { year: 2026, month: 3 } },
+    };
+    const four = [BLOCKAGE, secondQuarter, VISA, { ...VISA, document: "passport" } as ActionEntry];
+    expect(groupedEntries(four).map(({ entries }) => entries.length)).toEqual([1, 1, 1, 1]);
+  });
+
+  it("puts the entry where the first of its months stood", () => {
+    // The order is item 27's, and gathering must not move a kind up the list:
+    // the quarter came first and still does.
+    const list = [BLOCKAGE, unconfirmed(2026, 6), VISA, unconfirmed(2026, 7)];
+    expect(groupedEntries(list).map(({ lead }) => lead.key)).toEqual([
+      "nationalInsurance",
+      "monthUnconfirmed",
+      "documentExpiring",
+    ]);
+  });
+
+  it("counts as one, which is the number the bell and the opening screen give", () => {
+    const twelve = Array.from({ length: 12 }, (_, index) => unexported(2026, index + 1));
+    expect(groupedEntries(twelve)).toHaveLength(1);
+    expect(groupedEntries(twelve)[0]?.entries).toHaveLength(12);
+  });
+
+  it("lets a month put off on its own leave without taking the rest", () => {
+    // 'Mark as handled' on July: June and August are still one entry, and the
+    // card that draws them names two months rather than three.
+    const three = [unexported(2026, 6), unexported(2026, 7), unexported(2026, 8)];
+    const marked = markedHandledOf("w", three[1]!);
+    const left = shownEntries(three, {
+      workerId: "w",
+      switchedOff: [],
+      deferrals: [marked],
+      today: "2026-09-18",
+    });
+    expect(groupedEntries(left)).toEqual([
+      { lead: three[0], entries: [three[0], three[2]] },
+    ]);
   });
 });
 

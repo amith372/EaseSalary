@@ -13,8 +13,8 @@
 @theme {
   /* Text */
   --color-ink: #33291f; /* headings, and a day number on a light mark */
-  --color-ink-soft: #7b6a59; /* the alerts pill in the top bar */
-  --color-ink-faint: #9a8874; /* the line under the greeting */
+  --color-ink-soft: #7b6a59; /* the alerts pill, and the quietest body copy: the faintest token that holds 4.5:1 (4.90 on ground, 5.19 on a card) */
+  --color-ink-faint: #9a8874; /* decoration only — the aria-hidden `·` between two facts. It measures 3.23:1 on the page ground, so no text a reader has to read may take it */
   --color-ink-mute: #786858; /* the legend, an alert's note, an inactive tab */
   --color-ink-warm: #6e5d4d; /* body copy in a panel, and a summary label */
   --color-ink-quiet: #76695a; /* eyebrows, chevrons, day names, hints */

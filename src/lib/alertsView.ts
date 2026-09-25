@@ -1,10 +1,17 @@
 import { cache } from "react";
-import { coveredMonthsLabel, dayLabel, fullDayLabel, monthLabel } from "@/lib/dateLabels";
+import {
+  coveredMonthsLabel,
+  dayLabel,
+  fullDayLabel,
+  monthListLabel,
+  monthLabel,
+} from "@/lib/dateLabels";
 import { daysBetween } from "@/lib/dates";
 import { actionList, type ActionEntry } from "@/lib/engine/actionList";
 import {
   dismissalOf,
   fingerprintOf,
+  groupedEntries,
   handledList,
   shownEntries,
   type HandledEntry,
@@ -17,7 +24,7 @@ import { legalLink, type LegalLinkKey } from "@/lib/links";
 import { getRepository } from "@/lib/store";
 import { readToday } from "@/lib/requestToday";
 import { formatAgorot, formatDays } from "@/lib/money";
-import type { IsoDate } from "@/lib/types";
+import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
  * The household's alerts as `/alerts` draws them (specs.md item 27): every
@@ -37,9 +44,20 @@ export interface AlertCard {
   note: Said;
   action: { label: string; href: string };
   law: { label: string; url: string } | null;
-  /** What the dismissal button sends back, and which button it is; absent on a
-   * blockage, which cannot be put off. */
-  dismiss: { fingerprint: string; label: string } | null;
+  /**
+   * What the dismissal sends back, and which button it is; absent on a
+   * blockage, which cannot be put off.
+   *
+   * **One per month the card stands for** (the user, 2026-09-25): "mark as
+   * handled" cannot be undone from the screen, so a card naming four months
+   * offers four presses and never one that silences all four. `month` is the
+   * month's name where the card gathered several and `null` where it stands for
+   * one, which is the card that draws a single plain button as it always did.
+   */
+  dismiss: {
+    label: string;
+    months: { fingerprint: string; month: string | null }[];
+  } | null;
 }
 
 export interface HandledRow {
@@ -56,8 +74,13 @@ export interface AlertsView {
   done: HandledRow[];
 }
 
+/**
+ * One card's words. `months` is every month the card stands for (item 27's
+ * grouping): one, for all but the two kinds a replay raises month after month.
+ */
 function phrase(
   entry: ActionEntry,
+  months: YearMonth[],
   workerId: string,
 ): {
   said: { title: Said; note: Said; action: string };
@@ -121,13 +144,19 @@ function phrase(
       };
     case "monthNotExported":
       return {
-        said: words.monthNotExported(monthLabel(entry.month)),
+        said:
+          months.length > 1
+            ? words.monthsNotExported(months.length)
+            : words.monthNotExported(monthLabel(entry.month)),
         href: "/reports",
         law: "wageProtection",
       };
     case "monthUnconfirmed":
       return {
-        said: words.monthUnconfirmed(monthLabel(entry.month)),
+        said:
+          months.length > 1
+            ? words.monthsUnconfirmed(months.length, monthListLabel(months))
+            : words.monthUnconfirmed(monthLabel(entry.month)),
         href: "/month/export",
         law: "wageProtection",
       };
@@ -194,16 +223,18 @@ async function alertsView(
         deferrals,
         today,
       });
-      const open: AlertCard[] = entries.map((entry) => {
-        const { said, href, law } = phrase(entry, profile.id);
-        const fingerprint = fingerprintOf(entry);
-        const how = dismissalOf(entry);
+      const open: AlertCard[] = groupedEntries(entries).map(({ lead, entries: behind }) => {
+        // The months the card stands for, in item 27's order; one, wherever
+        // nothing was gathered.
+        const months = behind.flatMap((one) => ("month" in one ? [one.month] : []));
+        const { said, href, law } = phrase(lead, months, profile.id);
+        const how = dismissalOf(lead);
         return {
-          id: `${profile.id}:${fingerprint}`,
+          id: `${profile.id}:${fingerprintOf(lead)}`,
           workerId: profile.id,
           workerName,
-          blockage: entry.list === "blockage",
-          tag: tagOf(entry, today),
+          blockage: lead.list === "blockage",
+          tag: tagOf(lead, today),
           title: said.title,
           note: said.note,
           action: { label: said.action, href },
@@ -212,8 +243,12 @@ async function alertsView(
             how === null
               ? null
               : {
-                  fingerprint,
                   label: how === "markHandled" ? he.alerts.markHandled : he.alerts.notNow,
+                  months: behind.map((one) => ({
+                    fingerprint: fingerprintOf(one),
+                    month:
+                      behind.length > 1 && "month" in one ? monthLabel(one.month) : null,
+                  })),
                 },
         };
       });

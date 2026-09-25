@@ -25,10 +25,12 @@ import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
 import {
   AmountField,
+  busyAttrs,
   buttonClass,
   Field,
   NoteField,
   inputClass,
+  touchTargetClass,
 } from "@/components/Field";
 import { MoneyValue } from "@/components/MoneyValue";
 import { useAction } from "@/components/useAction";
@@ -92,6 +94,7 @@ export function StandingLinesControl({
     setChosen,
     refusal,
     run,
+    busyAt,
     clear,
     reset,
     openEdit,
@@ -162,7 +165,11 @@ export function StandingLinesControl({
       {refusal ? <Refusal reason={refusal} /> : null}
 
       <div className="flex items-center gap-3">
-        <button type="button" onClick={submit} className={buttonClass}>
+        <button
+          type="button"
+          onClick={submit}
+          {...busyAttrs(open !== null && busyAt(open), buttonClass)}
+        >
           <span dir="auto">
             {open === "new" ? lineWords.submit : lineWords.save}
           </span>
@@ -205,9 +212,15 @@ export function StandingLinesControl({
                     </button>
                     <button
                       type="button"
-                      onClick={() => run(() => stopStandingLine(workerId, line.id))}
+                      onClick={() =>
+                        run(
+                          () => stopStandingLine(workerId, line.id),
+                          undefined,
+                          `stop:${line.id}`,
+                        )
+                      }
                       aria-label={words.stopLabel(line.label)}
-                      className={quietButtonClass}
+                      {...busyAttrs(busyAt(`stop:${line.id}`), quietButtonClass)}
                     >
                       <span dir="auto">{words.stop}</span>
                     </button>
@@ -228,7 +241,7 @@ export function StandingLinesControl({
               clear();
               setOpen("new");
             }}
-            className="self-start text-[14px] font-medium text-forest hover:underline hover:underline-offset-4"
+            className={`${touchTargetClass} self-start text-[14px] font-medium text-forest hover:underline hover:underline-offset-4`}
           >
             <span dir="auto">{words.add}</span>
           </button>
@@ -279,7 +292,7 @@ export function OpeningPositionControl({
   const [principal, setPrincipal] = useState("");
   const [repaid, setRepaid] = useState("");
   const [note, setNote] = useState("");
-  const { refusal, run, clear } = useAction(onSubmit);
+  const { refusal, run, clear, busyAt } = useAction(onSubmit);
 
   function closeAdd() {
     setAdding(false);
@@ -322,9 +335,11 @@ export function OpeningPositionControl({
                     vacation === shownVacation ? String(opening.vacationDays) : vacation,
                   sickDays: sick === shownSick ? String(opening.sickDays) : sick,
                 }),
+                undefined,
+                "days",
               )
             }
-            className={buttonClass}
+            {...busyAttrs(busyAt("days"), buttonClass)}
           >
             <span dir="auto">{words.save}</span>
           </button>
@@ -346,10 +361,17 @@ export function OpeningPositionControl({
                   <button
                     type="button"
                     onClick={() =>
-                      run(() => removeOpeningAdvance(workerId, advance.number))
+                      run(
+                        () => removeOpeningAdvance(workerId, advance.number),
+                        undefined,
+                        `remove:${advance.number}`,
+                      )
                     }
                     aria-label={words.removeLabel(advance.number)}
-                    className={quietButtonClass}
+                    {...busyAttrs(
+                      busyAt(`remove:${advance.number}`),
+                      quietButtonClass,
+                    )}
                   >
                     <span dir="auto">{words.remove}</span>
                   </button>
@@ -393,9 +415,10 @@ export function OpeningPositionControl({
                     () =>
                       addOpeningAdvance(workerId, { principal, repaid, note }),
                     closeAdd,
+                    "add",
                   )
                 }
-                className={buttonClass}
+                {...busyAttrs(busyAt("add"), buttonClass)}
               >
                 <span dir="auto">{words.submit}</span>
               </button>
@@ -411,7 +434,7 @@ export function OpeningPositionControl({
               clear();
               setAdding(true);
             }}
-            className="self-start text-[14px] font-medium text-forest hover:underline hover:underline-offset-4"
+            className={`${touchTargetClass} self-start text-[14px] font-medium text-forest hover:underline hover:underline-offset-4`}
           >
             <span dir="auto">{words.addAdvance}</span>
           </button>

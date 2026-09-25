@@ -21,7 +21,7 @@ import {
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
-import { AmountField, inputClass } from "@/components/Field";
+import { AmountField, busyAttrs, inputClass } from "@/components/Field";
 import { SheetBadge } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
 import {
@@ -74,6 +74,9 @@ export function MonthConfirmation({
   const words = he.beforeExport;
   const { refusal, run, saving } = useAction<BeforeExportRefusal>();
   const [done, setDone] = useState(false);
+  // Which of the two files was asked for, so the button that was pressed is the
+  // one that says it is working. `null` while neither is.
+  const [pressed, setPressed] = useState<boolean | null>(null);
 
   const [answers, setAnswers] = useState<
     Partial<Record<ExportQuestionKey, boolean>>
@@ -117,12 +120,7 @@ export function MonthConfirmation({
   return (
     <div
       aria-busy={saving}
-      className={[
-        "flex flex-col gap-5.5 transition-opacity",
-        saving ? "opacity-60" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className="flex flex-col gap-5.5"
     >
       {/* Item 4, and all four things it asks for: the figure, the date it took
           effect, where it was read from, and a way to correct it. */}
@@ -415,8 +413,9 @@ export function MonthConfirmation({
               key={withNotes ? "notes" : "plain"}
               type="button"
               {...(withNotes ? { "data-finish-notes": "" } : { "data-finish": "" })}
-              disabled={blocked || !answered || saving}
-              onClick={() =>
+              disabled={blocked || !answered}
+              onClick={() => {
+                setPressed(withNotes);
                 run(
                   () =>
                     confirmMonth(workerId, shown.month, {
@@ -430,9 +429,12 @@ export function MonthConfirmation({
                     setDone(true);
                     download(workerId, shown.month, withNotes);
                   },
-                )
-              }
-              className="flex items-center gap-2.75 rounded-tint bg-forest px-6 py-3.5 text-[17px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:cursor-not-allowed disabled:opacity-45 sm:px-7.5 sm:text-[18px]"
+                );
+              }}
+              {...busyAttrs(
+                saving && pressed === withNotes,
+                "flex items-center gap-2.75 rounded-tint bg-forest px-6 py-3.5 text-[17px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:cursor-not-allowed disabled:opacity-45 sm:px-7.5 sm:text-[18px]",
+              )}
             >
               <SheetBadge className="size-5 text-forest" />
               <span dir="auto">

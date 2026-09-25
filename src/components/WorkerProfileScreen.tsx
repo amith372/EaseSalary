@@ -206,7 +206,7 @@ export function WorkerProfileScreen({
                     </span>
                     <span className="flex flex-col items-end">
                       <MoneyValue agorot={one.netAgorot} size="fact" />
-                      <span className="text-[13px] font-light text-ink-faint">
+                      <span className="text-[13px] font-light text-ink-soft">
                         <span dir="auto">{he.month.preview.gross} </span>
                         <Bidi noTranslate>
                           {one.grossAgorot === null

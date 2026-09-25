@@ -5,6 +5,20 @@ import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
 /**
+ * The tax group's own save.
+ *
+ * **Scoped to `data-group` and not addressed by its word.** Every group of
+ * `/payments` says `לשמור`, so a locator that reads the text alone matches two
+ * buttons on one screen — which is what happened the day the hospital group
+ * stopped being the odd one out (2026-09-24).
+ */
+function taxSave(page: Page) {
+  return page
+    .locator('[data-group="incomeTax"]')
+    .getByRole("button", { name: he.month.actions.incomeTax.save });
+}
+
+/**
  * The income tax, through the browser (`CLAUDE.md` rules 9–12, `build_plan.md`
  * stage 3).
  *
@@ -270,9 +284,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
 
     const field = page.getByLabel(he.month.actions.incomeTax.field);
     await field.fill("500");
-    await page
-      .getByRole("button", { name: he.month.actions.incomeTax.save })
-      .click();
+    await taxSave(page).click();
     await settled(page);
 
     await page.goto("/");
@@ -286,9 +298,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
     await openPaymentSections(page);
     await settled(page);
     await page.getByLabel(he.month.actions.incomeTax.field).fill("");
-    await page
-      .getByRole("button", { name: he.month.actions.incomeTax.save })
-      .click();
+    await taxSave(page).click();
     await settled(page);
 
     await page.goto("/");
@@ -491,9 +501,7 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
     await openPaymentSections(page);
     await settled(page);
     await page.getByLabel(he.month.actions.incomeTax.field).fill("300");
-    await page
-      .getByRole("button", { name: he.month.actions.incomeTax.save })
-      .click();
+    await taxSave(page).click();
     await settled(page);
 
     await openProfile(page);

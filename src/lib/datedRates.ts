@@ -78,9 +78,52 @@ export interface DatedRate {
    * the case of a rate that changed in the middle of a month.
    */
   effectiveFrom: IsoDate;
-  /** Where the figure came from: the address of the page it was fetched from,
-   * or the workbook, tab and cell a seeded one was read out of (Part 3). */
+  /** Where the figure came from (Part 3): the address of the page it was
+   * fetched from, or one of the names in `rateSources`. Never a sentence —
+   * `drawnRateSource` says why. */
   source: string;
+}
+
+/**
+ * The sources that are not an address.
+ *
+ * **A source is an address or one of these, and never a sentence.** The rates
+ * group on `/settings` draws this field, so prose put here is a user-facing
+ * string living outside `he.ts` (`CLAUDE.md`) — and the workbook citation the
+ * seed used to carry was worse than that: a path into a file the application
+ * does not hold, in a mixed Hebrew-and-Latin run that the right-to-left span
+ * reordered, so `שכר_חודשי_להאנה2026.xlsx` was drawn with its extension in
+ * front of its name. The citation belongs in the test and the commit message
+ * instead, which is `CLAUDE.md` rule 6's own division.
+ */
+export const rateSources = ["familyWorkbook", "userConfirmed"] as const;
+
+export type RateSourceName = (typeof rateSources)[number];
+
+/** The sentence `userConfirmed` replaced. A row written before the names
+ * existed holds it, and it means exactly what `userConfirmed` means. */
+const CONFIRMED_BY_HAND = "אושר על ידי המשתמש/ת";
+
+/** A stored source as a screen draws it: an address it links, or a name it has
+ * a sentence for. */
+export type DrawnRateSource =
+  | { kind: "address"; url: string }
+  | { kind: "named"; name: RateSourceName };
+
+/**
+ * What the row says about where a figure came from, or nothing.
+ *
+ * **Nothing, rather than the stored string, for a source it does not know.**
+ * Printing an unrecognised value is how the workbook path reached the screen;
+ * calling it the user's confirmation instead would be a claim about provenance
+ * that nobody checked, and a false one is worse than a row that stays quiet.
+ */
+export function drawnRateSource(source: string): DrawnRateSource | null {
+  if (source.startsWith("http")) return { kind: "address", url: source };
+  if (source === CONFIRMED_BY_HAND) return { kind: "named", name: "userConfirmed" };
+  return rateSources.includes(source as RateSourceName)
+    ? { kind: "named", name: source as RateSourceName }
+    : null;
 }
 
 /**
@@ -133,13 +176,18 @@ export const SEEDED_RATES: DatedRate[] = [
     key: "minimumWage",
     value: 624765,
     effectiveFrom: "2025-04-01",
-    source: "שכר_חודשי_להאנה2025.xlsx → חודש  4.25 → D6",
+    // ₪6,247.65, read out of שכר_חודשי_להאנה2025.xlsx → חודש  4.25 → D6.
+    // The citation is a comment and not the field: the field is drawn on
+    // `/settings` (`rateSources`), and rule 6 puts a citation in the test and
+    // the commit message.
+    source: "familyWorkbook",
   },
   {
     key: "minimumWage",
     value: 644385,
     effectiveFrom: "2026-04-01",
-    source: "שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6",
+    // ₪6,443.85, read out of שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6.
+    source: "familyWorkbook",
   },
   {
     key: "nationalInsurance",

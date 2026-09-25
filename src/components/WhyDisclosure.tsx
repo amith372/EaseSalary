@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Card } from "@/components/Card";
+import { touchTargetClass } from "@/components/Field";
 import { he } from "@/lib/i18n/he";
 import { legalLink, type LegalLinkKey } from "@/lib/links";
 import type { Explanation } from "@/lib/types";
@@ -116,7 +117,7 @@ export function RuleLink({
       target="_blank"
       rel="noopener noreferrer"
       dir="auto"
-      className={`font-medium hover:underline hover:underline-offset-[3px] ${className}`}
+      className={`${touchTargetClass} font-medium hover:underline hover:underline-offset-[3px] ${className}`}
     >
       <span>{link.label}</span>
       <span> — </span>

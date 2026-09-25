@@ -34,7 +34,9 @@ import {
   OpeningPositionControl,
   StandingLinesControl,
 } from "@/components/WorkerOpening";
+import { touchTargetClass } from "@/components/Field";
 import { fullDayLabel } from "@/lib/dateLabels";
+import { drawnRateSource } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
 import type { WorkerProfile } from "@/lib/engine/repository";
 import { he } from "@/lib/i18n/he";
@@ -94,13 +96,16 @@ export function SettingsScreen({
     household[0];
 
   // A change reaches the store and the page re-renders from it, so nothing here
-  // predicts what was saved; the screen dims while the round trip is in flight.
+  // predicts what was saved; the card says the round trip is in flight with
+  // `aria-busy`, and the control that was pressed is the one that wears it
+  // (`busyAttrs` in `Field.tsx`).
   const [saving, startSaving] = useTransition();
   function handleAction(
     action: () => Promise<ProfileActionResult>,
     onResult: (result: ProfileActionResult) => void,
   ) {
     startSaving(async () => onResult(await action()));
+    return true;
   }
 
   if (entry === undefined) return null;
@@ -130,16 +135,17 @@ export function SettingsScreen({
 
       {/* Keyed by worker: every control seeds its draft from the profile, and a
           switch must not leave the other worker's draft in the fields. */}
+      {/* One card holding the four folds, each divided from the one above by a
+          hairline — the arrangement `/payments` has. With the headings on the
+          page ground above four separate cards, a heading was not visibly
+          attached to what it opened and its chevron sat at the far end of an
+          800px row. */}
       <div
         key={profile.id}
         aria-busy={saving}
-        className={[
-          "flex min-w-0 flex-col gap-6 transition-opacity",
-          saving ? "opacity-60" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className="flex min-w-0 flex-col"
       >
+        <Card radius="lg" className="flex min-w-0 flex-col px-4 sm:px-6.5">
         <Group
           id="employment"
           title={words.employment.title}
@@ -274,6 +280,7 @@ export function SettingsScreen({
             onSubmit={handleAction}
           />
         </Group>
+        </Card>
       </div>
 
       <section className="flex flex-col gap-2 border-t border-line pt-5">
@@ -284,14 +291,14 @@ export function SettingsScreen({
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <Link
             href="/reports"
-            className="text-[15px] font-medium text-forest hover:underline hover:underline-offset-4"
+            className={`${touchTargetClass} text-[15px] font-medium text-forest hover:underline hover:underline-offset-4`}
           >
             <span dir="auto">{words.account.yearlySummary}</span>
           </Link>
           <form action={signOut}>
             <button
               type="submit"
-              className="text-[15px] font-medium text-clay-deep hover:underline hover:underline-offset-4"
+              className={`${touchTargetClass} text-[15px] font-medium text-clay-deep hover:underline hover:underline-offset-4`}
             >
               <span dir="auto">{words.account.signOut}</span>
             </button>
@@ -507,14 +514,12 @@ function Group({
       group={id}
       title={title}
       fold={{ open, onToggle: () => setOpen((current) => !current) }}
-      className="flex min-w-0 flex-col gap-2.5"
+      className="flex min-w-0 flex-col gap-2.5 border-t border-line-soft py-4 first:border-t-0"
     >
       <p className="text-[14px] font-light text-ink-quiet text-pretty">
         {typeof note === "string" ? <span dir="auto">{note}</span> : note}
       </p>
-      <Card className="flex min-w-0 flex-col px-4 sm:px-6">
-        {children}
-      </Card>
+      <div className="flex min-w-0 flex-col">{children}</div>
     </FoldSection>
   );
 }
@@ -534,14 +539,16 @@ function ValueRow({
   hint: string;
   value: string | null;
   since?: string;
-  /** The stored source of a dated rate (item 4). An address becomes a link; a
-   * figure confirmed by hand carries a Hebrew sentence instead, which is shown
-   * as it is. */
+  /** The stored source of a dated rate (item 4). An address becomes a link;
+   * every other source is one of `rateSources` and is said in words from
+   * `he.ts` — the row never prints the stored string, which is how a workbook
+   * path reached the screen. */
   source?: string;
   rowKey: string;
   derived?: boolean;
 }) {
   const words = he.settings;
+  const drawn = source === undefined ? null : drawnRateSource(source);
   return (
     <TermRow label={label} hint={hint}>
       <div
@@ -571,20 +578,22 @@ function ValueRow({
             {words.derived}
           </span>
         ) : null}
-        {source === undefined ? null : (
+        {drawn === null ? null : (
           <span data-source="" className="font-light text-ink-mute">
-            <span dir="auto">{words.readFrom} </span>
-            {source.startsWith("http") ? (
-              <a
-                href={source}
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-2 hover:text-forest"
-              >
-                <span dir="auto">{words.sourceLink}</span>
-              </a>
+            {drawn.kind === "address" ? (
+              <>
+                <span dir="auto">{words.readFrom} </span>
+                <a
+                  href={drawn.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2 hover:text-forest"
+                >
+                  <span dir="auto">{words.sourceLink}</span>
+                </a>
+              </>
             ) : (
-              <span dir="auto">{source}</span>
+              <span dir="auto">{words.sourceSaid[drawn.name]}</span>
             )}
           </span>
         )}

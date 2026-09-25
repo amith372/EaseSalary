@@ -780,7 +780,7 @@ describe("the household's dated rates", () => {
       key: "minimumWage" as const,
       value: 650000,
       effectiveFrom: "2026-04-01" as const,
-      source: "אושר על ידי המשתמש/ת",
+      source: "userConfirmed",
     };
     await repository.saveRate(corrected);
 

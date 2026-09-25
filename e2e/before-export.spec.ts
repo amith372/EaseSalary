@@ -565,21 +565,23 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
  * table is keyed by `(key, effective_from)`: a write at a date the table already
  * holds *replaces* the row, source and all. So confirming a month at the very
  * figure the fetch had put there used to overwrite the address it came from with
- * the sentence "אושר על ידי המשתמש/ת", and the first export of any month
- * took the provenance of every later one with it.
+ * the user's own name for it, and the first export of any month took the
+ * provenance of every later one with it.
  *
  * **Both branches are driven, because "never write" would pass one of them.**
  * Confirming the offered figure must leave the source alone; typing a different
  * one must claim it, since that figure really did come from the user.
  *
- * The expected strings come from `SEEDED_RATES` and from `he.ts`, neither of
- * which is the code under test. The seeded 1.4.2026 row is cited to
- * `שכר_חודשי_להאנה2026.xlsx` → `חודש  4.26` → D6, which is the row in force
- * during September 2026 and therefore the one `/settings` draws.
+ * The expected strings come from `he.ts`, which is not the code under test. The
+ * seeded 1.4.2026 row is cited to `שכר_חודשי_להאנה2026.xlsx` → `חודש  4.26`
+ * → D6 — the row in force during September 2026 and therefore the one `/settings`
+ * draws. **That citation is here and never on the screen**: the row says the
+ * fact in words, and the path it used to print was a path into a file the
+ * application does not hold, reordered by the right-to-left run it sat in.
  */
 test.describe("a confirmation keeps where the wage came from (item 4)", () => {
-  const SEEDED_SOURCE = "שכר_חודשי_להאנה2026.xlsx";
-  const CONFIRMED_BY_HAND = "אושר על ידי המשתמש/ת";
+  const SEEDED_SOURCE = he.settings.sourceSaid.familyWorkbook;
+  const CONFIRMED_BY_HAND = he.settings.sourceSaid.userConfirmed;
 
   async function wageSource(page: Page): Promise<string> {
     // The groups all start folded, so the row is in the document and not on the
@@ -607,6 +609,9 @@ test.describe("a confirmation keeps where the wage came from (item 4)", () => {
     const after = await wageSource(page);
     expect(after).toContain(SEEDED_SOURCE);
     expect(after).not.toContain(CONFIRMED_BY_HAND);
+    // And never the workbook it was read out of: a path into a file the
+    // application does not hold is nothing a family can go and look at.
+    expect(after).not.toContain(".xlsx");
 
     await page.screenshot({
       path: "test-results/settings-wage-source.png",
@@ -652,9 +657,11 @@ test("the rates group answers the failed-fetch link", async ({ page }) => {
   await openSettingsGroups(page);
 
   await expect(page.locator('[data-group="rates"]')).toBeVisible();
+  // The seeded wage says its source in words; only an address takes `readFrom`
+  // and the link beside it, which the national-insurance row below is.
   await expect(
     page.locator('[data-setting="minimum-wage"] [data-source]'),
-  ).toContainText(he.settings.readFrom);
+  ).toContainText(he.settings.sourceSaid.familyWorkbook);
   await expect(
     page.locator('[data-setting="national-insurance"] [data-source]'),
   ).toContainText(he.settings.sourceLink);

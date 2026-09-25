@@ -1147,7 +1147,11 @@ Each of these is true or false at a glance.
     the salary can be produced without it and the confirmation questions of item 18 already
     ask about it before every export. The opening screen shows the first four
     blockages; when there are more it says how many more and links to the page that lists
-    them all. The bell warns sixty days before the employment
+    them all. Entries of one kind that concern the same worker and differ only in the month
+    they are about are drawn as **one entry naming those months**, with one action on it, on
+    the opening screen and on the page alike; it counts as one, so the number the bell and the
+    opening screen give is the number of entries drawn and never the number of months behind
+    them. The bell warns sixty days before the employment
     permit, the work visa or the medical insurance expires, and in the month before a
     recuperation month or an employment anniversary; the passport's threshold is item 28's.
     Neither list is a notification that leaves the application: nothing is sent by mail or

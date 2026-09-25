@@ -3,6 +3,7 @@ import {
   coveredMonthsLabel,
   dayLabel,
   fullDayLabel,
+  monthListLabel,
   monthLabel,
   rangeLabel,
 } from "@/lib/dateLabels";
@@ -70,6 +71,33 @@ describe("the labels the rest of the screen uses", () => {
     // the selection summary sit on the same screen, and a day worded one way in
     // one and another way in the other is a difference with no reason behind it.
     expect(dayLabel("2026-08-26")).toBe(rangeLabel("2026-08-26", "2026-08-26"));
+  });
+});
+
+describe("the months one alert is about (specs.md item 27)", () => {
+  it("names every one of them", () => {
+    expect(
+      monthListLabel([
+        { year: 2025, month: 5 },
+        { year: 2025, month: 6 },
+        { year: 2026, month: 1 },
+      ]),
+    ).toBe("מאי 2025, יוני 2025, ינואר 2026");
+  });
+
+  it("names a single month as the calendar's heading names it", () => {
+    expect(monthListLabel([{ year: 2026, month: 8 }])).toBe("אוגוסט 2026");
+  });
+
+  it("names a gapped run month by month rather than as two ends", () => {
+    // June, July confirmed, August: "יוני 2026 – אוגוסט 2026" would claim July,
+    // which is why the list is not `coveredMonthsLabel`.
+    expect(
+      monthListLabel([
+        { year: 2026, month: 6 },
+        { year: 2026, month: 8 },
+      ]),
+    ).toBe("יוני 2026, אוגוסט 2026");
   });
 });
 

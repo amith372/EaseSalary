@@ -123,9 +123,10 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   );
 
   // A change reaches the store and the page re-renders from it, so nothing here
-  // predicts what was saved. The card dims while the round trip is in flight,
-  // for the reason the month screen's preview does: a stale figure that looks
-  // settled is worse than one that says it is waiting.
+  // predicts what was saved. The card says so with `aria-busy` alone: the dim
+  // that used to come with it is on the control that was pressed instead
+  // (`busyAttrs` in `Field.tsx`), because greying the calendar and every other
+  // row to save one note reads as the page failing.
   const [saving, startSaving] = useTransition();
 
   // Every section starts folded, and what she unfolds
@@ -145,13 +146,17 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   // send it again — two identical lines, where the user meant one — so it is
   // dropped. A ref rather than `saving`, which a second keypress in the same
   // tick would still read as false.
+  // Screen-wide and not per control: every section writes the same month
+  // record, read-modify-write, so two sections saving at once would lose one of
+  // the two changes. It answers `false` when it drops one, which is what stops
+  // the dropped control waiting for a result that is not coming.
   const inFlight = useRef(false);
 
   function handleAction(
     action: () => Promise<MonthActionResult>,
     onResult: (result: MonthActionResult) => void,
   ) {
-    if (inFlight.current) return;
+    if (inFlight.current) return false;
     inFlight.current = true;
     startSaving(async () => {
       try {
@@ -160,6 +165,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
         inFlight.current = false;
       }
     });
+    return true;
   }
 
   return (
@@ -210,12 +216,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
 
       <div
         aria-busy={saving}
-        className={[
-          "flex min-w-0 flex-col gap-2.5 transition-opacity",
-          saving ? "pointer-events-none opacity-60" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className="flex min-w-0 flex-col gap-2.5"
       >
         {shown ? (
           <MonthActions

@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { dismiss, saveReminders } from "@/app/alerts/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
+import { touchTargetClass } from "@/components/Field";
 import type { AlertCard, AlertsView } from "@/lib/alertsView";
 import { warningKinds, type WarningKind } from "@/lib/engine/alerts";
 import { he, type Said } from "@/lib/i18n/he";
@@ -132,6 +133,45 @@ function OpenCard({ card }: { card: AlertCard }) {
         {card.law ? (
           <LawLink law={card.law} className="pt-0.5 text-[14px]" />
         ) : null}
+        {/* **A card standing for several months puts each of them off on its
+            own** (item 27's grouping, the user on 2026-09-25): the gesture
+            cannot be undone from the screen, so there is no press that answers
+            four months at once. Each button is named for its month, because
+            four drawn alike are four a screen reader cannot tell apart. */}
+        {dismissal !== null && dismissal.months.length > 1 ? (
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 pt-1.5">
+            <span dir="auto" className="text-[14px] text-ink-quiet">
+              {he.alerts.markHandledEach}
+            </span>
+            {dismissal.months.map((one) => (
+              <button
+                key={one.fingerprint}
+                type="button"
+                disabled={pending}
+                aria-label={he.alerts.markHandledMonth(one.month ?? "")}
+                onClick={() => startPending(() => dismiss(card.workerId, one.fingerprint))}
+                className="flex min-h-9 items-center gap-1.5 rounded-full bg-chip px-3 py-1.5 text-[14px] text-ink-warm transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:text-ink-quiet"
+              >
+                <Bidi>{one.month}</Bidi>
+                <svg
+                  width="9"
+                  height="9"
+                  viewBox="0 0 9 9"
+                  fill="none"
+                  aria-hidden="true"
+                  className="flex-none"
+                >
+                  <path
+                    d="M1 1L8 8M8 1L1 8"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
       <div className="flex items-center gap-4">
         <Link
@@ -140,11 +180,13 @@ function OpenCard({ card }: { card: AlertCard }) {
         >
           <span dir="auto">{card.action.label}</span>
         </Link>
-        {dismissal !== null ? (
+        {dismissal !== null && dismissal.months.length === 1 && dismissal.months[0] ? (
           <button
             type="button"
             disabled={pending}
-            onClick={() => startPending(() => dismiss(card.workerId, dismissal.fingerprint))}
+            onClick={() =>
+              startPending(() => dismiss(card.workerId, dismissal.months[0]!.fingerprint))
+            }
             className="min-h-11 text-[15px] whitespace-nowrap text-ink-quiet transition-colors hover:text-ink-warm"
           >
             <span dir="auto">{dismissal.label}</span>
@@ -283,7 +325,7 @@ export function LawLink({
       href={law.url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`self-start text-ink-quiet hover:text-forest hover:underline hover:underline-offset-[3px] ${className}`}
+      className={`${touchTargetClass} self-start text-ink-quiet hover:text-forest hover:underline hover:underline-offset-[3px] ${className}`}
     >
       <span dir="auto">{he.alerts.whatTheLawSays}</span>
       <span> — </span>

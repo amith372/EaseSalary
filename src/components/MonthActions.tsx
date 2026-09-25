@@ -24,6 +24,7 @@ import { Chip } from "@/components/Chip";
 import { CoveredMonths } from "@/components/CoveredMonths";
 import {
   AmountField,
+  busyAttrs,
   Field,
   NoteField,
   inputClass,
@@ -204,12 +205,16 @@ function PanelButtons({
   cancelLabel,
   onCancel,
   disabled,
+  busy = false,
 }: {
   submitLabel: string;
   onSubmit: () => void;
   cancelLabel: string;
   onCancel: () => void;
   disabled?: boolean;
+  /** This panel's write is on its way to the store, so this button is what
+   * says so rather than the card around it (`busyAttrs` in `Field.tsx`). */
+  busy?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -220,7 +225,7 @@ function PanelButtons({
           event.preventDefault();
           onSubmit();
         }}
-        className={outlineButtonClass}
+        {...busyAttrs(busy, outlineButtonClass)}
       >
         <span dir="auto">{submitLabel}</span>
       </button>
@@ -356,7 +361,7 @@ function HospitalOvertimeControl({
     hospitalOvertime ? formatAgorot(hospitalOvertime.agorot) : "",
   );
   const [note, setNote] = useState(hospitalOvertime?.note ?? "");
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, saving } = useAction(onSubmit);
 
   const cleared = amount.trim() === "";
   const parsed = cleared ? null : parseShekels(amount);
@@ -407,7 +412,7 @@ function HospitalOvertimeControl({
           <button
             type="submit"
             disabled={!changed}
-            className={outlineButtonClass}
+            {...busyAttrs(saving, outlineButtonClass)}
           >
             <span dir="auto">{words.save}</span>
           </button>
@@ -475,7 +480,7 @@ function IncomeTaxControl({
   const [text, setText] = useState(
     incomeTaxManual ? formatAgorot(incomeTaxAgorot) : "",
   );
-  const { refusal, run } = useAction(onSubmit);
+  const { refusal, run, saving } = useAction(onSubmit);
 
   // **What produced the amount above**, said in the card rather than left to be
   // inferred from a field that may be empty: a manual figure first, because it
@@ -621,7 +626,7 @@ function IncomeTaxControl({
         <button
           type="submit"
           disabled={!changed}
-          className={`flex-none ${outlineButtonClass}`}
+          {...busyAttrs(saving, `flex-none ${outlineButtonClass}`)}
         >
           <span dir="auto">{words.save}</span>
         </button>
@@ -733,6 +738,7 @@ function UserLinesControl({
     setChosen,
     refusal,
     run,
+    busyAt,
     reset,
     openEdit,
     submit,
@@ -745,7 +751,7 @@ function UserLinesControl({
   });
 
   function remove(lineId: string) {
-    run(() => removeUserLine(workerId, month, lineId));
+    run(() => removeUserLine(workerId, month, lineId), undefined, `remove:${lineId}`);
   }
 
   const panel = (
@@ -815,6 +821,7 @@ function UserLinesControl({
       <PanelButtons
         submitLabel={open === "new" ? words.submit : words.save}
         onSubmit={submit}
+        busy={open !== null && busyAt(open)}
         cancelLabel={words.cancel}
         onCancel={reset}
       />
@@ -881,7 +888,10 @@ function UserLinesControl({
                   type="button"
                   onClick={() => remove(line.id)}
                   aria-label={words.removeLabel(line.label)}
-                  className={`hover:text-clay-deep ${rowActionClass}`}
+                  {...busyAttrs(
+                    busyAt(`remove:${line.id}`),
+                    `hover:text-clay-deep ${rowActionClass}`,
+                  )}
                 >
                   <span dir="auto">{words.remove}</span>
                 </button>
@@ -953,6 +963,14 @@ type OpenAdvancePanel =
   | { gesture: "repay"; number: number }
   | { gesture: "edit"; number: number; kind: AdvanceKind };
 
+/** The open panel's own name, so the busy state sits on its button and not on
+ * a row's action beside it. */
+function panelKey(open: OpenAdvancePanel) {
+  return open.gesture === "grant"
+    ? "grant"
+    : `${open.gesture}:${open.number}${open.gesture === "edit" ? `:${open.kind}` : ""}`;
+}
+
 function AdvancesControl({
   fold,
   workerId,
@@ -971,7 +989,7 @@ function AdvancesControl({
   const [open, setOpen] = useState<OpenAdvancePanel | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const { refusal, run, clear } = useAction(onSubmit);
+  const { refusal, run, clear, busyAt } = useAction(onSubmit);
 
   function reset() {
     setOpen(null);
@@ -1008,11 +1026,16 @@ function AdvancesControl({
                 : { kind: "repaid", number: open.number, amount, note },
             ),
       reset,
+      panelKey(open),
     );
   }
 
   function remove(advanceNumber: number, kind: AdvanceKind) {
-    run(() => removeAdvance(workerId, month, advanceNumber, kind));
+    run(
+      () => removeAdvance(workerId, month, advanceNumber, kind),
+      undefined,
+      `remove:${advanceNumber}:${kind}`,
+    );
   }
 
   const panel = (
@@ -1042,17 +1065,41 @@ function AdvancesControl({
               : words.submitRepay
         }
         onSubmit={submit}
+        busy={open !== null && busyAt(panelKey(open))}
         cancelLabel={words.cancel}
         onCancel={reset}
       />
     </Card>
   );
 
+  // How many advances are still being repaid. Nought is said as nought and not
+  // as "none recorded": an advance repaid in full is a fact about the month,
+  // and the two read alike only to whoever wrote the condition.
+  const stillOwed = ledger.filter(
+    (standing) => standing.outstandingAgorot !== 0,
+  ).length;
+
   return (
     <MonthFold
       group="advances"
       title={words.title}
       fold={fold}
+      // Folded, the section says how many advances are still being repaid —
+      // the aside's place, which until 2026-09-24 held a control and so could
+      // only be drawn open. Five advances behind a bare heading are five things
+      // nobody can see.
+      summary={
+        <span dir="auto" className="text-[13px] font-light text-ink-quiet">
+          {ledger.length === 0 ? (
+            words.empty
+          ) : (
+            <>
+              <span>{words.outstanding} </span>
+              <Bidi noTranslate>{String(stillOwed)}</Bidi>
+            </>
+          )}
+        </span>
+      }
       aside={
         open === null ? (
           <button
@@ -1207,7 +1254,10 @@ function AdvancesControl({
                               standing.number,
                               advance.kind,
                             )}
-                            className={`hover:text-clay-deep ${rowActionClass}`}
+                            {...busyAttrs(
+                              busyAt(`remove:${standing.number}:${advance.kind}`),
+                              `hover:text-clay-deep ${rowActionClass}`,
+                            )}
                           >
                             <span dir="auto">{words.remove}</span>
                           </button>
@@ -1309,7 +1359,7 @@ function ThirdPartyControl({
     from: string;
     to: string;
   } | null>(null);
-  const { refusal, run, clear } = useAction(onSubmit);
+  const { refusal, run, clear, busyAt } = useAction(onSubmit);
 
   const recorded = new Set(thirdPartyPayments.map((payment) => payment.kind));
   // The kinds still open this month, **and the one being corrected**: a panel
@@ -1388,11 +1438,16 @@ function ThirdPartyControl({
           ? addThirdPartyPayment(workerId, month, draft)
           : updateThirdPartyPayment(workerId, month, open, draft),
       reset,
+      open,
     );
   }
 
   function remove(paid: ThirdPartyKind) {
-    run(() => removeThirdPartyPayment(workerId, month, paid));
+    run(
+      () => removeThirdPartyPayment(workerId, month, paid),
+      undefined,
+      `remove:${paid}`,
+    );
   }
 
   const panel = (
@@ -1496,6 +1551,7 @@ function ThirdPartyControl({
       <PanelButtons
         submitLabel={open === "new" ? words.submit : words.save}
         onSubmit={submit}
+        busy={open !== null && busyAt(open)}
         cancelLabel={words.cancel}
         onCancel={reset}
         disabled={kind === null}
@@ -1557,7 +1613,10 @@ function ThirdPartyControl({
                   aria-label={words.removeLabel(
                     he.sheet.thirdParty[payment.kind],
                   )}
-                  className={`hover:text-clay-deep ${rowActionClass}`}
+                  {...busyAttrs(
+                    busyAt(`remove:${payment.kind}`),
+                    `hover:text-clay-deep ${rowActionClass}`,
+                  )}
                 >
                   <span dir="auto">{words.remove}</span>
                 </button>
@@ -1652,7 +1711,7 @@ function OverridesControl({
   const [open, setOpen] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const { refusal, run, clear } = useAction(onSubmit);
+  const { refusal, run, clear, busyAt } = useAction(onSubmit);
 
   const overridable = lines.filter((line) => line.overridable);
 
@@ -1675,11 +1734,11 @@ function OverridesControl({
   }
 
   function save(key: string) {
-    run(() => setOverride(workerId, month, { key, amount, note }), reset);
+    run(() => setOverride(workerId, month, { key, amount, note }), reset, key);
   }
 
   function restore(key: string) {
-    run(() => clearOverride(workerId, month, key));
+    run(() => clearOverride(workerId, month, key), undefined, `clear:${key}`);
   }
 
   const panel = (key: string) => (
@@ -1707,6 +1766,7 @@ function OverridesControl({
       <PanelButtons
         submitLabel={words.save}
         onSubmit={() => save(key)}
+        busy={busyAt(key)}
         cancelLabel={words.cancel}
         onCancel={reset}
       />
@@ -1767,7 +1827,10 @@ function OverridesControl({
                     type="button"
                     onClick={() => restore(line.key)}
                     aria-label={words.clearLabel(line.label)}
-                    className={`hover:text-clay-deep ${rowActionClass}`}
+                    {...busyAttrs(
+                      busyAt(`clear:${line.key}`),
+                      `hover:text-clay-deep ${rowActionClass}`,
+                    )}
                   >
                     <span dir="auto">{words.clear}</span>
                   </button>
@@ -1821,7 +1884,10 @@ function OverridesControl({
                     aria-label={words.clearLabel(
                       override.label ?? words.unnamed,
                     )}
-                    className={`ms-auto hover:text-clay-deep ${rowActionClass}`}
+                    {...busyAttrs(
+                      busyAt(`clear:${key}`),
+                      `ms-auto hover:text-clay-deep ${rowActionClass}`,
+                    )}
                   >
                     <span dir="auto">{words.clear}</span>
                   </button>

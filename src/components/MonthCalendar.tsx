@@ -70,6 +70,9 @@ interface MonthCalendarProps {
   /** The worker's first month, where the backward arrow stops (specs.md
    * item 6). */
   earliest?: YearMonth;
+  /** The month name's heading level. The default leads the screen; the caller
+   * steps it down where something above the calendar leads instead. */
+  heading?: "h1" | "h2";
   onMonthChange: (month: YearMonth) => void;
   onSelectRange: (intent: MarkIntent) => void;
   /** Clearing takes a range the way marking does, and the caller decides what a
@@ -247,6 +250,16 @@ function legendFor(
   ];
 }
 
+/**
+ * The tallest a day is drawn, and the gap between rows above `sm`.
+ *
+ * 100px is the cell at 1440×900, where the grid has no slack to distribute and
+ * so draws the proportion the artboard has. Above that height the cap holds it
+ * there and the slack falls to the card instead of into the day.
+ */
+const MAX_CELL_HEIGHT = 100;
+const GRID_GAP = 7;
+
 export function MonthCalendar({
   month,
   spans,
@@ -261,9 +274,11 @@ export function MonthCalendar({
   onSelectDay,
   editRequest,
   className,
+  heading: Heading = "h1",
 }: MonthCalendarProps) {
   const marks = he.calendar.marks(restDay);
   const cells = useMemo(() => monthGrid(month), [month]);
+  const weeks = cells.length / WEEK_LENGTH;
   const firstDay = isoOf(month, 1);
 
   /**
@@ -498,11 +513,14 @@ export function MonthCalendar({
           earliest={earliest}
           onMonthChange={onMonthChange}
           // The month is the page's subject and the skip link lands here, so
-          // its name is the page's `h1`.
+          // its name leads the page's outline. It steps down to an `h2` where
+          // something above the calendar leads the screen instead — the
+          // blocker strip, or a refused month's card — because a heading a
+          // reader meets first is that screen's `h1` whatever it says.
           label={
-            <h1 className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
+            <Heading className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
               <Bidi>{monthLabel(month)}</Bidi>
-            </h1>
+            </Heading>
           }
         />
       </CalendarBand>
@@ -521,9 +539,19 @@ export function MonthCalendar({
 
       {/* The keyboard handler belongs to the grid rather than to each day: a
           roving tabindex keeps the whole month to one tab stop, and the arrow
-          keys move between days inside it. */}
+          keys move between days inside it.
+
+          **The height is capped and the slack left to the card.** The rows are
+          `1fr` inside a screen-height column, so above about one window height
+          the day stopped being the artboard's near-square and became a tall
+          rectangle with its number floating in the middle of it — 91×177 at
+          1440×1440 against 91×99 at 1440×900. The cap is on the grid and not
+          on the row, because a row whose max is a length sizes to its content
+          and not to the space: `minmax(58px, 100px)` would draw a 58px day at
+          every height. */}
       <div
         className="grid min-h-64 flex-1 auto-rows-[minmax(48px,1fr)] grid-cols-7 gap-1 sm:auto-rows-[minmax(58px,1fr)] sm:gap-1.75"
+        style={{ maxHeight: weeks * MAX_CELL_HEIGHT + (weeks - 1) * GRID_GAP }}
         ref={gridRef}
         onKeyDown={handleKeyDown}
       >

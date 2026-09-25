@@ -584,3 +584,117 @@ test.describe("half a day of vacation (specs.md items 5, 7)", () => {
     ).toBeDisabled();
   });
 });
+
+/**
+ * The opening screen's outline starts at its own `h1`.
+ *
+ * **The screen opens straight onto the calendar with no heading of its own**
+ * (`DESIGN.md`), so the level goes to whatever leads rather than a heading
+ * being added: the blocker strip where it is drawn, then a refused month's
+ * card, then the month. Until 2026-09-24 the strip was an `h2` and the month
+ * an `h1`, so the outline opened at `צריך לטפל` and reached the `h1` second.
+ *
+ * What it catches: a heading added above the calendar without taking the level
+ * with it, and two `h1`s on one screen.
+ */
+test.describe("the opening screen's outline", () => {
+  for (const [seed, leads] of [
+    ["demo", he.status.needsAttention],
+    ["refused", he.month.refused.title],
+  ] as const) {
+    test(`starts at the h1 on a ${seed} household`, async ({ page }) => {
+      await useHousehold(page, seed, "outline");
+      await page.goto("/");
+      await switchToTestWorker(page);
+
+      const headings = page.locator("h1, h2, h3");
+      await expect(headings.first()).toHaveRole("heading", { timeout: 10_000 });
+      // The first heading a reader meets is the one that names the screen.
+      await expect(page.locator("h1")).toHaveCount(1);
+      const first = headings.first();
+      await expect(first).toContainText(leads);
+      expect(await first.evaluate((el) => el.tagName)).toBe("H1");
+    });
+  }
+});
+
+/**
+ * A day keeps its shape however tall the window is.
+ *
+ * The grid's rows are `1fr` inside a screen-height column, so until 2026-09-24
+ * the day took whatever the window had left: 91×99 at 1440×900 and 91×177 at
+ * 1440×1440, the number floating in the middle of an empty rectangle. The cap
+ * is on the grid rather than on the row, because a row whose max is a length
+ * sizes to its content and would draw a 58px day at every height.
+ *
+ * What it catches: the cap removed, and a cap put on the row instead — the
+ * second of which looks right in the source and is wrong on screen.
+ */
+test("a day keeps its proportion however tall the window is", async ({
+  page,
+}) => {
+  await useHousehold(page, "demo", "cell-height");
+  await page.goto("/");
+  await switchToTestWorker(page);
+
+  const day = page.locator("[data-date]").first();
+  await expect(day).toBeVisible();
+
+  async function cell(width: number, height: number) {
+    await page.setViewportSize({ width, height });
+    // The grid re-lays out on a size change and the assertion reads a box.
+    await page.waitForTimeout(250);
+    const box = await day.boundingBox();
+    expect(box).not.toBeNull();
+    return { w: Math.round(box!.width), h: Math.round(box!.height) };
+  }
+
+  const reference = await cell(1440, 900);
+  // Near-square, as the artboard draws it, and not a tall rectangle.
+  expect(reference.h).toBeLessThanOrEqual(reference.w + 12);
+  for (const height of [800, 1080, 1280, 1440]) {
+    const measured = await cell(1440, height);
+    expect(measured.w).toBe(reference.w);
+    // Within a step of the height it has where the grid has no slack.
+    expect(Math.abs(measured.h - reference.h)).toBeLessThanOrEqual(2);
+  }
+});
+
+/**
+ * Back puts the screen where it was.
+ *
+ * `<main>` is the scroller from `md` up, which is what keeps the bar on screen
+ * and is why the browser's own restoration — which acts on the document — had
+ * nothing to restore: until 2026-09-24, following a blocker from the foot of
+ * this screen and coming back landed at the top of it.
+ *
+ * What it catches: the restoration removed, and a restoration that fires on a
+ * fresh navigation too, which would undo an address naming an anchor.
+ */
+test("Back returns to the place the screen was left at", async ({ page }) => {
+  await useHousehold(page, "demo", "scroll-back");
+  await page.goto("/");
+  await switchToTestWorker(page);
+  await page.setViewportSize({ width: 1280, height: 720 });
+
+  const main = page.locator("#main");
+  await main.evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+  });
+  const left = await main.evaluate((el) => el.scrollTop);
+  // The screen has to be tall enough for the question to mean anything.
+  expect(left).toBeGreaterThan(100);
+
+  // **A link at the foot and not the blocker strip at the top**: Playwright
+  // scrolls a target into view before it presses it, so pressing the strip
+  // would scroll this screen back to the top and the question would answer
+  // itself.
+  await page.locator('a[href="/month/payslip"]').first().click();
+  await expect(page).toHaveURL(/month\/payslip/);
+
+  await page.goBack();
+  await expect(main).toBeVisible();
+  await expect
+    .poll(async () => main.evaluate((el) => el.scrollTop), { timeout: 5000 })
+    .toBeGreaterThan(left - 40);
+});

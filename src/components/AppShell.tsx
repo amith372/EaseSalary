@@ -57,6 +57,68 @@ import type { Worker } from "@/lib/types";
  * agreeing with itself. */
 export const ADD_WORKER = "/workers/new";
 
+/**
+ * Puts a screen back where it was when the user presses Back.
+ *
+ * **The document never scrolls**, because `<main>` is the scroller from `md`
+ * up — that is what buys a bar that never leaves, and it is worth more than
+ * what it costs. What it costs is the browser's own restoration, which acts on
+ * the document: press a blocker card from the foot of the opening screen and
+ * come back, and the screen is at the top.
+ *
+ * **Only a Back or a Forward is restored.** A fresh navigation is left exactly
+ * as it is, since the framework already puts it at the top and an address
+ * naming an anchor (`/settings#rates`) scrolls to that anchor — an offset
+ * written over either of those would undo it.
+ */
+function useScrollRestoration(pathname: string): void {
+  const offsets = useRef(new Map<string, number>());
+  const popped = useRef(false);
+
+  useEffect(() => {
+    const onPop = () => {
+      popped.current = true;
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // **Read when she leaves, not while she scrolls.** The framework scrolls this
+  // element to the top as a navigation starts, and a scroll listener records
+  // that nought over the place she was at — so the offset is taken in the click
+  // that begins the navigation, before anything has moved, and again on a
+  // `popstate` so that Forward has somewhere to return to as well.
+  useEffect(() => {
+    const remember = () => {
+      const main = document.getElementById(MAIN_ID);
+      if (main !== null) offsets.current.set(pathname, main.scrollTop);
+    };
+    document.addEventListener("click", remember, true);
+    window.addEventListener("popstate", remember);
+    return () => {
+      document.removeEventListener("click", remember, true);
+      window.removeEventListener("popstate", remember);
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!popped.current) return;
+    popped.current = false;
+    const saved = offsets.current.get(pathname);
+    if (saved === undefined || saved === 0) return;
+    const main = document.getElementById(MAIN_ID);
+    if (main === null) return;
+    main.scrollTop = saved;
+    // The screen restored to may still be arriving, and a shorter page clamps
+    // the offset to its own height — so it is set once more on the next frame,
+    // by when it has the height it was left at.
+    const frame = requestAnimationFrame(() => {
+      main.scrollTop = saved;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
+}
+
 /** What the skip link points at and `<main>` answers to. Named once: an
  * anchor that stops agreeing with its target skips to nowhere, silently. */
 const MAIN_ID = "main";
@@ -156,6 +218,8 @@ export function AppShell({
   const navRef = useRef<HTMLElement>(null);
   const activeTabRef = useRef<HTMLAnchorElement>(null);
   const [edges, setEdges] = useState({ start: false, end: false });
+
+  useScrollRestoration(pathname);
 
   /** Whether anything is hidden behind either edge of the strip. */
   const readEdges = useCallback(() => {

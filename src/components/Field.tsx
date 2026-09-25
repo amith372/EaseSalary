@@ -11,14 +11,59 @@ import { he } from "@/lib/i18n/he";
 export const inputClass =
   "w-full rounded-card-sm border border-line-field bg-surface px-3 py-2 text-[15px] text-ink transition-colors placeholder:text-ink-quiet hover:border-ink-quiet focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-forest";
 
-/** The filled button a form is sent with. */
+/** The filled button a form is sent with.
+ *
+ * **Disabled it goes to the chip grey, not to a lighter forest.** `opacity-50`
+ * turned it into a sage indistinguishable from a deliberate quiet action, so a
+ * screen with three saves dark and three sage read as two button styles rather
+ * than as three dead controls — the same three things `outlineButtonClass`
+ * below already says. */
 export const buttonClass =
-  "rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:opacity-50";
+  "rounded-card-sm bg-forest px-3.5 py-2 text-[14px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:cursor-not-allowed disabled:bg-chip disabled:text-ink-quiet disabled:hover:bg-chip";
 
 /** The outlined button, in a form and outside one alike. Disabled, it goes
  * quiet and stops answering the hover. */
 export const outlineButtonClass =
   "rounded-full border border-line-strong bg-surface px-3.5 py-2 text-[14px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:cursor-not-allowed disabled:border-line disabled:text-ink-quiet disabled:hover:border-line";
+
+/**
+ * What a bare text action adds so a finger can hit it.
+ *
+ * A link or a button drawn as a line of text is about 20px tall, under WCAG
+ * 2.2 AA's 24×24 (2.5.8). The padding takes it past that and the negative
+ * margin gives the space back, so the row is drawn exactly as the artboard has
+ * it — the idiom `DESIGN.md` records for the forms, and the one the rest of the
+ * application's bare actions take too.
+ *
+ * **Not for a link inside a sentence**, which WCAG's inline exception covers
+ * and whose enlarged area would overlap the lines above and below it.
+ */
+export const touchTargetClass = "-my-3 py-3";
+
+/**
+ * What a control wears while its own action is on its way to the store and
+ * back.
+ *
+ * **The busy state sits on the control that was pressed, not on the region
+ * around it.** A screen-wide dim while one note is written greys the calendar
+ * and every other row, which on a slow answer reads as the page failing rather
+ * than as one field being saved; the region keeps `aria-busy`, which is what
+ * says the same thing without repainting it.
+ *
+ * **It is not `disabled`.** Disabled is the chip grey (`buttonClass`) and means
+ * the control cannot be pressed; this one can be, and is working. The repeat
+ * press it therefore lets through is dropped by `useAction`, which is where one
+ * change at a time is enforced.
+ */
+export function busyAttrs(busy: boolean, className: string) {
+  return {
+    "aria-busy": busy,
+    // The suite's handle on "this is the control that was pressed", by what it
+    // is rather than by the Hebrew on it.
+    ...(busy ? { "data-busy": "" } : {}),
+    className: busy ? `${className} cursor-wait opacity-60` : className,
+  };
+}
 
 /** A refusal, as the sentence that says why (specs.md item 25). */
 export function RefusalLine({ children }: { children: ReactNode }) {

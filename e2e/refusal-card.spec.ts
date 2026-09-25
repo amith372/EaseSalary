@@ -74,6 +74,19 @@ test.describe("a refused month says so", () => {
       he.calendar.marks(SATURDAY).holiday,
     );
 
+    // The balances go with the money column and for the same reason: a balance
+    // is derived from the replay the engine refused (item 13), so the rail had
+    // nothing to draw and drew `[מספר] ימים` four times — a bracketed
+    // placeholder on screen, which is the thing `[השם שלך]` was cut for. The
+    // export link beside it stays, as the payslip link in the money column
+    // does. On this screen the placeholder has no other site, so its absence
+    // is asserted as well as the card's.
+    await expect(page.locator('[data-role="balances"]')).toHaveCount(0);
+    await expect(page.getByText(he.placeholder.count)).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: he.home.paid.exportToExcel }),
+    ).toBeVisible();
+
     await page.screenshot({
       path: "test-results/refusal-card-home.png",
       fullPage: true,
@@ -117,6 +130,13 @@ test.describe("a refused month says so", () => {
     // after it, which the refusal had been stopping.
     await expect(page.locator('[data-role="refusal"]')).toHaveCount(0);
     await expect(page.locator('[data-row="net"]')).toBeVisible();
+    // And the rail comes back with the figures, not with the placeholder: the
+    // correction is what gives the replay a month to derive a balance from.
+    await expect(page.locator('[data-role="balances"]')).toBeVisible();
+    await expect(
+      page.locator('[data-row$="-vacation-balance"]').first(),
+    ).toBeVisible();
+    await expect(page.getByText(he.placeholder.count)).toHaveCount(0);
     await page.goto("/month/payslip?month=2026-09");
     await expect(page.locator('[data-role="refusal"]')).toHaveCount(0);
 

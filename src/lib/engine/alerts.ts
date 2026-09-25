@@ -127,3 +127,42 @@ export function handledList(
     .filter(({ on }) => compareIsoDate(on, since) >= 0 && compareIsoDate(on, today) <= 0)
     .sort((a, b) => compareIsoDate(b.on, a.on));
 }
+
+/**
+ * The kinds one replay raises for several months at once. Recuperation's two
+ * entries carry a month as well and neither can repeat: one is raised for this
+ * month and the other for the next.
+ */
+const GATHERED: readonly ActionEntry["key"][] = ["monthUnconfirmed", "monthNotExported"];
+
+/** One card and every entry drawn as it (item 27). */
+export interface EntryGroup {
+  /** The entry the card is phrased from, which is the first of them. */
+  lead: ActionEntry;
+  /** The entries behind the card, the lead included, in item 27's order. */
+  entries: ActionEntry[];
+}
+
+/**
+ * Entries of one kind that differ only in the month they are about, drawn as
+ * one card naming those months (item 27). Counting the groups is therefore
+ * counting what is drawn, which is what the bell and the opening screen give.
+ *
+ * It runs after `shownEntries`, so a month put off on its own leaves the group
+ * rather than taking the rest of them with it.
+ */
+export function groupedEntries(entries: ActionEntry[]): EntryGroup[] {
+  const groups: EntryGroup[] = [];
+  const gathered = new Map<string, EntryGroup>();
+  for (const entry of entries) {
+    const into = GATHERED.includes(entry.key) ? gathered.get(entry.key) : undefined;
+    if (into !== undefined) {
+      into.entries.push(entry);
+      continue;
+    }
+    const group: EntryGroup = { lead: entry, entries: [entry] };
+    if (GATHERED.includes(entry.key)) gathered.set(entry.key, group);
+    groups.push(group);
+  }
+  return groups;
+}

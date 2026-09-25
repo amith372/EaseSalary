@@ -319,6 +319,10 @@ export function WhoStep({
             aria-invalid={refusalFor("country") !== null}
             data-field="country"
           >
+            {/* The select opens on nothing, so the country is chosen. It is
+                what her holiday list comes from, and the first of six is an
+                answer she never gave. */}
+            <option value="">{words.countryPlaceholder}</option>
             {countries.map((country) => (
               <option key={country.code} value={country.code}>
                 {country.nameHe}

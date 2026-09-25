@@ -20,20 +20,31 @@ import type { WorkerMonths } from "@/components/HomeScreen";
 import { railLink, workerDot } from "@/components/HomeScreen";
 import { sameMonth } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
+import { touchTargetClass } from "@/components/Field";
 import type { FirstOf } from "@/lib/alertsView";
 import { he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
 import { returningTo } from "@/lib/pickerReturn";
 import type { YearMonth } from "@/lib/types";
 
-/** What stops the month being calculated correctly, first (specs.md item 27). */
-export function Blockers({ blockages }: { blockages: FirstOf }) {
+/** What stops the month being calculated correctly, first (specs.md item 27).
+ *
+ * `heading` is the level, not a style: the strip leads the home screen, so its
+ * name is that screen's `h1` and the month below it an `h2`. The home screen
+ * decides, because only it knows whether the strip is drawn at all. */
+export function Blockers({
+  blockages,
+  heading: Heading = "h2",
+}: {
+  blockages: FirstOf;
+  heading?: "h1" | "h2";
+}) {
   if (blockages.shown.length === 0) return null;
   return (
       <section aria-labelledby="home-blockers" className="flex flex-none flex-col gap-1.5">
-        <h2 id="home-blockers" dir="auto" className="text-[15px] font-semibold text-ink-warm">
+        <Heading id="home-blockers" dir="auto" className="text-[15px] font-semibold text-ink-warm">
           {he.status.needsAttention}
-        </h2>
+        </Heading>
         <ul className="grid items-start gap-2.5 sm:grid-cols-2">
           {blockages.shown.map((card: FirstOf["shown"][number]) => (
             <li key={card.id} className="min-w-0">
@@ -52,7 +63,7 @@ export function Blockers({ blockages }: { blockages: FirstOf }) {
                   </span>
                   <Link
                     href={returningTo(card.action.href, "/")}
-                    className="flex-none text-[14px] font-medium whitespace-nowrap hover:underline hover:underline-offset-4"
+                    className={`${touchTargetClass} flex-none text-[14px] font-medium whitespace-nowrap hover:underline hover:underline-offset-4`}
                   >
                     <span dir="auto">{card.action.label}</span>
                   </Link>
@@ -75,7 +86,7 @@ export function Blockers({ blockages }: { blockages: FirstOf }) {
             </span>
             <Link
               href="/alerts"
-              className="font-medium text-forest hover:underline hover:underline-offset-4"
+              className={`${touchTargetClass} font-medium text-forest hover:underline hover:underline-offset-4`}
             >
               <span dir="auto">{he.header.bell.showAll}</span>
             </Link>
@@ -98,6 +109,7 @@ export function BalancesRail({
   household,
   month,
   fallbackRestDay,
+  refused,
   openWhy,
   toggleWhy,
 }: {
@@ -106,113 +118,122 @@ export function BalancesRail({
   month: YearMonth;
   /** The rest day to name a worker's marks by where no month of hers says. */
   fallbackRestDay: RestDay;
+  /** Whether a refused month's card is standing on the screen. A balance
+   * cannot be derived from a month the engine declined to value (item 13), so
+   * the card is withheld whole rather than drawn with a placeholder in every
+   * figure — the same answer the money column already gives. */
+  refused: boolean;
   openWhy: string | null;
   toggleWhy: (key: string) => void;
 }) {
   return (
-    <aside className="order-3 grid min-w-0 items-start gap-3 sm:grid-cols-2 lg:col-span-2 lg:row-start-2 xl:col-span-1 xl:col-start-1 xl:row-start-1 xl:flex xl:flex-col xl:items-stretch">
-      <Card className="flex flex-col px-1.5 pt-1.5 pb-3">
-        <div className="flex items-center gap-2.75 px-2.75 pt-2.5 pb-2">
-          <span className="flex size-8.5 flex-none items-center justify-center rounded-tab bg-tile-sage text-icon-sage">
-            <RailIcon name="calendar" />
-          </span>
-          <span className="flex min-w-0 flex-col gap-px">
-            <h2 dir="auto" className="text-[16px] font-semibold">
-              {he.home.rail.balances}
-            </h2>
-            <span dir="auto" className="text-[13px] font-light text-ink-quiet">
-              {he.home.rail.balancesNote}
+    <aside
+      className={`order-3 grid min-w-0 items-start gap-3 ${refused ? "" : "sm:grid-cols-2"} lg:col-span-2 lg:row-start-2 xl:col-span-1 xl:col-start-1 xl:row-start-1 xl:flex xl:flex-col xl:items-stretch`}
+    >
+      {refused ? null : (
+        <Card data-role="balances" className="flex flex-col px-1.5 pt-1.5 pb-3">
+          <div className="flex items-center gap-2.75 px-2.75 pt-2.5 pb-2">
+            <span className="flex size-8.5 flex-none items-center justify-center rounded-tab bg-tile-sage text-icon-sage">
+              <RailIcon name="calendar" />
             </span>
-          </span>
-        </div>
-        {workers.map((each) => {
-          // Her own month, and the balances it closed with. A worker with no
-          // record of this month has no balance to state, and the rows say
-          // so with the same placeholder the calendar's own figures use —
-          // the same rule the calendar follows when it draws her nothing.
-          const hers = household.find((candidate) => candidate.worker.id === each.id);
-          const herMonth = hers?.months.find((inSeries) =>
-            sameMonth(inSeries.facts.month, month),
-          );
-          const herMarks = he.calendar.marks(
-            herMonth?.facts.terms.restDay ?? hers?.restDay ?? fallbackRestDay,
-          );
-          return (
-            <div key={each.id} className="mt-0.5 flex flex-col gap-1.5 border-t border-line px-2.75 pt-2.25">
-              <span className="flex min-w-0 items-center gap-2">
-                <span aria-hidden="true" className={`size-2 flex-none rounded-full ${workerDot}`} />
-                <span dir="auto" className="truncate text-[14px] font-semibold text-ink-warm">
-                  {each.name}
-                </span>
+            <span className="flex min-w-0 flex-col gap-px">
+              <h2 dir="auto" className="text-[16px] font-semibold">
+                {he.home.rail.balances}
+              </h2>
+              <span dir="auto" className="text-[13px] font-light text-ink-quiet">
+                {he.home.rail.balancesNote}
               </span>
-              {/* A worker with no record of this month has no balance to
-                  state, so the two rows are drawn with the placeholder
-                  rather than left out — a missing row reads as a worker who
-                  has no vacation at all. There is no "?" beside them for
-                  the same reason: nothing was calculated to explain. */}
-              {herMonth === undefined
-                ? (["vacation", "sick"] as const).map((kind) => (
-                    <div key={kind} className="flex items-center justify-between gap-2.5">
-                      <span dir="auto" className="min-w-0 text-[15px] font-light text-ink-soft">
-                        {herMarks[kind]}
-                      </span>
-                      <span className="flex-none text-[15px] font-semibold whitespace-nowrap">
-                        <Bidi noTranslate>{he.placeholder.count}</Bidi>
-                        <span> </span>
-                        <span dir="auto" className="font-light text-ink-quiet">
-                          {he.units.days}
+            </span>
+          </div>
+          {workers.map((each) => {
+            // Her own month, and the balances it closed with. A worker with no
+            // record of this month has no balance to state, and the rows say
+            // so with the same placeholder the calendar's own figures use —
+            // the same rule the calendar follows when it draws her nothing.
+            const hers = household.find((candidate) => candidate.worker.id === each.id);
+            const herMonth = hers?.months.find((inSeries) =>
+              sameMonth(inSeries.facts.month, month),
+            );
+            const herMarks = he.calendar.marks(
+              herMonth?.facts.terms.restDay ?? hers?.restDay ?? fallbackRestDay,
+            );
+            return (
+              <div key={each.id} className="mt-0.5 flex flex-col gap-1.5 border-t border-line px-2.75 pt-2.25">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span aria-hidden="true" className={`size-2 flex-none rounded-full ${workerDot}`} />
+                  <span dir="auto" className="truncate text-[14px] font-semibold text-ink-warm">
+                    {each.name}
+                  </span>
+                </span>
+                {/* A worker with no record of this month has no balance to
+                    state, so the two rows are drawn with the placeholder
+                    rather than left out — a missing row reads as a worker who
+                    has no vacation at all. There is no "?" beside them for
+                    the same reason: nothing was calculated to explain. */}
+                {herMonth === undefined
+                  ? (["vacation", "sick"] as const).map((kind) => (
+                      <div key={kind} className="flex items-center justify-between gap-2.5">
+                        <span dir="auto" className="min-w-0 text-[15px] font-light text-ink-soft">
+                          {herMarks[kind]}
                         </span>
-                      </span>
-                    </div>
-                  ))
-                : null}
-              {(herMonth?.result.balances ?? []).map((balance) => {
-                const key = `${each.id}-${balance.kind}-balance`;
-                return (
-                  <div key={balance.kind} data-row={key} className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between gap-2.5">
-                      <span className="flex min-w-0 flex-col gap-px">
-                        <span className="flex min-w-0 items-center gap-1.75">
-                          <span dir="auto" className="text-[15px] font-light text-ink-soft">
-                            {herMarks[balance.kind]}
+                        <span className="flex-none text-[15px] font-semibold whitespace-nowrap">
+                          <Bidi noTranslate>{he.placeholder.count}</Bidi>
+                          <span> </span>
+                          <span dir="auto" className="font-light text-ink-quiet">
+                            {he.units.days}
                           </span>
-                          <WhyButton
-                            controls={`why-${key}`}
-                            open={openWhy === key}
-                            onToggle={() => toggleWhy(key)}
-                            label={he.why.balanceLabel}
-                            subject={herMarks[balance.kind]}
-                          />
                         </span>
-                        {/* Criterion 2 asks for the days used beside the
-                            balance: a balance with no days behind it cannot
-                            be checked, and this month's are what the user
-                            just changed by marking a day. v4 draws only the
-                            balance — a departure recorded in `DESIGN.md`. */}
-                        <span className="text-[13px] font-light text-ink-quiet">
-                          <span dir="auto">{he.sheet.reporting.daysUsed}</span>
-                          <span>: </span>
-                          <Bidi noTranslate>{formatDays(balance.used ?? 0)}</Bidi>
+                      </div>
+                    ))
+                  : null}
+                {(herMonth?.result.balances ?? []).map((balance) => {
+                  const key = `${each.id}-${balance.kind}-balance`;
+                  return (
+                    <div key={balance.kind} data-row={key} className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-2.5">
+                        <span className="flex min-w-0 flex-col gap-px">
+                          <span className="flex min-w-0 items-center gap-1.75">
+                            <span dir="auto" className="text-[15px] font-light text-ink-soft">
+                              {herMarks[balance.kind]}
+                            </span>
+                            <WhyButton
+                              controls={`why-${key}`}
+                              open={openWhy === key}
+                              onToggle={() => toggleWhy(key)}
+                              label={he.why.balanceLabel}
+                              subject={herMarks[balance.kind]}
+                            />
+                          </span>
+                          {/* Criterion 2 asks for the days used beside the
+                              balance: a balance with no days behind it cannot
+                              be checked, and this month's are what the user
+                              just changed by marking a day. v4 draws only the
+                              balance — a departure recorded in `DESIGN.md`. */}
+                          <span className="text-[13px] font-light text-ink-quiet">
+                            <span dir="auto">{he.sheet.reporting.daysUsed}</span>
+                            <span>: </span>
+                            <Bidi noTranslate>{formatDays(balance.used ?? 0)}</Bidi>
+                          </span>
                         </span>
-                      </span>
-                      <span className="flex-none text-[15px] font-semibold whitespace-nowrap">
-                        <Bidi noTranslate>
-                          {balance.closing === null ? he.placeholder.count : formatDays(balance.closing)}
-                        </Bidi>
-                        <span> </span>
-                        <span dir="auto" className="font-light text-ink-quiet">
-                          {he.units.days}
+                        <span className="flex-none text-[15px] font-semibold whitespace-nowrap">
+                          <Bidi noTranslate>
+                            {balance.closing === null ? he.placeholder.count : formatDays(balance.closing)}
+                          </Bidi>
+                          <span> </span>
+                          <span dir="auto" className="font-light text-ink-quiet">
+                            {he.units.days}
+                          </span>
                         </span>
-                      </span>
+                      </div>
+                      <WhyPanel id={`why-${key}`} open={openWhy === key} explanation={balance.explanation} />
                     </div>
-                    <WhyPanel id={`why-${key}`} open={openWhy === key} explanation={balance.explanation} />
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </Card>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </Card>
+      )}
 
       {/* Exporting is a screen rather than a bare download: the minimum wage
           is confirmed before every export (item 4), and that is where. One
