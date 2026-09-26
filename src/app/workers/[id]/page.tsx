@@ -45,6 +45,12 @@ export default async function WorkerPage({
   const { id } = await params;
   const replayed = await workerInSeries(id);
   if (replayed === null) notFound();
+  // Her months and her closing balances are the whole of this screen, and both
+  // come off the replay (item 13), so a refusal leaves it nothing true to say.
+  // It is raised again rather than drawn, for the reason `/workers` gives: the
+  // screen has no place for the card yet, and that is a debt in
+  // `build_plan.md`.
+  if (replayed.refusal !== null) throw replayed.refusal;
   const { profile, months: series } = replayed;
 
   const repository = await getRepository();

@@ -255,46 +255,56 @@ async function alertsView(
   ]);
   const named = replayed.length > 1;
 
+  // **A worker whose replay refused is left out, and only her.** Almost every
+  // entry below is read off her months — what is still unpaid, unconfirmed or
+  // unexported — so a refused worker handed over as a worker with no months
+  // would report every quarter of her employment as unpaid and every month as
+  // never filed, which is a list of things to do that are already done. She has
+  // no list until the mark is corrected, and her card on `/` is what says so;
+  // the other worker's list is untouched, which is the whole of why the refusal
+  // is caught per worker (`householdSeries.ts`).
   const perWorker = await Promise.all(
-    replayed.map(async ({ profile, months: series }) => {
-      const spans = await repository.listSpans(profile.id);
-      const workerName = named ? profile.firstName : null;
-      const entries = shownEntries(actionList({ profile, series, spans, rates, today }), {
-        workerId: profile.id,
-        switchedOff,
-        deferrals,
-        today,
-      });
-      const open: AlertCard[] = groupedEntries(entries).map(({ lead, entries: behind }) => {
-        // The months the card stands for, in item 27's order; one, wherever
-        // nothing was gathered.
-        const months = behind.flatMap((one) => ("month" in one ? [one.month] : []));
-        const { said, href, law } = phrase(lead, months, profile.id);
-        const how = dismissalOf(lead);
-        return {
-          id: `${profile.id}:${fingerprintOf(lead)}`,
+    replayed
+      .filter((worker) => worker.refusal === null)
+      .map(async ({ profile, months: series }) => {
+        const spans = await repository.listSpans(profile.id);
+        const workerName = named ? profile.firstName : null;
+        const entries = shownEntries(actionList({ profile, series, spans, rates, today }), {
           workerId: profile.id,
-          workerName,
-          blockage: lead.list === "blockage",
-          tag: tagOf(lead, today),
-          title: said.title,
-          note: said.note,
-          action: { label: said.action, href },
-          law: legalLink(law),
-          dismiss: dismissal(how, lead, behind),
-        };
-      });
-      const done = handledList(profile, series, today).map((entry, index) => ({
-        on: entry.on,
-        row: {
-          id: `${profile.id}:${index}`,
-          workerName,
-          title: handledTitle(entry),
-          when: dayLabel(entry.on),
-        },
-      }));
-      return { open, done };
-    }),
+          switchedOff,
+          deferrals,
+          today,
+        });
+        const open: AlertCard[] = groupedEntries(entries).map(({ lead, entries: behind }) => {
+          // The months the card stands for, in item 27's order; one, wherever
+          // nothing was gathered.
+          const months = behind.flatMap((one) => ("month" in one ? [one.month] : []));
+          const { said, href, law } = phrase(lead, months, profile.id);
+          const how = dismissalOf(lead);
+          return {
+            id: `${profile.id}:${fingerprintOf(lead)}`,
+            workerId: profile.id,
+            workerName,
+            blockage: lead.list === "blockage",
+            tag: tagOf(lead, today),
+            title: said.title,
+            note: said.note,
+            action: { label: said.action, href },
+            law: legalLink(law),
+            dismiss: dismissal(how, lead, behind),
+          };
+        });
+        const done = handledList(profile, series, today).map((entry, index) => ({
+          on: entry.on,
+          row: {
+            id: `${profile.id}:${index}`,
+            workerName,
+            title: handledTitle(entry),
+            when: dayLabel(entry.on),
+          },
+        }));
+        return { open, done };
+      }),
   );
 
   return {

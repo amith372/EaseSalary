@@ -8,6 +8,7 @@ import { Card } from "@/components/Card";
 import { CoveredMonths } from "@/components/CoveredMonths";
 import { SheetBadge } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
+import { RefusalCard } from "@/components/RefusalCard";
 import { SummaryRow } from "@/components/SummaryRow";
 import { ValueChip } from "@/components/ValueChip";
 import { useWorkerScope } from "@/components/WorkerScope";
@@ -17,6 +18,7 @@ import { monthLevels } from "@/lib/engine/month";
 import type { ClosingLine } from "@/lib/types";
 import { bottomFigure, he } from "@/lib/i18n/he";
 import { formatAgorot, formatDays } from "@/lib/money";
+import type { RefusedMonth } from "@/lib/refusalView";
 import type {
   IsoDate,
   MonthLine,
@@ -79,6 +81,10 @@ export interface PayslipMonth {
 export interface WorkerPayslip {
   workerId: string;
   workerName: string;
+  /** The month her replay refused, where it refused one (`specs.md` item 25).
+   * A refused replay values no month of hers, so the card stands in the sheet's
+   * place — for her, and not for the worker beside her. */
+  refused: RefusedMonth | null;
   months: PayslipMonth[];
 }
 
@@ -116,6 +122,10 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
   const mine =
     household.find((entry) => entry.workerId === worker?.id) ?? household[0];
   if (mine === undefined) return null;
+  // The sheet is her months laid out row by row and a refused replay values
+  // none of them, so the card is this screen for her. Every hook above it runs
+  // either way, which is why the check sits here and not at the top.
+  if (mine.refused !== null) return <RefusalCard refused={mine.refused} />;
 
   // The month comes off the URL where one was named — `/reports` links here
   // month by month — and otherwise the latest finished month that has a file.

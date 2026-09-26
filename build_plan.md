@@ -80,15 +80,12 @@ not re-opened without her asking.** New debts are paid in the stage that finds t
 
 ### Still to pay
 
-- **The two file routes still throw on a refused month.** `/month/export/file` and
-  `/reports/file` replay through `workerInSeries` and carry no catch, so a household in a
-  refused state meets a 500 there rather than a sentence. Stage 8¾ left it open on purpose —
-  neither is a screen, and a card is not what a download can return. What the routes owe is
-  a decision on what a refused month downloads as, which is the user's.
-- **A refusal hides the other worker's figures too.** `calculateSeries` runs per worker and
-  the four screens catch around the whole replay, so in a household of two a refusal in one
-  worker's month takes the other's figures off the screen as well. The card names the month
-  but not whose it is.
+- **`/workers` and `/workers/[id]` still fail whole on a refused month.** Every card on the
+  list states a balance and a balance is derived from the replay, so neither screen may draw
+  a refused worker — and neither has a place for one worker's refusal card the way the four
+  screens now do. Both raise the refusal again on purpose, in sight, rather than drawing her
+  opening position as though it were a balance. What they owe is where the card goes on a
+  screen that is a list of both workers, which is the user's decision.
 
 ### Settled open, by the user's own choice
 

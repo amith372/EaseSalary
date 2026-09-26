@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { workerInSeries } from "@/lib/householdSeries";
+import { refusedDownload, workerInSeries } from "@/lib/householdSeries";
 import { balancesFileOf } from "@/lib/export/balancesExport";
 import {
   buildReport,
@@ -100,6 +100,11 @@ export async function GET(request: NextRequest) {
 
   const replayed = await workerInSeries(workerId);
   if (replayed === null) return new Response("No such worker", { status: 404 });
+  // All four reports are built from the replay, so a refused one has nothing to
+  // build from — and this address hands back a workbook and cannot word a
+  // refusal. It sends her to the screen that draws the card
+  // (`refusedDownload`).
+  if (replayed.refusal !== null) return refusedDownload(request, workerId);
   const { profile: worker, months: series } = replayed;
 
   const { bytes, filename } = await REPORTS[report].file({ series, year, worker });

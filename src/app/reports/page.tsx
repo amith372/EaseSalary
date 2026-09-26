@@ -1,8 +1,7 @@
 import { connection } from "next/server";
 import { ReportsScreen } from "@/components/ReportsScreen";
 import type { WorkerReports } from "@/components/ReportsScreen";
-import { householdSeriesOrRefusal } from "@/lib/householdSeries";
-import { RefusalCard } from "@/components/RefusalCard";
+import { householdSeries, refusalShown } from "@/lib/householdSeries";
 import { blocksExport, monthStillRunning } from "@/lib/engine/beforeExport";
 import { monthLevels } from "@/lib/engine/month";
 import { readToday } from "@/lib/requestToday";
@@ -29,13 +28,14 @@ export default async function ReportsPage() {
 
   const today = await readToday();
   // Every figure and every file on this screen comes off the replay, so a
-  // refused month leaves it with nothing to list — and offering a file for a
-  // month the engine declined to value is the one thing it may not do.
-  const { series: replayed, refused } = await householdSeriesOrRefusal();
-  if (refused !== null) return <RefusalCard refused={refused} />;
+  // refused month leaves the worker it belongs to with nothing to list — and
+  // offering a file for a month the engine declined to value is the one thing
+  // it may not do. The other worker's reports are listed as they were.
+  const replayed = await householdSeries();
 
   const household: WorkerReports[] = await Promise.all(
-    replayed.map(async ({ profile, months: series }) => {
+    replayed.map(async (worker) => {
+      const { profile, months: series } = worker;
       // Newest first, because the two yearly reports open on the latest year
       // the worker has rather than on the current calendar year: a family
       // downloading in January is almost always after the year that just
@@ -70,6 +70,7 @@ export default async function ReportsPage() {
 
       return {
         workerId: profile.id,
+        refused: refusalShown(worker),
         months,
         years,
         // The latest finished month that can be exported. The current one can be

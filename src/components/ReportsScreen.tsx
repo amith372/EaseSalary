@@ -6,11 +6,13 @@ import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { SheetBadge, TwoToneIcon } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
+import { RefusalCard } from "@/components/RefusalCard";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { monthLabel } from "@/lib/dateLabels";
 import { sameMonth } from "@/lib/dates";
 import type { ExportBlockKey } from "@/lib/engine/beforeExport";
 import { he } from "@/lib/i18n/he";
+import type { RefusedMonth } from "@/lib/refusalView";
 import type { YearMonth } from "@/lib/types";
 
 /**
@@ -70,6 +72,10 @@ export interface ReportMonth {
 }
 
 export interface WorkerReports {
+  /** The month her replay refused, where it refused one (`specs.md` item 25).
+   * Every figure and every file here comes off the replay, so the card stands
+   * in the screen's place for her — and for nobody else. */
+  refused: RefusedMonth | null;
   workerId: string;
   months: ReportMonth[];
   /** The years the worker has months in, newest first. The two yearly reports
@@ -164,6 +170,11 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
     household.find((entry) => entry.workerId === worker?.id) ?? household[0];
 
   if (mine === undefined) return null;
+  // Every figure and every file on this screen comes off the replay, so a
+  // refused one leaves nothing to list and no file that may be offered. The
+  // other worker's reports are on her own screen, one step of the switcher
+  // away.
+  if (mine.refused !== null) return <RefusalCard refused={mine.refused} />;
 
   // Whether the month the hero points at has a file yet, which is the same
   // question its own row answers.

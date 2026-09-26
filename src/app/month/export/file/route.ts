@@ -3,7 +3,7 @@ import { parseYearMonth, sameMonth } from "@/lib/dates";
 import { getRepository } from "@/lib/store";
 import { blocksExport } from "@/lib/engine/beforeExport";
 import { recordOf } from "@/lib/engine/repository";
-import { workerInSeries } from "@/lib/householdSeries";
+import { refusedDownload, workerInSeries } from "@/lib/householdSeries";
 import { monthFileOf } from "@/lib/export/monthExport";
 import { readIdentifyingNumbers } from "@/lib/identifyingNumbers";
 import { readNow, readToday } from "@/lib/requestToday";
@@ -43,6 +43,10 @@ export async function GET(request: NextRequest) {
 
   const replayed = await workerInSeries(workerId);
   if (replayed === null) return new Response("No such worker", { status: 404 });
+  // A month the engine refused has no file, and this address has no way to say
+  // so: it hands back a workbook. It sends her to the screen that draws the
+  // card instead (`refusedDownload`).
+  if (replayed.refusal !== null) return refusedDownload(request, workerId);
   const { profile: worker, months: series } = replayed;
   const repository = await getRepository();
   const months = await repository.listMonths(workerId);

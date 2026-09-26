@@ -1137,6 +1137,13 @@ Each of these is true or false at a glance.
     replay of every month after it, so the sentence names the month at fault and not the
     month the screen was asked for. Where the screen draws her calendar it keeps drawing
     it, because the mark to correct is on it.
+    **A refusal belongs to the worker whose month it is.** Each worker is replayed on her
+    own, so a refusal in one worker's months takes her figures off the screen and leaves
+    the other worker's standing — an account holds two, and a refusal in one employment
+    says nothing about the other. **And a refused month has no file.** The two addresses
+    that hand back a workbook cannot draw a card, so they send her to the screen that
+    does, where the mark to correct is; a download is not a second place to word a
+    refusal.
 26. Every action that rests on a legal rule carries a link to the page that states it —
     the minimum wage, the rest-day and holiday premium, annual leave, sick pay,
     recuperation, national insurance — so a user who wants to check a figure can read

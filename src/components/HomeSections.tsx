@@ -109,7 +109,6 @@ export function BalancesRail({
   household,
   month,
   fallbackRestDay,
-  refused,
   openWhy,
   toggleWhy,
 }: {
@@ -118,19 +117,25 @@ export function BalancesRail({
   month: YearMonth;
   /** The rest day to name a worker's marks by where no month of hers says. */
   fallbackRestDay: RestDay;
-  /** Whether a refused month's card is standing on the screen. A balance
-   * cannot be derived from a month the engine declined to value (item 13), so
-   * the card is withheld whole rather than drawn with a placeholder in every
-   * figure — the same answer the money column already gives. */
-  refused: boolean;
   openWhy: string | null;
   toggleWhy: (key: string) => void;
 }) {
+  // **A worker the engine refused is left out of the rail, and only her.** A
+  // balance cannot be derived from a month the engine declined to value
+  // (item 13), and her rows would otherwise draw the bracketed placeholder in
+  // every figure — the same answer the money column gives. Her card above says
+  // why she is missing. Where nobody is left the whole card goes, which is what
+  // a one-worker household in a refused state sees.
+  const stated = workers.filter(
+    (each) =>
+      household.find((candidate) => candidate.worker.id === each.id)?.refused ==
+      null,
+  );
   return (
     <aside
-      className={`order-3 grid min-w-0 items-start gap-3 ${refused ? "" : "sm:grid-cols-2"} lg:col-span-2 lg:row-start-2 xl:col-span-1 xl:col-start-1 xl:row-start-1 xl:flex xl:flex-col xl:items-stretch`}
+      className={`order-3 grid min-w-0 items-start gap-3 ${stated.length === 0 ? "" : "sm:grid-cols-2"} lg:col-span-2 lg:row-start-2 xl:col-span-1 xl:col-start-1 xl:row-start-1 xl:flex xl:flex-col xl:items-stretch`}
     >
-      {refused ? null : (
+      {stated.length === 0 ? null : (
         <Card data-role="balances" className="flex flex-col px-1.5 pt-1.5 pb-3">
           <div className="flex items-center gap-2.75 px-2.75 pt-2.5 pb-2">
             <span className="flex size-8.5 flex-none items-center justify-center rounded-tab bg-tile-sage text-icon-sage">
@@ -145,7 +150,7 @@ export function BalancesRail({
               </span>
             </span>
           </div>
-          {workers.map((each) => {
+          {stated.map((each) => {
             // Her own month, and the balances it closed with. A worker with no
             // record of this month has no balance to state, and the rows say
             // so with the same placeholder the calendar's own figures use —

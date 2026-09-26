@@ -2,8 +2,7 @@ import { connection } from "next/server";
 import { PaymentsScreen } from "@/components/PaymentsScreen";
 import type { WorkerPayments } from "@/components/PaymentsScreen";
 import { getRepository } from "@/lib/store";
-import { householdSeriesOrRefusal } from "@/lib/householdSeries";
-import { RefusalCard } from "@/components/RefusalCard";
+import { householdSeries, refusalShown } from "@/lib/householdSeries";
 import { advanceLedger } from "@/lib/engine/advances";
 import { effectiveTaxRate } from "@/lib/engine/incomeTax";
 import { lineKeys } from "@/lib/engine/lines";
@@ -82,12 +81,13 @@ export default async function PaymentsPage() {
   const today = await readToday();
   // A month the engine refused says so instead of the figures: this screen
   // records against a month it cannot value, and there is nothing to record
-  // onto until the mark is put right on `/`.
-  const { series: replayed, refused } = await householdSeriesOrRefusal();
-  if (refused !== null) return <RefusalCard refused={refused} />;
+  // onto until the mark is put right on `/`. Only hers — the other worker's
+  // groups are recorded against as they were.
+  const replayed = await householdSeries();
 
   const household: WorkerPayments[] = await Promise.all(
-    replayed.map(async ({ profile, months: series }) => {
+    replayed.map(async (replayedWorker) => {
+      const { profile, months: series } = replayedWorker;
       // The months as they are stored, for the ledger below: it sums what was
       // recorded, and a month nobody opened records nothing.
       const months = await repository.listMonths(profile.id);
@@ -97,6 +97,7 @@ export default async function PaymentsPage() {
           name: profile.name,
           firstName: profile.firstName,
         },
+        refused: refusalShown(replayedWorker),
         firstMonth: profile.firstMonth,
         months: series.map(({ facts, result }) => ({
           // `recordOf` drops the spans, which belong to the worker and not to a

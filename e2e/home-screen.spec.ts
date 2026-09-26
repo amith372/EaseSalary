@@ -594,14 +594,17 @@ test.describe("half a day of vacation (specs.md items 5, 7)", () => {
  * card, then the month. Until 2026-09-24 the strip was an `h2` and the month
  * an `h1`, so the outline opened at `צריך לטפל` and reached the `h1` second.
  *
+ * **The refused household leads with the strip too**, and that is the whole of
+ * what the refusal being one worker's changed: the strip is the household's and
+ * the other worker still has things to do, so it is drawn and takes the level,
+ * and the card under it is the `h2` it is on every screen that has a strip
+ * above it. The card led only while a refusal emptied the strip for everybody.
+ *
  * What it catches: a heading added above the calendar without taking the level
  * with it, and two `h1`s on one screen.
  */
 test.describe("the opening screen's outline", () => {
-  for (const [seed, leads] of [
-    ["demo", he.status.needsAttention],
-    ["refused", he.month.refused.title],
-  ] as const) {
+  for (const seed of ["demo", "refused"] as const) {
     test(`starts at the h1 on a ${seed} household`, async ({ page }) => {
       await useHousehold(page, seed, "outline");
       await page.goto("/");
@@ -612,8 +615,14 @@ test.describe("the opening screen's outline", () => {
       // The first heading a reader meets is the one that names the screen.
       await expect(page.locator("h1")).toHaveCount(1);
       const first = headings.first();
-      await expect(first).toContainText(leads);
+      await expect(first).toContainText(he.status.needsAttention);
       expect(await first.evaluate((el) => el.tagName)).toBe("H1");
+      if (seed === "refused") {
+        // Drawn, and one level below the strip that leads.
+        const card = page.locator('[data-role="refusal-month"]');
+        await expect(card).toBeVisible();
+        expect(await card.evaluate((el) => el.tagName)).toBe("H2");
+      }
     });
   }
 });

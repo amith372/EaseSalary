@@ -2,8 +2,7 @@ import { after, connection } from "next/server";
 import { HomeScreen } from "@/components/HomeScreen";
 import type { WorkerMonths } from "@/components/HomeScreen";
 import { blockagesOf, householdAlerts } from "@/lib/alertsView";
-import { householdSeriesOrRefusal } from "@/lib/householdSeries";
-import type { WorkerInSeries } from "@/lib/householdSeries";
+import { householdSeries, refusalShown } from "@/lib/householdSeries";
 import { refreshIncomeTaxIfStale } from "@/lib/incomeTaxRefresh";
 import { refreshMinimumWageIfStale } from "@/lib/minimumWageRefresh";
 import { getRepository } from "@/lib/store";
@@ -59,8 +58,10 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   // **A refused month does not take this screen down**, because this is the
   // screen the mark that caused it is corrected on (`specs.md` item 25). The
   // calendar reads her spans and not the engine, so it draws either way; what
-  // the refusal costs is the figures beside it, and the card says why.
-  const { series: replayed, refused } = await householdSeriesOrRefusal();
+  // the refusal costs is the figures beside it, and the card says why. It costs
+  // them to the worker whose month it is and to nobody else: the replay refuses
+  // per worker, so the other worker's figures stay on the screen.
+  const replayed = await householdSeries();
   after(async () => {
     // The real clock, not `today`: staleness is measured against the real
     // instant of the last fetch, and a pinned day would move it.
@@ -82,44 +83,38 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   // `today` reaches every month and only the one still running is clipped by it
   // (item 8) — `householdSeries` is where both of those are arranged.
   //
-  // **Where the replay refused there are no months**, and each worker is drawn
-  // from her profile and her marks alone. `listWorkers` is what the replay
-  // itself walks, so the rail and the switcher hold the same household either
-  // way.
-  const drawn: WorkerInSeries[] =
-    replayed ??
-    (await repository.listWorkers()).map((profile) => ({ profile, months: [] }));
+  // **Where a worker's replay refused she has no months**, and she is drawn from
+  // her profile and her marks alone. The replay walks the whole household either
+  // way, so the rail and the switcher hold every worker whether hers stood or
+  // not.
   const household: WorkerMonths[] = await Promise.all(
-    drawn.map(async ({ profile, months }) => ({
+    replayed.map(async (worker) => ({
       worker: {
-        id: profile.id,
-        name: profile.name,
-        firstName: profile.firstName,
+        id: worker.profile.id,
+        name: worker.profile.name,
+        firstName: worker.profile.firstName,
       },
-      restDay: profile.restDay,
-      firstMonth: profile.firstMonth,
-      months,
-      spans: await repository.listSpans(profile.id),
+      restDay: worker.profile.restDay,
+      firstMonth: worker.profile.firstMonth,
+      months: worker.months,
+      refused: refusalShown(worker),
+      spans: await repository.listSpans(worker.profile.id),
     })),
   );
 
   // The strip reads the view `/alerts` and the bell read, so it lists the
   // page's first blockages and counts the rest. They are counted off the same
-  // replay, so a household the engine refused has none to count — the card is
-  // what that household is told, and an empty strip above it would say nothing.
-  const blockages = refused === null
-    ? blockagesOf(await householdAlerts())
-    : { shown: [], more: 0 };
+  // replay, and a worker whose replay refused is left out of it altogether
+  // (`alertsView.ts`) — her card is what she is told instead, and the other
+  // worker's blockages are still hers to see.
+  const blockages = blockagesOf(await householdAlerts());
 
   return (
     <HomeScreen
       household={household}
       blockages={blockages}
       today={today}
-      // A refused month opens the screen on itself: it is the month the mark to
-      // correct is in, and the address's own month cannot be valued either.
-      askedMonth={refused?.month ?? askedMonth}
-      refused={refused}
+      askedMonth={askedMonth}
     />
   );
 }

@@ -97,6 +97,11 @@ export interface WorkerMonths {
   /** Where the month arrows stop (specs.md item 6). */
   firstMonth: YearMonth;
   months: MonthInSeries[];
+  /** The month her replay refused, where it refused one (`specs.md` item 25).
+   * She has no figures then — one refused month stops the replay of every month
+   * after it — and the card above her columns says which month and why. The
+   * other worker's figures are untouched: the replay refuses per worker. */
+  refused: RefusedMonth | null;
   /** Every mark she has. Read only for a month after the current one, which
    * the replay does not value and so does not hand over (item 21), and whose
    * calendar still shows what was marked on it. */
@@ -140,33 +145,48 @@ export function HomeScreen({
   blockages,
   today,
   askedMonth = null,
-  refused = null,
 }: {
   household: WorkerMonths[];
   /** A month the address named, which the screen opens on instead. */
   askedMonth?: YearMonth | null;
   /** What stops a correct salary, for the whole household (`blockagesOf`). */
   blockages: FirstOf;
-  /** The month the engine refused, where it refused one (`specs.md` item 25).
-   * The whole household has no figures then — one refused month stops the
-   * replay — and the card above the columns says which month and why. */
-  refused?: RefusedMonth | null;
   /** Today, read once on the server and handed down, so nothing here reads a
    * clock during a render (`CLAUDE.md`). */
   today: IsoDate;
 }) {
   const { worker, workers } = useWorkerScope();
+  // The switcher moves between workers and the calendar stays on the month it
+  // was showing: the month is a fact about the screen and the worker is a fact
+  // about the shell, so switching does not send the user back to August.
+  const entry =
+    household.find((candidate) => candidate.worker.id === worker.id) ?? household[0];
   // The current month where anybody has a record of it, and otherwise the last
   // month anybody has — `openingMonthOf` says why, and the payments screen asks
-  // the same question so the two never open on different months.
+  // the same question so the two never open on different months. A worker whose
+  // replay refused opens on the refused month instead, and ahead of the
+  // address: the mark to correct is on that month and no month of hers can be
+  // valued, so the month the address asked for is no more drawable than any
+  // other.
   const [chosenMonth, setMonth] = useState<YearMonth>(
     () =>
+      entry.refused?.month ??
       askedMonth ??
       openingMonthOf(
-        household.flatMap((entry) => entry.months.map((m) => m.facts.month)),
+        household.flatMap((one) => one.months.map((m) => m.facts.month)),
         today,
       ),
   );
+  // Whose the chosen month is. Switching to a worker the engine refused moves
+  // the calendar to her refused month, because the card names that month and
+  // the day to correct is on it — a calendar left where the other worker was
+  // cannot show it. Adjusted during render, which is React's own pattern for
+  // state that follows a prop: an effect would paint the wrong month first.
+  const [monthOwner, setMonthOwner] = useState<string>(worker.id);
+  if (monthOwner !== worker.id) {
+    setMonthOwner(worker.id);
+    if (entry.refused !== null) setMonth(entry.refused.month);
+  }
   const [selected, setSelected] = useState<IsoDate>(today);
   const [editRequest, setEditRequest] = useState<{ date: IsoDate; seq: number }>();
   const [openWhy, setOpenWhy] = useState<string | null>(null);
@@ -179,11 +199,6 @@ export function HomeScreen({
   // answer to what was actually saved.
   const [saving, startSaving] = useTransition();
 
-  // The switcher moves between workers and the calendar stays on the month it
-  // was showing: the month is a fact about the screen and the worker is a fact
-  // about the shell, so switching does not send the user back to August.
-  const entry =
-    household.find((candidate) => candidate.worker.id === worker.id) ?? household[0];
   // Never a month before hers: the arrows stop at her first month, and a month
   // chosen while another worker was on screen is shown from her first instead.
   const month = notBefore(chosenMonth, entry.firstMonth);
@@ -288,17 +303,23 @@ export function HomeScreen({
   // strip leads where it is drawn — `specs.md` item 27 puts what blocks a
   // correct salary first — then a refused month's card, then the month.
   const leads =
-    blockages.shown.length > 0 ? "blockers" : refused !== null ? "refusal" : "month";
+    blockages.shown.length > 0
+      ? "blockers"
+      : entry.refused !== null
+        ? "refusal"
+        : "month";
 
   return (
     <>
       <Blockers blockages={blockages} heading={leads === "blockers" ? "h1" : "h2"} />
 
       {/* Above the month's content and not inside the money column: it is the
-          whole screen's state and not one figure's, and the calendar beneath it
-          is where the mark that caused it is corrected. */}
-      {refused === null ? null : (
-        <RefusalCard refused={refused} heading={leads === "refusal" ? "h1" : "h2"} />
+          state of everything this screen says about her and not of one figure,
+          and the calendar beneath it is where the mark that caused it is
+          corrected. It is the shown worker's alone — the other worker's figures
+          are on the screen beside it. */}
+      {entry.refused === null ? null : (
+        <RefusalCard refused={entry.refused} heading={leads === "refusal" ? "h1" : "h2"} />
       )}
 
       {/* One column on a phone, in the order a phone reads it: the calendar,
@@ -463,7 +484,7 @@ export function HomeScreen({
                 {he.month.future}
               </p>
             </Card>
-          ) : refused !== null ? (
+          ) : entry.refused !== null ? (
             // The card above already says why there are no figures, and a
             // second card saying the month is empty would contradict it.
             null
@@ -538,7 +559,6 @@ export function HomeScreen({
           household={household}
           month={month}
           fallbackRestDay={entry.restDay}
-          refused={refused !== null}
           openWhy={openWhy}
           toggleWhy={toggleWhy}
         />

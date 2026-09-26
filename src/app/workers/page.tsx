@@ -34,6 +34,14 @@ export default async function WorkersPage() {
   const repository = await getRepository();
   const today = await readToday();
   const replayed = await householdSeries();
+  // **A refused replay is raised again here rather than drawn.** Every card on
+  // this screen states a balance, and a balance is derived from the replay
+  // (item 13) — a worker the engine refused has none, and drawing her opening
+  // position instead would state a figure nobody checked. This screen has no
+  // place for one worker's refusal card yet, so it fails whole as it always
+  // has; that is a debt in `build_plan.md` and not a decision taken here.
+  const refusal = replayed.find((worker) => worker.refusal !== null)?.refusal;
+  if (refusal !== undefined) throw refusal;
   // One query for the whole list, not one per card: a share is the household's
   // and every worker of a household carries the same addresses.
   const shares = await sharedWith();

@@ -7,6 +7,7 @@ import { Card } from "@/components/Card";
 import { TwoToneIcon } from "@/components/icons";
 import { MonthActions, type MonthSection } from "@/components/MonthActions";
 import { MonthStepper, notBefore, openingMonthOf } from "@/components/MonthStepper";
+import { RefusalCard } from "@/components/RefusalCard";
 import { useOneAtATime } from "@/components/useAction";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { compareMonth, monthOf, sameMonth } from "@/lib/dates";
@@ -18,6 +19,7 @@ import { he } from "@/lib/i18n/he";
 import type { MonthIncomeTax } from "@/lib/engine/types";
 import type { UpcomingEntry } from "@/lib/engine/upcoming";
 import { formatAgorot, formatDays } from "@/lib/money";
+import type { RefusedMonth } from "@/lib/refusalView";
 import type { IsoDate, OverrideCandidate, Worker, YearMonth } from "@/lib/types";
 
 /**
@@ -81,6 +83,10 @@ export interface MonthPayments {
 /** One worker as this screen needs her: who she is, each of her months, and
  * what is still owed on each advance. */
 export interface WorkerPayments {
+  /** The month her replay refused, where it refused one (`specs.md` item 25).
+   * Nothing on this screen can be recorded against a month the engine declined
+   * to value, so the card stands in its place — for her alone. */
+  refused: RefusedMonth | null;
   worker: Worker;
   /** Where the month arrows stop (specs.md item 6). */
   firstMonth: YearMonth;
@@ -147,6 +153,11 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
     });
   }
 
+  // **Her refusal and not the household's.** This screen records against a
+  // month, and there is nothing to record onto until the mark is put right on
+  // `/` — so the card is the screen for her, while the worker beside her keeps
+  // hers. It sits below every hook because all of them run either way.
+  if (entry.refused !== null) return <RefusalCard refused={entry.refused} />;
 
   return (
     /* One column, and the heading and the card share its width. The shell hands

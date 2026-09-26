@@ -10,14 +10,15 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-> ### ✅ Everything through run 8 is committed. Steps 6 and 6½ are done.
-> **Run 8's fifteen and F64 went in together on 2026-09-26**, one batch as she asked, with
+> ### ✅ Everything through step 7 is committed. Steps 6, 6½ and 7 are done.
+> **Step 7 — the two refusal debts — went in on 2026-09-26** with `specs.md` item 25's
+> approved paragraph, `DESIGN.md`'s four rewritten departures and `build_plan.md`'s two debts
+> paid. The evidence it rests on, measured on the committed tree: browser suite
+> **168/168 in 13.6 minutes, no flake**, unit suite **1,246/1,246**, typecheck and lint clean.
+> Before it: **run 8's fifteen and F64 together as `62a7070`**, one batch as she asked, with
 > `specs.md` item 20's approved replacement, `DESIGN.md`'s two entries and `CLAUDE.md`'s three
-> duplications folded in. Before it: stage 8⅞ as `f72eadc`, run 7's seventeen as `e492ddf`
+> duplications folded in; stage 8⅞ as `f72eadc`; run 7's seventeen as `e492ddf`
 > and `591a67b`. **Nothing is pushed**; she decides that.
-> The evidence that commit rests on, measured on the committed tree: browser suite
-> **166/166 in 9.7 minutes, no flake** — the 164 that stood plus the contrast sweep and the
-> third busy-state case — unit suite **1,246/1,246**, typecheck and lint clean.
 > **A run measures one code state and nothing else** — a source file written while the suite is
 > going makes the dev server recompile underneath it, and the run that follows is evidence of
 > neither state. One such run was discarded on 2026-09-25 and re-run clean; its six "failures"
@@ -27,18 +28,24 @@ the plan table, then stops and reports to the user.
 > F62's regression — five failures in two spec files F62 never touched.
 
 > ### → A fresh session told "continue" does this
-> **Start at step 7 of "The order from here": the two refusal debts, together.** Both were
-> answered on 2026-09-25 and the answers are written into that step — the file routes redirect
-> to the screen that draws the refusal card, and a refusal in one worker's month stops taking
-> the other worker's figures off the screen. It **changes behaviour**, so it owes a `specs.md`
-> sentence whose exact wording is put to her first (rule 1), and the debts leave
-> `build_plan.md` as they are paid.
-> **The order, and a session does the first that is not done:** ~~6 run 8's fifteen~~ and
-> ~~6½ F64~~ are **done and committed** · **7 the two refusal debts, together** · 8 the
-> standing-line lifetime, **blocked on one word of hers** · 9 F37 · 10 F32 again.
-> **Step 8 is not the next step even though its PRD is signed off.** Its eight decisions and
-> `specs.md` item 20 are settled, but the button's word is hers and unanswered — see below —
-> so a session does step 7 and does not start step 8 to fill the time.
+> **The next step is 8, and it is blocked on one word of hers. Ask her for that word first,
+> and do not start the step until she answers.** The word is the row's button: she decided on
+> 2026-09-26 that it **deletes** the standing line, so it cannot keep saying `להפסיק`, and
+> what it says instead is hers. Everything else about step 8 is settled — see below.
+> **The order, and a session does the first that is not done:** ~~6 run 8's fifteen~~,
+> ~~6½ F64~~, ~~7 the two refusal debts~~ are **done and committed** · **8 the standing-line
+> lifetime, blocked on one word of hers** · 9 F37 · 10 F32 again.
+> **Step 8's PRD is signed off and its eight decisions are settled**, and
+> `specs.md` item 20 already carries the approved paragraph — so nothing there is re-decided
+> or re-asked. Only the button's word is missing, and it is needed when the row is built.
+> **While it is blocked, a session asks and waits rather than starting step 9 to fill the
+> time**: the order is hers and she set it.
+> **What step 7 left behind, and it is not a defect:** `/workers` and `/workers/[id]` still
+> fail whole on a refused month, on purpose — every card on them states a balance and a
+> refused worker has none, so drawing her opening position would state a figure nobody
+> checked. They raise the refusal in sight, which is what they always did. It is the one entry
+> in `build_plan.md`'s "Still to pay", and **where the card goes on a screen that lists both
+> workers is her decision** — a session does not invent it.
 > **F32 (`/doctor`) was run on 2026-09-25 and is not closed.** Its settings actions are
 > applied — eight unused skills off, auto mode saved as the default, Claude Code at 2.1.282 —
 > and `CLAUDE.md` lost three duplications she approved. **One item is hers and is outstanding:**
@@ -49,10 +56,10 @@ the plan table, then stops and reports to the user.
 > F32's own two findings are under "Needs the user". **The check F32 names — "`/doctor`
 > reports nothing left to fix" — is not met.** Step 10 is: confirm the connector is off, then
 > re-run `/doctor`.
-> **One uncommitted change is waiting and it is deliberate:** this file's header, corrected
-> after the commit it describes so that it could name it. The user's standing instruction of
-> 2026-09-25 is to **fold the header into the next commit** rather than commit it alone. Do
-> not commit it on its own and do not revert it. **Ask before every commit.**
+> **After a commit this file's header is corrected to name it, and that one change is left
+> uncommitted** — the user's standing instruction of 2026-09-25 is to **fold it into the next
+> commit** rather than commit it alone. Do not commit it on its own and do not revert it.
+> **Ask before every commit.**
 > **Step 8 changed on 2026-09-26.** She decided that the row's button **deletes** the line and
 > that a confirmed month keeps what it was confirmed with, which replaces decisions 1 and 5;
 > `specs.md` item 20 was corrected to match, quoted to her and **approved the same day**. One
@@ -68,7 +75,43 @@ the plan table, then stops and reports to the user.
 > which rule 8 says only she can run.
 > **Never push.**
 
-- **Last done: stage 8⅞ — the country of origin is correctable**, on 2026-09-25, whole.
+- **Last done: step 7 — the two refusal debts, together**, on 2026-09-26.
+  **The refusal is now a fact about one worker rather than about the household.**
+  `householdSeries` catches `InvalidMonthError` inside the per-worker map and hands it back on
+  `WorkerInSeries.refusal`, so it never escapes the replay; `householdSeriesOrRefusal` is gone
+  and `refusalShown` is the one step from the error to the card's input. The four screens read
+  it off the worker the switcher is showing — `/` from `entry`, and `PayslipScreen`,
+  `PaymentsScreen` and `ReportsScreen` each return the card after their last hook, which is
+  why the check sits below them and not at the top. `BalancesRail` drops the refused worker's
+  two rows and keeps everyone else's, and withholds the whole card only when nobody is left.
+  Switching to a refused worker moves the calendar to her refused month, adjusted during
+  render rather than in an effect. **`alertsView` leaves a refused worker out of the count
+  altogether** — handing her over as a worker with no months would have reported every quarter
+  of her employment unpaid and every month never filed — which is what let the bell's catch in
+  `layout.tsx` go, dead once nothing throws. The two download addresses answer with
+  `refusedDownload`: a 303 to `/` carrying the `worker` cookie, because a redirect that lost
+  the worker lands on a screen with no card on it. **`/workers` and `/workers/[id]` raise the
+  refusal again on purpose**, in sight, with the reason beside it: every card on them states a
+  balance and drawing her opening position instead would state a figure nobody checked. That
+  is the one debt left, and it is in `build_plan.md`.
+  **Checked against the restored bug, not only against itself:** with `src/` stashed, four of
+  the six tests in `refusal-card.spec.ts` fail, each at the assertion its own debt names — the
+  rail missing, the card standing over the first worker, the three screens drawing no heading,
+  and the download address staying on `/month/export/file` instead of landing on `/`.
+  The expected figures in "leaves the other worker's month exactly as it was" come from the
+  **`demo` household**, which is the `refused` household minus the one stray span: the rule
+  says a refusal in one employment says nothing about the other, so equality is the
+  expectation and nothing was read back off the implementation (rule 11).
+  `home-screen.spec.ts`'s outline test moved with the behaviour and was not silenced: the
+  strip leads a refused household now, because the other worker still has things to do, and
+  the card is the `h2` it is on any screen with a strip above it. `specs.md` item 25 carries
+  the approved paragraph, quoted to her and answered yes on 2026-09-26; `DESIGN.md`'s refusal
+  section has four rewritten departures.
+  **Its evidence, on the finished tree:** browser suite **168/168 in 13.6 minutes, no flake**
+  — the 166 that stood plus this step's two new cases — unit suite **1,246/1,246**, typecheck
+  and lint clean.
+
+- **Before it: stage 8⅞ — the country of origin is correctable**, on 2026-09-25, whole.
   `setCountry` sits beside `setGender` and checks the code against `countriesWithLists`, which
   is now the one offer `/workers/new` and `/settings` both read — the wizard's inline
   dedup-and-sort moved into `holidaySources.ts` with the `Country` type, which had been
@@ -516,7 +559,8 @@ the plan table, then stops and reports to the user.
      written down; R8.8–R8.14 are judgement calls, and she asked for **all fifteen**. Each is
      one commit unless she asks for a batch. The browser suite runs whole afterwards, and
      **nothing is written to a source file while it runs** — see the header.
-  7. **The two refusal debts**, both from `build_plan.md`'s "Still to pay", both in one step
+  7. ~~**The two refusal debts**~~ — **done 2026-09-26.** Both from
+     `build_plan.md`'s "Still to pay", both in one step
      because they share `calculateSeries`' callers and no split of them is worth paying twice.
      **(a)** `/month/export/file` and `/reports/file` throw on a refused month —
      **answered 2026-09-25: the route redirects to the screen that already draws the refusal
@@ -707,8 +751,8 @@ the plan table, then stops and reports to the user.
 | 12 | F32 — `/doctor` | **run 2026-09-25**; its settings actions are applied. Not closed: one item is the user's (the Claude Docs connector) and two findings owe a line under "Needs the user" |
 | 13 | Run 8 — the two-axis code review and a second `ponytail-audit` | **done** 2026-09-25 — fifteen findings, fixed point `9327b3d`. **Awaiting the user's GO**, which is step 14 |
 | 14 | The user signs run 8 off | **done** 2026-09-25 — **all fifteen**, and the four open questions answered. The order she set is steps 6–10 under "The order from here" |
-| 15 | Execute run 8's fifteen | **done** 2026-09-26 — fourteen fixed, R8.15 withdrawn as wrong. Uncommitted, and carries F64 with it |
-| 16 | The two refusal debts, together | **open** — `build_plan.md`'s "Still to pay"; both answered 2026-09-25 |
+| 15 | Execute run 8's fifteen | **done** 2026-09-26, `62a7070` — fourteen fixed, R8.15 withdrawn as wrong; the commit carries F64 too |
+| 16 | The two refusal debts, together | **done** 2026-09-26 — both paid; `/workers` and `/workers/[id]` are the one debt left in their place |
 | 17 | A standing line with a lifetime | **open** — decisions rewritten 2026-09-26 and `specs.md` item 20 corrected with her approval; one word (the row's button) is still hers — PRD and plan signed off 2026-09-25, all eight decisions recorded in step 8, `specs.md` item 20 already carries the approved paragraph. Placed before F37 |
 | 18 | F37 | **open** |
 | 19 | F32 again | **open** — the connector is hers, then `/doctor` is re-run |
@@ -1890,7 +1934,7 @@ again. F59 was listed as owing one too and does not; its entry says why.
 was raised, so none is a design question a session re-opens. The departure goes into `DESIGN.md` in
 the same commit (working rule 3).
 
-- [x] 2026-09-26 F64 — committed with run 8's batch, as she asked, rather than alone.
+- [x] 2026-09-26 `62a7070` F64 — committed with run 8's batch, as she asked, rather than alone.
   **The group that holds only insurance is named for it, and the minimum wage goes to the
   salary it is the floor of** — her two notes of 2026-09-26, answered the same day.
   `he.settings.rates` becomes `title: "ביטוחים"` and

@@ -37,7 +37,6 @@ import type { Gender } from "@/lib/engine/types";
 import { reviewUserLine, type UserLineDraft, type UserLineRefusal } from "@/lib/engine/userLines";
 import { isMonthNumber, monthOf, parseYearMonth, yearMonthText } from "@/lib/dates";
 import { balanceOf } from "@/lib/engine/balances";
-import { InvalidMonthError } from "@/lib/engine/validate";
 import { workerInSeries } from "@/lib/householdSeries";
 import {
   saveMonthsFollowingProfile,
@@ -268,26 +267,22 @@ function isOneOfAnswers(value: unknown): value is RestDayAnswer {
  * it. Balances are never stored (item 13), so the only way to know one is the
  * replay.
  *
- * **A replay that refuses hands back nothing rather than throwing**: a worker
- * already holding a stranded mark from before this check existed cannot be
- * replayed at all, and that is precisely the worker who needs to answer the
- * question. With no balance to draw on the conversion is not offered, and the
- * other two answers still put her right.
+ * **A replay that refuses hands back nothing**: a worker already holding a
+ * stranded mark from before this check existed cannot be replayed at all, and
+ * that is precisely the worker who needs to answer the question. Her months
+ * come back empty (`householdSeries.ts`), so with no balance to draw on the
+ * conversion is not offered and the other two answers still put her right.
  */
 async function vacationClosingOf(workerId: string): Promise<Map<string, number>> {
   const closing = new Map<string, number>();
-  try {
-    const worker = await workerInSeries(workerId);
-    for (const entry of worker?.months ?? []) {
-      const line = balanceOf(entry.result, "vacation");
-      // A balance line the sheet leaves blank has nothing to draw on, which is
-      // the same answer as a month the replay never reached.
-      if (line?.closing != null) {
-        closing.set(yearMonthText(entry.facts.month), line.closing);
-      }
+  const worker = await workerInSeries(workerId);
+  for (const entry of worker?.months ?? []) {
+    const line = balanceOf(entry.result, "vacation");
+    // A balance line the sheet leaves blank has nothing to draw on, which is
+    // the same answer as a month the replay never reached.
+    if (line?.closing != null) {
+      closing.set(yearMonthText(entry.facts.month), line.closing);
     }
-  } catch (error) {
-    if (!(error instanceof InvalidMonthError)) throw error;
   }
   return closing;
 }

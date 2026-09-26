@@ -3,8 +3,7 @@ import { Suspense } from "react";
 import { PayslipScreen } from "@/components/PayslipScreen";
 import type { WorkerPayslip } from "@/components/PayslipScreen";
 import { getRepository } from "@/lib/store";
-import { householdSeriesOrRefusal } from "@/lib/householdSeries";
-import { RefusalCard } from "@/components/RefusalCard";
+import { householdSeries, refusalShown } from "@/lib/householdSeries";
 import { advanceLedger } from "@/lib/engine/advances";
 import {
   blocksExport,
@@ -35,13 +34,14 @@ export default async function PayslipPage() {
   const repository = await getRepository();
   const today = await readToday();
   // The sheet is the month laid out row by row, so a month that could not be
-  // valued has no rows: here the card is the screen, and the calendar it
-  // would be corrected on is one link away on `/`.
-  const { series: replayed, refused } = await householdSeriesOrRefusal();
-  if (refused !== null) return <RefusalCard refused={refused} />;
+  // valued has no rows: the card stands in the screen's place for the worker
+  // whose replay refused, and the calendar it would be corrected on is one
+  // link away on `/`. It is hers alone — the other worker's sheet is drawn.
+  const replayed = await householdSeries();
 
   const household: WorkerPayslip[] = await Promise.all(
-    replayed.map(async ({ profile, months: series }) => {
+    replayed.map(async (worker) => {
+      const { profile, months: series } = worker;
       // The stored months as they stand, for the ledger below: it sums what was
       // recorded and not what the replay came to.
       const stored = await repository.listMonths(profile.id);
@@ -57,6 +57,7 @@ export default async function PayslipPage() {
       return {
         workerId: profile.id,
         workerName: profile.name,
+        refused: refusalShown(worker),
         months: series.map((month) => {
           const questions = exportQuestions(month.facts, today);
           const countOf = (key: string) =>
