@@ -1,6 +1,6 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
 import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections, openSettingsGroups, TODAY } from "./household";
-import { FRIDAY, SATURDAY, monthOf } from "../src/lib/dates";
+import { FRIDAY, SATURDAY, addMonths, monthOf, yearMonthText } from "../src/lib/dates";
 import { fullDayLabel } from "../src/lib/dateLabels";
 import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
@@ -96,6 +96,11 @@ const AUGUST_2025 = "2025-08";
 function thisMonth(): string {
   const { year, month } = monthOf(TODAY);
   return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+/** A month either side of this one, as the lifetime's own select values it. */
+function monthShift(months: number): string {
+  return yearMonthText(addMonths(monthOf(TODAY), months));
 }
 
 /** Every line the *profile's* standing lines put on the sheet. `userLineKey`
@@ -314,6 +319,90 @@ test.describe("a standing line, and the division it makes reachable (item 20)", 
       path: "test-results/profile-standing-line.png",
       fullPage: true,
     });
+  });
+
+  /**
+   * **A lifetime, set and corrected through the row that holds it** (specs.md
+   * item 20).
+   *
+   * The months are read off the clock rather than written here, for the reason
+   * `thisMonth` gives: the spec must not pin itself to one month. What is fixed
+   * is the *relation* — a line that starts next month is not this month's, a line
+   * whose range covers this month is, and a line whose last month has passed is
+   * neither, and sits under its own heading instead.
+   *
+   * **What it would catch**: the filter applied to the profile but not to the
+   * snapshot, so a line outside its range still reaches the sheet; a lifetime
+   * saved and not read back into the panel, so correcting one end silently
+   * clears the other; and an ended line dropped from the screen altogether,
+   * which would leave the edit that restarts it on a row nobody can see.
+   */
+  test("runs only for the months its lifetime names", async ({ page }) => {
+    await useHousehold(page, "demo", "standing-lifetime");
+    await openSettingsForTestWorker(page);
+
+    const words = he.workers.profile.terms.standing;
+    const standing = page.locator('[data-terms="standing"]');
+    const label = "השתתפות בטלפון";
+    const lifetime = words.lifetime;
+
+    async function fillLifetime(from: string, until: string): Promise<void> {
+      await standing.getByLabel(lifetime.from).selectOption(from);
+      await standing.getByLabel(lifetime.until).selectOption(until);
+    }
+
+    // A line that begins next month. Every field is filled in the panel it was
+    // opened in, as a family fills it.
+    await standing.getByRole("button", { name: words.add }).click();
+    await standing
+      .getByRole("textbox", { name: he.month.actions.lines.label })
+      .fill(label);
+    await standing
+      .getByRole("textbox", { name: he.month.actions.lines.amount })
+      .fill(String(STANDING_AGOROT / 100));
+    await fillLifetime(monthShift(1), "");
+    await standing
+      .getByRole("button", { name: he.month.actions.lines.submit, exact: true })
+      .click();
+    await settled(page);
+
+    // The row says when it begins, and says it has not begun.
+    await expect(standing).toContainText(lifetime.notYet);
+    // And this month's sheet does not carry it, because this month is outside it.
+    await openPayslipForTestWorker(page, thisMonth());
+    await expect(standingLines(page)).toHaveCount(0);
+
+    // Corrected to begin this month and end this month: one month, and this one.
+    await openSettingsForTestWorker(page);
+    await standing.getByRole("button", { name: words.editLabel(label) }).click();
+    await fillLifetime(thisMonth(), thisMonth());
+    // The panel as the family meets it, with both ends of the lifetime on it.
+    await standing.screenshot({ path: "test-results/profile-standing-lifetime-panel.png" });
+    await standing
+      .getByRole("button", { name: he.month.actions.lines.save, exact: true })
+      .click();
+    await settled(page);
+
+    await openPayslipForTestWorker(page, thisMonth());
+    await expect(standingLines(page)).toContainText(formatAgorot(STANDING_AGOROT));
+
+    // Ended: its last month is the month before this one. It leaves the sheet
+    // and moves to the quieter heading, where the edit that would restart it is.
+    await openSettingsForTestWorker(page);
+    await standing.getByRole("button", { name: words.editLabel(label) }).click();
+    await fillLifetime(monthShift(-1), monthShift(-1));
+    await standing
+      .getByRole("button", { name: he.month.actions.lines.save, exact: true })
+      .click();
+    await settled(page);
+
+    const ended = page.locator('[data-terms="standing-ended"]');
+    await expect(ended.getByText(words.ended)).toBeVisible();
+    await expect(ended).toContainText(label);
+    await standing.screenshot({ path: "test-results/profile-standing-lifetime.png" });
+
+    await openPayslipForTestWorker(page, thisMonth());
+    await expect(standingLines(page)).toHaveCount(0);
   });
 
   test("is overridable on the other side of the total too", async ({ page }) => {

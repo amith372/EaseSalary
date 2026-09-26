@@ -131,7 +131,7 @@ const august: MonthRecord = {
     minimumAgorot: SALARY,
     effectiveFrom: WAGE_EFFECTIVE_FROM,
   },
-  terms: snapshotTerms(hanna),
+  terms: snapshotTerms(hanna, AUGUST_2025),
   advances: [],
   thirdPartyPayments: [],
   userLines: [],

@@ -4,6 +4,7 @@ import { FRIDAY } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { calculateSeries } from "@/lib/engine/series";
 import {
+  AUGUST_2025,
   plainAugustFacts,
   plainWorker,
 } from "@/lib/engine/august-2025.fixture";
@@ -77,7 +78,7 @@ beforeAll(async () => {
 
 async function sheetFor(restDay: RestDay): Promise<ExcelJS.Worksheet> {
   const worker = { ...plainWorker(), restDay };
-  const facts = { ...plainAugustFacts(worker), terms: snapshotTerms(worker) };
+  const facts = { ...plainAugustFacts(worker), terms: snapshotTerms(worker, AUGUST_2025) };
   const month = calculateSeries([facts], worker)[0];
   if (month === undefined) throw new Error("no month");
 

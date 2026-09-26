@@ -110,7 +110,7 @@ function record(ym: YearMonth): MonthRecord {
     // put these fixtures below the minimum wage from April 2026 onward, which
     // is the defect a family found on 2026-09-11.
     confirmedWage: wageInForce(ym),
-    terms: snapshotTerms(HANNA),
+    terms: snapshotTerms(HANNA, ym),
     advances: [],
     thirdPartyPayments: [],
     userLines: [],
@@ -721,7 +721,7 @@ describe("the walk runs from the first month (specs.md item 6, Part 3)", () => {
       [facts(month(2026, 1)), facts(month(2026, 3))],
       HANNA,
     );
-    expect(february.facts.terms).toEqual(snapshotTerms(HANNA));
+    expect(february.facts.terms).toEqual(snapshotTerms(HANNA, month(2026, 2)));
     expect(february.facts.confirmedWage.minimumAgorot).toBe(624765);
     expect(february.facts.spans).toEqual([]);
     expect(february.facts.advances).toEqual([]);

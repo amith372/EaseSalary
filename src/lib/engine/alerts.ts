@@ -18,6 +18,7 @@ import type { ThirdPartyKind } from "./types";
  * correctly while it stands. */
 export const warningKinds = [
   "documentExpiring",
+  "standingLineEnding",
   "recuperationApproaching",
   "monthNotExported",
   "seniorityYearTurning",

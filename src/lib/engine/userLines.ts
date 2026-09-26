@@ -1,3 +1,4 @@
+import { compareMonth, parseYearMonth } from "@/lib/dates";
 import { userLineKey } from "@/lib/engine/month";
 import { userLineDirections, userLinePlacements } from "@/lib/engine/types";
 import { parseShekels } from "@/lib/money";
@@ -92,6 +93,65 @@ export function reviewUserLine(
       placement: draft.placement,
       agorot,
       ...(note === "" ? {} : { note }),
+    },
+  };
+}
+
+/**
+ * A standing line as it leaves the browser: the line, and the lifetime only a
+ * standing line has (specs.md item 20).
+ *
+ * **The two ends travel as text and are read here**, for the reason every other
+ * draft in this file gives: the browser collects the gesture and the server
+ * decides what it means (Part 3). Empty is not a missing value but the answer
+ * "no end on that side", which is why a blank pair is a line that applies to
+ * every month rather than a refusal.
+ */
+export interface StandingLineDraft extends UserLineDraft {
+  /** `YYYY-MM`, or empty for a line that reaches back as far as the employment
+   * does. */
+  from: string;
+  /** `YYYY-MM`, or empty for a line that runs on. */
+  until: string;
+}
+
+/** A standing line's own refusal, beside the three a line of any lifetime can
+ * be refused for: the range read backwards. */
+export type StandingLineRefusal = UserLineRefusal | "lifetime";
+
+/**
+ * The draft as a standing `UserLine`, or the reason it is not one (item 20).
+ *
+ * **The line itself is reviewed by `reviewUserLine`**, because a standing line
+ * is a one-off line with a different lifetime: the words, the amount, the
+ * direction and the placement are the line's and two reviews would be two
+ * places for those rules to drift. What this adds is the lifetime and the one
+ * rule about it — a last month before the first is a range that reaches no
+ * month at all, and a family that typed it meant something else.
+ */
+export function reviewStandingLine(
+  draft: StandingLineDraft,
+  id: string,
+): { ok: true; line: UserLine } | { ok: false; reason: StandingLineRefusal } {
+  const reviewed = reviewUserLine(draft, id);
+  if (!reviewed.ok) return reviewed;
+
+  const from = draft.from.trim() === "" ? undefined : parseYearMonth(draft.from.trim());
+  const until = draft.until.trim() === "" ? undefined : parseYearMonth(draft.until.trim());
+  if (from === null || until === null) return { ok: false, reason: "lifetime" };
+  if (from !== undefined && until !== undefined && compareMonth(until, from) < 0) {
+    return { ok: false, reason: "lifetime" };
+  }
+
+  return {
+    ok: true,
+    line: {
+      ...reviewed.line,
+      // Written only where the user named an end, so a line with no lifetime is
+      // stored exactly as one written before the lifetime existed — which is
+      // what makes "applies to every month" one state rather than two.
+      ...(from === undefined ? {} : { from }),
+      ...(until === undefined ? {} : { until }),
     },
   };
 }

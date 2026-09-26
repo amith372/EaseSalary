@@ -25,7 +25,13 @@ import { recuperationDaysCarriedIntoFirstMonth } from "@/lib/engine/recuperation
 import { recordOf } from "@/lib/engine/repository";
 import { salaryFor } from "@/lib/engine/salary";
 import type { MonthRecord, WorkerProfile } from "@/lib/engine/repository";
-import { closeMonth, genders, incomeTaxModes, snapshotTerms } from "@/lib/engine/types";
+import {
+  closeMonth,
+  genders,
+  incomeTaxModes,
+  profileTerms,
+  snapshotTerms,
+} from "@/lib/engine/types";
 import type {
   Gender,
   IncomeTaxSetting,
@@ -394,10 +400,15 @@ export function reviewOpeningDays(
  * month. Compared as JSON because the engine runs in the browser too; a
  * difference in key order alone reads as a change, which costs one needless
  * re-save and never a missed one.
+ *
+ * **It compares the profile's terms and not one month's** (`profileTerms`): a
+ * standing line's lifetime moved from June to August changes which months carry
+ * it without changing the line, and a comparison made through one month's
+ * filter would answer "nothing changed" and leave the months unfilled.
  */
 export function termsDiffer(before: WorkerTerms, after: WorkerTerms): boolean {
   return (
-    JSON.stringify(snapshotTerms(before)) !== JSON.stringify(snapshotTerms(after))
+    JSON.stringify(profileTerms(before)) !== JSON.stringify(profileTerms(after))
   );
 }
 
@@ -433,15 +444,20 @@ export function monthsFollowingProfile(
   profile: WorkerTerms,
   today: IsoDate,
 ): MonthRecord[] {
-  const terms = snapshotTerms(profile);
   const current = monthOf(today);
-  return months.filter(followsProfile).map((facts) => ({
-    ...recordOf(facts),
-    terms:
-      compareMonth(facts.month, current) < 0
-        ? { ...terms, restDay: facts.terms.restDay }
-        : terms,
-  }));
+  return months.filter(followsProfile).map((facts) => {
+    // Snapshotted per month rather than once, because a standing line's
+    // lifetime decides which months carry it (item 20): one snapshot reused
+    // would put every line into every month it was extended past.
+    const terms = snapshotTerms(profile, facts.month);
+    return {
+      ...recordOf(facts),
+      terms:
+        compareMonth(facts.month, current) < 0
+          ? { ...terms, restDay: facts.terms.restDay }
+          : terms,
+    };
+  });
 }
 
 /**

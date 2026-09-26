@@ -16,8 +16,8 @@ import {
   addOpeningAdvance,
   addStandingLine,
   removeOpeningAdvance,
+  removeStandingLine,
   setOpeningDays,
-  stopStandingLine,
   updateStandingLine,
 } from "@/app/workers/actions";
 import { Bidi } from "@/components/Bidi";
@@ -33,6 +33,7 @@ import {
   touchTargetClass,
 } from "@/components/Field";
 import { MoneyValue } from "@/components/MoneyValue";
+import { MonthSelect } from "@/components/MonthSelect";
 import { useAction } from "@/components/useAction";
 import { useUserLineForm } from "@/components/useUserLineForm";
 import {
@@ -47,6 +48,9 @@ import {
   userLinePlacements,
 } from "@/lib/engine/types";
 import type { UserLine } from "@/lib/engine/types";
+import { compareMonth, yearMonthText } from "@/lib/dates";
+import { monthLabel } from "@/lib/dateLabels";
+import type { YearMonth } from "@/lib/types";
 import type { WorkerProfile } from "@/lib/engine/repository";
 import { he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
@@ -64,9 +68,16 @@ import { formatDays } from "@/lib/money";
  *
  * The panel is the one `/payments` uses for a one-off line, and deliberately:
  * the three choices are the line's and not the month's, so a second panel would
- * be a second place for the placement rule to drift. What differs is the verb —
- * a standing line is *stopped* rather than removed, because stopping it leaves
- * every month it already appeared in exactly as it was.
+ * be a second place for the placement rule to drift. What it adds is the one
+ * thing only a standing line has — **a lifetime**, a first month and an optional
+ * last one (item 20) — held here rather than in the shared hook, since a one-off
+ * line belongs to the month it was typed into and has no range to name.
+ *
+ * **Two endings, two gestures.** `להסיר` deletes the line, which is what a line
+ * added by mistake needs; a line that is *meant* to stop is ended by its last
+ * month, stays listed under the quieter heading below, and is started again by
+ * clearing that month (the user, 2026-09-26). A month already confirmed keeps
+ * whichever snapshot it was confirmed with, either way.
  */
 /**
  * The names a control is known by while it waits, built rather than typed at
@@ -75,17 +86,34 @@ import { formatDays } from "@/lib/money";
  * right on their own.
  */
 const busyKey = {
-  standingLine: (id: string) => `stop:${id}`,
+  standingLine: (id: string) => `remove:${id}`,
   advance: (number: number) => `remove:${number}`,
 };
+
+/**
+ * How far a standing line's lifetime may reach, in months either side of this
+ * one.
+ *
+ * A lifetime is set looking forward — a deduction agreed for the next few months
+ * — so the forward reach is the long one: four years covers the employment
+ * permit's own cycle, the slowest clock the application knows (item 28). Two
+ * years back is for an employment the application took over part-way, whose
+ * earlier months are still unconfirmed drafts.
+ */
+const LIFETIME_MONTHS_BACK = 2 * 12;
+const LIFETIME_MONTHS_FORWARD = 4 * 12;
 
 export function StandingLinesControl({
   workerId,
   standingLines,
+  month,
   onSubmit,
 }: {
   workerId: string;
   standingLines: UserLine[];
+  /** This month, passed in because nothing reads a clock during a render — and
+   * the months the lifetime offers are counted from it. */
+  month: YearMonth;
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.standing;
@@ -114,9 +142,46 @@ export function StandingLinesControl({
     send: onSubmit,
     save: (open, draft) =>
       open === "new"
-        ? addStandingLine(workerId, draft)
-        : updateStandingLine(workerId, open, draft),
+        ? addStandingLine(workerId, { ...draft, from, until })
+        : updateStandingLine(workerId, open, { ...draft, from, until }),
   });
+
+  // The lifetime is held here and not in the shared hook: a one-off line has no
+  // range to name. Empty is the answer "no end on this side", so a panel opened
+  // fresh writes a line that applies to every month — exactly what a standing
+  // line meant before the lifetime existed.
+  const [from, setFrom] = useState("");
+  const [until, setUntil] = useState("");
+
+  /** Every way into the panel clears or fills these two, because the hook's own
+   * reset cannot reach them: a month left over from the last line would be a
+   * lifetime nobody typed. */
+  function openFor(line: UserLine | null) {
+    if (line === null) {
+      clear();
+      setFrom("");
+      setUntil("");
+      setOpen("new");
+      return;
+    }
+    openEdit(line);
+    setFrom(line.from === undefined ? "" : yearMonthText(line.from));
+    setUntil(line.until === undefined ? "" : yearMonthText(line.until));
+  }
+
+  function cancel() {
+    reset();
+    setFrom("");
+    setUntil("");
+  }
+
+  /** A line whose last month has already passed. It reaches no later month, and
+   * it is listed under its own quieter heading rather than dropped: the edit
+   * that would start it again is on its row (item 20). */
+  const hasEnded = (line: UserLine) =>
+    line.until !== undefined && compareMonth(line.until, month) < 0;
+  const live = standingLines.filter((line) => !hasEnded(line));
+  const ended = standingLines.filter(hasEnded);
 
   const panel = (
     <Card
@@ -166,6 +231,38 @@ export function StandingLinesControl({
         ))}
       </div>
 
+      <div className="flex flex-col gap-1">
+        <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+          {words.lifetime.title}
+        </span>
+        <div className="flex flex-wrap gap-2">
+          <MonthSelect
+            label={words.lifetime.from}
+            month={month}
+            value={from}
+            onChange={setFrom}
+            emptyLabel={words.lifetime.fromNone}
+            back={LIFETIME_MONTHS_BACK}
+            forward={LIFETIME_MONTHS_FORWARD}
+          />
+          <MonthSelect
+            label={words.lifetime.until}
+            month={month}
+            value={until}
+            onChange={setUntil}
+            emptyLabel={words.lifetime.untilNone}
+            back={LIFETIME_MONTHS_BACK}
+            forward={LIFETIME_MONTHS_FORWARD}
+          />
+        </div>
+        <span
+          dir="auto"
+          className="text-[12px] leading-[1.5] font-light text-ink-quiet text-pretty"
+        >
+          {words.lifetime.hint}
+        </span>
+      </div>
+
       <NoteField
         label={lineWords.note}
         hint={lineWords.noteHint}
@@ -185,11 +282,55 @@ export function StandingLinesControl({
             {open === "new" ? lineWords.submit : lineWords.save}
           </span>
         </button>
-        <button type="button" onClick={reset} className={quietButtonClass}>
+        <button type="button" onClick={cancel} className={quietButtonClass}>
           <span dir="auto">{he.workers.profile.terms.cancel}</span>
         </button>
       </div>
     </Card>
+  );
+
+  /** One line's row. Written once because the ended lines below are the same
+   * rows under a quieter heading, and two copies would be two rows that could
+   * come to offer different gestures. */
+  const rowFor = (line: UserLine) => (
+    <li key={line.id} className="flex flex-col">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-[15px] font-medium">
+            <Bidi>{line.label}</Bidi>
+          </span>
+          <Lifetime line={line} month={month} />
+        </span>
+        <span className="flex items-baseline gap-3">
+          <MoneyValue
+            agorot={line.direction === "addition" ? line.agorot : -line.agorot}
+          />
+          <button
+            type="button"
+            onClick={() => openFor(line)}
+            aria-label={words.editLabel(line.label)}
+            className={quietButtonClass}
+          >
+            <span dir="auto">{words.edit}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              run(
+                () => removeStandingLine(workerId, line.id),
+                undefined,
+                busyKey.standingLine(line.id),
+              )
+            }
+            aria-label={words.removeLabel(line.label)}
+            {...busyAttrs(busyAt(busyKey.standingLine(line.id)), quietButtonClass)}
+          >
+            <span dir="auto">{words.remove}</span>
+          </button>
+        </span>
+      </div>
+      {open === line.id ? panel : null}
+    </li>
   );
 
   return (
@@ -197,50 +338,30 @@ export function StandingLinesControl({
       <div data-terms="standing" className="flex flex-col gap-2">
         {standingLines.length === 0 ? (
           <Empty>{words.empty}</Empty>
-        ) : (
-          <ul className="flex flex-col gap-1.5">
-            {standingLines.map((line) => (
-              <li key={line.id} className="flex flex-col">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <span className="text-[15px] font-medium">
-                    <Bidi>{line.label}</Bidi>
-                  </span>
-                  <span className="flex items-baseline gap-3">
-                    <MoneyValue
-                      agorot={
-                        line.direction === "addition"
-                          ? line.agorot
-                          : -line.agorot
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={() => openEdit(line)}
-                      aria-label={words.editLabel(line.label)}
-                      className={quietButtonClass}
-                    >
-                      <span dir="auto">{words.edit}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        run(
-                          () => stopStandingLine(workerId, line.id),
-                          undefined,
-                          busyKey.standingLine(line.id),
-                        )
-                      }
-                      aria-label={words.stopLabel(line.label)}
-                      {...busyAttrs(busyAt(busyKey.standingLine(line.id)), quietButtonClass)}
-                    >
-                      <span dir="auto">{words.stop}</span>
-                    </button>
-                  </span>
-                </div>
-                {open === line.id ? panel : null}
-              </li>
-            ))}
-          </ul>
+        ) : null}
+
+        {live.length === 0 ? null : (
+          <ul className="flex flex-col gap-1.5">{live.map(rowFor)}</ul>
+        )}
+
+        {ended.length === 0 ? null : (
+          <div data-terms="standing-ended" className="flex flex-col gap-1.5">
+            <span
+              dir="auto"
+              className="mt-1 text-[13px] font-medium text-ink-quiet"
+            >
+              {words.ended}
+            </span>
+            <span
+              dir="auto"
+              className="text-[12px] leading-[1.5] font-light text-ink-quiet text-pretty"
+            >
+              {words.endedHint}
+            </span>
+            <ul className="flex flex-col gap-1.5 text-ink-mute">
+              {ended.map(rowFor)}
+            </ul>
+          </div>
         )}
 
         {open === "new" ? (
@@ -248,10 +369,7 @@ export function StandingLinesControl({
         ) : (
           <button
             type="button"
-            onClick={() => {
-              clear();
-              setOpen("new");
-            }}
+            onClick={() => openFor(null)}
             className={`${touchTargetClass} self-start text-[14px] font-medium text-forest hover:underline hover:underline-offset-4`}
           >
             <span dir="auto">{words.add}</span>
@@ -261,6 +379,38 @@ export function StandingLinesControl({
         {open === null && refusal ? <Refusal reason={refusal} /> : null}
       </div>
     </TermRow>
+  );
+}
+
+/**
+ * The months a standing line reaches, under its own row (specs.md item 20).
+ *
+ * Built in markup rather than as a string for `CoveredMonths`' reason: each end
+ * is a mixed run of digits and Hebrew and needs its own isolate (`CLAUDE.md`).
+ * A line with no lifetime draws nothing at all — it applies to every month, which
+ * is the plain case and says itself.
+ */
+function Lifetime({ line, month }: { line: UserLine; month: YearMonth }) {
+  const words = he.workers.profile.terms.standing.lifetime;
+  if (line.from === undefined && line.until === undefined) return null;
+  const notYet = line.from !== undefined && compareMonth(line.from, month) > 0;
+  return (
+    <span dir="auto" className="text-[13px] font-light text-ink-quiet">
+      {line.from === undefined ? null : (
+        <>
+          <span>{words.shownFrom}</span>
+          <Bidi noTranslate>{monthLabel(line.from)}</Bidi>
+        </>
+      )}
+      {line.until === undefined ? null : (
+        <>
+          <span>{line.from === undefined ? "" : " "}</span>
+          <span>{words.shownUntil} </span>
+          <Bidi noTranslate>{monthLabel(line.until)}</Bidi>
+        </>
+      )}
+      {notYet ? <span> · {words.notYet}</span> : null}
+    </span>
   );
 }
 

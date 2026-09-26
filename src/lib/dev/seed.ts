@@ -312,7 +312,7 @@ function monthsFor(
     confirmedWage: wageFor(profile, month),
     // The terms the month was calculated with, copied off the profile at the
     // moment it was confirmed and read from here afterwards (specs.md Part 3).
-    terms: snapshotTerms(profile),
+    terms: snapshotTerms(profile, month),
     advances: [],
     thirdPartyPayments: [],
     userLines: [],
@@ -349,7 +349,7 @@ const workbookMonths: MonthRecord[] = WORKBOOK_SEED_MONTHS.map((m) => ({
     minimumAgorot: m.salaryAgorot,
     effectiveFrom: m.salaryAgorot === WAGE_2026 ? "2026-04-01" : "2025-04-01",
   },
-  terms: snapshotTerms(firstWorker),
+  terms: snapshotTerms(firstWorker, m.month),
   advances: m.advances.map((a) => ({
     number: a.number,
     kind: a.kind,

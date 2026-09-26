@@ -21,7 +21,7 @@ import {
   reviewEmployedSince,
   type OpeningDraft,
 } from "@/lib/engine/profile";
-import type { MonthFacts, WorkerTerms } from "@/lib/engine/types";
+import type { MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
 
 /**
  * The rules the worker's profile is changed by (`build_plan.md` stage 4, step
@@ -283,6 +283,101 @@ describe("a term changed on the profile reaches the months that follow it (Part 
     ]);
   });
 
+  /**
+   * The lifetime, month by month (specs.md item 20).
+   *
+   * **The boundary months are worked out on paper and written here**, never read
+   * back from the engine (`CLAUDE.md` rule 11): a line from June to August
+   * reaches June, July and August and no other month, so May and September are
+   * asserted empty and the three in between asserted to hold it. The months are
+   * 2026's, the year `facts` builds.
+   */
+  describe("a standing line's lifetime decides which months carry it", () => {
+    const line = {
+      id: "phone",
+      label: "השתתפות בטלפון",
+      direction: "deduction" as const,
+      placement: "afterGross" as const,
+      agorot: 30000,
+    };
+    const may = 5;
+    const september = 9;
+    const months = [5, 6, 7, 8, 9].map((month) => facts(month, TERMS));
+
+    /** Which of May … September carried the line, as a list of month numbers. */
+    function carriedBy(lifetime: Pick<UserLine, "from" | "until">): number[] {
+      return monthsFollowingProfile(
+        months,
+        { ...TERMS, standingLines: [{ ...line, ...lifetime }] },
+        "2026-05-01",
+      )
+        .filter((record) => record.terms.standingLines.length === 1)
+        .map((record) => record.month.month);
+    }
+
+    it("reaches every month between its two ends, and none outside them", () => {
+      expect(
+        carriedBy({ from: { year: 2026, month: 6 }, until: { year: 2026, month: 8 } }),
+      ).toEqual([6, 7, 8]);
+    });
+
+    it("reaches from its first month onwards where it has no last month", () => {
+      expect(carriedBy({ from: { year: 2026, month: 7 } })).toEqual([7, 8, september]);
+    });
+
+    it("reaches up to its last month where it has no first month", () => {
+      expect(carriedBy({ until: { year: 2026, month: 7 } })).toEqual([may, 6, 7]);
+    });
+
+    it("reaches every month where it has neither, as it did before lifetimes", () => {
+      expect(carriedBy({})).toEqual([may, 6, 7, 8, september]);
+    });
+
+    it("reaches one month where both ends are that month", () => {
+      expect(
+        carriedBy({ from: { year: 2026, month: 7 }, until: { year: 2026, month: 7 } }),
+      ).toEqual([7]);
+    });
+
+    /**
+     * **Extending refills, and a confirmed month keeps what it was confirmed
+     * with** — item 20's own two sentences, and F28's rule rather than a second
+     * one.
+     *
+     * July is confirmed *without* the line and August is a draft carrying it.
+     * Extending the lifetime over both leaves July exactly as it was and gives
+     * August the line, which is the distinction a single flag could not make.
+     */
+    it("refills a draft month inside the new range and leaves a confirmed one alone", () => {
+      const july = { ...facts(7, TERMS), confirmedAt: "2026-07-31T21:00:00.000Z" };
+      const august = facts(8, TERMS);
+      const extended = monthsFollowingProfile(
+        [july, august],
+        {
+          ...TERMS,
+          standingLines: [
+            { ...line, from: { year: 2026, month: 7 }, until: { year: 2026, month: 12 } },
+          ],
+        },
+        "2026-07-01",
+      );
+
+      // July is not in the answer at all: it does not follow the profile.
+      expect(extended.map((record) => record.month.month)).toEqual([8]);
+      expect(extended[0]?.terms.standingLines).toHaveLength(1);
+      // And the stored month is untouched, as it was confirmed.
+      expect(july.terms.standingLines).toEqual([]);
+    });
+
+    /** The same rule read the other way: shortening a lifetime takes the line
+     * out of the drafts beyond the new end. A month past it carries nothing. */
+    it("takes the line out of a draft month beyond a shortened lifetime", () => {
+      expect(
+        carriedBy({ from: { year: 2026, month: 5 }, until: { year: 2026, month: 6 } }),
+      ).toEqual([may, 6]);
+    });
+  });
+
   it("rewrites the months only for a change to a term a month copies", () => {
     // `MonthTerms` holds five fields: the rest day, the rest-eve supplement,
     // the recuperation month, the income-tax setting and the standing lines.
@@ -303,6 +398,25 @@ describe("a term changed on the profile reaches the months that follow it (Part 
       { ...TERMS, standingLines: [line] },
     ];
     for (const after of copied) expect(termsDiffer(TERMS, after)).toBe(true);
+
+    // **A lifetime moved is a change, though no single month's snapshot has to
+    // differ for it** (item 20). A line June-to-July extended to August changes
+    // nothing about June or July and everything about August, so the comparison
+    // is made over the profile's whole list: made through one month's filter it
+    // would answer "nothing changed" and leave August unfilled.
+    const withLifetime = {
+      ...TERMS,
+      standingLines: [
+        { ...line, from: { year: 2026, month: 6 }, until: { year: 2026, month: 7 } },
+      ],
+    };
+    const extended = {
+      ...TERMS,
+      standingLines: [
+        { ...line, from: { year: 2026, month: 6 }, until: { year: 2026, month: 8 } },
+      ],
+    };
+    expect(termsDiffer(withLifetime, extended)).toBe(true);
 
     expect(termsDiffer(TERMS, { ...TERMS, gender: "male" })).toBe(false);
     expect(termsDiffer(TERMS, { ...TERMS, employedSince: "2024-05-01" })).toBe(false);

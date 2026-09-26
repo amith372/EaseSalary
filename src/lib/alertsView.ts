@@ -125,6 +125,12 @@ function phrase(
         href: "/settings/holidays",
         law: "holidayWork",
       };
+    case "standingLineEnding":
+      return {
+        said: words.standingLineEnding(entry.label, monthLabel(entry.month)),
+        href: "/settings",
+        law: "wageDeductions",
+      };
     case "recuperationDue":
       return {
         said: words.recuperationDue(monthLabel(entry.month)),

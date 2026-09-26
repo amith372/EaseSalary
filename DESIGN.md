@@ -288,6 +288,26 @@ folded sheet.
   "which figure is the application holding, and out of where" existed nowhere the
   user could go and look. The failed-fetch sentence before an export sends her
   here for it.
+- **A standing line carries a lifetime the canvas does not draw**, and it is two
+  selects over months and not a typed date (`specs.md` item 20). The wording the
+  third-party period already gives is the reason: a browser's own `type="month"`
+  picker is laid out and worded by the browser's locale rather than the page's, so
+  on a Hebrew right-to-left page it can arrive left-to-right and in another
+  language — which is why `MonthSelect` moved out of `MonthActions.tsx` and both
+  controls now share it. The empty option at each end is an answer and not a
+  blank: "no end on this side", and both empty is a line that applies to every
+  month, which is what every standing line meant before the lifetime existed. The
+  row above says the range beside the line's own words, each month isolated, and a
+  line with no lifetime says nothing — the plain case is the quiet one. The salary
+  row's `YYYY-MM` text field in the same group is not the model here and is the
+  thing that should move: a family should not have to know the idiom.
+- **A line whose last month has passed keeps a row, under a quieter heading**
+  (`שורות שנגמרו`) rather than leaving the screen. Item 20 asks for it, and the
+  reason is the gesture beside it: the edit that clears or extends the last month
+  is on that row, so a line dropped from the screen is a line that cannot be
+  started again. The two endings are two gestures and wear two words — `להסיר`
+  deletes the line outright, which a line added by mistake needs, and a last month
+  merely ends it (the user, 2026-09-26).
 - **The row never prints the stored source string.** It used to, and for the
   seeded wage that was `שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6`: a path into
   a file the application does not hold, and one the right-to-left run reordered

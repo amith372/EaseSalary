@@ -85,7 +85,7 @@ function terms(employedSince = "2024-04-01"): WorkerTerms {
 
 function facts(spans: ClosedSpan[], month: YearMonth = AUGUST_2025): ClosedMonthFacts {
   return {
-    terms: snapshotTerms(terms()),
+    terms: snapshotTerms(terms(), month),
     month,
     confirmedWage: {
       baseAgorot: SALARY,

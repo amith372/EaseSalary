@@ -180,7 +180,7 @@ function marchFacts(overrides: Partial<MonthFacts> = {}): MonthFacts {
       { ...july2026, month: { year: 2026, month: 3 }, freeRestDays: [], advances: [] },
       worker,
     ),
-    terms: snapshotTerms(worker),
+    terms: snapshotTerms(worker, { year: 2026, month: 3 }),
     ...overrides,
   };
 }

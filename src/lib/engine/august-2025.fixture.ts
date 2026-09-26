@@ -67,7 +67,7 @@ export function plainWorker(standingLines: UserLine[] = []): WorkerTerms {
 export function plainAugustFacts(terms: WorkerTerms): MonthFacts {
   return {
     month: AUGUST_2025,
-    terms: snapshotTerms(terms),
+    terms: snapshotTerms(terms, AUGUST_2025),
     confirmedWage: {
       baseAgorot: SALARY,
       minimumAgorot: SALARY,

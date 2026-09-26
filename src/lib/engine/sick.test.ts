@@ -94,7 +94,7 @@ function facts(
 ): ClosedMonthFacts {
   return {
     month,
-    terms: snapshotTerms(worker),
+    terms: snapshotTerms(worker, month),
     confirmedWage: {
       baseAgorot: SALARY,
       minimumAgorot: SALARY,

@@ -65,6 +65,7 @@ export type ActionEntry = { list: ActionList } & (
       chosenDays: number;
       allowance: number;
     }
+  | { key: "standingLineEnding"; label: string; month: YearMonth }
   | { key: "recuperationDue"; month: YearMonth }
   | { key: "recuperationApproaching"; month: YearMonth }
   | { key: "vacationUnderSeven"; year: number; days: number; required: number }
@@ -104,6 +105,7 @@ export function actionList(input: ActionListInput): ActionEntry[] {
   return [
     ...nationalInsurance(input),
     ...documents(input),
+    ...standingLinesEnding(input),
     ...advances(input),
     ...holidays(input),
     ...recuperation(input),
@@ -171,6 +173,37 @@ function documents({ profile, series, today }: ActionListInput): ActionEntry[] {
     }
   }
   return entries;
+}
+
+/**
+ * A standing line whose last month is the month after this one (item 20).
+ *
+ * **It is the second stage of the pattern `documentExpiring` runs**, which is
+ * why it is a warning and why it sits beside the documents: something the family
+ * agreed will stop paying itself next month, and the month before is when they
+ * can still say otherwise. A line already past its last month raises nothing —
+ * there is nothing left to warn about — and a line with no last month never
+ * ends, so neither is here.
+ *
+ * It reads the **profile** and not the months: next month has not been opened,
+ * exactly as `recuperation` above reads the profile for the month ahead.
+ */
+function standingLinesEnding({ profile, today }: ActionListInput): ActionEntry[] {
+  const next = addMonths(monthOf(today), 1);
+  return profile.standingLines.flatMap((line) =>
+    line.until !== undefined && sameMonth(line.until, next)
+      ? [
+          {
+            list: "warning" as const,
+            key: "standingLineEnding" as const,
+            // The user's own words for the line, carried as data: the screen
+            // phrases the sentence around it and never translates it (item 20).
+            label: line.label,
+            month: line.until,
+          },
+        ]
+      : [],
+  );
 }
 
 /** The latest cover any recorded medical-insurance payment bought (item 16). */

@@ -49,7 +49,7 @@ function facts(
   extras: Partial<ClosedMonthFacts> = {},
 ): ClosedMonthFacts {
   return {
-    terms: snapshotTerms(terms),
+    terms: snapshotTerms(terms, { year: 2025, month: 8 }),
     month: { year: 2025, month: 8 },
     confirmedWage: {
       baseAgorot: 624765,

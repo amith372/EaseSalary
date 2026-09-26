@@ -1,6 +1,6 @@
 import { SEEDED_RATES } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
-import { compareIsoDate, daysInMonth, isoOf, orderDates } from "@/lib/dates";
+import { compareIsoDate, compareMonth, daysInMonth, isoOf, orderDates } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { SEEDED_TAX_BRACKETS } from "@/lib/taxBrackets";
 import type { TaxYearBrackets } from "@/lib/taxBrackets";
@@ -297,8 +297,10 @@ export interface WorkerTerms {
    * switching to `none` in June leaves every earlier month exactly as it was.
    */
   incomeTax: IncomeTaxSetting;
-  /** Lines the user set once and that appear in every month afterwards, at the
-   * same amount, until they are changed or stopped (specs.md item 20). */
+  /** Lines the user set once that appear in every month their lifetime reaches,
+   * at the same amount, until they are changed or removed (specs.md item 20).
+   * The whole list lives here whatever each line's lifetime; which of them one
+   * month carries is decided by `standingLinesFor` at the snapshot. */
   standingLines: UserLine[];
   /**
    * The country whose holiday list the worker's year is drawn from (specs.md
@@ -361,28 +363,52 @@ export interface MonthTerms {
    */
   incomeTax: IncomeTaxSetting;
   /**
-   * The standing lines this month was calculated with (specs.md item 20).
+   * The standing lines this month was calculated with (specs.md item 20) —
+   * those whose lifetime reaches it, filtered by `standingLinesFor` when the
+   * snapshot was taken.
    *
    * A standing line is a term of the employment like the supplement and the
-   * rest day, so it is snapshotted here and read from here: stopping one in June
-   * leaves every earlier month exactly as it was, which is the same argument
-   * Part 3 makes for the rest of the terms.
+   * rest day, so it is snapshotted here and read from here: removing one in June
+   * leaves every month already confirmed exactly as it was, which is the same
+   * argument Part 3 makes for the rest of the terms.
    */
   standingLines: UserLine[];
 }
 
 /**
- * Copy the profile's current terms onto a month. Called at the moment a month
- * is confirmed (specs.md Part 5, the month's four states) and never afterwards
- * - a confirmed month's terms are then its own.
+ * The profile's terms as the profile holds them, before any one month narrows
+ * them: every field of `MonthTerms`, with **every** standing line whatever its
+ * lifetime.
+ *
+ * It exists for `termsDiffer`, which asks whether a change to the profile
+ * reaches the months at all. That question is about the profile and not about
+ * one month: a lifetime moved from June to August changes no month's snapshot
+ * that a single month's view would show, and the months still have to be
+ * refilled. Comparing the whole list is what catches it.
  */
-export function snapshotTerms(worker: WorkerTerms): MonthTerms {
+export function profileTerms(worker: WorkerTerms): MonthTerms {
   return {
     restDay: worker.restDay,
     restEveSupplementAgorot: worker.restEveSupplementAgorot,
     recuperationMonth: worker.recuperationMonth,
     incomeTax: worker.incomeTax,
     standingLines: worker.standingLines,
+  };
+}
+
+/**
+ * Copy the profile's current terms onto a month. Called at the moment a month
+ * is confirmed (specs.md Part 5, the month's four states) and never afterwards
+ * - a confirmed month's terms are then its own.
+ *
+ * **The month is a parameter because a standing line has a lifetime** (item
+ * 20): the terms one month copies are the standing lines that reach *it*, so
+ * the filter belongs at the copy and not at every reader of the result.
+ */
+export function snapshotTerms(worker: WorkerTerms, month: YearMonth): MonthTerms {
+  return {
+    ...profileTerms(worker),
+    standingLines: standingLinesFor(worker.standingLines, month),
   };
 }
 
@@ -600,6 +626,49 @@ export interface UserLine {
   /** The reason, which is the part the application cannot derive and the part a
    * later reader needs (item 20). */
   note?: string;
+  /**
+   * The first month a **standing** line reaches, and the last (specs.md item
+   * 20). Both are optional and both mean "no end on that side", so a line with
+   * neither applies to every month — which is what every standing line meant
+   * before a lifetime could be recorded, the idiom `placement` already uses.
+   *
+   * They are meaningless on a one-off line, which belongs to the one month it
+   * is stored in, and `reviewUserLine` never sets them: a lifetime arrives only
+   * through `reviewStandingLine`. The filter is `standingLinesFor`, applied
+   * where the snapshot is taken, so a month's `terms.standingLines` holds the
+   * lines that month actually carries and nothing downstream filters again.
+   */
+  from?: YearMonth;
+  until?: YearMonth;
+}
+
+/**
+ * The standing lines one month carries — those whose lifetime covers it
+ * (specs.md item 20).
+ *
+ * **A missing end is not a missing value, it is "no end on that side".** A line
+ * with no `from` reaches back as far as the employment does and one with no
+ * `until` runs on, so a line with neither is in every month; that is what a
+ * standing line meant before the lifetime existed, and it is why nothing had to
+ * be migrated.
+ *
+ * It is applied **at the snapshot** and not where a line is drawn. A month keeps
+ * the terms it was calculated with (Part 3), so filtering here is what makes
+ * `terms.standingLines` mean "the lines this month carries": a confirmed month
+ * keeps the snapshot it was confirmed with even after the lifetime moves, and a
+ * month still following the profile is refilled by `monthsFollowingProfile`.
+ * Filtering at the drawing end instead would leave the sheet, the payslip and
+ * `notes.ts` each to remember to do it.
+ */
+export function standingLinesFor(
+  lines: readonly UserLine[],
+  month: YearMonth,
+): UserLine[] {
+  return lines.filter(
+    (line) =>
+      (line.from === undefined || compareMonth(month, line.from) >= 0) &&
+      (line.until === undefined || compareMonth(month, line.until) <= 0),
+  );
 }
 
 /**

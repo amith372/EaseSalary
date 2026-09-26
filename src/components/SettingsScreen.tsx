@@ -222,6 +222,7 @@ export function SettingsScreen({
           <StandingLinesControl
             workerId={profile.id}
             standingLines={profile.standingLines}
+            month={month}
             onSubmit={handleAction}
           />
           <OpeningPositionControl

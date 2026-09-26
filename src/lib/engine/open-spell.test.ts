@@ -85,7 +85,7 @@ const worker: WorkerTerms = {
 function facts(spans: MonthSpan[]): MonthFacts {
   return {
     month: AUGUST_2025,
-    terms: snapshotTerms(worker),
+    terms: snapshotTerms(worker, AUGUST_2025),
     confirmedWage: {
       baseAgorot: SALARY,
       minimumAgorot: SALARY,

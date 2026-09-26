@@ -411,7 +411,7 @@ export function openMonthRecord(
   return {
     month,
     confirmedWage,
-    terms: snapshotTerms(profile),
+    terms: snapshotTerms(profile, month),
     advances: [],
     thirdPartyPayments: [],
     userLines: [],

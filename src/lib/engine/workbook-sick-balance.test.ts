@@ -62,7 +62,7 @@ function everyMonth(): MonthFacts[] {
     const wage = wageFor(month);
     months.push({
       month,
-      terms: snapshotTerms(workbookWorker(wage.agorot)),
+      terms: snapshotTerms(workbookWorker(wage.agorot), month),
       confirmedWage: {
         baseAgorot: wage.agorot,
         minimumAgorot: wage.agorot,

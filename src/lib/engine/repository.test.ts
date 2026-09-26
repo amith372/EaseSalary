@@ -72,7 +72,7 @@ function record(month: YearMonth, extra: Partial<MonthRecord> = {}): MonthRecord
       minimumAgorot: 624765,
       effectiveFrom: "2025-04-01",
     },
-    terms: snapshotTerms(HANNA),
+    terms: snapshotTerms(HANNA, month),
     advances: [],
     thirdPartyPayments: [],
     userLines: [],
@@ -653,7 +653,7 @@ describe("opening a month the store has no record of (specs.md item 21)", () => 
     expect(opened).toEqual({
       month: APRIL,
       confirmedWage: NEW_WAGE,
-      terms: snapshotTerms(HANNA),
+      terms: snapshotTerms(HANNA, APRIL),
       advances: [],
       thirdPartyPayments: [],
       userLines: [],

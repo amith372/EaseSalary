@@ -551,7 +551,7 @@ export function workbookFacts(
 
   return {
     month: m.month,
-    terms: snapshotTerms(worker),
+    terms: snapshotTerms(worker, m.month),
     confirmedWage: {
       baseAgorot: m.salaryAgorot,
       minimumAgorot: m.salaryAgorot,

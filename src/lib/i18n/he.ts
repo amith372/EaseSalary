@@ -801,6 +801,7 @@ export const he = {
       close: "סגירה",
       kinds: {
         documentExpiring: "מסמך או ביטוח שעומד לפוג",
+        standingLineEnding: "שורה קבועה שעומדת להיגמר",
         recuperationApproaching: "חודש הבראה שמתקרב",
         monthNotExported: "חודש שהסתיים ולא יוצא",
         seniorityYearTurning: "שנת ותק חדשה",
@@ -847,6 +848,19 @@ export const he = {
           ? ["בתוקף עד ", { value: on }, ", ונשארו פחות משמונה־עשר חודשים."]
           : ["בתוקף עד ", { value: on }, ". כדאי לחדש לפני כן."]) as Said,
         action: document === "medicalInsurance" ? "לרשום חידוש" : "לעדכן תאריך",
+      }),
+      /** The line's own words are the user's and are isolated rather than
+       * translated (item 20). */
+      standingLineEnding: (label: string, month: string) => ({
+        title: ["שורה קבועה שעומדת להיגמר"] as Said,
+        note: [
+          "«",
+          { value: label },
+          "» נגמרת ב",
+          { value: month },
+          ", ואחרי החודש הזה היא לא תופיע יותר.",
+        ] as Said,
+        action: "להגדרות",
       }),
       advanceOutstanding: (number: number, outstanding: string) => ({
         title: ["מקדמה ", { value: String(number) }, " עדיין בהחזר"] as Said,
@@ -2048,13 +2062,52 @@ export const he = {
         },
         standing: {
           title: "שורות קבועות",
-          hint: "שורה שנקבעת פעם אחת ומופיעה בכל חודש מאז, באותו סכום, עד שמשנים אותה או מפסיקים אותה. סכום שונה בחודש מסוים מחליפים במסך התשלומים.",
+          hint: "שורה שנקבעת פעם אחת ומופיעה בכל חודש שבטווח שלה, באותו סכום. אפשר לקבוע מאיזה חודש היא מתחילה ובאיזה חודש היא נגמרת, ואם שניהם ריקים היא חלה על כל החודשים. סכום שונה בחודש מסוים מחליפים במסך התשלומים.",
           empty: "לא נקבעה שורה קבועה.",
           add: "להוסיף שורה קבועה",
           edit: "לתקן",
           editLabel: (label: string) => `לתקן את השורה הקבועה "${label}"`,
-          stop: "להפסיק",
-          stopLabel: (label: string) => `להפסיק את השורה הקבועה "${label}"`,
+          /** The word on the gesture that **deletes** the line (the user,
+           * 2026-09-26). It is `להסיר` and not `להפסיק` for one reason: since a
+           * line can be *ended* by its last month, two different endings would
+           * otherwise wear one word, and a family meaning "stop paying this from
+           * now on" would press it and lose the record. It is also the word
+           * every other removable row on this screen and on `/payments`
+           * already wears. */
+          remove: "להסיר",
+          removeLabel: (label: string) => `להסיר את השורה הקבועה "${label}"`,
+          /** How long a line lasts (specs.md item 20). Genderless, like every
+           * other control here: the infinitive and the impersonal, and only the
+           * worker takes dual forms. */
+          lifetime: {
+            title: "מאיזה חודש ועד איזה חודש",
+            from: "מחודש",
+            until: "עד חודש",
+            /** The empty option at each end. It is an answer and not a blank:
+             * "no end on this side", which together mean a line that applies to
+             * every month — what every standing line meant before a lifetime
+             * could be set. */
+            fromNone: "מתחילת ההעסקה",
+            untilNone: "בלי חודש סיום",
+            hint: "אם משאירים את שני השדות ריקים, השורה חלה על כל החודשים. שינוי כאן מזיז רק חודשים שעדיין לא אושרו — חודש שאושר שומר על מה שאושר בו.",
+            /**
+             * The two ends as the row shows them. They are words and not a
+             * sentence for `CoveredMonths`' reason: each month is a mixed run of
+             * digits and Hebrew needing its own isolate (`CLAUDE.md`), so the row
+             * assembles them in markup. A line with no lifetime shows neither —
+             * the plain case is the quiet one.
+             */
+            shownFrom: "מ־",
+            shownUntil: "עד",
+            /** Beside the range of a line that has not begun: it is live, and it
+             * is not this month's. */
+            notYet: "עוד לא התחילה",
+          },
+          /** The quieter heading a line whose last month has passed sits under
+           * (item 20): the edit that would start it again is on that row, so a
+           * row she cannot see is a line she cannot bring back. */
+          ended: "שורות שנגמרו",
+          endedHint: "החודש האחרון שלהן עבר, ולכן הן לא מופיעות יותר בחודש חדש. תיקון של חודש הסיום מחזיר אותן.",
         },
         opening: {
           title: "המצב שממנו מתחילים",
@@ -2143,6 +2196,7 @@ export const he = {
           shape: "אחת מהבחירות אינה מוכרת. כדאי לרענן את הדף ולנסות שוב.",
           entryUnknown:
             "השורה הזאת כבר לא קיימת. כדאי לרענן את הדף ולראות מה נשמר.",
+          lifetime: "חודש הסיום לא יכול להיות לפני חודש ההתחלה.",
         },
       },
     },

@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import { calculateSeries } from "@/lib/engine/series";
 import { lineKeys } from "@/lib/engine/lines";
 import { isUserLine } from "@/lib/engine/month";
+import { snapshotTerms } from "@/lib/engine/types";
 import type { MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
+import type { MonthResult } from "@/lib/types";
 import {
+  AUGUST_2025,
   plainAugustFacts,
   plainWorker,
 } from "@/lib/engine/august-2025.fixture";
@@ -18,6 +21,7 @@ import { monthSheetInputOf } from "@/lib/export/monthExport";
 import { fillMonthSheet } from "@/lib/export/monthSheet";
 import { MONTH_TEMPLATE, readTemplate } from "@/lib/export/template";
 import { monthLabel } from "@/lib/dateLabels";
+import { userLineKey } from "@/lib/engine/month";
 import { formatAgorot } from "@/lib/money";
 import { sameMonth } from "@/lib/dates";
 import { createInMemoryRepository } from "@/lib/engine/repository";
@@ -113,9 +117,31 @@ function busyMonth(): { worker: WorkerTerms; facts: MonthFacts } {
   return { worker, facts };
 }
 
-async function filled(showNotes: boolean, over: Partial<MonthFacts> = {}) {
-  const { worker, facts: base } = busyMonth();
-  const facts = { ...base, ...over };
+async function filled(
+  showNotes: boolean,
+  over: Partial<MonthFacts> = {},
+  /** The lifetime the standing line is given, where the case is about one
+   * (specs.md item 20). Left out, the line has none and reaches every month,
+   * which is what every standing line meant before a lifetime could be set. */
+  lifetime?: Pick<UserLine, "from" | "until">,
+) {
+  const { worker: plain, facts: base } = busyMonth();
+  const worker =
+    lifetime === undefined
+      ? plain
+      : {
+          ...plain,
+          standingLines: plain.standingLines.map((line) =>
+            line.id === standing.id ? { ...line, ...lifetime } : line,
+          ),
+        };
+  const facts = {
+    ...base,
+    // Snapshotted again, because the lifetime is what decides which lines the
+    // month carries and the snapshot is where that is decided.
+    terms: snapshotTerms(worker, AUGUST_2025),
+    ...over,
+  };
   // The replay, exactly as every screen and the route both take it: a month
   // calculated on its own would open from the wrong balances (item 13).
   const series = calculateSeries([facts], worker);
@@ -151,24 +177,109 @@ function said(sheet: ExcelJS.Worksheet, address: string): string | null {
   return typeof value === "number" ? formatAgorot(Math.round(value * 100)) : null;
 }
 
+/**
+ * Where each of the month's lines lands: the rows the template keeps by name, and
+ * the rest in the order the engine drew them, since an inserted line moves every
+ * row below it. Written once because three cases below walk it, and the row
+ * arithmetic is exactly what must not be worked out twice.
+ */
+function addressesOf(result: MonthResult): { key: string; address: string }[] {
+  const layout = layoutOf(
+    result.lines.filter(isUserLine).length,
+    result.closing.filter((row) => row.block === "transfer").length,
+  );
+  let added = 0;
+  return result.lines.map((line) => {
+    const fixed = TEMPLATE_ROWS[line.key];
+    const row = fixed ?? layout.firstAddedRow + added;
+    if (fixed === undefined) added += 1;
+    return { key: line.key, address: `${line.column}${row}` };
+  });
+}
+
+/** Every line the engine drew, against the cell the sheet drew it in. */
+function expectLinesAgree(sheet: ExcelJS.Worksheet, result: MonthResult): void {
+  const addresses = addressesOf(result);
+  result.lines.forEach((line, index) => {
+    const address = addresses[index]?.address ?? "";
+    expect(said(sheet, address), `${line.key} in ${address}`).toBe(
+      formatAgorot(line.amount ?? 0),
+    );
+  });
+}
+
 describe("the preview and the file, from one engine result", () => {
   it("says every line's amount the same way in both", async () => {
     const { sheet, result } = await filled(false);
+    expectLinesAgree(sheet, result);
+  });
+
+  /**
+   * **A standing line's lifetime reaches the sheet and the screen together**
+   * (specs.md item 20, rule 12).
+   *
+   * August 2025 is the fixture's month. A line whose lifetime is July to
+   * September covers it; a line whose last month is July does not — both worked
+   * out from the criterion's own sentence, "a month outside that range does not
+   * carry the line", and neither read back from the engine.
+   *
+   * **What it would catch**: the filter applied on one side only, which is the
+   * whole hazard of a rule that removes a row — a screen that drops the line
+   * while the sheet still charges it, or a sheet whose subtotal keeps a line the
+   * screen no longer lists. The column is asserted *lighter by exactly the
+   * line's own amount*, because a total that merely differs proves nothing about
+   * which line left it.
+   */
+  const standingKey = userLineKey("standing", standing.id);
+
+  /** Column E's subtotal as the sheet holds it, in agorot. The cell is a formula
+   * with its figure cached beside it, which the case below reads rather than
+   * re-evaluating: the cached figure is what anything that does not recalculate
+   * shows the family. */
+  function subtotalE(sheet: ExcelJS.Worksheet, result: MonthResult): number {
     const layout = layoutOf(
       result.lines.filter(isUserLine).length,
       result.closing.filter((row) => row.block === "transfer").length,
     );
+    const value = sheet.getCell(`E${layout.subtotalERow}`).value;
+    const cached = (value as { result?: number } | null)?.result ?? 0;
+    return Math.round(cached * 100);
+  }
 
-    let added = 0;
-    for (const line of result.lines) {
-      const fixed = TEMPLATE_ROWS[line.key];
-      const row = fixed ?? layout.firstAddedRow + added;
-      if (fixed === undefined) added += 1;
-      expect(
-        said(sheet, `${line.column}${row}`),
-        `${line.key} in ${line.column}${row}`,
-      ).toBe(formatAgorot(line.amount ?? 0));
-    }
+  it("carries a standing line whose lifetime covers the month, in both", async () => {
+    const { sheet, result } = await filled(false, {}, {
+      from: { year: 2025, month: 7 },
+      until: { year: 2025, month: 9 },
+    });
+
+    expect(result.lines.some((line) => line.key === standingKey)).toBe(true);
+    expectLinesAgree(sheet, result);
+    expect(subtotalE(sheet, result)).toBe(
+      result.subtotals.find((one) => one.column === "E")?.amount,
+    );
+  });
+
+  it("leaves it out of both once the month is past its last month", async () => {
+    const inside = await filled(false, {}, {
+      from: { year: 2025, month: 7 },
+      until: { year: 2025, month: 9 },
+    });
+    const after = await filled(false, {}, {
+      from: { year: 2025, month: 7 },
+      until: { year: 2025, month: 7 },
+    });
+
+    expect(after.result.lines.some((line) => line.key === standingKey)).toBe(false);
+    expectLinesAgree(after.sheet, after.result);
+    expect(subtotalE(after.sheet, after.result)).toBe(
+      after.result.subtotals.find((one) => one.column === "E")?.amount,
+    );
+    // The line is a ₪50 deduction sitting in column E, so a month that no longer
+    // carries it has ₪50 more in that column — worked out by hand from the
+    // fixture's own figure and not from either total.
+    expect(
+      subtotalE(after.sheet, after.result) - subtotalE(inside.sheet, inside.result),
+    ).toBe(standing.agorot);
   });
 
   it("says the income tax the same way in both, in the row the sheet keeps for it", async () => {

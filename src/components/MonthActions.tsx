@@ -36,8 +36,8 @@ import { useUserLineForm } from "@/components/useUserLineForm";
 import { RuleLink } from "@/components/WhyDisclosure";
 import { FoldSection, type Fold } from "@/components/FoldSection";
 import { MoneyValue } from "@/components/MoneyValue";
-import { addMonths, yearMonthText } from "@/lib/dates";
-import { monthLabel } from "@/lib/dateLabels";
+import { MonthSelect } from "@/components/MonthSelect";
+import { yearMonthText } from "@/lib/dates";
 import { whyRepaymentIsRefused } from "@/lib/engine/advances";
 import type { AdvanceStanding } from "@/lib/engine/advances";
 import type { OrphanedOverride } from "@/lib/engine/overrides";
@@ -71,6 +71,21 @@ import {
   parseShekels,
 } from "@/lib/money";
 import type { OverrideCandidate, YearMonth } from "@/lib/types";
+
+/**
+ * How far the covered period a payment names may reach, in months.
+ *
+ * **It reaches both ways, because the two kinds of payment look opposite ways.**
+ * The national insurance is paid in arrears and covers months already lived
+ * through (item 19), while a yearly fee covers the year running *forward* from
+ * one employment anniversary to the next (item 15) — so a visa fee paid in March
+ * is for March through next February, and a control offering only past months
+ * could not record it at all. Four years back is the employment permit's own
+ * cycle, the slowest clock the application knows (item 28); a year forward is
+ * the longest any payment reaches ahead.
+ */
+const PERIOD_MONTHS_BACK = 4 * 12;
+const PERIOD_MONTHS_FORWARD = 12;
 
 /**
  * The additional-payments group, on the payments screen (specs.md item 5).
@@ -1549,6 +1564,9 @@ function ThirdPartyControl({
             onChange={(value) =>
               setChosenPeriod({ from: value, to: period.to })
             }
+            emptyLabel={words.periodNone}
+            back={PERIOD_MONTHS_BACK}
+            forward={PERIOD_MONTHS_FORWARD}
           />
           <MonthSelect
             label={words.periodTo}
@@ -1557,6 +1575,9 @@ function ThirdPartyControl({
             onChange={(value) =>
               setChosenPeriod({ from: period.from, to: value })
             }
+            emptyLabel={words.periodNone}
+            back={PERIOD_MONTHS_BACK}
+            forward={PERIOD_MONTHS_FORWARD}
           />
         </div>
         <span
@@ -1978,67 +1999,3 @@ function OverridesControl({
   );
 }
 
-/**
- * One end of a covered period, as a select over months rather than a typed date.
- *
- * **A `<input type="month">` is not used, and that is deliberate.** Its picker
- * is the browser's own and is laid out and worded by the browser's locale, not
- * the page's — so on a Hebrew right-to-left page it can arrive left-to-right and
- * in another language entirely, which is exactly the mixed-direction failure
- * Part 5 warns about, in a control the application cannot style or isolate. A
- * select holds labels the application wrote.
- *
- * **The range reaches both ways, because the two kinds of payment look opposite
- * ways.** The national insurance is paid in arrears and covers months already
- * lived through (item 19), while a yearly fee covers the year running *forward*
- * from one employment anniversary to the next (item 15) — so a visa fee paid in
- * March is for March through next February, and a control offering only past
- * months could not record it at all. Four years back is the employment permit's
- * own cycle, the slowest clock the application knows (item 28); a year forward
- * is the longest any payment reaches ahead.
- *
- * Each option carries the month's own label, and the value is `YYYY-MM`, which
- * is what `parseYearMonth` reads on the server.
- */
-function MonthSelect({
-  label,
-  month,
-  value,
-  onChange,
-}: {
-  label: string;
-  month: YearMonth;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const words = he.month.actions.thirdParty;
-  // Newest first, so the months a quarterly payment wants are at the top of the
-  // list and the forward year is reached by scrolling past them: the arrears
-  // case is the common one.
-  const MONTHS_BACK = 4 * 12;
-  const MONTHS_FORWARD = 12;
-  const options = Array.from(
-    { length: MONTHS_BACK + MONTHS_FORWARD + 1 },
-    (_, index) => addMonths(month, MONTHS_FORWARD - index),
-  );
-
-  return (
-    <label className="flex min-w-0 flex-1 flex-col gap-1">
-      <span dir="auto" className="text-[12px] font-light text-ink-quiet">
-        {label}
-      </span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={inputClass}
-      >
-        <option value="">{words.periodNone}</option>
-        {options.map((candidate) => (
-          <option key={yearMonthText(candidate)} value={yearMonthText(candidate)}>
-            {monthLabel(candidate)}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}

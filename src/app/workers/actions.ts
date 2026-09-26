@@ -34,7 +34,11 @@ import {
 } from "@/lib/engine/profile";
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
 import type { Gender } from "@/lib/engine/types";
-import { reviewUserLine, type UserLineDraft, type UserLineRefusal } from "@/lib/engine/userLines";
+import {
+  reviewStandingLine,
+  type StandingLineDraft,
+  type StandingLineRefusal,
+} from "@/lib/engine/userLines";
 import { isMonthNumber, monthOf, parseYearMonth, yearMonthText } from "@/lib/dates";
 import { balanceOf } from "@/lib/engine/balances";
 import { workerInSeries } from "@/lib/householdSeries";
@@ -76,7 +80,7 @@ import type { RestDay } from "@/lib/dates";
  */
 export type ProfileActionRefusal =
   | OpeningRefusal
-  | UserLineRefusal
+  | StandingLineRefusal
   | "restDay"
   /** Not a mistake but a question: the change would strand a free rest day and
    * the answer is owed before it can be saved (item 5). It is in this union so
@@ -509,13 +513,14 @@ export async function setSalaryChange(
 }
 
 /**
- * A line set once on the profile that appears in every month afterwards, at the
- * same amount, until the user changes it or stops it (specs.md item 20).
+ * A line set once on the profile that appears in every month its lifetime
+ * reaches, at the same amount, until the user changes or removes it (specs.md
+ * item 20).
  *
- * **It is reviewed by the same `reviewUserLine` a one-off line is**, because it
- * is the same thing with a different lifetime: the three choices — which way it
- * moves, where it sits, what it says — are the line's and not the month's, and
- * two reviews would be two places for the placement rule to drift.
+ * **It is reviewed by the same `reviewUserLine` a one-off line is**, wrapped by
+ * `reviewStandingLine` for the lifetime: the three choices — which way it moves,
+ * where it sits, what it says — are the line's and not the month's, and two
+ * reviews would be two places for the placement rule to drift.
  *
  * The id is minted here for the reason every other id is: it is the store's to
  * give, and the line's explanation key is built from it — `standing.<id>` —
@@ -524,9 +529,9 @@ export async function setSalaryChange(
  */
 export async function addStandingLine(
   workerId: string,
-  draft: UserLineDraft,
+  draft: StandingLineDraft,
 ): Promise<ProfileActionResult> {
-  const reviewed = reviewUserLine(draft, randomUUID());
+  const reviewed = reviewStandingLine(draft, randomUUID());
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   const profile = await requireWorker(workerId);
@@ -544,18 +549,23 @@ export async function addStandingLine(
  * line that had never existed — the same argument `updateUserLine` makes for a
  * one-off line, and it bites harder here because a standing line appears in
  * every month at once.
+ *
+ * **Correcting the lifetime comes through here too**, which is what makes
+ * extending a line restore it: `saveProfile` re-snapshots every month that still
+ * follows the profile, so a month inside the new range takes the line back while
+ * a month already confirmed keeps the snapshot it was confirmed with.
  */
 export async function updateStandingLine(
   workerId: string,
   lineId: string,
-  draft: UserLineDraft,
+  draft: StandingLineDraft,
 ): Promise<ProfileActionResult> {
-  const reviewed = reviewUserLine(draft, lineId);
+  const reviewed = reviewStandingLine(draft, lineId);
   if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
   const profile = await requireWorker(workerId);
   if (!profile.standingLines.some((line) => line.id === lineId)) {
-    // A page held open over a line another tab has since stopped. Refused
+    // A page held open over a line another tab has since removed. Refused
     // rather than added back: she is looking at a form for something that is
     // gone.
     return { ok: false, reason: "entryUnknown" };
@@ -573,13 +583,19 @@ export async function updateStandingLine(
 }
 
 /**
- * A standing line stopped (specs.md item 20).
+ * A standing line removed outright (specs.md item 20).
  *
- * **Stopping it in June leaves the earlier months exactly as they were**, and
- * that is not a promise this action keeps by itself — it is what the snapshot
- * keeps. A month that has been confirmed holds its own terms and this reaches
- * none of them; a month still following the profile stops carrying the line
- * because it stops being one of the profile's terms.
+ * **It is a removal and not an ending**, which are two different gestures since
+ * the lifetime exists (the user, 2026-09-26). A line added by mistake is removed
+ * — the record goes — and a line that is *meant* to end is ended by setting its
+ * last month, which leaves it listed and lets a later correction start it again.
+ * One button cannot be both, so this one is named for what it does.
+ *
+ * **Removing it in June leaves every month already confirmed exactly as it
+ * was**, and that is not a promise this action keeps by itself — it is what the
+ * snapshot keeps. A confirmed month holds its own terms and this reaches none of
+ * them; a month still following the profile stops carrying the line because it
+ * stops being one of the profile's terms.
  *
  * No override is deleted here, and that is the difference from removing a
  * one-off line. A one-off line's key belongs to one month and dies with it; a
@@ -589,7 +605,7 @@ export async function updateStandingLine(
  * `/payments`, which is where item 17 says a stored amount that cannot be seen
  * must not stay.
  */
-export async function stopStandingLine(
+export async function removeStandingLine(
   workerId: string,
   lineId: string,
 ): Promise<ProfileActionResult> {

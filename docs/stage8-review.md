@@ -10,8 +10,14 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-> ### ✅ Everything through step 7 is committed. Steps 6, 6½ and 7 are done.
-> **Step 7 — the two refusal debts — went in on 2026-09-26** with `specs.md` item 25's
+> ### ✅ Everything through step 8 is committed.
+> **Step 8 — a standing line with a lifetime — went in on 2026-09-26** once she answered the
+> one word it waited on: the row's button says **`להסיר`**, the word four other removable rows
+> on the same screens already wear. Its evidence, on the finished tree: browser suite
+> **169/169 in 11.6 minutes, no flake**, unit suite **1,265/1,265** (nineteen new), typecheck
+> and lint clean. **Her own check passed** — the ₪300 recurring deduction over three months —
+> and so did step 1's, outstanding since 2026-09-18.
+> Before it: **step 7 — the two refusal debts — went in as `9c52ca4` on 2026-09-26** with `specs.md` item 25's
 > approved paragraph, `DESIGN.md`'s four rewritten departures and `build_plan.md`'s two debts
 > paid. The evidence it rests on, measured on the committed tree: browser suite
 > **168/168 in 13.6 minutes, no flake**, unit suite **1,246/1,246**, typecheck and lint clean.
@@ -28,18 +34,14 @@ the plan table, then stops and reports to the user.
 > F62's regression — five failures in two spec files F62 never touched.
 
 > ### → A fresh session told "continue" does this
-> **The next step is 8, and it is blocked on one word of hers. Ask her for that word first,
-> and do not start the step until she answers.** The word is the row's button: she decided on
-> 2026-09-26 that it **deletes** the standing line, so it cannot keep saying `להפסיק`, and
-> what it says instead is hers. Everything else about step 8 is settled — see below.
+> **The next step is 9, F37 — strip the history out of `specs.md`.** It is the larger of the two
+> left and it is all reading and quoting: **every deletion is put to her first, quoted exactly,
+> as one batch for one yes** (rule 1), and the three exceptions — Part 4's August 2025 case, the
+> dated rates' effective dates, and a date that is an example inside a rule — are not touched.
+> The Fix-list entry says what goes and what stays; nothing about it is re-decided.
 > **The order, and a session does the first that is not done:** ~~6 run 8's fifteen~~,
-> ~~6½ F64~~, ~~7 the two refusal debts~~ are **done and committed** · **8 the standing-line
-> lifetime, blocked on one word of hers** · 9 F37 · 10 F32 again.
-> **Step 8's PRD is signed off and its eight decisions are settled**, and
-> `specs.md` item 20 already carries the approved paragraph — so nothing there is re-decided
-> or re-asked. Only the button's word is missing, and it is needed when the row is built.
-> **While it is blocked, a session asks and waits rather than starting step 9 to fill the
-> time**: the order is hers and she set it.
+> ~~6½ F64~~, ~~7 the two refusal debts~~, ~~8 the standing-line lifetime~~ are **done and
+> committed** · **9 F37** · 10 F32 again.
 > **What step 7 left behind, and it is not a defect:** `/workers` and `/workers/[id]` still
 > fail whole on a refused month, on purpose — every card on them states a balance and a
 > refused worker has none, so drawing her opening position would state a figure nobody
@@ -60,22 +62,48 @@ the plan table, then stops and reports to the user.
 > uncommitted** — the user's standing instruction of 2026-09-25 is to **fold it into the next
 > commit** rather than commit it alone. Do not commit it on its own and do not revert it.
 > **Ask before every commit.**
-> **Step 8 changed on 2026-09-26.** She decided that the row's button **deletes** the line and
-> that a confirmed month keeps what it was confirmed with, which replaces decisions 1 and 5;
-> `specs.md` item 20 was corrected to match, quoted to her and **approved the same day**. One
-> thing is still hers and is needed only when the row is built: **the button's own word**,
-> since a button that deletes cannot keep `להפסיק`. The rest of the step stands.
+> **Step 8 is decided in full.** The row's button **deletes** the line, a confirmed month keeps
+> what it was confirmed with, `specs.md` item 20 carries the approved paragraph, and the button's
+> word is **`להסיר`**, answered 2026-09-26. **Nothing about step 8 is left to decide or to ask.**
 > **Everything else that was open is answered, in place:**
 > F48's sweep **joins the suite** (R8.4 finishes it; the file is preserved at
 > `e2e/contrast-sweep.parked.ts`, which the suite ignores until it is renamed); `useAction`'s
 > dropped second press is **kept**; the refused download **redirects to the screen that draws
 > the card**; and the mark panel's missing busy state was **handed back to the session** and is
 > decided where the finding is. **The user's own outstanding actions** are listed under
-> "Waiting on the user" and none may be answered for her — chief among them step 1's check,
-> which rule 8 says only she can run.
+> "Waiting on the user"; none may be answered for her, and after 2026-09-26 **one is left** —
+> the Claude Docs connector, which is step 10's.
 > **Never push.**
 
-- **Last done: step 7 — the two refusal debts, together**, on 2026-09-26.
+- **Last done: step 8 — a standing line with a lifetime**, on 2026-09-26.
+  A standing line now carries `from?` and `until?` as month keys, and **the filter is applied
+  where the snapshot is taken** (`standingLinesFor`, `snapshotTerms(worker, month)`): a month's
+  `terms.standingLines` therefore means "the lines this month carries", so the sheet, the
+  payslip and `notes.ts` need no filter of their own and a confirmed month keeps whatever it
+  was confirmed with for free. `snapshotTerms` gained the month at every call site;
+  `profileTerms` is the unfiltered view and exists for one reason — `termsDiffer` must answer
+  "yes" to a lifetime moved from June to August, which changes no single month's snapshot and
+  still has to refill the drafts. `monthsFollowingProfile` snapshots per month rather than once.
+  `reviewStandingLine` wraps `reviewUserLine` and reads the two ends, refusing a last month
+  before the first; `stopStandingLine` is **`removeStandingLine`**, because it deletes and a
+  lifetime is what ends a line. `standingLineEnding` joins the warning list in the month before
+  a line's last month, with its own switch in the reminders pop-up — the seventh.
+  On the screen the panel gained the lifetime as two month selects, and `MonthSelect` moved out
+  of `MonthActions.tsx` so the covered period and the lifetime share one control and one reason
+  against `<input type="month">`; a line whose last month has passed keeps a row under
+  `שורות שנגמרו`, where the edit that restarts it is. `DESIGN.md` has both departures.
+  **Checked against the bug and not only against itself:** with `standingLinesFor` stubbed to
+  filter nothing, five of `profile.test.ts`'s lifetime cases and the rule-12
+  "leaves it out of both once the month is past its last month" fail, each at the month it
+  names. The expected months are 2026's, worked out on paper from item 20's own sentence — a
+  line from June to August reaches June, July and August, so May and September are asserted
+  empty. **Its evidence:** browser suite **169/169 in 11.6 minutes, no flake**, unit suite
+  **1,265/1,265**, typecheck and lint clean.
+  **What it did not do:** the two screens did not move (decision 7, reversed by her on
+  2026-09-26), and the salary row's `YYYY-MM` text field beside it was left alone — it is named
+  in `DESIGN.md` as the thing that should move to a select, and it is not this step's.
+
+- **Before it: step 7 — the two refusal debts, together**, `9c52ca4`, on 2026-09-26.
   **The refusal is now a fact about one worker rather than about the household.**
   `householdSeries` catches `InvalidMonthError` inside the per-worker map and hands it back on
   `WorkerInSeries.refusal`, so it never escapes the replay; `householdSeriesOrRefusal` is gone
@@ -111,7 +139,7 @@ the plan table, then stops and reports to the user.
   — the 166 that stood plus this step's two new cases — unit suite **1,246/1,246**, typecheck
   and lint clean.
 
-- **Before it: stage 8⅞ — the country of origin is correctable**, on 2026-09-25, whole.
+- **And before that: stage 8⅞ — the country of origin is correctable**, on 2026-09-25, whole.
   `setCountry` sits beside `setGender` and checks the code against `countriesWithLists`, which
   is now the one offer `/workers/new` and `/settings` both read — the wizard's inline
   dedup-and-sort moved into `holidaySources.ts` with the `Country` type, which had been
@@ -559,7 +587,7 @@ the plan table, then stops and reports to the user.
      written down; R8.8–R8.14 are judgement calls, and she asked for **all fifteen**. Each is
      one commit unless she asks for a batch. The browser suite runs whole afterwards, and
      **nothing is written to a source file while it runs** — see the header.
-  7. ~~**The two refusal debts**~~ — **done 2026-09-26.** Both from
+  7. ~~**The two refusal debts**~~ — **done 2026-09-26, `9c52ca4`.** Both from
      `build_plan.md`'s "Still to pay", both in one step
      because they share `calculateSeries`' callers and no split of them is worth paying twice.
      **(a)** `/month/export/file` and `/reports/file` throw on a refused month —
@@ -571,7 +599,7 @@ the plan table, then stops and reports to the user.
      This step **changes behaviour**, so it is not a Fix-list item (ground rule 1); it owes a
      `specs.md` sentence whose exact wording is put to her first (rule 1), and the debts come
      out of `build_plan.md` as they are paid.
-  8. **A standing line with a lifetime — the PRD is signed off; build it.** Asked for 2026-09-25,
+  8. ~~**A standing line with a lifetime**~~ — **done 2026-09-26.** Asked for 2026-09-25,
      and she placed it **before F37**. **What exists already:** `UserLine`
      (`src/lib/engine/types.ts:580`) serves both lifetimes — a one-off on the month
      (`MonthFacts.userLines`) and a **standing** one on the profile
@@ -646,21 +674,22 @@ the plan table, then stops and reports to the user.
      approved on 2026-09-26** (rule 1). Item 20 now carries both endings: a line removed outright
      when she asks, a confirmed month keeping its snapshot, and a line *meant* to end ended by its
      last month and restarted by clearing it. **No session reopens it.**
-     **(b) A button that deletes cannot keep the word `להפסיק`.**
-     `he.workers.profile.terms.standing.stop` is `להפסיק`, and beside a range that also ends a
-     line two different endings would wear one word — a family meaning "stop paying this from now
-     on" would press it and lose the record. **Still open on 2026-09-26** — `להסיר`, `למחוק` or
-     `להפסיק` kept as it is was put to her and is the one thing this step still waits on. It is
-     needed when the row is built and not before, so the rest of the step may proceed.
+     **(b) A button that deletes cannot keep the word `להפסיק`.** **Answered 2026-09-26:
+     `להסיר`**, which is the word four other removable rows already wear — the opening advance
+     and the three per-row removals on `/payments`. `he.workers.profile.terms.standing.stop` is
+     gone and `remove`/`removeLabel` stand in its place.
 
-     **The build, in order.** (1) `UserLine` gains `from?` and `until?` as month keys
-     (`src/lib/engine/types.ts:580`). (2) The snapshot filters standing lines by the month it
-     is building (`src/lib/engine/month.ts:158`, `src/lib/engine/userLines.ts`). (3) The
-     profile actions set, extend and stop a lifetime, and the server refuses `until` before
-     `from` (`src/app/workers/actions.ts:540`, `:573`, `:606`). (4) `standingLineEnding` joins
-     `actionList.ts` and `he.ts`. (5) The two screens move, and `DESIGN.md` gains the entry.
-     (6) The rule-12 agreement test. **Expected figures come from outside the code** (rule 11):
-     the boundary months are worked out by hand, never read back from the engine.
+     **What was built**, against the plan's own six steps. (1)–(4) as written. (5) **No screen
+     moved** — decision 7 reversed that, so the only screen work was the lifetime itself: two
+     month selects in the panel, the range under each row, and `שורות שנגמרו` for a line whose
+     last month has passed. `MonthSelect` moved out of `MonthActions.tsx` on the way, so the
+     covered period and the lifetime share one control rather than two copies of the argument
+     against `<input type="month">`. (6) The rule-12 test is two cases in
+     `src/lib/export/agreement.test.ts`, and the second is the one worth having: the sheet's
+     own column E, read off its cached figure, is **lighter by exactly the line's ₪50** in a
+     month past the line's last — a total that merely differed would prove nothing about which
+     line left it. **Expected figures came from outside the code** (rule 11): the boundary
+     months are item 20's sentence worked out on paper, and the ₪50 is the fixture's own.
 
      **`specs.md` item 20 is settled and nothing in it is owed.** The approved paragraph is
      in, and its one sentence that decision 7's reversal made wrong — the one sending all
@@ -668,7 +697,7 @@ the plan table, then stops and reports to the user.
      under rule 1. Item 20's own older sentences about where each kind is made are correct and
      stand. **No session reopens item 20 for this step.**
 
-     **The check she runs (rule 8):** add a recurring deduction of ₪300 from next month until
+     **The check she ran (rule 8), passed 2026-09-26:** add a recurring deduction of ₪300 from next month until
      three months after, where standing lines are set today; confirm it appears on those three months and on no others; stop it
      early and confirm the months after the new end lose it while a month already confirmed
      keeps it; confirm the warning appears the month before it ends; export one affected month
@@ -699,17 +728,14 @@ the plan table, then stops and reports to the user.
   for that reason. Retrying the press would end it; that is test code, not product, and it is
   not on the Fix list. On 2026-09-22 it took `holiday-picker.spec.ts:257` out of a full run
   (134/135) and three of a trio run, all of which passed alone.
-- **Waiting on the user**, none of which a session may answer for her: **step 1's own check
-  (rule 8) has not been run yet** — open `/settings`, unfold `תעריפים`, and confirm the
-  minimum-wage row says where it was read from; export a month accepting the offered wage and
-  confirm that source is still there; export another after typing a different figure and
-  confirm that one flips to `אושר על ידי המשתמש/ת`. It is committed but not pushed, and
-  nothing is pushed until she confirms. **A session does not re-run step 1 over this** — it
-  reports the check as outstanding and moves on to step 2 unless she says otherwise.
+- **Waiting on the user**, and a session may answer none of it for her: **the Claude Docs
+  connector**, which is the one item left and is step 10's.
 
   **Answered already, so do not ask again:** where stage 8¾ sits, which is step 3 above; the
-  sign-off on step 1, given 2026-09-23 and built; and which household the broken one is — the
-  live Postgres one, and she is no longer locked out of it.
+  sign-off on step 1, given 2026-09-23 and built; which household the broken one is — the
+  live Postgres one, and she is no longer locked out of it; **step 1's check (rule 8), run and
+  passed on 2026-09-26**; and **step 8's check — the ₪300 recurring deduction over three
+  months — run and passed the same day**. Neither is re-run and neither is re-asked.
 
 ## Ground rules for every step
 
@@ -752,11 +778,11 @@ the plan table, then stops and reports to the user.
 | 13 | Run 8 — the two-axis code review and a second `ponytail-audit` | **done** 2026-09-25 — fifteen findings, fixed point `9327b3d`. **Awaiting the user's GO**, which is step 14 |
 | 14 | The user signs run 8 off | **done** 2026-09-25 — **all fifteen**, and the four open questions answered. The order she set is steps 6–10 under "The order from here" |
 | 15 | Execute run 8's fifteen | **done** 2026-09-26, `62a7070` — fourteen fixed, R8.15 withdrawn as wrong; the commit carries F64 too |
-| 16 | The two refusal debts, together | **done** 2026-09-26 — both paid; `/workers` and `/workers/[id]` are the one debt left in their place |
-| 17 | A standing line with a lifetime | **open** — decisions rewritten 2026-09-26 and `specs.md` item 20 corrected with her approval; one word (the row's button) is still hers — PRD and plan signed off 2026-09-25, all eight decisions recorded in step 8, `specs.md` item 20 already carries the approved paragraph. Placed before F37 |
+| 16 | The two refusal debts, together | **done** 2026-09-26, `9c52ca4` — both paid; `/workers` and `/workers/[id]` are the one debt left in their place |
+| 17 | A standing line with a lifetime | **done** 2026-09-26 — the button's word answered the same day (`להסיר`). 169/169 browser, 1,265/1,265 unit, and her own check passed |
 | 18 | F37 | **open** |
 | 19 | F32 again | **open** — the connector is hers, then `/doctor` is re-run |
-| 20 | F64 — her two notes on the rates group | **open**, and ready to build — both halves answered 2026-09-26. Where it sits in the order is hers; proposed as 6½, after run 8's fifteen |
+| 20 | F64 — her two notes on the rates group | **done** 2026-09-26, `62a7070` — committed inside run 8's batch, as she asked, rather than alone |
 
 ### How each step is run
 

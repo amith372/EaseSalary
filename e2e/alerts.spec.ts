@@ -142,10 +142,11 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await page.getByRole("button", { name: he.alerts.settingsLink }).click();
     const dialog = page.getByRole("dialog", { name: he.alerts.reminders.title });
     await expect(dialog).toBeVisible();
-    // The six kinds item 27 names and nothing else, every one on by default.
+    // The six kinds item 27 names, plus item 20's standing line about to end,
+    // and nothing else — every one on by default.
     const boxes = dialog.getByRole("checkbox");
-    await expect(boxes).toHaveCount(6);
-    for (let i = 0; i < 6; i += 1) await expect(boxes.nth(i)).toBeChecked();
+    await expect(boxes).toHaveCount(7);
+    for (let i = 0; i < 7; i += 1) await expect(boxes.nth(i)).toBeChecked();
     // The blockages are named, so one looked for here is explained.
     await expect(dialog.locator('[data-role="always-shown"]')).toHaveText(
       he.alerts.reminders.alwaysShown,
@@ -304,7 +305,7 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await panel.getByRole("button", { name: he.alerts.settingsLink }).click();
     await expect(reminders).toBeVisible();
     const boxes = reminders.getByRole("checkbox");
-    for (let i = 0; i < 6; i += 1) await boxes.nth(i).uncheck();
+    for (let i = 0; i < 7; i += 1) await boxes.nth(i).uncheck();
     await expect(bell.locator('[data-row="warnings"]')).toHaveText("0");
     await reminders.getByRole("button", { name: he.alerts.reminders.close }).click();
     await expect(page).toHaveURL(/\/$/);

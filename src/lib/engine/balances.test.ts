@@ -96,7 +96,7 @@ function wageInForce(ym: YearMonth) {
 function facts(month: YearMonth, spans: ClosedSpan[] = []): ClosedMonthFacts {
   return {
     month,
-    terms: snapshotTerms(terms()),
+    terms: snapshotTerms(terms(), month),
     // The wage in force during the month itself, and not one figure stamped on
     // every month a fixture happens to cover (specs.md item 4). Stamping one
     // put these fixtures below the minimum wage from April 2026 onward, which

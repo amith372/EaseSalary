@@ -300,6 +300,51 @@ describe("holidays not all chosen (item 10)", () => {
   });
 });
 
+describe("a standing line about to end (item 20)", () => {
+  /** A line of the family's own — item 20 gives no amount, because a line the
+   * user adds is the user's own. Its lifetime is what each case below varies. */
+  const line = {
+    id: "phone",
+    label: "השתתפות בטלפון",
+    direction: "deduction" as const,
+    placement: "afterGross" as const,
+    agorot: 30000,
+  };
+  const endingIn = (until: YearMonth): WorkerProfile => ({
+    ...PROFILE,
+    standingLines: [{ ...line, from: ym(2026, 1), until }],
+  });
+
+  it("warns in the month before the line's last month", () => {
+    // Worked out from the rule and not from the function: on 10 June 2026 the
+    // month after is July, so a line whose last month is July is the one warned
+    // about — the second stage of `documentExpiring`, one month's notice.
+    expect(
+      only(listFor({ today: "2026-06-10", profile: endingIn(ym(2026, 7)) }), "standingLineEnding"),
+    ).toEqual([
+      { list: "warning", key: "standingLineEnding", label: line.label, month: ym(2026, 7) },
+    ]);
+  });
+
+  it("says nothing two months out, in the last month itself, or after it", () => {
+    for (const [today, until] of [
+      ["2026-06-10", ym(2026, 8)],
+      ["2026-07-10", ym(2026, 7)],
+      ["2026-08-10", ym(2026, 7)],
+    ] as const) {
+      expect(
+        only(listFor({ today, profile: endingIn(until) }), "standingLineEnding"),
+        `${today} for a line ending ${until.year}-${until.month}`,
+      ).toEqual([]);
+    }
+  });
+
+  it("says nothing about a line with no last month, which never ends", () => {
+    const profile: WorkerProfile = { ...PROFILE, standingLines: [{ ...line, from: ym(2026, 1) }] };
+    expect(only(listFor({ today: "2026-06-10", profile }), "standingLineEnding")).toEqual([]);
+  });
+});
+
 describe("recuperation (item 15)", () => {
   it("warns in the month before the recuperation month", () => {
     expect(only(listFor({ today: "2026-06-10" }), "recuperationApproaching")).toEqual([

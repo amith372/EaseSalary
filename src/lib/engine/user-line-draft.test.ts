@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  reviewStandingLine,
   reviewUserLine,
   withoutOneOffUserLine,
+  type StandingLineDraft,
   type UserLineDraft,
 } from "@/lib/engine/userLines";
 import { placementOf } from "@/lib/engine/types";
@@ -196,5 +198,88 @@ describe("a line removed", () => {
     withoutOneOffUserLine(month, "going");
     expect(month.userLines).toHaveLength(2);
     expect(month.overrides["extra.going"]).toEqual({ agorot: 20000 });
+  });
+});
+
+/**
+ * The lifetime only a standing line has (specs.md item 20).
+ *
+ * **Every expectation is the criterion's own wording**, never what the function
+ * returned: "a first month, and optionally a last month"; "a line with no
+ * lifetime recorded applies to every month"; and the one refusal, a range read
+ * backwards, which reaches no month at all.
+ */
+describe("a standing line's lifetime", () => {
+  const standing = (over: Partial<StandingLineDraft> = {}): StandingLineDraft => ({
+    ...draft(),
+    from: "",
+    until: "",
+    ...over,
+  });
+
+  it("writes neither end where the user named neither", () => {
+    // Stored exactly as a line written before the lifetime existed, which is
+    // what makes "applies to every month" one state and not two.
+    const reviewed = reviewStandingLine(standing(), "line-1");
+    expect(reviewed.ok).toBe(true);
+    if (!reviewed.ok) return;
+    expect("from" in reviewed.line).toBe(false);
+    expect("until" in reviewed.line).toBe(false);
+  });
+
+  it("reads each end as a month", () => {
+    const reviewed = reviewStandingLine(
+      standing({ from: "2026-06", until: "2026-08" }),
+      "line-1",
+    );
+    expect(reviewed.ok).toBe(true);
+    if (!reviewed.ok) return;
+    expect(reviewed.line.from).toEqual({ year: 2026, month: 6 });
+    expect(reviewed.line.until).toEqual({ year: 2026, month: 8 });
+  });
+
+  it("takes one end without the other", () => {
+    const fromOnly = reviewStandingLine(standing({ from: "2026-06" }), "line-1");
+    expect(fromOnly.ok && fromOnly.line.from).toEqual({ year: 2026, month: 6 });
+    expect(fromOnly.ok && "until" in fromOnly.line).toBe(false);
+
+    const untilOnly = reviewStandingLine(standing({ until: "2026-06" }), "line-1");
+    expect(untilOnly.ok && untilOnly.line.until).toEqual({ year: 2026, month: 6 });
+    expect(untilOnly.ok && "from" in untilOnly.line).toBe(false);
+  });
+
+  it("allows a line that lasts one month", () => {
+    // The two ends being the same month is a line for that month alone, which is
+    // a range of one and not a range read backwards.
+    const reviewed = reviewStandingLine(
+      standing({ from: "2026-06", until: "2026-06" }),
+      "line-1",
+    );
+    expect(reviewed.ok).toBe(true);
+  });
+
+  it("refuses a last month before the first", () => {
+    expect(
+      reviewStandingLine(standing({ from: "2026-08", until: "2026-06" }), "line-1"),
+    ).toEqual({ ok: false, reason: "lifetime" });
+  });
+
+  it("refuses an end that is not a month", () => {
+    // A crafted request, like the direction and the placement: the form offers a
+    // select over months, so nothing an ordinary gesture sends can get here.
+    expect(
+      reviewStandingLine(standing({ from: "יוני" }), "line-1"),
+    ).toEqual({ ok: false, reason: "lifetime" });
+  });
+
+  it("refuses the line before the lifetime, on the line's own grounds", () => {
+    // The wrapper adds a rule and replaces none: a line with no words is refused
+    // for its words even where its lifetime is impossible too.
+    expect(
+      reviewStandingLine(
+        standing({ label: "   ", from: "2026-08", until: "2026-06" }),
+        "line-1",
+      ),
+    ).toEqual({ ok: false, reason: "label" });
   });
 });

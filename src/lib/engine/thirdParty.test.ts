@@ -111,7 +111,7 @@ const AUGUST_2025: YearMonth = { year: 2025, month: 8 };
 
 function facts(payments: ThirdPartyPayment[] = []): ClosedMonthFacts {
   return {
-    terms: snapshotTerms(terms),
+    terms: snapshotTerms(terms, AUGUST_2025),
     month: AUGUST_2025,
     confirmedWage: {
       baseAgorot: SALARY,
