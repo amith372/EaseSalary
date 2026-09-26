@@ -161,7 +161,7 @@ describe("the plausibility check", () => {
 
   it("refuses rather than guesses when no row is in force yet", () => {
     const future: DatedRate[] = [
-      { key: "minimumWage", value: WAGE_2026, effectiveFrom: "2027-04-01", source: "x" },
+      { key: "minimumWage", value: WAGE_2026, effectiveFrom: "2027-04-01", source: "userConfirmed" },
     ];
     expect(checkPlausible(WAGE_2026, EFFECTIVE_2026, future)?.kind).toBe(
       "implausible",

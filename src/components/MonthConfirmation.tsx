@@ -72,11 +72,11 @@ export function MonthConfirmation({
   sourceUrl: string;
 }) {
   const words = he.beforeExport;
-  const { refusal, run, saving } = useAction<BeforeExportRefusal>();
+  // `busyAt` names which of the two files was asked for, so the button that
+  // was pressed is the one that says it is working — the same mechanism every
+  // other list of controls uses, rather than a second one kept here.
+  const { refusal, run, saving, busyAt } = useAction<BeforeExportRefusal>();
   const [done, setDone] = useState(false);
-  // Which of the two files was asked for, so the button that was pressed is the
-  // one that says it is working. `null` while neither is.
-  const [pressed, setPressed] = useState<boolean | null>(null);
 
   const [answers, setAnswers] = useState<
     Partial<Record<ExportQuestionKey, boolean>>
@@ -178,7 +178,10 @@ export function MonthConfirmation({
           >
             <span>{words.wage.failed[failure]} </span>
             <Link
-              href="/settings#rates"
+              // The employment group, because that is where the wage row and its
+              // source are drawn — the sentence promises a provenance and has to
+              // land where it is.
+              href="/settings#employment"
               className="font-medium underline underline-offset-2 hover:text-forest"
             >
               <span dir="auto">{words.wage.failedWhere}</span>
@@ -408,14 +411,15 @@ export function MonthConfirmation({
               artboard draws a chooser, and the difference between the files is
               one the user has to be able to see before she picks. Both confirm
               the month first, as the export button does. */}
-          {[false, true].map((withNotes) => (
+          {[false, true].map((withNotes) => {
+            const which = withNotes ? "notes" : "plain";
+            return (
             <button
-              key={withNotes ? "notes" : "plain"}
+              key={which}
               type="button"
               {...(withNotes ? { "data-finish-notes": "" } : { "data-finish": "" })}
               disabled={blocked || !answered}
               onClick={() => {
-                setPressed(withNotes);
                 run(
                   () =>
                     confirmMonth(workerId, shown.month, {
@@ -429,10 +433,11 @@ export function MonthConfirmation({
                     setDone(true);
                     download(workerId, shown.month, withNotes);
                   },
+                  which,
                 );
               }}
               {...busyAttrs(
-                saving && pressed === withNotes,
+                busyAt(which),
                 "flex items-center gap-2.75 rounded-tint bg-forest px-6 py-3.5 text-[17px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:cursor-not-allowed disabled:opacity-45 sm:px-7.5 sm:text-[18px]",
               )}
             >
@@ -441,7 +446,8 @@ export function MonthConfirmation({
                 {withNotes ? words.finish.actionWithNotes : words.finish.action}
               </span>
             </button>
-          ))}
+            );
+          })}
           <Link
             href="/"
             className="py-2 text-[16px] text-ink-mute transition-colors hover:text-forest"

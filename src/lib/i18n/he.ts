@@ -1448,6 +1448,10 @@ export const he = {
         title: "סכומים שהיישום חישב",
         lead: "אפשר לשנות כל אחד מהם לסכום אחר, והוא יישאר כך גם אחרי כל חישוב מחדש של החודש. סכום שהקלדת בעצמך — שורה משלך, מקדמה או תשלום לגורם שלישי — אינו כאן, ואותו מתקנים במקום שבו הוקלד.",
         empty: "אין החודש סכומים מחושבים.",
+        /** The folded line where the month *has* calculated rows and none of
+         * them was replaced (F56): `empty` says there is nothing to change,
+         * which would be false here. */
+        noneChanged: "לא שונה החודש אף סכום.",
         /** Said beside the manual figure, so the row still says what it would
          * otherwise have been (items 17, 24) — which is what makes the
          * replacement checkable without recalculating it by hand. */
@@ -1624,9 +1628,18 @@ export const he = {
         hint: "נצברים 1.5 בחודש עד תקרה של תשעים ימים",
       },
     },
+    /**
+     * The insurances group — and the minimum-wage row, which is **not** drawn in
+     * it. The key names the dated-rate mechanism these words belong to
+     * (`datedRates.ts`) rather than the group they appear in: the wage is drawn
+     * in `employment`, directly under the salary it is the floor of, because the
+     * figure and the floor it is measured against are read together. What is
+     * left in the group is the two insurances, and the title says so instead of
+     * promising a cadence that only one of them has.
+     */
     rates: {
-      title: "שערים ותשלומים קבועים",
-      note: "מה משולם מלבד המשכורת, ובאיזה קצב",
+      title: "ביטוחים",
+      note: "ביטוח לאומי לפי אחוז שבחוק, וביטוח רפואי דרך מי שבחרתם",
       minimumWage: {
         label: "שכר מינימום",
         hint: "נקרא מכל זכות ונשמר עם התאריך שבו נכנס לתוקף — חודש מוערך לפי השער שהיה בתוקף בו",
@@ -2347,7 +2360,8 @@ export const he = {
           "הסכום שקראנו מהאתר רחוק מדי מהשכר שהיה בתוקף עד כה, ולכן לא סמכנו עליו. הסכום למטה הוא האחרון שהיישום מכיר, ואפשר גם להקליד סכום אחר.",
       },
       /**
-       * Beside any of the three, pointing at the rates group on `/settings`.
+       * Beside any of the three, pointing at the employment group on
+       * `/settings`, which is where the wage row is drawn.
        * The sentences above say the figure below is the cached one; this is
        * where the user sees *which* figure that is, from when it took effect
        * and where it was read from, which is the question the failure raises

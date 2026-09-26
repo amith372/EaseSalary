@@ -54,6 +54,11 @@ import type { YearMonth } from "@/lib/types";
  * does not draw — gender, income tax, standing lines and the opening position
  * among the employment's terms, the recuperation month beside the holidays —
  * because every term has one place to be changed and this is it.
+ *
+ * **The minimum wage is drawn among the employment's rows and not with the
+ * insurances**, under the salary it is the floor of; the group left holding the
+ * two insurances is titled for them. The words stay under `he.settings.rates`,
+ * which names the mechanism the figure comes from and not the group.
  */
 
 /** One worker's settings as the server prepared them. */
@@ -169,6 +174,19 @@ export function SettingsScreen({
             month={month}
             onSubmit={handleAction}
           />
+          {/* Under the salary and not with the insurances: it is the floor that
+              salary may not go below (item 3), and the two are read together.
+              The household's figure inside a per-worker group is no departure —
+              the card is drawn per worker and the wage is the same on both. */}
+          <ValueRow
+            label={words.rates.minimumWage.label}
+            hint={words.rates.minimumWage.hint}
+            value={minimumWage === null ? null : formatAgorot(minimumWage.value)}
+            since={minimumWage?.effectiveFrom}
+            source={minimumWage?.source}
+            rowKey="minimum-wage"
+            derived
+          />
           <RestEveSupplementControl
             workerId={profile.id}
             agorot={profile.restEveSupplementAgorot}
@@ -242,15 +260,6 @@ export function SettingsScreen({
         </Group>
 
         <Group id="rates" title={words.rates.title} note={words.rates.note}>
-          <ValueRow
-            label={words.rates.minimumWage.label}
-            hint={words.rates.minimumWage.hint}
-            value={minimumWage === null ? null : formatAgorot(minimumWage.value)}
-            since={minimumWage?.effectiveFrom}
-            source={minimumWage?.source}
-            rowKey="minimum-wage"
-            derived
-          />
           <ValueRow
             label={words.rates.nationalInsurance.label}
             hint={words.rates.nationalInsurance.hint}

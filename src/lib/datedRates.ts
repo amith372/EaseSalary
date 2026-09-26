@@ -80,8 +80,8 @@ export interface DatedRate {
   effectiveFrom: IsoDate;
   /** Where the figure came from (Part 3): the address of the page it was
    * fetched from, or one of the names in `rateSources`. Never a sentence —
-   * `drawnRateSource` says why. */
-  source: string;
+   * `drawnRateSource` says why, and `RateSource` is what keeps it so. */
+  source: RateSource;
 }
 
 /**
@@ -100,8 +100,23 @@ export const rateSources = ["familyWorkbook", "userConfirmed"] as const;
 
 export type RateSourceName = (typeof rateSources)[number];
 
-/** The sentence `userConfirmed` replaced. A row written before the names
- * existed holds it, and it means exactly what `userConfirmed` means. */
+/**
+ * What may be *written* as a source: the address a figure was fetched from, or
+ * one of the names. The union is on the field so that no writer can put prose
+ * there again — which is how a workbook path came to be stored and drawn.
+ */
+export type RateSource = `http${string}` | RateSourceName;
+
+/**
+ * The sentence `userConfirmed` replaced, held as the stored value it is.
+ *
+ * **It is Hebrew outside `he.ts` and may stay there**, because nothing draws
+ * it: it is a value a row written before the names existed still holds, and it
+ * is compared against, never rendered — `drawnRateSource` answers
+ * `userConfirmed` for it and the screen says that name's own sentence from
+ * `he.ts`. Moved into `he.ts` and translated it would stop matching the rows in
+ * the store, and those rows would silently lose their source.
+ */
 const CONFIRMED_BY_HAND = "אושר על ידי המשתמש/ת";
 
 /** A stored source as a screen draws it: an address it links, or a name it has
@@ -117,6 +132,12 @@ export type DrawnRateSource =
  * Printing an unrecognised value is how the workbook path reached the screen;
  * calling it the user's confirmation instead would be a claim about provenance
  * that nobody checked, and a false one is worse than a row that stays quiet.
+ */
+/**
+ * **It takes a string and not a `RateSource`**, deliberately: what reaches it
+ * is a stored row, which may have been written before the names existed — the
+ * sentence above is exactly such a value. The union types what may be *written*;
+ * this reads what *is* there.
  */
 export function drawnRateSource(source: string): DrawnRateSource | null {
   if (source.startsWith("http")) return { kind: "address", url: source };

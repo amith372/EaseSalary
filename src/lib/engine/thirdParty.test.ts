@@ -264,7 +264,9 @@ describe("the national-insurance estimate (specs.md item 19)", () => {
           key: "nationalInsurance",
           value: 0.02,
           effectiveFrom: "2024-01-01",
-          source: "שכר_חודשי_להאנה2024.xlsx → חודש  12.24 → D21",
+          // The 2% the family carried: `שכר_חודשי_להאנה2024.xlsx` -> `חודש  12.24` -> D21
+          // (`CLAUDE.md` rule 6 — the citation belongs here and not in a stored field).
+          source: "familyWorkbook",
         },
       ],
     });

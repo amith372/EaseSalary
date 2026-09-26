@@ -542,6 +542,16 @@ test.describe("an account with nothing outstanding (build_plan.md stage 6, done 
     await expect(page.locator('[data-role="empty-household"]')).toHaveCount(0);
     await expect(page.locator('[data-role="blocker"]')).toHaveCount(0);
     await expect(page.getByRole("heading", { name: he.status.needsAttention })).toHaveCount(0);
+
+    // **The third household of F52's outline rule, asserted where it exists**
+    // (run 8's R8.5). `home-screen.spec.ts` covers the two the seeds can draw
+    // — a strip leading and a refusal leading — and this is the third: with
+    // neither of those on screen the month itself is what a reader meets, so it
+    // carries the `h1`. Rebuilding this household in that file to say so would
+    // be this whole wizard again for two assertions.
+    const headings = page.locator("h1, h2, h3");
+    await expect(page.locator("h1")).toHaveCount(1);
+    expect(await headings.first().evaluate((el) => el.tagName)).toBe("H1");
     await page.screenshot({ path: "test-results/home-nothing-outstanding.png" });
 
     await page.goto("/alerts");

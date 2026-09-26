@@ -112,18 +112,11 @@ export function HolidayPickerScreen({
   const refusal =
     reason === null || refusedAt === null ? null : { at: refusedAt, reason };
 
-  // The control is named apart from the refusal's anchor because it is finer:
-  // a row anchors its refusal once and holds three controls — the tick, the two
-  // day parts and the move form — and the source chips all anchor theirs to the
-  // card, while the busy state belongs to the chip that was pressed.
-  function act(
-    at: string,
-    action: () => Promise<HolidayActionResult>,
-    control: string = at,
-  ) {
-    setRefusedAt(at);
-    run(action, () => setOpen(null), control);
+  function act(gesture: Gesture, action: () => Promise<HolidayActionResult>) {
+    setRefusedAt(gesture.anchor);
+    run(action, () => setOpen(null), gesture.control);
   }
+  const busy = (gesture: Gesture) => busyAt(gesture.control);
 
   const { year: state } = entry;
 
@@ -239,13 +232,11 @@ export function HolidayPickerScreen({
                   key={`country-${choice.source.kind === "country" ? choice.source.code : ""}`}
                   choice={choice}
                   onPick={() =>
-                    act(
-                      "source",
-                      () => setHolidaySource(entry.worker.id, choice.source),
-                      sourceKey(choice),
+                    act(sourceGesture(choice), () =>
+                      setHolidaySource(entry.worker.id, choice.source),
                     )
                   }
-                  busy={busyAt(sourceKey(choice))}
+                  busy={busy(sourceGesture(choice))}
                 />
               ))}
             </div>
@@ -271,13 +262,11 @@ export function HolidayPickerScreen({
                 key={`religion-${choice.source.kind === "religion" ? choice.source.religion : ""}`}
                 choice={choice}
                 onPick={() =>
-                  act(
-                    "source",
-                    () => setHolidaySource(entry.worker.id, choice.source),
-                    sourceKey(choice),
+                  act(sourceGesture(choice), () =>
+                    setHolidaySource(entry.worker.id, choice.source),
                   )
                 }
-                busy={busyAt(sourceKey(choice))}
+                busy={busy(sourceGesture(choice))}
               />
             ))}
           </div>
@@ -289,13 +278,13 @@ export function HolidayPickerScreen({
               year={year}
               submit={words.add.submit}
               onCancel={() => setOpen(null)}
-              busy={busyAt("add")}
+              busy={busy(ADD)}
               onSubmit={(date) =>
-                act("add", () => chooseHoliday(entry.worker.id, date, year))
+                act(ADD, () => chooseHoliday(entry.worker.id, date, year))
               }
             />
           ) : null}
-          {refusal?.at === "add" || refusal?.at === "source" ? (
+          {refusal?.at === ADD.anchor || refusal?.at === SOURCE_ANCHOR ? (
             <Refusal reason={refusal.reason} />
           ) : null}
         </Card>
@@ -358,7 +347,7 @@ export function HolidayPickerScreen({
                     }
                     onCancelMove={() => setOpen(null)}
                     act={act}
-                    busyAt={busyAt}
+                    busy={busy}
                   />
                   {refusal?.at === row.date ? (
                     <Refusal reason={refusal.reason} />
@@ -458,15 +447,46 @@ function QuotaBar({ allowance, chosen }: { allowance: number; chosen: number }) 
   );
 }
 
+/**
+ * Where a gesture's refusal is anchored, and which control performed it.
+ *
+ * **They are two different names and the finer one is not the anchor.** A row
+ * anchors its refusal once and holds four controls — the tick, the two day
+ * parts and the move form — and every source chip anchors its refusal to the
+ * card while the busy state belongs to the chip that was pressed. Held as one
+ * argument they are named rather than told apart by position, and each is
+ * spelled once by the builders below, so the press and the busy state cannot
+ * drift apart on a typo.
+ */
+type Gesture = { anchor: string; control: string };
+
+/** The gestures a candidate row holds, built from its date. */
+function rowGestures(date: string) {
+  return {
+    tick: { anchor: date, control: `${date}:tick` },
+    move: { anchor: date, control: `${date}:move` },
+    part: (part: number) => ({ anchor: date, control: `${date}:part:${part}` }),
+  };
+}
+
+/** The card's own two: every source chip is answered on the card, and the
+ * hand-typed date is its own control. */
+const SOURCE_ANCHOR = "source";
+const ADD: Gesture = { anchor: "add", control: "add" };
+
 /** One list to choose the year's candidates from — a country's or a faith's
  * (item 10). */
 /** A chip's own name, so the one that was pressed is the one that says it is
  * working. The refusal stays anchored to the card, where the sentence is
  * drawn. */
-function sourceKey(choice: HolidaySourceChoice) {
-  return choice.source.kind === "country"
-    ? `country:${choice.source.code}`
-    : `religion:${choice.source.religion}`;
+function sourceGesture(choice: HolidaySourceChoice): Gesture {
+  return {
+    anchor: SOURCE_ANCHOR,
+    control:
+      choice.source.kind === "country"
+        ? `country:${choice.source.code}`
+        : `religion:${choice.source.religion}`,
+  };
 }
 
 function SourceChip({
@@ -506,7 +526,7 @@ function HolidayRowView({
   onMove,
   onCancelMove,
   act,
-  busyAt,
+  busy,
 }: {
   row: HolidayRow;
   restDay: RestDay;
@@ -516,16 +536,13 @@ function HolidayRowView({
   moving: boolean;
   onMove: () => void;
   onCancelMove: () => void;
-  act: (
-    at: string,
-    action: () => Promise<HolidayActionResult>,
-    control?: string,
-  ) => void;
-  busyAt: (control: string) => boolean;
+  act: (gesture: Gesture, action: () => Promise<HolidayActionResult>) => void;
+  busy: (gesture: Gesture) => boolean;
 }) {
   const words = he.holidays.row;
   const chosen = row.chosen;
   const label = weekdayDayLabel(row.date);
+  const gesture = rowGestures(row.date);
 
   return (
     <>
@@ -537,17 +554,14 @@ function HolidayRowView({
           aria-label={chosen === null ? words.choose(label) : words.unchoose(label)}
           disabled={row.blocked}
           onClick={() =>
-            act(
-              row.date,
-              () =>
-                chosen === null
-                  ? chooseHoliday(workerId, row.date, year)
-                  : unchooseHoliday(workerId, chosen.spanId),
-              `${row.date}:tick`,
+            act(gesture.tick, () =>
+              chosen === null
+                ? chooseHoliday(workerId, row.date, year)
+                : unchooseHoliday(workerId, chosen.spanId),
             )
           }
           {...busyAttrs(
-            busyAt(`${row.date}:tick`),
+            busy(gesture.tick),
             [
               // The box is drawn at 24 and hit at 40: a fixed-size control cannot
               // be padded out without shrinking what it draws, so the hit area is
@@ -616,14 +630,12 @@ function HolidayRowView({
                 data-part={part}
                 aria-pressed={chosen.fraction === part}
                 onClick={() =>
-                  act(
-                    row.date,
-                    () => setHolidayPart(workerId, chosen.spanId, part, year),
-                    `${row.date}:part:${part}`,
+                  act(gesture.part(part), () =>
+                    setHolidayPart(workerId, chosen.spanId, part, year),
                   )
                 }
                 {...busyAttrs(
-                  busyAt(`${row.date}:part:${part}`),
+                  busy(gesture.part(part)),
                   [
                     "rounded-full border bg-surface px-3.25 py-1.5 text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
                     chosen.fraction === part
@@ -667,12 +679,10 @@ function HolidayRowView({
           initial={row.date}
           amending={amending}
           onCancel={onCancelMove}
-          busy={busyAt(`${row.date}:move`)}
+          busy={busy(gesture.move)}
           onSubmit={(date, amendment) =>
-            act(
-              row.date,
-              () => moveHoliday(workerId, chosen.spanId, date, year, amendment),
-              `${row.date}:move`,
+            act(gesture.move, () =>
+              moveHoliday(workerId, chosen.spanId, date, year, amendment),
             )
           }
         />

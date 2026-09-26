@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { SEEDED_RATES } from "@/lib/datedRates";
+import { SEEDED_RATES, type DatedRate } from "@/lib/datedRates";
 import { openNumber, sealNumber } from "@/lib/encryption";
 import { UnknownWorkerError } from "@/lib/engine/repository";
 import type { MonthRecord, SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
@@ -337,8 +337,8 @@ describe("what the household shares between its workers", () => {
   });
 
   test("a fetched rate replaces the shipped figure for its own key and date, and is read back in its own unit", async () => {
-    const fetched = {
-      key: "minimumWage" as const,
+    const fetched: DatedRate = {
+      key: "minimumWage",
       value: 700000,
       effectiveFrom: "2027-01-01",
       source: "https://example.test/the-notice",

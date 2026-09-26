@@ -50,14 +50,19 @@ export interface AlertCard {
    *
    * **One per month the card stands for** (the user, 2026-09-25): "mark as
    * handled" cannot be undone from the screen, so a card naming four months
-   * offers four presses and never one that silences all four. `month` is the
-   * month's name where the card gathered several and `null` where it stands for
-   * one, which is the card that draws a single plain button as it always did.
+   * offers four presses and never one that silences all four.
+   *
+   * **The two shapes are told apart by the type and not by a count**, because
+   * the screen draws two different controls: `one` is the single plain button a
+   * card has always had, and `each` is the row of month chips. Only the two
+   * kinds `groupedEntries` gathers carry a month, so a chip always has a name
+   * to wear — said here, where it is built, rather than left to a fallback on
+   * the screen that would draw a button named after nothing.
    */
-  dismiss: {
-    label: string;
-    months: { fingerprint: string; month: string | null }[];
-  } | null;
+  dismiss:
+    | { label: string; one: string }
+    | { label: string; each: { fingerprint: string; month: string }[] }
+    | null;
 }
 
 export interface HandledRow {
@@ -78,15 +83,15 @@ export interface AlertsView {
  * One card's words. `months` is every month the card stands for (item 27's
  * grouping): one, for all but the two kinds a replay raises month after month.
  */
+/** The three sentences an entry is drawn as: its heading, the line under it,
+ * and the words on the button beside them. */
+type AlertSaid = { title: Said; note: Said; action: string };
+
 function phrase(
   entry: ActionEntry,
   months: YearMonth[],
   workerId: string,
-): {
-  said: { title: Said; note: Said; action: string };
-  href: string;
-  law: LegalLinkKey;
-} {
+): { said: AlertSaid; href: string; law: LegalLinkKey } {
   const words = he.alerts.entry;
   switch (entry.key) {
     case "nationalInsurance":
@@ -144,19 +149,13 @@ function phrase(
       };
     case "monthNotExported":
       return {
-        said:
-          months.length > 1
-            ? words.monthsNotExported(months.length)
-            : words.monthNotExported(monthLabel(entry.month)),
+        said: gathered(entry.month, months, words.monthNotExported, words.monthsNotExported),
         href: "/reports",
         law: "wageProtection",
       };
     case "monthUnconfirmed":
       return {
-        said:
-          months.length > 1
-            ? words.monthsUnconfirmed(months.length, monthListLabel(months))
-            : words.monthUnconfirmed(monthLabel(entry.month)),
+        said: gathered(entry.month, months, words.monthUnconfirmed, words.monthsUnconfirmed),
         href: "/month/export",
         law: "wageProtection",
       };
@@ -177,6 +176,49 @@ function phrase(
         law: "annualLeave",
       };
   }
+}
+
+/**
+ * Which dismissal a card offers, if any: one press for the card, or one per
+ * month where it gathered several.
+ *
+ * **A month is required to gather**, which is what makes the `each` shape safe
+ * for the screen to draw: an entry that carries none cannot be told apart from
+ * its siblings by a chip, so the card falls back to the single button rather
+ * than drawing one named after nothing.
+ */
+function dismissal(
+  how: ReturnType<typeof dismissalOf>,
+  lead: ActionEntry,
+  behind: ActionEntry[],
+): AlertCard["dismiss"] {
+  if (how === null) return null;
+  const label = how === "markHandled" ? he.alerts.markHandled : he.alerts.notNow;
+  const each = behind.flatMap((one) =>
+    "month" in one
+      ? [{ fingerprint: fingerprintOf(one), month: monthLabel(one.month) }]
+      : [],
+  );
+  return each.length > 1 ? { label, each } : { label, one: fingerprintOf(lead) };
+}
+
+/**
+ * What a gathered kind says: one sentence for a single month, another for the
+ * several a card stands for (item 27).
+ *
+ * **Written once so that a third gathered kind is a call and not a third copy**
+ * of the same branch. `many` is handed the count *and* the list; a sentence
+ * that names only the count simply takes the first of the two.
+ */
+function gathered(
+  month: YearMonth,
+  months: YearMonth[],
+  one: (month: string) => AlertSaid,
+  many: (count: number, list: string) => AlertSaid,
+): AlertSaid {
+  return months.length > 1
+    ? many(months.length, monthListLabel(months))
+    : one(monthLabel(month));
 }
 
 function tagOf(entry: ActionEntry, today: IsoDate): Said {
@@ -239,17 +281,7 @@ async function alertsView(
           note: said.note,
           action: { label: said.action, href },
           law: legalLink(law),
-          dismiss:
-            how === null
-              ? null
-              : {
-                  label: how === "markHandled" ? he.alerts.markHandled : he.alerts.notNow,
-                  months: behind.map((one) => ({
-                    fingerprint: fingerprintOf(one),
-                    month:
-                      behind.length > 1 && "month" in one ? monthLabel(one.month) : null,
-                  })),
-                },
+          dismiss: dismissal(how, lead, behind),
         };
       });
       const done = handledList(profile, series, today).map((entry, index) => ({

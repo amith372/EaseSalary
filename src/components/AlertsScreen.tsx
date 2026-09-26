@@ -5,11 +5,12 @@ import { useRef, useState, useTransition } from "react";
 import { dismiss, saveReminders } from "@/app/alerts/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
-import { touchTargetClass } from "@/components/Field";
+import { busyAttrs, touchTargetClass } from "@/components/Field";
 import type { AlertCard, AlertsView } from "@/lib/alertsView";
 import { warningKinds, type WarningKind } from "@/lib/engine/alerts";
 import { he, type Said } from "@/lib/i18n/he";
 import { returningTo } from "@/lib/pickerReturn";
+import { useAction } from "@/components/useAction";
 
 /**
  * `EaseSalary - התראות`, for the whole household (specs.md item 27). Everything
@@ -96,14 +97,28 @@ export function AlertsScreen({ view }: { view: AlertsView }) {
 }
 
 function OpenCard({ card }: { card: AlertCard }) {
-  const [pending, startPending] = useTransition();
+  // The busy state goes on the control that was pressed and not on the card
+  // (`DESIGN.md`): a card standing for four months has four buttons, and one
+  // press must not say that the other three cannot be pressed.
+  const { run, saving, busyAt } = useAction<never>();
   const dismissal = card.dismiss;
+  /** `dismiss` answers nothing — it drops a fingerprint it cannot read — so the
+   * success `useAction` waits for is made here. */
+  const put = (fingerprint: string) =>
+    run(
+      async () => {
+        await dismiss(card.workerId, fingerprint);
+        return { ok: true } as const;
+      },
+      undefined,
+      fingerprint,
+    );
   return (
     <Card
       radius="md"
       data-role="alert"
       data-list={card.blockage ? "blockage" : "warning"}
-      aria-busy={pending}
+      aria-busy={saving}
       className="flex flex-wrap items-start gap-x-4 gap-y-3 px-5 py-4.5"
     >
       <span
@@ -138,19 +153,21 @@ function OpenCard({ card }: { card: AlertCard }) {
             cannot be undone from the screen, so there is no press that answers
             four months at once. Each button is named for its month, because
             four drawn alike are four a screen reader cannot tell apart. */}
-        {dismissal !== null && dismissal.months.length > 1 ? (
+        {dismissal !== null && "each" in dismissal ? (
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 pt-1.5">
             <span dir="auto" className="text-[14px] text-ink-quiet">
               {he.alerts.markHandledEach}
             </span>
-            {dismissal.months.map((one) => (
+            {dismissal.each.map((one) => (
               <button
                 key={one.fingerprint}
                 type="button"
-                disabled={pending}
-                aria-label={he.alerts.markHandledMonth(one.month ?? "")}
-                onClick={() => startPending(() => dismiss(card.workerId, one.fingerprint))}
-                className="flex min-h-9 items-center gap-1.5 rounded-full bg-chip px-3 py-1.5 text-[14px] text-ink-warm transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:text-ink-quiet"
+                aria-label={he.alerts.markHandledMonth(one.month)}
+                onClick={() => put(one.fingerprint)}
+                {...busyAttrs(
+                  busyAt(one.fingerprint),
+                  "flex min-h-9 items-center gap-1.5 rounded-full bg-chip px-3 py-1.5 text-[14px] text-ink-warm transition-colors hover:bg-hover",
+                )}
               >
                 <Bidi>{one.month}</Bidi>
                 <svg
@@ -180,14 +197,14 @@ function OpenCard({ card }: { card: AlertCard }) {
         >
           <span dir="auto">{card.action.label}</span>
         </Link>
-        {dismissal !== null && dismissal.months.length === 1 && dismissal.months[0] ? (
+        {dismissal !== null && "one" in dismissal ? (
           <button
             type="button"
-            disabled={pending}
-            onClick={() =>
-              startPending(() => dismiss(card.workerId, dismissal.months[0]!.fingerprint))
-            }
-            className="min-h-11 text-[15px] whitespace-nowrap text-ink-quiet transition-colors hover:text-ink-warm"
+            onClick={() => put(dismissal.one)}
+            {...busyAttrs(
+              busyAt(dismissal.one),
+              "min-h-11 text-[15px] whitespace-nowrap text-ink-quiet transition-colors hover:text-ink-warm",
+            )}
           >
             <span dir="auto">{dismissal.label}</span>
           </button>

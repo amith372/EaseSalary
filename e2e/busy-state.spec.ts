@@ -120,3 +120,54 @@ test("the pressed rest-day chip says it is working and its neighbours do not", a
   await release();
   await expect(page.locator("[data-busy]")).toHaveCount(0, { timeout: 15000 });
 });
+
+/**
+ * The same rule where a card holds several controls at once: a gathered alert
+ * draws one chip per month (item 27), and pressing one must leave the rest
+ * pressable.
+ *
+ * **The failure this catches is the one run 8 found as R8.1**: the chips were
+ * drawn `disabled` while a press was in flight, so putting January off said
+ * that February, March and April could not be touched — the region dim of R7.14
+ * in another shape, on the one card that has four controls to grey.
+ *
+ * It runs on the `filed` seed — named as the *first* argument, which is what
+ * picks the household (`store.ts`) — whose January to April are confirmed and
+ * never exported, and so are one card with four chips (`alerts.spec.ts`).
+ */
+test("the pressed month chip says it is working and its neighbours stay pressable", async ({
+  page,
+}) => {
+  await useHousehold(page, "filed", "busy-alerts");
+  await page.goto("/alerts");
+
+  const card = page
+    .locator('[data-role="alert"][data-list="warning"]')
+    .filter({ hasText: "טרם יוצא" })
+    .filter({ hasText: he.placeholder.name });
+  const monthOf = (month: number) =>
+    card.getByRole("button", {
+      name: he.alerts.markHandledMonth(`${he.calendar.monthNames[month]} 2026`),
+    });
+  const january = monthOf(0);
+  const february = monthOf(1);
+  await expect(january).toBeVisible();
+
+  const release = await holdActions(page);
+  await january.click();
+
+  await expect(page.locator("[data-busy]")).toHaveCount(1);
+  await expect(january).toHaveAttribute("data-busy", "");
+  expect(await opacityOf(january)).toBe("0.6");
+  // **The neighbour is read once and never with a retrying assertion.** The
+  // hold lets go after `HELD_MS`, and `expect(locator)` retries until it
+  // passes — so a neighbour drawn disabled *during* the write would be found
+  // enabled a moment later and the defect would pass unseen. This is the one
+  // assertion in the file that has to be a plain read.
+  expect(await february.isDisabled()).toBe(false);
+  expect(await february.getAttribute("data-busy")).toBeNull();
+  expect(await opacityOf(february)).toBe("1");
+
+  await release();
+  await expect(page.locator("[data-busy]")).toHaveCount(0, { timeout: 15000 });
+});

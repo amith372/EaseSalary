@@ -1,6 +1,7 @@
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
+import type { DatedRate } from "@/lib/datedRates";
 import { calculateMonth } from "@/lib/engine/month";
 import {
   createInMemoryRepository,
@@ -776,10 +777,10 @@ describe("the household's dated rates", () => {
    */
   it("replace the row held for the same key and effective date", async () => {
     const repository = store();
-    const corrected = {
-      key: "minimumWage" as const,
+    const corrected: DatedRate = {
+      key: "minimumWage",
       value: 650000,
-      effectiveFrom: "2026-04-01" as const,
+      effectiveFrom: "2026-04-01",
       source: "userConfirmed",
     };
     await repository.saveRate(corrected);

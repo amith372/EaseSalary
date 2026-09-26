@@ -597,4 +597,21 @@ test("the folded sections say what is inside them", async ({ page }) => {
     "false",
   );
   await expect(tax.locator("[data-money]").first()).toBeVisible();
+
+  // **The other three, which F56 left bare and run 8 found as R8.6.** Each
+  // names what is inside rather than counting it, and a section holding
+  // nothing says so — which is the assertion that fails if the summary is
+  // dropped again, since a folded section would then hold its title alone.
+  for (const [group, said] of [
+    ["userLines", he.month.actions.lines.empty],
+    ["thirdParty", he.month.actions.thirdParty.empty],
+    ["overrides", he.month.actions.overrides.noneChanged],
+  ] as const) {
+    const section = page.locator(`[data-group="${group}"]`);
+    await expect(section.locator("button[aria-expanded]")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await expect(section).toContainText(said);
+  }
 });

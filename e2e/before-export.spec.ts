@@ -645,22 +645,29 @@ test.describe("a confirmation keeps where the wage came from (item 4)", () => {
  * and out of where.
  *
  * The fetch cannot be made to fail from the browser, so this drives the link's
- * destination rather than the failure: the rates group on `/settings` answers to
- * the `#rates` the sentence links to, and it carries the source the sentence
- * promises. A link into a group that had no source line is exactly the broken
- * promise this asserts against.
+ * destination rather than the failure: the employment group on `/settings`
+ * answers to the `#employment` the sentence links to, and it carries the source
+ * the sentence promises. A link into a group that had no source line is exactly
+ * the broken promise this asserts against.
+ *
+ * **The wage row is asserted as a descendant of the linked group and not on its
+ * own**, which is what catches the row and the link drifting apart again: the
+ * row moved out of the rates group and the link moved with it, and a row found
+ * anywhere on the screen would have let either one move alone.
  */
-test("the rates group answers the failed-fetch link", async ({ page }) => {
+test("the employment group answers the failed-fetch link", async ({ page }) => {
   await useHousehold(page, "rates-anchor");
-  await page.goto("/settings#rates");
+  await page.goto("/settings#employment");
   await switchToTestWorker(page);
   await openSettingsGroups(page);
 
-  await expect(page.locator('[data-group="rates"]')).toBeVisible();
+  await expect(page.locator('[data-group="employment"]')).toBeVisible();
   // The seeded wage says its source in words; only an address takes `readFrom`
   // and the link beside it, which the national-insurance row below is.
   await expect(
-    page.locator('[data-setting="minimum-wage"] [data-source]'),
+    page.locator(
+      '[data-group="employment"] [data-setting="minimum-wage"] [data-source]',
+    ),
   ).toContainText(he.settings.sourceSaid.familyWorkbook);
   await expect(
     page.locator('[data-setting="national-insurance"] [data-source]'),

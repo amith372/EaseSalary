@@ -171,8 +171,18 @@ folded sheet.
   button that opens it, with a chevron beside it that points towards the end
   of the line when folded and down when open. The artboard draws them open:
   five forms at once were too much to take in on arrival. What is open stays
-  open while the month is stepped. A heading's side item — the tax amount, the
-  `לתת מקדמה` button — shows only while its section is open.
+  open while the month is stepped.
+- **A folded section says what is inside it**, which the artboard does not draw
+  because it draws them open. What sits beside the heading depends on which
+  state it is in: a *control* — `לתת מקדמה` — appears only once the section is
+  open, since a button acting on what the user cannot see is a trap, while a
+  *figure or a name* is drawn folded as well. Each of the six says the thing it
+  is for: the tax its amount, `מקדמות` how many are still being repaid, and the
+  three that hold what she entered herself — her own lines, the payments to
+  third parties, and the figures she typed over the calculated ones — the names
+  of what is in them, or a sentence saying there is nothing. Names and not
+  counts: these hold things she named or chose, so a name answers "what is in
+  there" where a number only says how much opening it would cost.
 - **A movement of an advance carries a לתקן beside its להסיר**, which the
   canvas draws on a line the user added and not here. The amount of an advance is
   what she typed, so it is corrected rather than overridden (`specs.md` item 20),
@@ -258,6 +268,17 @@ folded sheet.
   the wizard makes — and the hint says what the answer decides, since the country
   is only the *default* her holiday list is drawn from: a worker already moved to
   another list keeps it.
+- **The minimum wage is drawn among the employment's rows, directly under
+  `שכר בסיס לחודש`**, and not in the group the canvas puts it in. The salary's own
+  hint already says it may not fall below the minimum, so the figure and the
+  floor it is measured against are read as one thing; what is left in the other
+  group is `ביטוח לאומי` and the medical insurer, which is why that group is
+  titled `ביטוחים` rather than for a cadence only one of the two has. **The
+  failed-fetch sentence before an export links to `#employment` for this
+  reason** — it promises to show which wage figure is held and out of where, so
+  it has to land on the group that draws it. The household's figure sitting
+  inside a per-worker group is no departure of its own: the card is drawn per
+  worker and the wage is the same on both.
 - **A rate row carries where its figure was read from**, which the canvas does
   not draw: `נקרא מ־` and the link `המקור` where the source is an address, and
   otherwise **a sentence of the screen's own** — `נקרא מהגיליון של המשפחה`, or

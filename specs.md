@@ -939,6 +939,20 @@ Each of these is true or false at a glance.
       employment — but the user who wants a monthly deduction goes to the month, finds
       only the one-off kind, and concludes the application cannot do it. It could, and
       did. A capability nobody can find is not a capability the user has.
+
+      A standing line carries a lifetime: a first month, and optionally a last
+      month. A month outside that range does not carry the line. A line with no
+      lifetime recorded applies to every month, which is what a standing line
+      meant before the lifetime existed. A line is removed outright when the user
+      asks for it, which is what a line added by mistake needs, and a month
+      already confirmed keeps the line in the snapshot it was confirmed with. A
+      line that is meant to end rather than to disappear is ended by setting its
+      last month; it stays listed under its own quieter heading and is started
+      again by clearing that month. Extending a line's range
+      restores it to every month inside the new range that has not been
+      confirmed, and a confirmed month keeps the snapshot it was confirmed with.
+      A line whose last month is the month after the current one is raised as a
+      warning, beside the documents that are about to expire.
     - **Where it sits: before the month's total, or after it.** This is the user's own
       choice on every line, and it is not implied by the direction. A line placed
       *before* is part of what the month came to — it enters the month's total and with it

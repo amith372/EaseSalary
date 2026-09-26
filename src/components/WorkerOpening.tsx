@@ -68,6 +68,17 @@ import { formatDays } from "@/lib/money";
  * a standing line is *stopped* rather than removed, because stopping it leaves
  * every month it already appeared in exactly as it was.
  */
+/**
+ * The names a control is known by while it waits, built rather than typed at
+ * both ends (run 8's R8.10): a key the press spells one way and the control
+ * another leaves a button that never says it is working, and both halves look
+ * right on their own.
+ */
+const busyKey = {
+  standingLine: (id: string) => `stop:${id}`,
+  advance: (number: number) => `remove:${number}`,
+};
+
 export function StandingLinesControl({
   workerId,
   standingLines,
@@ -216,11 +227,11 @@ export function StandingLinesControl({
                         run(
                           () => stopStandingLine(workerId, line.id),
                           undefined,
-                          `stop:${line.id}`,
+                          busyKey.standingLine(line.id),
                         )
                       }
                       aria-label={words.stopLabel(line.label)}
-                      {...busyAttrs(busyAt(`stop:${line.id}`), quietButtonClass)}
+                      {...busyAttrs(busyAt(busyKey.standingLine(line.id)), quietButtonClass)}
                     >
                       <span dir="auto">{words.stop}</span>
                     </button>
@@ -364,12 +375,12 @@ export function OpeningPositionControl({
                       run(
                         () => removeOpeningAdvance(workerId, advance.number),
                         undefined,
-                        `remove:${advance.number}`,
+                        busyKey.advance(advance.number),
                       )
                     }
                     aria-label={words.removeLabel(advance.number)}
                     {...busyAttrs(
-                      busyAt(`remove:${advance.number}`),
+                      busyAt(busyKey.advance(advance.number)),
                       quietButtonClass,
                     )}
                   >

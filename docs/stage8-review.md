@@ -10,31 +10,62 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-> ### ✅ Run 7's seventeen are committed.
-> F47 as `e492ddf` on 2026-09-24, and **F48–F63 as `591a67b` on 2026-09-25** — one commit,
-> which is what the user asked for on 2026-09-24. **Nothing is pushed**; she decides that.
-> The evidence that commit rests on: browser suite **161/161 in 11.7 minutes, no flake**, unit
-> suite **1,241/1,241**, typecheck and lint clean, all on the committed tree.
+> ### ✅ Everything through run 8 is committed. Steps 6 and 6½ are done.
+> **Run 8's fifteen and F64 went in together on 2026-09-26**, one batch as she asked, with
+> `specs.md` item 20's approved replacement, `DESIGN.md`'s two entries and `CLAUDE.md`'s three
+> duplications folded in. Before it: stage 8⅞ as `f72eadc`, run 7's seventeen as `e492ddf`
+> and `591a67b`. **Nothing is pushed**; she decides that.
+> The evidence that commit rests on, measured on the committed tree: browser suite
+> **166/166 in 9.7 minutes, no flake** — the 164 that stood plus the contrast sweep and the
+> third busy-state case — unit suite **1,246/1,246**, typecheck and lint clean.
 > **A run measures one code state and nothing else** — a source file written while the suite is
 > going makes the dev server recompile underneath it, and the run that follows is evidence of
 > neither state. One such run was discarded on 2026-09-25 and re-run clean; its six "failures"
 > were all `worker process exited unexpectedly`, which is a crashed browser and never an
 > assertion.
-> **A per-file run is not evidence for a batch.** The whole-suite run before the commit found
+> **A per-file run is not evidence for a batch.** The whole-suite run before `591a67b` found
 > F62's regression — five failures in two spec files F62 never touched.
 
 > ### → A fresh session told "continue" does this
-> **Step 5 — F32 (`/doctor`).** It is the next item on the Fix list, and the step says to
-> **stop before it and ask the user**, which a session does rather than starting it.
-> **Stage 8⅞ is done** — the country of origin is correctable — and `build_plan.md` holds it
-> as one line.
-> **Uncommitted and deliberate, waiting to be folded into the next commit:** this file's
-> header, corrected after `591a67b`, plus the whole of stage 8⅞ — `setCountry`,
-> `CountryControl`, `countriesWithLists`, `e2e/country-change.spec.ts`, the `specs.md`
-> paragraph and the `DESIGN.md` row. The user said on 2026-09-25 to fold the header in rather
-> than commit it alone; do not revert any of it, and **ask before committing**.
-> **One question is open and is the user's** — see "Needs the user" below: whether F48's
-> contrast sweep joins the suite. **Do not decide it.**
+> **Start at step 7 of "The order from here": the two refusal debts, together.** Both were
+> answered on 2026-09-25 and the answers are written into that step — the file routes redirect
+> to the screen that draws the refusal card, and a refusal in one worker's month stops taking
+> the other worker's figures off the screen. It **changes behaviour**, so it owes a `specs.md`
+> sentence whose exact wording is put to her first (rule 1), and the debts leave
+> `build_plan.md` as they are paid.
+> **The order, and a session does the first that is not done:** ~~6 run 8's fifteen~~ and
+> ~~6½ F64~~ are **done and committed** · **7 the two refusal debts, together** · 8 the
+> standing-line lifetime, **blocked on one word of hers** · 9 F37 · 10 F32 again.
+> **Step 8 is not the next step even though its PRD is signed off.** Its eight decisions and
+> `specs.md` item 20 are settled, but the button's word is hers and unanswered — see below —
+> so a session does step 7 and does not start step 8 to fill the time.
+> **F32 (`/doctor`) was run on 2026-09-25 and is not closed.** Its settings actions are
+> applied — eight unused skills off, auto mode saved as the default, Claude Code at 2.1.282 —
+> and `CLAUDE.md` lost three duplications she approved. **One item is hers and is outstanding:**
+> the Claude Docs connector, which has no local config file, so it goes through `/mcp` or
+> claude.ai. **Whether it is already off is not known**: the server disconnected during the
+> session of 2026-09-25, but a disconnect is not a removal and nothing here confirms one — it
+> was reported as done on that evidence, which was too thin, and the claim is withdrawn.
+> F32's own two findings are under "Needs the user". **The check F32 names — "`/doctor`
+> reports nothing left to fix" — is not met.** Step 10 is: confirm the connector is off, then
+> re-run `/doctor`.
+> **One uncommitted change is waiting and it is deliberate:** this file's header, corrected
+> after the commit it describes so that it could name it. The user's standing instruction of
+> 2026-09-25 is to **fold the header into the next commit** rather than commit it alone. Do
+> not commit it on its own and do not revert it. **Ask before every commit.**
+> **Step 8 changed on 2026-09-26.** She decided that the row's button **deletes** the line and
+> that a confirmed month keeps what it was confirmed with, which replaces decisions 1 and 5;
+> `specs.md` item 20 was corrected to match, quoted to her and **approved the same day**. One
+> thing is still hers and is needed only when the row is built: **the button's own word**,
+> since a button that deletes cannot keep `להפסיק`. The rest of the step stands.
+> **Everything else that was open is answered, in place:**
+> F48's sweep **joins the suite** (R8.4 finishes it; the file is preserved at
+> `e2e/contrast-sweep.parked.ts`, which the suite ignores until it is renamed); `useAction`'s
+> dropped second press is **kept**; the refused download **redirects to the screen that draws
+> the card**; and the mark panel's missing busy state was **handed back to the session** and is
+> decided where the finding is. **The user's own outstanding actions** are listed under
+> "Waiting on the user" and none may be answered for her — chief among them step 1's check,
+> which rule 8 says only she can run.
 > **Never push.**
 
 - **Last done: stage 8⅞ — the country of origin is correctable**, on 2026-09-25, whole.
@@ -137,8 +168,19 @@ the plan table, then stops and reports to the user.
   same way. **One place is left saying nothing but `aria-busy`, and it is a real gap**: on `/`
   the calendar's mark panel closes on the press, so by the time the write is in flight there is
   no control left to wear the state. Nothing was invented to fill it (working rule 4) — it was
-  **reported to the user on 2026-09-25 and she has not answered**, so it stays as it is and is
-  not re-decided by a session that notices it. `e2e/busy-state.spec.ts` is new: it holds the server action at
+  **reported to the user on 2026-09-25, and she answered the same day by handing the choice
+  back: do what is best.** That delegation is working rule 4's "an explicit decision by the
+  user", so the gap is now filled rather than left. **What was chosen, and why:** the busy
+  state goes onto **the day cells the gesture marked**, not onto the kind chip. `applyKind`
+  (`src/components/MonthCalendar.tsx:430`) calls `onSelectRange` and then `reset()`, so the
+  chip that committed the mark is unmounted before the write resolves — holding the picker
+  open until it lands would make every mark feel slower, to say something the calendar can say
+  better. The days are still on screen, they are the subject of the change, and the dim then
+  reads as "these days are being written" rather than as the page failing, which is the exact
+  failure the comment on `HomeScreen.tsx:364` warns about. It needs the component to remember
+  which range is in flight, because `reset()` clears the selection; that state is cleared when
+  the write answers. **It is a visual change, so it goes into `DESIGN.md` in the same step**
+  (rule 3), and it is built with run 8's findings rather than on its own. `e2e/busy-state.spec.ts` is new: it holds the server action at
   the network for 2.5s and measures the browser's computed `opacity`, because opacity is not
   inherited as a computed value and a child of a dimmed region still reads 1 — so it is the
   region that has to be measured. **Both halves were checked against the restored bug**: with
@@ -466,9 +508,136 @@ the plan table, then stops and reports to the user.
      are in `build_plan.md`, not here. It **changes behaviour**, so it is not a Fix-list item
      (ground rule 1) and it is a stage of its own. It owes a `specs.md` sentence, whose exact
      wording is put to her first.
-  5. **F32 (`/doctor`)**. **Stop before it and ask** — she may want to change model for it;
-     reaching it is not licence to start it.
-  6. **F37.**
+  5. ~~**F32 (`/doctor`)**.~~ **Run 2026-09-25, not closed** — see step 9 below, where she
+     moved it to last.
+  **The order was replaced on 2026-09-25, after run 8. What stands is steps 6 to 9, in this
+  order, and a session does the first that is not done:**
+  6. **Run 8's fifteen findings.** R8.1–R8.7 and R8.15 are fixes against a rule already
+     written down; R8.8–R8.14 are judgement calls, and she asked for **all fifteen**. Each is
+     one commit unless she asks for a batch. The browser suite runs whole afterwards, and
+     **nothing is written to a source file while it runs** — see the header.
+  7. **The two refusal debts**, both from `build_plan.md`'s "Still to pay", both in one step
+     because they share `calculateSeries`' callers and no split of them is worth paying twice.
+     **(a)** `/month/export/file` and `/reports/file` throw on a refused month —
+     **answered 2026-09-25: the route redirects to the screen that already draws the refusal
+     card**, so she lands where the mark she must correct is, and no second surface is
+     invented for a refusal the card already words. **(b)** A refusal in one worker's month
+     takes the other worker's figures off the screen — the four screens catch around the whole
+     replay where `calculateSeries` runs per worker. **Answered 2026-09-25: fix it here.**
+     This step **changes behaviour**, so it is not a Fix-list item (ground rule 1); it owes a
+     `specs.md` sentence whose exact wording is put to her first (rule 1), and the debts come
+     out of `build_plan.md` as they are paid.
+  8. **A standing line with a lifetime — the PRD is signed off; build it.** Asked for 2026-09-25,
+     and she placed it **before F37**. **What exists already:** `UserLine`
+     (`src/lib/engine/types.ts:580`) serves both lifetimes — a one-off on the month
+     (`MonthFacts.userLines`) and a **standing** one on the profile
+     (`WorkerTerms.standingLines`, snapshotted onto each month with the other terms at
+     `month.ts:158`), already positive or negative by `direction` and already placed before or
+     after the gross. It can be added, edited and removed (`src/app/workers/actions.ts:540`,
+     `:573`, `:606`). **What is missing, and is the whole of this step:** a standing line has
+     **no lifetime**. It has no first month and no last month, so it cannot run for a range;
+     and the only way to stop one is to delete it, which loses the record and cannot be undone,
+     so it cannot be *turned off* and on again. **The screen half:** `/payments` currently
+     explains the difference in prose and sends her to another page for the recurring kind —
+     she said that reads poorly, and the wording and the control both move with this step.
+     It **changes behaviour and adds a field**, so rule 2 applied: **the PRD and its
+     implementation plan were put to her on 2026-09-25 and every open question was answered
+     the same day.** The `specs.md` paragraph was quoted to her and answered **yes**, and is
+     **already written into item 20**, under the "How long it lasts" bullet — so no session
+     asks for it again. What is left is the build.
+
+     **What was settled, and none of it is re-decided by a session:**
+     1. **One lifetime, not two controls.** A first month and an optional last month.
+        "Turning off" **sets the last month**; clearing it starts the line again. A separate
+        on/off switch was rejected because a range plus a switch is four states the user has
+        to hold, and Part 1 says to choose the option that requires her to know less.
+     2. **Extending refills** every month inside the new range **that is not confirmed**. A
+        confirmed month keeps the snapshot it was confirmed with — F28's rule, not a second one.
+     3. **Months, never days.** `from` and `until` are month keys. A line starting in the
+        current month applies to it while that month is unconfirmed and not yet over.
+     4. **A missing lifetime means "always"**, which is exactly what every standing line
+        written before this step meant — the idiom `placement?` already uses, where an
+        omitted value and the old behaviour are the same thing rather than merely similar.
+        **This is why there is no migration:** `standing_lines` is a `jsonb` array
+        (`supabase/migrations/20260910183000_…sql:70`), so the new keys need no schema change.
+     5. **A stopped line stays listed**, under its own quieter heading, with its range shown —
+        otherwise the edit that would restart it is on a row she cannot see.
+     6. **A line about to end raises a warning.** `standingLineEnding` in the **warning** list
+        of `src/lib/engine/actionList.ts`, in the month before the line's last month, naming
+        the line and the worker. **It is not a new shape:** it is the second stage of the
+        pattern `documentExpiring`/`documentExpired` and `recuperationApproaching`/
+        `recuperationDue` already run. It fires only for a line that *has* a last month, and
+        never for one already stopped.
+     7. **The two screens stay exactly as they are** — reversed by her on 2026-09-26, after
+        the decision of 2026-09-25 to move all editing to `/settings`. `/payments` keeps its
+        one-off control and `/settings` keeps the standing one, which is where both already
+        are. **No screen moves in this step.** The only screen work is wherever the lifetime
+        itself has to be shown and edited, and wherever a stopped line is listed.
+     8. **Whatever words the lifetime needs are genderless.** `he.ts`'s convention is the
+        infinitive for a control (`לצאת`, `לבטל`, `להמשיך`) and the impersonal for prose
+        (`אחרי שמוסיפים אותה`); only the *worker* takes dual forms (`עובד/ת`). A second-person
+        feminine draft was rejected for that reason. The existing screens keep their existing
+        strings (decision 7), so what this step adds is only the lifetime's own words — a
+        range, and the quieter heading a stopped line sits under.
+
+     **Answered by her on 2026-09-26: the button deletes, and a confirmed month keeps what it
+     was confirmed with.** The question was whether a line *added by mistake* keeps a real
+     deletion once the lifetime exists, and both halves are hers in her own words — "do delete if
+     they clicked להפסיק", and "if it was confirmed then do keep it on the month that was
+     confirmed". So the gesture on the row removes the line from the profile, which is what
+     `stopStandingLine` (`src/app/workers/actions.ts:597`) already does, and `saveProfile`'s
+     re-snapshot takes it out of every month not yet confirmed while a confirmed month keeps its
+     snapshot — F28's rule, unchanged and not this step's to touch. The third-party payments she
+     asked about in the same breath already have both gestures (`לתקן` and `להסיר` per row,
+     `MonthActions.tsx:1440`, `:1451`), so this is the standing kind alone.
+     **What it replaces in the plan:** decision 1's "turning off **sets the last month**" and
+     decision 5's "a stopped line stays listed" no longer describe that button. The lifetime
+     itself stays and is the range — a line whose last month has passed reaches no later month,
+     stays listed, and is started again by clearing or extending that month — and decision 6's
+     warning is unaffected. What is gone is stopping *as* the way of ending a line.
+     **Two things follow, and neither is a session's to settle.**
+     **(a) `specs.md` item 20 is corrected and nothing is owed.** Its sentence said the
+     opposite — a line is stopped by setting its last month rather than by deleting it, and a
+     stopped line stays listed — so the replacement was **quoted to her as its own question and
+     approved on 2026-09-26** (rule 1). Item 20 now carries both endings: a line removed outright
+     when she asks, a confirmed month keeping its snapshot, and a line *meant* to end ended by its
+     last month and restarted by clearing it. **No session reopens it.**
+     **(b) A button that deletes cannot keep the word `להפסיק`.**
+     `he.workers.profile.terms.standing.stop` is `להפסיק`, and beside a range that also ends a
+     line two different endings would wear one word — a family meaning "stop paying this from now
+     on" would press it and lose the record. **Still open on 2026-09-26** — `להסיר`, `למחוק` or
+     `להפסיק` kept as it is was put to her and is the one thing this step still waits on. It is
+     needed when the row is built and not before, so the rest of the step may proceed.
+
+     **The build, in order.** (1) `UserLine` gains `from?` and `until?` as month keys
+     (`src/lib/engine/types.ts:580`). (2) The snapshot filters standing lines by the month it
+     is building (`src/lib/engine/month.ts:158`, `src/lib/engine/userLines.ts`). (3) The
+     profile actions set, extend and stop a lifetime, and the server refuses `until` before
+     `from` (`src/app/workers/actions.ts:540`, `:573`, `:606`). (4) `standingLineEnding` joins
+     `actionList.ts` and `he.ts`. (5) The two screens move, and `DESIGN.md` gains the entry.
+     (6) The rule-12 agreement test. **Expected figures come from outside the code** (rule 11):
+     the boundary months are worked out by hand, never read back from the engine.
+
+     **`specs.md` item 20 is settled and nothing in it is owed.** The approved paragraph is
+     in, and its one sentence that decision 7's reversal made wrong — the one sending all
+     editing to settings — was **quoted to her and removed on 2026-09-26 with her plain yes**,
+     under rule 1. Item 20's own older sentences about where each kind is made are correct and
+     stand. **No session reopens item 20 for this step.**
+
+     **The check she runs (rule 8):** add a recurring deduction of ₪300 from next month until
+     three months after, where standing lines are set today; confirm it appears on those three months and on no others; stop it
+     early and confirm the months after the new end lose it while a month already confirmed
+     keeps it; confirm the warning appears the month before it ends; export one affected month
+     and confirm the sheet agrees with the screen. A failure looks like the line appearing
+     outside its range, a confirmed month's total moving, or the sheet and the screen
+     disagreeing.
+  9. **F37** — strip the history out of `specs.md`. Every deletion quoted to her first, as one
+     batch for one yes.
+  10. **F32 again.** Its settings half is done. What is left is **the Claude Docs connector,
+     which is hers** (`/mcp` here, or claude.ai → Settings → Connectors — prefer the latter,
+     because `/mcp` is per-project and this project is registered twice; see "Needs the user").
+     Then `/doctor` is run once more, and the entry's own check — "`/doctor` reports nothing
+     left to fix" — is what closes it.
 
   **Ask before each commit** (said on 2026-09-18).
 - **The migrations are live.** The user ran `npx supabase db push` twice on 2026-09-24, the
@@ -533,7 +702,17 @@ the plan table, then stops and reports to the user.
 | 7 | The user signs the Fix list off | **done** 2026-09-18 — F1–F25 |
 | 8 | Execute the Fix list, one item at a time | under way — F1–F31, F33–F46 done; F32 and F37 remain. Stage 8¾ landed between step 2 and step 4 |
 | 9 | Layout and UI/UX review (step 4 of the order, asked for 2026-09-23) | **done** 2026-09-24 — run 7's section. All seventeen findings approved the same day: sections I (F47–F53, rule defects) and J (F54–F63, screen changes), executed before F32 |
-| 10 | Execute run 7's seventeen (step 4½) | **done** 2026-09-25 — F47–F63. Only F47 is committed; F48–F63 are the uncommitted batch |
+| 10 | Execute run 7's seventeen (step 4½) | **done** 2026-09-25 — F47–F63, committed as `e492ddf` and `591a67b` |
+| 11 | Stage 8⅞ — the country of origin is correctable | **done** 2026-09-25, `f72eadc` |
+| 12 | F32 — `/doctor` | **run 2026-09-25**; its settings actions are applied. Not closed: one item is the user's (the Claude Docs connector) and two findings owe a line under "Needs the user" |
+| 13 | Run 8 — the two-axis code review and a second `ponytail-audit` | **done** 2026-09-25 — fifteen findings, fixed point `9327b3d`. **Awaiting the user's GO**, which is step 14 |
+| 14 | The user signs run 8 off | **done** 2026-09-25 — **all fifteen**, and the four open questions answered. The order she set is steps 6–10 under "The order from here" |
+| 15 | Execute run 8's fifteen | **done** 2026-09-26 — fourteen fixed, R8.15 withdrawn as wrong. Uncommitted, and carries F64 with it |
+| 16 | The two refusal debts, together | **open** — `build_plan.md`'s "Still to pay"; both answered 2026-09-25 |
+| 17 | A standing line with a lifetime | **open** — decisions rewritten 2026-09-26 and `specs.md` item 20 corrected with her approval; one word (the row's button) is still hers — PRD and plan signed off 2026-09-25, all eight decisions recorded in step 8, `specs.md` item 20 already carries the approved paragraph. Placed before F37 |
+| 18 | F37 | **open** |
+| 19 | F32 again | **open** — the connector is hers, then `/doctor` is re-run |
+| 20 | F64 — her two notes on the rates group | **open**, and ready to build — both halves answered 2026-09-26. Where it sits in the order is hers; proposed as 6½, after run 8's fifteen |
 
 ### How each step is run
 
@@ -1040,9 +1219,114 @@ screenshot of the application read as unfinished, but they are seed data and not
 `·` separators that fail contrast are `aria-hidden` decoration; `MonthActions.tsx` at 1,903
 lines (R2.21, which F27 took as far as it goes).
 
+## Run 8 — `mattpocock-skills:code-review` (both axes) and `ponytail-audit`, 2026-09-25
+
+Fixed point `9327b3d` — the three commits run 7's execution and stage 8⅞ became, which no
+review had seen. Both axes were spot-checked against the files before being written down.
+`ponytail-audit` found **nothing to cut** repo-wide (no dead deps, no hand-rolled stdlib, no
+single-implementation abstraction; `jszip` earns its place reading raw parts `exceljs` parses
+back as its own); its one finding is R8.15, routed here because it is correctness and not bulk.
+
+R8.1 — the per-month "handled" chips are drawn disabled while a press is in flight — `src/components/AlertsScreen.tsx:150` — `DESIGN.md` says the busy control is not drawn as a disabled one and the region around it says nothing; one press disables every month on the card, which is the state the same commit removed from five other screens.
+R8.2 — a null month writes a broken accessible name — `src/components/AlertsScreen.tsx:153` — `one.month ?? ""` renders a label with a hole in it; the non-null invariant lives in `alertsView.ts:247` and not in the type.
+R8.3 — the Hebrew sentence outside `he.ts` carries no note saying why it may stay — `src/lib/datedRates.ts:105` — it is a stored-row sentinel nothing draws, which is the exemption, but the comment says only what it replaced, so the next reader moves it into `he.ts` and changes what a stored row means.
+R8.4 — F48's own check was never built — no contrast sweep in `e2e/`, `scripts/` or `package.json` — three faint paragraphs moved to `text-ink-soft` and nothing stops the fourth; the file that would close it is the parked one under "Needs the user", which this run does not decide.
+R8.5 — F52 is asserted on two households where its entry names three — `e2e/home-screen.spec.ts:601` — the loop is demo and refused only, so the `leads === "month"` branch (`src/components/HomeScreen.tsx:291`) is the case F52 singled out and the one not covered.
+R8.6 — F56 left three of six sections without a folded line — `src/components/MonthActions.tsx:832`, `:1563`, `:1777` — `userLines`, `thirdParty` and `overrides` pass neither `aside` nor `summary`, so each still opens as a bare heading, which is the defect R7.10 named.
+R8.7 — F50's sweep drops the two controls F50 names first — `e2e/pointer-targets.spec.ts:53` — the inline-link exception skips any anchor whose parent holds more text, so the blocker strip's action (`HomeSections.tsx:64`) and the show-all link (`:87`) are excluded before measurement and the spec's own docstring claim is false.
+R8.8 — the in-flight guard and its five-line comment are copied whole — `src/components/useAction.ts:45` and `src/components/PaymentsScreen.tsx:153` — one rule kept in two places drifts at the next edit.
+R8.9 — `MonthConfirmation` reimplements `useAction`'s `pressed`/`busyAt` by hand — `src/components/MonthConfirmation.tsx:79` — because its key is a boolean; passing `String(withNotes)` to `run` would delete the state.
+R8.10 — the busy key is an ad-hoc string minted five ways — `src/components/MonthActions.tsx:968`, `src/components/HolidayPickerScreen.tsx:464` and three inline forms — a typo yields a control that never shows busy, and nothing catches it.
+R8.11 — `act(at, action, control = at)` carries two key spaces told apart only by a comment — `src/components/HolidayPickerScreen.tsx:118` — one `{ anchor, control }` argument would name them.
+R8.12 — the singular/plural branch is repeated per key — `src/lib/alertsView.ts:148`, `:157` — a third gathered kind means a third copy.
+R8.13 — `GRID_GAP = 7` mirrors a Tailwind class and is wrong below `sm` — `src/components/MonthCalendar.tsx:260` — `sm:gap-1.75` sits on line 553 and `gap-1` (4px) under it; nothing keeps the number and the class string in step.
+R8.14 — `drawnRateSource` still takes a bare string — `src/lib/datedRates.ts:121` — it branches on `startsWith("http")` over a field that `rateSources` now makes a union.
+R8.15 — the bracket parser's plausibility guard is never called — `src/lib/scrape/incomeTax.ts:182` — `checkBracketsPlausible` is exported, documented at length and referenced nowhere, while its sibling `checkPlausible` (`src/lib/scrape/minimumWage.ts:111`) is called at `:189`; a table read out of order produces a tax figure that looks ordinary, which is what the guard was written to refuse.
+
+Seen and not reported: the `heading` prop threaded through `Blockers`, `RefusalCard` and
+`MonthCalendar` reads as Shotgun Surgery but is `DESIGN.md`'s rule decided once in
+`HomeScreen.tsx`; `TermRow`'s `children` union is the documented idiom. The diff is otherwise
+clean against this repo's own conventions — no physical `left`/`right`, no `dir="auto"` over a
+lone `<bdi>`, every new dynamic string wrapped, no clock read in a render, money untouched.
+
+**Executed 2026-09-26, all fifteen, as one batch she asked for.** Fourteen are fixed and
+**R8.15 is withdrawn as wrong**: `checkBracketsPlausible` *is* called, at
+`src/lib/scrape/incomeTax.ts:242` inside `parseTaxBracketsPage`, so no tax figure is offered
+without it. What is true of it is only that it is exported and used in its own file — and
+`knip --production` lists it beside `checkPlausible`, the sibling the finding held up as
+correct, along with a dozen other exports this repository already tolerates. Nothing was
+changed for it rather than a fix being invented for a defect that is not there.
+**What the other fourteen became, in one line each:** R8.1 the alerts card's chips take
+`useAction`'s `busyAt` and drop `disabled`, with `e2e/busy-state.spec.ts` gaining the third
+case — and its neighbour assertions are **plain reads and not `expect` retries**, which is how
+the first version of that test passed against the restored bug; R8.2 `AlertCard.dismiss` is a
+union of `one` and `each`, so the screen branches on the type and the `?? ""` and the `months[0]!`
+are both gone; R8.3 the stored Hebrew sentinel now says why it may live outside `he.ts`;
+R8.4 the sweep is `e2e/contrast-sweep.spec.ts`, its header rewritten, green on ten screens at
+two widths and checked against a paragraph put back to `text-ink-faint` (3.42:1); R8.5 the
+month-leading outline case is asserted in `alerts.spec.ts`'s no-blockage household, which is
+the only place that state exists; R8.6 `userLines`, `thirdParty` and `overrides` gained folded
+lines naming what is inside them, and `he.ts` one new sentence for a month whose calculated
+rows are all untouched; R8.7 the pointer sweep's inline exception now asks whether the link is
+in a **text flow**, since every string here is wrapped and "the parent holds more text" excused
+every standalone action — removing one `touchTargetClass` now fails it 142 times; R8.8 the
+one-at-a-time rule is `useOneAtATime` and `useAction` and `/payments` both hold it at their own
+scope; R8.9 the two export buttons key off `notes`/`plain` through `busyAt`; R8.10 every busy
+key is built by a named builder at both ends; R8.11 `act` takes one `{ anchor, control }`
+gesture; R8.12 the gathered singular/plural branch is written once; R8.13 the grid gap is
+`--calendar-gap`, read by the `gap` and the cap, so below `sm` the cap stops using the `sm`
+gap; R8.14 `RateSource` types what may be written as a source, which caught a workbook citation
+still sitting in a test fixture.
+
+**R8.1–R8.7 and R8.15 are defects against a rule already written down**, so each is a fix and
+none is a design question. **R8.8–R8.14 are judgement calls** and change no behaviour.
+**One behaviour change is in the diff and is nobody's approved item** — it is under
+"Needs the user" below, and this run does not decide it.
+
 ## Needs the user
 
-**F48's contrast sweep — in the suite, parked, or deleted? Asked 2026-09-25, unanswered.**
+**Her two notes on the rates group, 2026-09-26 — asked and answered the same day, and now F64.**
+Raised by her and not by a run: `שערים ותשלומים קבועים` over `מה משולם מלבד המשכורת, ובאיזה קצב`
+(`he.ts:1628`) describes none of the three rows under it (`SettingsScreen.tsx:244`) — a wage the
+salary may not fall below, a percentage fixed in law, and the words the medical-insurance line is
+printed with — and the note promises a cadence two of the three do not have. **Answered 2026-09-26,
+both halves:** the minimum wage moves under `שכר בסיס לחודש`, and what is left is named `ביטוחים`
+with a note saying what each of the two is set by. She chose that note against two alternatives, so
+**the exact Hebrew is F64's and is quoted only there.** Nothing is owed to `specs.md` — item 4 asks
+for the figure, its date and its source on this screen and names no group and no heading — and
+`DESIGN.md` takes the departure in F64's own commit (working rule 3).
+
+**Where the four-yearly payment is — she asked on 2026-09-26, and it is already built.** Recorded
+as a third-party payment on `/payments`, `אגרה להארכת רשיון העסקה` (the sheet's B16, `specs.md`
+item 19's "licence renewal that falls once every four years"); reminded in
+`לקראת החודשים הבאים` in the month `היתר העסקה` expires, and warned by `documentExpiring`
+(`actionList.ts:159`). The four years themselves are stored nowhere: the due month is derived from
+the expiry date on `/settings`, so the reminder recurs at the document's own pace and only
+`agencyFee` carries a fixed period. **No work follows from the question** — it is written down here
+only so it is not asked twice.
+
+**F32's two findings that are not a setting, so the entry says they come here. 2026-09-25.**
+The Fix list's F32 says a `/doctor` finding that is not a setting goes under "Needs the user".
+Two are. **First:** `~/.claude.json` holds this project twice, as `d:/school/…` and
+`D:/school/…`, and per-project state — MCP toggles, trust, history — is keyed by that exact
+string, so a toggle set under one spelling does not apply when the working directory resolves
+to the other. Nothing is broken by it today and no fix was proposed, because the file is
+written live by the running application and merging its entries mid-session risks losing
+state. **Second:** `Bash(python -c ' *)` is allowed at user scope, which is a standing
+pre-approval for arbitrary Python in every project, not only this one. It predates the
+`/doctor` run and was left untouched. Neither is a repository change; both are the user's.
+
+**A second press is silently dropped, and no item asked for it. Found by run 8, 2026-09-25.**
+`useAction` gained an `inFlight` ref and its `Send` contract changed from `void` to `boolean`
+(`src/components/useAction.ts:42`), so a second press while the first is travelling now does
+nothing. F60 asked only that the busy state move onto the pressed control. On `/payments` the
+`pointer-events-none` it replaced already enforced this, so nothing changed there; on `/`,
+`/settings` and the holiday picker a second press used to go through and no longer does. It is
+written down in the `DESIGN.md` paragraph the same commit added, which is rule 3's form — but
+the change was never put as its own question. **Answered 2026-09-25: keep it.** The drop
+stands, and nothing in run 8 restores the second press.
+
+**F48's contrast sweep — answered 2026-09-25: it joins the suite.**
 `contrast-sweep.spec.ts`, 133 lines, is in the F48 session's scratchpad, under
 `AppData\Local\Temp\claude\d--school-LLM-vibe-coding-EaseSalary\551c64fe-4943-4745-a3ff-0a2b31f49b92\scratchpad\`.
 It walks ten screens and, for every run of visible text, measures the real foreground against
@@ -1052,8 +1336,14 @@ the nearest actually-painted background, computes the WCAG ratio and fails anyth
 Its own header says "TEMPORARY — delete before committing", so F48 parked it rather than
 decide. **A session must not decide this either** — keeping it costs suite time, and a
 whole-screen sweep is not a check a fix may add on its own authority (ground rule 1).
-It sits in a session scratchpad, which is not forever: if it is wanted, it is wanted before
-that directory is cleared.
+It sat in a session scratchpad, which is not forever, so on 2026-09-25 it was **copied into
+the repository as `e2e/contrast-sweep.parked.ts`** — that name does not match Playwright's
+`testMatch`, so the suite ignores it and nothing it might fail can be blamed on a run that
+did not choose to include it. **R8.4 is what finishes it**: rename it to
+`e2e/contrast-sweep.spec.ts`, rewrite the header (it still says "TEMPORARY — delete before
+committing", which is now false), and make it pass on every screen it walks. **Also seen by
+run 8, as R8.4**, which found no sweep anywhere in the repository and so could not report
+F48's check as built.
 
 
 **Run 7's ten screen changes — answered 2026-09-24: every one as recommended, and all of them
@@ -1595,6 +1885,30 @@ again. F59 was listed as owing one too and does not; its entry says why.
   message, which is `CLAUDE.md` rule 6's own division. **It touches the seed as well as the
   screen** — check: the rate row on `/settings` names a source in words for the seeded wage and
   still links the address for a fetched one, and no workbook path appears on any screen.
+
+**K. Her own notes.** Raised by the user rather than by a review, and each answered by her when it
+was raised, so none is a design question a session re-opens. The departure goes into `DESIGN.md` in
+the same commit (working rule 3).
+
+- [x] 2026-09-26 F64 — committed with run 8's batch, as she asked, rather than alone.
+  **The group that holds only insurance is named for it, and the minimum wage goes to the
+  salary it is the floor of** — her two notes of 2026-09-26, answered the same day.
+  `he.settings.rates` becomes `title: "ביטוחים"` and
+  `note: "ביטוח לאומי לפי אחוז שבחוק, וביטוח רפואי דרך מי שבחרתם"` — her own wording, chosen against
+  two alternatives, so it is not paraphrased in the code. The minimum-wage `ValueRow` leaves the
+  `rates` group for `employment`, **directly under `SalaryControl`**, whose hint already says the
+  salary may not fall below it; it moves whole, its date, its `מחושב לפי החוק` badge and F63's
+  source sentence all being its own props.
+  **The third half, and the one a session would miss:** the failed-fetch sentence before an export
+  links to `/settings#rates` (`MonthConfirmation.tsx:181`) **because that is where the wage's source
+  is drawn**, so the link becomes `#employment` and travels with the row — otherwise the one
+  sentence in the application that sends her to find a figure's provenance lands on the group that
+  no longer holds it. `before-export.spec.ts:653` drives exactly that link and moves with it.
+  **The group's `id` stays `rates`** — it is the fold's anchor and `[data-group="rates"]` in the
+  suite, and a rename is a second change with no user-facing half — check: `/settings` draws
+  `שכר מינימום` as the second row of `תנאי ההעסקה` with its date and `נקרא מהגיליון של המשפחה`
+  intact, `ביטוחים` draws its two rows under the new note, and the failed-fetch link lands on the
+  group that draws the wage; Browser.
 
 **Not on the list**
 - R3.3 — needs a migration of its own. The local ones are live as of 2026-09-24, so what it

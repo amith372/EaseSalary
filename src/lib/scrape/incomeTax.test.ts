@@ -159,7 +159,7 @@ describe("the credit point page", () => {
         key: "creditPointValue",
         value: 400_000,
         effectiveFrom: "2025-01-01",
-        source: "a figure invented by this test to stand above the fetched one",
+        source: "userConfirmed",
       },
     ]);
     expect(read.ok).toBe(false);

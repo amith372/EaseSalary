@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
-import type { MonthActionResult } from "@/app/month/actions";
+import { useState } from "react";
+import type { MonthActionRefusal } from "@/app/month/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { TwoToneIcon } from "@/components/icons";
 import { MonthActions, type MonthSection } from "@/components/MonthActions";
 import { MonthStepper, notBefore, openingMonthOf } from "@/components/MonthStepper";
+import { useOneAtATime } from "@/components/useAction";
 import { useWorkerScope } from "@/components/WorkerScope";
 import { compareMonth, monthOf, sameMonth } from "@/lib/dates";
 import { monthLabel } from "@/lib/dateLabels";
@@ -127,7 +128,11 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   // that used to come with it is on the control that was pressed instead
   // (`busyAttrs` in `Field.tsx`), because greying the calendar and every other
   // row to save one note reads as the page failing.
-  const [saving, startSaving] = useTransition();
+  // **Screen-wide and not per control**: every section writes the same month
+  // record, read-modify-write, so two sections saving at once would lose one of
+  // the two changes. The rule itself is `useOneAtATime`'s and is not repeated
+  // here; what is this screen's is the *scope* it is held at.
+  const { saving, send: handleAction } = useOneAtATime<MonthActionRefusal>();
 
   // Every section starts folded, and what she unfolds
   // stays unfolded while she steps between months.
@@ -142,31 +147,6 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
     });
   }
 
-  // One change at a time. A second press while the first is on its way would
-  // send it again — two identical lines, where the user meant one — so it is
-  // dropped. A ref rather than `saving`, which a second keypress in the same
-  // tick would still read as false.
-  // Screen-wide and not per control: every section writes the same month
-  // record, read-modify-write, so two sections saving at once would lose one of
-  // the two changes. It answers `false` when it drops one, which is what stops
-  // the dropped control waiting for a result that is not coming.
-  const inFlight = useRef(false);
-
-  function handleAction(
-    action: () => Promise<MonthActionResult>,
-    onResult: (result: MonthActionResult) => void,
-  ) {
-    if (inFlight.current) return false;
-    inFlight.current = true;
-    startSaving(async () => {
-      try {
-        onResult(await action());
-      } finally {
-        inFlight.current = false;
-      }
-    });
-    return true;
-  }
 
   return (
     /* One column, and the heading and the card share its width. The shell hands

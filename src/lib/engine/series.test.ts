@@ -499,7 +499,7 @@ describe("the household's own rates reach every month of the walk", () => {
       key: "minimumWage",
       value: 700000,
       effectiveFrom: "2026-01-01",
-      source: "the household's own confirmation",
+      source: "userConfirmed",
     },
   ];
 

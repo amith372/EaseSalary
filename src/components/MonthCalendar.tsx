@@ -251,14 +251,18 @@ function legendFor(
 }
 
 /**
- * The tallest a day is drawn, and the gap between rows above `sm`.
+ * The tallest a day is drawn.
  *
  * 100px is the cell at 1440×900, where the grid has no slack to distribute and
  * so draws the proportion the artboard has. Above that height the cap holds it
  * there and the slack falls to the card instead of into the day.
+ *
+ * **The gap between rows is not a number here.** It is `--calendar-gap` on the
+ * grid itself, which the `gap` and this cap both read: kept as a constant
+ * beside this one it was the `sm` gap at every width, so below `sm` the cap was
+ * computed from a distance the grid was not drawing.
  */
 const MAX_CELL_HEIGHT = 100;
-const GRID_GAP = 7;
 
 export function MonthCalendar({
   month,
@@ -550,8 +554,10 @@ export function MonthCalendar({
           and not to the space: `minmax(58px, 100px)` would draw a 58px day at
           every height. */}
       <div
-        className="grid min-h-64 flex-1 auto-rows-[minmax(48px,1fr)] grid-cols-7 gap-1 sm:auto-rows-[minmax(58px,1fr)] sm:gap-1.75"
-        style={{ maxHeight: weeks * MAX_CELL_HEIGHT + (weeks - 1) * GRID_GAP }}
+        className="grid min-h-64 flex-1 auto-rows-[minmax(48px,1fr)] grid-cols-7 gap-[var(--calendar-gap)] [--calendar-gap:4px] sm:auto-rows-[minmax(58px,1fr)] sm:[--calendar-gap:7px]"
+        style={{
+          maxHeight: `calc(${weeks} * ${MAX_CELL_HEIGHT}px + ${weeks - 1} * var(--calendar-gap))`,
+        }}
         ref={gridRef}
         onKeyDown={handleKeyDown}
       >

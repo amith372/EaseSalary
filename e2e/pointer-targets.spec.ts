@@ -20,6 +20,16 @@ import {
  * exception: padding it out would overlap the lines above and below it, and
  * the sentence around it is not a target.
  *
+ * **The exception asks where the link is laid out and not only what is beside
+ * it** (run 8's R8.7). "Its parent holds more text" alone excused every action
+ * that merely sits next to a label — the blocker strip's own action and the
+ * `כל זכות` link among them, which are the controls this sweep was written
+ * for — because in this repository every string is wrapped in an element of
+ * its own (`CLAUDE.md`), so a standalone action and an inline link look alike
+ * from the anchor. What tells them apart is the flow: a link inside a sentence
+ * shares a line box with the words around it, while an action beside a label
+ * sits in a flex or grid row, and only the first is exempt.
+ *
  * What it catches: a bare text action added without the padding idiom
  * `DESIGN.md` records — the state of the blocker strip, both `כל זכות` links,
  * the two account actions and the holiday tick until 2026-09-24.
@@ -50,7 +60,9 @@ async function tooSmall(page: Page): Promise<Omit<Target, "route" | "width">[]> 
       const parent = el.parentElement;
       const own = (el.textContent ?? "").trim();
       const around = (parent?.textContent ?? "").trim();
-      if (el.tagName === "A" && around.length > own.length) continue;
+      const flow = parent === null ? "" : getComputedStyle(parent).display;
+      const inSentence = !flow.includes("flex") && !flow.includes("grid");
+      if (el.tagName === "A" && inSentence && around.length > own.length) continue;
 
       // `elementFromPoint` returns null outside the viewport, so a control near
       // an edge would measure short. Bring it to the middle first.

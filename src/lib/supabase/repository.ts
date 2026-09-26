@@ -463,7 +463,11 @@ function rateOf(row: RateRow): DatedRate {
     key: row.key,
     value: numberOf(row.value),
     effectiveFrom: row.effective_from,
-    source: row.source,
+    // **The one place a stored source is taken on trust**, as `row.key` is:
+    // what the application writes is a `RateSource`, but a row written before
+    // those names existed holds the sentence they replaced. `drawnRateSource`
+    // is what judges it, and answers nothing for a value it does not know.
+    source: row.source as DatedRate["source"],
   };
 }
 

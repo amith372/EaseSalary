@@ -15,6 +15,38 @@ export type Send<Reason> = (
 ) => boolean;
 
 /**
+ * One change at a time, and whether this one was taken.
+ *
+ * **A second press while the first is on its way would send it again** — two
+ * identical lines, where the user meant one — so it is dropped, and the caller
+ * is told, or the control it came from would wear a busy state waiting for a
+ * result that is never coming. A ref rather than the transition's `pending`,
+ * which a second press in the same tick would still read as false.
+ *
+ * **The scope is the caller's.** `useAction` holds one per control; a screen
+ * whose sections all write the same record read-modify-write holds one for the
+ * whole screen, because two of them saving at once would lose one of the two
+ * changes. The rule is the same and lives here, so the two cannot drift.
+ */
+export function useOneAtATime<Reason>(): { saving: boolean; send: Send<Reason> } {
+  const [saving, startSaving] = useTransition();
+  const inFlight = useRef(false);
+  const send: Send<Reason> = (action, onResult) => {
+    if (inFlight.current) return false;
+    inFlight.current = true;
+    startSaving(async () => {
+      try {
+        onResult(await action());
+      } finally {
+        inFlight.current = false;
+      }
+    });
+    return true;
+  };
+  return { saving, send };
+}
+
+/**
  * A change on its way to the store, and the refusal it may come back with.
  *
  * Every control that calls a server action does the same three things around
@@ -29,7 +61,11 @@ export type Send<Reason> = (
  * the pressed one's name and `busyAt` answers for it.
  */
 export function useAction<Reason>(send?: Send<Reason>) {
-  const [saving, startSaving] = useTransition();
+  // Its own way of sending, for a hook with no parent to send through. The
+  // guard is the same one either way, because it is the same rule and it is
+  // written once (`useOneAtATime`).
+  const own = useOneAtATime<Reason>();
+  const through = send ?? own.send;
   // A parent's transition is the parent's; this is the hook's own record of
   // having sent, so a control under one still knows it is the one waiting.
   const [sent, setSent] = useState(false);
@@ -38,14 +74,7 @@ export function useAction<Reason>(send?: Send<Reason>) {
   // where there is only one, which is most of them.
   const [pressed, setPressed] = useState<string | null>(null);
 
-  // One change at a time. A second press while the first is on its way would
-  // send it again — two identical lines, where the user meant one — so it is
-  // dropped. A ref rather than `saving`, which a second keypress in the same
-  // tick would still read as false.
-  const inFlight = useRef(false);
-
   function settle(result: ActionResult<Reason>, onDone?: () => void) {
-    inFlight.current = false;
     setSent(false);
     setPressed(null);
     if (result.ok) onDone?.();
@@ -57,33 +86,18 @@ export function useAction<Reason>(send?: Send<Reason>) {
     onDone?: () => void,
     at?: string,
   ) {
-    if (inFlight.current) return;
-    inFlight.current = true;
     setRefusal(null);
     setPressed(at ?? null);
-    if (send) {
-      setSent(true);
-      // Refused by the parent — it already has a change of its own in flight —
-      // so nothing is waiting and nothing should say it is.
-      if (!send(action, (result) => settle(result, onDone))) {
-        inFlight.current = false;
-        setSent(false);
-        setPressed(null);
-      }
-      return;
+    setSent(true);
+    // Dropped — this hook or its parent already has a change on its way — so
+    // nothing is waiting and nothing should say it is.
+    if (!through(action, (result) => settle(result, onDone))) {
+      setSent(false);
+      setPressed(null);
     }
-    startSaving(async () => {
-      try {
-        settle(await action(), onDone);
-      } finally {
-        // `settle` clears it on every answer; this is the throw, which would
-        // otherwise leave the control unable to be pressed again.
-        inFlight.current = false;
-      }
-    });
   }
 
-  const busy = saving || sent;
+  const busy = own.saving || sent;
   return {
     refusal,
     run,

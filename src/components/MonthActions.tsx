@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   addAdvance,
   addThirdPartyPayment,
@@ -181,6 +181,54 @@ function MonthFold(props: Omit<Parameters<typeof FoldSection>[0], "className"> &
     />
   );
 }
+
+/**
+ * What a folded section says it holds: the names of what is inside, or a
+ * sentence for holding nothing (F56, finished by run 8's R8.6).
+ *
+ * **Names and not a count.** Each of the three sections that draw it holds
+ * things the user named or chose herself — her own lines, the payments she
+ * recorded, the figures she typed over — so a name answers "what is in there"
+ * where a number only says how much opening it would cost. A name may be the
+ * user's own words in another script, so each is its own `<bdi>` and the
+ * wrapper carries no `dir="auto"`: over a lone `<bdi>` that resolves
+ * left-to-right and hangs the line off the wrong edge (`CLAUDE.md`).
+ */
+function FoldedNames({ names, empty }: { names: string[]; empty: string }) {
+  const className = "min-w-0 truncate text-[13px] font-light text-ink-quiet";
+  if (names.length === 0) {
+    return (
+      <span dir="auto" className={className}>
+        {empty}
+      </span>
+    );
+  }
+  return (
+    <span className={className}>
+      {names.map((name, at) => (
+        <Fragment key={`${at}-${name}`}>
+          {at > 0 ? <span>, </span> : null}
+          <Bidi>{name}</Bidi>
+        </Fragment>
+      ))}
+    </span>
+  );
+}
+
+/**
+ * The names a control is known by while it waits.
+ *
+ * **Built and never typed at both ends** (run 8's R8.10): the press sends a
+ * name and the control asks for the same one, and a key spelled differently in
+ * the two places yields a control that never says it is working — a defect
+ * nothing fails on, because both halves are correct on their own.
+ */
+const busyKey = {
+  userLine: (id: string) => `remove:${id}`,
+  advance: (number: number, kind: string) => `remove:${number}:${kind}`,
+  thirdParty: (kind: ThirdPartyKind) => `remove:${kind}`,
+  override: (key: string) => `clear:${key}`,
+};
 
 /** A bare text action inside a row. The padding widens what a finger can hit to
  * about 44px and the negative margin gives the space back, so the row is laid
@@ -751,7 +799,7 @@ function UserLinesControl({
   });
 
   function remove(lineId: string) {
-    run(() => removeUserLine(workerId, month, lineId), undefined, `remove:${lineId}`);
+    run(() => removeUserLine(workerId, month, lineId), undefined, busyKey.userLine(lineId));
   }
 
   const panel = (
@@ -833,6 +881,9 @@ function UserLinesControl({
       group="userLines"
       title={he.month.preview.userLines}
       fold={fold}
+      summary={
+        <FoldedNames names={userLines.map((line) => line.label)} empty={words.empty} />
+      }
     >
       <div className="flex flex-col gap-0.5">
         {/* **What this card can and cannot do, before she uses it.** A line
@@ -889,7 +940,7 @@ function UserLinesControl({
                   onClick={() => remove(line.id)}
                   aria-label={words.removeLabel(line.label)}
                   {...busyAttrs(
-                    busyAt(`remove:${line.id}`),
+                    busyAt(busyKey.userLine(line.id)),
                     `hover:text-clay-deep ${rowActionClass}`,
                   )}
                 >
@@ -1034,7 +1085,7 @@ function AdvancesControl({
     run(
       () => removeAdvance(workerId, month, advanceNumber, kind),
       undefined,
-      `remove:${advanceNumber}:${kind}`,
+      busyKey.advance(advanceNumber, kind),
     );
   }
 
@@ -1255,7 +1306,7 @@ function AdvancesControl({
                               advance.kind,
                             )}
                             {...busyAttrs(
-                              busyAt(`remove:${standing.number}:${advance.kind}`),
+                              busyAt(busyKey.advance(standing.number, advance.kind)),
                               `hover:text-clay-deep ${rowActionClass}`,
                             )}
                           >
@@ -1446,7 +1497,7 @@ function ThirdPartyControl({
     run(
       () => removeThirdPartyPayment(workerId, month, paid),
       undefined,
-      `remove:${paid}`,
+      busyKey.thirdParty(paid),
     );
   }
 
@@ -1560,7 +1611,17 @@ function ThirdPartyControl({
   );
 
   return (
-    <MonthFold group="thirdParty" title={words.title} fold={fold}>
+    <MonthFold
+      group="thirdParty"
+      title={words.title}
+      fold={fold}
+      summary={
+        <FoldedNames
+          names={thirdPartyPayments.map((payment) => he.sheet.thirdParty[payment.kind])}
+          empty={words.empty}
+        />
+      }
+    >
       <p
         dir="auto"
         className="text-[13px] leading-[1.5] font-light text-ink-mute text-pretty"
@@ -1614,7 +1675,7 @@ function ThirdPartyControl({
                     he.sheet.thirdParty[payment.kind],
                   )}
                   {...busyAttrs(
-                    busyAt(`remove:${payment.kind}`),
+                    busyAt(busyKey.thirdParty(payment.kind)),
                     `hover:text-clay-deep ${rowActionClass}`,
                   )}
                 >
@@ -1738,7 +1799,7 @@ function OverridesControl({
   }
 
   function restore(key: string) {
-    run(() => clearOverride(workerId, month, key), undefined, `clear:${key}`);
+    run(() => clearOverride(workerId, month, key), undefined, busyKey.override(key));
   }
 
   const panel = (key: string) => (
@@ -1774,7 +1835,21 @@ function OverridesControl({
   );
 
   return (
-    <MonthFold group="overrides" title={words.title} fold={fold}>
+    <MonthFold
+      group="overrides"
+      title={words.title}
+      fold={fold}
+      // **The rows she replaced, and not every row that could be.** Almost
+      // every line of the sheet is overridable, so naming those would say the
+      // same long thing every month; what has been typed over is what the
+      // section is for.
+      summary={
+        <FoldedNames
+          names={overridable.filter((line) => line.manual).map((line) => line.label)}
+          empty={overridable.length === 0 ? words.empty : words.noneChanged}
+        />
+      }
+    >
       <p
         dir="auto"
         className="text-[13px] leading-[1.5] font-light text-ink-mute text-pretty"
@@ -1828,7 +1903,7 @@ function OverridesControl({
                     onClick={() => restore(line.key)}
                     aria-label={words.clearLabel(line.label)}
                     {...busyAttrs(
-                      busyAt(`clear:${line.key}`),
+                      busyAt(busyKey.override(line.key)),
                       `hover:text-clay-deep ${rowActionClass}`,
                     )}
                   >
@@ -1885,7 +1960,7 @@ function OverridesControl({
                       override.label ?? words.unnamed,
                     )}
                     {...busyAttrs(
-                      busyAt(`clear:${key}`),
+                      busyAt(busyKey.override(key)),
                       `ms-auto hover:text-clay-deep ${rowActionClass}`,
                     )}
                   >
