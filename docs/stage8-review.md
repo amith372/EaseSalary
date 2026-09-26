@@ -10,8 +10,18 @@ A fresh session told "continue with `docs/stage8-review.md`" reads this file who
 **the next step below, and only that step**. At the end of the step it updates this block and
 the plan table, then stops and reports to the user.
 
-> ### ✅ Everything through step 8 is committed.
-> **Step 8 — a standing line with a lifetime — went in on 2026-09-26** once she answered the
+> ### ✅ Everything through step 9 is committed.
+> **Step 9 — F37, the history stripped out of `specs.md`, and the size question it raised —
+> went in on 2026-09-26** after she approved all twenty-five deletions as one batch, then the
+> Part 2 index and three further cuts as two more. 31 exact replacements in all, each matched
+> once and once only by a script that aborts on a near-miss. Typecheck, lint and the unit suite
+> **1,265/1,265** clean, and no code was touched, so rule 6's browser suite does not apply.
+> **`specs.md` is now read one item at a time.** Part 2 carries an index at its head naming what
+> each of the twenty-nine items settles, so a session reads item 17's 2,240 words instead of
+> Part 2's 17,000; `CLAUDE.md`'s "Where to read" says so. The index **adds** ~2.6KB on disk and
+> that is the intended trade — rule 9 charges a file for what it costs a session, not what it
+> weighs.
+> Before it: **step 8 — a standing line with a lifetime — went in as `f56f602` on 2026-09-26** once she answered the
 > one word it waited on: the row's button says **`להסיר`**, the word four other removable rows
 > on the same screens already wear. Its evidence, on the finished tree: browser suite
 > **169/169 in 11.6 minutes, no flake**, unit suite **1,265/1,265** (nineteen new), typecheck
@@ -34,14 +44,22 @@ the plan table, then stops and reports to the user.
 > F62's regression — five failures in two spec files F62 never touched.
 
 > ### → A fresh session told "continue" does this
-> **The next step is 9, F37 — strip the history out of `specs.md`.** It is the larger of the two
-> left and it is all reading and quoting: **every deletion is put to her first, quoted exactly,
-> as one batch for one yes** (rule 1), and the three exceptions — Part 4's August 2025 case, the
-> dated rates' effective dates, and a date that is an example inside a rule — are not touched.
-> The Fix-list entry says what goes and what stays; nothing about it is re-decided.
+> **The next step is 10, F32 — `/doctor` again**, and its first half is **hers**: the Claude Docs
+> connector, which no local config file holds, so it goes through `/mcp` or claude.ai. A session
+> does not answer it for her. Then `/doctor` is run once more and the entry's own check —
+> "`/doctor` reports nothing left to fix" — is what closes it.
 > **The order, and a session does the first that is not done:** ~~6 run 8's fifteen~~,
-> ~~6½ F64~~, ~~7 the two refusal debts~~, ~~8 the standing-line lifetime~~ are **done and
-> committed** · **9 F37** · 10 F32 again.
+> ~~6½ F64~~, ~~7 the two refusal debts~~, ~~8 the standing-line lifetime~~, ~~9 F37~~ are
+> **done and committed** · **10 F32 again**.
+> **The size question is answered and closed, 2026-09-26.** She chose the recommendation —
+> lever 1 in full and lever 3 only in its narrow form — and both are built. **Lever 2 was not
+> taken and is not owed:** moving items 17 and 20's screen prose to `DESIGN.md` would put a
+> behavioural rule where no test-writer looks, which is why it was recommended against.
+> **No further compression of `specs.md` is on anyone's list.** The measurement that settles it,
+> so nobody re-measures: 614 sentences over 60 chars, **zero exact duplicates**, 23 of 23,069
+> twelve-word phrases repeated (0.1%). The file is not padded, and lever 3 done safely bought
+> only ~185 words — 1% of Part 2. A session that thinks `specs.md` is too long reads the index
+> instead of the part.
 > **What step 7 left behind, and it is not a defect:** `/workers` and `/workers/[id]` still
 > fail whole on a refused month, on purpose — every card on them states a balance and a
 > refused worker has none, so drawing her opening position would state a figure nobody
@@ -75,7 +93,7 @@ the plan table, then stops and reports to the user.
 > the Claude Docs connector, which is step 10's.
 > **Never push.**
 
-- **Last done: step 8 — a standing line with a lifetime**, on 2026-09-26.
+- **Last done: step 8 — a standing line with a lifetime**, `f56f602`, on 2026-09-26.
   A standing line now carries `from?` and `until?` as month keys, and **the filter is applied
   where the snapshot is taken** (`standingLinesFor`, `snapshotTerms(worker, month)`): a month's
   `terms.standingLines` therefore means "the lines this month carries", so the sheet, the
@@ -599,7 +617,7 @@ the plan table, then stops and reports to the user.
      This step **changes behaviour**, so it is not a Fix-list item (ground rule 1); it owes a
      `specs.md` sentence whose exact wording is put to her first (rule 1), and the debts come
      out of `build_plan.md` as they are paid.
-  8. ~~**A standing line with a lifetime**~~ — **done 2026-09-26.** Asked for 2026-09-25,
+  8. ~~**A standing line with a lifetime**~~ — **done 2026-09-26, `f56f602`.** Asked for 2026-09-25,
      and she placed it **before F37**. **What exists already:** `UserLine`
      (`src/lib/engine/types.ts:580`) serves both lifetimes — a one-off on the month
      (`MonthFacts.userLines`) and a **standing** one on the profile
@@ -704,8 +722,8 @@ the plan table, then stops and reports to the user.
      and confirm the sheet agrees with the screen. A failure looks like the line appearing
      outside its range, a confirmed month's total moving, or the sheet and the screen
      disagreeing.
-  9. **F37** — strip the history out of `specs.md`. Every deletion quoted to her first, as one
-     batch for one yes.
+  9. ~~**F37** — strip the history out of `specs.md`~~ — **done 2026-09-26.** Twenty-five
+     deletions quoted to her and approved as one batch; nothing else in the file was touched.
   10. **F32 again.** Its settings half is done. What is left is **the Claude Docs connector,
      which is hers** (`/mcp` here, or claude.ai → Settings → Connectors — prefer the latter,
      because `/mcp` is per-project and this project is registered twice; see "Needs the user").
@@ -779,8 +797,8 @@ the plan table, then stops and reports to the user.
 | 14 | The user signs run 8 off | **done** 2026-09-25 — **all fifteen**, and the four open questions answered. The order she set is steps 6–10 under "The order from here" |
 | 15 | Execute run 8's fifteen | **done** 2026-09-26, `62a7070` — fourteen fixed, R8.15 withdrawn as wrong; the commit carries F64 too |
 | 16 | The two refusal debts, together | **done** 2026-09-26, `9c52ca4` — both paid; `/workers` and `/workers/[id]` are the one debt left in their place |
-| 17 | A standing line with a lifetime | **done** 2026-09-26 — the button's word answered the same day (`להסיר`). 169/169 browser, 1,265/1,265 unit, and her own check passed |
-| 18 | F37 | **open** |
+| 17 | A standing line with a lifetime | **done** 2026-09-26, `f56f602` — the button's word answered the same day (`להסיר`). 169/169 browser, 1,265/1,265 unit, and her own check passed |
+| 18 | F37, and the size question | **done** 2026-09-26 — 25 approved deletions, then the Part 2 index and 3 narrow cuts; 31 replacements in all. Typecheck, lint, 1,265/1,265 |
 | 19 | F32 again | **open** — the connector is hers, then `/doctor` is re-run |
 | 20 | F64 — her two notes on the rates group | **done** 2026-09-26, `62a7070` — committed inside run 8's batch, as she asked, rather than alone |
 
@@ -1355,6 +1373,35 @@ none is a design question. **R8.8–R8.14 are judgement calls** and change no be
 
 ## Needs the user
 
+**Whether `specs.md` should be made shorter — asked and answered 2026-09-26. Settled; kept
+only because it says what was measured, so nobody measures it again.** F37 took 3.3KB out; the file is 132,615 chars over 1,690 lines, and **Part 2 is 95,504 of
+them — 72%**. Within Part 2, six of twenty-nine items carry **57%** of the words: item 17 (2,240),
+item 20 (2,163), item 8 (1,700), item 5 (1,459), item 16 (1,120) and item 7 (1,053), against a
+median item of 340. **Nothing is padding**: 614 sentences over 60 chars hold **zero exact
+duplicates**, and 23 of 23,069 twelve-word phrases recur (0.1%). So there is no cut that costs
+nothing, and the three levers differ in what is lost:
+
+1. **Make Part 2 addressable, deleting no word.** `CLAUDE.md`'s read protocol is "grep the part,
+   read to the next heading" — and Part 2 has no sub-heading, so reading "Part 2" means reading
+   95KB. Per-item `###` headings, or an index at Part 2's head, would let a session read item 17's
+   2,240 words instead of 17,000. **This is the one lever that loses nothing**, and it cuts what
+   the file actually costs a session rather than what it weighs. It needs a `CLAUDE.md` line too.
+2. **Move the screen prose in items 17 and 20 to `DESIGN.md`.** Both argue at length about what a
+   screen *draws* — the three-figure block, which half a line sits in, which name survives a
+   collapse. `DESIGN.md` is the "how it looks" file and is read by whoever is building a screen.
+   A relocation, not a deletion, but the specs/design boundary is genuinely blurred here: which
+   figure is drawn when is behaviour, and moving it would put a rule where no test-writer looks.
+3. **Compress the big six's reasoning.** Perhaps 3,700 words, ~22% of Part 2. **This is the lever
+   to refuse by default**: what would go is the *reasons*, and working rule 4 exists because "a
+   plausible invention is the hardest kind of wrong answer to find later". Every reason deleted is
+   one a future session can re-litigate from scratch. Worth doing only sentence by sentence, and
+   only where a sentence argues against an alternative nobody proposed or restates a rule another
+   item already owns.
+
+**She took the recommendation: 1 in full, 3 in its narrow form, 2 refused.** All three of
+lever 3's cuts were quoted to her and approved — item 8's doubled sentence, item 17's third
+statement of the credit-points rule, and item 20's self-quotation. **Nothing here is still owed.**
+
 **Her two notes on the rates group, 2026-09-26 — asked and answered the same day, and now F64.**
 Raised by her and not by a run: `שערים ותשלומים קבועים` over `מה משולם מלבד המשכורת, ובאיזה קצב`
 (`he.ts:1628`) describes none of the three rows under it (`SettingsScreen.tsx:244`) — a wage the
@@ -1724,7 +1771,7 @@ figure, and each is a bug against a rule `specs.md` already states.
 - [ ] F32 — `/doctor` (added 2026-09-19 at the user's request) — a built-in Claude Code
   command, so the user runs it and the session acts on what it reports; a finding that is
   not a setting goes under "Needs the user" — check: `/doctor` reports nothing left to fix.
-- [ ] F37 — (added 2026-09-22 at the user's request) **strip the history out of `specs.md`.**
+- [x] 2026-09-26 F37 — (added 2026-09-22 at the user's request) **strip the history out of `specs.md`.**
   The file carries its own changelog, against `CLAUDE.md` rule 3: these files describe only
   what stands now, and how a rule came to be what it is belongs in the commit message. What
   goes is every sentence that dates or narrates a change — "This reverses the rule that stood

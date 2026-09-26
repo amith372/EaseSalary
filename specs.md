@@ -36,10 +36,8 @@ guided screens where the user supplies only facts about the month and never a fo
 or a rate. When a decision is not covered by this specification, choose the option that
 requires the user to know less.
 
-The application works the income tax out and does not leave the family to. **This
-reverses the rule that stood until 2026-09-10**, which was that income tax is never
-calculated and its line is simply typed; the reason for reversing it is the reason
-everything else here is calculated — the arithmetic is a rate table and a count of credit
+The application works the income tax out and does not leave the family to, for the
+reason everything else here is calculated — the arithmetic is a rate table and a count of credit
 points, and a family that has to look both up is a family that gets it wrong in the
 direction that underpays the state or the worker. The figure is derived from the month's
 wage, from the tax brackets in force during that month, and from the credit points the
@@ -47,7 +45,7 @@ worker is entitled to. It is offered rather than imposed: the user confirms it b
 every export, exactly as she already confirms the minimum wage and the recuperation day
 rate, and the confirmed figure is stored with the month so a past month reproduces at its
 own rates. It can be overridden like any other computed amount, and a month that withholds
-nothing holds zero, which is what every month held before this changed. Nothing about it
+nothing holds zero. Nothing about it
 is hardcoded: the brackets and the value of a credit point are fetched per year and cached
 like the minimum wage. **The credit points are derived and never asked for** — a legally
 employed foreign worker in home care is entitled to 2.25, and a woman to half a point
@@ -60,6 +58,43 @@ before, because the gender it turns on is a profile field and the profile is bui
 ## Part 2 — Testable success criteria
 
 Each of these is true or false at a glance.
+
+**Reading this part.** It is 72% of this file and is read **one item at a time, never whole**:
+find the item in the table below, then `grep -n '^[0-9]\+\. ' specs.md` and read from its line
+to the next item's. Six items carry more than half of this part, so reading it whole to answer
+a question about one of them is the expensive mistake.
+
+| Item | What it settles |
+|---|---|
+| 1 | the August 2025 known case and its four totals |
+| 2 | what the exported .xlsx is — the rows, columns and layout of the 2026 workbook |
+| 3 | the derived rates, the twenty-five divisor, and a base-salary change dated from a month |
+| 4 | the minimum wage confirmed before every export; the dated-rates table, its sources, and a month earlier than every row |
+| 5 | the month calendar and what the month came to; the month screen against the payments screen; the preview read by kind; the weekly rest day as a term of the employment |
+| 6 | a worker's first month, the date the employment began, and the opening position |
+| 7 | balances carried forward; the worker's page total; the vacation rate and the base that never shrinks |
+| 8 | sick days — accrual, the ninety-day ceiling, the tiers, what makes one spell, and a spell left open |
+| 9 | a holiday worked and not worked; a holiday on the rest day; the three answers a holiday has |
+| 10 | the year's candidate list, country or religion; the country correctable; entitlement by months employed; a holiday inside a spell of sickness |
+| 11 | household, members, invitations, and what a member may remove |
+| 12 | a year with no holiday list fetches one |
+| 13 | a month corrected after export, and every later month's balances with it |
+| 14 | the rest-eve supplement — per worker, and paid whether she worked the day or not |
+| 15 | the yearly recurring items; recuperation from seniority, its month, and its own anniversary clock |
+| 16 | third-party payments — the seven kinds, the four things each records, editing and removing one |
+| 17 | overrides; the income tax, how it is arrived at, snapshotted and corrected for one month; the three figures and which names survive a collapse; what is overridden against what is edited |
+| 18 | the pre-export confirmation questions, and what blocks an export |
+| 19 | the national-insurance estimate at 3.6%, and the columns its base is |
+| 20 | the user's own lines — direction, lifetime, placement before or after the total, and where each lands on the sheet and on the screen |
+| 21 | a future month filled ahead, and the current month exported before it ends |
+| 22 | the four encrypted identifying numbers |
+| 23 | the balances exported on their own as a yearly table |
+| 24 | a figure opened to show how it was reached, and the help screen that points rather than restates |
+| 25 | a refusal carries the rule's link, is shown where she can act on it, and belongs to one worker |
+| 26 | every action resting on a legal rule links the page that states it |
+| 27 | the opening screen's warning list, the bell, and switching a kind off |
+| 28 | the three documents, their three expiry dates, and the warning windows |
+| 29 | the yearly salary summary for one worker |
 
 1. Entering the facts of August 2025 into a worker profile and exporting produces a
    sheet whose four total lines read 6,747.65 / 2,558.10 / 9,305.75 / 7,305.75.
@@ -99,7 +134,7 @@ Each of these is true or false at a glance.
    rise on its own: when a fetch finds the minimum wage has changed, or when the salary
    on the profile sits below it, the application says so and leaves the decision to the
    user.
-   **A change of the base salary holds from a month the user names, and the months before it keep the salary they were calculated with** (decided with the user on 2026-09-13): a raise is agreed from some month on and is never a restatement of months already paid. It may not be set below the minimum wage in force during the month it starts; a month the application has not opened yet reads the salary in force during it when it is opened.
+   **A change of the base salary holds from a month the user names, and the months before it keep the salary they were calculated with**: a raise is agreed from some month on and is never a restatement of months already paid. It may not be set below the minimum wage in force during the month it starts; a month the application has not opened yet reads the salary in force during it when it is opened.
 4. Before every export the application shows the minimum wage it fetched from its
    source and requires the user to confirm it; if the fetch fails, the application says
    so plainly and lets the user enter the figure by hand.
@@ -149,14 +184,12 @@ Each of these is true or false at a glance.
    shows nothing and the month still calculates, while a rate a payment depended on would
    refuse the month with its reason.
    **A month opened after the fact is valued from the table and not from the month beside
-   it.** A month the store has no record of has to get its wage from somewhere, and until
-   the table existed the only source was the worker's own months — so it carried the
-   nearest confirmed position. That is the undated guess this item exists to remove, and
-   it produced a real one: a July 2026 opened by a mark was valued at the wage of April
-   2025, below the minimum in force during it (found by the user on 2026-09-11). The
-   table answers first; the nearest confirmed position is the fallback for a month earlier
-   than every row, which is the one case it was ever right for. The base is floored at
-   that minimum and the profile is not rewritten above it (item 3).
+   it.** A month the store has no record of has to get its wage from somewhere, and the
+   nearest confirmed position is the undated guess this item exists to remove: a July 2026
+   opened by a mark would be valued at the wage of April 2025, below the minimum in force
+   during it. The table answers first; the nearest confirmed position is the fallback for
+   a month earlier than every row, which is the one case it is right for. The base is
+   floored at that minimum and the profile is not rewritten above it (item 3).
    **A month already paying under the minimum in force during it says so on the month
    screen.** The floor is applied when the wage is confirmed before an export, so a month
    reaches the family's hands correct — but a month sitting on screen beforehand was
@@ -265,7 +298,7 @@ Each of these is true or false at a glance.
     sickness, a holiday falling on a rest day, and column F — and the exported sheet names
     the worker's own day in its labels rather than saying Saturday to everyone. In the
     Hebrew interface a Saturday-resting worker still reads "שבת חופשית"; the term is
-    derived from her rest day and is no longer fixed in the wording. No action asks the
+    derived from her rest day rather than fixed in the wording. No action asks the
     user for a rate or a formula.
 6. **Each worker has a first month: the month the application starts calculating her from.**
    It is chosen once when the worker is added — the month she is added in, or the month
@@ -289,7 +322,7 @@ Each of these is true or false at a glance.
 7. Balances carry forward: month N+1 opens with the previous balance plus the monthly
    accrual minus what was used in month N.
    **The worker's own page adds up what she has actually been paid across every month it
-   lists** (asked for by the user on 2026-09-11), under the same name the months are
+   lists**, under the same name the months are
    listed by, so the total and the column are one figure reached one way. Only months
    that have a figure are counted: a month still open has no total, and counting it as
    zero would report a sum that grew the day it closed without anything about the worker
@@ -437,9 +470,6 @@ Each of these is true or false at a glance.
    reach the rest-eve supplement at all**, and there is no rule here about weeks. The
    supplement is paid for every rest-eve of the month whichever days the illness covered
    (item 14), so nothing in this criterion has to define what losing a week would mean.
-   An earlier version of this criterion did define one — the six days ending at the rest
-   day — and it existed only to qualify a "pocket money" setting that item 14 no longer
-   has. It is gone rather than kept for a caller that no longer exists.
    **A spell may be left open, and the application never asks for an end date.** On the day
    a worker falls ill nobody knows the day she will return, so it is not asked for: the
    spell runs from its first day and is closed when she comes back.
@@ -451,14 +481,11 @@ Each of these is true or false at a glance.
    holiday between two of them sitting inside the period rather than breaking it (above).
    So continuity is *inferred* and never declared, and a second gesture meaning "she is
    still ill" would be a second way to say what marking the days already says, with two
-   states to keep in step. A spell crossing the end of a month needs no gesture for the
-   same reason: the days on either side touch, so they are one spell with one first day,
-   which is what the tiers are counted from. The open shape stays in storage and in the
+   states to keep in step. The open shape stays in storage and in the
    engine — `to` may be null and a month clips such a spell at its own last day — because
-   a spell genuinely has no end until she returns; what has gone is any screen that asks
-   the user to say so. This is
-   why a spell crossing the end of a month needs no gesture of its own — an open spell is
-   never *crossed*, it simply has not ended, and it stays one spell with one first day,
+   a spell genuinely has no end until she returns; no screen asks the user to say so. This
+   is why a spell crossing the end of a month needs no gesture of its own — an open spell
+   is never *crossed*, it simply has not ended, and it stays one spell with one first day,
    which is what the tiers are counted from. An open spell is counted in a month by
    clipping it at **that month's own last day**, which is a fact about the month and not
    about the present, so a finished month's figure is settled once the month has ended and
@@ -474,9 +501,8 @@ Each of these is true or false at a glance.
    **A holiday that falls on her weekly rest day is drawn on the calendar as a holiday and
    is treated as one for nothing else**: the day is her weekly rest day, it is paid as one
    whether she works it or not, and it draws nothing from the yearly entitlement, so
-   nothing is spent on it and another date may be chosen in its place. The money is the
-   same as under the rule this replaces, which paid such a day once rather than twice;
-   what changed is that the day is no longer one of the nine. Choosing it is not refused,
+   nothing is spent on it and another date may be chosen in its place. Choosing it is not
+   refused,
    because a calendar is not a mistake — the clash is explained where it falls, with the
    link to the rule beside it (item 25).
    The user never marks a day as a holiday on the month's calendar. The year's holidays
@@ -496,21 +522,21 @@ Each of these is true or false at a glance.
 10. The worker's holidays for the year are shown in advance as her country of origin's
    full candidate list, with another country's list selectable instead, of which the
    user marks the paid ones. **The country is named wherever it is shown and never
-   printed as its two-letter code** (asked for by the user on 2026-09-11): the code is
+   printed as its two-letter code**: the code is
    how a list is filed and is nothing a family has any reason to read. The name comes
    from the stored list itself, which publishes it, so no second table of country names
    is kept; a country nothing is stored for falls back to its code, because inventing a
    name for it would be a guess.
 
-   **The country of origin is correctable after the worker is added** (asked for by the
-   user on 2026-09-25). It is a term of the employment like any other and is changed where
+   **The country of origin is correctable after the worker is added.** It is a term of the
+   employment like any other and is changed where
    the rest are changed, offering exactly the countries a holiday list is stored for.
    Correcting it moves the *default* the holiday list is drawn from and nothing else: a
    worker deliberately moved to another country's list or to a faith's stays where she was
    put, and no month carries the country, so nothing already filed is restated.
 
    **A religion's list may be chosen in place of a
-   country's** (decided with the user on 2026-09-09): the candidate list is either the
+   country's**: the candidate list is either the
    holidays of a country or the holidays of a faith — Jewish, Muslim, Christian or
    Druze — and the two are one choice with two kinds of answer rather than two separate
    settings. A worker's own holidays need not be her country's, and the four faiths are
@@ -549,9 +575,7 @@ Each of these is true or false at a glance.
    cannot be both, and charging it to the sick quota would spend a day of illness on a day
    she was not going to be working anyway. It does not break the spell around it, for the
    same reason the weekly rest day does not — a day she owed no attendance on says nothing
-   about whether she was still ill (Part 5). This reversed on 2026-09-12; before then the
-   day was drawn from the sick balance and the holiday was kept to be moved to another
-   date.
+   about whether she was still ill (Part 5).
 11. A worker belongs to a household, never to a person. An account is a person who signs
     in; a household is the group of people who look after the same workers, and it holds
     no more than two workers. Every member of a household sees the same workers, the same
@@ -706,11 +730,9 @@ Each of these is true or false at a glance.
 17. Any amount the application worked out for a month can be overridden by the user from
     that month's actions. An overridden amount is visibly marked as manual and survives
     every later recalculation of that month.
-    **The income tax is one of those amounts and is no longer typed.** **This reversed
-    on 2026-09-10**, before which this item said the line defaulted to zero and was the
-    user's to type.
+    **The income tax is one of those amounts and is calculated rather than typed.**
     **How it is arrived at is a term of the employment, chosen once on the profile**, and
-    there are three choices (settled with the user on 2026-09-11). *Automatic* works the
+    there are three choices. *Automatic* works the
     figure out from the month's ברוטו, the bracket table in force during that tax year and
     the worker's credit points, which follow from the gender on her profile — 2.25 for a
     foreign caregiver in home care and half a point more for a woman — and are never asked
@@ -725,8 +747,8 @@ Each of these is true or false at a glance.
     that stops withholding in June leaves January through May exactly as they were filed.
     **Any single month still departs from it** by the field on the payments screen, which
     stores an override like every other correction and is how a past month is fixed.
-    **That correction may be typed either as a sum or as a share of the ברוטו** (settled
-    with the user on 2026-09-11), because a family told "two and a half percent" by an
+    **That correction may be typed either as a sum or as a share of the ברוטו**, because a
+    family told "two and a half percent" by an
     accountant would otherwise have to do the arithmetic against a ברוטו that moves every
     month — which is the arithmetic this application exists to take off her. The unit is
     the field's own and never the worker's setting: a month on the automatic mode may be
@@ -767,11 +789,7 @@ Each of these is true or false at a glance.
     borrowed to describe a step that did not happen. So a month with no tax shows נטו and
     not ברוטו; a month that withholds a tax but transfers nothing shows ברוטו, the tax,
     and then נטו; and only a month that actually transfers something carries סך הכל תשלום
-    לעובד/ת, where the two figures genuinely are two. Decided with the user on 2026-09-10,
-    replacing the earlier rule that the lower name always survived: under that rule the
-    same untransferred month was called סך הכל תשלום לעובד/ת on the payslip and נטו on
-    `/reports`, which is one figure under two names — the thing this criterion exists to
-    prevent, one screen further out.
+    לעובד/ת, where the two figures genuinely are two.
     **Hiding the zero row moves the tax's explanation and does not delete it.** The rule a
     user needs before typing a figure — the 2.25 credit points below, with its link — is
     attached to the place the figure is *entered*, which this criterion already says is the
@@ -788,21 +806,11 @@ Each of these is true or false at a glance.
     user types can disagree with the label beside it, and a tax entered negative would pay
     her instead. A figure of zero is not an entry but the absence of one, and it is what
     every month holds until the user says otherwise.
-    Income tax **is** calculated, which it was not until 2026-09-10, and the
-    paragraph that said it never would be is replaced rather than qualified. The
-    employer deducts on the basis of the wage and of the credits the worker is
-    entitled to: the brackets in force during the month, less her credit points at
-    the value a point held that year. A legally employed foreign worker in home care
-    is entitled to 2.25 points and a woman to half a point more, so a female
-    caregiver has 2.75 and a male one 2.25; a foreign worker in another sector has
-    one, and an asylum seeker holding a 2א5 permit none, neither of whom this
-    application employs. The count is therefore read off the worker's own gender and
-    is never a number the family is asked for — someone who does not know the rule
-    deducts too much, which is the reason the figure moved out of her hands rather
-    than a reason to explain it to her better. The line's explanation still says the
-    rule and still links it (items 25, 26), because a figure the application worked
-    out is one it has to be able to justify. The derived figure is confirmed before
-    every export and is overridable afterwards like any other.
+    A female caregiver therefore has 2.75 points and a male one 2.25; a foreign
+    worker in another sector has one, and an asylum seeker holding a 2א5 permit
+    none, neither of whom this application employs. The line's explanation still says
+    the rule and still links it (items 25, 26), because a figure the application
+    worked out is one it has to be able to justify.
     **What may be overridden is what the application worked out, and what the
     month itself recorded is edited instead.** The two are different gestures and
     naming them apart is what keeps either usable. An override replaces a figure
@@ -875,8 +883,8 @@ Each of these is true or false at a glance.
     vacation days, whether there were sick days, and whether anything was paid to
     somebody other than the worker — so nothing is left out by silence.
     **Each question shows the month's own dates and amounts, not only a count**: the
-    days the calendar holds for it, and the sums the payments screen holds. Added on
-    2026-09-10, and it is what makes the set a confirmation of the month rather than of
+    days the calendar holds for it, and the sums the payments screen holds. It is what
+    makes the set a confirmation of the month rather than of
     its totals — a count is a figure a family agrees with while the days sit on the wrong
     dates, and it is the dates she actually remembers. The screen is therefore also the
     summary of the month it is about, which is the second thing it is for: what was
@@ -934,7 +942,7 @@ Each of these is true or false at a glance.
       and is snapshotted onto the month like every other term (Part 3), so stopping it in
       June leaves the earlier months exactly as they were.
       **The screen where a one-off line is made says that the standing kind exists and
-      where it is set**, and links there (2026-09-11). The two are made in two places for
+      where it is set**, and links there. The two are made in two places for
       a reason this criterion already gives — one belongs to a month and the other to the
       employment — but the user who wants a monthly deduction goes to the month, finds
       only the one-off kind, and concludes the application cannot do it. It could, and
@@ -942,8 +950,7 @@ Each of these is true or false at a glance.
 
       A standing line carries a lifetime: a first month, and optionally a last
       month. A month outside that range does not carry the line. A line with no
-      lifetime recorded applies to every month, which is what a standing line
-      meant before the lifetime existed. A line is removed outright when the user
+      lifetime recorded applies to every month. A line is removed outright when the user
       asks for it, which is what a line added by mistake needs, and a month
       already confirmed keeps the line in the snapshot it was confirmed with. A
       line that is meant to end rather than to disappear is ended by setting its
@@ -973,12 +980,10 @@ Each of these is true or false at a glance.
     with however many rows the month has.
 
     **On the month screen that block has two halves and the line sits in the lower one**,
-    with the advances and not with the income tax. The screen shows three figures where
-    the sheet shows two (Part 5, item 17): the tax is withheld from the ברוטו and what is
-    left is the נטו, while a line placed after the total does what this criterion already
-    says it does — it "changes only what is transferred at the end" and reaches neither
-    the month's cost nor item 19's estimate, which is the same sentence as an advance and
-    not the same as a withholding. So it comes off the נטו and never moves it. The sheet
+    with the advances and not with the income tax. A line placed after the total changes
+    only what is transferred and reaches neither the month's cost nor item 19's estimate,
+    which is an advance's sentence and not a withholding's, so it comes off the נטו and
+    never moves it (Part 5, item 17). The sheet
     is unaffected: it has one block below the columns and the line is in it.
 
     **The application defaults the placement and lets the user move it.** An addition
@@ -990,7 +995,7 @@ Each of these is true or false at a glance.
     deduction before it is one the wage itself is meant to be net of.
 
     **The month's preview summarises them and the payments screen itemises them, and so
-    does the export.** The two answer different questions and now sit on different screens
+    does the export.** The two answer different questions and sit on different screens
     (item 5). The preview answers "what did this month come to", which nine rows answer
     worse than one. The payments screen is where the lines are *made*, and a control
     surface that hides what it has already recorded cannot be used — a user who cannot see
@@ -1094,8 +1099,8 @@ Each of these is true or false at a glance.
 22. Reading the identifying columns straight out of the database shows unreadable values;
     the real numbers appear only on the worker's own screen and in the export. The
     columns are the passport number, the bank account number, the employment permit
-    number and the work visa number — **four in all**. This said five until 2026-09-10,
-    which counted the passport twice: it is one of the three documents of criterion 28
+    number and the work visa number — **four in all**. The passport is not counted twice:
+    it is one of the three documents of criterion 28
     *and* the number written into the sheet's identity line, and a passport carries one
     number for both. The expiry dates beside those document numbers are deliberately
     **not** among them, for the reason criterion 28 gives.
@@ -1423,7 +1428,7 @@ length, is treated as a failed fetch rather than a new fact. A failed fetch degr
 the last confirmed figure plus manual entry, and never blocks an export.
 
 **The range a fetched wage is judged against is the dated-rates table's own history and
-never a figure written into the code** (decided 2026-09-09). The comparison is with the row
+never a figure written into the code**. The comparison is with the row
 already in force on the *fetched figure's own* effective date, not with the latest row the
 table holds: those are two different rows whenever a figure arrives dated to a month that
 has already passed, and judging against the latest would refuse it for having fallen. A
@@ -1434,7 +1439,7 @@ ratio is not a rate: it values no month and enters no calculation, which is why 
 in the code where criterion 4's figures may not.
 
 **A fetched holiday list is judged the same way, against the same source's own nearest
-stored year** (decided with the user on 2026-09-09). A list of no holidays at all is a
+stored year**. A list of no holidays at all is a
 failed fetch and never a year without any: the source answers an address it does not know
 with a page whose heading names no country and which carries no rows, which is exactly what
 a mistyped country code produces, and believing it would record "this country publishes no
@@ -1477,7 +1482,7 @@ day as one the worker was absent ill, and the same day as a holiday she worked. 
 application must refuse it and explain why, because she cannot have been absent ill and
 at work on the same day. The same refusal covers a tenth paid holiday within a year, and
 a day recorded twice over. A holiday landing on a Saturday she had off is **not** among
-them, and was until 2026-09-12: such a day is not a holiday at all but the rest day it
+them: such a day is not a holiday at all but the rest day it
 is, paid once and spending nothing from the nine (item 9), so there is no second rate
 for it to be paid at. The sick-and-worked day is a contradiction the application cannot resolve: she
 cannot have been absent ill and at work on the same day, and choosing one reading
@@ -1617,9 +1622,7 @@ second one moves the most** — the block at the foot of the sheet grows by a ro
 advance granted, every instalment repaid and every line the user added, so the transferred
 total sits at row 29 only in the simplest month and at row 31 in a month with two advances.
 It is therefore found **by its own label** and never by a row number, which is what
-`layoutOf` in `src/lib/export/layout.ts` derives and what the export's tests read. Corrected
-on 2026-09-10: the cells had been cited as `A26` and `B29` alone, which names the words
-rather than the numbers and fixes a row that moves.
+`layoutOf` in `src/lib/export/layout.ts` derives and what the export's tests read.
 Between them stands the נטו — the ברוטו less what was **withheld from it**, today the
 income-tax line and nothing else — which the sheet has no cell for and the code therefore
 names `afterWithholding` rather than `net`. That the English `net` and the Hebrew נטו name

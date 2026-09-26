@@ -71,7 +71,10 @@ anchors below are the literal headings, so they are what you are grepping for.
 | what to build next, in what order, with what | `build_plan.md` |
 
 Part 2's criteria are numbered and are cited by number throughout both files; find one with
-`grep -n '^[0-9]\+\. ' specs.md` rather than by scrolling.
+`grep -n '^[0-9]\+\. ' specs.md` rather than by scrolling. **Part 2 is 72% of `specs.md`, so it
+is read one item at a time and never whole**: the index at its head says which item settles what,
+and only that item is then read. Reading the part entire to answer a question about one item
+charges a session seventeen thousand words for two thousand.
 
 ## Agent skills
 Installed skills written for other repos assume files this repo does not have. The two files below
