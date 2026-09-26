@@ -12,7 +12,7 @@ the plan table, then stops and reports to the user.
 
 > ### ✅ Everything through step 9 is committed.
 > **Step 9 — F37, the history stripped out of `specs.md`, and the size question it raised —
-> went in on 2026-09-26** after she approved all twenty-five deletions as one batch, then the
+> went in as `8413a4d` on 2026-09-26** after she approved all twenty-five deletions as one batch, then the
 > Part 2 index and three further cuts as two more. 31 exact replacements in all, each matched
 > once and once only by a script that aborts on a near-miss. Typecheck, lint and the unit suite
 > **1,265/1,265** clean, and no code was touched, so rule 6's browser suite does not apply.
@@ -21,6 +21,22 @@ the plan table, then stops and reports to the user.
 > Part 2's 17,000; `CLAUDE.md`'s "Where to read" says so. The index **adds** ~2.6KB on disk and
 > that is the intended trade — rule 9 charges a file for what it costs a session, not what it
 > weighs.
+> **`CLAUDE.md`'s pointers were wrong and are fixed** (asked 2026-09-26, after the above).
+> **Items 1–29 are all in Part 2; Parts 1 and 3–5 hold no numbered item at all** — and three
+> citations named the wrong part: `(Part 3, items 22 and 28)`, `(Part 3, item 13)` and
+> `(Part 1, item 17)`. All eleven non-negotiables now name the item holding the rule, each
+> verified against `specs.md` before it was written; the "Where to read" table said Part 2 was
+> for "anything test-shaped", which would send nobody there for a question about overrides, and
+> it now says Part 2 is what the application does; the screen row pointed at Part 1 and now
+> points at that screen's own item. **Rules 10–13 were a near-copy of Part 4** — 23% verbatim,
+> the edge-case list word for word — and are cut to what Part 4 does not say, 434 → 318 words,
+> each removed sentence checked to exist in Part 4 first. **The four rule slots were kept**
+> because `rule 11` is cited 19 times and `rule 12` seven; collapsing them would have broken
+> ~30 citations silently. Net effect on the always-loaded file: **+8 words**, the de-duplication
+> paying for the longer pointers, and that trade was taken deliberately.
+> **One gap found and deliberately not closed:** `specs.md` never says "agorot". The
+> integer-agorot representation is a code convention, so it stays in `CLAUDE.md`, whose citation
+> now says the spec does not state it. **No `specs.md` write is owed for it.**
 > Before it: **step 8 — a standing line with a lifetime — went in as `f56f602` on 2026-09-26** once she answered the
 > one word it waited on: the row's button says **`להסיר`**, the word four other removable rows
 > on the same screens already wear. Its evidence, on the finished tree: browser suite
@@ -722,7 +738,7 @@ the plan table, then stops and reports to the user.
      and confirm the sheet agrees with the screen. A failure looks like the line appearing
      outside its range, a confirmed month's total moving, or the sheet and the screen
      disagreeing.
-  9. ~~**F37** — strip the history out of `specs.md`~~ — **done 2026-09-26.** Twenty-five
+  9. ~~**F37** — strip the history out of `specs.md`~~ — **done 2026-09-26, `8413a4d`.** Twenty-five
      deletions quoted to her and approved as one batch; nothing else in the file was touched.
   10. **F32 again.** Its settings half is done. What is left is **the Claude Docs connector,
      which is hers** (`/mcp` here, or claude.ai → Settings → Connectors — prefer the latter,
@@ -798,7 +814,7 @@ the plan table, then stops and reports to the user.
 | 15 | Execute run 8's fifteen | **done** 2026-09-26, `62a7070` — fourteen fixed, R8.15 withdrawn as wrong; the commit carries F64 too |
 | 16 | The two refusal debts, together | **done** 2026-09-26, `9c52ca4` — both paid; `/workers` and `/workers/[id]` are the one debt left in their place |
 | 17 | A standing line with a lifetime | **done** 2026-09-26, `f56f602` — the button's word answered the same day (`להסיר`). 169/169 browser, 1,265/1,265 unit, and her own check passed |
-| 18 | F37, and the size question | **done** 2026-09-26 — 25 approved deletions, then the Part 2 index and 3 narrow cuts; 31 replacements in all. Typecheck, lint, 1,265/1,265 |
+| 18 | F37, and the size question | **done** 2026-09-26, `8413a4d` — 25 approved deletions, then the Part 2 index and 3 narrow cuts; 31 replacements in all. Typecheck, lint, 1,265/1,265 |
 | 19 | F32 again | **open** — the connector is hers, then `/doctor` is re-run |
 | 20 | F64 — her two notes on the rates group | **done** 2026-09-26, `62a7070` — committed inside run 8's batch, as she asked, rather than alone |
 
@@ -1771,7 +1787,7 @@ figure, and each is a bug against a rule `specs.md` already states.
 - [ ] F32 — `/doctor` (added 2026-09-19 at the user's request) — a built-in Claude Code
   command, so the user runs it and the session acts on what it reports; a finding that is
   not a setting goes under "Needs the user" — check: `/doctor` reports nothing left to fix.
-- [x] 2026-09-26 F37 — (added 2026-09-22 at the user's request) **strip the history out of `specs.md`.**
+- [x] 2026-09-26 `8413a4d` F37 — (added 2026-09-22 at the user's request) **strip the history out of `specs.md`.**
   The file carries its own changelog, against `CLAUDE.md` rule 3: these files describe only
   what stands now, and how a rule came to be what it is belongs in the commit message. What
   goes is every sentence that dates or narrates a change — "This reverses the rule that stood
