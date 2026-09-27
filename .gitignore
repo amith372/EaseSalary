@@ -73,3 +73,7 @@ next-env.d.ts
 # are working notes rather than a record: what a review found belongs in the
 # code, the tests, or the commit that acted on it.
 /.impeccable/
+
+# the build plan — a working list of what is not built yet, kept out of the
+# repository because it changes by the hour and is meaningful only locally.
+/build_plan.md

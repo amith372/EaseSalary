@@ -194,7 +194,7 @@ folded sheet.
   never the address of the family that invited them, so a worker shared into
   their view carries no chip.
 - What the artboards draw and nothing yet supplies is listed in
-  `build_plan.md`, not drawn as placeholders.
+  `build_plan.md` (local and untracked — `CLAUDE.md` rule 9), not drawn as placeholders.
 
 ### The payments screen
 

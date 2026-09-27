@@ -3,12 +3,15 @@
 This repo has no issue tracker. There are no GitHub issues, no `.scratch/`, and no triage labels —
 the `triage` skill is not installed, so `docs/agents/triage-labels.md` does not exist either.
 
-`build_plan.md` is the work list and the stage order.
+`build_plan.md` is the work list and the stage order. **It is untracked** — `.gitignore` keeps it
+out of the repository, because it changes by the hour and means nothing outside the working copy it
+is kept in (`CLAUDE.md` rule 9). A session that does not find it has no work list and asks the user
+what to build next.
 
 ## When a skill says "fetch the relevant ticket"
 
 Read `build_plan.md` and take the stage or step named. A step's own detail, where it has any, is in
-the matching `docs/plan-*.md`.
+the matching `docs/plan-*.md`. Where the file is not there at all, ask — see above.
 
 ## When a skill says "publish to the issue tracker" or "open an issue"
 

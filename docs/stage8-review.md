@@ -87,9 +87,9 @@ nothing is re-asked; a check is recorded the day it passes, or it is silently re
 | Step 1's check | step 1 | 2026-09-26 |
 | The ₪300 recurring deduction over three months | step 8, `f56f602` | 2026-09-26 |
 
-**Stage 8 owes no further proof.** What survives it is not stage-8 work: the `/workers` refusal
-decision below, which is `build_plan.md`'s and is the user's to take, and one user-scope setting
-that is not a repository change at all — `Bash(python -c ' *)`, still allowed at user scope.
+**Stage 8 owes no further proof.** What survives it is one user-scope setting that is not a
+repository change at all — `Bash(python -c ' *)`, still allowed at user scope. The `/workers`
+refusal decision that used to stand here was taken and built on 2026-09-27 (see "Settled" below).
 **The duplicate project registration is fixed**: `~/.claude.json` keeps
 `D:/school/LLM vibe coding/EaseSalary` and the lower-case twin was removed on 2026-09-27 at the
 user's instruction. Sessions open the project with that spelling, since the key is the exact
@@ -97,11 +97,13 @@ string and a differently-cased path makes a second entry.
 
 ### Settled — do not reopen, do not ask again
 
-- **Where the refusal card goes on a screen that lists both workers is her decision.** A session
-  does not invent it. `/workers` and `/workers/[id]` still fail whole on a refused month **on
-  purpose** — every card on them states a balance and a refused worker has none, so drawing her
-  opening position would state a figure nobody checked. This is the one entry in
-  `build_plan.md`'s "Still to pay", and it is not a defect.
+- **Where the refusal card goes on a screen that lists both workers was her decision, and she
+  took it on 2026-09-27.** Both screens now raise the refusal in sight instead of failing whole,
+  and neither states a balance for a refused worker — the compact card, the grid and the status
+  chip she withheld, and the way back to the calendar are each a row of `DESIGN.md`'s refusal
+  table marked "(the user, 2026-09-27)". `e2e/refusal-card.spec.ts` holds it through the browser.
+  A session does not redesign it: a change to what those two screens draw for a refused worker is
+  hers again.
 - **Whether `specs.md` should be shorter** — answered 2026-09-26. Lever 1 (the Part 2 index) and
   lever 3 (three narrow cuts) are built; lever 2 was refused, because moving items 17 and 20's
   screen prose to `DESIGN.md` would put a behavioural rule where no test-writer looks. **No
