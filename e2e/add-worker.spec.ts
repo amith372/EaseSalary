@@ -42,8 +42,8 @@ const COUNTRY_NAME = "הפיליפינים";
 /**
  * A household of this test's own, seeded with nobody.
  *
- * **The cookie's head must be `empty`**, because `seedOf` reads everything
- * before the first hyphen to choose the seed (`src/lib/store.ts`). The label is
+ * **The cookie must begin with `empty`**, because `seedOf` chooses the seed by
+ * the longest seed name the value begins with (`src/lib/store.ts`). The label is
  * a plain ASCII counter and not the test's title: a cookie value carrying
  * Hebrew, spaces or commas is refused by the browser outright, which fails every
  * test in the file on the cookie rather than on its subject.

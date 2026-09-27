@@ -47,7 +47,7 @@
      band with no season on it falls back to; the three others are further down
      this file, keyed off `data-season`.
 
-     Eleven of the twelve move with the season and `--color-band` does not: all
+     Twelve of the thirteen move with the season and `--color-band` does not: all
      four scenes are drawn on the same cream, which is what keeps the band one
      object across a year rather than four cards. */
   --color-band: #fbf6ee; /* the band's cream ground */
@@ -220,7 +220,8 @@
   --color-band-leaf-deep: #b45c34;
   --color-band-accent: #f0c27c; /* the leaves already down */
   --color-band-accent-deep: #bc9448; /* the one leaf still olive */
-  --color-band-bloom: #fde3c4; /* unused: autumn has no white */
+  /* No `--color-band-bloom` here: it is snow and petal, and the autumn scene
+     draws neither, so the scene that never reads it declares no value for it. */
   --color-band-trace: #f0c27c; /* the specks between the fallen leaves */
 }
 

@@ -56,13 +56,13 @@ const DAYS_ONCE_CLOSED = 3;
 
 const RUN = Date.now().toString(36);
 
-/** The `openspell` seed, in a store of this test's own. One word and no hyphen
- * before the first `-`: `seedOf` reads the name up to it (`src/lib/store.ts`). */
+/** The `open-spell` seed, in a store of this test's own — `seedOf` takes the
+ * longest seed name the household's name begins with (`src/lib/store.ts`). */
 async function useHousehold(page: Page, label: string): Promise<void> {
   await page.context().addCookies([
     {
       name: "household",
-      value: `openspell-e2e-${RUN}-${label}`,
+      value: `open-spell-e2e-${RUN}-${label}`,
       url: "http://localhost:3000",
     },
   ]);
@@ -137,7 +137,7 @@ test.describe("a spell of sickness nobody closed (specs.md items 8, 18)", () => 
     // counted as a day of sickness — five days for a spell she may already have
     // come back from, which is item 18's stated reason for blocking the export.
     await daysUsed(page, DAYS_WHILE_OPEN);
-    const spentWhileOpen = await sickBalance(page);
+    const balanceWhileOpen = await sickBalance(page);
 
     await page.goto("/month/export");
     await switchToTestWorker(page);
@@ -209,8 +209,16 @@ test.describe("a spell of sickness nobody closed (specs.md items 8, 18)", () => 
     // is asserted as well as the balance, because it is the count that says the
     // return date was read as a return and not as the last day of the illness.
     await daysUsed(page, DAYS_ONCE_CLOSED);
-    expect(await sickBalance(page)).toBe(
-      spentWhileOpen + (DAYS_WHILE_OPEN - DAYS_ONCE_CLOSED),
+    // **The expected figure here is the movement and never an absolute.** Two
+    // days, from the calendar: five while the preview clipped the spell at today
+    // and three once the 17th closed it. `balanceWhileOpen` is the baseline it is
+    // measured from — read off the screen before the close, so it is a
+    // measurement and not an expectation. The absolute balance is the accrual's
+    // business and is asserted where its figure is derived on paper
+    // (`src/lib/engine/balances.test.ts`); asserting it from a number this test had just read
+    // would prove only that the screen agrees with itself (`CLAUDE.md` rule 11).
+    expect((await sickBalance(page)) - balanceWhileOpen).toBe(
+      DAYS_WHILE_OPEN - DAYS_ONCE_CLOSED,
     );
   });
 

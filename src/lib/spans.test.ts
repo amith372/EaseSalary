@@ -459,10 +459,6 @@ describe("a kind no day of the selection can take (items 5, 8)", () => {
  * spell would go on drawing sick days from the balance for as long as nobody
  * closed it, and the only screen that closes one is reached from an export the
  * open spell itself blocks.
- *
- * Note that `src/lib/types.ts` still describes the open shape as "how one is
- * normally recorded", which is what item 8 says it is *not*. The comment is
- * wrong and the spec governs; this test pins the behaviour either way.
  */
 describe("a sweep never leaves a spell open (specs.md item 8)", () => {
   const sweeps: { what: string; intent: Parameters<typeof applyMark>[0] }[] = [

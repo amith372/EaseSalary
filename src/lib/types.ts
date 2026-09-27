@@ -60,13 +60,17 @@ export interface DaySpan {
   /**
    * `null` while the spell is still running.
    *
-   * **A spell may be left open, and that is how one is normally recorded**
-   * (specs.md item 8): on the day a worker falls ill nobody knows the day she
-   * will return, so the application does not ask for one. An open spell is
-   * never *crossed* by a month boundary — it simply has not ended — and it
-   * stays one spell with one first day, which is what the tiers are counted
-   * from. That is the whole reason the storage shape is a span and not a set of
-   * per-day marks.
+   * **A spell may be left open, and the application never asks for an end
+   * date** (specs.md item 8): on the day a worker falls ill nobody knows the
+   * day she will return. But **no gesture writes one** — there is deliberately
+   * none, so continuity is inferred from the days marked and every span
+   * `applyMark` writes is closed (`spans.test.ts`); an open spell reaches the
+   * engine from stored data, and the panel that closes one is the only screen
+   * that speaks of it. The shape is nonetheless real: an open spell is never
+   * *crossed* by a month boundary — it simply has not ended — and it stays one
+   * spell with one first day, which is what the tiers are counted from. That is
+   * the whole reason the storage shape is a span and not a set of per-day
+   * marks.
    *
    * Only sickness may be open. `MonthSpan` in `src/lib/engine/types.ts` is what
    * enforces it, narrowing this field back to a date for every other kind, the

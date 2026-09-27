@@ -390,7 +390,7 @@ test.describe("a refused month on the workers screens", () => {
   test("both workers refused: two cards, and the list still renders", async ({
     page,
   }) => {
-    await useHousehold(page, "refusedboth", "workers-list-both");
+    await useHousehold(page, "refused-both", "workers-list-both");
     await page.goto("/workers");
 
     await expect(
@@ -421,7 +421,7 @@ test.describe("a refused month on the workers screens", () => {
   test("a refused worker alone in a household that still has room", async ({
     page,
   }) => {
-    await useHousehold(page, "refusedalone", "workers-list-alone");
+    await useHousehold(page, "refused-alone", "workers-list-alone");
     await page.goto("/workers");
 
     await expect(
@@ -442,7 +442,7 @@ test.describe("a refused month on the workers screens", () => {
   test("a refusal with no date at all locates itself by its month", async ({
     page,
   }) => {
-    await useHousehold(page, "refusednodate", "workers-list-nodate");
+    await useHousehold(page, "refused-no-date", "workers-list-nodate");
     await page.goto("/workers");
 
     const card = cardOf(page, REFUSED_WORKER).locator('[data-role="refusal"]');

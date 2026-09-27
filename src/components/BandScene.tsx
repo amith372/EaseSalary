@@ -28,6 +28,23 @@ const leafMid = "M0 0C10.5 -23.1 36.2 -24.2 58.3 0C36.2 24.2 10.5 23.1 0 0Z";
 const leafLower = "M0 0C11.7 -22.1 40.3 -23.1 65.1 0C40.3 23.1 11.7 22.1 0 0Z";
 const leafSide = "M0 0C9.7 -16.8 33.6 -17.6 54.1 0C33.6 17.6 9.7 16.8 0 0Z";
 
+/**
+ * Where the branch holds its leaves: each at the point it joins, turned to where
+ * it points, with the length of its own lens.
+ *
+ * **All four scenes place them identically** — a scene says only which of the
+ * five it carries and in what colour — so the placements live here and never in
+ * a scene. Repeated per scene they drifted by a degree between July and October
+ * for no reason anybody drew.
+ */
+const leaves = [
+  { at: "translate(62 78) rotate(-113.4)", d: leafLong, length: 65.4 },
+  { at: "translate(98 100) rotate(-74.7)", d: leafShort, length: 45.6 },
+  { at: "translate(58 136) rotate(-149)", d: leafMid, length: 58.3 },
+  { at: "translate(72 166) rotate(-45)", d: leafLower, length: 65.1 },
+  { at: "translate(120 132) rotate(4.2)", d: leafSide, length: 54.1 },
+] as const;
+
 /** The branch: one stem out of the bottom corner and two that fork off it. */
 const branch =
   "M56 184C64 152 78 120 98 98M82 114C74 100 66 88 62 76M70 142C88 134 106 132 122 132";
@@ -61,28 +78,11 @@ function Branch({ width }: { width: number }) {
   );
 }
 
-/** June to September: the branch in leaf, as `דף הבית v4` draws it. */
-function SummerScene() {
+/** The midrib of a turned leaf, along the lens's own length. It is what tells an
+ * autumn leaf from a summer one at this size — the colour alone reads as a
+ * recolour. */
+function Vein({ length }: { length: number }) {
   return (
-    <Frame>
-      <Sun />
-      <Branch width={2.6} />
-      <path transform="translate(62 78) rotate(-113.4)" d={leafLong} className="fill-band-leaf" />
-      <path transform="translate(98 100) rotate(-74.7)" d={leafShort} className="fill-band-leaf-light" />
-      <path transform="translate(58 136) rotate(-149)" d={leafMid} className="fill-band-leaf-deep" />
-      <path transform="translate(72 166) rotate(-45)" d={leafLower} className="fill-band-leaf" />
-      <path transform="translate(120 132) rotate(4.2)" d={leafSide} className="fill-band-leaf-light" />
-    </Frame>
-  );
-}
-
-/**
- * October and November: the same branch turning, one leaf still olive, and two
- * already down. The midribs are what tell an autumn leaf from a summer one at
- * this size — the colour alone reads as a recolour.
- */
-function AutumnScene() {
-  const vein = (length: number) => (
     <path
       d={`M${(length * 0.14).toFixed(1)} 0H${(length * 0.82).toFixed(1)}`}
       className="fill-none stroke-band-stem"
@@ -91,31 +91,76 @@ function AutumnScene() {
       strokeLinecap="round"
     />
   );
+}
 
+/**
+ * The leaves a scene carries: one fill per placement in `leaves`, and `null`
+ * where that scene's branch does not hold that leaf — winter and spring drop the
+ * short one over the fork. `veins` is autumn's alone.
+ */
+function Leaves({
+  fills,
+  veins = false,
+}: {
+  fills: readonly (string | null)[];
+  veins?: boolean;
+}) {
+  return (
+    <>
+      {leaves.map(({ at, d, length }, index) => {
+        const fill = fills[index];
+        if (fill === null) return null;
+        return veins ? (
+          <g key={at} transform={at}>
+            <path d={d} className={fill} />
+            <Vein length={length} />
+          </g>
+        ) : (
+          <path key={at} transform={at} d={d} className={fill} />
+        );
+      })}
+    </>
+  );
+}
+
+/** June to September: the branch in leaf, as `דף הבית v4` draws it. */
+function SummerScene() {
+  return (
+    <Frame>
+      <Sun />
+      <Branch width={2.6} />
+      <Leaves
+        fills={[
+          "fill-band-leaf",
+          "fill-band-leaf-light",
+          "fill-band-leaf-deep",
+          "fill-band-leaf",
+          "fill-band-leaf-light",
+        ]}
+      />
+    </Frame>
+  );
+}
+
+/**
+ * October and November: the same branch turning, one leaf still olive, and two
+ * already down.
+ */
+function AutumnScene() {
   return (
     <Frame>
       <Sun />
       <Branch width={3} />
-      <g transform="translate(62 78) rotate(-113.4)">
-        <path d={leafLong} className="fill-band-leaf-deep" />
-        {vein(65.4)}
-      </g>
-      <g transform="translate(98 100) rotate(-74.7)">
-        <path d={leafShort} className="fill-band-accent-deep" />
-        {vein(45.6)}
-      </g>
-      <g transform="translate(58 136) rotate(-149)">
-        <path d={leafMid} className="fill-band-leaf" />
-        {vein(58.3)}
-      </g>
-      <g transform="translate(72 166) rotate(-45)">
-        <path d={leafLower} className="fill-band-leaf-light" />
-        {vein(65.1)}
-      </g>
-      <g transform="translate(120 132) rotate(4.2)">
-        <path d={leafSide} className="fill-band-leaf" />
-        {vein(54.1)}
-      </g>
+      <Leaves
+        veins
+        fills={[
+          "fill-band-leaf-deep",
+          "fill-band-accent-deep",
+          "fill-band-leaf",
+          "fill-band-leaf-light",
+          "fill-band-leaf",
+        ]}
+      />
       {/* Down, and past the sun rather than over it. */}
       <path
         transform="translate(176 150) rotate(28) scale(0.4)"
@@ -153,10 +198,15 @@ function WinterScene() {
         className="fill-band-bloom"
       />
       <Branch width={3.4} />
-      <path transform="translate(62 78) rotate(-113.4)" d={leafLong} className="fill-band-leaf" />
-      <path transform="translate(58 136) rotate(-149)" d={leafMid} className="fill-band-leaf-deep" />
-      <path transform="translate(72 166) rotate(-45)" d={leafLower} className="fill-band-leaf" />
-      <path transform="translate(120 132) rotate(4.2)" d={leafSide} className="fill-band-leaf-light" />
+      <Leaves
+        fills={[
+          "fill-band-leaf",
+          null,
+          "fill-band-leaf-deep",
+          "fill-band-leaf",
+          "fill-band-leaf-light",
+        ]}
+      />
 
       {/* The stalks first, so every berry sits on the end of one. */}
       <path
@@ -235,10 +285,15 @@ function SpringScene() {
     <Frame>
       <Sun />
       <Branch width={3.2} />
-      <path transform="translate(62 78) rotate(-113.4)" d={leafLong} className="fill-band-leaf" />
-      <path transform="translate(58 136) rotate(-149)" d={leafMid} className="fill-band-leaf-deep" />
-      <path transform="translate(72 166) rotate(-45)" d={leafLower} className="fill-band-leaf-light" />
-      <path transform="translate(120 132) rotate(4.2)" d={leafSide} className="fill-band-leaf" />
+      <Leaves
+        fills={[
+          "fill-band-leaf",
+          null,
+          "fill-band-leaf-deep",
+          "fill-band-leaf-light",
+          "fill-band-leaf",
+        ]}
+      />
 
       {/* The buds. Each grows off a stem the branch already has and sits on the
           end of its own twig — set beside one, a bud reads as a pin stuck in

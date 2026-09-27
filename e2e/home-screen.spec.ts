@@ -84,6 +84,29 @@ function daysUsed(count: number): string {
   return `${he.sheet.reporting.daysUsed}: ${formatDays(count)}`;
 }
 
+/** The illustrated band over the calendar. `data-season` is the whole mechanism
+ * that sets its scene, so the attribute is what a test reads (`CalendarBand`). */
+function band(page: Page) {
+  return page.locator("[data-season]");
+}
+
+/** Steps the calendar back until it is showing a given month, by the month's own
+ * name and never by a count of clicks — a count is right only for one `today`. */
+async function stepBackTo(page: Page, month: { year: number; month: number }): Promise<void> {
+  const back = page.getByRole("button", { name: he.calendar.previousMonth });
+  // **Inside the band, where the stepper draws it**, and never anywhere on the
+  // page: the blocker strip above the calendar names the months it is waiting
+  // on, so a page-wide match on "אפריל 2026" is satisfied by an alert while the
+  // calendar is still showing September — and the walk then never takes a step.
+  const showing = band(page).getByText(monthLabel(month)).first();
+  // Bounded, so a step that stops working fails here rather than spinning: the
+  // demo's earliest month is May 2025 and the furthest walk below is ten steps.
+  for (let step = 0; step < 24 && !(await showing.isVisible()); step += 1) {
+    await back.click();
+  }
+  await expect(showing).toBeVisible();
+}
+
 /** Unfold the picker's second row — part of a day and a note. */
 async function openSecondRow(page: Page): Promise<void> {
   await page
@@ -165,6 +188,48 @@ test.describe("the opening screen", () => {
     const today = TODAY;
     await expect(page.locator(`[data-date="${today}"]`)).toBeVisible();
     await expect(page.getByText(monthLabel(monthOf(today))).first()).toBeVisible();
+  });
+
+  /**
+   * **The band's season is the shown month's and never today's.**
+   *
+   * The scene is set by `data-season` on the band and nothing else
+   * (`CalendarBand`), so the attribute is the whole wiring and is what this
+   * reads. The four expected values come from `DESIGN.md`'s own rule — Israel's
+   * seasons, where summer runs June to September and autumn is October and
+   * November — and not from `seasonOf`, which is pinned separately in
+   * `src/lib/season.test.ts`. What is unproven without this is the wiring
+   * between them.
+   *
+   * **What it would catch**: a band that took its season from the clock instead
+   * of from the month on screen. Every assertion below is made on the same day —
+   * the suite's pinned 2026-09-18 — so a clock-reading band answers "summer"
+   * three times over while the calendar plainly shows April, December and
+   * November. That is `CLAUDE.md`'s "nothing reads the clock during a render",
+   * and on the built screen it would be invisible until a family correcting
+   * March in July was shown a summer band.
+   */
+  test("draws the band in the season of the month being shown", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    // The month today falls in. September is summer here by any thermometer,
+    // which is the one place Israel's seasons and the astronomical ones part.
+    await expect(band(page)).toHaveAttribute("data-season", "summer");
+
+    // Stepped back only, so the walk is one direction and each month is reached
+    // from the one before it.
+    const months = [
+      [{ year: 2026, month: 4 }, "spring"],
+      [{ year: 2025, month: 12 }, "winter"],
+      [{ year: 2025, month: 11 }, "autumn"],
+    ] as const;
+
+    for (const [month, season] of months) {
+      await stepBackTo(page, month);
+      await expect(band(page)).toHaveAttribute("data-season", season);
+    }
   });
 
   test("never lets the page scroll sideways", async ({ page }) => {
