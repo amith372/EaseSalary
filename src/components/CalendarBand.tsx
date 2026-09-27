@@ -1,10 +1,20 @@
 import type { ReactNode } from "react";
+import { BandScene } from "@/components/BandScene";
+import type { Season } from "@/lib/season";
 import { he } from "@/lib/i18n/he";
 
 /**
  * The illustrated band across the top of the home calendar, as
  * `EaseSalary - דף הבית v4` draws it: the month's controls at the start, and at
  * the end a branch, a sun and "כל יום נחשב" in a hand-written face.
+ *
+ * **It is drawn in the season of the month being shown**, which is the one
+ * thing on the screen that is there to be liked rather than read. The season
+ * arrives as a prop and is never worked out here, because it comes from the
+ * month the calendar is on and not from today (`CLAUDE.md`: nothing reads the
+ * clock during a render). `data-season` is the whole mechanism — it sets the
+ * scene's colours on this element and every `band-*` utility inside inherits
+ * them (`globals.css`).
  *
  * **Everything past the controls is decoration** and is hidden from assistive
  * technology; the slogan is still real text rather than part of the drawing,
@@ -15,14 +25,17 @@ import { he } from "@/lib/i18n/he";
  * room for either, and the drawing is left out rather than shown as a stub.
  */
 export function CalendarBand({
+  season,
   children,
   className,
 }: {
+  season: Season;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <div
+      data-season={season}
       className={[
         "relative isolate flex min-h-26 flex-none items-center gap-4.5 overflow-hidden rounded-t-calendar border-b border-line bg-band ps-5.5",
         className ?? "",
@@ -92,20 +105,7 @@ export function CalendarBand({
             tip of a leaf; pinned the other way it took a bite out of the sun,
             which is a circle and shows a straight cut. */}
         <span className="flex h-26 w-36.5 min-w-0 flex-[0_1_auto] justify-start overflow-hidden">
-          <svg aria-hidden="true" viewBox="0 14 218 167" className="block h-26 w-36.5 flex-none">
-            <circle cx="170" cy="62" r="42" className="fill-band-sun" />
-            <path
-              d="M56 184C64 152 78 120 98 98M82 114C74 100 66 88 62 76M70 142C88 134 106 132 122 132"
-              className="fill-none stroke-band-stem"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-            />
-            <path transform="translate(62 78) rotate(-113.4)" d="M0 0C11.8 -24.2 40.5 -25.3 65.4 0C40.5 25.3 11.8 24.2 0 0Z" className="fill-band-leaf" />
-            <path transform="translate(98 100) rotate(-74.7)" d="M0 0C8.2 -17.9 28.3 -18.7 45.6 0C28.3 18.7 8.2 17.9 0 0Z" className="fill-band-leaf-light" />
-            <path transform="translate(58 136) rotate(-149)" d="M0 0C10.5 -23.1 36.2 -24.2 58.3 0C36.2 24.2 10.5 23.1 0 0Z" className="fill-band-leaf-deep" />
-            <path transform="translate(72 166) rotate(-45)" d="M0 0C11.7 -22.1 40.3 -23.1 65.1 0C40.3 23.1 11.7 22.1 0 0Z" className="fill-band-leaf" />
-            <path transform="translate(120 132) rotate(4.2)" d="M0 0C9.7 -16.8 33.6 -17.6 54.1 0C33.6 17.6 9.7 16.8 0 0Z" className="fill-band-leaf-light" />
-          </svg>
+          <BandScene season={season} />
         </span>
       </span>
     </div>

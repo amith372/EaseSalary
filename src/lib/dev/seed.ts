@@ -575,6 +575,94 @@ export const refusedSeed = {
 };
 
 /**
+ * The refused household with the *first* worker's August doubled as well, so
+ * both employments are refused at once.
+ *
+ * **Two workers is the whole household** (item 11), so this is the case where
+ * the list has nothing left to state — and it is the one the screens must still
+ * render rather than fail whole, which is the defect they had. Her two marks are
+ * invented here rather than collided with a workbook day: a mark read off a tab
+ * is a figure the first worker's months are held against, and doubling one would
+ * put the known case out of agreement with its own sheet.
+ */
+export const bothRefusedSeed = {
+  ...refusedSeed,
+  spans: {
+    ...refusedSeed.spans,
+    "worker-1": [
+      ...devSpans["worker-1"],
+      // **July and not August**: her seeded months are the workbook tabs and
+      // they stop at July 2026 (`WORKBOOK_SEED_MONTHS`), so marks on an August
+      // she has no month for would be validated by nothing at all. The two
+      // workers are therefore refused in different months, which is the
+      // stronger case anyway — one card per employment and not one per
+      // household.
+      {
+        id: "w1-vacation-0708",
+        kind: "vacation" as const,
+        from: "2026-07-08",
+        to: "2026-07-08",
+      },
+      {
+        id: "w1-sick-0708",
+        kind: "sick" as const,
+        from: "2026-07-08",
+        to: "2026-07-08",
+      },
+    ],
+  },
+};
+
+/**
+ * A household of one worker, refused.
+ *
+ * **It is the case where the list holds nothing else**, and it is also the one
+ * where the household still has room — so the card that offers a second worker
+ * is drawn beside a refusal, which is the layout nothing else reaches.
+ */
+export const refusedAloneSeed = {
+  workers: [secondWorker],
+  spans: { "worker-2": refusedSeed.spans["worker-2"] },
+  months: { "worker-2": devMonths["worker-2"] },
+};
+
+/**
+ * A refusal that names **no date at all**: two medical-insurance payments in one
+ * month, which item 16 refuses because the sheet holds one row per kind.
+ *
+ * **It is seeded because it is the only shape that proves the month is the
+ * locator.** `dayRecordedTwice` always carries a day, so every other refused
+ * household would pass a card that silently depended on one; a payment concerns
+ * a kind and not a date (`validate.ts`), and here the month's own name is all
+ * the card has to say where the trouble is.
+ */
+export const refusedNoDateSeed = {
+  ...devSeed,
+  months: {
+    ...devMonths,
+    "worker-2": devMonths["worker-2"].map((record) =>
+      record.month.year === 2026 && record.month.month === 8
+        ? {
+            ...record,
+            thirdPartyPayments: [
+              {
+                kind: "medicalInsurance" as const,
+                agorot: 130000,
+                paidOn: "2026-08-08",
+              },
+              {
+                kind: "medicalInsurance" as const,
+                agorot: 130000,
+                paidOn: "2026-08-09",
+              },
+            ],
+          }
+        : record,
+    ),
+  },
+};
+
+/**
  * The demo with the test worker's spell of sickness left **open** — a span whose
  * `to` is null (`specs.md` item 8).
  *

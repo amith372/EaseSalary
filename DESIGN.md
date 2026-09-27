@@ -42,7 +42,7 @@ canonical for the home screen and supersedes the v3 departures recorded in
 Measured after the cuts: nothing scrolls sideways at any width, and 1440×700
 fits without scrolling.
 
-### A refused month (the opening screen, the payslip, the payments screen and `דוחות`)
+### A refused month (every screen that replays her months)
 
 **The canvas draws no such card, because it draws no refused month.** The engine
 declines to value a month it cannot value correctly (`specs.md` item 25, Part 4)
@@ -58,6 +58,13 @@ a stack trace.
 | The refused worker's two rows leave the balances card, and the card itself goes only where nobody is left — a one-worker household, or both refused — leaving the rail holding `לייצא לאקסל` alone, drawn full width | A balance is derived by replaying the months (item 13), so a month the engine declined to value leaves nothing to derive one from, and her rows drew `[מספר] ימים` instead — a bracketed placeholder on screen, which is what `[השם שלך]` was cut for. An empty figure beside a real one is worse than no figure. The other worker's rows stay, because the rail answers where the *household* stands and her balances were never in question |
 | On the payslip, the payments screen and `דוחות` the card **is** the screen — for the worker the switcher is showing, and not for the other | None of the three has a calendar, every figure on them comes off the replay, and `דוחות` would otherwise offer a file for a month the engine declined to value. One step of the switcher and the other worker's screen is whole (`specs.md` item 25) |
 | The blocker strip is drawn as it always is, and the card sits below it as an `h2` | The strip is the household's and a refused worker is simply left out of its count (`alertsView.ts`), so the other worker's list stands. The card led the outline only while a refusal emptied the strip for everybody |
+| On `/workers` and `/workers/[id]` the card is drawn **compact**: the reason, its dates, the month and the rule stay; the body paragraph and the “every month after it is waiting” line go (the user, 2026-09-27) | Those two are lists of an employment and not screens that explain a month. The two lines that go are prose; the four that stay are what item 25 requires. One component with a `tone`, so the wording cannot fork between the screens that explain and the screens that list |
+| On `/workers` her card keeps the terms of her employment — name, avatar, country, employed-since — and loses the whole four-figure grid, her base salary with it (the user, 2026-09-27) | The terms are stored and not replayed, so a refusal says nothing about them. The salary would still be true, and it goes anyway: a grid of one cell is not the grid, and the card is what her row is now about. An empty figure beside a real one is worse than no figure |
+| Her status chip is not drawn at all while she is refused | The chip states `waitingMonth`, which is derived from the replay: a chip reporting `הכל מעודכן` beside a card saying the month could not be valued is the plainest kind of wrong answer |
+| The other worker's card on `/workers` is untouched, and the add-worker card behaves exactly as it does otherwise | A refusal belongs to the employment whose month it is (item 25). An account holds two, and whether there is room for another is not a question the replay answers |
+| On `/workers/[id]` the card **is** the screen and carries the `h1`, with her name stated above it | Her months and her balances are the whole of that screen and both come off the replay. On the list her own card's heading names her; here nothing else would, so an address reached from a bookmark still says whose month it is |
+| A way back to the calendar sits **inside** the card, under the reason, on `/workers/[id]` — and **nowhere on `/workers`** (the user, 2026-09-27) | The refusal and its exit read as one thing. It is on her own page and not on the list because the opening screen shows one worker at a time and only an address naming a worker chooses her (`WorkerScope`): from `/workers/[id]` the link lands on her calendar, and from a list of two it would as often land on the other worker's, with no refusal on it to correct |
+| Neither screen gets an `error.tsx`, then or now | A refused month is a known state with a sentence written for it, not an error. A boundary would paper over the state the card exists to say, and would swallow genuine faults with it |
 | The two download addresses draw no refusal of their own: they send her to the opening screen, showing the worker the download named | A file is not a place to word a refusal, and the card is already written. The opening screen is the only one that draws the card *and* carries the calendar the mark is corrected on |
 
 ### The calendar (on every screen that draws it)
@@ -72,6 +79,29 @@ a stack trace.
   Saturday, so it never meets the case. Greyed and not hidden, because a control
   that vanishes leaves the user looking for it, and the row already greys a kind
   that cannot be taken in part.
+
+### The calendar band (the home screen alone)
+
+**The canvas draws one band and the code draws four**, one per season of the
+month the calendar is showing: the drawing, the wave behind the controls, the
+slogan, its underline and the month's name all follow it. `v4`'s branch, its
+cream sun and its sage wave are summer, unchanged, and are what a band with no
+season on it falls back to. The user drew the other three on 2026-09-27 and
+their colours are sampled from those drawings.
+
+| Departure | Why |
+|---|---|
+| The season is Israel's and not the astronomical one: **summer is June to September** and autumn only October and November | The user, 2026-09-27. September here is summer by any thermometer, and a band that turned brown on the first of the month would be describing somewhere else |
+| It is read off the **month being shown** and never off today | A family correcting March in July is looking at March (`CLAUDE.md`: nothing reads the clock during a render) |
+| The month's name takes the band's ink rather than the page's `ink` | It is inside the band, and the page ink is the one warm-brown thing in a winter scene. Summer's band ink is a hair warmer than the page's, which is the only visible change the seasons made to the built screen |
+| The **arrows and `החודש` keep their neutral border and ink** in all four scenes, where the drawings tint them | `MonthStepper` is shared with the payments screen, which draws no band; tinting it there would need band-scoped overrides of global tokens, and the buttons are the one part of the band nobody looks at |
+| All four scenes share one frame, one sun position and one wave path; only the colours and the shapes inside change | The band's clipping rules are measured against that frame — the branch is clipped before the slogan and the sun is never cut — so a scene drawn to its own dimensions would be a second layout to keep true. The drawings' waves differ by a few pixels of curve, which at 104px tall is nothing the fill does not already say |
+| Spring's underline is `#8ca57e`, one step deeper than the `#98b08b` of the drawing | At 2.4px the sampled green read as a smudge under the slogan rather than as a stroke |
+| The ground `--color-band` is the same cream in all four | It is what keeps the band one object across a year instead of four cards |
+
+The scene is set by `data-season` on the band and nothing else: the colours are
+inherited by every `band-*` utility inside it, so a scene is a list of tokens in
+`globals.css` and never a second set of class names in the markup.
 
 ### The top bar (owed to the canvas, which draws none of it)
 

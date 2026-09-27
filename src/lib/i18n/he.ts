@@ -1106,6 +1106,13 @@ export const he = {
        */
       stopsLater:
         "כל החודשים שאחריו ממתינים לתיקון הזה, כי היתרות נגררות מחודש לחודש.",
+      /**
+       * The way out of a screen that states the refusal but cannot correct it.
+       * It names the calendar rather than the screen, because what she has come
+       * to do is fix a mark and "למסך הפתיחה" would tell her where to go
+       * without telling her why.
+       */
+      wayHome: "ללוח החודשי לתיקון הרישום",
     },
     preview: {
       /**

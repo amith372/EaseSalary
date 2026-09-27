@@ -42,16 +42,31 @@
   --color-sage-ink: #33513b;
   --color-sage-ink-hover: #24402c;
 
-  /* The illustrated band over the home calendar (דף הבית v4) */
+  /* The illustrated band over the home calendar (דף הבית v4). The values here
+     are the **summer** scene, which is the one the canvas draws and the one a
+     band with no season on it falls back to; the three others are further down
+     this file, keyed off `data-season`.
+
+     Eleven of the twelve move with the season and `--color-band` does not: all
+     four scenes are drawn on the same cream, which is what keeps the band one
+     object across a year rather than four cards. */
   --color-band: #fbf6ee; /* the band's cream ground */
   --color-band-wave: #e8f0eb; /* the sage wave behind the month controls */
-  --color-band-ink: #3a322a; /* the slogan and its heart */
+  --color-band-ink: #3a322a; /* the slogan, its heart, and the month's name */
   --color-band-underline: #d8664e;
-  --color-band-sun: #fcebc8;
+  --color-band-sun: #fcebc8; /* the sun, and winter's moon */
   --color-band-stem: #8aa798;
   --color-band-leaf: #7fa393;
   --color-band-leaf-light: #86a99a;
   --color-band-leaf-deep: #779c8b;
+  /* The three roles the summer scene has nothing to put in — berries, blossom
+     and snow. They are declared here because a token undeclared in `@theme`
+     generates no utility to override, and they carry summer's own leaf and sun
+     so a scene that reached them by mistake would be quiet rather than garish. */
+  --color-band-accent: #86a99a; /* winter's berry, autumn's fallen gold, spring's bud */
+  --color-band-accent-deep: #779c8b; /* the darker berry, the olive leaf, the blossom's eye */
+  --color-band-bloom: #fcebc8; /* winter's snow and spring's petal */
+  --color-band-trace: #86a99a; /* the small marks scattered clear of the branch: winter's flake, autumn's specks, spring's petals let go */
 
   /* Clay — the accent that says "this needs you" */
   --color-clay: #c9663c; /* the wordmark's square, and the alerts dot */
@@ -153,6 +168,60 @@
   --font-sans: var(--font-assistant), "Segoe UI", system-ui, sans-serif;
   /* The hand-written slogan in the calendar band, and nothing else */
   --font-hand: var(--font-gveret-levin), var(--font-assistant), sans-serif;
+}
+
+/* The band's other three scenes, set on the band itself by `CalendarBand` from
+   the season of the month the calendar is showing (`seasonOf`). Every
+   `*-band-*` utility inside the band reads these through inheritance, so a
+   scene is a list of colours here and never a second set of class names in the
+   markup — and a scene that gains a shape gains it in one drawing rather than
+   in a rule per element.
+
+   Only the drawing, the wave and the ink move. The ground, the stepper's
+   buttons and everything below the band are the same in all four. */
+[data-season="winter"] {
+  --color-band-wave: #e0e8ed;
+  --color-band-ink: #232f34;
+  --color-band-underline: #718a96;
+  --color-band-sun: #d8e1e6; /* the moon */
+  --color-band-stem: #2f3a3f; /* the bare branch, and the only near-black scene */
+  --color-band-leaf: #617b75;
+  --color-band-leaf-light: #6e857f;
+  --color-band-leaf-deep: #546e68;
+  --color-band-accent: #b2574b; /* the berries */
+  --color-band-accent-deep: #9e4d42;
+  --color-band-bloom: #ffffff; /* the snow */
+  --color-band-trace: #a3bac3; /* the flake and the dots falling past it */
+}
+
+[data-season="spring"] {
+  --color-band-wave: #e9ecdb;
+  --color-band-ink: #344b3a;
+  --color-band-underline: #8ca57e; /* one step deeper than the drawing's #98b08b, which at 2.4px read as a smudge */
+  --color-band-sun: #fbecc8;
+  --color-band-stem: #405842;
+  --color-band-leaf: #8ba67f;
+  --color-band-leaf-light: #a3bb93;
+  --color-band-leaf-deep: #728f69;
+  --color-band-accent: #f2b9ab; /* the buds */
+  --color-band-accent-deep: #f3c268; /* the blossom's eye */
+  --color-band-bloom: #fdfbf5; /* the petals */
+  --color-band-trace: #f2b9ab; /* the petals the branch has let go */
+}
+
+[data-season="autumn"] {
+  --color-band-wave: #f9e7d0;
+  --color-band-ink: #483326;
+  --color-band-underline: #c88834;
+  --color-band-sun: #fde3c4;
+  --color-band-stem: #5b4030;
+  --color-band-leaf: #c37535;
+  --color-band-leaf-light: #e0a44f;
+  --color-band-leaf-deep: #b45c34;
+  --color-band-accent: #f0c27c; /* the leaves already down */
+  --color-band-accent-deep: #bc9448; /* the one leaf still olive */
+  --color-band-bloom: #fde3c4; /* unused: autumn has no white */
+  --color-band-trace: #f0c27c; /* the specks between the fallen leaves */
 }
 
 @layer base {

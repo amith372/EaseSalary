@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  FIRST_WORKER_NAME,
+  TEST_WORKER_NAME,
   switchToFirstWorker,
   switchToTestWorker,
   useHousehold,
@@ -276,5 +278,257 @@ test.describe("a refused month says so", () => {
       path: "test-results/refusal-card-corrected.png",
       fullPage: true,
     });
+  });
+});
+
+/**
+ * The two screens that list the household rather than explain one month
+ * (`specs.md` item 25; `build_plan.md`'s last debt of stage 8).
+ *
+ * **What these catch.** Both addresses re-raised the refusal instead of drawing
+ * it, and there is no `error.tsx` anywhere under `src/app/` — so a refused month
+ * reached the user as the dev overlay's stack trace, or in production as a bare
+ * 500 with no Hebrew on it and no way back. They would catch the half-fix too:
+ * a card drawn beside the four figures it replaces, which is the bracketed
+ * placeholder the balances rail was corrected for.
+ *
+ * **The compact form is asserted by what it does *not* say.** The reason, its
+ * dates, the month and the rule stay; the body paragraph and the
+ * "every month after it is waiting" line go (the user, 2026-09-27). Asserting
+ * only the presence of the reason would pass on the full card, which is the
+ * change these two screens were supposed to make.
+ *
+ * **One edge case has no test here and cannot have one.** The share chip is
+ * drawn from `sharedWith`, which reads Postgres and returns nothing for a
+ * seeded household — no dev seed can produce it. It is drawn above the branch,
+ * from the terms rather than from the replay, so a refusal cannot reach it.
+ */
+test.describe("a refused month on the workers screens", () => {
+  /** Her card on the list, found by the worker it belongs to rather than by the
+   * Hebrew beside it. */
+  const cardOf = (page: Page, workerId: string) =>
+    page.locator(`#worker-${workerId}`);
+
+  test("states the refusal where her four figures were, and leaves the other card whole", async ({
+    page,
+  }) => {
+    await useHousehold(page, "refused", "workers-list");
+    await page.goto("/workers");
+
+    // The list rendered at all, which a throw would have prevented.
+    await expect(
+      page.getByRole("heading", { name: he.workers.title }),
+    ).toBeVisible();
+
+    const hers = cardOf(page, REFUSED_WORKER);
+    const card = hers.locator('[data-role="refusal"]');
+    await expect(card).toBeVisible();
+    await expect(card).toHaveAttribute("data-tone", "compact");
+    await expect(card.locator('[data-role="refusal-month"]')).toContainText(
+      REFUSED_MONTH,
+    );
+    await expect(card).toContainText(he.sheet.refusals.dayRecordedTwice);
+    await expect(card.locator('[data-role="refusal-date"]')).toHaveText(
+      fullDayLabel(REFUSED_DAY),
+    );
+    // The rule behind it — dropping it would have been a `specs.md` conflict
+    // and not a styling choice (items 25, 26).
+    await expect(
+      card.getByRole("link", { name: new RegExp(he.alerts.whatTheLawSays) }),
+    ).toBeVisible();
+    // Her name is the card's own heading and is not said a second time.
+    await expect(
+      hers.getByRole("heading", { name: TEST_WORKER_NAME }),
+    ).toBeVisible();
+
+    // **The compact form**: neither piece of prose the full card carries.
+    await expect(card).not.toContainText(he.month.refused.body);
+    await expect(card).not.toContainText(he.month.refused.stopsLater);
+
+    // None of the four replay-derived figures, and no placeholder in their
+    // place — an empty figure beside a real one is worse than no figure.
+    for (const label of [
+      he.workers.facts.vacation,
+      he.workers.facts.sick,
+      he.workers.facts.advance,
+      he.workers.facts.salary,
+    ]) {
+      await expect(hers.getByText(label)).toHaveCount(0);
+    }
+    // The chip draws `waitingMonth`, which she has none of: a card reporting
+    // calm beside a refusal would be the plainest kind of wrong answer.
+    await expect(hers.locator('[data-row="worker-status"]')).toHaveCount(0);
+    await expect(page.getByText(he.placeholder.count)).toHaveCount(0);
+
+    // **And no way home from the list** (the user, 2026-09-27). The opening
+    // screen shows one worker at a time and only an address naming a worker
+    // chooses her, so a link to `/` from a list of two would as often arrive on
+    // the other worker's calendar — with no refusal on it to correct. Her own
+    // page is a link below this card, and the way home is there.
+    await expect(
+      card.locator('[data-role="refusal-way-home"]'),
+    ).toHaveCount(0);
+
+    // **The control**: the first worker's card is untouched. A refusal belongs
+    // to the employment whose month it is, and the catch used to be around the
+    // whole household.
+    const first = cardOf(page, "worker-1");
+    await expect(first.locator('[data-role="refusal"]')).toHaveCount(0);
+    await expect(first.getByText(he.workers.facts.vacation)).toBeVisible();
+    await expect(first.getByText(he.workers.facts.advance)).toBeVisible();
+    await expect(first.locator('[data-row="worker-status"]')).toBeVisible();
+    await expect(
+      first.getByRole("heading", { name: FIRST_WORKER_NAME }),
+    ).toBeVisible();
+
+    await page.screenshot({
+      path: "test-results/refusal-workers-list.png",
+      fullPage: true,
+    });
+  });
+
+  test("both workers refused: two cards, and the list still renders", async ({
+    page,
+  }) => {
+    await useHousehold(page, "refusedboth", "workers-list-both");
+    await page.goto("/workers");
+
+    await expect(
+      page.getByRole("heading", { name: he.workers.title }),
+    ).toBeVisible();
+    // Two refusals, one per worker — and not one card for the household, which
+    // is what a catch around the whole replay would have produced.
+    await expect(page.locator('[data-role="refusal"]')).toHaveCount(2);
+    for (const workerId of ["worker-1", REFUSED_WORKER]) {
+      await expect(
+        cardOf(page, workerId).locator('[data-role="refusal"]'),
+      ).toBeVisible();
+    }
+    await expect(page.getByText(he.placeholder.count)).toHaveCount(0);
+    // The household is full at two, so the add-worker card is not offered —
+    // the same answer it gives when nothing is refused (item 11).
+    await expect(page.locator('[data-role="add-worker-link"]')).toHaveCount(0);
+    // The sentence that closes the screen is still there: the list is a whole
+    // page and not a card on its own.
+    await expect(page.getByText(he.workers.limit)).toBeVisible();
+
+    await page.screenshot({
+      path: "test-results/refusal-workers-both.png",
+      fullPage: true,
+    });
+  });
+
+  test("a refused worker alone in a household that still has room", async ({
+    page,
+  }) => {
+    await useHousehold(page, "refusedalone", "workers-list-alone");
+    await page.goto("/workers");
+
+    await expect(
+      cardOf(page, REFUSED_WORKER).locator('[data-role="refusal"]'),
+    ).toBeVisible();
+    // The layout nothing else reaches: the dashed card offering a second worker
+    // drawn beside a refusal. It behaves exactly as it does on a whole
+    // household — a refusal in one employment says nothing about adding
+    // another.
+    await expect(page.locator('[data-role="add-worker-link"]')).toBeVisible();
+
+    await page.screenshot({
+      path: "test-results/refusal-workers-alone.png",
+      fullPage: true,
+    });
+  });
+
+  test("a refusal with no date at all locates itself by its month", async ({
+    page,
+  }) => {
+    await useHousehold(page, "refusednodate", "workers-list-nodate");
+    await page.goto("/workers");
+
+    const card = cardOf(page, REFUSED_WORKER).locator('[data-role="refusal"]');
+    await expect(card).toBeVisible();
+    // Two medical-insurance payments in one month: a payment concerns a kind
+    // and not a day, so the refusal carries `dates: []` and the month's own
+    // name is the whole locator. A card that had quietly depended on a date
+    // would read as a sentence about nowhere.
+    await expect(card.locator('[data-role="refusal-month"]')).toContainText(
+      REFUSED_MONTH,
+    );
+    await expect(card.locator('[data-role="refusal-date"]')).toHaveCount(0);
+    await expect(card).not.toContainText(he.month.refused.dates);
+    await expect(card).toContainText(
+      he.sheet.refusals.thirdPartyPaidTwice(
+        he.sheet.thirdParty.medicalInsurance,
+      ),
+    );
+
+    await page.screenshot({
+      path: "test-results/refusal-workers-nodate.png",
+      fullPage: true,
+    });
+  });
+
+  test("her own page is the card, and names her; the other worker's page is whole", async ({
+    page,
+  }) => {
+    await useHousehold(page, "refused", "worker-page");
+
+    await page.goto(`/workers/${REFUSED_WORKER}`);
+    const card = page.locator('[data-role="refusal"]');
+    await expect(card).toBeVisible();
+    await expect(card).toHaveAttribute("data-tone", "compact");
+    // The card leads the screen, so it carries the `h1` — as it does on the
+    // payslip. Nothing else on the page is a heading above it.
+    await expect(card.locator("h1")).toContainText(REFUSED_MONTH);
+    // And it says whose month it is: on the list her card's heading does that
+    // and here nothing else would, so an address reached from a bookmark still
+    // names the employment it concerns.
+    await expect(page.getByText(TEST_WORKER_NAME).first()).toBeVisible();
+    await expect(card).toContainText(he.sheet.refusals.dayRecordedTwice);
+    await expect(card).not.toContainText(he.month.refused.body);
+    await expect(
+      card.locator('[data-role="refusal-way-home"]'),
+    ).toHaveAttribute("href", "/");
+    await expect(page.getByText(he.placeholder.count)).toHaveCount(0);
+
+    // The other worker's page, while the first is still refused: whole.
+    await page.goto("/workers/worker-1");
+    await expect(page.locator('[data-role="refusal"]')).toHaveCount(0);
+    await expect(page.getByText(FIRST_WORKER_NAME).first()).toBeVisible();
+    await expect(
+      page.getByText(he.home.balances.vacation).first(),
+    ).toBeVisible();
+
+    await page.screenshot({
+      path: "test-results/refusal-worker-page.png",
+      fullPage: true,
+    });
+  });
+
+  test("an unknown id is still a 404 and not a refusal", async ({ page }) => {
+    await useHousehold(page, "refused", "worker-page-404");
+    // The two failures stay distinct. A mistyped id in the address bar is an
+    // ordinary thing and a refusal is a state with a sentence of its own, so a
+    // screen that answered both with the card would be telling the user to
+    // correct a month that does not exist.
+    const response = await page.goto("/workers/worker-nobody");
+    expect(response?.status()).toBe(404);
+    await expect(page.locator('[data-role="refusal"]')).toHaveCount(0);
+  });
+
+  test("the way home lands on her own calendar, the one the mark is corrected on", async ({
+    page,
+  }) => {
+    await useHousehold(page, "refused", "way-home");
+    // **From her own page**, which is where the link matters most: the address
+    // names her, so the scope makes her the chosen worker and the opening
+    // screen arrives showing *her* month rather than the other worker's. A
+    // link that landed on a calendar with no refusal on it would be worth
+    // nothing.
+    await page.goto(`/workers/${REFUSED_WORKER}`);
+    await page.locator('[data-role="refusal-way-home"]').click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator('[data-role="refusal"]')).toBeVisible();
+    await expect(page.locator(`[data-date="${REFUSED_DAY}"]`)).toBeVisible();
   });
 });

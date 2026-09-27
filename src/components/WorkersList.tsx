@@ -5,11 +5,13 @@ import { ADD_WORKER } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { RailIcon, TwoToneIcon } from "@/components/icons";
 import { MoneyValue } from "@/components/MoneyValue";
+import { RefusalCard } from "@/components/RefusalCard";
 import { WorkerAvatar } from "@/components/WorkerAvatar";
 import { WorkerSettingsLink } from "@/components/WorkerSettingsLink";
 import { fullDayLabel } from "@/lib/dateLabels";
 import { he } from "@/lib/i18n/he";
 import { formatDays } from "@/lib/money";
+import type { RefusedMonth } from "@/lib/refusalView";
 import type { IsoDate, Worker } from "@/lib/types";
 
 /**
@@ -26,7 +28,9 @@ import type { IsoDate, Worker } from "@/lib/types";
  * It holds no state and no arithmetic: the four facts under each worker are
  * read from the same replay the home screen reads (item 13), on the server.
  */
-export interface WorkerSummary {
+/** What is true of an employment whatever the replay came to: its terms, which
+ * are stored and not calculated. */
+interface WorkerTerms {
   worker: Worker;
   employedSince: IsoDate;
   /** Her country of origin in Hebrew, resolved on the server by
@@ -34,6 +38,20 @@ export interface WorkerSummary {
    * for falls back to its two-letter code. */
   country: string;
   baseMonthlySalaryAgorot: number;
+  /**
+   * The addresses this worker is shared with, the viewer's own excluded
+   * (`shares.ts`) — empty where she is shared with nobody, and the chip is then
+   * not drawn at all rather than drawn saying so.
+   */
+  sharedWith: string[];
+}
+
+/**
+ * A worker whose months the engine valued: her terms and the four figures the
+ * replay came to.
+ */
+interface WorkerReplayed extends WorkerTerms {
+  refused: null;
   /** Her last month's closing balances, or the opening position for a worker
    * who has no months yet (items 6, 7). */
   vacationDays: number;
@@ -48,13 +66,26 @@ export interface WorkerSummary {
    * built its own sentence would be a second place the wording lives.
    */
   waitingMonth: string | null;
-  /**
-   * The addresses this worker is shared with, the viewer's own excluded
-   * (`shares.ts`) — empty where she is shared with nobody, and the chip is then
-   * not drawn at all rather than drawn saying so.
-   */
-  sharedWith: string[];
 }
+
+/**
+ * A worker the engine refused a month of (`specs.md` item 25).
+ *
+ * **The four figures are absent from this arm rather than nulled in it.** A
+ * refused replay has no balance, no outstanding advance and no month waiting to
+ * be confirmed — so the card cannot draw a blank or a placeholder where one
+ * belongs, because there is no field to read. Her terms stay: they are stored,
+ * not calculated, and a refusal says nothing about them.
+ */
+interface WorkerRefused extends WorkerTerms {
+  refused: RefusedMonth;
+}
+
+/**
+ * One worker as her card draws her — either replayed or refused, never both and
+ * never neither.
+ */
+export type WorkerSummary = WorkerReplayed | WorkerRefused;
 
 export function WorkersList({
   household,
@@ -94,18 +125,15 @@ export function WorkersList({
       </div>
 
       <div className="flex min-w-0 flex-col gap-5">
-        {household.map(
-          ({
+        {household.map((summary) => {
+          const {
             worker,
             employedSince,
             country,
             baseMonthlySalaryAgorot,
-            vacationDays,
-            sickDays,
-            outstandingAgorot,
-            waitingMonth,
             sharedWith,
-          }) => (
+          } = summary;
+          return (
             <Card
               key={worker.id}
               id={`worker-${worker.id}`}
@@ -146,47 +174,74 @@ export function WorkersList({
                 </div>
                 {/* The attention colour only while something is waiting: a chip
                     that reports calm in the same colour as one asking for work
-                    teaches the eye to read neither. */}
-                <span
-                  data-row="worker-status"
-                  data-waiting={waitingMonth === null ? "no" : "yes"}
-                  className={[
-                    "ms-auto flex-none rounded-full px-3.5 py-2 text-[14px] font-semibold whitespace-nowrap sm:text-[15px]",
-                    waitingMonth === null
-                      ? "bg-chip text-ink-warm"
-                      : "bg-band-sun text-clay-ink",
-                  ].join(" ")}
-                >
-                  <Bidi>
-                    {waitingMonth === null
-                      ? words.status.upToDate
-                      : words.status.waiting(waitingMonth)}
-                  </Bidi>
-                </span>
+                    teaches the eye to read neither.
+
+                    **A refused worker has no chip at all.** The chip draws
+                    `waitingMonth`, which is one of the four facts a refused
+                    replay does not have — and "הכל מעודכן" beside a card
+                    saying the month could not be valued would be the plainest
+                    kind of wrong answer. */}
+                {summary.refused === null ? (
+                  <span
+                    data-row="worker-status"
+                    data-waiting={summary.waitingMonth === null ? "no" : "yes"}
+                    className={[
+                      "ms-auto flex-none rounded-full px-3.5 py-2 text-[14px] font-semibold whitespace-nowrap sm:text-[15px]",
+                      summary.waitingMonth === null
+                        ? "bg-chip text-ink-warm"
+                        : "bg-band-sun text-clay-ink",
+                    ].join(" ")}
+                  >
+                    <Bidi>
+                      {summary.waitingMonth === null
+                        ? words.status.upToDate
+                        : words.status.waiting(summary.waitingMonth)}
+                    </Bidi>
+                  </span>
+                ) : null}
               </div>
 
-              {/* A ruled grid: each cell draws its own top and start rules and
-                  is pulled back over the frame by a pixel, so the frame and the
-                  rules between cells are one hairline. Two columns even on a phone:
-                  the longest figure fits in half of 390px. */}
-              <Card
-                tone="inset"
-                radius="sm"
-                className="grid grid-cols-2 overflow-hidden"
-              >
-                <Fact label={words.facts.salary}>
-                  <MoneyValue agorot={baseMonthlySalaryAgorot} size="fact" />
-                </Fact>
-                <Fact label={words.facts.vacation}>
-                  <Days value={vacationDays} />
-                </Fact>
-                <Fact label={words.facts.sick}>
-                  <Days value={sickDays} />
-                </Fact>
-                <Fact label={words.facts.advance}>
-                  <MoneyValue agorot={outstandingAgorot} size="fact" />
-                </Fact>
-              </Card>
+              {/* **Her refusal stands where her four figures were**, and the
+                  grid is not drawn at all — an empty figure beside a real one is
+                  worse than no figure (`DESIGN.md`). Her salary is a term of the
+                  employment and not a replayed figure, so it would still be
+                  true; it goes with the grid because a grid of one cell is not
+                  the grid, and the card says what this worker's row is about.
+                  An `h2`: the list's own `h1` stands above it. */}
+              {summary.refused === null ? (
+                /* A ruled grid: each cell draws its own top and start rules and
+                   is pulled back over the frame by a pixel, so the frame and the
+                   rules between cells are one hairline. Two columns even on a phone:
+                   the longest figure fits in half of 390px. */
+                <Card
+                  tone="inset"
+                  radius="sm"
+                  className="grid grid-cols-2 overflow-hidden"
+                >
+                  <Fact label={words.facts.salary}>
+                    <MoneyValue agorot={baseMonthlySalaryAgorot} size="fact" />
+                  </Fact>
+                  <Fact label={words.facts.vacation}>
+                    <Days value={summary.vacationDays} />
+                  </Fact>
+                  <Fact label={words.facts.sick}>
+                    <Days value={summary.sickDays} />
+                  </Fact>
+                  <Fact label={words.facts.advance}>
+                    <MoneyValue agorot={summary.outstandingAgorot} size="fact" />
+                  </Fact>
+                </Card>
+              ) : (
+                /* **No way-home link here, unlike her own page** (the user,
+                   2026-09-27). The opening screen shows one worker at a time
+                   and a plain link to it would arrive on whichever worker the
+                   switcher's cookie last named — which on a list of two is as
+                   often the wrong one, landing her on a calendar with no
+                   refusal on it. Her own page is one link below this card and
+                   the way home works correctly from there, because that address
+                   makes her the chosen worker (`WorkerScope`). */
+                <RefusalCard refused={summary.refused} tone="compact" />
+              )}
 
               <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 border-t border-line pt-4.5 sm:pt-5">
                 <Link
@@ -203,8 +258,8 @@ export function WorkersList({
                 </WorkerSettingsLink>
               </div>
             </Card>
-          ),
-        )}
+          );
+        })}
 
         {hasRoom ? (
           <Link

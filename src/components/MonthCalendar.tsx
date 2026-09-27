@@ -19,6 +19,7 @@ import { dayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
 import { clipEndOf } from "@/lib/engine/types";
 import { CalendarBand } from "@/components/CalendarBand";
 import { MonthStepper } from "@/components/MonthStepper";
+import { seasonOf } from "@/lib/season";
 import { TwoToneIcon, type TwoToneName } from "@/components/icons";
 import { he } from "@/lib/i18n/he";
 import {
@@ -510,7 +511,7 @@ export function MonthCalendar({
       {/* v4 puts the controls first and the month beside them, so the drawing
           can take the far end of the band. The header is bled to the edges of a
           card padded `px-4.5 pt-3.5`. */}
-      <CalendarBand className="-mx-4.5 -mt-3.5 mb-1">
+      <CalendarBand season={seasonOf(month)} className="-mx-4.5 -mt-3.5 mb-1">
         <MonthStepper
           month={month}
           today={today}
@@ -522,7 +523,10 @@ export function MonthCalendar({
           // blocker strip, or a refused month's card — because a heading a
           // reader meets first is that screen's `h1` whatever it says.
           label={
-            <Heading className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap">
+            // The month's name is inside the band, so it takes the band's ink
+            // rather than the page's: in a seasonal scene the page ink is the
+            // one warm-brown thing in a winter band.
+            <Heading className="text-[24px] font-bold tracking-[-0.02em] whitespace-nowrap text-band-ink">
               <Bidi>{monthLabel(month)}</Bidi>
             </Heading>
           }

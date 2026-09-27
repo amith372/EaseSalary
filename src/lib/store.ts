@@ -5,10 +5,13 @@ import {
 } from "@/lib/engine/repository";
 import type { SalaryRepository } from "@/lib/engine/repository";
 import {
+  bothRefusedSeed,
   confirmedSeed,
   devSeed,
   filedSeed,
+  refusedAloneSeed,
   openSpellSeed,
+  refusedNoDateSeed,
   refusedSeed,
 } from "@/lib/dev/seed";
 import { knownCaseSeed } from "@/lib/dev/known";
@@ -65,6 +68,16 @@ const seeds = {
   /** The demo with one day of August 2026 marked twice, which the engine
    * refuses — the state the refusal card is drawn in (`seed.ts`). */
   refused: refusedSeed,
+  /* One word each and no hyphen: `seedOf` reads the name up to the first
+     hyphen, so `refused-both` would be the `refused` household. */
+  /** The same with the first worker refused too — the household with nothing
+   * left to state, which the list still has to render (`seed.ts`). */
+  refusedboth: bothRefusedSeed,
+  /** One worker, refused, in a household that still has room: the refusal and
+   * the add-worker card side by side. */
+  refusedalone: refusedAloneSeed,
+  /** A refusal carrying no date, where the month is the whole locator. */
+  refusednodate: refusedNoDateSeed,
   /** The demo with an open spell of sickness, which blocks the export until it
    * is closed — the one state the close-spell panel exists for (`seed.ts`). */
   openspell: openSpellSeed,

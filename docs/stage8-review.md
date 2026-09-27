@@ -73,46 +73,27 @@ denials show the heredoc form `python - <<'PY'` never matched that pattern.
 - **The migrations are live.** `npx supabase db push` was run twice on 2026-09-24, the second
   time for F42's `cached_pages`, and `migration list` shows every local migration remote.
 
-### What the user still owes — four `CLAUDE.md` rule 8 checks and one setting
+### The rule-8 checks — all run and passed
 
-A session may answer none of it for her.
+**Every check stage 8 owed has been run by the user and passed.** Nothing here is re-run and
+nothing is re-asked; a check is recorded the day it passes, or it is silently re-owed for ever.
 
-**Four things, and every one is a rule-8 check.** They were written inside step narratives,
-where a session reading for "what is left" would never find them; they are listed here because
-the narratives are gone and this is now the only record. **None blocks anything** — the Fix list
-is complete, so these are the last of stage 8.
+| Check | Owed by | Passed |
+|---|---|---|
+| A refused month: the card names the month and the doubled day, the calendar keeps its marks without figures, `/דוחות` offers no file — and clearing the sweep brings August and September back | step 7, `9c52ca4` | 2026-09-27 |
+| `cached_pages` holds the wage row with a title and non-empty `sections`, and reopening the screen does not grow the row count | F42, `b0f3514` | 2026-09-27 |
+| F46's draft-month export gate and its income-tax card; F44's advance correction and the refusal below what is repaid; and the five before them — a pre-April-2025 salary change, the gendered wording in `B10`, `F29`, `G1`, `B9` and `I1`, and both notes in column I | F38–F46 | 2026-09-27 |
+| A holiday marked signed in stores | `43e0d5a` | 2026-09-27 |
+| Step 1's check | step 1 | 2026-09-26 |
+| The ₪300 recurring deduction over three months | step 8, `f56f602` | 2026-09-26 |
 
-1. **Step 7's check — a refused month.** Open `/` on a household whose August is refused: the
-   card names the month and the doubled day, links the rule, and the calendar below still draws
-   August's marks with no figures beside them; the payslip, `/payments` and `/דוחות` say the
-   same and `/דוחות` offers no file. Then clear the doubled sweep and the card goes and the
-   figures come back for September as well as August.
-2. **F42's check — `cached_pages`.** Open the home screen so the daily refresh runs; confirm the
-   table holds a row for the wage page with a title and a non-empty `sections`; reopen the
-   screen and confirm the row count has **not** grown. A failure looks like an empty table after
-   a refresh, a growing row count, or a home screen that errors.
-3. **The eight items F38–F46 owe one check, and it has never been run.** Three parts.
-   *F46:* open `/דוחות` on a household whose months are drafts — each ended month offers
-   `לאשר ולייצא` and no Excel link, and pressing it opens the confirmation on that month; take a
-   month through and the row offers its file. On the confirmation screen the income-tax card
-   says what will be filed, and for a month carrying a manual correction it says her figure,
-   calls it hers, and the exported sheet prints that same figure.
-   *F44:* open `/payments` on a month recording an advance movement, press `לתקן`, change the
-   amount and the reason — the row says the new figure, the advance keeps its number, and what
-   is still owed moves in that month and every later one; then type an amount smaller than what
-   is already repaid and it is refused on screen, leaving the figure as it was.
-   *The five before them:* record a salary change dated before April 2025 on `/settings` — it is
-   accepted; and export a month and open the sheet — `B10`, `F29`, `G1`, `B9` and `I1` read for
-   a woman as they did before, a male profile gets masculine wording throughout, and a month
-   carrying an override and a hospital-overtime entry shows both notes in column I.
-4. **`43e0d5a`'s check** — mark a holiday signed in and confirm it stores.
-
-**None of the four is a defect and none blocks a commit.** They are checks only she can run; a
-session offers them and never runs them or answers them. **A check is recorded here the day it
-passes** — otherwise it is silently re-owed for ever.
-
-**Passed already, so neither is re-run nor re-asked:** step 1's check, run and passed
-2026-09-26; and step 8's check, the ₪300 recurring deduction over three months, the same day.
+**Stage 8 owes no further proof.** What survives it is not stage-8 work: the `/workers` refusal
+decision below, which is `build_plan.md`'s and is the user's to take, and one user-scope setting
+that is not a repository change at all — `Bash(python -c ' *)`, still allowed at user scope.
+**The duplicate project registration is fixed**: `~/.claude.json` keeps
+`D:/school/LLM vibe coding/EaseSalary` and the lower-case twin was removed on 2026-09-27 at the
+user's instruction. Sessions open the project with that spelling, since the key is the exact
+string and a differently-cased path makes a second entry.
 
 ### Settled — do not reopen, do not ask again
 

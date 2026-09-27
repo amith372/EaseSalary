@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { Bidi } from "@/components/Bidi";
+import { RefusalCard } from "@/components/RefusalCard";
 import { WorkerProfileScreen } from "@/components/WorkerProfileScreen";
 import type { ProfileMonth } from "@/components/WorkerProfileScreen";
 import type { ProfileBalance } from "@/components/WorkerBalances";
@@ -10,7 +12,7 @@ import { seniorityYearOfCalendarYear } from "@/lib/engine/balances";
 import { advanceLedger } from "@/lib/engine/advances";
 import { exportQuestions } from "@/lib/engine/beforeExport";
 import { monthState } from "@/lib/engine/monthState";
-import { workerInSeries } from "@/lib/householdSeries";
+import { refusalShown, workerInSeries } from "@/lib/householdSeries";
 import { he } from "@/lib/i18n/he";
 import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
 import { formatAgorot, formatDays } from "@/lib/money";
@@ -36,6 +38,9 @@ import { readToday } from "@/lib/requestToday";
  * A worker the store does not have is a 404 and not an error page: the id is in
  * the address bar and a mistyped one is an ordinary thing, not a bug in the
  * caller (`repository.ts` draws that line for ids that come from the store).
+ * **A refused month is neither of those** — it is a state with a sentence of
+ * its own, so the two stay apart: an unknown id is still a 404 and a refusal is
+ * still a card.
  */
 export default async function WorkerPage({
   params,
@@ -45,13 +50,25 @@ export default async function WorkerPage({
   const { id } = await params;
   const replayed = await workerInSeries(id);
   if (replayed === null) notFound();
-  // Her months and her closing balances are the whole of this screen, and both
-  // come off the replay (item 13), so a refusal leaves it nothing true to say.
-  // It is raised again rather than drawn, for the reason `/workers` gives: the
-  // screen has no place for the card yet, and that is a debt in
-  // `build_plan.md`.
-  if (replayed.refusal !== null) throw replayed.refusal;
   const { profile, months: series } = replayed;
+
+  // Her months and her closing balances are the whole of this screen, and both
+  // come off the replay (item 13), so a refusal leaves it nothing true to say
+  // and the card is the screen (`specs.md` item 25). **It names her**, which on
+  // the list her card's own heading does and here nothing would: an address
+  // opened from a link or a bookmark has to say whose month it is talking
+  // about. The card carries the `h1`, as it does on the payslip.
+  const refused = refusalShown(replayed);
+  if (refused !== null) {
+    return (
+      <div className="mx-auto flex w-full max-w-[860px] min-w-0 flex-col gap-3">
+        <p className="text-[22px] leading-[1.2] font-bold tracking-[-0.02em] break-words">
+          <Bidi>{profile.name}</Bidi>
+        </p>
+        <RefusalCard refused={refused} heading="h1" tone="compact" wayHome />
+      </div>
+    );
+  }
 
   const repository = await getRepository();
   const today = await readToday();

@@ -80,12 +80,7 @@ not re-opened without her asking.** New debts are paid in the stage that finds t
 
 ### Still to pay
 
-- **`/workers` and `/workers/[id]` still fail whole on a refused month.** Every card on the
-  list states a balance and a balance is derived from the replay, so neither screen may draw
-  a refused worker — and neither has a place for one worker's refusal card the way the four
-  screens now do. Both raise the refusal again on purpose, in sight, rather than drawing her
-  opening position as though it were a balance. What they owe is where the card goes on a
-  screen that is a list of both workers, which is the user's decision.
+Nothing.
 
 ### Settled open, by the user's own choice
 
