@@ -242,6 +242,66 @@ test("adds the household's first worker, and every screen then has somebody to b
 });
 
 /**
+ * **An account that already holds two workers is told so, and is not bounced to
+ * a step** (specs.md item 11: an account holds up to two).
+ *
+ * Scenario: the demo household, which the seed leaves with two workers, is sent
+ * to `/workers/new` by address — the wizard has no guard of its own, and the
+ * link that reaches it is drawn only while there is room, so this is the state
+ * a stale tab or a typed address lands in. The three steps are filled and the
+ * save is pressed.
+ *
+ * Expected: the fourth step is never drawn, and the refusal names the limit.
+ *
+ * **Why this refusal and not another.** Every other refusal in the wizard sends
+ * the user back to the step that can fix it — `STEP_OF` maps each reason to its
+ * own step — and this one is excluded from that map by hand, because no step
+ * can fix it: the account is full however the form is filled. So it is the one
+ * refusal whose *screen* behaviour nothing else in the file exercises.
+ *
+ * **What it would catch**: the exclusion dropped, which sends the family back
+ * to a step to correct a field that was never wrong, in a loop with no exit;
+ * the limit enforced only by hiding the link, which leaves a typed address able
+ * to save a third worker; and the message not drawn at all, which is a save
+ * that silently does nothing.
+ */
+test("an account already holding two workers is refused a third, and is told why", async ({
+  page,
+}) => {
+  // Overrides the empty household this file's `beforeEach` set: the limit can
+  // only be met where there is something to be at the limit of.
+  await useHousehold(page, "demo", `full${households}`);
+  await page.goto("/workers/new");
+
+  await fillWho(page);
+  await fillWhen(page);
+  await fillPay(page);
+
+  // The refusal, in the words the family reads, and no fourth step behind it.
+  await expect(page.locator('[data-role="add-worker-error"]')).toContainText(
+    he.addWorker.errors.householdFull,
+  );
+  await expect(page.locator('[data-role="add-worker-done"]')).toHaveCount(0);
+  await page.screenshot({
+    path: "test-results/add-worker-household-full.png",
+    fullPage: true,
+  });
+
+  // **And it stayed on the step it was pressed from.** The third step is where
+  // the save happens; being sent back to the first would be the `STEP_OF`
+  // lookup finding this reason, which is the bug the exclusion prevents.
+  await expect(
+    page.getByRole("heading", { name: he.addWorker.pay.title }),
+  ).toBeVisible();
+
+  // The household still holds two, so nothing was half-saved behind the
+  // refusal.
+  await page.goto("/workers");
+  await expect(page.getByRole("heading", { name: NAME })).toHaveCount(0);
+  await expect(page.locator('[data-role="add-worker-link"]')).toHaveCount(0);
+});
+
+/**
  * **The passport number goes in and comes back, and the profile never carries
  * it** (specs.md items 22 and 28).
  *

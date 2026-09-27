@@ -439,3 +439,78 @@ describe("a kind no day of the selection can take (items 5, 8)", () => {
     ).toBe("notRestDay");
   });
 });
+
+/**
+ * **No gesture in the application can leave a spell open**, and this is the
+ * test that keeps it that way.
+ *
+ * The stored shape allows it: `DaySpan.to` is `IsoDate | null`, the Postgres
+ * column is nullable, and the engine clips an open spell at the month's own
+ * last day (`openSickSpellOf`, `clipEndOf`). `specs.md` item 8 settles why the
+ * shape exists and no screen produces it — "There is no gesture for opening
+ * one, and there is deliberately none": continuity is inferred from the days
+ * marked, and a second gesture meaning "she is still ill" would be a second way
+ * to say what marking the days already says.
+ *
+ * `applyMark` is the only path from a user's sweep to a stored span, so the
+ * guarantee is a property of this one function and is asserted here rather than
+ * argued in a comment. **What it would catch**: a change that starts writing
+ * `to: null` from the calendar — which is a trap rather than a bug, because the
+ * spell would go on drawing sick days from the balance for as long as nobody
+ * closed it, and the only screen that closes one is reached from an export the
+ * open spell itself blocks.
+ *
+ * Note that `src/lib/types.ts` still describes the open shape as "how one is
+ * normally recorded", which is what item 8 says it is *not*. The comment is
+ * wrong and the spec governs; this test pins the behaviour either way.
+ */
+describe("a sweep never leaves a spell open (specs.md item 8)", () => {
+  const sweeps: { what: string; intent: Parameters<typeof applyMark>[0] }[] = [
+    { what: "one sick day", intent: { kind: "sick", from: "2026-08-10", to: "2026-08-10" } },
+    { what: "a sick range", intent: { kind: "sick", from: "2026-08-10", to: "2026-08-14" } },
+    {
+      what: "a sick range across a month boundary",
+      intent: { kind: "sick", from: "2026-08-28", to: "2026-09-03" },
+    },
+    {
+      what: "a sick range broken by a day that refuses the mark",
+      intent: { kind: "sick", from: "2026-08-10", to: "2026-08-20" },
+    },
+    { what: "a vacation range", intent: { kind: "vacation", from: "2026-08-10", to: "2026-08-14" } },
+    // The 22nd and not the 15th: the 15th carries the holiday below, so a
+    // free rest day there is refused and the sweep writes nothing at all.
+    { what: "a free rest day", intent: { kind: "freeRestDay", from: "2026-08-22", to: "2026-08-22" } },
+  ];
+
+  // A day already marked, so one sweep above is broken around it and yields two
+  // spans: the run that is *split* is where an end could most plausibly go
+  // missing.
+  const existing: DaySpan[] = [
+    { id: "holiday", kind: "holiday", from: "2026-08-15", to: "2026-08-15" },
+  ];
+
+  for (const { what, intent } of sweeps) {
+    it(`closes every span it writes for ${what}`, () => {
+      const { spans } = applyMark(intent, SATURDAY, existing);
+      expect(spans.length).toBeGreaterThan(0);
+      for (const span of spans) {
+        // Not `toBeTruthy`: an empty string is falsy and would pass that while
+        // being just as wrong as a null.
+        expect(span.to).not.toBeNull();
+        expect(span.to).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      }
+    });
+  }
+
+  it("closes both spans when a sweep is broken in two", () => {
+    const { spans } = applyMark(
+      { kind: "sick", from: "2026-08-13", to: "2026-08-17" },
+      SATURDAY,
+      existing,
+    );
+    // 13–14 and 16–17: the 15th is the holiday above and the Saturday is kept
+    // by sickness, so the break is the holiday's alone.
+    expect(spans.length).toBeGreaterThan(1);
+    expect(spans.every((span) => span.to !== null)).toBe(true);
+  });
+});

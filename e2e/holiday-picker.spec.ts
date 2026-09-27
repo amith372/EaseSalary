@@ -475,6 +475,85 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     });
   });
 
+  /**
+   * The gesture that undoes a choice — the other half of the tick, and the only
+   * way a day taken by mistake is given back.
+   *
+   * Scenario: the demo worker holds the seed's three chosen days of her nine. A
+   * fourth is chosen, taking her to four, and then unchosen again.
+   *
+   * Expected: the quota reads four while it is chosen and three again after,
+   * the row goes back to `data-chosen="false"`, and June's calendar — which
+   * drew the holiday the moment it was chosen — stops drawing it. Three and
+   * four are the seed's own count against item 10's nine and are not read off
+   * the screen.
+   *
+   * **What it would catch**: an unchoose that clears the row but leaves the
+   * span, so the day is still drawn on the month and still spends one of the
+   * nine while the picker shows it free — the quota and the calendar would then
+   * disagree, and the family would lose a holiday they can no longer see; and
+   * an unchoose that takes a different span than the one unticked, which the
+   * calendar assertion catches because only this date was ever chosen here.
+   */
+  test("gives a chosen day back, in the quota and on the calendar (item 10)", async ({
+    page,
+  }) => {
+    await useHousehold(page, "unchoose");
+    await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
+
+    // Three of nine, as the seed leaves her.
+    await expect(page.locator("[data-quota]")).toContainText(
+      formatDays(SEEDED_CHOSEN),
+    );
+
+    await tick(page, CANDIDATE_IN_JUNE);
+    await expect(holidayRow(page, CANDIDATE_IN_JUNE)).toHaveAttribute(
+      "data-chosen",
+      "true",
+    );
+    await expect(page.locator("[data-quota]")).toContainText(
+      formatDays(SEEDED_CHOSEN + 1),
+    );
+
+    // Drawn on June's calendar, which is what being chosen means (item 9).
+    await page.goto("/");
+    await switchToTestWorker(page);
+    await backTo(page, 3);
+    await expect(
+      page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`),
+    ).toContainText(he.calendar.marks(SATURDAY).holiday);
+
+    // And given back.
+    await page.goto("/settings/holidays");
+    await switchToTestWorker(page);
+    await tick(page, CANDIDATE_IN_JUNE);
+
+    await expect(holidayRow(page, CANDIDATE_IN_JUNE)).toHaveAttribute(
+      "data-chosen",
+      "false",
+    );
+    await expect(page.locator("[data-quota]")).toContainText(
+      formatDays(SEEDED_CHOSEN),
+    );
+    await expect(
+      page.locator('[data-quota-state="incomplete"]'),
+    ).toContainText(he.holidays.quota.incomplete);
+
+    // **The calendar is the half that matters**: a day left drawn there is a
+    // day the month still pays for, whatever the picker says.
+    await page.goto("/");
+    await switchToTestWorker(page);
+    await backTo(page, 3);
+    await expect(
+      page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`),
+    ).not.toContainText(he.calendar.marks(SATURDAY).holiday);
+    await page.screenshot({
+      path: "test-results/holidays-unchosen.png",
+      fullPage: true,
+    });
+  });
+
   test("takes a date typed by hand, which is what a failed fetch leaves (item 12)", async ({
     page,
   }) => {
@@ -614,6 +693,113 @@ test.describe("a move once the year's list is in force (specs.md item 10)", () =
     await expect(listed).toContainText(NOTE);
     await listed.scrollIntoViewIfNeeded();
     await listed.screenshot({ path: "test-results/worker-holiday-amendment.png" });
+  });
+});
+
+/**
+ * **A picker opened before the year's list was in force, used after it was.**
+ *
+ * The test above drives the amendment through a household where a month is
+ * already confirmed, so the panel draws its two fields and the family fills
+ * them. This is the other case, and it is not a crafted request: whether a move
+ * is an amendment is decided on the *server*, when the page is rendered
+ * (`amending`), and a picker rendered before any month of the year was
+ * confirmed draws no agreement fields at all. Confirm a month after that, and
+ * the panel still on screen sends a move with no amendment on it.
+ *
+ * Scenario, in one session and two tabs, which is how a family meets it — the
+ * picker is a screen you leave open while you work through the month:
+ *
+ *  1. Tab A opens the picker on a household where nothing is confirmed. The
+ *     move panel has no `agreed on` field, because no month is filed yet.
+ *  2. Tab B walks the ordinary export flow and confirms July, which puts 2026's
+ *     list in force.
+ *  3. Tab A, untouched and unreloaded, moves a holiday.
+ *
+ * Expected: the move is refused, in words, and the holiday has not moved.
+ *
+ * **What it would catch**: the server-side check dropped in favour of the
+ * disabled button, which is a client guard on a page that can go stale — the
+ * move would then be written with no agreement behind it, which is exactly what
+ * item 10 requires one for; and the refusal raised but not drawn, which leaves
+ * the family pressing a button that silently does nothing.
+ *
+ * **Two tabs and not two accounts.** Nothing here races: tab B finishes before
+ * tab A is touched. The staleness is the whole subject, and it is the ordinary
+ * kind — a page that was correct when it was drawn.
+ */
+test.describe("a move from a picker drawn before the list was in force (item 10)", () => {
+  test("is refused for want of the agreement, and the holiday stays put", async ({
+    context,
+  }) => {
+    const label = `demo-e2e-${RUN}-stale-picker`;
+    await context.addCookies([
+      { name: "household", value: label, url: "http://localhost:3000" },
+    ]);
+
+    // --- Tab A: the picker, drawn while nothing is confirmed ----------------
+    const picker = await context.newPage();
+    await picker.goto("/settings/holidays");
+    await switchToTestWorker(picker);
+    await picker
+      .getByRole("button", {
+        name: he.holidays.row.moveLabel(weekdayDayLabel(WORKED_HOLIDAY)),
+      })
+      .click();
+    // No month of 2026 is filed, so this is not an amendment yet and the panel
+    // says so by drawing neither field.
+    await expect(picker.locator('[data-field="agreed-on"]')).toHaveCount(0);
+    await expect(picker.locator('[data-field="amendment-note"]')).toHaveCount(0);
+
+    // --- Tab B: the ordinary export flow, which puts the list in force ------
+    const exporting = await context.newPage();
+    await exporting.goto("/month/export");
+    await switchToTestWorker(exporting);
+    // July, the recuperation month, as `before-export.spec.ts` confirms it.
+    for (let step = 0; step < 2; step += 1) {
+      await exporting
+        .getByRole("button", { name: he.calendar.previousMonth })
+        .click();
+    }
+    const questions = exporting.locator("[data-question]");
+    const count = await questions.count();
+    for (let index = 0; index < count; index += 1) {
+      await questions
+        .nth(index)
+        .getByRole("button", { name: he.beforeExport.questions.no, exact: true })
+        .click();
+    }
+    await exporting.locator("[data-finish]").click();
+    await expect(exporting.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect(exporting.locator("[data-confirmed]")).toContainText(
+      he.beforeExport.finish.done,
+    );
+    await exporting.close();
+
+    // --- Tab A again, untouched: the move it was about to make --------------
+    await picker.getByLabel(he.holidays.add.date, { exact: true }).fill(TYPED_BY_HAND);
+    await picker
+      .getByRole("button", { name: he.holidays.add.moveSubmit, exact: true })
+      .click();
+    await expect(picker.locator('[aria-busy="true"]')).toHaveCount(0);
+
+    await expect(picker.locator("main").getByRole("alert")).toHaveText(
+      he.holidays.refused.amendmentNeeded,
+    );
+    await picker.screenshot({
+      path: "test-results/holidays-amendment-needed.png",
+      fullPage: true,
+    });
+
+    // **And nothing moved.** Read on a fresh load, so this is the store's
+    // answer and not the stale page's.
+    await picker.reload();
+    await expect(holidayRow(picker, WORKED_HOLIDAY)).toHaveAttribute(
+      "data-chosen",
+      "true",
+    );
+    await expect(holidayRow(picker, TYPED_BY_HAND)).toHaveCount(0);
+    await picker.close();
   });
 });
 

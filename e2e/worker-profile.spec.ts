@@ -126,6 +126,22 @@ async function settled(page: Page): Promise<void> {
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
 }
 
+/**
+ * One closing balance on the payslip, in days.
+ *
+ * Read off `data-closing`, which carries the number the row was drawn from, so a
+ * difference is arithmetic rather than a match on a formatted string — and the
+ * assertions that use it are all differences.
+ */
+async function balanceOf(page: Page, kind: "vacation" | "sick"): Promise<number> {
+  const text = await page
+    .locator(`[data-after="${kind}"]`)
+    .first()
+    .getAttribute("data-closing");
+  expect(text).not.toBeNull();
+  return Number(text);
+}
+
 test.describe("the workers' list", () => {
   test("shows the household's workers and the limit on them", async ({
     page,
@@ -494,6 +510,77 @@ test.describe("the opening position (specs.md item 6)", () => {
     await expect(advance).toContainText(formatAgorot(OPENING_OUTSTANDING));
     await page.screenshot({
       path: "test-results/profile-opening-advance.png",
+      fullPage: true,
+    });
+  });
+
+  /**
+   * **The opening days are saved on the profile, and every month's balance
+   * moves with them** (specs.md items 6 and 13).
+   *
+   * The wizard's copy of these two fields is driven in `first-month.spec.ts`;
+   * the profile's own save was read back but never pressed, so a form that
+   * held its value and never wrote it looked identical to one that worked.
+   *
+   * Scenario: the demo worker opens with nine vacation days and twenty-four
+   * sick days (`seed.ts`). Five days are added to the vacation opening on the
+   * profile — nine becomes fourteen — and nothing else is touched.
+   *
+   * Expected: this month's closing vacation balance is exactly five days
+   * higher than it was, and the sick balance has not moved at all.
+   *
+   * **The five is the arithmetic and the baseline cancels.** What the balance
+   * stands at is the replay's answer and is not asserted against itself; what
+   * is asserted is that adding five days to the position every month is
+   * replayed from moves that month's balance by five — which is item 13's
+   * whole promise, that a correction to the opening carries forward for free.
+   *
+   * **What it would catch**: the save wired to nothing, which leaves the
+   * balance where it was; the vacation field written into the sick one, which
+   * this catches by asserting the sick balance did *not* move; and a balance
+   * stored rather than replayed, which would leave the already-computed months
+   * at their old figure while only the newest followed.
+   */
+  test("a correction to the opening days carries into the month's balance", async ({
+    page,
+  }) => {
+    await useHousehold(page, "demo", "opening-days");
+    const words = he.workers.profile.terms.opening;
+    /** Nine, as `seed.ts` states her opening vacation. */
+    const SEEDED_VACATION = 9;
+    const ADDED = 5;
+
+    await openPayslipForTestWorker(page, thisMonth());
+    const vacationBefore = await balanceOf(page, "vacation");
+    const sickBefore = await balanceOf(page, "sick");
+
+    await openSettingsForTestWorker(page);
+    const opening = page.locator('[data-terms="opening"]');
+    // The field holds what the seed gave, which is what makes the new figure a
+    // correction rather than a first entry.
+    await expect(opening.getByRole("textbox", { name: words.vacation })).toHaveValue(
+      String(SEEDED_VACATION),
+    );
+    await opening
+      .getByRole("textbox", { name: words.vacation })
+      .fill(String(SEEDED_VACATION + ADDED));
+    await opening.getByRole("button", { name: words.save, exact: true }).click();
+    await settled(page);
+
+    // Read back out of the store, not off the field that still holds it.
+    await openSettingsForTestWorker(page);
+    await expect(
+      page.locator('[data-terms="opening"]').getByRole("textbox", { name: words.vacation }),
+    ).toHaveValue(String(SEEDED_VACATION + ADDED));
+
+    // **And the month followed.** Five more days of vacation, and sickness
+    // exactly where it was — the two fields save through one control, so a
+    // value written into the wrong one is the mistake worth catching.
+    await openPayslipForTestWorker(page, thisMonth());
+    expect(await balanceOf(page, "vacation")).toBeCloseTo(vacationBefore + ADDED, 5);
+    expect(await balanceOf(page, "sick")).toBeCloseTo(sickBefore, 5);
+    await page.screenshot({
+      path: "test-results/profile-opening-days.png",
       fullPage: true,
     });
   });

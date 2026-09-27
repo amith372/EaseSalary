@@ -486,6 +486,66 @@ test.describe("the start of the employment", () => {
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
     await expect(vacation).toContainText(formatDays(21));
   });
+
+  /**
+   * **A start moved past the first month the application holds is refused**
+   * (specs.md item 6).
+   *
+   * Scenario: the demo worker's months run from January 2026 (`seed.ts`). The
+   * start of employment is set to 1 June 2026 — a date inside the range the
+   * field accepts, and after months that already carry her marks and figures.
+   *
+   * Expected: the refusal, naming January 2026 as the month it must not pass;
+   * the field still holding the date the seed gave; and the vacation quota
+   * unmoved, since seniority is what a start date changes.
+   *
+   * **Why it is refused rather than accepted.** Balances are replayed from the
+   * opening position through every month she has (item 6), so a start *after*
+   * a month that already exists asks the replay to value months from before
+   * the employment began — which is not a wrong figure but an incoherent one.
+   * The refusal is the only alternative to letting the family produce it.
+   *
+   * **What it would catch**: the `firstMonth` check dropped, which accepts the
+   * date and restates five months of balances from a start that contradicts
+   * them; the refusal raised but its own sentence not drawn, which this term
+   * renders by hand rather than through the shared `Refusal` — so a change to
+   * that branch silently leaves the family with a save that does nothing; and
+   * the date saved anyway behind a refusal that is merely displayed.
+   */
+  test("refuses a start after the first month the worker already has", async ({
+    page,
+  }) => {
+    await useHousehold(page, "settings", "employed-since-after");
+    await openSettingsForTestWorker(page);
+
+    const words = he.workers.profile.terms.employedSince;
+    const vacation = page.locator('[data-setting="vacation-per-year"]');
+    const before = await vacation.textContent();
+
+    const since = page.locator('[data-terms="employedSince"]');
+    await since.locator("input").fill("2026-06-01");
+    await since.getByRole("button", { name: words.save }).click();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+
+    // The sentence names the month it may not pass, which is the only thing
+    // that tells the family what to type instead.
+    await expect(since).toContainText(words.afterFirstMonth.before);
+    await expect(since).toContainText(words.afterFirstMonth.after);
+    await page.screenshot({
+      path: "test-results/settings-employed-since-after-first-month.png",
+      fullPage: true,
+    });
+
+    // **Nothing was saved behind it.** Reopened from the store rather than read
+    // off the field that still holds what was typed.
+    await openSettingsForTestWorker(page);
+    await expect(
+      page.locator('[data-terms="employedSince"] input'),
+    ).not.toHaveValue("2026-06-01");
+    await expect(page.locator('[data-setting="vacation-per-year"]')).toHaveText(
+      before ?? "",
+    );
+  });
 });
 
 /**

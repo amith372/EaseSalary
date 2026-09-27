@@ -490,6 +490,13 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               <div
                 key={balance.kind}
                 data-after={balance.kind}
+                // The closing figure itself, for the browser suite: a balance
+                // is drawn as a formatted count inside a chip, and a test that
+                // needed the *difference* two balances make would otherwise
+                // have to parse Hebrew-locale digits back into a number.
+                // `data-money` on an amount is the same handle for the same
+                // reason (`MoneyValue`).
+                data-closing={balance.closing ?? ""}
                 className="border-t border-line py-3.5"
               >
                 <SummaryRow

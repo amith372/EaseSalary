@@ -248,3 +248,86 @@ test("an existing account joins through a copied link, and the invitation then r
   await inviterContext.close();
   await inviteeContext.close();
 });
+
+/**
+ * The two gestures that undo the ones above: an invitation taken back before
+ * anybody opens it, and the way out of the account.
+ *
+ * **They run here and not in `settings.spec.ts`** for one reason each. A
+ * withdrawal needs a *pending* invitation, which needs a real second address
+ * and the live policies — the dev household has neither. And `signOut` revokes
+ * the refresh token for the whole account: run against the session
+ * `auth.setup.ts` leaves behind, it would sign the rest of the run out. The
+ * accounts here are made for this file and deleted after it, so both are safe
+ * only in this one.
+ *
+ * Scenario: the inviter invites a third address, sees it pending, and withdraws
+ * it. Then they sign out.
+ *
+ * Expected: the pending row goes, the link that was copied no longer joins
+ * anybody, and after signing out `/settings` is the sign-in screen again.
+ *
+ * **What it would catch**: a withdrawal that removes the row from the screen
+ * and leaves it live, which is the whole failure — a family who withdrew an
+ * invitation would have no way of knowing the link still worked; and a sign-out
+ * that clears the screen without ending the session, which leaves the next
+ * person at that browser signed in.
+ */
+test("an invitation is withdrawn before it is opened, and the member signs out", async ({
+  browser,
+}) => {
+  const words = he.settings.account.share;
+  const third = `e2e-withdrawn-${stamp}@easesalary.test`;
+
+  const context = await browser.newContext({
+    permissions: ["clipboard-read", "clipboard-write"],
+  });
+  const page = await context.newPage();
+  await signIn(page, inviter.email);
+  await page.goto("/settings");
+
+  const share = page.locator("[data-share]");
+  await share.locator('input[type="email"]').fill(third);
+  await share.getByRole("button", { name: words.send }).click();
+
+  const pending = share.locator('[data-invitation="pending"]');
+  await expect(pending).toContainText(third);
+
+  // The link as it stood, kept so the withdrawal can be checked against the
+  // thing it is supposed to invalidate rather than against the screen alone.
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  const live = new URL(copied.match(/https?:\/\/\S+/)?.[0] ?? "");
+  const link = `${live.pathname}${live.search}`;
+
+  await pending.getByRole("button", { name: words.withdraw }).click();
+  await expect(share.locator('[data-invitation="pending"]')).toHaveCount(0);
+  await page.screenshot({ path: "test-results/invitation-withdrawn.png" });
+
+  // **The link is dead, and that is the half the screen cannot show.** The
+  // invitee already has an account, so opening it while signed in as them is
+  // what would have joined the household had the row survived.
+  const inviteeContext = await browser.newContext();
+  const inviteePage = await inviteeContext.newPage();
+  await signIn(inviteePage, invitee.email);
+  await inviteePage.goto(link);
+  await inviteePage.goto("/workers");
+  await expect(
+    inviteePage.getByText(he.workers.toProfile(inviter.firstName)),
+  ).toHaveCount(0);
+  await inviteeContext.close();
+
+  // --- And the way out ------------------------------------------------------
+  await page.goto("/settings");
+  await page.getByRole("button", { name: he.settings.account.signOut }).click();
+  await page.waitForURL(/\/sign-in/);
+
+  // Signed out for real: the session is gone, so the screens behind it are the
+  // sign-in screen again and not a cached page.
+  await page.goto("/settings");
+  await expect(page).toHaveURL(/\/sign-in/);
+  await expect(
+    page.getByRole("heading", { name: he.signIn.signInTitle }),
+  ).toBeVisible();
+
+  await context.close();
+});

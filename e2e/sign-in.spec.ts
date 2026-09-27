@@ -69,6 +69,50 @@ test.describe("signed out", () => {
     await expect(page).toHaveURL(/\/sign-in$/);
   });
 
+  /**
+   * **An empty form is refused here and never sent** (the sign-in screen's own
+   * check, ahead of Supabase's).
+   *
+   * Scenario: the sign-in screen is submitted with both fields blank, and then
+   * with an address and no password.
+   *
+   * Expected: the same sentence both times, the screen unmoved, and — the half
+   * that matters — no network request to the authentication endpoint, because
+   * the point of checking here is that an empty submission is not a question
+   * worth asking a server.
+   *
+   * **What it would catch**: the guard dropped, which sends a blank credential
+   * to Supabase and shows whatever it answers — a sentence written for a wrong
+   * password, on a form the user simply has not finished; and a guard that
+   * refuses but lets the submission through behind the message, which is the
+   * same request with a refusal drawn over it.
+   */
+  test("an unfinished form is refused without asking the server", async ({
+    page,
+  }) => {
+    await page.goto("/sign-in");
+
+    // Every call to the authentication endpoint during this test, counted.
+    const attempts: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("/auth/v1/token")) attempts.push(request.url());
+    });
+
+    const failure = page.locator('[data-role="sign-in-error"]');
+
+    // Both fields empty.
+    await page.getByRole("button", { name: he.signIn.submitSignIn }).click();
+    await expect(failure).toHaveText(he.signIn.errors.missingFields);
+
+    // An address and no password: still unfinished, and the same sentence.
+    await page.locator('[data-field="email"]').fill(address("unfinished"));
+    await page.getByRole("button", { name: he.signIn.submitSignIn }).click();
+    await expect(failure).toHaveText(he.signIn.errors.missingFields);
+
+    await expect(page).toHaveURL(/\/sign-in$/);
+    expect(attempts).toHaveLength(0);
+  });
+
   test("a second sign-up at an address that already has an account is not told mail is coming", async ({
     page,
   }) => {

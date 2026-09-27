@@ -4,7 +4,13 @@ import {
   createInMemoryRepository,
 } from "@/lib/engine/repository";
 import type { SalaryRepository } from "@/lib/engine/repository";
-import { confirmedSeed, devSeed, filedSeed, refusedSeed } from "@/lib/dev/seed";
+import {
+  confirmedSeed,
+  devSeed,
+  filedSeed,
+  openSpellSeed,
+  refusedSeed,
+} from "@/lib/dev/seed";
 import { knownCaseSeed } from "@/lib/dev/known";
 import { INVITATION_COOKIE, invitationToken } from "@/lib/invitationCookie";
 import { createPostgresRepository } from "@/lib/supabase/repository";
@@ -59,6 +65,9 @@ const seeds = {
   /** The demo with one day of August 2026 marked twice, which the engine
    * refuses — the state the refusal card is drawn in (`seed.ts`). */
   refused: refusedSeed,
+  /** The demo with an open spell of sickness, which blocks the export until it
+   * is closed — the one state the close-spell panel exists for (`seed.ts`). */
+  openspell: openSpellSeed,
   /**
    * A household with nothing in it, which is what every new account is.
    *

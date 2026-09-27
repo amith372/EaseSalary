@@ -574,6 +574,55 @@ export const refusedSeed = {
   },
 };
 
+/**
+ * The demo with the test worker's spell of sickness left **open** — a span whose
+ * `to` is null (`specs.md` item 8).
+ *
+ * **It is a seed for the same reason `refusedSeed` is one**: no gesture in the
+ * interface produces it, and that is deliberate rather than missing. Item 8 says
+ * so outright — "There is no gesture for opening one, and there is deliberately
+ * none" — because continuity is inferred from the days marked and a second
+ * gesture meaning "she is still ill" would be a second way to say it.
+ * `applyMark` therefore always closes what it writes, which
+ * `src/lib/spans.test.ts` pins.
+ *
+ * **But the shape is live in storage and in the engine.** The column is
+ * nullable, `openSickSpellOf` looks for it, a month clips such a spell at its
+ * own last day, and the export refuses to run over one (item 18). So a
+ * household can arrive in this state the way a refused one can — from a
+ * migration, from a direct write, or from a later feature — and the *only* way
+ * out is the panel the export draws. Without this seed that panel is
+ * unreachable, and an escape hatch nobody can open is worse than none.
+ *
+ * **Why the spell sits four days before the suite's own today.** The file's
+ * header says no spell is left open in `devSeed` because one drifts with the
+ * real clock and eventually exhausts a balance that was fine when it was
+ * written. That hazard is real and is contained rather than removed: the browser
+ * suite pins today to 2026-09-18 (`e2e/household.ts`), this seed is reachable
+ * only by its own cookie name, and the spell begins on the 14th — so under the
+ * pinned clock it is five days against an opening balance of twenty-four. Opened
+ * in a browser on a much later real date it *will* run the balance down, which
+ * is the drift the header warns about and the reason this is not in `devSeed`.
+ */
+export const OPEN_SPELL_FROM = "2026-09-14";
+
+export const openSpellSeed = {
+  ...devSeed,
+  spans: {
+    ...devSpans,
+    "worker-2": [
+      ...devSpans["worker-2"],
+      {
+        id: "w2-sick-open",
+        kind: "sick" as const,
+        from: OPEN_SPELL_FROM,
+        /** The whole point of the fixture: no end recorded. */
+        to: null,
+      },
+    ],
+  },
+};
+
 export const filedSeed = {
   ...devSeed,
   months: {
