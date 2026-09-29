@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
       id: worker.id,
       name: worker.name,
       firstName: worker.firstName,
+      gender: worker.gender,
     },
     employment: { employedSince: worker.employedSince },
     insurer: worker.insurer,

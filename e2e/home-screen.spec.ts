@@ -409,7 +409,10 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     for (const date of ["2025-08-19", "2025-08-21"]) {
       await page.locator(`[data-date="${date}"]`).click();
       await page
-        .getByRole("button", { name: he.calendar.holiday.yes, exact: true })
+        .getByRole("button", {
+          name: he.calendar.holiday.yes("female"),
+          exact: true,
+        })
         .click();
     }
 

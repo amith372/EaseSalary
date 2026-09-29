@@ -149,7 +149,7 @@ async function filled(
   if (month === undefined) throw new Error("no month");
 
   const input = monthSheetInputOf({
-    worker: { id: "w", name: "חנה", firstName: "חנה" },
+    worker: { id: "w", name: "חנה", firstName: "חנה", gender: "female" },
     insurer: "סוכנות ביטוח לדוגמה",
     employment: { employedSince: worker.employedSince },
     gender: worker.gender,

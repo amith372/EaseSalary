@@ -8,6 +8,7 @@ import { LogoMark } from "@/components/icons";
 import type { Country } from "@/lib/holidaySources";
 import {
   DoneStep,
+  draftGender,
   monthNumberOf,
   PayStep,
   Progress,
@@ -329,7 +330,7 @@ export function AddWorkerScreen({
               minimumWageAgorot={minimumWageAgorot}
             />
           ) : null}
-          {step === LAST_STEP ? <DoneStep headingRef={heading} workerId={workerId} /> : null}
+          {step === LAST_STEP ? <DoneStep headingRef={heading} workerId={workerId} gender={draftGender(draft.gender)} /> : null}
 
           {saveRefusal !== null ? (
             <p

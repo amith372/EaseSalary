@@ -20,6 +20,7 @@ import { useAction } from "@/components/useAction";
 import { RuleLink, WhyPanel } from "@/components/WhyDisclosure";
 import { weekdayDayLabel } from "@/lib/dateLabels";
 import type { RestDay } from "@/lib/dates";
+import type { Gender } from "@/lib/engine/types";
 import type { HolidayRow, HolidayYear } from "@/lib/engine/holidayYear";
 import type { HolidaySourceChoice } from "@/lib/holidaySources";
 import { he } from "@/lib/i18n/he";
@@ -333,6 +334,7 @@ export function HolidayPickerScreen({
                     restDay={state.restDay}
                     year={year}
                     workerId={entry.worker.id}
+                    gender={entry.worker.gender}
                     amending={entry.amending}
                     moving={
                       open?.kind === "move" &&
@@ -521,6 +523,7 @@ function HolidayRowView({
   restDay,
   year,
   workerId,
+  gender,
   amending,
   moving,
   onMove,
@@ -532,6 +535,9 @@ function HolidayRowView({
   restDay: RestDay;
   year: number;
   workerId: string;
+  /** The amendment note names her page, so it agrees with her
+   * (`he.workerWords`). */
+  gender: Gender;
   amending: boolean;
   moving: boolean;
   onMove: () => void;
@@ -673,7 +679,7 @@ function HolidayRowView({
       {moving && chosen !== null ? (
         <DateForm
           legend={he.holidays.add.move}
-          hint={amending ? he.holidays.add.amendment.hint : undefined}
+          hint={amending ? he.holidays.add.amendment.hint(gender) : undefined}
           year={year}
           submit={he.holidays.add.moveSubmit}
           initial={row.date}

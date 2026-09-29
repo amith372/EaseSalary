@@ -216,6 +216,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
                offer themselves as that month's. */
             key={`${worker.id}-${month.year}-${month.month}`}
             workerId={worker.id}
+            gender={worker.gender}
             month={month}
             /* **Assembled on the server from the engine's own row** (item
                17): the amount the month settled on, whether it was typed by

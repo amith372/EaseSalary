@@ -196,6 +196,7 @@ export function BeforeExportScreen({
         <MonthConfirmation
           key={`${entry.worker.id}-${month.year}-${month.month}`}
           workerId={entry.worker.id}
+          gender={entry.worker.gender}
           restDay={entry.restDay}
           shown={shown}
           failure={failure}

@@ -70,7 +70,12 @@ async function whatTheBarShows(): Promise<{ workers: Worker[]; bell: BellView | 
       theBell(),
     ]);
     return {
-      workers: profiles.map(({ id, name, firstName }) => ({ id, name, firstName })),
+      workers: profiles.map(({ id, name, firstName, gender }) => ({
+        id,
+        name,
+        firstName,
+        gender,
+      })),
       bell,
     };
   } catch (error) {

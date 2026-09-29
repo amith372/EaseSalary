@@ -1,3 +1,4 @@
+import type { Gender } from "@/lib/engine/types";
 import type { LegalLinkKey } from "@/lib/links";
 
 /**
@@ -446,6 +447,12 @@ export interface Worker {
   name: string;
   /** The first name alone, for "לדף של [שם]". */
   firstName: string;
+  /** Which way every screen's Hebrew agrees when it names her — "בדף שלה"
+   * against "בדף שלו". It rides on the scope rather than being fetched per
+   * screen because a sentence that names the worker can appear on any of them,
+   * and a screen that had to ask for it would be a screen that forgot to
+   * (`src/lib/i18n/he.ts`, `workerWords`). */
+  gender: Gender;
 }
 
 /**

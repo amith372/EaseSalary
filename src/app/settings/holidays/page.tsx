@@ -90,6 +90,7 @@ export default async function HolidaysPage({
           id: profile.id,
           name: profile.name,
           firstName: profile.firstName,
+          gender: profile.gender,
         },
         countries,
         religions,

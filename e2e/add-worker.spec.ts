@@ -242,6 +242,93 @@ test("adds the household's first worker, and every screen then has somebody to b
 });
 
 /**
+ * **The wizard's last step speaks to the worker who was actually described.**
+ *
+ * Scenario: the same empty household, taken through all four steps twice — once
+ * choosing `גבר` on the first step and once `אישה` — and the fourth step read
+ * in the browser both times. Everything else about the two runs is identical.
+ *
+ * Expected, and derived from Hebrew grammar rather than from what the screen
+ * returned: the man's copy says `לדף שלו`, `החודש הראשון שלו` and
+ * `לפי הוותק שלו`, and the woman's says `שלה` in all three. The masculine run
+ * is additionally asserted to contain no `שלה` anywhere in the card, because
+ * the defect is one word inside a correct paragraph and an assertion on one
+ * sentence would pass a half-finished edit.
+ *
+ * **What it would catch**: the bug reported against this screen — the fourth
+ * step written once in the feminine, which calls every man the application
+ * serves a woman while rendering, flowing and passing every other test
+ * perfectly. It also catches the narrower regression of the button alone being
+ * fixed and the three bullets above it left behind, since all four sentences
+ * are read.
+ *
+ * **Why through the browser and not from `he.ts`.** The unit suite already
+ * pins the wording (`src/lib/i18n/worker-wording.test.ts`); what only the
+ * browser can prove is that the answer given on step one reaches step four at
+ * all. A correctly inflected string handed the wrong gender — or a default —
+ * produces exactly the screen that was reported, and every string test in the
+ * repository would still pass.
+ */
+/**
+ * `שלה` standing alone, which is the feminine possessive of a person. The
+ * lookahead is what keeps `שלהם` out of it: Hebrew has no word boundary a
+ * `\b` can see, so the guard is "not followed by another Hebrew letter".
+ */
+const HER_OWN = /שלה(?![֐-׿])/;
+
+test.describe("the fourth step agrees with the worker described", () => {
+  for (const [choice, hers] of [
+    ["male", "שלו"],
+    ["female", "שלה"],
+  ] as const) {
+    test(`says ${hers} after ${choice} was chosen`, async ({ page }) => {
+      await page.goto("/workers/new");
+
+      await page.locator('[data-field="name"]').fill(NAME);
+      await page.locator('[data-field="country"]').selectOption(COUNTRY);
+      await page
+        .locator('[data-choice="gender"]')
+        .getByRole("button", { name: he.workers.profile.terms.gender[choice] })
+        .click();
+      await page.locator('[data-role="add-worker-next"]').click();
+      await expect(
+        page.getByRole("heading", { name: he.addWorker.when.title }),
+      ).toBeVisible();
+
+      await fillWhen(page);
+      await fillPay(page);
+
+      const card = page.locator('[data-role="add-worker-done"]');
+      await expect(card).toBeVisible();
+      await expect(card).toContainText(`החודש הראשון ${hers} כבר מחכה`);
+      await expect(card).toContainText(`לפי הוותק ${hers}`);
+      await expect(
+        page.locator('[data-role="add-worker-finish"]'),
+      ).toHaveText(`לדף ${hers}`);
+
+      // The lead above the card names her page too, so the whole step is read
+      // and not only the part that was reported.
+      await expect(
+        page.getByText(`שמרנו את הפרטים. אפשר לשנות כל דבר בדף ${hers}.`),
+      ).toBeVisible();
+
+      if (choice === "male") {
+        // Not one feminine possessive survives anywhere on the step. The
+        // report showed a card that looked entirely correct apart from a single
+        // word, which is why this is asserted over the card's whole text rather
+        // than sentence by sentence.
+        //
+        // **It must be `שלה` as a word and not as a substring.** The third
+        // bullet says `התאריכים שלהם` of the documents — masculine, plural and
+        // correct — and a plain `toContainText` fails on it, which is a test
+        // that reports the one sentence in the card that was already right.
+        await expect(card).not.toHaveText(HER_OWN, { useInnerText: true });
+      }
+    });
+  }
+});
+
+/**
  * **An account that already holds two workers is told so, and is not bounced to
  * a step** (specs.md item 11: an account holds up to two).
  *

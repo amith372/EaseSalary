@@ -77,6 +77,7 @@ export default async function BeforeExportPage({
           id: profile.id,
           name: profile.name,
           firstName: profile.firstName,
+          gender: profile.gender,
         },
         restDay: profile.restDay,
         firstMonth: profile.firstMonth,

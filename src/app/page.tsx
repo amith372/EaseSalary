@@ -93,6 +93,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         id: worker.profile.id,
         name: worker.profile.name,
         firstName: worker.profile.firstName,
+        gender: worker.profile.gender,
       },
       restDay: worker.profile.restDay,
       firstMonth: worker.profile.firstMonth,

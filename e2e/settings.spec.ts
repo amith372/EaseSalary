@@ -530,7 +530,7 @@ test.describe("the start of the employment", () => {
     // The sentence names the month it may not pass, which is the only thing
     // that tells the family what to type instead.
     await expect(since).toContainText(words.afterFirstMonth.before);
-    await expect(since).toContainText(words.afterFirstMonth.after);
+    await expect(since).toContainText(words.afterFirstMonth.after("female"));
     await page.screenshot({
       path: "test-results/settings-employed-since-after-first-month.png",
       fullPage: true,

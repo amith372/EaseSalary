@@ -91,7 +91,7 @@ function recuperationRateMissingWarning(
   }
   return {
     key: "recuperationRateMissing",
-    message: he.sheet.warnings.recuperationRateMissing(days),
+    message: he.sheet.warnings.recuperationRateMissing(days, employment.gender),
     link: "recuperation",
   };
 }

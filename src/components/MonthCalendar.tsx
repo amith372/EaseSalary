@@ -17,6 +17,7 @@ import {
 import type { RestDay } from "@/lib/dates";
 import { dayLabel, monthLabel, rangeLabel } from "@/lib/dateLabels";
 import { clipEndOf } from "@/lib/engine/types";
+import type { Gender } from "@/lib/engine/types";
 import { CalendarBand } from "@/components/CalendarBand";
 import { MonthStepper } from "@/components/MonthStepper";
 import { seasonOf } from "@/lib/season";
@@ -62,6 +63,12 @@ interface MonthCalendarProps {
    * `spans.ts`, which the caller reaches through `onSelectRange`.
    */
   restDay: RestDay;
+  /**
+   * Which way the holiday question agrees — "עבד בחג?" against "עבדה בחג?".
+   * A term of the employment exactly as the rest day is, and read off the
+   * worker for the same reason (`he.workerWords`).
+   */
+  gender: Gender;
   /**
    * Today, passed in rather than read from the clock, so the component renders
    * the same on the server as in the browser. Without it the "היום" button is
@@ -269,6 +276,7 @@ export function MonthCalendar({
   month,
   spans,
   restDay,
+  gender,
   today,
   earliest,
   onMonthChange,
@@ -680,15 +688,19 @@ export function MonthCalendar({
             <span dir="auto" className="text-[13px] font-light text-ink-quiet">
               <span>{marks.holiday}</span>
               <span> · </span>
-              <span>{he.calendar.holiday.question}</span>
+              <span>{he.calendar.holiday.question(gender)}</span>
             </span>
           </div>
           <div className="flex flex-auto flex-wrap items-center gap-2">
             {[
-              { worked: true, label: he.calendar.holiday.yes, swatch: "bg-holiday" },
+              {
+                worked: true,
+                label: he.calendar.holiday.yes(gender),
+                swatch: "bg-holiday",
+              },
               {
                 worked: false,
-                label: he.calendar.holiday.no,
+                label: he.calendar.holiday.no(gender),
                 swatch: "bg-day border-2 border-holiday-dot",
               },
             ].map((answer, index) => (

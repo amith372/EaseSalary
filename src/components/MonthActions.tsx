@@ -48,6 +48,7 @@ import {
 } from "@/lib/engine/incomeTax";
 import type { TaxCorrectionUnit } from "@/lib/engine/incomeTax";
 import type { MonthIncomeTax } from "@/lib/engine/types";
+import type { Gender } from "@/lib/engine/types";
 import { offeredPeriodFor } from "@/lib/engine/thirdParty";
 import {
   placementOf,
@@ -129,6 +130,9 @@ const PERIOD_MONTHS_FORWARD = 12;
 
 interface MonthActionsProps {
   workerId: string;
+  /** Two of the notes on this screen name her page and her profile, so they
+   * agree with her rather than picking a gender (`he.workerWords`). */
+  gender: Gender;
   month: YearMonth;
   /** The month's tax, assembled on the server from the engine's own row: the
    * amount, whether it was typed by hand, the setting behind it and the share
@@ -301,6 +305,7 @@ function PanelButtons({
 
 export function MonthActions({
   workerId,
+  gender,
   month,
   incomeTax,
   userLines,
@@ -325,6 +330,7 @@ export function MonthActions({
       <IncomeTaxControl
         fold={fold("incomeTax")}
         workerId={workerId}
+        gender={gender}
         month={month}
         incomeTax={incomeTax}
         onSubmit={onSubmit}
@@ -333,6 +339,7 @@ export function MonthActions({
       <UserLinesControl
         fold={fold("userLines")}
         workerId={workerId}
+        gender={gender}
         month={month}
         userLines={userLines}
         onSubmit={onSubmit}
@@ -531,10 +538,15 @@ function HospitalOvertimeControl({
 function IncomeTaxControl({
   fold,
   workerId,
+  gender,
   month,
   incomeTax,
   onSubmit,
-}: FoldProps & Pick<MonthActionsProps, "workerId" | "month" | "incomeTax" | "onSubmit">) {
+}: FoldProps &
+  Pick<
+    MonthActionsProps,
+    "workerId" | "gender" | "month" | "incomeTax" | "onSubmit"
+  >) {
   const words = he.month.actions.incomeTax;
   const { agorot: incomeTaxAgorot, manual: incomeTaxManual } = incomeTax;
   // The field holds only what the *user* put there. A calculated figure is
@@ -562,9 +574,9 @@ function IncomeTaxControl({
   // a flat-rate month would be a sentence that is untrue of the amount above it
   // — which is the worst kind of help, because it is the kind a family acts on.
   let ruleWords: string = words.rule;
-  if (incomeTax.setting.mode === "none") ruleWords = words.ruleNone;
+  if (incomeTax.setting.mode === "none") ruleWords = words.ruleNone(gender);
   else if (incomeTax.setting.mode === "percentage") {
-    ruleWords = words.rulePercentage(rate);
+    ruleWords = words.rulePercentage(rate, gender);
   }
 
   // **Which unit the correction is typed in**. It is
@@ -781,10 +793,15 @@ function IncomeTaxControl({
 function UserLinesControl({
   fold,
   workerId,
+  gender,
   month,
   userLines,
   onSubmit,
-}: FoldProps & Pick<MonthActionsProps, "workerId" | "month" | "userLines" | "onSubmit">) {
+}: FoldProps &
+  Pick<
+    MonthActionsProps,
+    "workerId" | "gender" | "month" | "userLines" | "onSubmit"
+  >) {
   const words = he.month.actions.lines;
   const {
     open,
@@ -910,7 +927,7 @@ function UserLinesControl({
         <p dir="auto" className="text-[13px] leading-[1.5] font-light text-ink-quiet text-pretty">
           <span>{`${words.oneOffOnly} `}</span>
           <Link href="/settings" className="font-medium">
-            <span dir="auto">{words.standing}</span>
+            <span dir="auto">{words.standing(gender)}</span>
           </Link>
         </p>
       </div>

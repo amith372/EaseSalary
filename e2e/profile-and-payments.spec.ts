@@ -207,7 +207,7 @@ test.describe("the payments screen", () => {
     await settled(page);
 
     await page
-      .getByRole("link", { name: he.month.actions.lines.standing })
+      .getByRole("link", { name: he.month.actions.lines.standing("female") })
       .click();
     await settled(page);
     // The link lands on settings, whose groups arrive folded.

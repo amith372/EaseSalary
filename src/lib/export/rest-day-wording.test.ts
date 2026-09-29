@@ -85,7 +85,7 @@ async function sheetFor(restDay: RestDay): Promise<ExcelJS.Worksheet> {
   const bytes = await fillMonthSheet(
     template,
     monthSheetInputOf({
-      worker: { id: "w", name: "חנה", firstName: "חנה" },
+      worker: { id: "w", name: "חנה", firstName: "חנה", gender: "female" },
       insurer: "סוכנות ביטוח לדוגמה",
       employment: { employedSince: worker.employedSince },
       gender: worker.gender,

@@ -189,6 +189,7 @@ export function SettingsScreen({
           />
           <RestEveSupplementControl
             workerId={profile.id}
+            gender={profile.gender}
             agorot={profile.restEveSupplementAgorot}
             onSubmit={handleAction}
           />
@@ -199,6 +200,7 @@ export function SettingsScreen({
           />
           <EmployedSinceControl
             workerId={profile.id}
+            gender={profile.gender}
             employedSince={profile.employedSince}
             firstMonth={profile.firstMonth}
             onSubmit={handleAction}

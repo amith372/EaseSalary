@@ -30,6 +30,7 @@ import {
   asksOpeningPosition,
   asksRecuperationPaid,
   firstMonthChoices,
+  isAllowedGender,
   restDayChoices,
   reviewEmployedSince,
   type NewWorkerDraft,
@@ -38,6 +39,7 @@ import {
 } from "@/lib/engine/profile";
 import { paymentMonthBeforeFirstMonth } from "@/lib/engine/recuperation";
 import { genders, incomeTaxModes } from "@/lib/engine/types";
+import type { Gender } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import type { LegalLinkKey } from "@/lib/links";
 import { formatAgorot } from "@/lib/money";
@@ -505,6 +507,7 @@ export function WhenStep({
       {plan?.asksOpening ? (
         <OpeningQuestions
           opening={draft.opening}
+          gender={draftGender(draft.gender)}
           plan={plan}
           change={(over) => change({ opening: { ...draft.opening, ...over } })}
           refusalFor={refusalFor}
@@ -520,11 +523,15 @@ export function WhenStep({
  */
 function OpeningQuestions({
   opening,
+  gender,
   plan,
   change,
   refusalFor,
 }: {
   opening: OpeningDraft;
+  /** The step before this one asked, so these sentences can say "שלו" or
+   * "שלה" rather than choosing one for her (`he.workerWords`). */
+  gender: Gender;
   plan: WizardPlan;
   change: (over: Partial<OpeningDraft>) => void;
   refusalFor: RefusalFor;
@@ -565,7 +572,7 @@ function OpeningQuestions({
           {words.title}
         </h2>
         <p dir="auto" className="text-[16px] font-light text-pretty text-ink-mute">
-          {words.lead}
+          {words.lead(gender)}
         </p>
       </div>
 
@@ -636,7 +643,7 @@ function OpeningQuestions({
           {words.advances}
         </legend>
         <p dir="auto" className="text-[15px] font-light text-pretty text-ink-soft">
-          {words.advancesHint}
+          {words.advancesHint(gender)}
         </p>
         {opening.advances.map((advance, index) => (
           <div
@@ -802,7 +809,7 @@ export function PayStep({
         </ChoiceGroup>
 
         <p dir="auto" className="-mt-2.5 text-[15px] font-light text-pretty text-ink-soft">
-          {noteFor(draft.incomeTaxMode)}
+          {noteFor(draft.incomeTaxMode, draftGender(draft.gender))}
         </p>
 
         {draft.incomeTaxMode === "percentage" ? (
@@ -841,10 +848,22 @@ export function monthNumberOf(iso: string): number | null {
   return isIsoDate(trimmed) ? monthOf(trimmed).month : null;
 }
 
-function noteFor(mode: unknown): string {
+/**
+ * The draft's gender, narrowed for the sentences that agree with it.
+ *
+ * `NewWorkerDraft.gender` is `unknown` on purpose — a radio reaches the server
+ * as data, and a union cannot check data. On screen it has always been one of
+ * the two: the draft opens on one and only the radio writes it, so this
+ * narrows rather than decides, and the fallback is unreachable.
+ */
+export function draftGender(value: unknown): Gender {
+  return isAllowedGender(value) ? value : genders[0];
+}
+
+function noteFor(mode: unknown, gender: Gender): string {
   const words = he.addWorker.pay;
   const notes = {
-    automatic: words.automaticNote,
+    automatic: words.automaticNote(gender),
     none: words.noneNote,
     percentage: words.percentageNote,
   };
@@ -863,16 +882,24 @@ function noteFor(mode: unknown): string {
  */
 export function DoneStep({
   workerId,
+  gender,
   headingRef,
 }: {
   workerId: string | null;
+  /** Every sentence on this step names her, so every one of them agrees with
+   * the answer the first step collected (`he.workerWords`). */
+  gender: Gender;
   headingRef: HeadingRef;
 }) {
   const words = he.addWorker.done;
 
   return (
     <>
-      <Heading title={words.title} lead={words.lead} headingRef={headingRef} />
+      <Heading
+        title={words.title}
+        lead={words.lead(gender)}
+        headingRef={headingRef}
+      />
       <section
         className="flex flex-col gap-3.5 rounded-card border border-chip-line bg-chip px-7 py-6.5"
         data-role="add-worker-done"
@@ -880,7 +907,7 @@ export function DoneStep({
         <span dir="auto" className="text-[17px] font-semibold">
           {words.whatNow}
         </span>
-        {words.steps.map((sentence) => (
+        {words.steps(gender).map((sentence) => (
           <span key={sentence} className="flex items-start gap-3">
             <span
               aria-hidden="true"
@@ -902,7 +929,7 @@ export function DoneStep({
           data-role="add-worker-finish"
           className="rounded-[15px] bg-forest px-9 py-3.75 text-[19px] font-semibold whitespace-nowrap text-white transition-colors hover:bg-forest-deep hover:text-white"
         >
-          <span dir="auto">{words.toWorker}</span>
+          <span dir="auto">{words.toWorker(gender)}</span>
         </Link>
       </div>
     </>

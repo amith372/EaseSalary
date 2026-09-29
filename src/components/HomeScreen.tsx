@@ -335,6 +335,7 @@ export function HomeScreen({
             month={month}
             spans={spans}
             restDay={shownRestDay}
+            gender={worker.gender}
             today={today}
             earliest={entry.firstMonth}
             onMonthChange={setMonth}

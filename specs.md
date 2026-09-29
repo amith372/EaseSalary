@@ -1376,7 +1376,13 @@ fetch.
 The worker's name is written into the export in Hebrew only, never with a Latin
 transliteration beside it, so a line of Hebrew is never broken up by a run in another
 script. Wording that names the worker by gender is filled from the profile rather than
-fixed in the template, so a sheet never calls a man a woman.
+fixed in the template, so a sheet never calls a man a woman. **The screens do the
+same.** Every sentence in the application that names the worker — her page, her month,
+her seniority, whether she worked a holiday — is inflected from the gender on her
+profile, and the inclusive form survives only where no worker has been chosen yet or
+where the sentence states the law rather than this employment. A screen written in one
+gender is not a smaller version of the same fault than a sheet written in one: it
+renders, it flows, and the family has no way to correct it.
 
 A spell of sickness is stored as the dates it ran between, not as marks belonging to a
 month, because its tiers are counted from its own first day and a spell that begins in

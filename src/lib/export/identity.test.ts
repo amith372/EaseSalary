@@ -25,7 +25,12 @@ async function sheetWith(numbers?: { passport?: string; bankAccount?: string }) 
   if (month === undefined) throw new Error("no month");
 
   const input = monthSheetInputOf({
-    worker: { id: "w", name: "עובדת לדוגמה", firstName: "עובדת" },
+    worker: {
+      id: "w",
+      name: "עובדת לדוגמה",
+      firstName: "עובדת",
+      gender: "female",
+    },
     insurer: "",
     employment: { employedSince: worker.employedSince },
     gender: worker.gender,

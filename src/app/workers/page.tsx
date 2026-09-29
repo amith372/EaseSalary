@@ -52,6 +52,7 @@ export default async function WorkersPage() {
           id: profile.id,
           name: profile.name,
           firstName: profile.firstName,
+          gender: profile.gender,
         },
         employedSince: profile.employedSince,
         country: countryNameHe(SEEDED_HOLIDAY_LISTS, profile.country),

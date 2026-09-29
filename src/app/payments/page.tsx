@@ -96,6 +96,7 @@ export default async function PaymentsPage() {
           id: profile.id,
           name: profile.name,
           firstName: profile.firstName,
+          gender: profile.gender,
         },
         refused: refusalShown(replayedWorker),
         firstMonth: profile.firstMonth,

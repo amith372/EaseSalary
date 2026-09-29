@@ -314,7 +314,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     await backTo(page, 3);
     await page.locator(`[data-date="${CANDIDATE_IN_JUNE}"]`).click();
     await page
-      .getByRole("button", { name: he.calendar.holiday.no, exact: true })
+      .getByRole("button", { name: he.calendar.holiday.no("female"), exact: true })
       .click();
     await settled(page);
 

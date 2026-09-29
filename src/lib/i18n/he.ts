@@ -135,6 +135,75 @@ const AGREEMENT = {
   },
 } as const;
 
+/**
+ * The worker herself, as words — every form a screen needs in order to name
+ * her without deciding for her which she is (specs.md Part 3).
+ *
+ * **The same argument as `DAY_WORDS` directly above, applied to the person
+ * rather than to her day.** A sentence written once as "בדף שלה" reads as
+ * broken Hebrew for half the workers the application serves, and the family
+ * cannot correct it; the profile already knows which, so the sentence asks.
+ *
+ * **Whole words and never a suffix**, for the reason `sheet.genderTokens`
+ * gives: Hebrew inflects a verb in more than its ending, so each form is
+ * written out. The two tables are one — `genderTokens` draws its four
+ * placeholders from here, because a sheet and the screen that previews it
+ * saying different words about the same person is the one failure neither
+ * would show on its own.
+ *
+ * **The inclusive `עובד/ת` is not in this table and is not a form of it.** It
+ * belongs where no worker is chosen yet — the empty household, the wizard
+ * before its first question — and where a sentence states the law rather than
+ * describing this employment ("עובד/ת זר/ה בסיעוד מקבל/ת 2.25 נקודות"). Where
+ * a worker is on screen, the application knows and says.
+ */
+interface WorkerWords {
+  /** "שלה" / "שלו" — the possessive four of the wizard's own sentences end on. */
+  hers: string;
+  /** "לה" / "לו" — the dative: an advance given to her. */
+  toHer: string;
+  /** "עובדת" / "עובד" — the bare noun. */
+  role: string;
+  /** "העובדת" / "העובד" — the definite noun. */
+  roleDefinite: string;
+  /** "עבדה" / "עבד" — did she work that day. */
+  worked: string;
+  /** "שעבדה" / "שעבד" — the same verb as a relative clause. */
+  thatWorked: string;
+  /** "זכאית" / "זכאי" — what she is owed. */
+  entitled: string;
+  /** "חזרה" / "חזר" — back from a spell of sickness. */
+  returned: string;
+}
+
+const WORKER_WORDS: Record<Gender, WorkerWords> = {
+  female: {
+    hers: "שלה",
+    toHer: "לה",
+    role: "עובדת",
+    roleDefinite: "העובדת",
+    worked: "עבדה",
+    thatWorked: "שעבדה",
+    entitled: "זכאית",
+    returned: "חזרה",
+  },
+  male: {
+    hers: "שלו",
+    toHer: "לו",
+    role: "עובד",
+    roleDefinite: "העובד",
+    worked: "עבד",
+    thatWorked: "שעבד",
+    entitled: "זכאי",
+    returned: "חזר",
+  },
+};
+
+/** The worker, as words. */
+export function workerWords(gender: Gender): WorkerWords {
+  return WORKER_WORDS[gender];
+}
+
 /** Her rest day, as words. */
 function day(restDay: RestDay): DayWords {
   return DAY_WORDS[restDay];
@@ -222,7 +291,11 @@ export const he = {
    */
   emptyHousehold: {
     title: "עוד אין כאן עובד/ת",
-    lead: "כל המסכים כאן מדברים על עובד/ת אחת — החודש שלה, היתרות שלה, הגיליון שלה. אחרי שמוסיפים אותה, הכול נפתח.",
+    /** **The one screen that stays inclusive on purpose.** Everywhere else the
+     * profile settles the agreement (`workerWords`); here there is no profile
+     * yet, so the sentence is written without a pronoun rather than picking a
+     * gender for a worker nobody has described. */
+    lead: "כל המסכים כאן מדברים על עובד/ת אחד — החודש, היתרות והגיליון. אחרי ההוספה, הכול נפתח.",
     /** The one thing there is to do on this screen, and now it leads somewhere.
      * Same words as the `העובדות` list's own control, so a family meets one
      * name for one flow. */
@@ -261,7 +334,7 @@ export const he = {
        * form; the profile's own row carries the full sentence and is the same
        * choice, so the two labels come from there rather than being written
        * twice. */
-      genderHint: "קובע את נקודות הזיכוי במס הכנסה, ואת הפנייה בגיליון.",
+      genderHint: "קובע את נקודות הזיכוי במס הכנסה, ואת לשון הפנייה בכל המסכים ובגיליון.",
       passport: "מספר דרכון",
       passportHint: "נשמר מוצפן, ונפתח רק כדי להציג אותו לך או להכניס אותו לגיליון.",
       passportPlaceholder: "מספר",
@@ -308,7 +381,8 @@ export const he = {
        */
       opening: {
         title: "המצב שממנו מתחילים",
-        lead: "ההעסקה התחילה לפני החודש הראשון באפליקציה, ולכן צריך לדעת מה כבר נצבר ומה כבר נוצל. אפשר לתקן הכול אחר כך בדף שלה.",
+        lead: (gender: Gender) =>
+          `ההעסקה התחילה לפני החודש הראשון באפליקציה, ולכן צריך לדעת מה כבר נצבר ומה כבר נוצל. אפשר לתקן הכול אחר כך בדף ${workerWords(gender).hers}.`,
         vacationDays: "ימי חופשה שכבר נצברו",
         sickDays: "ימי מחלה שכבר נצברו",
         balanceHint: "ימים שנצברו ועוד לא נוצלו, נכון לתחילת החודש הראשון.",
@@ -322,7 +396,8 @@ export const he = {
         no: "לא",
         recuperationPaidIn: "באיזה חודש שולמו",
         advances: "מקדמה שעדיין נפרעת",
-        advancesHint: "אם ניתנה לה מקדמה שעוד לא הוחזרה במלואה.",
+        advancesHint: (gender: Gender) =>
+          `אם ניתנה ${workerWords(gender).toHer} מקדמה שעוד לא הוחזרה במלואה.`,
         advanceName: (number: number) => `מקדמה ${number}`,
       },
     },
@@ -345,23 +420,28 @@ export const he = {
        * are the profile's own, so a family meets one name for one choice; only
        * the note is shortened here, because a wizard card cannot carry the
        * profile's full paragraph. */
-      automaticNote: "לפי מדרגות המס שבתוקף ונקודות הזיכוי שלה.",
+      automaticNote: (gender: Gender) =>
+        `לפי מדרגות המס שבתוקף ונקודות הזיכוי ${workerWords(gender).hers}.`,
       noneNote: "אם המס מוסדר במקום אחר.",
       percentageNote: "אם רואה חשבון נקב באחוז אחד.",
     },
 
     done: {
       title: "זהו, אפשר להתחיל",
-      lead: "שמרנו את הפרטים. אפשר לשנות כל דבר בדף שלה.",
+      lead: (gender: Gender) =>
+        `שמרנו את הפרטים. אפשר לשנות כל דבר בדף ${workerWords(gender).hers}.`,
       whatNow: "מה יקרה עכשיו",
       /** Three sentences, each about something the application actually does.
-       * Nothing here promises a screen that does not exist. */
-      steps: [
-        "החודש הראשון שלה כבר מחכה בדף הבית — אפשר להתחיל לסמן בלוח.",
-        "יתרות החופשה והמחלה מתעדכנות מכאן בכל חודש, לפי הוותק שלה.",
-        "מספרי הדרכון והאשרה, התאריכים שלהם והמצב שממנו התחלנו — אפשר להוסיף ולתקן בדף שלה.",
+       * Nothing here promises a screen that does not exist.
+       *
+       * The step before this one asked which she is, so by the time these are
+       * drawn the answer is in the draft and the sentences agree with it. */
+      steps: (gender: Gender) => [
+        `החודש הראשון ${workerWords(gender).hers} כבר מחכה בדף הבית — אפשר להתחיל לסמן בלוח.`,
+        `יתרות החופשה והמחלה מתעדכנות מכאן בכל חודש, לפי הוותק ${workerWords(gender).hers}.`,
+        `מספרי הדרכון והאשרה, התאריכים שלהם והמצב שממנו התחלנו — אפשר להוסיף ולתקן בדף ${workerWords(gender).hers}.`,
       ],
-      toWorker: "לדף שלה",
+      toWorker: (gender: Gender) => `לדף ${workerWords(gender).hers}`,
     },
 
     /** Why a step cannot be left, in the words shown under the field itself.
@@ -705,9 +785,9 @@ export const he = {
       /** Item 9's third state. Named for the question nobody answered rather
        * than for a guess about the day, because that is what it is. */
       unanswered: "חג שטרם נענה",
-      question: "עבדה בחג?",
-      yes: "כן, עבדה",
-      no: "לא עבדה",
+      question: (gender: Gender) => `${workerWords(gender).worked} בחג?`,
+      yes: (gender: Gender) => `כן, ${workerWords(gender).worked}`,
+      no: (gender: Gender) => `לא ${workerWords(gender).worked}`,
     },
     selection: {
       /** "‎16–20 באוגוסט": the day numbers, then the month with its prefix. */
@@ -1216,10 +1296,10 @@ export const he = {
          * sentence that is simply untrue of the amount above it — which is the
          * worst kind of help, because it is the kind a family would act on.
          */
-        ruleNone:
-            "לפי ההגדרה בפרופיל של העובד/ת לא מנוכה מס הכנסה בשום חודש. אפשר לשנות את זה בדף העובד/ת, ואפשר גם להזין כאן סכום לחודש הזה בלבד.",
-        rulePercentage: (percent: string) =>
-            `לפי ההגדרה בפרופיל של העובד/ת מנוכה ${percent}% מהברוטו בכל חודש, בלי קשר למדרגות המס ולנקודות הזיכוי. אפשר לשנות את זה בדף העובד/ת, ואפשר גם להזין כאן סכום לחודש הזה בלבד.`,
+        ruleNone: (gender: Gender) =>
+            `לפי ההגדרה בפרופיל של ${workerWords(gender).roleDefinite} לא מנוכה מס הכנסה בשום חודש. אפשר לשנות את זה בדף ${workerWords(gender).roleDefinite}, ואפשר גם להזין כאן סכום לחודש הזה בלבד.`,
+        rulePercentage: (percent: string, gender: Gender) =>
+            `לפי ההגדרה בפרופיל של ${workerWords(gender).roleDefinite} מנוכה ${percent}% מהברוטו בכל חודש, בלי קשר למדרגות המס ולנקודות הזיכוי. אפשר לשנות את זה בדף ${workerWords(gender).roleDefinite}, ואפשר גם להזין כאן סכום לחודש הזה בלבד.`,
         /** A calculated zero, which at the minimum wage is the ordinary
          * answer and not a line nobody filled in (item 17). */
         none: "לא מנוכה מס החודש",
@@ -1272,7 +1352,8 @@ export const he = {
          * is not a feature the user has.
          */
         oneOffOnly: "שורה שמופיעה בחודש הזה בלבד — תוספת או הורדה.",
-        standing: "שורה שחוזרת בכל חודש נקבעת פעם אחת בדף העובד/ת",
+        standing: (gender: Gender) =>
+          `שורה שחוזרת בכל חודש נקבעת פעם אחת בדף ${workerWords(gender).roleDefinite}`,
         label: "על מה",
         labelHint: "במילים שלך — כך זה יופיע בדף המשכורת",
         amount: "סכום",
@@ -1947,7 +2028,7 @@ export const he = {
         },
         gender: {
           label: "מין",
-          hint: "קובע את נקודות הזיכוי במס הכנסה — עובד/ת זר/ה בסיעוד מקבל/ת 2.25 נקודות, ואישה מקבלת חצי נקודה נוספת — ואת לשון הפנייה בדף המשכורת.",
+          hint: "קובע את נקודות הזיכוי במס הכנסה — עובד/ת זר/ה בסיעוד מקבל/ת 2.25 נקודות, ואישה מקבלת חצי נקודה נוספת — ואת לשון הפנייה בכל המסכים ובדף המשכורת.",
           female: "אישה",
           male: "גבר",
         },
@@ -2022,19 +2103,22 @@ export const he = {
         /** When the employment began: what seniority is counted from. */
         employedSince: {
           label: "תחילת העסקה",
-          hint: "משפיע על ותק, על הבראה ועל מכסת החופשה. תיקון התאריך מעדכן את כל החודשים, כי היתרות מחושבות מחדש מהחודש הראשון של העובדת באפליקציה.",
+          hint: (gender: Gender) =>
+            `משפיע על ותק, על הבראה ועל מכסת החופשה. תיקון התאריך מעדכן את כל החודשים, כי היתרות מחושבות מחדש מהחודש הראשון של ${workerWords(gender).roleDefinite} באפליקציה.`,
           save: "לשמור",
           /** Item 6: a correction past the first month is refused. The month is
            * its own element between the two halves (`CLAUDE.md`). */
           afterFirstMonth: {
             before: "התאריך צריך להיות עד סוף ",
-            after: ", החודש הראשון של העובדת באפליקציה",
+            after: (gender: Gender) =>
+              `, החודש הראשון של ${workerWords(gender).roleDefinite} באפליקציה`,
           },
         },
         /** Item 14: an agreed term, changed or stopped when the agreement is. */
         restEveSupplement: {
           label: "תוספת לערב המנוחה",
-          hint: "הסכום שמשולם על כל ערב יום מנוחה בחודש, בלי קשר לשאלה אם עבדה בו. אם הוסכם להפסיק, משאירים ריק.",
+          hint: (gender: Gender) =>
+            `הסכום שמשולם על כל ערב יום מנוחה בחודש, בלי קשר לשאלה אם ${workerWords(gender).worked} בו. אם הוסכם להפסיק, משאירים ריק.`,
           save: "לשמור",
         },
         /** The way in to `בחירת חגים` from `הגדרות`, as the artboard draws
@@ -2320,7 +2404,8 @@ export const he = {
       moveSubmit: "להעביר",
       /** A move once the year's list is in force (specs.md item 10). */
       amendment: {
-        hint: "חודש מהשנה הזו כבר אושר, ולכן רשימת החגים בתוקף. העברה היא עכשיו שינוי מוסכם בין שני הצדדים, והיא נשמרת ברשימה בדף העובד/ת.",
+        hint: (gender: Gender) =>
+          `חודש מהשנה הזו כבר אושר, ולכן רשימת החגים בתוקף. העברה היא עכשיו שינוי מוסכם בין שני הצדדים, והיא נשמרת ברשימה בדף ${workerWords(gender).roleDefinite}.`,
         agreedOn: "מתי סוכם",
         note: "הערה — מה סוכם ומדוע",
       },
@@ -2437,8 +2522,8 @@ export const he = {
        * changed without being announced is exactly the silent figure Part 5 is
        * about.
        */
-      raised: (salary: number, minimum: number) =>
-        `המשכורת הרשומה לעובד/ת היא ${formatAgorot(salary)}, ושכר המינימום שבתוקף בחודש הזה גבוה ממנה. החודש יאושר לפי ${formatAgorot(minimum)}, כי משכורת אינה יכולה להיות נמוכה משכר המינימום. אפשר לקבוע משכורת גבוהה יותר בדף העובד/ת.`,
+      raised: (salary: number, minimum: number, gender: Gender) =>
+        `המשכורת הרשומה ל${workerWords(gender).role} היא ${formatAgorot(salary)}, ושכר המינימום שבתוקף בחודש הזה גבוה ממנה. החודש יאושר לפי ${formatAgorot(minimum)}, כי משכורת אינה יכולה להיות נמוכה משכר המינימום. אפשר לקבוע משכורת גבוהה יותר בדף ${workerWords(gender).roleDefinite}.`,
       refused: {
         amount: "צריך להקליד סכום גדול מאפס.",
       },
@@ -2499,10 +2584,12 @@ export const he = {
       /** Named by the day it began, because that is the fact the family has and
        * the one that says which spell is meant. */
       since: "המחלה נרשמה מ־",
-      ask: "האם העובד/ת חזר/ה לעבודה, ובאיזה יום?",
+      ask: (gender: Gender) =>
+        `האם ${workerWords(gender).roleDefinite} ${workerWords(gender).returned} לעבודה, ובאיזה יום?`,
       returnLabel: "תאריך החזרה",
       save: "לסגור את המחלה",
-      note: "בלי תשובה אי אפשר לייצא את החודש: מחלה שנשארה פתוחה בטעות סופרת ימים למי שכבר חזרה.",
+      note: (gender: Gender) =>
+        `בלי תשובה אי אפשר לייצא את החודש: מחלה שנשארה פתוחה בטעות סופרת ימים למי שכבר ${workerWords(gender).returned}.`,
       refused: {
         beforeTheSpell: "תאריך החזרה צריך להיות אחרי היום שבו התחילה המחלה.",
       },
@@ -2781,15 +2868,16 @@ export const he = {
      */
     genderTokens: (gender: Gender) => ({
       /** The noun a label needs — `ביטוח רפואי ל{{worker_role}}`. */
-      worker_role: gender === "female" ? "עובדת" : "עובד",
+      worker_role: workerWords(gender).role,
       /** The definite noun, in `I1`'s instruction to the person preparing the
        * sheet: have the worker sign it. */
-      worker_definite: gender === "female" ? "העובדת" : "העובד",
-      /** And send *her* a copy — the same sentence's pronoun. */
+      worker_definite: workerWords(gender).roleDefinite,
+      /** And send *her* a copy — the same sentence's pronoun. This one is the
+       * sheet's alone, because no screen sends anything anywhere. */
       to_worker: gender === "female" ? "אליה" : "אליו",
       /** The verb four of the day-count labels end on: the Saturdays she
        * worked that month. */
-      worked: gender === "female" ? "שעבדה" : "שעבד",
+      worked: workerWords(gender).thatWorked,
     }),
 
     /** The sheet's identity line, `{{passport_line}}` in `A4` — the passport
@@ -2912,7 +3000,7 @@ export const he = {
        * a holiday behaving oppositely in money and in the counts is the check
        * item 5 says to hold on to. */
       workDays: (restDay: RestDay) =>
-        `ימי התקן הם כל ימי החודש חוץ מ${day(restDay).pluralDefinite}, והמשכורת מחושבת מהם — חופשה או מחלה אינן מקטינות אותם. הימים בפועל הם אותם ימים פחות הימים שלא נעבדו: יום חופשה ויום מחלה. חג אינו יורד מהם, בין שעבדה בו ובין שלא: חג שנעבד הוא יום עבודה ככל יום אחר, וחג שלא נעבד הוא יום חופש בתשלום. חוק הגנת השכר מחייב לציין בתלוש את שני המספרים.`,
+        `ימי התקן הם כל ימי החודש חוץ מ${day(restDay).pluralDefinite}, והמשכורת מחושבת מהם — חופשה או מחלה אינן מקטינות אותם. הימים בפועל הם אותם ימים פחות הימים שלא נעבדו: יום חופשה ויום מחלה. חג אינו יורד מהם, בין שנעבד ובין שלא: חג שנעבד הוא יום עבודה ככל יום אחר, וחג שלא נעבד הוא יום חופש בתשלום. חוק הגנת השכר מחייב לציין בתלוש את שני המספרים.`,
       base: (standardDays: number, restDay: RestDay) =>
         `משכורת חודשית מלאה. היא נשענת על ${standardDays} ימי התקן של החודש — כל ימי החודש חוץ מ${day(restDay).pluralDefinite} — ולכן חופשה או מחלה אינן מקטינות אותה.`,
       restEveSupplement: (restEves: number, restDay: RestDay) =>
@@ -3055,8 +3143,8 @@ export const he = {
        * the profile has nobody in it (specs.md item 16). */
       insurerMissing:
         "החודש שולם ביטוח רפואי, ואין בפרופיל דרך מי הוא משולם. בלי זה שורת הביטוח הרפואי בדף המשכורת תיגמר באמצע המשפט.",
-      recuperationRateMissing: (days: number) =>
-        `החודש הזה הוא חודש ההבראה, והעובד/ת זכאית ל־${formatDays(days)} ימי הבראה — אבל ערך יום ההבראה שהיה בתוקף בחודש הזה אינו ידוע ליישום, ולכן השורה אינה מופיעה. אפשר להוסיף אותה כשורה משלך עם הסכום הנכון.`,
+      recuperationRateMissing: (days: number, gender: Gender) =>
+        `החודש הזה הוא חודש ההבראה, ו${workerWords(gender).roleDefinite} ${workerWords(gender).entitled} ל־${formatDays(days)} ימי הבראה — אבל ערך יום ההבראה שהיה בתוקף בחודש הזה אינו ידוע ליישום, ולכן השורה אינה מופיעה. אפשר להוסיף אותה כשורה משלך עם הסכום הנכון.`,
     },
   },
 } as const;

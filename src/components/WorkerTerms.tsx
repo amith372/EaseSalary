@@ -1067,11 +1067,15 @@ export function IdentifyingNumberControl({
  */
 export function EmployedSinceControl({
   workerId,
+  gender,
   employedSince,
   firstMonth,
   onSubmit,
 }: {
   workerId: string;
+  /** The hint and the refusal both name her first month in the application,
+   * and agree with her (`he.workerWords`). */
+  gender: Gender;
   employedSince: string;
   firstMonth: YearMonth;
   onSubmit: Submit;
@@ -1081,7 +1085,7 @@ export function EmployedSinceControl({
   const { refusal, run, saving } = useAction(onSubmit);
 
   return (
-    <TermRow label={words.label} hint={words.hint}>
+    <TermRow label={words.label} hint={words.hint(gender)}>
       {(labelId) => (
         <div data-terms="employedSince" className="flex flex-wrap items-center gap-2.5">
           <DateInput value={typed} onChange={setTyped} labelledBy={labelId} />
@@ -1100,7 +1104,7 @@ export function EmployedSinceControl({
             <RefusalLine>
               <span>{words.afterFirstMonth.before}</span>
               <bdi>{monthLabel(firstMonth)}</bdi>
-              <span>{words.afterFirstMonth.after}</span>
+              <span>{words.afterFirstMonth.after(gender)}</span>
             </RefusalLine>
           ) : refusal ? (
             <Refusal reason={refusal} />
@@ -1126,10 +1130,14 @@ const numberWords = {
  */
 export function RestEveSupplementControl({
   workerId,
+  gender,
   agorot,
   onSubmit,
 }: {
   workerId: string;
+  /** The hint asks whether she worked that evening, and agrees with her
+   * (`he.workerWords`). */
+  gender: Gender;
   agorot: number;
   onSubmit: Submit;
 }) {
@@ -1139,7 +1147,7 @@ export function RestEveSupplementControl({
   const { refusal, run, saving } = useAction(onSubmit);
 
   return (
-    <TermRow label={words.label} hint={words.hint}>
+    <TermRow label={words.label} hint={words.hint(gender)}>
       {(labelId) => (
         <div data-terms="restEveSupplement" className="flex flex-wrap items-center gap-2.5">
           <input

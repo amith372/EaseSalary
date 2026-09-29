@@ -415,7 +415,7 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
     await switchToTestWorker(page);
 
     await expect(page.locator("[data-raised]")).toContainText(
-      he.beforeExport.wage.raised(SEEDED_SALARY, WAGE_IN_FORCE),
+      he.beforeExport.wage.raised(SEEDED_SALARY, WAGE_IN_FORCE, "female"),
     );
     await answerEverything(page, AUGUST_AGREES);
     await page.locator("[data-finish]").click();

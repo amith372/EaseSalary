@@ -36,6 +36,7 @@ import type {
 } from "@/lib/engine/beforeExport";
 import { exportQuestionKeys } from "@/lib/engine/beforeExport";
 import type { IncomeTaxSetting } from "@/lib/engine/types";
+import type { Gender } from "@/lib/engine/types";
 import type { MonthBeforeExport } from "@/components/BeforeExportScreen";
 import { he } from "@/lib/i18n/he";
 import {
@@ -60,12 +61,16 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  */
 export function MonthConfirmation({
   workerId,
+  gender,
   restDay,
   shown,
   failure,
   sourceUrl,
 }: {
   workerId: string;
+  /** The raised-wage note and the open-spell question both name her, and agree
+   * with her rather than with a default (`he.workerWords`). */
+  gender: Gender;
   restDay: RestDay;
   shown: MonthBeforeExport;
   failure: ScrapeFailureKind | null;
@@ -207,7 +212,7 @@ export function MonthConfirmation({
             dir="auto"
             className="text-[14px] leading-[1.55] font-light text-clay-deep text-pretty"
           >
-            {words.wage.raised(baseMonthlySalaryAgorot, typedWage)}
+            {words.wage.raised(baseMonthlySalaryAgorot, typedWage, gender)}
           </p>
         ) : null}
 
@@ -232,6 +237,7 @@ export function MonthConfirmation({
       {shown.openSpell !== null ? (
         <OpenSpellBlock
           workerId={workerId}
+          gender={gender}
           spell={shown.openSpell}
           onRun={run}
           refusal={refusal}
@@ -550,11 +556,13 @@ function refusalText(reason: BeforeExportRefusal): string {
  */
 function OpenSpellBlock({
   workerId,
+  gender,
   spell,
   onRun,
   refusal,
 }: {
   workerId: string;
+  gender: Gender;
   spell: { spanId: string; from: IsoDate };
   onRun: (action: () => Promise<BeforeExportResult>) => void;
   refusal: BeforeExportRefusal | null;
@@ -572,7 +580,7 @@ function OpenSpellBlock({
         <span dir="auto">{words.since}</span>
         <Bidi noTranslate>{fullDayLabel(spell.from)}</Bidi>
         <span>. </span>
-        <span dir="auto">{words.ask}</span>
+        <span dir="auto">{words.ask(gender)}</span>
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1">
@@ -611,7 +619,7 @@ function OpenSpellBlock({
         dir="auto"
         className="text-[14px] leading-[1.55] font-light text-ink-mute text-pretty"
       >
-        {words.note}
+        {words.note(gender)}
       </p>
     </Card>
   );

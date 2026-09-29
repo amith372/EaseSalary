@@ -8,6 +8,7 @@ every file; this holds the look, and the places the code departs from the canvas
 - Tokens (colour, radius, fonts): `src/app/globals.css`. Add or change tokens there, never inline.
 - Type: Assistant for UI; Gveret Levin only for the band's hand-written slogan.
 - RTL, bidi isolation, `dir="auto"`, `translate="no"`: CLAUDE.md "Code conventions".
+- **The artboards are lettered in the feminine throughout; the screens are not.** Copy read off the canvas is inflected through `workerWords(gender)` before it is written down (CLAUDE.md "Code conventions"), so an artboard's `בדף שלה` is not a licence to ship it.
 - No meaningful text inside an image or CSS `content:`; icons are inline `<svg aria-hidden>`.
 - A visual change is made on the canvas first, or written down as a departure below.
 - Out of scope: redesigns, "bolder", "overdrive", "delight".

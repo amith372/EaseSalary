@@ -93,6 +93,7 @@ async function filesOf() {
           id: worker.id,
           name: worker.name,
           firstName: worker.firstName,
+          gender: worker.gender,
         },
         insurer: "סוכנות ביטוח לדוגמה",
         employment: { employedSince: worker.employedSince },
