@@ -122,10 +122,6 @@
   --color-icon-star: #9077d4;
   --color-icon-star-2: #b7a4e6;
   --color-icon-home: #5c87bc;
-  --color-icon-calendar: #b08e63;
-  --color-icon-calendar-2: #f1e2cc;
-  --color-icon-calc: #c9853f;
-  --color-icon-calc-2: #fbe6c8;
   /* Darkened from #c99457 on 2026-09-16: against the white bar that measured
      2.56:1, the only one of the five tab icons under 3:1, and it read as a
      fainter icon rather than a different one. This is 3.36:1. */

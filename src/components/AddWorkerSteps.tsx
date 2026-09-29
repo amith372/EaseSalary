@@ -103,7 +103,7 @@ export function Progress({ step }: { step: number }) {
   );
 }
 
-export type HeadingRef = RefObject<HTMLHeadingElement | null>;
+type HeadingRef = RefObject<HTMLHeadingElement | null>;
 
 /** `tabIndex={-1}` so the wizard can move focus here. `outline-none` because
  * the browser's own ring still drew round the title on arrival, where it read

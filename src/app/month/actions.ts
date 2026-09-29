@@ -216,7 +216,7 @@ export type MonthActionRefusal =
    * figure the user did not type. */
   | "noGross";
 
-export type MonthActionResult =
+type MonthActionResult =
   | { ok: true }
   | { ok: false; reason: MonthActionRefusal };
 

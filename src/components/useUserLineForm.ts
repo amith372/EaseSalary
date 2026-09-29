@@ -35,7 +35,7 @@ import { formatAgorot } from "@/lib/money";
 /** `null` when nothing is open, `"new"` for a line being added, and a line's id
  * when that line is being corrected — one panel at a time, so two half-filled
  * forms cannot both be on screen claiming the same line. */
-export type OpenPanel = "new" | string | null;
+type OpenPanel = "new" | string | null;
 
 export function useUserLineForm<Reason>({
   send,

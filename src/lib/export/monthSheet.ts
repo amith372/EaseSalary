@@ -56,7 +56,7 @@ import type { MonthLine, MonthResult, SheetColumn } from "@/lib/types";
 /** The identity block, and the two labels that name the worker inside a
  * sentence. Every one of these is a placeholder in the template, because no
  * worker's details may survive in it — including inside a sentence (Part 3). */
-export interface MonthSheetIdentity {
+interface MonthSheetIdentity {
   /** "אוגוסט 2025" — loose text, as the sheet writes every date (Part 5). */
   monthYear: string;
   workerName: string;

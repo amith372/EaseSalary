@@ -5,7 +5,7 @@ import type { LegalLink } from "@/lib/links";
 import type { YearMonth } from "@/lib/types";
 
 /** One refusal as the card draws it. */
-export interface RefusedReason {
+interface RefusedReason {
   /** The Hebrew sentence the engine refused with, which says why and not only
    * what (`validate.ts`). */
   message: string;

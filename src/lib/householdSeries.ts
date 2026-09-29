@@ -14,7 +14,7 @@ import { WORKER_COOKIE } from "@/lib/workerCookie";
 import type { YearMonth } from "@/lib/types";
 
 /** One worker and her months as the replay came to them. */
-export interface WorkerInSeries {
+interface WorkerInSeries {
   profile: WorkerProfile;
   /** Empty where her replay refused: a month the engine declined to value stops
    * every month after it (item 13), and there is no prefix worth handing over —

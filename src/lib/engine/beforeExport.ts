@@ -134,7 +134,7 @@ export type ExportQuestionDetail =
    * advance, which has no kinds. */
   | { shape: "money"; agorot: number; kind?: ThirdPartyKind };
 
-export interface ExportQuestionCounts {
+interface ExportQuestionCounts {
   /** Days, where the question is about days on the calendar. Fractional where a
    * day was taken in part (specs.md item 10). */
   days?: number;

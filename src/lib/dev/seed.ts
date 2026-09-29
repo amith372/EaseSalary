@@ -692,7 +692,7 @@ export const refusedNoDateSeed = {
  * in a browser on a much later real date it *will* run the balance down, which
  * is the drift the header warns about and the reason this is not in `devSeed`.
  */
-export const OPEN_SPELL_FROM = "2026-09-14";
+const OPEN_SPELL_FROM = "2026-09-14";
 
 export const openSpellSeed = {
   ...devSeed,

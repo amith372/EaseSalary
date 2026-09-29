@@ -27,7 +27,7 @@ import type { IsoDate } from "@/lib/types";
 
 /** The chosen day, as the store holds it — which span it belongs to, so the
  * screen can address it, and how much of the day it is. */
-export interface HolidayChoice {
+interface HolidayChoice {
   spanId: string;
   fraction: number;
 }

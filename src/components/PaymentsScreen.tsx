@@ -53,7 +53,7 @@ import type { IsoDate, OverrideCandidate, Worker, YearMonth } from "@/lib/types"
 
 /** One month as this screen needs it: the facts it holds, the lines the engine
  * drew for it, and the overrides it is holding for rows it is not drawing. */
-export interface MonthPayments {
+interface MonthPayments {
   /** Without the spans, which belong to the worker rather than to a month. */
   record: MonthRecord;
   /**

@@ -12,7 +12,7 @@ import type { ThirdPartyKind, ThirdPartyPayment } from "./types";
  */
 
 /** The three yearly fees item 15 names, in its order. */
-export type UpcomingFee = Extract<ThirdPartyKind, "visaExtensionFee" | "licenceFee" | "agencyFee">;
+type UpcomingFee = Extract<ThirdPartyKind, "visaExtensionFee" | "licenceFee" | "agencyFee">;
 
 export type UpcomingEntry =
   | {

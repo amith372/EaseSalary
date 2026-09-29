@@ -31,9 +31,8 @@ import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
  * is the whole of its job. The in-memory implementation below and the Postgres
  * one stand *beside* each other, so the screens and the tests need no auth,
  * row-level security or schema in order to be right. The vendor is deliberately not written down even
- * here: `docs/plan-calculation-engine.md` verifies the rule by grepping this
- * directory for the name, and a comment explaining the rule would be the one hit
- * that makes the grep useless.
+ * here, because the rule is checked by grepping this directory for the name: a
+ * comment explaining the rule would be the one hit that makes the grep useless.
  *
  * **It stores facts and never results.** `specs.md` Part 3 requires one
  * calculation path serving both the preview and the export, and a stored figure

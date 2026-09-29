@@ -179,7 +179,7 @@ function bracketsUnder(
  * stored history to compare a new year's brackets against, because a new year's
  * brackets are precisely the thing that has never been seen before.
  */
-export function checkBracketsPlausible(
+function checkBracketsPlausible(
   brackets: TaxYearBrackets["brackets"],
 ): Scraped<TaxYearBrackets["brackets"]> {
   if (brackets.length < 2) {
@@ -329,7 +329,7 @@ export function parseCreditPointPage(
  * A page whose statement could not be read is still a page the help screen can
  * answer out of, so a failed reading does not discard the corpus.
  */
-export interface TaxBracketsFetch {
+interface TaxBracketsFetch {
   brackets: Scraped<TaxYearBrackets>;
   text: Scraped<CachedPage> | null;
 }

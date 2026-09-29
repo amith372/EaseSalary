@@ -65,7 +65,7 @@ export interface AlertCard {
     | null;
 }
 
-export interface HandledRow {
+interface HandledRow {
   id: string;
   workerName: string | null;
   title: Said;

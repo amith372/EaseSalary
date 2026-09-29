@@ -35,7 +35,7 @@ import type { YearMonth } from "@/lib/types";
  */
 
 /** One month as this screen lists it: what it was, and what it came to. */
-export interface ReportMonth {
+interface ReportMonth {
   month: YearMonth;
   grossAgorot: number | null;
   /** The `נטו` — the `ברוטו` less what was withheld from it, which is the

@@ -106,26 +106,10 @@ const TWO_TONE = {
     detail: "M6.4 9.3h3.2v5.3H6.4z",
     detailClass: "fill-surface",
   },
-  calendar: {
-    shape:
-      "M2.4 3.4h11.2a.9.9 0 01.9.9v9a.9.9 0 01-.9.9H2.4a.9.9 0 01-.9-.9v-9a.9.9 0 01.9-.9z",
-    shapeClass: "fill-icon-calendar",
-    detail:
-      "M1.5 6.6h13v1.4h-13zM4.4 1.2h1.4v3.2H4.4zM10.2 1.2h1.4v3.2h-1.4zM3.6 9.4h2v1.9h-2zM7 9.4h2v1.9H7z",
-    detailClass: "fill-icon-calendar-2",
-  },
-  calc: {
-    shape:
-      "M3.6 1.8h8.8a1.2 1.2 0 011.2 1.2v10a1.2 1.2 0 01-1.2 1.2H3.6a1.2 1.2 0 01-1.2-1.2V3a1.2 1.2 0 011.2-1.2z",
-    shapeClass: "fill-icon-calc",
-    detail:
-      "M4.8 3.6h6.4v2.2H4.8zM4.8 7.4h1.6v1.5H4.8zM7.2 7.4h1.6v1.5H7.2zM9.6 7.4h1.6v1.5H9.6zM4.8 10.2h1.6v1.6H4.8zM7.2 10.2h1.6v1.6H7.2zM9.6 10.2h1.6v3.4H9.6z",
-    detailClass: "fill-icon-calc-2",
-  },
-  // The four below belong to the top bar's tabs, which is why `home`,
-  // `calendar` and `calc` above are not enough: a tab is named by its screen,
-  // and the shape beside the name is what is recognised before the name is
-  // read. Each is aria-hidden — the label is the tab.
+  // The four below belong to the top bar's tabs, which is why `home` above is
+  // not enough: a tab is named by its screen, and the shape beside the name is
+  // what is recognised before the name is read. Each is aria-hidden — the
+  // label is the tab.
   people: {
     shape:
       "M5.9 1.9a2.6 2.6 0 110 5.2 2.6 2.6 0 010-5.2zM1.3 14.4c0-2.6 2.1-4.5 4.6-4.5s4.6 1.9 4.6 4.5z",

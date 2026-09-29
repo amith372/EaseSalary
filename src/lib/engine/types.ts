@@ -660,7 +660,7 @@ export interface UserLine {
  * Filtering at the drawing end instead would leave the sheet, the payslip and
  * `notes.ts` each to remember to do it.
  */
-export function standingLinesFor(
+function standingLinesFor(
   lines: readonly UserLine[],
   month: YearMonth,
 ): UserLine[] {

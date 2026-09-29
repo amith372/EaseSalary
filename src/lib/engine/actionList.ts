@@ -44,7 +44,7 @@ import type { MonthSpan } from "./types";
  * needs and nothing in Hebrew, so the opening screen and `/alerts` phrase one
  * list and cannot disagree about what is on it.
  */
-export type ActionList = "blockage" | "warning";
+type ActionList = "blockage" | "warning";
 
 /** The three documents of item 28, and the medical insurance item 27 names
  * beside them. */

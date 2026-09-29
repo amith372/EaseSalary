@@ -19,8 +19,8 @@ every file; this holds the look, and the places the code departs from the canvas
 decision already taken against the built screen.** Every departure below is the
 user's, and each carries the reason it was made — a departure with no reason
 beside it is indistinguishable from a screen nobody finished. `דף הבית v4` is
-canonical for the home screen and supersedes the v3 departures recorded in
-`docs/plan-calculation-engine.md` Step 0 (f) and (g).
+canonical for the home screen, and the departures that were weighed against the
+superseded `v3 לוח במרכז` are not departures any more.
 
 ### The opening screen
 

@@ -168,7 +168,7 @@ const restDayAnswers = [
  * about the request was wrong: the change is allowed and the application has a
  * question to ask before it makes it.
  */
-export type SetRestDayResult =
+type SetRestDayResult =
   | { ok: true }
   | { ok: false; reason: ProfileActionRefusal }
   | { ok: false; reason: "stranded"; stranded: StrandedFreeRestDay[] };

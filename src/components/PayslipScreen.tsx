@@ -51,7 +51,7 @@ import type {
 /** One month, ready to read. The counts come from `exportQuestions`, which is
  * what the pre-export screen already counts them with — so the two screens
  * cannot disagree about how many holidays a month had. */
-export interface PayslipMonth {
+interface PayslipMonth {
   month: YearMonth;
   restDay: RestDay;
   result: MonthResult;

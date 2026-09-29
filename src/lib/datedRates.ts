@@ -98,7 +98,7 @@ export interface DatedRate {
  */
 export const rateSources = ["familyWorkbook", "userConfirmed"] as const;
 
-export type RateSourceName = (typeof rateSources)[number];
+type RateSourceName = (typeof rateSources)[number];
 
 /**
  * What may be *written* as a source: the address a figure was fetched from, or
@@ -121,7 +121,7 @@ const CONFIRMED_BY_HAND = "אושר על ידי המשתמש/ת";
 
 /** A stored source as a screen draws it: an address it links, or a name it has
  * a sentence for. */
-export type DrawnRateSource =
+type DrawnRateSource =
   | { kind: "address"; url: string }
   | { kind: "named"; name: RateSourceName };
 

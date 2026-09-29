@@ -137,7 +137,7 @@ export function handledList(
 const GATHERED: readonly ActionEntry["key"][] = ["monthUnconfirmed", "monthNotExported"];
 
 /** One card and every entry drawn as it (item 27). */
-export interface EntryGroup {
+interface EntryGroup {
   /** The entry the card is phrased from, which is the first of them. */
   lead: ActionEntry;
   /** The entries behind the card, the lead included, in item 27's order. */

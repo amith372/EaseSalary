@@ -56,10 +56,10 @@ const sick = (from: string, to: string): ClosedSpan => ({
 
 /**
  * The opening sick balance. 43.5 days against a ceiling of ninety is the
- * family's own standing position, recorded in `docs/plan-calculation-engine.md`
- * Step 4. It is here so the balance floor of item 8 never fires in a test about
- * the tiers — a refusal would hide the figure the test is checking — and the
- * floor has its own tests in `balances.test.ts`.
+ * family's own standing position, with no day ever taken. It is here so the
+ * balance floor of item 8 never fires in a test about the tiers — a refusal
+ * would hide the figure the test is checking — and the floor has its own tests
+ * in `balances.test.ts`.
  */
 const OPENING_SICK_DAYS = 43.5;
 
