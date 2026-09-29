@@ -36,14 +36,22 @@ const leafSide = "M0 0C9.7 -16.8 33.6 -17.6 54.1 0C33.6 17.6 9.7 16.8 0 0Z";
  * five it carries and in what colour — so the placements live here and never in
  * a scene. Repeated per scene they drifted by a degree between July and October
  * for no reason anybody drew.
+ *
+ * **Keyed and not a list**, so a scene names the leaf it is colouring. A scene
+ * that passed its fills positionally would recolour every leaf the day one is
+ * added or the order changes, and nothing would fail: the arrays would still be
+ * the right shape and the band would simply come out wrong, in a season nobody
+ * is looking at that month.
  */
-const leaves = [
-  { at: "translate(62 78) rotate(-113.4)", d: leafLong, length: 65.4 },
-  { at: "translate(98 100) rotate(-74.7)", d: leafShort, length: 45.6 },
-  { at: "translate(58 136) rotate(-149)", d: leafMid, length: 58.3 },
-  { at: "translate(72 166) rotate(-45)", d: leafLower, length: 65.1 },
-  { at: "translate(120 132) rotate(4.2)", d: leafSide, length: 54.1 },
-] as const;
+const leaves = {
+  long: { at: "translate(62 78) rotate(-113.4)", d: leafLong, length: 65.4 },
+  short: { at: "translate(98 100) rotate(-74.7)", d: leafShort, length: 45.6 },
+  mid: { at: "translate(58 136) rotate(-149)", d: leafMid, length: 58.3 },
+  lower: { at: "translate(72 166) rotate(-45)", d: leafLower, length: 65.1 },
+  side: { at: "translate(120 132) rotate(4.2)", d: leafSide, length: 54.1 },
+} as const;
+
+type LeafName = keyof typeof leaves;
 
 /** The branch: one stem out of the bottom corner and two that fork off it. */
 const branch =
@@ -94,29 +102,26 @@ function Vein({ length }: { length: number }) {
 }
 
 /**
- * The leaves a scene carries: one fill per placement in `leaves`, and `null`
- * where that scene's branch does not hold that leaf — winter and spring drop the
- * short one over the fork. `veins` is autumn's alone.
+ * The leaves a scene carries, each named and given its fill. A leaf the scene's
+ * branch does not hold is simply left out — winter and spring name no `short`,
+ * the one over the fork. `veins` is autumn's alone.
  */
 function Leaves({
   fills,
   veins = false,
 }: {
-  fills: readonly (string | null)[];
+  fills: Partial<Record<LeafName, string>>;
   veins?: boolean;
 }) {
   return (
     <>
-      {leaves.map(({ at, d, length }, index) => {
-        const fill = fills[index];
-        if (fill === null) return null;
-        return veins ? (
-          <g key={at} transform={at}>
+      {Object.entries(leaves).map(([name, { at, d, length }]) => {
+        const fill = fills[name as LeafName];
+        return fill === undefined ? null : (
+          <g key={name} transform={at}>
             <path d={d} className={fill} />
-            <Vein length={length} />
+            {veins ? <Vein length={length} /> : null}
           </g>
-        ) : (
-          <path key={at} transform={at} d={d} className={fill} />
         );
       })}
     </>
@@ -130,13 +135,13 @@ function SummerScene() {
       <Sun />
       <Branch width={2.6} />
       <Leaves
-        fills={[
-          "fill-band-leaf",
-          "fill-band-leaf-light",
-          "fill-band-leaf-deep",
-          "fill-band-leaf",
-          "fill-band-leaf-light",
-        ]}
+        fills={{
+          long: "fill-band-leaf",
+          short: "fill-band-leaf-light",
+          mid: "fill-band-leaf-deep",
+          lower: "fill-band-leaf",
+          side: "fill-band-leaf-light",
+        }}
       />
     </Frame>
   );
@@ -153,13 +158,13 @@ function AutumnScene() {
       <Branch width={3} />
       <Leaves
         veins
-        fills={[
-          "fill-band-leaf-deep",
-          "fill-band-accent-deep",
-          "fill-band-leaf",
-          "fill-band-leaf-light",
-          "fill-band-leaf",
-        ]}
+        fills={{
+          long: "fill-band-leaf-deep",
+          short: "fill-band-accent-deep",
+          mid: "fill-band-leaf",
+          lower: "fill-band-leaf-light",
+          side: "fill-band-leaf",
+        }}
       />
       {/* Down, and past the sun rather than over it. */}
       <path
@@ -199,13 +204,12 @@ function WinterScene() {
       />
       <Branch width={3.4} />
       <Leaves
-        fills={[
-          "fill-band-leaf",
-          null,
-          "fill-band-leaf-deep",
-          "fill-band-leaf",
-          "fill-band-leaf-light",
-        ]}
+        fills={{
+          long: "fill-band-leaf",
+          mid: "fill-band-leaf-deep",
+          lower: "fill-band-leaf",
+          side: "fill-band-leaf-light",
+        }}
       />
 
       {/* The stalks first, so every berry sits on the end of one. */}
@@ -286,13 +290,12 @@ function SpringScene() {
       <Sun />
       <Branch width={3.2} />
       <Leaves
-        fills={[
-          "fill-band-leaf",
-          null,
-          "fill-band-leaf-deep",
-          "fill-band-leaf-light",
-          "fill-band-leaf",
-        ]}
+        fills={{
+          long: "fill-band-leaf",
+          mid: "fill-band-leaf-deep",
+          lower: "fill-band-leaf-light",
+          side: "fill-band-leaf",
+        }}
       />
 
       {/* The buds. Each grows off a stem the branch already has and sits on the

@@ -56,13 +56,13 @@ const DAYS_ONCE_CLOSED = 3;
 
 const RUN = Date.now().toString(36);
 
-/** The `open-spell` seed, in a store of this test's own — `seedOf` takes the
- * longest seed name the household's name begins with (`src/lib/store.ts`). */
+/** The `openSpell` seed, in a store of this test's own — `seedOf` reads the
+ * household's name up to its first hyphen (`src/lib/store.ts`). */
 async function useHousehold(page: Page, label: string): Promise<void> {
   await page.context().addCookies([
     {
       name: "household",
-      value: `open-spell-e2e-${RUN}-${label}`,
+      value: `openSpell-e2e-${RUN}-${label}`,
       url: "http://localhost:3000",
     },
   ]);

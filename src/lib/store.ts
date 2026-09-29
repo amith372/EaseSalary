@@ -70,15 +70,15 @@ const seeds = {
   refused: refusedSeed,
   /** The same with the first worker refused too — the household with nothing
    * left to state, which the list still has to render (`seed.ts`). */
-  "refused-both": bothRefusedSeed,
+  refusedBoth: bothRefusedSeed,
   /** One worker, refused, in a household that still has room: the refusal and
    * the add-worker card side by side. */
-  "refused-alone": refusedAloneSeed,
+  refusedAlone: refusedAloneSeed,
   /** A refusal carrying no date, where the month is the whole locator. */
-  "refused-no-date": refusedNoDateSeed,
+  refusedNoDate: refusedNoDateSeed,
   /** The demo with an open spell of sickness, which blocks the export until it
    * is closed — the one state the close-spell panel exists for (`seed.ts`). */
-  "open-spell": openSpellSeed,
+  openSpell: openSpellSeed,
   /**
    * A household with nothing in it, which is what every new account is.
    *
@@ -103,20 +103,14 @@ const STORES = Symbol.for("easesalary.dev.repositories");
 
 type Global = typeof globalThis & { [STORES]?: Map<string, SalaryRepository> };
 
-/** The seed names, longest first. A seed name may itself be the start of a
- * longer one — `refused` prefixes `refused-both` — so the longest match is the
- * answer and the order is what makes `seedOf` a single pass. */
-const SEED_NAMES = (Object.keys(seeds) as SeedName[]).sort(
-  (a, b) => b.length - a.length,
-);
-
 /**
- * Which seed a household name is built from — **the longest seed name it begins
- * with, at a hyphen boundary** — and the demo seed for a name that matches none.
+ * Which seed a household name is built from — everything before the first
+ * hyphen — and the demo seed for a name that matches none.
  *
- * Matching the longest is what lets a seed name be words rather than one run
- * together: `refused-both-e2e-3` is the two-worker refusal and not `refused`
- * with a suffix on it.
+ * **A seed name is one word**, `refusedBoth` and not `refused-both`, because
+ * the hyphen is what separates the seed from the suffix. Spelled with one, a
+ * seed name would be a prefix of the suffix grammar itself and the lookup
+ * would need a longest-match rule to tell `refused` from `refused-both`.
  *
  * **The suffix is what gives a run its own store.** `known-e2e-7` is the known
  * case seeded fresh, separate from the `known` the user is clicking at, which
@@ -127,9 +121,8 @@ const SEED_NAMES = (Object.keys(seeds) as SeedName[]).sort(
  * conservative answer to a name it does not know is the ordinary household.
  */
 function seedOf(name: string): { seed: (typeof seeds)[SeedName]; key: string } {
-  const known =
-    SEED_NAMES.find((seed) => name === seed || name.startsWith(`${seed}-`)) ??
-    DEFAULT_SEED;
+  const head = name.split("-")[0];
+  const known = head in seeds ? (head as SeedName) : DEFAULT_SEED;
   // Keyed by the whole name and not by the seed, so two names that share a seed
   // are two stores. Keyed by the *given* name, so an unrecognised one gets its
   // own demo household rather than sharing the default's.

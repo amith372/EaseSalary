@@ -221,14 +221,14 @@ test.describe("the opening screen", () => {
     // Stepped back only, so the walk is one direction and each month is reached
     // from the one before it.
     const months = [
-      [{ year: 2026, month: 4 }, "spring"],
-      [{ year: 2025, month: 12 }, "winter"],
-      [{ year: 2025, month: 11 }, "autumn"],
-    ] as const;
+      { year: 2026, month: 4, season: "spring" },
+      { year: 2025, month: 12, season: "winter" },
+      { year: 2025, month: 11, season: "autumn" },
+    ];
 
-    for (const [month, season] of months) {
+    for (const month of months) {
       await stepBackTo(page, month);
-      await expect(band(page)).toHaveAttribute("data-season", season);
+      await expect(band(page)).toHaveAttribute("data-season", month.season);
     }
   });
 

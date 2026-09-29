@@ -132,13 +132,6 @@ export function WorkersList({
             country,
             baseMonthlySalaryAgorot,
             sharedWith,
-            // **One question, and the card answers it in two places**: a refused
-            // worker loses the status chip and the whole four-figure grid,
-            // because both are replayed and a refusal is the replay declining to
-            // value her month (`DESIGN.md`). The two slots are far apart in the
-            // card and each keeps its own branch; what must not fork is the
-            // reason, which is this field and not a flag derived from it.
-            refused,
           } = summary;
           return (
             <Card
@@ -188,7 +181,7 @@ export function WorkersList({
                     replay does not have — and "הכל מעודכן" beside a card
                     saying the month could not be valued would be the plainest
                     kind of wrong answer. */}
-                {refused === null ? (
+                {summary.refused === null ? (
                   <span
                     data-row="worker-status"
                     data-waiting={summary.waitingMonth === null ? "no" : "yes"}
@@ -215,7 +208,7 @@ export function WorkersList({
                   true; it goes with the grid because a grid of one cell is not
                   the grid, and the card says what this worker's row is about.
                   An `h2`: the list's own `h1` stands above it. */}
-              {refused === null ? (
+              {summary.refused === null ? (
                 /* A ruled grid: each cell draws its own top and start rules and
                    is pulled back over the frame by a pixel, so the frame and the
                    rules between cells are one hairline. Two columns even on a phone:
@@ -247,7 +240,7 @@ export function WorkersList({
                    refusal on it. Her own page is one link below this card and
                    the way home works correctly from there, because that address
                    makes her the chosen worker (`WorkerScope`). */
-                <RefusalCard refused={refused} tone="compact" />
+                <RefusalCard refused={summary.refused} tone="compact" />
               )}
 
               <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 border-t border-line pt-4.5 sm:pt-5">
