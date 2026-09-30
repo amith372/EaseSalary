@@ -104,7 +104,7 @@ export interface LineDraft {
  * typed. Taken verbatim instead, an override typed over the sickness deduction
  * would turn a deduction into a payment while looking like an ordinary
  * correction, and `parseShekels` refuses a minus precisely so that the user
- * never has the option of disagreeing with the label beside her figure.
+ * never has the option of disagreeing with the label beside their figure.
  */
 export function toLine(
   draft: LineDraft,

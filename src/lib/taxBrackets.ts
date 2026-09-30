@@ -67,7 +67,7 @@ const PAST_BRACKETS_PAGE =
  * **Two years, and both are tables for income מיגיעה אישית** — income from a
  * person's own work, which a salary is. The same pages print a second table for
  * income that is not, whose first bracket is 31% rather than 10%, and reading
- * that one would tax a caregiver at three times the right rate on her first
+ * that one would tax a caregiver at three times the right rate on their first
  * shekel. It is the trap this source carries, and it is why the parser finds
  * its table by the heading above it rather than by taking the first one on the
  * page.

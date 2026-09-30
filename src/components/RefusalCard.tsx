@@ -12,7 +12,7 @@ import type { RefusedMonth } from "@/lib/refusalView";
  * draws it.** The engine refuses a month it cannot value correctly rather than
  * valuing it wrongly in silence, and until this card existed that sentence —
  * written for the user, with the dates it concerns and the rule behind it —
- * reached her as a stack trace.
+ * reached them as a stack trace.
  *
  * **Two refusals in one month are two reasons and not two cards**: they are one
  * month's state, and a screen stacking cards would read as two separate
@@ -21,7 +21,7 @@ import type { RefusedMonth } from "@/lib/refusalView";
  * **It names its month.** One refused month stops the replay of every month
  * after it (item 13), so the screen catching the refusal usually asked about a
  * different month than the one at fault — which for twenty years of months is
- * the difference between a sentence she can act on and one she cannot.
+ * the difference between a sentence they can act on and one they cannot.
  *
  * **`tone="compact"` is the same card with its prose dropped**, for the two
  * screens that list both workers rather than explain one month: the reason, its

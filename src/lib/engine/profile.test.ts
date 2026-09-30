@@ -247,7 +247,7 @@ describe("the opening position (specs.md item 6)", () => {
 describe("a term changed on the profile reaches the months that follow it (Part 5)", () => {
   it("re-snapshots every month that is still a draft", () => {
     // Part 5: confirming a month is "the moment its figures stop moving with
-    // the profile", so a month nobody has confirmed is a draft and follows her.
+    // the profile", so a month nobody has confirmed is a draft and follows them.
     const before = [facts(1, TERMS), facts(2, TERMS)];
     expect(before.every((month) => month.terms.restDay === SATURDAY)).toBe(true);
 
@@ -740,7 +740,7 @@ describe("the income-tax setting the server accepts (specs.md item 17)", () => {
     });
   });
 
-  /** The two that cannot be meant. A rate above the whole salary would pay her
+  /** The two that cannot be meant. A rate above the whole salary would pay them
    * nothing while looking like an ordinary withholding. */
   it("refuses a negative rate, a rate above 100, and an empty one", () => {
     for (const text of ["-1", "101", "", "  ", "abc"]) {
@@ -865,7 +865,7 @@ describe("reviewNewWorker", () => {
   });
 
   it("refuses a first month the start date does not offer", () => {
-    // July is two months before the month she is added in.
+    // July is two months before the month they are added in.
     expect(reviewNewWorker(draft({ firstMonth: "2026-07" }), MINIMUM, TODAY)).toEqual({
       ok: false,
       reason: "firstMonth",
@@ -1124,7 +1124,7 @@ describe("reviewNewWorker", () => {
     });
   });
 
-  // Item 6: from 1 January 2020 to one year after the day she was added.
+  // Item 6: from 1 January 2020 to one year after the day they were added.
   // TODAY is 2026-09-16, so the last accepted day is 2027-09-16.
   it.each([
     ["2020-01-01", true],

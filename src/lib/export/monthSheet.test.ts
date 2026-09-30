@@ -52,7 +52,7 @@ function knownWorker(): WorkerTerms {
       sickDays: 0,
       vacationUsedThisYear: 0,
       holidayUsedThisYear: 0,
-      // July 2025's payment was made before August, her first month here, so
+      // July 2025's payment was made before August, their first month here, so
       // nothing is carried into Part 4's month (item 15).
       recuperationPaidIn: { year: 2025, month: 7 },
       advances: [{ number: 1, principalAgorot: 1000000, repaidAgorot: 0 }],
@@ -87,7 +87,7 @@ function inputFor(
       insurer: "סוכנות ביטוח לדוגמה",
     },
     // Part 4's two holidays, which is what the year's entitlement is drawn
-    // against whether or not she worked them (item 10).
+    // against whether or not they worked them (item 10).
     holidayDaysUsed: 2,
     freeRestDays: ["16 באוגוסט"],
     // Hanna rests on Saturday, so these are the words the template already
@@ -223,7 +223,7 @@ describe("the August 2025 month tab, filled (specs.md Part 4, criterion 1)", () 
   });
 
   it("draws the entitlement against the holidays taken off, not the ones worked", async () => {
-    // The distinction the template's own two headings make: G1 counts what she
+    // The distinction the template's own two headings make: G1 counts what they
     // worked and H1 counts what the entitlement was drawn against, and the two
     // are different counts — a part day draws its own proportion, and a holiday
     // inside a spell of sickness draws nothing at all.
@@ -291,7 +291,7 @@ describe("the August 2025 month tab, filled (specs.md Part 4, criterion 1)", () 
     expect(numberAt(sheet, "C33")).toBe(26); // standard days, Part 4
     expect(numberAt(sheet, "C34")).toBe(26); // actual days, Part 4
     expect(numberAt(sheet, "C35")).toBe(0); // vacation used
-    // Item 7: the monthly accrual is the yearly quota over twelve, and her
+    // Item 7: the monthly accrual is the yearly quota over twelve, and them
     // second year's quota is fourteen days. Never 1.17 — Part 5 says the
     // workbook's rounding here is not to be copied.
     expect(numberAt(sheet, "C36")).toBeCloseTo(14 / 12, 10);

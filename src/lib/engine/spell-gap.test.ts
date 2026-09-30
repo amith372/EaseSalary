@@ -16,7 +16,7 @@ import type { YearMonth } from "@/lib/types";
 
 /**
  * **A spell ends on the first *working* day no sickness was reported**
- * (`specs.md` item 8), so days she owed no attendance sit inside the period
+ * (`specs.md` item 8), so days they owed no attendance sit inside the period
  * rather than breaking it.
  *
  * **Where the rule comes from.** Kol Zchut's *חישוב דמי מחלה לעובד במשכורת
@@ -127,7 +127,7 @@ function restDayPay(spans: ClosedSpan[]) {
 
 describe("the weekly rest day sits inside the period, not across its break", () => {
   // Friday the 8th and Sunday the 10th reported, Saturday the 9th left alone —
-  // which is how a family records an illness, by marking the days she was
+  // which is how a family records an illness, by marking the days they were
   // absent from work.
   const marked = [sick("2025-08-08"), sick("2025-08-10")];
 
@@ -159,8 +159,8 @@ describe("the weekly rest day sits inside the period, not across its break", () 
    * wrong when the count is read off the marks instead of off the spell.
    *
    * August 2025 holds five Saturdays — 2, 9, 16, 23, 30 — and a rest day is
-   * paid unless she was off it (item 5), so four are paid here and the ninth
-   * is not. Reading the 9th as a day she attended would pay it at the rest-day
+   * paid unless they were off it (item 5), so four are paid here and the ninth
+   * is not. Reading the 9th as a day they attended would pay it at the rest-day
    * rate while `sickDrawn` above is drawing the very same day from the sick
    * balance: paid for and spent from the quota at once.
    */
@@ -175,7 +175,7 @@ describe("the weekly rest day sits inside the period, not across its break", () 
   });
 
   it("costs exactly what the same three days swept in one gesture cost", () => {
-    // The property the rule exists for: what she drew and what she was paid stop
+    // The property the rule exists for: what they drew and what they were paid stop
     // depending on how the days happened to be entered.
     const swept = [sick("2025-08-08", "2025-08-10")];
     expect(spellsOf(marked, SATURDAY)).toEqual(spellsOf(swept, SATURDAY));
@@ -188,7 +188,7 @@ describe("the weekly rest day sits inside the period, not across its break", () 
   });
 
   it("still ends the spell on a working day nobody reported", () => {
-    // Wednesday the 6th is a day she owed attendance on, so it ends the spell
+    // Wednesday the 6th is a day they owed attendance on, so it ends the spell
     // and the tiers restart on the 7th — two firsts, two full days taken back.
     // 1 + 1 = 2 days -> 2 × 24,990.6 = 49,981.2 -> 49,981.
     const broken = [sick("2025-08-05"), sick("2025-08-07")];
@@ -200,7 +200,7 @@ describe("the weekly rest day sits inside the period, not across its break", () 
 
 describe("a holiday she did not work sits inside the period", () => {
   // Monday the 11th and Wednesday the 13th reported, Tuesday the 12th a holiday
-  // she did not work. None of the three is a Saturday.
+  // they did not work. None of the three is a Saturday.
   const marked = [sick("2025-08-11"), sick("2025-08-13")];
 
   it("reads the two marks as one spell through the holiday", () => {
@@ -243,7 +243,7 @@ describe("a holiday she did not work sits inside the period", () => {
 
   it("draws it from the yearly holiday allowance and not from the sick balance", () => {
     // A day cannot be both, and charging it to the sick quota would spend a day
-    // of illness on a day she was not going to be working anyway (item 10).
+    // of illness on a day they were not going to be working anyway (item 10).
     const spans = [...marked, holiday("2025-08-12", false)];
     expect(sickDrawn(spans)).toBe(2);
     expect(holidayDaysOf(spans, SATURDAY)).toBe(1);
@@ -272,7 +272,7 @@ describe("a vacation day between two reported days breaks the spell", () => {
   it("reads them as two illnesses, because one day cannot be both", () => {
     // Settled, and not a balance of arguments (specs.md item 8): illness during
     // a vacation converts the day into a sick day and draws only the rest from
-    // the vacation quota, so a day still recorded as vacation is a day she was
+    // the vacation quota, so a day still recorded as vacation is a day they were
     // not ill on. The rest day and the unworked holiday sit inside a spell
     // because they contradict nothing; a vacation day would contradict itself.
     const spans = [sick("2025-08-11"), vacation("2025-08-12"), sick("2025-08-13")];

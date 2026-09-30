@@ -29,7 +29,7 @@ export interface MonthCounts {
    */
   standardDays: number;
   /**
-   * The standard count less the days she did not in fact work. It answers the
+   * The standard count less the days they did not in fact work. It answers the
    * Wage Protection Act's requirement to list the days actually worked (item 2)
    * and is never paid from. Not always a whole number: a day taken in part
    * leaves it in that same proportion (item 5).
@@ -38,11 +38,11 @@ export interface MonthCounts {
   /** The month's rest-eves — the working day before each weekly rest day —
    * counted from the calendar. */
   restEves: number;
-  /** The rest-eves she actually worked. */
+  /** The rest-eves they actually worked. */
   restEvesWorked: number;
   /** The month's weekly rest days, counted from the calendar. */
   restDays: number;
-  /** The rest days she worked, which are the ones paid at the rest-day rate. */
+  /** The rest days they worked, which are the ones paid at the rest-day rate. */
   restDaysWorked: number;
 }
 
@@ -55,7 +55,7 @@ function spansCovering(spans: ClosedSpan[], date: IsoDate): ClosedSpan[] {
 }
 
 /**
- * How much of the day she did not in fact work, from 0 to 1.
+ * How much of the day they did not in fact work, from 0 to 1.
  *
  * Written as "not worked" rather than as "vacation or sickness" on purpose.
  * There is no mark for an absence with no entitlement in this version (item 5),
@@ -67,10 +67,10 @@ function spansCovering(spans: ClosedSpan[], date: IsoDate): ClosedSpan[] {
  * a vacation day leaves half a day (item 5). The count is therefore not always
  * a whole number, which is why it is carried as one.
  *
- * A holiday never moves the actual count (item 5): one she worked is a working
- * day, and one she did not is a paid day the law lets her take without a
+ * A holiday never moves the actual count (item 5): one they worked are a working
+ * day, and one they did not is a paid day the law lets them take without a
  * deduction. `countHolidays` false is that reading; the rest-day and rest-eve
- * counts still read an unworked holiday as a day she was not there.
+ * counts still read an unworked holiday as a day they were not there.
  */
 function notWorkedFraction(
   spans: ClosedSpan[],
@@ -79,13 +79,13 @@ function notWorkedFraction(
 ): number {
   let lost = 0;
   for (const span of spansCovering(spans, date)) {
-    // A holiday she worked is a working day like any other, and so is one
+    // A holiday they worked are a working day like any other, and so is one
     // nobody has answered for: the preview reads an unanswered holiday as
     // worked (item 9), and the count has to agree with the money or the month
     // pays for a day it also counted as not worked.
     if (span.kind === "holiday" && (!countHolidays || countsAsWorked(span)))
       continue;
-    // Vacation, sickness, an unworked holiday, and the rest day she had off are
+    // Vacation, sickness, an unworked holiday, and the rest day they had off are
     // all days not worked. A span cannot legally overlap another (`spans.ts`
     // refuses the day as `alreadyMarked`), so the max is the one that covers it.
     lost = Math.max(lost, span.fraction ?? 1);
@@ -93,7 +93,7 @@ function notWorkedFraction(
   return Math.min(lost, 1);
 }
 
-/** A whole day not worked. A day worked in part is a day she attended, so it
+/** A whole day not worked. A day worked in part is a day they attended, so it
  * counts as a rest-eve or a rest day worked even though it leaves a fraction of
  * the actual count. */
 function notWorked(spans: ClosedSpan[], date: IsoDate): boolean {
@@ -110,14 +110,14 @@ export function countMonth(facts: ClosedMonthFacts): MonthCounts {
   const standardDaysList = days.filter((date) => !isRestDay(date, restDay));
 
   // **A rest day the spell bridged carries no span of its own.** The natural
-  // way to record an illness is to mark the days she was absent from work, so
+  // way to record an illness is to mark the days they were absent from work, so
   // a family marks Friday and Sunday and leaves the Saturday between them
-  // alone — and that Saturday is a day of the period, not a day she attended
+  // alone — and that Saturday is a day of the period, not a day they attended
   // (specs.md item 8). Read off the marks alone it would be paid at the
   // rest-day rate while the balance is drawing it for the same day, which
   // collapses two of the four separate things item 8 keeps apart. Only the
-  // rest day needs this: a gap is made of days she owed no attendance, and the
-  // other kind — a holiday she did not work — carries a span of its own.
+  // rest day needs this: a gap is made of days they owed no attendance, and the
+  // other kind — a holiday they did not work — carries a span of its own.
   const spellDays = new Set(
     spellsOf(spans, restDay).flatMap((spell) => eachDate(spell.from, spell.to)),
   );

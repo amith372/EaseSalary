@@ -261,12 +261,12 @@ async function alertsView(
   ]);
   const named = replayed.length > 1;
 
-  // **A worker whose replay refused is left out, and only her.** Almost every
-  // entry below is read off her months — what is still unpaid, unconfirmed or
+  // **A worker whose replay refused is left out, and only them.** Almost every
+  // entry below is read off their months — what is still unpaid, unconfirmed or
   // unexported — so a refused worker handed over as a worker with no months
-  // would report every quarter of her employment as unpaid and every month as
-  // never filed, which is a list of things to do that are already done. She has
-  // no list until the mark is corrected, and her card on `/` is what says so;
+  // would report every quarter of their employment as unpaid and every month as
+  // never filed, which is a list of things to do that are already done. They have
+  // no list until the mark is corrected, and their card on `/` is what says so;
   // the other worker's list is untouched, which is the whole of why the refusal
   // is caught per worker (`householdSeries.ts`).
   const perWorker = await Promise.all(

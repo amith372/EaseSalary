@@ -33,7 +33,7 @@ import type { Worker } from "@/lib/types";
  * **On a worker's own page the address decides**, because `/workers/[id]`
  * takes its worker from it. The switcher there goes to the other worker's
  * page rather than renaming the bar over a profile it no longer matches, and
- * arriving on her page makes her the choice for the screens that follow.
+ * arriving on their page makes them the choice for the screens that follow.
  */
 
 
@@ -42,7 +42,7 @@ interface WorkerScope {
   worker: Worker;
   /** Forward or back through the account's workers, wrapping at either end. */
   step: (by: number) => void;
-  /** Show this worker, as a link from her own page does. An id the household
+  /** Show this worker, as a link from their own page does. An id the household
    * does not hold leaves the choice as it was. */
   select: (id: string) => void;
 }
@@ -75,7 +75,7 @@ export function WorkerScopeProvider({
     workers.some((one) => one.id === initialWorkerId) ? initialWorkerId : undefined,
   );
 
-  // Arriving on her own page makes her the choice. Adjusted during render
+  // Arriving on their own page makes them the choice. Adjusted during render
   // rather than in an effect, which is React's own pattern for state derived
   // from a prop: an effect would paint the old worker for a frame first.
   if (addressed !== null && addressed !== chosenId) setChosenId(addressed);

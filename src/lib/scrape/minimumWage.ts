@@ -64,7 +64,7 @@ type ScrapeResult = Scraped<DatedRate>;
  * every real rise clears this by a wide margin, and what it catches is the
  * order-of-magnitude misread: a figure whose decimal point was lost, or whose
  * thousands separator was read as one. A tighter bound would start refusing
- * real rises, and a refusal costs the user a manual entry she should not have
+ * real rises, and a refusal costs the user a manual entry they should not have
  * had to make.
  */
 const MAX_PLAUSIBLE_RISE = 2;

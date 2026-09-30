@@ -47,7 +47,7 @@ interface MonthFileRequest {
    */
   insurer: string;
   /**
-   * Her gender, which the sheet's own sentences are worded from (Part 3: a
+   * Their gender, which the sheet's own sentences are worded from (Part 3: a
    * sheet never calls a man a woman).
    *
    * Beside `employment` and not inside the month, for the reason `insurer` is:
@@ -56,8 +56,8 @@ interface MonthFileRequest {
    */
   gender: Gender;
   /**
-   * Her passport and bank account numbers, already opened on the server
-   * (specs.md item 22: the real numbers appear on her screen and in the export,
+   * Their passport and bank account numbers, already opened on the server
+   * (specs.md item 22: the real numbers appear on their screen and in the export,
    * and nowhere else). Only the two the month sheet prints; the visa and permit
    * numbers are not on it. A number never entered is absent, and its cell is
    * written empty for the family to fill.
@@ -89,7 +89,7 @@ export function monthSheetInputOf(request: MonthFileRequest): MonthSheetInput {
       closeMonth(facts).spans,
       facts.terms.restDay,
     ),
-    // The weekly rest days she had off, in the wording the calendar uses for a
+    // The weekly rest days they had off, in the wording the calendar uses for a
     // single day, so the sheet and the screen name the same day alike.
     freeRestDays: facts.spans
       .filter((span) => span.kind === "freeRestDay")

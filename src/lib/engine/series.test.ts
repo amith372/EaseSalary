@@ -461,7 +461,7 @@ describe("a spell crossing a month boundary, stored once and replayed", () => {
  * 28.8.2026 is a Friday and 29.8 the Saturday after it, so the spell runs:
  *
  *   Fri 28 Aug  day 1  nothing paid      -> a whole day taken back
- *   Sat 29 Aug  day 2  her rest day      -> nothing taken back, position advances
+ *   Sat 29 Aug  day 2  their rest day      -> nothing taken back, position advances
  *   Sun 30 Aug  day 3  half paid         -> half a day taken back
  *   Mon 31 Aug  day 4  paid in full      -> nothing taken back
  *   Tue 1 – Thu 3 Sep  days 5 to 7       -> nothing taken back
@@ -590,7 +590,7 @@ describe("a spell entered as two spans is one spell across the boundary", () => 
   });
 
   it("costs exactly what the same seven days swept in one gesture cost", () => {
-    // The property the rule exists for: what she was paid stops depending on
+    // The property the rule exists for: what they were paid stops depending on
     // how the days happened to be entered.
     expect(deductions(split)).toEqual(deductions(swept));
   });
@@ -605,7 +605,7 @@ describe("a spell entered as two spans is one spell across the boundary", () => 
   });
 
   it("still restarts the tiers over a working day nobody reported", () => {
-    // Friday 4 September is a day she owed attendance on, so it ends the spell
+    // Friday 4 September is a day they owed attendance on, so it ends the spell
     // and Monday the 7th begins a new one: day 1, a whole day taken back.
     // 1 × 25,775.4 = 25,775.4 -> 25,775. Without this the fix would be reading
     // any two spans as one, which is the mistake in the other direction.
@@ -686,7 +686,7 @@ describe("nothing in the walk reads a clock", () => {
   });
 
   it("clips only the month still running", () => {
-    // She fell ill on the 26th of February and has not returned. Asked on the
+    // They fell ill on the 26th of February and has not returned. Asked on the
     // 28th, February has counted three days; asked on the 2nd of March, the
     // month is over and has counted three all the same — 26, 27 and 28.
     const open: MonthSpan = {
@@ -716,7 +716,7 @@ describe("the walk runs from the first month (specs.md item 6, Part 3)", () => {
   it("gives a month nobody opened the profile's terms and the wage in force", () => {
     // February 2026 falls before the April 2026 rise, so its minimum wage is
     // the April 2025 row: ₪6,247.65 (`datedRates.ts`, read from the 2025
-    // workbook's April tab). No marks, no advances, no lines of her own.
+    // workbook's April tab). No marks, no advances, no lines of their own.
     const [, february] = calculateSeries(
       [facts(month(2026, 1)), facts(month(2026, 3))],
       HANNA,
@@ -775,7 +775,7 @@ describe("the walk runs from the first month (specs.md item 6, Part 3)", () => {
   });
 
   it("carries a sick spell nobody closed into the month nobody opened", () => {
-    // She fell ill on 29 January and has not returned; asked on 2 February.
+    // They fell ill on 29 January and has not returned; asked on 2 February.
     // January draws 29, 30, 31 — three days, 10 + 1.5 - 3 = 8.5. February draws
     // the 1st and the 2nd, every day counted (item 8): 8.5 + 1.5 - 2 = 8.
     const open: MonthSpan = {

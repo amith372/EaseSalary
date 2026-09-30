@@ -14,7 +14,7 @@ import type { IsoDate } from "@/lib/types";
  * between them is a month that pays for a day it also counted as missed.
  *
  * **A holiday on the weekly rest day is not a holiday** (item 9). The day is
- * her weekly rest day and is paid as one whether she worked it or not, so it
+ * their weekly rest day and is paid as one whether they worked it or not, so it
  * earns nothing extra as a holiday and spends nothing from the yearly
  * entitlement — another date may be chosen in its place. It is still *drawn* as
  * a holiday on the calendar, because the clash is a fact about the year worth
@@ -34,7 +34,7 @@ function holidayDatesDrawn(spans: ClosedSpan[]): Set<IsoDate> {
 }
 
 /**
- * The dates that count as holidays: every drawn one that is not her weekly rest
+ * The dates that count as holidays: every drawn one that is not their weekly rest
  * day.
  *
  * This is the set the money, the entitlement and the sick balance all read.

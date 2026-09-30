@@ -62,8 +62,8 @@ describe("an advance repaid lowers the transfer below the ברוטו", () => {
   });
 
   it("takes the instalment off the transfer and never off the ברוטו", () => {
-    // Across every repaying month in the fixture: the ברוטו is what she earned
-    // and the transfer is what she was handed (Part 5). A repayment reaching
+    // Across every repaying month in the fixture: the ברוטו is what they earned
+    // and the transfer is what they were handed (Part 5). A repayment reaching
     // the ברוটו would shrink the national-insurance base with it.
     const repaying = WORKBOOK_MONTHS.filter((m) =>
       m.advances.every((a) => a.kind === "repaid"),

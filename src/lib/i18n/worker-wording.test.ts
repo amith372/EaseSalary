@@ -76,7 +76,7 @@ describe("the worker's own words", () => {
  */
 describe("the screens that name her", () => {
   /** The confirmation step of the add-worker wizard — the four sentences a
-   * family meets immediately after saying which she is. */
+   * family meets immediately after saying which they are. */
   const done = he.addWorker.done;
 
   it("ends the wizard in the gender the wizard just collected", () => {

@@ -54,7 +54,7 @@ export async function useToday(page: Page, today: string): Promise<void> {
 
 /**
  * Steps to the worker the tests are written against, and waits until the screen
- * is showing her.
+ * is showing them.
  *
  * **Only the demo household.** The known case of `specs.md` Part 4 seeds one
  * worker and nothing to step to, so its tests are already on their subject and
@@ -66,9 +66,9 @@ export async function useToday(page: Page, today: string): Promise<void> {
  * the same tick reads the *first* worker's month and passes or fails for
  * reasons that have nothing to do with the test.
  *
- * **It steps only when she is not already showing.** Since 2026-09-13 the
+ * **It steps only when they are not already showing.** Since 2026-09-13 the
  * choice survives a reload and a navigation (a cookie the layout reads), so a
- * second call in the same test would otherwise step past her and back to the
+ * second call in the same test would otherwise step past them and back to the
  * first worker.
  */
 export async function switchToTestWorker(page: Page): Promise<void> {
@@ -76,7 +76,7 @@ export async function switchToTestWorker(page: Page): Promise<void> {
 }
 
 /** The reverse, for a test that has switched and now asks about the first
- * worker. Stepping "next" wraps, so with two workers it reaches her. */
+ * worker. Stepping "next" wraps, so with two workers it reaches them. */
 export async function switchToFirstWorker(page: Page): Promise<void> {
   await stepUntilShowing(page, FIRST_WORKER_NAME);
 }
@@ -92,7 +92,7 @@ async function stepUntilShowing(page: Page, name: string): Promise<void> {
   // out its timeout on the *first* worker's name, which reads as stale data or
   // a dirty household rather than as a lost click — the flake that cost a rerun
   // on most full runs. The guard inside the retry is what keeps a press React
-  // replays after hydration from stepping straight past her, since with two
+  // replays after hydration from stepping straight past them, since with two
   // workers "next" wraps.
   await expect(async () => {
     if (!(await group.innerText()).includes(name)) {
@@ -103,7 +103,7 @@ async function stepUntilShowing(page: Page, name: string): Promise<void> {
 }
 
 /**
- * `/settings` showing the test worker — the only screen her terms are changed on
+ * `/settings` showing the test worker — the only screen their terms are changed on
  * since 2026-09-13.
  *
  * **The address names no worker**: the screen shows whoever the switcher holds.
@@ -120,7 +120,7 @@ export async function openSettingsForTestWorker(page: Page): Promise<void> {
 /** As `seed.ts` names the first worker — Hanna, seeded from the workbooks. */
 export const FIRST_WORKER_NAME = "האנה מונטנה Hanna Montana";
 
-/** As `seed.ts` names her. */
+/** As `seed.ts` names them. */
 export const TEST_WORKER_NAME = "[שם העובד/ת השני/ה]";
 
 /**

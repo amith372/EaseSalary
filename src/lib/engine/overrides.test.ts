@@ -10,7 +10,7 @@ import type { LineOverride } from "@/lib/engine/types";
 import type { ClosingLine, MonthLine } from "@/lib/types";
 
 /**
- * What the user may replace by hand, and what she may not (specs.md item 17).
+ * What the user may replace by hand, and what they may not (specs.md item 17).
  *
  * The expectations come from the criterion and never from the function: an
  * override addresses a figure the **application worked out** and an amount the

@@ -97,8 +97,8 @@ export function MonthStepper({
 }
 
 /** The later of a month and the worker's first month — what a screen shows
- * when the month it was left on is before her first (specs.md item 6): after
- * switching to a worker who started later, or before her employment begins. */
+ * when the month it was left on is before their first (specs.md item 6): after
+ * switching to a worker who started later, or before their employment begins. */
 export function notBefore(month: YearMonth, earliest: YearMonth): YearMonth {
   return compareMonth(month, earliest) < 0 ? earliest : month;
 }

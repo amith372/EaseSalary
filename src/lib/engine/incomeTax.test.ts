@@ -134,7 +134,7 @@ describe("the month's tax at the minimum wage", () => {
    *
    * It would catch a calculation that forgot the credits entirely — that one
    * withholds ₪644.39 from a worker who owes nothing — and one that let the
-   * credit run negative, which would pay her ₪21.12 she is not owed.
+   * credit run negative, which would pay them ₪21.12 they are not owed.
    */
   it("withholds nothing from a woman at the minimum wage", () => {
     expect(taxFor(MINIMUM_WAGE_2026)).toBe(0);

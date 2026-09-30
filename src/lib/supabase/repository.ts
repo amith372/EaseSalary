@@ -299,10 +299,10 @@ function workerRowOf(profile: WorkerProfile, householdId: string) {
     opening_advances: profile.openingPosition.advances,
     standing_lines: profile.standingLines,
     salary_changes: profile.salaryChanges ?? [],
-    // **Her own country's list is stored as null and never as a copy of
+    // **Their own country's list is stored as null and never as a copy of
     // `country`**, which is the interface's own rule: storing the exception is
     // what keeps one worker from having two fields that can disagree about
-    // where her holidays come from.
+    // where their holidays come from.
     holiday_source_kind:
       source === undefined || source.kind === "country" ? null : "religion",
     holiday_source_religion:
@@ -531,7 +531,7 @@ export function createPostgresRepository(
 
   /**
    * Refuses a worker the household cannot reach, before anything is written
-   * against her.
+   * against them.
    *
    * **A worker who is not there and a worker in somebody else's household are
    * one answer here**, and that is row-level security working rather than a
@@ -586,12 +586,12 @@ export function createPostgresRepository(
   /**
    * The household a worker belongs to, or `null` for a worker not yet created.
    *
-   * **A worker's household is her own and not the viewer's.** A person who
+   * **A worker's household is their own and not the viewer's.** A person who
    * accepted an invitation reaches the other household's workers beside their
    * own (item 11), so the household `householdId` names — the one the person
    * joined first — is where a *new* worker goes and nothing more. Writing a
-   * shared worker back under it would move her out of the family that employs
-   * her, and put the household-level permit on the wrong household.
+   * shared worker back under it would move them out of the family that employs
+   * them, and put the household-level permit on the wrong household.
    */
   async function householdOf(workerId: string): Promise<string | null> {
     const { data, error } = await client
@@ -664,7 +664,7 @@ export function createPostgresRepository(
         .upsert(workerRowOf(profile, household));
       raise(error, "could not save the worker");
 
-      // The permit is the employer's, so saving her profile saves it on the
+      // The permit is the employer's, so saving their profile saves it on the
       // household. Written every time rather than only when it changed: the
       // profile is saved whole, and a conditional write here would be a second
       // rule about when a field is current.

@@ -63,13 +63,13 @@ function holdsUnwritableCharacter(text: string): boolean {
 }
 
 /**
- * **The second demo worker, because she is the fullest month this repository
+ * **The second demo worker, because they are the fullest month this repository
  * holds**: an override on the tax, an advance, two lines the user wrote
- * herself, a holiday on her own rest day and a sick spell across a month
- * boundary all reach the sheet from her.
+ * themselves, a holiday on their own rest day and a sick spell across a month
+ * boundary all reach the sheet from them.
  *
- * She became that worker on 2026-09-11, when the first was reseeded from the
- * family's own workbooks and everything invented moved across to her
+ * They became that worker on 2026-09-11, when the first was reseeded from the
+ * family's own workbooks and everything invented moved across to them
  * (`seed.ts`). A file assembled from the plainest possible month would exercise
  * none of the rows this test is about.
  */

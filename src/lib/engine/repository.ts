@@ -49,7 +49,7 @@ import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
  */
 
 /**
- * The worker as the store holds her: who she is, and the terms that hold from
+ * The worker as the store holds them: who they are, and the terms that hold from
  * month to month.
  *
  * The two halves are one record because they are one row — `Worker` is what a
@@ -60,18 +60,18 @@ import type { Worker, WorkerDocuments, YearMonth } from "@/lib/types";
  */
 export interface WorkerProfile extends Worker, WorkerTerms {
   /**
-   * The list her year's holidays are chosen from, where it is not her own
+   * The list their year's holidays are chosen from, where it is not their own
    * country's (specs.md item 10).
    *
-   * **Absent is her country's list**, which is what item 10 makes the default:
-   * the candidate list is "her country of origin's, with another country's
+   * **Absent is their country's list**, which is what item 10 makes the default:
+   * the candidate list is "their country of origin's, with another country's
    * selectable instead" — and a religion's beside it. Storing the exception
    * rather than restating `country` is what keeps one worker from having two
-   * fields that can disagree about where her holidays come from.
+   * fields that can disagree about where their holidays come from.
    *
    * **It is on the profile and not in `WorkerTerms`**, for the reason the
-   * documents are: it is not a term of a month. A family that switches her from
-   * her country's list to a faith's in June does not restate May — the dates
+   * documents are: it is not a term of a month. A family that switches them from
+   * their country's list to a faith's in June does not restate May — the dates
    * already chosen are spans, and they stay exactly where they are.
    */
   holidaySource?: HolidaySource;
@@ -146,7 +146,7 @@ export class UnknownWorkerError extends Error {
 export interface SalaryRepository {
   listWorkers(): Promise<WorkerProfile[]>;
   getWorker(workerId: string): Promise<WorkerProfile | null>;
-  /** Creates the worker or replaces her wholesale, keyed by `id`. */
+  /** Creates the worker or replaces them wholesale, keyed by `id`. */
   saveWorker(profile: WorkerProfile): Promise<void>;
   /** Whether the person's own household holds fewer than two workers (item
    * 11). A worker shared from another household is not counted, so this is
@@ -177,7 +177,7 @@ export interface SalaryRepository {
    * **They belong to the household and not to a worker**, because a list is a
    * source and a year and nothing about one worker: two workers from the same
    * country share one list, and a list fetched for the first is the list the
-   * second reads. Which list a worker's year is drawn from is her own, and that
+   * second reads. Which list a worker's year is drawn from is their own, and that
    * is `holidaySource` above.
    */
   listHolidayLists(): Promise<HolidayList[]>;

@@ -45,7 +45,7 @@ export interface TaxToConfirm {
   missingTableYear: number | null;
   /**
    * The amount the user has typed over this month's tax row, or `null` where
-   * she has not (specs.md item 17).
+   * they have not (specs.md item 17).
    *
    * **It is what the sheet will print**, and the screen shows it rather than
    * the figure under it: a card saying ₪0.00 in front of a file that prints
@@ -76,7 +76,7 @@ function withTaxSetAside(facts: MonthFacts): MonthFacts {
 /**
  * What confirming this month would store as its income tax, and what the screen
  * has to say about it beforehand. `null` for a month outside the worker's
- * series — before her first month, or after the current one.
+ * series — before their first month, or after the current one.
  */
 export function taxToConfirm(
   months: readonly MonthFacts[],

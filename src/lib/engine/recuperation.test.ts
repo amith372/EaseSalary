@@ -140,7 +140,7 @@ describe("the month the payment falls in", () => {
   /**
    * A family that pays in a month other than the one its employment year ends
    * in still gets one payment a year, stepping once. July 2025 is inside
-   * Hanna's second year, so the year completed by then is her first.
+   * Hanna's second year, so the year completed by then is their first.
    */
   it("steps once a year whichever month the family chose", () => {
     const july = 7;
@@ -171,7 +171,7 @@ describe("the day rate, which the application does not derive", () => {
 });
 
 /** March 2026 as the engine's facts, built from the workbook's own March tab
- * shape: Hanna's terms, her salary, and nothing else recorded. */
+ * shape: Hanna's terms, their salary, and nothing else recorded. */
 function marchFacts(overrides: Partial<MonthFacts> = {}): MonthFacts {
   const july2026 = WORKBOOK_MONTHS[WORKBOOK_MONTHS.length - 1];
   const worker = workbookWorker(july2026.salaryAgorot);
@@ -210,7 +210,7 @@ describe("the line the month draws", () => {
    * Column G reaches the worker, so the payment is part of what the month came
    * to and part of what the national insurance is estimated on (item 19, Part
    * 5's column paragraph). A line drawn in H instead would look identical on
-   * screen and pay her nothing.
+   * screen and pay them nothing.
    */
   it("raises the gross by exactly the payment", () => {
     const without = calculateMonth(
@@ -373,7 +373,7 @@ describe("a payment that fell before the first month", () => {
   });
 
   it("owes nothing for a payment month inside the first employment year", () => {
-    // Employed 1.12.2025: March 2026 fell in her first year, before one was
+    // Employed 1.12.2025: March 2026 fell in their first year, before one was
     // complete, so it owed nothing and nothing is carried.
     const result = firstMonthResult({
       employedSince: "2025-12-01",

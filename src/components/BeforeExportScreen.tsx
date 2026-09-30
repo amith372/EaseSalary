@@ -40,14 +40,14 @@ import type { IsoDate, Worker, YearMonth } from "@/lib/types";
  * exporting *begins* with them, so they are asked again before every export;
  * what reaches the server is the confirmations they lead to. A question
  * answered against what the month recorded raises a warning and never a
- * refusal: she is the one who knows what
- * happened, and what item 18 buys is that she was asked.
+ * refusal: they are the one who knows what
+ * happened, and what item 18 buys is that they were asked.
  *
  * **Two things do block, and each says so in `specs.md` itself.** A month that
  * has not begun cannot be exported (item 21), and a month is not exported over
  * an open spell of sickness (item 18). The current month before its last day is
  * a warning (item 21), not a block. The open spell is answered here, because
- * the question item 18 names — has she returned, and on what day — is this
+ * the question item 18 names — have they returned, and on what day — is this
  * screen's own.
  */
 
@@ -56,7 +56,7 @@ import type { IsoDate, Worker, YearMonth } from "@/lib/types";
 export interface MonthBeforeExport {
   month: YearMonth;
   confirmedWage: ConfirmedWage;
-  /** Her salary in force during *this* month (`salaryFor`). The screen says so
+  /** Their salary in force during *this* month (`salaryFor`). The screen says so
    * when the confirmed minimum is above it, because the month is then confirmed
    * at the minimum instead (specs.md item 3). */
   baseMonthlySalaryAgorot: number;
@@ -89,7 +89,7 @@ export interface WorkerBeforeExport {
   restDay: RestDay;
   /** Where the month arrows stop (specs.md item 6). */
   firstMonth: YearMonth;
-  /** Oldest first: every month from her first to the current one. */
+  /** Oldest first: every month from their first to the current one. */
   months: MonthBeforeExport[];
 }
 
@@ -156,7 +156,7 @@ export function BeforeExportScreen({
   const entry =
     household.find((candidate) => candidate.worker.id === worker.id) ??
     household[0];
-  // Never a month before hers (specs.md item 6), as on the opening screen.
+  // Never a month before theirs (specs.md item 6), as on the opening screen.
   const month = notBefore(chosenMonth, entry.firstMonth);
   const future = compareMonth(month, monthOf(today)) > 0;
   const shown = entry.months.find((each) => sameMonth(each.month, month));

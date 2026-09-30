@@ -71,7 +71,7 @@ export async function fillBalancesSheet(
     // figure on this sheet the engine does not carry: a `BalanceLine` knows its
     // own month. It is accumulated across the block rather than summed with a
     // formula, so a year that starts mid-way — a worker employed in June — adds
-    // up from her first recorded month and not from an empty January.
+    // up from their first recorded month and not from an empty January.
     let usedThisYear = 0;
 
     input.months.slice(0, ROWS_PER_BLOCK).forEach((month, index) => {

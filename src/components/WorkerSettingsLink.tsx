@@ -6,7 +6,7 @@ import { useWorkerScope } from "@/components/WorkerScope";
 
 /**
  * A link to `/settings` about one worker. `/settings` shows whichever worker the
- * switcher holds, so following the link selects her first — from the list the
+ * switcher holds, so following the link selects their first — from the list the
  * switcher may be holding the other one.
  */
 export function WorkerSettingsLink({

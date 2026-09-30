@@ -133,8 +133,8 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
     await page.getByRole("link", { name: he.home.paid.fullSheet }).click();
     await expect(page).toHaveURL(/\/month\/payslip/);
     // On the worker the suite works on, whose months run past the workbooks the
-    // first worker is seeded from: hers end in July 2026, so a heading read off
-    // her would say July and prove nothing about the address.
+    // first worker is seeded from: theirs end in July 2026, so a heading read off
+    // them would say July and prove nothing about the address.
     await switchToTestWorker(page);
     await expect(
       page.getByRole("heading", { level: 1 }),
@@ -294,7 +294,7 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
    *
    * **On the known household, not the demo one.** Both demo workers rest on
    * Saturday since 2026-09-11, when the first was reseeded from the family's
-   * workbooks and the second took her ordinary terms (`seed.ts`) — and the
+   * workbooks and the second took their ordinary terms (`seed.ts`) — and the
    * second also carries a free rest day marked on a Saturday, which since stage
    * 8.5 raises a question of its own before the change can be saved
    * (`rest-day-change.spec.ts`). Part 4's household holds one worker and no such

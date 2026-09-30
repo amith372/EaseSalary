@@ -101,21 +101,21 @@ test.describe("a refused month says so", () => {
       await law.getAttribute("href"),
     );
 
-    // Her figures are gone, and the calendar is not. **The mark is what is
+    // Their figures are gone, and the calendar is not. **The mark is what is
     // asserted and not the grid**: an empty August would draw every day cell
     // just the same, so what proves the calendar survived the refusal is that
     // it still names what is on the day the user has to correct — which it can
-    // only do by reading her spans, since there is no valued month to read.
+    // only do by reading their spans, since there is no valued month to read.
     await expect(page.locator('[data-row="net"]')).toHaveCount(0);
     await expect(page.locator(`[data-date="${REFUSED_DAY}"]`)).toContainText(
       he.calendar.marks(SATURDAY).holiday,
     );
 
     // The rail keeps standing, because it is the household's and the other
-    // worker's balances are hers. What it may not do is draw the refused
+    // worker's balances are theirs. What it may not do is draw the refused
     // worker's: a balance is derived from the replay the engine refused
     // (item 13), and the rows drew `[מספר] ימים` four times — a bracketed
-    // placeholder on screen, which is the thing `[השם שלך]` was cut for. So her
+    // placeholder on screen, which is the thing `[השם שלך]` was cut for. So them
     // two rows are absent, the first worker's are there, and no placeholder is.
     const rail = page.locator('[data-role="balances"]');
     await expect(rail).toBeVisible();
@@ -149,7 +149,7 @@ test.describe("a refused month says so", () => {
     await useHousehold(page, "refused", "other-worker");
     await page.goto("/?month=2026-08");
     // The screen opens on the first worker, whose replay stood: no card, and
-    // her figures to the agora.
+    // their figures to the agora.
     await expect(page.locator('[data-role="refusal"]')).toHaveCount(0);
     expect(await firstWorkersAugust(page)).toEqual(expected);
 
@@ -157,7 +157,7 @@ test.describe("a refused month says so", () => {
     await switchToTestWorker(page);
     await expect(page.locator('[data-role="refusal"]')).toBeVisible();
     await expect(page.locator('[data-row="net"]')).toHaveCount(0);
-    // Stepping back restores her, which proves the card was never the
+    // Stepping back restores them, which proves the card was never the
     // household's: a screen that had caught around the whole replay could not
     // come back to a figure at all.
     await switchToFirstWorker(page);
@@ -178,8 +178,8 @@ test.describe("a refused month says so", () => {
 
     // The first worker first, because those three screens are the ones that
     // caught around the whole household: each drew the card in place of itself
-    // and the worker who had done nothing lost her payslip, her payments and
-    // her reports along with it. The heading is asserted beside the card's
+    // and the worker who had done nothing lost their payslip, them payments and
+    // them reports along with it. The heading is asserted beside the card's
     // absence, because a screen that failed to render at all would also have
     // no card on it.
     const drawn: Record<string, (on: Page) => ReturnType<Page["locator"]>> = {
@@ -229,7 +229,7 @@ test.describe("a refused month says so", () => {
         REFUSED_MONTH,
       );
       // The refused worker's card and not the screen's default worker: the
-      // download named her, so the redirect has to arrive showing her, or it
+      // download named them, so the redirect has to arrive showing them, or it
       // lands on a screen with nothing on it to explain the refusal.
       await expect(page.locator(`[data-date="${REFUSED_DAY}"]`)).toContainText(
         he.calendar.marks(SATURDAY).holiday,
@@ -250,7 +250,7 @@ test.describe("a refused month says so", () => {
 
     // The gesture a user makes: sweep over the day and clear what is on it.
     // The screen has already opened on August, because switching to a worker
-    // the engine refused moves the calendar to her refused month. The sweep
+    // the engine refused moves the calendar to their refused month. The sweep
     // starts on the day before, because a first click on a holiday asks whether
     // it was worked rather than anchoring a range (`MonthCalendar.tsx`) — and
     // the 19th carries no mark of its own.
@@ -265,7 +265,7 @@ test.describe("a refused month says so", () => {
     // after it, which the refusal had been stopping.
     await expect(page.locator('[data-role="refusal"]')).toHaveCount(0);
     await expect(page.locator('[data-row="net"]')).toBeVisible();
-    // And her rows come back to the rail beside the first worker's: the
+    // And their rows come back to the rail beside the first worker's: the
     // correction is what gives the replay a month to derive a balance from.
     await expect(
       page.locator(`[data-row="${REFUSED_WORKER}-vacation-balance"]`),
@@ -304,7 +304,7 @@ test.describe("a refused month says so", () => {
  * from the terms rather than from the replay, so a refusal cannot reach it.
  */
 test.describe("a refused month on the workers screens", () => {
-  /** Her card on the list, found by the worker it belongs to rather than by the
+  /** Their card on the list, found by the worker it belongs to rather than by the
    * Hebrew beside it. */
   const cardOf = (page: Page, workerId: string) =>
     page.locator(`#worker-${workerId}`);
@@ -336,7 +336,7 @@ test.describe("a refused month on the workers screens", () => {
     await expect(
       card.getByRole("link", { name: new RegExp(he.alerts.whatTheLawSays) }),
     ).toBeVisible();
-    // Her name is the card's own heading and is not said a second time.
+    // Their name is the card's own heading and is not said a second time.
     await expect(
       hers.getByRole("heading", { name: TEST_WORKER_NAME }),
     ).toBeVisible();
@@ -355,15 +355,15 @@ test.describe("a refused month on the workers screens", () => {
     ]) {
       await expect(hers.getByText(label)).toHaveCount(0);
     }
-    // The chip draws `waitingMonth`, which she has none of: a card reporting
+    // The chip draws `waitingMonth`, which they have none of: a card reporting
     // calm beside a refusal would be the plainest kind of wrong answer.
     await expect(hers.locator('[data-row="worker-status"]')).toHaveCount(0);
     await expect(page.getByText(he.placeholder.count)).toHaveCount(0);
 
     // **And no way home from the list** (the user, 2026-09-27). The opening
     // screen shows one worker at a time and only an address naming a worker
-    // chooses her, so a link to `/` from a list of two would as often arrive on
-    // the other worker's calendar — with no refusal on it to correct. Her own
+    // chooses them, so a link to `/` from a list of two would as often arrive on
+    // the other worker's calendar — with no refusal on it to correct. Their own
     // page is a link below this card, and the way home is there.
     await expect(
       card.locator('[data-role="refusal-way-home"]'),
@@ -480,7 +480,7 @@ test.describe("a refused month on the workers screens", () => {
     // The card leads the screen, so it carries the `h1` — as it does on the
     // payslip. Nothing else on the page is a heading above it.
     await expect(card.locator("h1")).toContainText(REFUSED_MONTH);
-    // And it says whose month it is: on the list her card's heading does that
+    // And it says whose month it is: on the list their card's heading does that
     // and here nothing else would, so an address reached from a bookmark still
     // names the employment it concerns.
     await expect(page.getByText(TEST_WORKER_NAME).first()).toBeVisible();
@@ -520,9 +520,9 @@ test.describe("a refused month on the workers screens", () => {
     page,
   }) => {
     await useHousehold(page, "refused", "way-home");
-    // **From her own page**, which is where the link matters most: the address
-    // names her, so the scope makes her the chosen worker and the opening
-    // screen arrives showing *her* month rather than the other worker's. A
+    // **From their own page**, which is where the link matters most: the address
+    // names them, so the scope makes them the chosen worker and the opening
+    // screen arrives showing *their* month rather than the other worker's. A
     // link that landed on a calendar with no refusal on it would be worth
     // nothing.
     await page.goto(`/workers/${REFUSED_WORKER}`);

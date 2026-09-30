@@ -102,7 +102,7 @@ export function Blockers({
  *
  * **Both workers, not the one the switcher shows**, because the rail answers
  * "where does the household stand" while the calendar answers "what happened
- * in this month to her".
+ * in this month to them".
  */
 export function BalancesRail({
   workers,
@@ -115,16 +115,16 @@ export function BalancesRail({
   workers: { id: string; name: string }[];
   household: WorkerMonths[];
   month: YearMonth;
-  /** The rest day to name a worker's marks by where no month of hers says. */
+  /** The rest day to name a worker's marks by where no month of theirs says. */
   fallbackRestDay: RestDay;
   openWhy: string | null;
   toggleWhy: (key: string) => void;
 }) {
-  // **A worker the engine refused is left out of the rail, and only her.** A
+  // **A worker the engine refused is left out of the rail, and only them.** A
   // balance cannot be derived from a month the engine declined to value
-  // (item 13), and her rows would otherwise draw the bracketed placeholder in
-  // every figure — the same answer the money column gives. Her card above says
-  // why she is missing. Where nobody is left the whole card goes, which is what
+  // (item 13), and their rows would otherwise draw the bracketed placeholder in
+  // every figure — the same answer the money column gives. Their card above says
+  // why they are missing. Where nobody is left the whole card goes, which is what
   // a one-worker household in a refused state sees.
   const stated = workers.filter(
     (each) =>
@@ -151,10 +151,10 @@ export function BalancesRail({
             </span>
           </div>
           {stated.map((each) => {
-            // Her own month, and the balances it closed with. A worker with no
+            // Their own month, and the balances it closed with. A worker with no
             // record of this month has no balance to state, and the rows say
             // so with the same placeholder the calendar's own figures use —
-            // the same rule the calendar follows when it draws her nothing.
+            // the same rule the calendar follows when it draws them nothing.
             const hers = household.find((candidate) => candidate.worker.id === each.id);
             const herMonth = hers?.months.find((inSeries) =>
               sameMonth(inSeries.facts.month, month),

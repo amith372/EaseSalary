@@ -42,7 +42,7 @@ export function notesOf(
 
   for (const span of facts.spans) {
     // Each kind of day reaches one row: sickness the deduction it causes, a
-    // holiday the row that prices it, a rest day she had off the rest-day row
+    // holiday the row that prices it, a rest day they had off the rest-day row
     // whose count it reduces, and vacation the reporting row that carries its
     // units alone.
     if (span.kind === "sick") add(lineKeys.sickDeduction, span.note);

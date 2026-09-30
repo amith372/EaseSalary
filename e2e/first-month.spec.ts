@@ -8,20 +8,20 @@ import { formatAgorot } from "../src/lib/money";
 import type { YearMonth } from "../src/lib/types";
 
 /**
- * A worker added in the middle of her employment — `specs.md` items 6 and 15,
+ * A worker added in the middle of their employment — `specs.md` items 6 and 15,
  * through the wizard, the opening screen and the export (`CLAUDE.md` rules 10–13).
  *
- * **The scenario.** She is added this month with last month as her first
+ * **The scenario.** They are added this month with last month as their first
  * month, so the first month is one nobody ever opened: no mark, no figure and
- * no record of it exists until it is confirmed for export. Her employment
- * began 28 months before the first month, and her recuperation month is the
+ * no record of it exists until it is confirmed for export. Their employment
+ * began 28 months before the first month, and their recuperation month is the
  * month before the first — so the payment for the employment year running at
- * the first month fell before the application saw her, and the wizard asks
+ * the first month fell before the application saw them, and the wizard asks
  * whether it was paid.
  *
  * **Every expected figure is worked by hand** (rule 11):
  *
- * - The employment year running at the first month began 24 months after she
+ * - The employment year running at the first month began 24 months after they
  *   was hired, so two full years are complete by the payment month, and the
  *   statutory ladder gives six days for a second completed year
  *   (https://www.kolzchut.org.il/he/דמי_הבראה).
@@ -58,7 +58,7 @@ async function addWorker(page: Page, recuperationPaid: boolean): Promise<void> {
   await page.goto("/workers/new");
   await page.locator('[data-field="name"]').fill("רוזה למפה");
   // Chosen, because the step will not be left without it: the country decides
-  // her holiday list and the select opens on nothing. `PH` is one of the lists
+  // their holiday list and the select opens on nothing. `PH` is one of the lists
   // in `data/holidays/`, which is where the wizard's options come from.
   await page.locator('[data-field="country"]').selectOption("PH");
   await page.locator('[data-role="add-worker-next"]').click();

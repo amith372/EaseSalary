@@ -1,7 +1,7 @@
 import { supabaseOnServer } from "@/lib/supabase/server";
 
 /**
- * Who else can see a worker — what the `משותף/ת עם` chip on her card says
+ * Who else can see a worker — what the `משותף/ת עם` chip on their card says
  * (specs.md item 11, the `העובדות` artboard).
  *
  * **It is an address and never a name.** A share is an invitation sent to an
@@ -16,7 +16,7 @@ import { supabaseOnServer } from "@/lib/supabase/server";
  * household nobody joined carries none.
  *
  * **The caller's own address is left out.** The chip answers "who else", and a
- * member reading her own address back would learn nothing from it. It is also
+ * member reading their own address back would learn nothing from it. It is also
  * the whole of what an invited member can see of the other side: the policy
  * shows them the household's invitations, which are addressed to them, and
  * never the address of the family that invited them — so a worker shared *into*

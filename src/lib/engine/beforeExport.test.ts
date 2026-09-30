@@ -46,8 +46,8 @@ import {
  * Nothing below reads a figure this module produced.
  */
 
-/** Hanna as the workbook has her: employed 1.4.2024, resting on Saturday, and
- * paid her recuperation in March. */
+/** Hanna as the workbook has them: employed 1.4.2024, resting on Saturday, and
+ * paid their recuperation in March. */
 const HANNA = "2024-04-01";
 
 function facts(overrides: Partial<MonthFacts> = {}): MonthFacts {
@@ -101,7 +101,7 @@ describe("the questions that open an export", () => {
    * The half that makes a question a confirmation rather than a memory test: a
    * month with nothing recorded still answers, and answers "no". A question
    * that arrived without what the month knows would be asking the user to
-   * recall her own April.
+   * recall their own April.
    */
   it("says what the month holds even when it holds nothing", () => {
     const questions = exportQuestions(facts());
@@ -195,7 +195,7 @@ describe("the questions that open an export", () => {
   });
 
   it("counts the free rest days marked, and the payments to somebody else", () => {
-    // 4.4.2026 is a Saturday, which is her own rest day.
+    // 4.4.2026 is a Saturday, which is their own rest day.
     const spans: MonthSpan[] = [
       { id: "r", kind: "freeRestDay", from: "2026-04-04", to: "2026-04-04" },
     ];
@@ -259,7 +259,7 @@ describe("the dates and amounts behind the questions", () => {
    * The dates and the count are one answer. 30.3 to 2.4 is four days to the
    * balance and two of them are April's, so April names the 1st and the 2nd —
    * a row reading "2 days" above "30 March – 2 April" is a contradiction the
-   * user is left to resolve herself.
+   * user is left to resolve themselves.
    */
   it("names a crossing spell as the month's own days, and agrees with the count", () => {
     const spans: MonthSpan[] = [
@@ -290,7 +290,7 @@ describe("the dates and amounts behind the questions", () => {
   });
 
   /** Both the worked and the unworked, because the question is *which* of them
-   * she worked and a list of only the worked ones cannot be read against the
+   * they worked and a list of only the worked ones cannot be read against the
    * calendar. */
   it("names every holiday of the month and whether it was worked", () => {
     const spans: MonthSpan[] = [
@@ -341,7 +341,7 @@ describe("the dates and amounts behind the questions", () => {
       expect(question.details).toEqual([]);
     }
     const spans: MonthSpan[] = [
-      // 4.4.2026 is a Saturday, which is her own rest day.
+      // 4.4.2026 is a Saturday, which is their own rest day.
       { id: "r", kind: "freeRestDay", from: "2026-04-04", to: "2026-04-04" },
     ];
     const question = answerFor(
@@ -388,13 +388,13 @@ describe("what stops a month being exported", () => {
    * items 9 and 18, settled with the user on 2026-09-12).
    *
    * This is the half that makes the lean safe. The preview reads an unanswered
-   * holiday as one she worked and pays for it, because a figure on a screen has
+   * holiday as one they worked and pays for it, because a figure on a screen has
    * to say something; the block is what stops that reading ever reaching a filed
    * sheet, so the family answers rather than inherits an answer.
    *
    * **What it would catch is the block quietly not firing** — which is the only
    * failure that matters here, because without it the new default is simply an
-   * overpayment nobody was asked about. Both answers clear it, including "she
+   * overpayment nobody was asked about. Both answers clear it, including "they
    * did not work it": what is required is an answer and not a particular one.
    */
   it("refuses a month holding a holiday nobody has answered for, and allows it once answered", () => {
@@ -414,8 +414,8 @@ describe("what stops a month being exported", () => {
   });
 
   /**
-   * **A holiday on her weekly rest day does not hold the export**, even
-   * unanswered (item 9). It is treated as a holiday for nothing, so whether she
+   * **A holiday on their weekly rest day does not hold the export**, even
+   * unanswered (item 9). It is treated as a holiday for nothing, so whether they
    * worked it is already answered by the rest day — and a block on a question
    * whose answer changes no figure is a question asked for its own sake.
    *
@@ -435,7 +435,7 @@ describe("what stops a month being exported", () => {
   });
 
   /**
-   * **The question does not claim she worked it.** The preview pays for an
+   * **The question does not claim they worked it.** The preview pays for an
    * unanswered holiday, but the sentence the family is asked to confirm reports
    * what the month *records*, and an unanswered holiday records nothing — so it
    * is listed with its date and named as unanswered rather than counted among
@@ -495,7 +495,7 @@ describe("what stops a month being exported", () => {
 
 describe("closing the spell by the day she came back", () => {
   /**
-   * The user is asked the day she *returned*, which is the event the family
+   * The user is asked the day they *returned*, which is the event the family
    * witnessed, and the spell ends the day before. Reading the answer as the
    * last sick day would pay one day of sickness too many and draw one day too
    * many from the balance — a figure that looks entirely ordinary.
@@ -612,7 +612,7 @@ describe("the two figures the month has to have confirmed", () => {
   });
 
   /** And leaves a salary the family agreed above the minimum exactly where it
-   * is: the floor is all the statute settles, and how far above it she is paid
+   * is: the floor is all the statute settles, and how far above it they are paid
    * stays theirs (item 3). */
   it("leaves a salary above the minimum wage alone", () => {
     expect(baseForMonth(700000, 644385)).toBe(700000);

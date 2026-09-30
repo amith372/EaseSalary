@@ -63,12 +63,12 @@ const holiday = (date: string, worked = true): ClosedSpan => ({
 });
 
 /**
- * **A holiday on a Saturday she had off is not refused** (specs.md item 9 and
+ * **A holiday on a Saturday they had off is not refused** (specs.md item 9 and
  * Part 4, settled with the user on 2026-09-12).
  *
  * This was Part 4's deliberately invalid case until then, refused because the
  * day would have been paid at both the rest-day rate and the holiday rate. It
- * cannot be any more: a holiday on her weekly rest day is not a holiday at all,
+ * cannot be any more: a holiday on their weekly rest day is not a holiday at all,
  * so there is only one rate for the day to be paid at, and a calendar is not a
  * mistake.
  *
@@ -79,7 +79,7 @@ const holiday = (date: string, worked = true): ClosedSpan => ({
  */
 describe("a holiday on a free rest day (specs.md item 9, Part 4)", () => {
   // The 16th of August 2025 is a Saturday, recorded as one the worker had off,
-  // and it is also one of her chosen holidays.
+  // and it is also one of them chosen holidays.
   const onTheRestDay = facts([
     { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
     holiday("2025-08-16"),
@@ -157,9 +157,9 @@ describe("the rest-day counts cannot exceed the month (specs.md Part 4)", () => 
     // This is how the rest-day counts actually go wrong in stored data. The
     // 18th of August 2025 is a Monday, and this worker rests on Saturday.
     //
-    // The refusal reads her own rest day off the month, so the case that tells
+    // The refusal reads their own rest day off the month, so the case that tells
     // one worker from another — a Friday-resting worker's genuine free Friday,
-    // refused for Hanna and recorded for her — lives in `rest-day.test.ts`.
+    // refused for Hanna and recorded for them — lives in `rest-day.test.ts`.
     // This one holds for all three workers, because a Monday is nobody's rest
     // day.
     const [refusal] = validateMonth(
@@ -205,7 +205,7 @@ describe("every refusal carries the rule it rests on (specs.md item 25)", () => 
     {
       // Ten holidays against an allowance of nine (item 10).
       //
-      // **None of them is a Saturday**, which is her rest day: a holiday that
+      // **None of them is a Saturday**, which is their rest day: a holiday that
       // lands there is not a holiday at all and spends nothing from the nine
       // (item 9, 2026-09-12), so a run of ten consecutive dates would have
       // carried only eight and never reached the limit.
@@ -266,11 +266,11 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
 
   it("refuses a day recorded as both sick and worked as a holiday", () => {
     // The 13th of August 2025 is a Wednesday inside a spell running 12-14, and
-    // is also marked as a holiday she worked. She cannot have been absent ill
+    // is also marked as a holiday they worked. They cannot have been absent ill
     // and at work on the same day, and the engine has no way to know which
     // happened.
     //
-    // **A weekday and not the Saturday this used**, because a holiday on her
+    // **A weekday and not the Saturday this used**, because a holiday on them
     // rest day is not a holiday at all since 2026-09-12 (item 9): on the 16th
     // there would be nothing but a sick Saturday, and no contradiction to find.
     const spans: ClosedSpan[] = [
@@ -329,7 +329,7 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
   });
 
   /**
-   * Part 4's deliberately invalid case since 2026-09-12: she cannot have been
+   * Part 4's deliberately invalid case since 2026-09-12: they cannot have been
    * absent ill and at work on the same day, and choosing one reading silently
    * would produce a figure that looks entirely ordinary.
    */

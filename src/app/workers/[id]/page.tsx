@@ -25,8 +25,8 @@ import { readToday } from "@/lib/requestToday";
  * in-memory store and on Postgres.
  *
  * **The balances are the replay's and not a second count.** `calculateSeries`
- * walks her months from the opening position (item 13) and the closing figures
- * of the last of them are what "how many days has she left" means — the same
+ * walks their months from the opening position (item 13) and the closing figures
+ * of the last of them are what "how many days have they left" means — the same
  * function the home screen and `/payments` run, so the three screens cannot
  * disagree. The sentence behind each "?" comes from the same line, so they
  * cannot explain one figure two ways either.
@@ -52,10 +52,10 @@ export default async function WorkerPage({
   if (replayed === null) notFound();
   const { profile, months: series } = replayed;
 
-  // Her months and her closing balances are the whole of this screen, and both
+  // Their months and their closing balances are the whole of this screen, and both
   // come off the replay (item 13), so a refusal leaves it nothing true to say
-  // and the card is the screen (`specs.md` item 25). **It names her**, which on
-  // the list her card's own heading does and here nothing would: an address
+  // and the card is the screen (`specs.md` item 25). **It names them**, which on
+  // the list their card's own heading does and here nothing would: an address
   // opened from a link or a bookmark has to say whose month it is talking
   // about. The card carries the `h1`, as it does on the payslip.
   const refused = refusalShown(replayed);
@@ -112,9 +112,9 @@ export default async function WorkerPage({
       label: he.home.balances.vacation,
       dot: "bg-vacation-dot",
       value: formatDays(vacation?.closing ?? profile.openingPosition.vacationDays),
-      // A worker with no month yet has no line to explain her opening
+      // A worker with no month yet has no line to explain their opening
       // position, so the same sentence is built here from the seniority year
-      // she is in — the figure the entitlement rests on (item 7).
+      // they are in — the figure the entitlement rests on (item 7).
       explanation: vacation?.explanation ?? {
         text: he.sheet.why.vacationBalance(
           seniorityYearOfCalendarYear(profile.employedSince, monthOf(today).year),
@@ -146,7 +146,7 @@ export default async function WorkerPage({
     },
   ];
 
-  // The hero card: her first blockage, phrased once in `alertsView` and read
+  // The hero card: their first blockage, phrased once in `alertsView` and read
   // here from the same request-cached view the bar and the opening screen read
   // (item 27). A warning is not a blockage and stays in the bell.
   const view = await householdAlerts();

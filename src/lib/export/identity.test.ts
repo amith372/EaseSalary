@@ -7,8 +7,8 @@ import { fillMonthSheet } from "@/lib/export/monthSheet";
 import { MONTH_TEMPLATE, readTemplate } from "@/lib/export/template";
 
 /**
- * Her passport and bank account numbers on the month sheet (specs.md item 22:
- * the real numbers appear on her own screen and in the export).
+ * Their passport and bank account numbers on the month sheet (specs.md item 22:
+ * the real numbers appear on their own screen and in the export).
  *
  * The cells are the template's own: `A4` holds `{{passport_line}}` and `C3`
  * reads "מס'  חשבון:  {{account_number}}" in both month templates. The numbers

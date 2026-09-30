@@ -24,11 +24,11 @@ import type { MonthSpan } from "@/lib/engine/types";
  * 5's. Everything else is the user's to enter, and is deliberately left out:
  *
  * - **The free rest day of the 16th** is swept on the calendar (item 5).
- * - **Whether she worked each of the two holidays** is the one fact a month
+ * - **Whether they worked each of the two holidays** is the one fact a month
  *   records about a holiday, and it is clicked on the day (item 9). Both arrive
  *   `worked: false`, which is what an unanswered holiday looks like — seeding
  *   them as worked would answer, on the user's behalf, the question the case
- *   exists to put to her.
+ *   exists to put to them.
  * - **The ₪2,000 instalment** is recorded on `/payments` (item 20).
  *
  * So the household opens on a month worth ₪8,879.40 — the plain August of
@@ -51,10 +51,10 @@ const REST_EVE_SUPPLEMENT = 10000;
 const AUGUST_2025 = { year: 2025, month: 8 };
 
 /**
- * Hanna, as Part 4 describes her: paid the minimum wage, employed since
- * 1.4.2024, resting on Saturday so that her rest-eve is Friday.
+ * Hanna, as Part 4 describes them: paid the minimum wage, employed since
+ * 1.4.2024, resting on Saturday so that their rest-eve is Friday.
  *
- * Her opening balances are zero and that is confirmed rather than convenient.
+ * Their opening balances are zero and that is confirmed rather than convenient.
  * Part 4 gives no opening balance for August 2025, so a figure here would be
  * one with no source in the case the whole engine is checked against — the
  * balances the screen then shows are the month's own accrual, which is the part
@@ -62,13 +62,13 @@ const AUGUST_2025 = { year: 2025, month: 8 };
  */
 const hanna: WorkerProfile = {
   id: "hanna",
-  // Part 4 says nothing about an insurer and her case records no medical
+  // Part 4 says nothing about an insurer and their case records no medical
   // insurance, so an empty string is the honest value: not entered.
   insurer: "",
   name: "האנה",
   firstName: "האנה",
   employedSince: "2024-04-01",
-  // Part 4 gives her position as August opens.
+  // Part 4 gives them position as August opens.
   firstMonth: { year: 2025, month: 8 },
   gender: "female",
   baseMonthlySalaryAgorot: SALARY,

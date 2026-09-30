@@ -10,7 +10,7 @@ import { placementOf } from "@/lib/engine/types";
 import type { UserLine } from "@/lib/engine/types";
 
 /**
- * What the user may add to a month, and what she may not (specs.md item 20).
+ * What the user may add to a month, and what they may not (specs.md item 20).
  *
  * The expectations come from the criterion and not from the function: a line
  * has three independent choices and every combination of them is meant, the
@@ -109,7 +109,7 @@ describe("what is not a line", () => {
     }
   });
 
-  /** A line that moves no money is not a line she meant, and it would print in
+  /** A line that moves no money is not a line they meant, and it would print in
    * the export as a payment of nothing (item 2). */
   it("refuses zero", () => {
     expect(reviewUserLine(draft({ amount: "0" }), "l")).toEqual({

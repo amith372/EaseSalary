@@ -36,7 +36,7 @@ export default async function PayslipPage() {
   // The sheet is the month laid out row by row, so a month that could not be
   // valued has no rows: the card stands in the screen's place for the worker
   // whose replay refused, and the calendar it would be corrected on is one
-  // link away on `/`. It is hers alone — the other worker's sheet is drawn.
+  // link away on `/`. It is theirs alone — the other worker's sheet is drawn.
   const replayed = await householdSeries();
 
   const household: WorkerPayslip[] = await Promise.all(
@@ -72,7 +72,7 @@ export default async function PayslipPage() {
               vacation: countOf("vacationDays").days ?? 0,
               sick: countOf("sickDays").days ?? 0,
               holidaysWorked: worked,
-              // Every holiday the month holds less the ones she worked — the
+              // Every holiday the month holds less the ones they worked — the
               // unworked half of the same answer, and not a second count of
               // the calendar.
               holidaysUnworked: (holidays.items ?? 0) - worked,

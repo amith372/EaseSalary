@@ -15,7 +15,7 @@ import { religiousSources } from "@/lib/scrape/religiousHolidays";
  * `religiousSources`, never off what the function returned.
  */
 
-/** The demo case: her own country's list is the one she is on. */
+/** The demo case: their own country's list is the one they are on. */
 const OWN_PH = { kind: "country", code: "PH" } as const;
 
 describe("the lists a worker's year can be drawn from", () => {
@@ -46,10 +46,10 @@ describe("the lists a worker's year can be drawn from", () => {
   });
 
   /**
-   * Her country is her country whether or not a list has ever been stored for
+   * Their country is their country whether or not a list has ever been stored for
    * it. Catches a picker built from the stored lists alone: it would show a
    * chosen source with no chip selected, and the first thing the user did would
-   * be to move her onto some other country's list.
+   * be to move them onto some other country's list.
    */
   it("offers her own country even where nothing is stored for it", () => {
     const { countries } = holidaySourceChoices(SEEDED_HOLIDAY_LISTS, "TH", {
@@ -87,7 +87,7 @@ describe("the lists a worker's year can be drawn from", () => {
       religiousSources.druze.nameHe,
     ]);
     expect(religions[0].nameHe).toBe("חגים יהודיים");
-    // She is on her country's list, so no faith is the chosen one.
+    // They are on their country's list, so no faith is the chosen one.
     expect(religions.every((choice) => choice.selected)).toBe(false);
   });
 
@@ -103,7 +103,7 @@ describe("the lists a worker's year can be drawn from", () => {
     expect(countries.map((choice) => choice.nameHe)).toEqual(["PH", "הודו"]);
   });
 
-  /** A faith chosen in place of a country is the selected chip, and her own
+  /** A faith chosen in place of a country is the selected chip, and their own
    * country then is not — the two are one choice with two kinds of answer
    * (item 10). */
   it("marks a faith as the chosen list where she was moved to one", () => {
@@ -159,7 +159,7 @@ describe("the countries a holiday list is stored for", () => {
   });
 
   /** A faith's list is not a country. It is offered beside them by
-   * `holidaySourceChoices` and is no answer to "where is she from". */
+   * `holidaySourceChoices` and is no answer to "where are they from". */
   it("leaves a faith's list out", () => {
     const withReligion = [
       ...SEEDED_HOLIDAY_LISTS,
@@ -182,7 +182,7 @@ describe("the countries a holiday list is stored for", () => {
  * stage 8⅞).
  */
 describe("the list a corrected country is drawn from", () => {
-  /** Never moved, so the default is hers and the correction reaches it. */
+  /** Never moved, so the default is theirs and the correction reaches it. */
   it("follows the country for a worker never moved off it", () => {
     expect(holidaySourceOf({ country: "PH" })).toEqual({
       kind: "country",
@@ -195,10 +195,10 @@ describe("the list a corrected country is drawn from", () => {
   });
 
   /**
-   * Moved deliberately, so the correction leaves her where she was put. Catches
+   * Moved deliberately, so the correction leaves them where they were put. Catches
    * a `setCountry` that wrote `holidaySource` as well as `country`: a family
-   * fixing a typo in her country would silently undo the list they had chosen
-   * for her, and the picker would say nothing about it.
+   * fixing a typo in their country would silently undo the list they had chosen
+   * for them, and the picker would say nothing about it.
    */
   it("leaves a worker moved to another list where she was put", () => {
     expect(

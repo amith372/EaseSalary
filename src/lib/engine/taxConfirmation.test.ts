@@ -162,7 +162,7 @@ describe("the income tax a month is confirmed with", () => {
   /**
    * **What the sheet will print travels beside what is stored** (item 17). An
    * override replaces the calculated amount and leaves it standing underneath,
-   * so both are needed: the screen shows the user the figure her file will
+   * so both are needed: the screen shows the user the figure their file will
    * carry, and the action stores the one beneath it.
    *
    * **What it would catch**: the card showing ₪0.00 in front of a file that

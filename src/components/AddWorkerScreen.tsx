@@ -53,7 +53,7 @@ import { amountFieldValue } from "@/lib/money";
  *
  * **Three departures from the artboard, each because the drawing asks for
  * something the spec does not.** The artboard marks the country optional and it
- * cannot be — it is where her holiday list comes from, and a worker without one
+ * cannot be — it is where their holiday list comes from, and a worker without one
  * would be offered no list at all. Its step 2 offers calculating "from this
  * month" or "from the start of the employment"; item 6 offers this month or the
  * month before, never earlier than the employment, and asks for the opening
@@ -65,7 +65,7 @@ import { amountFieldValue } from "@/lib/money";
 
 /** How many steps there are, and which field belongs to which. A refusal names
  * a field, and the wizard has to know whether that field is behind the user or
- * ahead of her: at step 1 an empty salary is not yet a mistake. */
+ * ahead of them: at step 1 an empty salary is not yet a mistake. */
 const STEP_OF: Record<NewWorkerRefusal, number> = {
   name: 0,
   gender: 0,
@@ -123,7 +123,7 @@ export function AddWorkerScreen({
     name: "",
     gender: "female",
     passportNumber: "",
-    // **Empty, and not the first country on the list.** It is what her holiday
+    // **Empty, and not the first country on the list.** It is what their holiday
     // list is drawn from, so a country nobody chose would be saved as an
     // answer; `reviewNewWorker` refuses an empty one and the step says so.
     country: "",
@@ -139,7 +139,7 @@ export function AddWorkerScreen({
     incomeTaxMode: "automatic",
     incomeTaxPercentage: "",
     firstMonth: "",
-    // Zero opens every count, as on her page: a family with nothing accrued
+    // Zero opens every count, as on their page: a family with nothing accrued
     // needs to type nothing.
     opening: {
       vacationDays: "0",

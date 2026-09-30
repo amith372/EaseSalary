@@ -38,8 +38,8 @@ function taxSave(page: Page) {
  *
  * September 2026, **the second demo worker** — the one the browser suite works
  * on since 2026-09-11, when the first was reseeded from the family's own
- * workbooks (`seed.ts`). `seed.ts` pays her the ₪6,443.85 minimum wage in force
- * from 1.4.2026 and a ₪100 rest-eve supplement, and rests her on Saturday.
+ * workbooks (`seed.ts`). `seed.ts` pays them the ₪6,443.85 minimum wage in force
+ * from 1.4.2026 and a ₪100 rest-eve supplement, and rests them on Saturday.
  * September 2026 has thirty days and four Saturdays — the 5th, 12th, 19th and
  * 26th — so twenty-six are standard days, and four Fridays fall before those
  * Saturdays. Nothing is marked in September, so all four Saturdays are worked:
@@ -66,7 +66,7 @@ function taxSave(page: Page) {
  *                                    1,108,792.08 a year, = 92,399.34 a month
  *
  * A woman's 2.75 credit points are worth 2.75 × ₪2,904 ÷ 12 = ₪665.50 a month,
- * so she is taxed 92,399.34 − 66,550 = 25,849.34, which rounds to **₪258.49**.
+ * so they are taxed 92,399.34 − 66,550 = 25,849.34, which rounds to **₪258.49**.
  * A man's 2.25 points are worth ₪544.50, so he is taxed 92,399.34 − 54,450 =
  * 37,949.34, which rounds to **₪379.49**. The two differ by ₪121.00, which is
  * half a credit point a month and is the check that the pair is consistent.
@@ -171,8 +171,8 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
       formatAgorot(-TAX_FEMALE),
     );
 
-    // Her terms, with the switcher stepped across rather than left on the
-    // first worker: Hanna's months come from the workbooks and her terms no
+    // Their terms, with the switcher stepped across rather than left on the
+    // first worker: Hanna's months come from the workbooks and their terms no
     // test may edit (`household.ts`).
     await openSettingsForTestWorker(page);
     await settled(page);
@@ -202,7 +202,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
    * Marking the four Saturdays as free rest days takes the ₪1,758.96 of
    * rest-day work out of the month, leaving ₪6,443.85 + ₪400.00 = ₪6,843.85.
    * A year of that is 8,212,620 agorot, still inside the 10% bracket: 821,262 a
-   * year, or ₪684.39 a month, against a woman's ₪665.50 credit. She is taxed
+   * year, or ₪684.39 a month, against a woman's ₪665.50 credit. They are taxed
    * the ₪18.89 between them.
    *
    * **This month used to withhold nothing, and the wage rise is why it no
@@ -268,7 +268,7 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
    * the row back** (specs.md item 17).
    *
    * What it catches: an empty field read as a zero, which is what it used to
-   * mean. A user who clears the box to undo her correction would then be
+   * mean. A user who clears the box to undo them correction would then be
    * storing "withhold nothing" by hand for ever — the same number the
    * application would have produced in an ordinary month, and a silently wrong
    * one in every other.
@@ -323,8 +323,8 @@ test.describe("the tax the application works out (specs.md item 17)", () => {
  */
 test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
   async function openProfile(page: Page): Promise<void> {
-    // Her terms, with the switcher stepped across rather than left on the
-    // first worker: Hanna's months come from the workbooks and her terms no
+    // Their terms, with the switcher stepped across rather than left on the
+    // first worker: Hanna's months come from the workbooks and their terms no
     // test may edit (`household.ts`).
     await openSettingsForTestWorker(page);
     await settled(page);

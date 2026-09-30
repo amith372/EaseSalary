@@ -357,7 +357,7 @@ test.describe("a mark goes to the store", () => {
     await page.reload();
     // **The worker survives the reload as well** (`build_plan.md` stage 3):
     // the switcher's choice is a cookie the layout reads, so the page comes
-    // back on her without being chosen again. Asserted and not stepped to —
+    // back on them without being chosen again. Asserted and not stepped to —
     // stepping here would pass whether or not the choice survived.
     await expect(
       page.getByRole("group", { name: he.header.workerSwitcher.showing }),
@@ -403,8 +403,8 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     // Gesture one: the free Saturday of the 16th (Part 4).
     await sweep(page, "2025-08-16", "2025-08-16", "freeRestDay");
 
-    // Gestures two and three: the two holidays, each answered "she worked it".
-    // The dates are the year's and arrive drawn; whether she worked one is the
+    // Gestures two and three: the two holidays, each answered "they worked it".
+    // The dates are the year's and arrive drawn; whether they worked one is the
     // single fact a month records about it (item 9).
     for (const date of ["2025-08-19", "2025-08-21"]) {
       await page.locator(`[data-date="${date}"]`).click();
@@ -499,7 +499,7 @@ test.describe("the known case of Part 4, entered through the screen", () => {
   test("refuses the deliberately invalid case rather than paying twice", async ({
     page,
   }) => {
-    // Part 4's invalid case: the 16th recorded as a Saturday she had off, then
+    // Part 4's invalid case: the 16th recorded as a Saturday they had off, then
     // the same date marked again. Left unrefused it would pay both the rest-day
     // rate and a second mark's for one day, and the sheet would look ordinary.
     await useHousehold(page, "known", "invalid");
@@ -547,7 +547,7 @@ test.describe("half a day of vacation (specs.md items 5, 7)", () => {
     // vacation day leaves half a day", and item 7 draws it from the balance in
     // the same proportion. A fraction written to the store but read by only one
     // of the two would pass every unit test in the suite and still charge the
-    // worker a whole day on the screen she is looking at.
+    // worker a whole day on the screen they are looking at.
     await useHousehold(page, "demo", "halfday");
     await page.goto("/");
     await switchToTestWorker(page);
@@ -590,7 +590,7 @@ test.describe("half a day of vacation (specs.md items 5, 7)", () => {
     // And it went to the store rather than to the browser: the mark a reload
     // forgets is the one failure no unit test can see.
     await page.reload();
-    // The chosen worker does not survive a reload, so she is chosen again. What
+    // The chosen worker does not survive a reload, so they are chosen again. What
     // is being checked is the mark, and the mark does.
     await switchToTestWorker(page);
     await expect(row(page, "workDays")).toContainText(

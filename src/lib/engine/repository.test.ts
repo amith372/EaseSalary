@@ -176,8 +176,8 @@ describe("a worker's facts written and read back", () => {
   });
 
   it("keeps a worker's months and spans when her profile is replaced", async () => {
-    // Raising the salary must not empty her history. The profile is one row and
-    // is replaced wholesale; the months hang off her id and are untouched.
+    // Raising the salary must not empty their history. The profile is one row and
+    // is replaced wholesale; the months hang off them id and are untouched.
     const repository = store();
     await repository.saveMonth("hanna", record(JANUARY));
     await repository.saveSpan("hanna", {

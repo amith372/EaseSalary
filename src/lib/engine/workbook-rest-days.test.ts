@@ -37,12 +37,12 @@ describe("the rest days the calendar yields, against what the family counted", (
       );
       const restDays = result.lines.find((line) => line.key === "restDays");
 
-      // `G2`: the rest days she worked. The engine derives it as the month's
+      // `G2`: the rest days they worked. The engine derives it as the month's
       // rest days less the ones marked free, so a fixed count of four fails on
       // `חודש  5.26` and a free day counted twice fails on `חודש  8.25`.
       expect(restDays?.units ?? 0).toBe(m.restDaysWorked);
 
-      // `F2`: the rest-eves. Every one of these fifteen months has her working
+      // `F2`: the rest-eves. Every one of these fifteen months has them working
       // all of them, so the family's "Fridays worked" and item 14's "every
       // rest-eve of the month" agree throughout, and the count is a clean check
       // on the calendar rather than on the rule.
@@ -107,7 +107,7 @@ describe("the supplement is ₪100 a rest-eve, and the pay is the rest-day rate"
   });
 
   it("draws no rest-day line at all in a month with none left to work", () => {
-    // There is no such month in the fixture — she worked at least three in
+    // There is no such month in the fixture — they worked at least three in
     // every one — so this states the boundary the fixture cannot: a month whose
     // rest days are all free prints no row rather than a row of zero.
     const m = byTab("חודש  6.26");
@@ -122,7 +122,7 @@ describe("the supplement is ₪100 a rest-eve, and the pay is the rest-day rate"
     );
     expect(result.lines.some((line) => line.key === "restDays")).toBe(false);
     // The salary is untouched by it: a free rest day stands outside the
-    // standard count, so it costs her nothing (item 5).
+    // standard count, so it costs them nothing (item 5).
     expect(result.gross).toBe(m.salaryAgorot + 40000);
   });
 });

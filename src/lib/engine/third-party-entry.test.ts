@@ -172,8 +172,8 @@ describe("the covered period is a run of months or nothing (item 16)", () => {
   });
 
   it("refuses a backwards period and never quietly reorders it", () => {
-    // Which way round she meant it is not the application's to decide, and a
-    // period silently flipped is one she will not check (item 16). This is the
+    // Which way round they meant it is not the application's to decide, and a
+    // period silently flipped is one they will not check (item 16). This is the
     // mutation `orderDates` would invite if it were reached for here.
     expect(
       reviewThirdPartyPayment(
@@ -391,7 +391,7 @@ describe("when it was paid, and when the cover runs out (specs.md item 16)", () 
 
   it("keeps the family's own date over the default", () => {
     // "Usually" is why the year is a default: a policy that ran fifteen months
-    // must keep the date the family typed, and must still keep it when she
+    // must keep the date the family typed, and must still keep it when they
     // reopens the panel to correct something else.
     const reviewed = reviewThirdPartyPayment(
       draft({ paidOn: "2026-06-15", expiresOn: "2027-09-30" }),

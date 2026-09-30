@@ -22,7 +22,7 @@ import type { YearMonth } from "../src/lib/types";
  * day in `worker-profile` and `payslip`, the tax in `income-tax`, the
  * recuperation month in `recuperation`. What this spec owns is the screen:
  * that it is about the worker the switcher holds, that the worker's page sends
- * her there, and that the rows the law settles show the law's figures.
+ * them there, and that the rows the law settles show the law's figures.
  *
  * **The rates are read at today's month**, which is the real clock, as every
  * spec that opens on "the current month" is. From 2026-04-01 the seeded minimum
@@ -87,7 +87,7 @@ test.describe("the settings screen", () => {
       .getByRole("link", { name: he.workers.toProfile(he.placeholder.name) })
       .last()
       .click();
-    // The URL first: the list draws her name as a heading too, and its cards
+    // The URL first: the list draws their name as a heading too, and its cards
     // carry their own "פרטים והגדרות" links.
     await expect(page).toHaveURL(/\/workers\/[^/]+$/);
     await expect(
@@ -105,7 +105,7 @@ test.describe("the settings screen", () => {
 
   /**
    * The rows marked "מחושב לפי החוק", against figures that come from outside
-   * the code: the seeded worker was employed from 1.4.2024, so 2026 is her
+   * the code: the seeded worker was employed from 1.4.2024, so 2026 is them
    * third calendar year and the ladder gives fourteen days (item 7); sick days
    * accrue 1.5 a month, eighteen a year (item 8).
    *
@@ -231,7 +231,7 @@ test.describe("a change of salary (specs.md item 3)", () => {
  * month.
  *
  * The expected figure is counted here by hand: the test worker rests on
- * Saturday, so her rest-eves are the Fridays of the month the calendar opens on,
+ * Saturday, so their rest-eves are the Fridays of the month the calendar opens on,
  * each paid the ₪150 this test sets.
  *
  * What it catches: a supplement saved on the profile that no month reads —
@@ -279,7 +279,7 @@ test.describe("the rest-eve supplement (specs.md item 14)", () => {
    * **The two figures are worked out on a calendar.** 2026-01-01 is a Thursday,
    * so 2026-03-01 is a Sunday and March's Fridays are the 6th, 13th, 20th and
    * 27th — four of them. 2026-05-01 is a Friday, so May's are the 1st, 8th,
-   * 15th, 22nd and 29th — five. She is seeded at ₪100 a rest-eve, which is
+   * 15th, 22nd and 29th — five. They are seeded at ₪100 a rest-eve, which is
    * ₪400 in March and ₪500 in May; raised to ₪200, March stays at ₪400 and May
    * becomes ₪1,000.
    *
@@ -367,7 +367,7 @@ test.describe("the identifying numbers (specs.md items 22, 28)", () => {
       await expect(page.locator(`[data-terms="${name}Number"]`)).toContainText(value);
     }
 
-    // The first worker: her own visa and bank account are not the test
+    // The first worker: their own visa and bank account are not the test
     // worker's, and the permit is the household's and is.
     await page.goto("/settings");
     await switchToFirstWorker(page);
@@ -431,7 +431,7 @@ test.describe("every field is announced by its own row", () => {
  * The switcher on a worker's own page (`build_plan.md` stage 3). That page takes
  * its worker from the address, so switching there has to change the address.
  *
- * What it catches: the bar renaming itself to the other worker while her
+ * What it catches: the bar renaming itself to the other worker while them
  * profile stays on screen — a page showing one person's months under another
  * person's name, which is what the switcher did until 2026-09-13.
  */
@@ -457,8 +457,8 @@ test.describe("the switcher on a worker's page", () => {
  * so the rows that read it move at once.
  *
  * The figure is item 7's ladder: moved from 1.4.2024 to 1.1.2020, 2026 becomes
- * her seventh calendar year, and year seven is twenty-one days — up from the
- * fourteen of her third. That holds while the real clock is in 2026, which is
+ * them seventh calendar year, and year seven is twenty-one days — up from the
+ * fourteen of their third. That holds while the real clock is in 2026, which is
  * true of every spec here that reads "this year".
  *
  * What it catches: a date saved on the profile while the vacation figure keeps
@@ -493,14 +493,14 @@ test.describe("the start of the employment", () => {
    *
    * Scenario: the demo worker's months run from January 2026 (`seed.ts`). The
    * start of employment is set to 1 June 2026 — a date inside the range the
-   * field accepts, and after months that already carry her marks and figures.
+   * field accepts, and after months that already carry their marks and figures.
    *
    * Expected: the refusal, naming January 2026 as the month it must not pass;
    * the field still holding the date the seed gave; and the vacation quota
    * unmoved, since seniority is what a start date changes.
    *
    * **Why it is refused rather than accepted.** Balances are replayed from the
-   * opening position through every month she has (item 6), so a start *after*
+   * opening position through every month they have (item 6), so a start *after*
    * a month that already exists asks the replay to value months from before
    * the employment began — which is not a wrong figure but an incoherent one.
    * The refusal is the only alternative to letting the family produce it.

@@ -17,10 +17,10 @@ import { he } from "@/lib/i18n/he";
  * exactly one thing. Nothing here is read back from the engine.
  *
  * **The four combinations, each moving one thing.** A standing addition of ₪500
- * lands in column E, because a payment made every month is part of what she
+ * lands in column E, because a payment made every month is part of what they
  * earns; a one-off addition of ₪300 lands in G, which is what that column is
  * for. Deductions of either lifetime land in the block below the columns, so
- * they move what is transferred and never what she earned:
+ * they move what is transferred and never what they earned:
  *
  *   standing addition   E 724,765   gross 937,940   net 937,940
  *   one-off addition    G  30,000   gross 917,940   net 917,940
@@ -122,7 +122,7 @@ describe("a one-off addition (specs.md item 20)", () => {
 describe("a deduction is withheld, never un-earned (specs.md item 20)", () => {
   it("moves the standing case's net and leaves its gross alone", () => {
     // 887,940 earned, 20,000 withheld, 867,940 transferred. A deduction that
-    // moved the gross would be saying she never earned the money, which is a
+    // moved the gross would be saying they never earned the money, which is a
     // different claim and the wrong one.
     const w = worker([standingDeduction]);
     const result = calculateMonth(facts(w), w);
@@ -302,7 +302,7 @@ describe("a line placed before or after the month's total (specs.md item 20)", (
   });
 
   it("pays the worker the same either way, and estimates a different cost", () => {
-    // The check that says what the choice is actually about. She is transferred
+    // The check that says what the choice is actually about. They are transferred
     // ₪9,379.40 in both, and what differs is whether the ₪500 was part of the
     // month's cost — so the two estimates are 3.6% of ₪9,379.40 and of
     // ₪8,879.40.

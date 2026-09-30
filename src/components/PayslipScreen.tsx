@@ -81,9 +81,9 @@ interface PayslipMonth {
 export interface WorkerPayslip {
   workerId: string;
   workerName: string;
-  /** The month her replay refused, where it refused one (`specs.md` item 25).
-   * A refused replay values no month of hers, so the card stands in the sheet's
-   * place — for her, and not for the worker beside her. */
+  /** The month their replay refused, where it refused one (`specs.md` item 25).
+   * A refused replay values no month of theirs, so the card stands in the sheet's
+   * place — for them, and not for the worker beside them. */
   refused: RefusedMonth | null;
   months: PayslipMonth[];
 }
@@ -93,7 +93,7 @@ interface PayslipScreenProps {
 }
 
 /** The three columns that reach the worker, in the order the sheet prints
- * them. `H` is drawn separately below, outside her total (item 16). */
+ * them. `H` is drawn separately below, outside their total (item 16). */
 const WORKER_COLUMNS: SheetColumn[] = ["E", "F", "G"];
 
 function unitsHint(line: MonthLine) {
@@ -122,8 +122,8 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
   const mine =
     household.find((entry) => entry.workerId === worker?.id) ?? household[0];
   if (mine === undefined) return null;
-  // The sheet is her months laid out row by row and a refused replay values
-  // none of them, so the card is this screen for her. Every hook above it runs
+  // The sheet is their months laid out row by row and a refused replay values
+  // none of them, so the card is this screen for them. Every hook above it runs
   // either way, which is why the check sits here and not at the top.
   if (mine.refused !== null) return <RefusalCard refused={mine.refused} />;
 
@@ -230,7 +230,7 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               screen that confirms it** (specs.md items 4, 17). The route
               refuses such a month, and a control that answers a click with a
               refusal is a control that should not have been drawn — but unlike
-              a block, this is something she can do from here, so it is offered
+              a block, this is something they can do from here, so it is offered
               rather than withheld. */}
           {shown.canExport && shown.confirmedOn === null ? (
             <Link

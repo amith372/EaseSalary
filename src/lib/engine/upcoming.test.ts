@@ -22,7 +22,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * within twelve months counted from this one, and the last amount paid per kind.
  */
 
-// Employed from 10 March 2025: her first employment year completes on 10 March
+// Employed from 10 March 2025: their first employment year completes on 10 March
 // 2026, so July 2026 owes 5 days and July 2027, two years done, owes 6 (item 15).
 const PROFILE: WorkerProfile = {
   id: "w",

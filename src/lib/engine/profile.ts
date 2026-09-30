@@ -104,7 +104,7 @@ export function isAllowedGender(value: unknown): value is Gender {
  * **Zero is refused rather than accepted as "nothing"**, because `none` is what
  * says that and the whole reason there are three modes is so a family never has
  * to express a decision as an amount. A rate above the whole salary is refused
- * for the reason a negative one is: it cannot be meant, and it would pay her
+ * for the reason a negative one is: it cannot be meant, and it would pay them
  * nothing while looking like an ordinary withholding.
  */
 export function reviewIncomeTax(
@@ -161,7 +161,7 @@ function latestEmployment(today: IsoDate): IsoDate {
  * The date the employment began, or why it is refused (specs.md item 6):
  * `"invalid"` for no date at all, `"range"` for a date before 2020 or more than
  * a year after `today`, and `"afterFirstMonth"` for a correction that would
- * leave the worker's first month before her employment. The same rule serves
+ * leave the worker's first month before their employment. The same rule serves
  * the wizard and a later correction, so the two cannot disagree; only a
  * correction passes `firstMonth`, because the wizard derives it from the date.
  */
@@ -185,8 +185,8 @@ export function reviewEmployedSince(
 }
 
 /**
- * The first month of a worker added today (specs.md item 6): the month she is
- * added in, and never earlier than the month her employment begins — a start
+ * The first month of a worker added today (specs.md item 6): the month they are
+ * added in, and never earlier than the month their employment begins — a start
  * date still ahead makes that month the first.
  */
 export function firstMonthFor(employedSince: IsoDate, today: IsoDate): YearMonth {
@@ -197,7 +197,7 @@ export function firstMonthFor(employedSince: IsoDate, today: IsoDate): YearMonth
 
 /**
  * The first months a worker added today may be given (specs.md item 6): the
- * month she is added in, and the month before it so a family registering early
+ * month they are added in, and the month before it so a family registering early
  * in a month can still pay the month that just ended — but never a month
  * before the employment began. One choice means none is offered.
  */
@@ -291,7 +291,7 @@ export interface OpeningDaysDraft {
 /**
  * A count of days, or `null`.
  *
- * Negative is refused: a balance already accrued is what she has, and a
+ * Negative is refused: a balance already accrued is what they have, and a
  * worker cannot begin owing days. The ceiling is not checked here — ninety is
  * where the sick *accrual* stops (item 8) and a family stating an opening
  * position states what they were told, so refusing it would refuse a fact
@@ -564,7 +564,7 @@ function daysBackToRestDay(date: IsoDate, restDay: RestDay): number {
  *
  * **Where one month holds two stranded marks, each is measured against the same
  * balance**, because the user answers them one at a time and may convert only
- * one. What she actually chose is checked again together when the change is
+ * one. What they actually chose is checked again together when the change is
  * saved, which is the only moment the combination exists.
  */
 export function strandedFreeRestDays(
@@ -675,7 +675,7 @@ export function parseRestEveSupplement(text: string): number | null {
 }
 
 /**
- * A worker as the `הוספת עובד` wizard hands her over — every field as the user
+ * A worker as the `הוספת עובד` wizard hands them over — every field as the user
  * typed or chose it, so the rule that reads them is the server's (Part 3).
  *
  * **The four steps of the artboard are three drafts and a summary**, and this
@@ -690,7 +690,7 @@ export interface NewWorkerDraft {
    * check data (`isAllowedGender`). */
   gender: unknown;
   /**
-   * Her passport number, which is one of the four sealed at rest (items 22,
+   * Their passport number, which is one of the four sealed at rest (items 22,
    * 28).
    *
    * **Empty is "not entered yet" and is an ordinary answer**, exactly as an
@@ -707,7 +707,7 @@ export interface NewWorkerDraft {
   passportNumber: string;
   /** A country *code*, from the holiday lists the household holds — the
    * published pages are addressed by code (item 12). The artboard marks the
-   * field optional and it cannot be: it is what her year's holidays are drawn
+   * field optional and it cannot be: it is what their year's holidays are drawn
    * from, and a worker with no country would be offered no list at all. */
   country: string;
   employedSince: string;
@@ -792,7 +792,7 @@ type ReviewedNewWorker =
   | { ok: false; reason: NewWorkerRefusal };
 
 /**
- * A new worker, or the first reason she is not one yet.
+ * A new worker, or the first reason they are not one yet.
  *
  * **The id is not minted here**, for the reason `reviewOpeningAdvance`'s number
  * is not: an id is the store's to give and never the caller's, and a function

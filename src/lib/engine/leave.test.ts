@@ -143,8 +143,8 @@ describe("a holiday changes the money and never the count (items 5, 9)", () => {
 });
 
 describe("a holiday on her weekly rest day is not a holiday (specs.md item 9)", () => {
-  // Saturday 16 August 2025, worked, and also a chosen holiday. Her rest day is
-  // Saturday, so the day is her weekly rest day and nothing about it is a
+  // Saturday 16 August 2025, worked, and also a chosen holiday. Their rest day is
+  // Saturday, so the day is their weekly rest day and nothing about it is a
   // holiday except how the calendar draws it. Settled with the user on
   // 2026-09-12.
   const spans = [holiday("2025-08-16", true)];
@@ -161,7 +161,7 @@ describe("a holiday on her weekly rest day is not a holiday (specs.md item 9)", 
   /**
    * **The money is unchanged and the line it sits on is not.** Until
    * 2026-09-12 the day was paid on the holiday line with a day taken back out
-   * of the rest days; now it is simply one of the five rest days she worked.
+   * of the rest days; now it is simply one of the five rest days they worked.
    * The family sees the same total either way, so this is the assertion that
    * would catch the rule half-applied.
    */
@@ -175,8 +175,8 @@ describe("a holiday on her weekly rest day is not a holiday (specs.md item 9)", 
 
   /**
    * **And it spends nothing from the nine** (item 9), which is the half that
-   * costs the worker something if it is wrong: a date she can never be paid
-   * extra for must not quietly consume one of the nine she could have been.
+   * costs the worker something if it is wrong: a date they can never be paid
+   * extra for must not quietly consume one of the nine they could have been.
    * Another date may be chosen in its place.
    */
   it("draws nothing from the year's entitlement", () => {
@@ -214,19 +214,19 @@ describe("part days are paid and drawn in their own proportion (items 7, 10)", (
   });
 
   /**
-   * **A holiday nobody has answered for is paid as one she worked** (specs.md
+   * **A holiday nobody has answered for is paid as one they worked** (specs.md
    * item 9, settled with the user on 2026-09-12).
    *
    * The lean is deliberate and its direction is the point: of the two readings
    * an unanswered holiday could be given, the cheaper one is the one that costs
-   * her money, and a month is not exported while the question is still open
+   * them money, and a month is not exported while the question is still open
    * (`blocksExport`). Before this the value was `false`, which the engine paid
    * nothing for, so a family who never opened the month was silently taken to
-   * have said she did not work it.
+   * have said they did not work it.
    *
    * **What this would catch is the state quietly collapsing back into two.**
    * `worked` is nullable and `null` is falsy, so every `if (span.worked)` goes
-   * on compiling while reading "nobody has said yet" as "she did not work it".
+   * on compiling while reading "nobody has said yet" as "they did not work it".
    * No type catches that; this does.
    */
   it("pays a holiday nobody has answered for as one she worked", () => {
@@ -247,7 +247,7 @@ describe("part days are paid and drawn in their own proportion (items 7, 10)", (
 
   /**
    * Item 5's check applied to the third state: a holiday never moves a count,
-   * so an unanswered holiday is counted as a day of her month whichever way it
+   * so an unanswered holiday is counted as a day of their month whichever way it
    * is later answered.
    */
   it("counts an unanswered holiday as a day she attended, not as one she missed", () => {
@@ -313,7 +313,7 @@ describe("the yearly entitlement (specs.md item 10)", () => {
 
   it("turns over on the 1st of January, like the vacation year (item 7)", () => {
     // Not on the employment anniversary: every month of 2025 has the full nine,
-    // including the three before her April anniversary.
+    // including the three before them April anniversary.
     expect(holidayAllowanceFor("2024-04-01", 2025)).toBe(9);
     expect(holidayAllowanceFor("2024-04-01", 2023)).toBe(0);
   });
@@ -380,7 +380,7 @@ describe("vacation costs nothing, structurally (specs.md item 7)", () => {
   it("draws six days and not seven from a range spanning a Saturday", () => {
     // Sunday 10 to Saturday 16 August is seven days, six of which draw:
     // Saturday is already the weekly rest day, so a vacation day for it would
-    // charge her twice (item 5). `spans.ts` owns the rule and would in fact
+    // charge them twice (item 5). `spans.ts` owns the rule and would in fact
     // refuse the 16th at mark time; this is the engine consuming the same rule
     // for a span that reached it whole from storage.
     expect(week.balances.find((b) => b.kind === "vacation")?.used).toBe(6);
@@ -393,11 +393,11 @@ describe("vacation costs nothing, structurally (specs.md item 7)", () => {
   });
 
   it("moves money only through the days she was away, never through the vacation", () => {
-    // The week takes Friday 15 and Saturday 16 out of the days she attended,
-    // and only one of them costs anything. A Saturday she did not work earns no
+    // The week takes Friday 15 and Saturday 16 out of the days they attended,
+    // and only one of them costs anything. A Saturday they did not work earns no
     // rest-day premium (item 5): −₪426.35. **The Friday costs nothing**, because
     // the rest-eve supplement is paid for every rest-eve of the month whether
-    // she worked it or not (item 14) — it is an agreed term and attendance is
+    // they worked it or not (item 14) — it is an agreed term and attendance is
     // not a condition on it. Neither figure is a price on the vacation, and the
     // base is untouched above.
     expect((without.net ?? 0) - (week.net ?? 0)).toBe(REST_DAY_RATE);

@@ -7,11 +7,11 @@ import { formatAgorot } from "../src/lib/money";
  * "לקראת החודשים הבאים" on the payments screen (specs.md item 15), for the test
  * worker of the demo seed.
  *
- * **Where the expected rows come from.** `seed.ts`: her work visa expires on
- * 15 October 2026 and her permit on 30 November 2026; she was employed from
- * 1 April 2024 with July as her recuperation month, so July 2027 completes her
+ * **Where the expected rows come from.** `seed.ts`: their work visa expires on
+ * 15 October 2026 and their permit on 30 November 2026; they were employed from
+ * 1 April 2024 with July as their recuperation month, so July 2027 completes them
  * third year and owes 6 days (item 15's ladder: 5, then 6 for years two and
- * three); no fee has been paid for her. Counted from September 2026, the
+ * three); no fee has been paid for them. Counted from September 2026, the
  * twelve months run to August 2027 and hold all three. September 2026 is the
  * suite's own day (`TODAY` in `household.ts`), not the machine's.
  */

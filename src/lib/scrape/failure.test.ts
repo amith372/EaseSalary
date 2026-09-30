@@ -45,7 +45,7 @@ describe("fetchPage", () => {
    * **What it would catch**: the signal not being passed to the request at all,
    * and the abort being reported as something other than a source that gave us
    * no page — the sentence the user reads is chosen from the kind, so a
-   * `notFound` here would tell her the application's parsing is broken when the
+   * `notFound` here would tell them the application's parsing is broken when the
    * source is merely down.
    */
   it("gives up on a source that never answers, and calls it unreachable", async () => {

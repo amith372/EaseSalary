@@ -29,7 +29,7 @@ import { supabaseOnServer } from "@/lib/supabase/server";
  *
  * **The figures in the "מחושב לפי החוק" rows are the engine's own functions**,
  * read here for the current calendar year and month, so this screen and the
- * month it values cannot disagree about what a year entitles her to.
+ * month it values cannot disagree about what a year entitles them to.
  *
  * **Two of the artboard's rows are absent on purpose.** The medical-insurance
  * premium and the agency fee are payments, recorded on the month they were paid
@@ -86,7 +86,7 @@ export default async function SettingsPage() {
     workers.map(async (profile) => {
       // The picker's own two figures, for the reason the worker's page gave
       // when it drew this row: the row and `/settings/holidays` must not be
-      // able to disagree about how much of her year is chosen (item 10).
+      // able to disagree about how much of their year is chosen (item 10).
       const holidays = holidayYear(
         [],
         await repository.listSpans(profile.id),

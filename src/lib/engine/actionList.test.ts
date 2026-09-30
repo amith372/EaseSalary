@@ -24,8 +24,8 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * returned.
  */
 
-// Employed from 10 March 2025 and calculated from January 2026: her first
-// employment year completes on 10 March 2026, so July 2026, her recuperation
+// Employed from 10 March 2025 and calculated from January 2026: their first
+// employment year completes on 10 March 2026, so July 2026, their recuperation
 // month, is the first that owes anything (item 15).
 const PROFILE: WorkerProfile = {
   id: "w",
@@ -58,7 +58,7 @@ const PROFILE: WorkerProfile = {
   },
 };
 
-// Nine Mondays of 2026 — none on her Saturday rest day, so all nine count
+// Nine Mondays of 2026 — none on them Saturday rest day, so all nine count
 // towards the year's nine (items 9, 10).
 const NINE_HOLIDAYS: MonthSpan[] = [
   "2026-01-05", "2026-01-12", "2026-01-19", "2026-01-26", "2026-02-02",
@@ -121,7 +121,7 @@ function only<K extends ActionEntry["key"]>(entries: ActionEntry[], key: K) {
 
 describe("nothing outstanding", () => {
   // Item 27's done-when. 20 January 2026: no quarter has ended since January
-  // (the last ended in December, before her first month); January itself has not
+  // (the last ended in December, before their first month); January itself has not
   // ended; all nine holidays are chosen; every document is more than sixty days
   // (and the passport more than eighteen months) off; no advance; recuperation
   // is July and the anniversary March, neither of them next month.
@@ -370,7 +370,7 @@ describe("recuperation (item 15)", () => {
 });
 
 describe("a year with fewer than seven vacation days (item 7)", () => {
-  // 10–16 March 2026, Tuesday to Monday, with Saturday the 14th her rest day:
+  // 10–16 March 2026, Tuesday to Monday, with Saturday the 14th their rest day:
   // six working days. To the 17th: seven.
   const sixDays: MonthSpan = { id: "v", kind: "vacation", from: "2026-03-10", to: "2026-03-16" };
   const sevenDays: MonthSpan = { ...sixDays, to: "2026-03-17" };
@@ -513,7 +513,7 @@ describe("a minimum wage that changed since the last export (items 4, 27)", () =
 
 describe("a new year of seniority (item 27)", () => {
   it("warns in the month before the anniversary", () => {
-    // Employed 10 March 2025: her second year begins 10 March 2026.
+    // Employed 10 March 2025: their second year begins 10 March 2026.
     expect(only(listFor({ today: "2026-02-10" }), "seniorityYearTurning")).toEqual([
       { list: "warning", key: "seniorityYearTurning", years: 1, on: "2026-03-10" },
     ]);

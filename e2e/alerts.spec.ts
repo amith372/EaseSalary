@@ -8,7 +8,7 @@ import { he, type Said } from "../src/lib/i18n/he";
  * **What every assertion rests on.** The `filed` seed is the demo with the
  * test worker's January to April 2026 confirmed and never exported
  * (`seed.ts`), so "January 2026 not yet exported" and the three months after it
- * are warnings on her list, while every later finished month is still a draft
+ * are warnings on their list, while every later finished month is still a draft
  * and so a blockage (item 27). Nothing below depends on which other entries the
  * day raises: the blockages are counted before and after and compared with
  * themselves.
@@ -455,7 +455,7 @@ test.describe("a finished month never confirmed (specs.md item 27)", () => {
     // The demo confirms none of its months (`seed.ts`), so August 2026 — ended
     // by the suite's day — is a draft.
     await useHousehold(page, "demo", "unconfirmed");
-    // Every month of hers is a draft, so the blockage is one card naming them
+    // Every month of theirs is a draft, so the blockage is one card naming them
     // all, August among them (item 27's grouping).
     const unconfirmed = page
       .locator('[data-role="alert"][data-list="blockage"]')
@@ -501,7 +501,7 @@ test.describe("an account with nothing outstanding (build_plan.md stage 6, done 
     // salary is April 2026's minimum wage, as in `add-worker.spec.ts`.
     await page.goto("/workers/new");
     await page.locator('[data-field="name"]').fill("מריה דה לה קרוס");
-    // The step will not be left without a country: it decides her holiday list
+    // The step will not be left without a country: it decides their holiday list
     // and the select opens on nothing (`add-worker.spec.ts`).
     await page.locator('[data-field="country"]').selectOption("PH");
     await page.locator('[data-role="add-worker-next"]').click();
@@ -563,9 +563,9 @@ test.describe("an account with nothing outstanding (build_plan.md stage 6, done 
 
 test.describe("the December that closes a year (specs.md item 7)", () => {
   // Expected by hand from item 7, not read off the screen: a worker employed
-  // from 1 December 2026 is in her first calendar year, which accrues fourteen
+  // from 1 December 2026 is in their first calendar year, which accrues fourteen
   // days a year, so December alone accrues 14 ÷ 12 = 1.1667 days — fewer than
-  // seven, so that is what the law asks her to have taken, and she took none.
+  // seven, so that is what the law asks them to have taken, and they took none.
   // It is a warning and never a blockage: item 7 says it without pressing the
   // point, and item 27 puts it in the bell.
   test("warns of the vacation a worker added that month has not taken", async ({ page }) => {
@@ -574,7 +574,7 @@ test.describe("the December that closes a year (specs.md item 7)", () => {
 
     await page.goto("/workers/new");
     await page.locator('[data-field="name"]').fill("מריה דה לה קרוס");
-    // The step will not be left without a country: it decides her holiday list
+    // The step will not be left without a country: it decides their holiday list
     // and the select opens on nothing (`add-worker.spec.ts`).
     await page.locator('[data-field="country"]').selectOption("PH");
     await page.locator('[data-role="add-worker-next"]').click();

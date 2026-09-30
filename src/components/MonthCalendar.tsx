@@ -56,7 +56,7 @@ interface MonthCalendarProps {
   month: YearMonth;
   spans: DaySpan[];
   /**
-   * Her weekly rest day, which is a term of the employment and not a constant
+   * Their weekly rest day, which is a term of the employment and not a constant
    * (specs.md item 5). The calendar needs it for the words alone — a
    * Saturday-resting worker reads שבת חופשית and a Friday-resting one
    * שישי חופשי — since what a swept range *means* is decided by
@@ -114,7 +114,7 @@ interface MonthCalendarProps {
  * **The three kinds the user may mark — and a holiday is not one of them**
  * (specs.md item 9). The year's holidays are chosen in advance from the
  * country's candidate list, arrive on the month already drawn, and the only
- * thing recorded about one is whether she worked it. `MarkKind` does not
+ * thing recorded about one is whether they worked it. `MarkKind` does not
  * contain `"holiday"`, so this list cannot grow it by accident.
  */
 const pickerKinds: MarkKind[] = ["vacation", "sick", "freeRestDay"];
@@ -183,8 +183,8 @@ function chipClass({
 const PART_DAY = "bg-[linear-gradient(to_top,transparent_50%,var(--color-day)_50%)]";
 
 /**
- * A holiday, in the two weights item 9 asks for: **an outline for one she did
- * not work and a fill for one she did**, so the state that costs money is the
+ * A holiday, in the two weights item 9 asks for: **an outline for one they did
+ * not work and a fill for one they did**, so the state that costs money is the
  * louder of the two. One colour, two weights — the same hue in both, because
  * they are two answers about one kind of day and not two kinds.
  */
@@ -208,10 +208,10 @@ const HOLIDAY_FACE = {
  *
  * **Written once because the cell, its label and the legend all ask it**, and
  * because the question has three answers: a predicate returning a boolean is
- * exactly the shape that reads "nobody has said yet" as "she did not work it".
+ * exactly the shape that reads "nobody has said yet" as "they did not work it".
  */
 /**
- * Six entries. "יום עבודה" is a day she worked, which is every unmarked day
+ * Six entries. "יום עבודה" is a day they worked, which is every unmarked day
  * including an unmarked rest day — so there is no entry for the weekly rest day
  * and no separate fill for it. The holiday takes three, because its weights
  * are the whole of what the month records about one and a month read back later
@@ -219,7 +219,7 @@ const HOLIDAY_FACE = {
  * answered for is its own state and not a quiet no.
  *
  * Built per render rather than held as a module constant, because one entry
- * names her own rest day (item 5).
+ * names their own rest day (item 5).
  */
 /**
  * How many days an arrow key moves the focus. The document is right-to-left, so
@@ -404,7 +404,7 @@ export function MonthCalendar({
    *
    * **A holiday answers a single click instead**, because a holiday is not
    * marked — it is already there, and the one thing the month records about it
-   * is whether she worked it (specs.md item 9). Asking that on the second click
+   * is whether they worked it (specs.md item 9). Asking that on the second click
    * of a range would be two clicks for a yes-or-no about a day the user did not
    * choose. The cost is that a holiday cannot be the day a sweep starts on;
    * every other day still can, and a sweep that *crosses* one is unaffected.
@@ -495,7 +495,7 @@ export function MonthCalendar({
    *
    * **The same function the server marks with** (`spans.ts`), so the picker
    * cannot offer what `markRange` would then drop: a free rest day on a day
-   * that is not her rest day is skipped there, and a chip that was pressed,
+   * that is not their rest day is skipped there, and a chip that was pressed,
    * marked nothing and answered afterwards is the dead control this removes.
    * A selection holding even one day that can take the kind still offers it,
    * because those days are marked and the rest reported (specs.md item 8).

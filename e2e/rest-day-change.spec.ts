@@ -27,10 +27,10 @@ import { formatDays } from "../src/lib/money";
  * August is the month before it.
  *
  * **The vacation balance is worked out on paper.** The second worker opens
- * January 2026 with 9 days (`seed.ts`), her employment began on 2024-04-01 so
- * 2026 is her third seniority year and accrues 14 days a year (item 7) — 14/12
+ * January 2026 with 9 days (`seed.ts`), their employment began on 2024-04-01 so
+ * 2026 is their third seniority year and accrues 14 days a year (item 7) — 14/12
  * a month, over the nine months January to September, which is 10.5 — and the
- * only vacation she has taken is 16–19 February, which is four days. 9 + 10.5 −
+ * only vacation they have taken is 16–19 February, which is four days. 9 + 10.5 −
  * 4 = 15.5 days at the end of September, and a free rest day turned into a
  * vacation day takes it to 14.5.
  */
@@ -287,7 +287,7 @@ test.describe("a change of rest day asks about the marks it would strand (item 5
     await panel.locator('[data-stranded-action="save"]').click();
     await settled(page);
 
-    // August's sheet still names Fridays as her rest-eves, which is what a
+    // August's sheet still names Fridays as their rest-eves, which is what a
     // Saturday-resting month does: item 5's change "reaches the current month
     // and the months after it, and never a month before".
     await page.goto(`/month/payslip?month=${AUGUST}`);
@@ -352,7 +352,7 @@ test.describe("the picker withholds a kind no selected day can take (items 5, 8)
     await page.goto("/");
     await switchToTestWorker(page);
 
-    // A Saturday: she does not rest on it, so the chip is there and dead no
+    // A Saturday: they do not rest on it, so the chip is there and dead no
     // longer — it is greyed, with the sentence that says only Friday can be it.
     const onSaturday = await pick(page, FREE_SATURDAY);
     await expect(onSaturday).toBeDisabled();
@@ -362,7 +362,7 @@ test.describe("the picker withholds a kind no selected day can take (items 5, 8)
       fullPage: true,
     });
 
-    // Her own Friday: offered, and it marks.
+    // Their own Friday: offered, and it marks.
     await page.keyboard.press("Escape");
     const onFriday = await pick(page, FRIDAY_AFTER);
     await expect(onFriday).toBeEnabled();

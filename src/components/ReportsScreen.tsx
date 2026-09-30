@@ -72,9 +72,9 @@ interface ReportMonth {
 }
 
 export interface WorkerReports {
-  /** The month her replay refused, where it refused one (`specs.md` item 25).
+  /** The month their replay refused, where it refused one (`specs.md` item 25).
    * Every figure and every file here comes off the replay, so the card stands
-   * in the screen's place for her — and for nobody else. */
+   * in the screen's place for them — and for nobody else. */
   refused: RefusedMonth | null;
   workerId: string;
   months: ReportMonth[];
@@ -83,8 +83,8 @@ export interface WorkerReports {
    * rather than a range it worked out from today's date. */
   years: number[];
   /** The month the `לייצא לאקסל` hero points at — the latest the worker has
-   * that can actually be exported, which is not always the latest she has.
-   * `null` where she has none, and the hero then says so rather than offering
+   * that can actually be exported, which is not always the latest they have.
+   * `null` where they have none, and the hero then says so rather than offering
    * a file the route would refuse. */
   latest: YearMonth | null;
 }
@@ -172,7 +172,7 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
   if (mine === undefined) return null;
   // Every figure and every file on this screen comes off the replay, so a
   // refused one leaves nothing to list and no file that may be offered. The
-  // other worker's reports are on her own screen, one step of the switcher
+  // other worker's reports are on their own screen, one step of the switcher
   // away.
   if (mine.refused !== null) return <RefusalCard refused={mine.refused} />;
 

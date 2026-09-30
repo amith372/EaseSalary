@@ -30,22 +30,22 @@ import { formatDays } from "../src/lib/money";
  * - **Open, the current month's preview clips the spell at today** (item 8:
  *   only the current month's preview clips at a `today`, a finished month clips
  *   at its own last day). 14 to 18 inclusive is **5** days.
- * - **Closed, the question asks the day she came *back*, and the spell ends the
+ * - **Closed, the question asks the day they came *back*, and the spell ends the
  *   day before** (`spellEndFromReturn`: the returning is the event the family
- *   witnessed). A return on Thursday the 17th therefore means she was ill on the
+ *   witnessed). A return on Thursday the 17th therefore means they were ill on the
  *   14th, 15th and 16th — **3** days, not four.
  *
  * So closing it gives **two** days back. Both counts are asserted, and not only
  * their difference: each pins a rule that the other would hide. An
- * implementation that read the return date as the last day she was ill would
+ * implementation that read the return date as the last day they were ill would
  * still move the balance — by one day instead of two — and would charge the
- * worker a sick day she never took. That is the whole reason the figures are
+ * worker a sick day they never took. That is the whole reason the figures are
  * written out here rather than compared to each other.
  */
 
 /** As `openSpellSeed` writes it. */
 const SPELL_FROM = "2026-09-14";
-/** The day she actually came back: a Thursday, before the pinned today. */
+/** The day they actually came back: a Thursday, before the pinned today. */
 const RETURNED_ON = "2026-09-17";
 /** A day before the spell began, which the close refuses. */
 const BEFORE_THE_SPELL = "2026-09-10";
@@ -134,7 +134,7 @@ test.describe("a spell of sickness nobody closed (specs.md items 8, 18)", () => 
     await useHousehold(page, "close");
 
     // Before: the preview clips the open spell at today, so the 18th is being
-    // counted as a day of sickness — five days for a spell she may already have
+    // counted as a day of sickness — five days for a spell they may already have
     // come back from, which is item 18's stated reason for blocking the export.
     await daysUsed(page, DAYS_WHILE_OPEN);
     const balanceWhileOpen = await sickBalance(page);
@@ -177,7 +177,7 @@ test.describe("a spell of sickness nobody closed (specs.md items 8, 18)", () => 
     await expect(block).toBeVisible();
     await expect(page.locator("[data-finish]")).toBeDisabled();
 
-    // **The day she actually came back closes it.**
+    // **The day they actually came back closes it.**
     await page.locator("[data-return-input]").fill(RETURNED_ON);
     await page.locator("[data-close-spell]").click();
     await settled(page);
@@ -204,8 +204,8 @@ test.describe("a spell of sickness nobody closed (specs.md items 8, 18)", () => 
     }
     await expect(page.locator("[data-finish]")).toBeEnabled();
 
-    // **And two days came back.** She was ill on the 14th, 15th and 16th: the
-    // 17th is the day she returned and the 18th was never hers at all. The count
+    // **And two days came back.** They were ill on the 14th, 15th and 16th: the
+    // 17th is the day they returned and the 18th was never theirs at all. The count
     // is asserted as well as the balance, because it is the count that says the
     // return date was read as a return and not as the last day of the illness.
     await daysUsed(page, DAYS_ONCE_CLOSED);

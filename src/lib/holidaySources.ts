@@ -40,8 +40,8 @@ export interface HolidaySourceChoice {
   selected: boolean;
 }
 
-/** Her own country first, then the rest by name, then the four faiths — the
- * order item 10 states them in: her country's list, with another selectable
+/** Their own country first, then the rest by name, then the four faiths — the
+ * order item 10 states them in: their country's list, with another selectable
  * instead, and a religion's in place of a country's. */
 export function holidaySourceChoices(
   lists: HolidayList[],
@@ -52,9 +52,9 @@ export function holidaySourceChoices(
   for (const list of lists) {
     if (list.source.kind === "country") named.set(list.source.code, list.nameHe);
   }
-  // Her own country stands even where nothing is stored for it, because it is
-  // the list her year is drawn from by default and a picker that dropped it
-  // would show her a chosen source with no chip selected. The code is the whole
+  // Their own country stands even where nothing is stored for it, because it is
+  // the list their year is drawn from by default and a picker that dropped it
+  // would show them a chosen source with no chip selected. The code is the whole
   // of what is known about such a country's name.
   if (!named.has(ownCountry)) named.set(ownCountry, ownCountry);
 
@@ -81,12 +81,12 @@ export function holidaySourceChoices(
 }
 
 /**
- * Which list a worker's year is drawn from: the one she was moved to, or her
+ * Which list a worker's year is drawn from: the one they were moved to, or them
  * own country's (specs.md item 10).
  *
  * It is derived and not a stored default, so a worker whose country is
  * corrected follows it, and one deliberately moved to a faith's list or to
- * another country's stays where she was put.
+ * another country's stays where they were put.
  *
  * It takes the two fields it reads rather than a whole profile, which is what
  * keeps this file clear of the repository — and therefore importable from a

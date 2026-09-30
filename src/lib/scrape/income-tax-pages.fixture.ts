@@ -73,7 +73,7 @@ export function yearMissing(): string {
  *
  * A regressive table is not a table anyone published: it is a parser that has
  * walked the rows the wrong way, and the figure it produces on a caregiver's
- * salary — 50% of her first shekel — is wrong by a factor of five while looking
+ * salary — 50% of their first shekel — is wrong by a factor of five while looking
  * like an ordinary percentage.
  */
 export function ratesOutOfOrder(): string {

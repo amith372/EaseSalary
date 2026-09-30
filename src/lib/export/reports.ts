@@ -24,7 +24,7 @@ import type { MonthLine } from "@/lib/types";
  *
  * **Every figure comes off the replay and none is recomputed here.** The
  * balances, the totals and the lines were all derived by `calculateSeries`
- * walking the worker's months from her opening position (item 13); a report
+ * walking the worker's months from their opening position (item 13); a report
  * that added arithmetic of its own would be a second calculation path and would
  * disagree with the screen the day either was corrected.
  *
@@ -154,7 +154,7 @@ export function recuperationReport(
  * The covered months travel with the line rather than being recomputed: the
  * quarter is offered when the payment is recorded and stops following the kind
  * the moment the user touches it, so a family that paid a quarter late has
- * chosen the quarter it was for and this file must say what she chose.
+ * chosen the quarter it was for and this file must say what they chose.
  */
 export function nationalInsuranceReport(series: MonthInSeries[]): ReportSheet {
   const words = he.reports.nationalInsurance;

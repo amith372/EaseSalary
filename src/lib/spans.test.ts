@@ -376,7 +376,7 @@ describe("an open sick spell covers every day from its first onward (item 8)", (
  * Friday-resting worker was shown "שבת חופשית" on a Saturday, pressed it, and
  * got nothing marked and a skipped-day sentence after the fact. A predicate
  * that answered for the *first* day of a range, or for any day rather than
- * every day, would grey a swept week that does contain her rest day — which
+ * every day, would grey a swept week that does contain their rest day — which
  * item 8 requires to be marked and its other days reported.
  */
 describe("a kind no day of the selection can take (items 5, 8)", () => {
@@ -449,7 +449,7 @@ describe("a kind no day of the selection can take (items 5, 8)", () => {
  * last day (`openSickSpellOf`, `clipEndOf`). `specs.md` item 8 settles why the
  * shape exists and no screen produces it — "There is no gesture for opening
  * one, and there is deliberately none": continuity is inferred from the days
- * marked, and a second gesture meaning "she is still ill" would be a second way
+ * marked, and a second gesture meaning "they are still ill" would be a second way
  * to say what marking the days already says.
  *
  * `applyMark` is the only path from a user's sweep to a stored span, so the

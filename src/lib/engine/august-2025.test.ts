@@ -21,8 +21,8 @@ import type { MonthResult } from "@/lib/types";
  * the supplement weekly, so the per-rest-eve figure is those two statements
  * divided, shown here in the open.
  *
- * Hanna rests on Saturday, which is the default, so her rest-eve is Friday and
- * every weekday named below is hers rather than the rule. That is exactly why
+ * Hanna rests on Saturday, which is the default, so their rest-eve is Friday and
+ * every weekday named below is theirs rather than the rule. That is exactly why
  * this case cannot check the rest day's generalisation and why `build_plan.md`
  * `rest-day.test.ts` exists, with figures derived on paper.
  */
@@ -203,7 +203,7 @@ describe("what the payslip requires beyond the payments (specs.md item 2)", () =
   });
 
   it("accrues vacation as fourteen twelfths, never as 1.17 (Part 5)", () => {
-    // Employed since 1.4.2024, so August 2025 opens in her second year, and
+    // Employed since 1.4.2024, so August 2025 opens in their second year, and
     // years one to four accrue fourteen days a year (item 7). The workbook
     // writes 1.17 in some months and the fraction in others; using the decimal
     // drifts a hundredth of a day a year.
@@ -229,7 +229,7 @@ describe("what the payslip requires beyond the payments (specs.md item 2)", () =
 
 describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
   it("leaves the gross and the net where they were", () => {
-    // Reading H as salary would overpay her, so a ₪500 premium must move
+    // Reading H as salary would overpay them, so a ₪500 premium must move
     // neither figure.
     const withPremium = calculateMonth(
       {

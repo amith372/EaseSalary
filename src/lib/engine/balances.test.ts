@@ -152,9 +152,9 @@ describe("the seniority ladder (specs.md item 7)", () => {
 
   it("counts the year as a calendar year, not from the employment anniversary", () => {
     // Item 7: the year turns over on the 1st of January, and a worker who
-    // started mid-year completes her first working year on the 31st of
-    // December of that same year. Employed 1.4.2024, so 2024 is her first year
-    // and 2028 her fifth — the figures item 7 states outright.
+    // started mid-year completes their first working year on the 31st of
+    // December of that same year. Employed 1.4.2024, so 2024 is their first year
+    // and 2028 their fifth — the figures item 7 states outright.
     const since = "2024-04-01";
     expect(seniorityYearOfCalendarYear(since, 2024)).toBe(1);
     expect(seniorityYearOfCalendarYear(since, 2025)).toBe(2);
@@ -165,7 +165,7 @@ describe("the seniority ladder (specs.md item 7)", () => {
 
   it("counts a first year of one day as a whole year on the ladder", () => {
     // Item 7 again, at its sharpest: a partial calendar year counts as a whole
-    // year on the ladder. Employed on the last day of 2024, she is in her
+    // year on the ladder. Employed on the last day of 2024, they are in them
     // second year on the 1st of January 2025.
     expect(seniorityYearOfCalendarYear("2024-12-31", 2024)).toBe(1);
     expect(seniorityYearOfCalendarYear("2024-12-31", 2025)).toBe(2);
@@ -292,7 +292,7 @@ describe("balances carry forward (specs.md item 7)", () => {
       { vacationDays: 12, sickDays: 30 },
     );
     expect(january.opening).toBe(12);
-    // 2026 is her third year, still fourteen a year (item 7).
+    // 2026 is their third year, still fourteen a year (item 7).
     expect(january.accrued).toBe(14 / 12);
     expect(january.closing).toBe(12 + 14 / 12);
   });
@@ -472,7 +472,7 @@ describe("the seven-day vacation warning (specs.md item 7)", () => {
   });
 
   it("asks a partial year for what it accrued, when that is under seven", () => {
-    // Employed from 1.10.2025: October to December is three months of her
+    // Employed from 1.10.2025: October to December is three months of them
     // first year's fourteen days, 14 × 3 ÷ 12 = 3.5. Three days taken (Monday
     // 1.12 to Wednesday 3.12) are short of it; four (to Thursday) are not.
     const october = terms("2025-10-01");

@@ -14,8 +14,8 @@ import {
  * The three reports no template covers — stage 2's step 3.
  *
  * **Every expected figure is derived on paper or comes from a criterion, never
- * from what the report returned.** Hanna was employed on 1.4.2024 and her
- * recuperation month is July, so by 31.7.2025 she has completed exactly one
+ * from what the report returned.** Hanna was employed on 1.4.2024 and them
+ * recuperation month is July, so by 31.7.2025 they have completed exactly one
  * employment year: item 15's ladder pays five days for a first completed year,
  * and six for the second and third. At ₪451.50 a day that is ₪2,257.50 in 2025
  * and ₪2,709.00 in 2026 — the second of which the build plan already records
@@ -27,7 +27,7 @@ import {
  * it, which is exactly why it is a stored fact and is written here as one. */
 const DAY_RATE = 45150;
 
-// Her first month is the earliest month these cases walk (specs.md item 6).
+// Their first month is the earliest month these cases walk (specs.md item 6).
 const worker = { ...plainWorker(), firstMonth: { year: 2025, month: 6 } };
 
 function monthOf(year: number, month: number): MonthFacts {

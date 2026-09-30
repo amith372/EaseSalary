@@ -96,7 +96,7 @@ async function anAccountWithAWorker(person: Person): Promise<void> {
     gender: "female",
     employed_since: "2025-01-01",
     // The first month the seeded rates table can value (specs.md item 6);
-    // her opening position is not what this test is about.
+    // their opening position is not what this test is about.
     first_month: "2025-04-01",
     base_monthly_salary_agorot: 609590,
     recuperation_month: 7,

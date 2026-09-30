@@ -10,7 +10,7 @@ import { readToday } from "@/lib/requestToday";
  * The `דוחות` screen's route, which the shell links from every page.
  *
  * **The whole history is replayed and nothing is stored.** A worker's balances
- * are derived by walking her months from the opening position (item 13), so
+ * are derived by walking their months from the opening position (item 13), so
  * every figure this screen shows and every file the four cards produce comes
  * off one walk — the same `calculateSeries` the month screen and the month
  * export run (Part 3). Nothing here totals anything of its own.

@@ -19,7 +19,7 @@ import { formatAgorot, formatDays } from "../src/lib/money";
  * **Every expected figure comes from outside the code under test.**
  *
  * - Nine days for a full year is item 10's; the demo worker was employed from
- *   1.4.2024, so 2026 is a full calendar year and her entitlement is nine.
+ *   1.4.2024, so 2026 is a full calendar year and their entitlement is nine.
  * - ₪426.35 for a worked holiday is `specs.md` Part 4's own figure, and it is
  *   also what Part 5's formula gives for the seeded wage: a rest day is
  *   twenty-five hours, so the rate is (6,247.65 ÷ 25 + 6,247.65 ÷ 182) × 1.5 =
@@ -36,7 +36,7 @@ import { formatAgorot, formatDays } from "../src/lib/money";
  * true on the second run as on the first.
  */
 
-/** The demo worker's own three seeded holidays for 2026, and her entitlement. */
+/** The demo worker's own three seeded holidays for 2026, and their entitlement. */
 const SEEDED_CHOSEN = 3;
 const FULL_YEAR = 9;
 
@@ -58,7 +58,7 @@ const HALF_HOLIDAY = 21987;
  * They were Philippine dates until then, and every one of them is a different
  * day here — which is the point of the candidate list being per country.
  *
- * None of the dates below falls on a Saturday, which is her rest day: a paid
+ * None of the dates below falls on a Saturday, which is their rest day: a paid
  * holiday there would be refused as the day being recorded twice (Part 4).
  */
 const CANDIDATE_IN_JUNE = "2026-06-22";
@@ -72,7 +72,7 @@ const WORKED_HOLIDAY = "2026-04-03";
  * is the screen's own case of a date chosen that nobody published. */
 const CHOSEN_WITH_NO_NAME = "2026-08-20";
 /** Six more candidates, none of them covered by another mark and none on a
- * Saturday, which take her from three chosen days to the whole nine. */
+ * Saturday, which take them from three chosen days to the whole nine. */
 const SIX_MORE = [
   "2026-01-13",
   "2026-01-14",
@@ -82,10 +82,10 @@ const SIX_MORE = [
   "2026-03-03",
 ];
 /** A date nobody published, typed by hand — item 12's own answer to a list that
- * could not be fetched. 27.7.2026 is a Monday, so it is neither her rest day
+ * could not be fetched. 27.7.2026 is a Monday, so it is neither their rest day
  * nor a day the seed already marks, and India publishes nothing on it. */
 const TYPED_BY_HAND = "2026-07-27";
-/** Independence Day on her Indian list, a Saturday — her rest day. */
+/** Independence Day on their Indian list, a Saturday — their rest day. */
 const SATURDAY_HOLIDAY = "2026-08-15";
 
 const RUN = Date.now().toString(36);
@@ -199,13 +199,13 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     );
 
     // A chosen date the source never published still has a row, with the date
-    // and no name — otherwise a day she had moved a holiday onto would vanish
-    // from the screen while still drawing on her quota.
+    // and no name — otherwise a day they had moved a holiday onto would vanish
+    // from the screen while still drawing on their quota.
     await expect(holidayRow(page, CHOSEN_WITH_NO_NAME)).toContainText(
       he.holidays.row.own,
     );
 
-    // The candidate list is the Philippines', because that is her country, and
+    // The candidate list is the Philippines', because that is their country, and
     // the faiths are offered beside the countries (item 10).
     await expect(page.locator('[data-source="IN"]')).toHaveAttribute(
       "aria-pressed",
@@ -265,14 +265,14 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
   /**
    * **A chosen holiday arrives unanswered, and the month cannot be exported
-   * until somebody says whether she worked it** (specs.md items 9 and 18,
+   * until somebody says whether they worked it** (specs.md items 9 and 18,
    * settled with the user on 2026-09-12).
    *
    * Monday 22 June 2026 is chosen here, so it reaches the calendar with nobody
    * having answered for it. What this would catch is the one failure that
    * matters for the change: the export going through on the preview's lean.
    * The preview pays an unanswered holiday as worked so the figure never quietly
-   * underpays her, and that lean is only safe because the export refuses to
+   * underpays them, and that lean is only safe because the export refuses to
    * proceed on it.
    */
   test("a chosen holiday arrives unanswered, and blocks the export until answered", async ({
@@ -318,8 +318,8 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
       .click();
     await settled(page);
 
-    // After: the block is gone. "She did not work it" clears it as well as
-    // "she did" — what is required is an answer, not a particular one.
+    // After: the block is gone. "They did not work it" clears it as well as
+    // "they did" — what is required is an answer, not a particular one.
     await page.goto("/month/export");
     await switchToTestWorker(page);
     await backTo(page, 2);
@@ -328,11 +328,11 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
   });
 
   /**
-   * **A holiday on her rest day is explained where it is chosen, and spends
+   * **A holiday on their rest day is explained where it is chosen, and spends
    * nothing from the nine** (specs.md item 9, settled with the user on
    * 2026-09-12).
    *
-   * Independence Day, Saturday 15 August 2026, is on her Indian list and her
+   * Independence Day, Saturday 15 August 2026, is on their Indian list and them
    * rest day is Saturday. What this would catch is the family watching the
    * quota not move with no reason given, and reading it as a broken screen.
    */
@@ -434,7 +434,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // 2.4.2026 is the last day of the seeded spell of sickness. A day carrying
     // two entries is what `validateMonth` refuses as `dayRecordedTwice`, and
-    // refusing it here says so while she is looking at the date.
+    // refusing it here says so while they are looking at the date.
     await tick(page, CANDIDATE_INSIDE_SICKNESS);
 
     await expect(holidayRow(page, CANDIDATE_INSIDE_SICKNESS)).toContainText(
@@ -479,8 +479,8 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
    * The gesture that undoes a choice — the other half of the tick, and the only
    * way a day taken by mistake is given back.
    *
-   * Scenario: the demo worker holds the seed's three chosen days of her nine. A
-   * fourth is chosen, taking her to four, and then unchosen again.
+   * Scenario: the demo worker holds the seed's three chosen days of them nine. A
+   * fourth is chosen, taking them to four, and then unchosen again.
    *
    * Expected: the quota reads four while it is chosen and three again after,
    * the row goes back to `data-chosen="false"`, and June's calendar — which
@@ -502,7 +502,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     await page.goto("/settings/holidays");
     await switchToTestWorker(page);
 
-    // Three of nine, as the seed leaves her.
+    // Three of nine, as the seed leaves them.
     await expect(page.locator("[data-quota]")).toContainText(
       formatDays(SEEDED_CHOSEN),
     );
@@ -634,7 +634,7 @@ test.describe("a move once the year's list is in force (specs.md item 10)", () =
   // The `filed` seed is the demo with the test worker's January to April 2026
   // confirmed (`seed.ts`), so 2026's list is in force and a move is an
   // amendment: it asks when it was agreed and why, refuses a confirmed month,
-  // and is listed on her page. The dates and their order are read off item 10's
+  // and is listed on their page. The dates and their order are read off item 10's
   // own sentence, not off the screen.
   const AGREED = "2026-07-01";
   const NOTE = "סוכם איתה לקראת הנסיעה";

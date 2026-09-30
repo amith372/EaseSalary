@@ -20,7 +20,7 @@ import { MONTH_TEMPLATE, readTemplate } from "@/lib/export/template";
  * **The rest day is a term of the employment and not a constant** (specs.md
  * item 5), and Part 3 requires every label that names it to become a
  * placeholder, "so a worker whose rest day is Friday receives a sheet that says
- * Friday throughout and counts her Fridays, and Hanna's sheet is unchanged word
+ * Friday throughout and counts their Fridays, and Hanna's sheet is unchanged word
  * for word".
  *
  * **Both expectations below come from outside the code under test.** The
@@ -29,7 +29,7 @@ import { MONTH_TEMPLATE, readTemplate } from "@/lib/export/template";
  * so this half is the regression test for the second promise, and it fails the
  * moment a token is filled with a word the family's own template did not use.
  * The Friday column is that same wording with the Hebrew names of the days
- * substituted by hand: her rest day is Friday and her rest-eve is therefore
+ * substituted by hand: their rest day is Friday and their rest-eve is therefore
  * Thursday, the working day immediately before it (item 14).
  *
  * The whole path is driven, from the replay through `monthSheetInputOf` to the
@@ -132,11 +132,11 @@ describe("the nine labels that name the rest day (Part 3)", () => {
   });
 
   it("still counts her Fridays in the cells those labels head", async () => {
-    // Part 3 asks for a sheet that "says Friday throughout and counts her
+    // Part 3 asks for a sheet that "says Friday throughout and counts them
     // Fridays" — a label alone proves half of it. August 2025 holds five
     // Fridays and four Thursdays, counted off a calendar and not off the
     // engine: 1, 8, 15, 22 and 29 August are Fridays; 7, 14, 21 and 28 are
-    // Thursdays. `G2` is the rest days she worked and `F2` the rest-eves.
+    // Thursdays. `G2` is the rest days they worked and `F2` the rest-eves.
     const sheet = await sheetFor(FRIDAY);
     expect(sheet.getCell("G2").value).toBe(5);
     expect(sheet.getCell("F2").value).toBe(4);

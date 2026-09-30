@@ -36,7 +36,7 @@ import type { MonthLine, MonthResult, SheetColumn } from "@/lib/types";
  * keep the template's own Hebrew, which is how item 2's "same Hebrew labels" is
  * satisfied without `he.ts` and the template ever having to agree about
  * anything. Only the rows the template cannot label in advance — a line the
- * user wrote in her own words, an advance the block grows for — carry a label
+ * user wrote in their own words, an advance the block grows for — carry a label
  * the engine gave them.
  *
  * **The one exception is the rest day, and it is an exception the template
@@ -74,13 +74,13 @@ interface MonthSheetIdentity {
   insurer: string;
   /**
    * The employer of record, the passport line, the bank line and the account
-   * number. The passport line and the account number are her sealed numbers,
+   * number. The passport line and the account number are them sealed numbers,
    * opened on the server for the export (specs.md item 22), and empty where the
    * family has entered none. The employer of record — the person being cared
    * for — and the bank's own name and branch have no field, so those two are
    * always empty. A cell left blank is one the family fills, exactly as the
    * template's own "בתאריך _________" is; a token left standing would print
-   * `{{passport_line}}` onto her sheet.
+   * `{{passport_line}}` onto their sheet.
    */
   employerLine?: string;
   passportLine?: string;
@@ -94,7 +94,7 @@ export interface MonthSheetInput {
   result: MonthResult;
   identity: MonthSheetIdentity;
   /**
-   * The weekly rest days she had off, already in words, for the template's own
+   * The weekly rest days they had off, already in words, for the template's own
    * `תאריך שבת חופשית`.
    *
    * Formatted by the caller and not here: the sheet writes every date as loose
@@ -113,7 +113,7 @@ export interface MonthSheetInput {
    * written because the rest day is a term of the employment and not a
    * constant (specs.md item 5): the template says Saturday and Friday in nine
    * of its cells, and a Friday-resting worker must not receive a sheet that
-   * counts her Fridays and calls them Saturdays.
+   * counts their Fridays and calls them Saturdays.
    */
   restDayWords: Record<string, string>;
   /**
@@ -160,10 +160,10 @@ export interface MonthSheetInput {
    * The holiday days this month drew from the yearly entitlement — the
    * template's own `ניצול יום חג בחודש זה` (specs.md item 10).
    *
-   * **It is not the count of holidays she *worked***, which is what row 8 prices
+   * **It is not the count of holidays they *worked***, which is what row 8 prices
    * and what `G1` counts. The entitlement is drawn against every holiday the
    * month records, worked or not, a holiday inside a spell of sickness included
-   * and one on her weekly rest day left out — `holidayDaysOf` owns that rule and states it, and it is the same function
+   * and one on their weekly rest day left out — `holidayDaysOf` owns that rule and states it, and it is the same function
    * `calculateSeries` counts the year with, so the sheet and the replay can
    * never disagree about it. Filling this from the worked count instead makes
    * the two headings say one thing in a month where a holiday was taken off.
@@ -315,7 +315,7 @@ function put(
  * heading in row 1.
  *
  * **They are read off the engine's own lines and not counted again here.** The
- * rest days she worked are that line's units; a second count would be a second
+ * rest days they worked are that line's units; a second count would be a second
  * calculation path, and Part 5's warning is that an off-by-one in counting a
  * month stays invisible until a month with an absence in it.
  */
@@ -329,7 +329,7 @@ function writeHeader(sheet: ExcelJS.Worksheet, input: MonthSheetInput): void {
   put(sheet, "F2", units(lineKeys.restEveSupplement));
   put(sheet, "G2", units(lineKeys.restDays));
   // `ניצול יום חג בחודש זה` — what the yearly entitlement was drawn against
-  // (item 10), which is not the same count as the holidays she worked in `G1`.
+  // (item 10), which is not the same count as the holidays they worked in `G1`.
   put(sheet, "H2", input.holidayDaysUsed);
   put(sheet, "J2", balanceOf(result, "sick")?.used ?? null);
 

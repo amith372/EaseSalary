@@ -30,12 +30,12 @@ const PH = { kind: "country", code: "PH" } as const;
 const SHIPPED = holidayListFor(SEEDED_HOLIDAY_LISTS, PH, 2026)!;
 
 /**
- * The shipped dates that are not Saturdays, which is her rest day in every case
+ * The shipped dates that are not Saturdays, which is their rest day in every case
  * below.
  *
  * **The quota cases fill the year from these and not from the whole list**,
  * because the shipped list carries Black Saturday, 4 April 2026, and since
- * 2026-09-12 a holiday on her rest day spends nothing from the nine (item 9).
+ * 2026-09-12 a holiday on their rest day spends nothing from the nine (item 9).
  * Filling the nine from the full list would leave the quota a day short of full
  * and every one of these cases would test the rest-day rule by accident rather
  * than the arithmetic it names. The rest-day rule has its own case at the end.
@@ -109,8 +109,8 @@ describe("the year's rows", () => {
   /**
    * A date can be edited and a fetch can fail, so a chosen date need not be one
    * the source published (items 10 and 12). Catches a picker that drew the
-   * candidate list alone: the day she moved a holiday to would vanish from the
-   * screen while still drawing on her quota.
+   * candidate list alone: the day they moved a holiday to would vanish from the
+   * screen while still drawing on their quota.
    */
   it("include a chosen date the source never published, with no name", () => {
     const year = holidayYear(
@@ -156,7 +156,7 @@ describe("the year's rows", () => {
 
 describe("what the year has left", () => {
   /** Catches a count of spans rather than of days — the two differ the moment a
-   * day is taken in part, and the difference is what she is paid. */
+   * day is taken in part, and the difference is what they are paid. */
   it("counts a part day as its fraction", () => {
     const year = holidayYear(
       CANDIDATES,
@@ -180,7 +180,7 @@ describe("what the year has left", () => {
   it("counts every day of a span that covers several", () => {
     const year = holidayYear(
       [],
-      // Monday to Wednesday, so none of the three is her rest day.
+      // Monday to Wednesday, so none of the three is their rest day.
       [{ id: "a", kind: "holiday", from: "2026-05-04", to: "2026-05-06", worked: false }],
       FULL_YEAR,
       2026,
@@ -218,7 +218,7 @@ describe("whether another day can be chosen", () => {
 
     expect(year.remaining).toBe(0);
     expect(year.rows.filter((row) => row.chosen !== null)).toHaveLength(9);
-    // A row on her rest day is never blocked: choosing it spends nothing.
+    // A row on their rest day is never blocked: choosing it spends nothing.
     expect(
       year.rows
         .filter((row) => !row.onRestDay)
@@ -439,11 +439,11 @@ describe("whether the selection is incomplete", () => {
 });
 
 /**
- * **A holiday on her weekly rest day can be chosen, spends nothing, and says
+ * **A holiday on their weekly rest day can be chosen, spends nothing, and says
  * so** (specs.md item 9, settled with the user on 2026-09-12).
  *
  * Black Saturday, 4 April 2026, is on the shipped Philippine list and falls on
- * a Saturday, which is her rest day here. It is drawn on the calendar as a
+ * a Saturday, which is their rest day here. It is drawn on the calendar as a
  * holiday and treated as one for nothing else: the day is paid as the rest day
  * it is, and the nine are untouched.
  *
@@ -499,9 +499,9 @@ describe("a holiday on her weekly rest day", () => {
 
   /**
    * **The server agrees with the picker**, which is the half a crafted request
-   * would otherwise reach. A full quota refuses a weekday and not her rest day,
-   * and a Saturday already recorded as one she had off is not a second entry
-   * beside the holiday — the day is her rest day either way (item 9).
+   * would otherwise reach. A full quota refuses a weekday and not their rest day,
+   * and a Saturday already recorded as one they had off is not a second entry
+   * beside the holiday — the day is their rest day either way (item 9).
    */
   it("is accepted by the server even with the nine spent, and beside a free rest day", () => {
     const full = WEEKDAYS.slice(0, 9).map((candidate, index) =>

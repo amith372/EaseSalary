@@ -316,7 +316,7 @@ describe("repaying an advance", () => {
    * Two repayments of one advance in one month share a key, so neither could be
    * overridden or explained apart from the other (items 17, 24). The refusal
    * comes before the amount is read, because the sentence the user needs is
-   * that the month already records one — not that her figure is wrong.
+   * that the month already records one — not that their figure is wrong.
    */
   it("refuses a second repayment in the same month, before reading the amount", () => {
     const second = reviewAdvance(

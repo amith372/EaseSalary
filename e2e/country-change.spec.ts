@@ -13,15 +13,15 @@ import { he } from "../src/lib/i18n/he";
  * **What this catches.** Until this stage `profile.country` was written once by
  * the wizard and by nothing since — no row on `/settings`, no action — so a
  * family that chose the wrong country in the wizard held a profile permanently
- * wrong about where she is from, and printed it on `/workers` and on her own
+ * wrong about where they are from, and printed it on `/workers` and on their own
  * page. A unit test does not see that: every function involved was correct, and
  * what was missing was a way in.
  *
  * **The two halves of the correction are asserted apart**, because they pull
- * against each other. The country is the *default* her holiday list is drawn
+ * against each other. The country is the *default* their holiday list is drawn
  * from (`holidaySourceOf`), so a worker never moved off it follows the
  * correction — and a worker deliberately moved to another list must not, or a
- * family fixing a typo would silently undo the list they had chosen for her.
+ * family fixing a typo would silently undo the list they had chosen for them.
  *
  * The second worker is seeded from India and the first from the Philippines
  * (`seed.ts`), and neither carries a stored `holidaySource`, so the second
@@ -41,8 +41,8 @@ function countryChip(page: Page, name: string) {
   return page.locator('[data-terms="country"] button', { hasText: name });
 }
 
-/** The line her own page prints her country on — the label the list card and
- * her page share, with the name after it. */
+/** The line their own page prints their country on — the label the list card and
+ * their page share, with the name after it. */
 function countryLine(page: Page) {
   return page.locator("p", { hasText: he.workers.country });
 }
@@ -58,7 +58,7 @@ test.describe("the country of origin is correctable", () => {
    * What it catches: a correction that reaches the profile and nothing else —
    * a `/workers` card or a worker's page still printing the country the wizard
    * stored, or a holiday picker still offering the old country's list as the
-   * one she is on.
+   * one they are on.
    */
   test("reaches every screen that names it, and the list drawn from it", async ({
     page,
@@ -91,7 +91,7 @@ test.describe("the country of origin is correctable", () => {
       fullPage: true,
     });
 
-    // The list screen, which names her country as a fact about her. Her card
+    // The list screen, which names their country as a fact about them. Their card
     // and not the other worker's: the second worker is `worker-2` in the demo
     // seed, and the first is from the Philippines already — so a card asserted
     // by name alone would pass on the wrong one.
@@ -100,15 +100,15 @@ test.describe("the country of origin is correctable", () => {
     await expect(card).toContainText(`${he.workers.country} ${PHILIPPINES}`);
     await expect(card).not.toContainText(INDIA);
 
-    // Her own page, reached as a user reaches it.
+    // Their own page, reached as a user reaches it.
     await card.getByRole("link", { name: he.workers.toProfile("") }).click();
     await expect(page).toHaveURL(/\/workers\/worker-2$/);
     const line = countryLine(page).first();
     await expect(line).toContainText(PHILIPPINES);
     await expect(line).not.toContainText(INDIA);
 
-    // And the default her holiday list is drawn from, which she was never
-    // moved off: the Philippines' list is the one she is on now.
+    // And the default their holiday list is drawn from, which they were never
+    // moved off: the Philippines' list is the one they are on now.
     await page.goto("/settings/holidays");
     await switchToTestWorker(page);
     await expect(page.locator('[data-source="PH"]')).toHaveAttribute(
@@ -150,7 +150,7 @@ test.describe("the country of origin is correctable", () => {
       { timeout: 15000 },
     );
 
-    // The correction moved the default and not her list.
+    // The correction moved the default and not their list.
     await page.goto("/settings/holidays");
     await switchToTestWorker(page);
     await expect(page.locator('[data-source="NP"]')).toHaveAttribute(

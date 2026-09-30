@@ -44,7 +44,7 @@ export const CREDIT_POINT_SOURCE_URL =
  * accident. The second is income that is **not** מיגיעה אישית — income from a
  * person's own work is the first — and its lowest bracket is 31% where the
  * first table's is 10%. Reading it would tax a caregiver at three times the
- * right rate on her first shekel and produce a figure with nothing odd about
+ * right rate on their first shekel and produce a figure with nothing odd about
  * it, which is the failure this selector exists to make impossible.
  */
 const EARNED_INCOME_HEADING = "מדרגות_המס_להכנסה_מיגיעה_אישית";
@@ -113,7 +113,7 @@ function bracketsUnder(
   // page.** The two are the same table today, which is exactly why this is
   // written positionally: a parser that took the first table would be right by
   // accident, and the accident would end the day the page put the other table
-  // first — with no failure, just a caregiver taxed at 31% on her first shekel.
+  // first — with no failure, just a caregiver taxed at 31% on their first shekel.
   //
   // Cutting the source at the heading and parsing what follows says that in one
   // line. Walking siblings would need the heading's own ancestor, and the

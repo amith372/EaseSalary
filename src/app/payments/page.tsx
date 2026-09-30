@@ -81,7 +81,7 @@ export default async function PaymentsPage() {
   const today = await readToday();
   // A month the engine refused says so instead of the figures: this screen
   // records against a month it cannot value, and there is nothing to record
-  // onto until the mark is put right on `/`. Only hers — the other worker's
+  // onto until the mark is put right on `/`. Only theirs — the other worker's
   // groups are recorded against as they were.
   const replayed = await householdSeries();
 

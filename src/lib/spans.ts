@@ -27,8 +27,8 @@ import type {
  *
  * A range that covers a day which refuses the mark applies to the days it
  * legally can and reports the rest, rather than refusing the whole sweep over
- * one bad day: making the user find the offending day herself is the option
- * that requires her to know more (specs.md Part 1).
+ * one bad day: making the user find the offending day themselves is the option
+ * that requires them to know more (specs.md Part 1).
  */
 
 export interface MarkIntent {
@@ -89,14 +89,14 @@ export type SkipReason =
   /** The day is already the weekly rest day, so a vacation day drawn for it
    * would charge the worker twice (specs.md item 5). */
   | "weeklyRest"
-  /** Only the worker's own rest day can be the rest day she had off. */
+  /** Only the worker's own rest day can be the rest day they had off. */
   | "notRestDay"
   /** The day already carries a mark, and a span is replaced rather than
    * layered. **A day carrying a holiday is one of them**: the year's holidays
-   * arrive drawn and the month records only whether she worked one (specs.md
+   * arrive drawn and the month records only whether they worked one (specs.md
    * item 9), so a mark swept over one is refused here rather than layered.
    *
-   * There is no `restDayHoliday` beside it: a holiday landing on her weekly rest day is not a holiday at all
+   * There is no `restDayHoliday` beside it: a holiday landing on their weekly rest day is not a holiday at all
    * but the rest day it is (item 9), so a free rest day marked there is the one
    * thing on that date. A holiday cannot arrive from a sweep in any case,
    * because `MarkIntent.kind` is a `MarkKind` and a holiday is not one. */
@@ -121,7 +121,7 @@ interface MarkResult {
    * surviving run, so what is stored is exactly what is marked.
    *
    * Always closed: a swept range has both ends by definition. An open spell is
-   * recorded by a different gesture — "she fell ill today", with no return date
+   * recorded by a different gesture — "they fell ill today", with no return date
    * asked for (specs.md item 8).
    */
   spans: MarkedSpan[];

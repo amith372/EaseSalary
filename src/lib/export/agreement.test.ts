@@ -467,7 +467,7 @@ describe("the preview and the file, from one engine result", () => {
    *
    * **What it would catch**: the token left standing, which prints the literal
    * "{{ni_months}}" onto a family's sheet; the months dropped, which is the
-   * blank the application exists to stop the user filling in herself; and the
+   * blank the application exists to stop the user filling in themselves; and the
    * sheet naming a different run from the screen, which draws the same two ends
    * through `CoveredMonths`. The ends are asserted through `monthLabel` for
    * that last reason — it is the function the screen words each end with.
@@ -589,7 +589,7 @@ describe("the preview and the file, from one engine result", () => {
  */
 describe("a month nobody opened keeps its figures when it is opened", () => {
   it("draws the same result before and after", async () => {
-    // Her first month is July 2025 and nothing was recorded in August; asked on
+    // Their first month is July 2025 and nothing was recorded in August; asked on
     // 20 August, the walk values August as an ordinary month.
     const worker = {
       ...plainWorker(),

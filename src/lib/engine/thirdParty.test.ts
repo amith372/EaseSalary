@@ -143,7 +143,7 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
   const bare = calculateMonth(facts(), terms);
 
   it("leaves the gross and the net exactly where they were", () => {
-    // Reading H as salary would overpay her. ₪500 of medical insurance must
+    // Reading H as salary would overpay them. ₪500 of medical insurance must
     // move neither of Part 4's two totals.
     const withPremium = calculateMonth(
       facts([{ kind: "medicalInsurance", agorot: 50000, paidOn: "2025-08-15" }]),
@@ -214,7 +214,7 @@ describe("the national-insurance estimate (specs.md item 19)", () => {
     // 3.6% of Part 4's ₪9,305.75 — the salary, the rest-eve supplement and the
     // Saturday and holiday pay — and not of the ₪7,305.75 that follows the
     // instalment: the contribution cannot depend on whether the family happened
-    // to lend her money.
+    // to lend them money.
     const result = calculateMonth(facts(), terms);
     // The percentage is looked up by date rather than read off a constant
     // (specs.md item 4): August 2025 falls after the 1.1.2025 row, so it is
@@ -437,7 +437,7 @@ describe("one row per kind, and a month with two is refused (item 16)", () => {
       result.lines.find((l) => l.key === thirdPartyLineKey("workerVisa"))
         ?.amount,
     ).toBe(21000);
-    // And still none of it reaches her.
+    // And still none of it reaches them.
     expect(result.gross).toBe(GROSS);
     expect(result.net).toBe(NET);
   });

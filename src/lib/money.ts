@@ -86,8 +86,8 @@ export function toShekels(agorot: number | null | undefined): number | null {
  * Characters a figure can arrive wrapped in and that carry no value: the shekel
  * sign, thousands separators, ordinary and non-breaking spaces, and the bidi
  * controls a paste picks up on a right-to-left page. They are stripped rather
- * than refused — a user who pastes "‎1,234.50 ₪" typed a number, and telling her
- * she did not is the application being pedantic about its own formatting.
+ * than refused — a user who pastes "‎1,234.50 ₪" typed a number, and telling them
+ * they did not is the application being pedantic about its own formatting.
  */
 const NOISE = /[\s\u00a0\u2000-\u200b\u200e\u200f\u202a-\u202e\u2066-\u2069\u061c,₪]/g;
 
@@ -95,7 +95,7 @@ const AMOUNT = /^(\d*)(?:\.(\d+))?$/;
 
 /**
  * What the user typed, as integer agorot — the one place a figure crosses from
- * the interface into the calculation, and `null` when what she typed is not a
+ * the interface into the calculation, and `null` when what they typed are not a
  * figure at all.
  *
  * **It never goes through a float, and that is the whole reason it is here

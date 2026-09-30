@@ -40,7 +40,7 @@ function param(month: { year: number; month: number }): string {
   return `${month.year}-${String(month.month).padStart(2, "0")}`;
 }
 
-/** The badge on that month's row of her page, by the month it belongs to. */
+/** The badge on that month's row of their page, by the month it belongs to. */
 function badge(page: Page, month: { year: number; month: number }) {
   return page.locator(`[data-month="${param(month)}"] [data-state]`);
 }
@@ -106,7 +106,7 @@ test.describe("a month moves through its four states (specs.md Part 5)", () => {
 
     // **The gesture: a day of that month is marked afterwards.** The opening
     // screen opens on the current month, so the stepper goes back one — the
-    // same click a user makes to correct a month she has already filed.
+    // same click a user makes to correct a month they have already filed.
     await page.goto("/");
     await switchToTestWorker(page);
     await page

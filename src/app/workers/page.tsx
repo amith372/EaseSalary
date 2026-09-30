@@ -19,8 +19,8 @@ import { readToday } from "@/lib/requestToday";
  * **The nav is the contract**: every tab is a promise the application makes on
  * every page, and a tab that 404s is worse than a tab that is not there.
  *
- * **A worker the engine refused states her refusal instead of her figures**
- * (`specs.md` item 25). Her card keeps the terms of her employment, which are
+ * **A worker the engine refused states their refusal instead of their figures**
+ * (`specs.md` item 25). Their card keeps the terms of their employment, which are
  * stored rather than replayed, and the other worker's card is untouched.
  *
  * **The four facts under each worker are read from the same calculation
@@ -61,9 +61,9 @@ export default async function WorkersPage() {
         sharedWith: shares.get(profile.id) ?? [],
       };
 
-      // **A refused worker is drawn and no longer raised.** Her card states the
-      // refusal where her four figures were; the other worker's card is
-      // untouched, because each worker is replayed on her own and a refusal in
+      // **A refused worker is drawn and no longer raised.** Their card states the
+      // refusal where their four figures were; the other worker's card is
+      // untouched, because each worker is replayed on their own and a refusal in
       // one employment says nothing about the other (item 25). The four figures
       // are absent from this arm rather than nulled in it, so nothing further
       // down can draw a blank where a balance belongs.
@@ -75,8 +75,8 @@ export default async function WorkersPage() {
       // nobody opened is in the replay (item 6) and is not a month waiting to
       // be confirmed.
       const months = await repository.listMonths(profile.id);
-      // The closing balances of her last month, which is what "how many days
-      // has she left" means. A worker with no months at all has her opening
+      // The closing balances of them last month, which is what "how many days
+      // have they left" means. A worker with no months at all has their opening
       // position and nothing has happened to it yet (item 6).
       const last = series[series.length - 1]?.result.balances;
       const closing = (kind: "vacation" | "sick") =>
@@ -95,7 +95,7 @@ export default async function WorkersPage() {
           0,
         ),
         // The earliest month that has ended and is still a draft — what the
-        // chip on her card names. A month that has not ended cannot be
+        // chip on their card names. A month that has not ended cannot be
         // confirmed (item 21), so it is never what is waiting; a corrected
         // month is not either, since its figures are current and only the file
         // is stale, which is the bell's business (item 27).

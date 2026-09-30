@@ -31,7 +31,7 @@ import type { Explanation, MonthLine, SheetColumn, YearMonth } from "@/lib/types
  *
  * **Nothing in this file ever reaches the worker's total.** The payments are
  * column H, and H is deliberately excluded from the month's total: reading it
- * as salary would overpay her (specs.md item 16, Part 5). The workbook says so
+ * as salary would overpay them (specs.md item 16, Part 5). The workbook says so
  * in its own formulas — `שכר_חודשי_להאנה2025.xlsx` -> `חודש  7.25` totals the
  * month in E26 as `=E23+F24+G25` while H25 is `=SUM(H6:H22)` and stands apart,
  * carrying that month's ₪936 to the National Insurance Institute.
@@ -68,7 +68,7 @@ const THIRD_PARTY_COLUMN: SheetColumn = "H";
  *
  * That base is columns E, F and G, which is the gross, so the gross is what
  * this takes. Applying it to the net would make the contribution depend on
- * whether the family happened to lend her money, which nothing in the rule
+ * whether the family happened to lend them money, which nothing in the rule
  * says: for August 2025 it is 3.6% of ₪9,305.75 and not of ₪7,305.75 (Part 4).
  *
  * **The percentage is looked up by date and is not a constant here.** It
@@ -328,8 +328,8 @@ function coveredMonths(
   const to = parseYearMonth(toText);
   if (from === null || to === null) return { ok: false, reason: "shape" };
 
-  // Refused and never reordered. Which way round she meant it is not the
-  // application's to decide, and a period silently flipped is one she will not
+  // Refused and never reordered. Which way round they meant it is not the
+  // application's to decide, and a period silently flipped is one they will not
   // check (specs.md item 16).
   if (compareMonth(from, to) > 0) return { ok: false, reason: "periodBackwards" };
 

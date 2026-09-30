@@ -96,7 +96,7 @@ describe("the income tax is withheld from the ברוטו (specs.md item 17)", ()
  *                                -----------
  *                                1,155,259.20 a year, = 96,271.60 a month
  *
- * A woman's 2.75 credit points are worth ₪665.50 a month, so she is taxed
+ * A woman's 2.75 credit points are worth ₪665.50 a month, so they are taxed
  * 96,271.60 − 66,550 = 29,721.60, which rounds to **29,722 agorot (₪297.22)**.
  * A man's 2.25 points are worth ₪544.50, so he is taxed 96,271.60 − 54,450 =
  * 41,821.60, which rounds to **41,822 agorot (₪418.22)**.

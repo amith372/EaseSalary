@@ -57,7 +57,7 @@ describe("the family's own months, to the agora", () => {
       it("makes the ברוטו the sum of the columns that reach her", () => {
         // Part 5: the month's total is columns E, F and G alone. Column H is
         // money to somebody else and is outside it — reading H as salary would
-        // overpay her.
+        // overpay them.
         expect(result.gross).toBe(
           columnTotal(result, "E") +
             columnTotal(result, "F") +

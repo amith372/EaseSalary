@@ -191,7 +191,7 @@ describe("a spell across a month boundary is one spell (specs.md item 8)", () =>
   it("deducts nothing at all in September", () => {
     // Days four onward are paid in full, so September carries no such row —
     // not a row reading zero. If September deducted as though the spell began
-    // there it would take two more days off her, and she would be underpaid
+    // there it would take two more days off them, and they would be underpaid
     // twice over for one illness.
     const september = calculateMonth(facts(SEPTEMBER_2025, spans), terms());
     expect(deductionLine(september)).toBeUndefined();
@@ -230,8 +230,8 @@ describe("the four things a Saturday inside a spell does (specs.md item 8)", () 
     // Friday 8 is tier day 1   -> 1
     // Saturday 9 is tier day 2 -> 0. A Saturday stands outside the standard
     //   count, so the base never paid for it, and item 8 says the rest days in
-    //   a spell are not paid. Taking money back for one would charge her for a
-    //   day she was not paid. It still advances the tier, which is what makes
+    //   a spell are not paid. Taking money back for one would charge them for a
+    //   day they were not paid. It still advances the tier, which is what makes
     //   the Sunday the third day and not the second.
     // Sunday 10 is tier day 3  -> 0.5
     // Monday 11 is tier day 4  -> 0
@@ -242,7 +242,7 @@ describe("the four things a Saturday inside a spell does (specs.md item 8)", () 
 
   it("does not let a Saturday inside a spell be paid as a Saturday worked", () => {
     // The other half of "not paid". August has five Saturdays and a day
-    // carrying no mark is a day she worked, so an ordinary August pays five at
+    // carrying no mark is a day they worked, so an ordinary August pays five at
     // the rest-day rate; Saturday 9 falls inside the spell and drops to four.
     // Part 4 gives that rate as ₪426.35, so 4 × 42,635 = 170,540 agorot.
     const result = calculateMonth(facts(AUGUST_2025, spans), terms());
@@ -322,7 +322,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
 
   it("ends a spell on the first working day no sickness was reported", () => {
     // 3-5 August and 7-9 August, with the 6th not marked. Wednesday the 6th is
-    // an ordinary working day she owed attendance on, so it is what ends the
+    // an ordinary working day they owed attendance on, so it is what ends the
     // first spell and the tiers restart on the 7th. Two spells:
     //   Sun 3, Mon 4, Tue 5  -> 1 + 0.5 + 0.5           = 2
     //   Thu 7, Fri 8, Sat 9  -> 1 + 0.5 + 0 (Saturday)  = 1.5
@@ -372,7 +372,7 @@ describe("a month with no sickness in it", () => {
  * says an override is a magnitude and the application gives it its sign, taken
  * from the figure it replaces; `parseShekels` refuses a minus so the user never
  * has one to type. A deduction is therefore still a deduction after the user
- * corrects its amount, and the figure below is the one she typed with the row's
+ * corrects its amount, and the figure below is the one they typed with the row's
  * own sign put back on it.
  */
 describe("an override on a deduction stays a deduction (specs.md item 17)", () => {
@@ -385,8 +385,8 @@ describe("an override on a deduction stays a deduction (specs.md item 17)", () =
     );
     const line = deductionLine(result);
     // ₪300 withheld, not ₪300 paid: the sign is the row's and the magnitude is
-    // hers. Taken verbatim this reads +30000, and the month pays her ₪600 more
-    // than she earned while looking like an ordinary correction.
+    // theirs. Taken verbatim this reads +30000, and the month pays them ₪600 more
+    // than they earned while looking like an ordinary correction.
     expect(line?.amount).toBe(-30000);
     expect(line?.manual).toBe(true);
     // Still says what it would otherwise have been: two days deducted at

@@ -25,7 +25,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * whole day from the fourth onward (item 8). What reaches the sheet is the
  * difference — a negative amount on the sickness-absence row of column E,
  * inside the same subtotal as the base and the rest-eve supplement — so the
- * worker is left with exactly what the tiers give her. A payment line beside a
+ * worker is left with exactly what the tiers give them. A payment line beside a
  * base that already contains the day would pay it twice, which is the same
  * mistake the sheet deliberately avoids for vacation (item 7).
  *
@@ -35,7 +35,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * ran between (Part 3) and why this module reads spans that begin before the
  * month being calculated: a spell running 29 August to 3 September is days one
  * to three in August and day four onward in September, and reading it a month
- * at a time would restart the tiers and underpay her twice over.
+ * at a time would restart the tiers and underpay them twice over.
  */
 
 /** Where the tiers step. Both are the statute's own boundaries (item 8) and
@@ -75,23 +75,23 @@ interface SickSpell {
  * Two kinds of day, and they rest on the source differently. The **weekly rest
  * day** is what Kol Zchut says in so many words — "עובד במשכורת חודשית תקופת
  * מחלתו הינה כל ימי מחלתו, לרבות ימי מנוחה שבועית", citing ד"מ 48713-10-17. A
- * **holiday she did not work** is carried by the same holding rather than by a
+ * **holiday they did not work** is carried by the same holding rather than by a
  * second authority: what was held is that the period runs over "ימי המחלה
  * הקלנדריים" and not over the days worked in fact, and an unworked holiday is
  * precisely a day not worked in fact.
  *
- * A holiday she **did** work is a day of attendance and ends a spell like any
+ * A holiday they **did** work is a day of attendance and ends a spell like any
  * other, and so does a **vacation** day — not because it is a lesser kind of
  * absence, but because the law does not let one day be both: illness during a
  * vacation converts the day into a sick day and draws only the rest from the
  * vacation quota (item 8). A day still recorded as vacation is therefore a day
- * she was not ill on, so a vacation day *inside* a spell is not a state this
+ * they were not ill on, so a vacation day *inside* a spell is not a state this
  * function can be asked about.
  */
 function owesNoAttendance(spans: ClosedSpan[], restDay: RestDay) {
   const holidaysOff = new Set(
     spans
-      // Only a holiday she actually did not work owes no attendance. One
+      // Only a holiday they actually did not work owes no attendance. One
       // nobody has answered for is read as worked (item 9), so it ends a spell
       // like any other day of attendance — the same reading the money and the
       // counts take, rather than a third one here.
@@ -107,22 +107,22 @@ function owesNoAttendance(spans: ClosedSpan[], restDay: RestDay) {
  * **A spell ends on the first *working* day no sickness was reported** (specs.md
  * item 8). Two spans meeting end to end are the one illness they are, however
  * many ranges they were entered as — and so are two spans separated only by days
- * she owed no attendance, because for a worker on a monthly salary the period of
+ * they owed no attendance, because for a worker on a monthly salary the period of
  * illness is counted in calendar days.
  *
  * **The gap is the ordinary case and not an edge one.** The natural way to
- * record an illness is to mark the days she was absent from work: a family that
+ * record an illness is to mark the days they were absent from work: a family that
  * marks Friday and Sunday and leaves Saturday alone means one illness, and
  * reading it as two restarts the tiers and pays the Sunday nothing. Bridging
  * extends the spell's own `to` over the gap, so every rule below — the tiers,
  * and the days drawn from the balance — sees one continuous run and none of them
  * has to know why.
  *
- * A day she *was* expected at work and reported no sickness for still ends the
+ * A day they *were* expected at work and reported no sickness for still ends the
  * spell, which is what stops this swallowing an interval of any length. The
  * skipped days of a broken sweep are still shown to the user by `spans.ts`,
- * because what she marked and what the spell came to are two different things
- * and she is told both.
+ * because what they marked and what the spell came to are two different things
+ * and they are told both.
  *
  * Where two genuinely separate illnesses run into each other the effect is to
  * read them as one, so the fourth day is paid in full rather than starting again
@@ -141,7 +141,7 @@ export function spellsOf(spans: ClosedSpan[], restDay: RestDay): SickSpell[] {
   const spells: SickSpell[] = [];
   for (const span of ordered) {
     const last = spells[spells.length - 1];
-    // Touching or overlapping, or separated only by days she owed no attendance
+    // Touching or overlapping, or separated only by days they owed no attendance
     // — the days strictly between the two, which is an empty range when they
     // already touch, so the one test covers both.
     if (
@@ -166,13 +166,13 @@ export function spellsOf(spans: ClosedSpan[], restDay: RestDay): SickSpell[] {
  * when the same illness was entered as two ranges, one either side of the
  * boundary: September would see only its own, read it as a spell beginning on
  * the 1st, and restart the tiers the spec counts from the spell's first day
- * (specs.md item 8) — which underpays her on days four and five for no reason
+ * (specs.md item 8) — which underpays them on days four and five for no reason
  * but how the days happened to be marked.
  *
  * So the walk decides the spells once over the worker's whole set and hands
  * each month the run that led into it. **One span covering the whole of the
  * earlier part**, rather than the spans it was made of: a spell bridges days
- * she owed no attendance, and those days are carried by spans of other kinds
+ * they owed no attendance, and those days are carried by spans of other kinds
  * (an unworked holiday) which belong to the month they fell in and must not be
  * counted again in this one. Covering the run closed absorbs the bridging that
  * already happened, so `spellsOf` below joins it to the month's own spans with
@@ -237,7 +237,7 @@ interface SickDay {
    * inside a spell does** (specs.md item 8). It is not paid; nothing is
    * deducted from the money for it, which is this field — a rest day stands
    * outside the standard count, so the base never paid for it, there is nothing
-   * to take back, and a deduction would charge her for a day she was not paid;
+   * to take back, and a deduction would charge them for a day they were not paid;
    * it is nonetheless drawn from the sick balance, which is a count of days and
    * not a sum of money, and `balanceDaysOf` in `spans.ts` does that drawing;
    * and it advances `dayOfSpell` all the same, so the day after it stands one
@@ -252,7 +252,7 @@ interface SickDay {
 function sickDaysOf(spans: ClosedSpan[], restDay: RestDay): SickDay[] {
   // **A holiday inside a spell is a holiday and not a sick day** (item 10): it
   // pays the ordinary salary and draws nothing from the sick balance, because
-  // charging it to the sick quota would spend a day of illness on a day she was
+  // charging it to the sick quota would spend a day of illness on a day they were
   // not going to be working anyway. It is dropped *after* the numbering rather
   // than before it, because the spell is an unbroken run of calendar days (item
   // 8) and the tier a later day falls in is counted over that run — removing it

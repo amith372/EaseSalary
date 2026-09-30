@@ -189,7 +189,7 @@ export async function requireWorker(
  * because row-level security returns every worker they can reach and the
  * switcher lists them all. The oldest household is only where something new is
  * put — a worker they create, a fetched rate — and each existing worker is
- * written back to her own household (`createPostgresRepository`).
+ * written back to their own household (`createPostgresRepository`).
  */
 async function householdRepository(): Promise<SalaryRepository> {
   const client = await supabaseOnServer();

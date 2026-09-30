@@ -84,7 +84,7 @@ export class MonthBeforeFirstMonthError extends Error {
   }
 }
 
-/** The worker's own spans, recovered once from the months she has: the store
+/** The worker's own spans, recovered once from the months they have: the store
  * hands a spell to every month it touches, so the same span arrives more than
  * once and is taken by id. Each month below clips from this one set. */
 function everySpan(months: MonthFacts[]): MonthSpan[] {

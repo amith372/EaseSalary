@@ -7,7 +7,7 @@ import type { IsoDate } from "@/lib/types";
 
 /**
  * One worker's holiday year as the picker shows it: the candidate dates, the
- * ones she has chosen, what the entitlement leaves, and whether one more may be
+ * ones they have chosen, what the entitlement leaves, and whether one more may be
  * chosen (specs.md item 10).
  *
  * **It is a calculation and not a screen**, which is why it is here rather than
@@ -20,7 +20,7 @@ import type { IsoDate } from "@/lib/types";
  * candidates are what a source published — a country's or a religion's page for
  * that year — and the choice is the worker's: a date may be chosen that no
  * candidate names, because a date can be edited and because a fetch that failed
- * leaves the user typing the dates herself (items 10 and 12). Such a date is a
+ * leaves the user typing the dates themselves (items 10 and 12). Such a date is a
  * row of its own with no published name beside it, and never a chosen date this
  * screen quietly forgets.
  */
@@ -37,7 +37,7 @@ export interface HolidayRow {
   date: IsoDate;
   /**
    * Exactly the name the source published, or `null` for a date the user
-   * chose herself. A null name is not a missing one: nobody published that
+   * chose themselves. A null name is not a missing one: nobody published that
    * date, so there is nothing to show but the date.
    */
   name: string | null;
@@ -49,7 +49,7 @@ export interface HolidayRow {
    */
   blocked: boolean;
   /**
-   * The date is her weekly rest day (item 9).
+   * The date is their weekly rest day (item 9).
    *
    * **It can still be chosen and is explained rather than refused.** A holiday
    * there is drawn on the calendar as a holiday and treated as one for nothing
@@ -79,7 +79,7 @@ export interface HolidayYear {
   incomplete: boolean;
   /** Ordered by date, which is the order a year is read in. */
   rows: HolidayRow[];
-  /** Her weekly rest day, carried so the screen can name it where it explains a
+  /** Their weekly rest day, carried so the screen can name it where it explains a
    * holiday that falls on it (item 5: it is a term of the employment, never
    * assumed to be Saturday). */
   restDay: RestDay;
@@ -96,8 +96,8 @@ const SMALLEST_PART = Math.min(...dayParts);
  * **The tick chooses the largest part that fits**, rather than always taking a
  * whole day and refusing the last half of a partly worked year's entitlement.
  * The alternative is a remainder the user can see and cannot spend, and working
- * out that she must first halve some other day to reach it is exactly the kind
- * of knowledge this application exists to hold for her (`CLAUDE.md`).
+ * out that they must first halve some other day to reach it is exactly the kind
+ * of knowledge this application exists to hold for them (`CLAUDE.md`).
  */
 export function partThatFits(remaining: number): number {
   return remaining >= 1 ? 1 : SMALLEST_PART;
@@ -129,7 +129,7 @@ export function holidayYear(
   restDay: RestDay,
 ): HolidayYear {
   const chosen = chosenDaysOf(spans, year);
-  // A chosen date on her weekly rest day spends nothing from the nine (item
+  // A chosen date on their weekly rest day spends nothing from the nine (item
   // 9), so it is left out of what has been spent — otherwise the quota would
   // fill with dates that can never be paid as holidays, and the family would be
   // refused a ninth they are still entitled to.
@@ -180,7 +180,7 @@ export type HolidayRefusal =
   | "holidayLimit"
   /** The date already carries a mark, and a day carrying two entries is what
    * `validateMonth` refuses as `dayRecordedTwice` — refused here instead, at
-   * the gesture that would create it, so the user is told while she is looking
+   * the gesture that would create it, so the user is told while they are looking
    * at the date rather than when a month later fails to calculate. */
   | "alreadyMarked"
   /** A typed date that is not a date, or one outside the year on screen — which
@@ -199,7 +199,7 @@ type HolidayReview =
  * Whether some span already covers the date. An open spell is closed at the
  * date itself, which is the window this question is asked in (`touchesRange`).
  *
- * **On her weekly rest day only another holiday counts** (item 9). A holiday
+ * **On their weekly rest day only another holiday counts** (item 9). A holiday
  * there is treated as a holiday for nothing, so a free rest day or a sick day
  * already recorded on that Saturday is not a second entry beside it — the day
  * is the rest day either way. Two holidays on one date are still two, because
@@ -246,7 +246,7 @@ export function reviewHolidayDate(
   if (alreadyCovered(spans, date, restDay)) {
     return { ok: false, reason: "alreadyMarked" };
   }
-  // A date on her rest day spends nothing (item 9), so a full quota is no
+  // A date on their rest day spends nothing (item 9), so a full quota is no
   // reason to refuse it, and it is taken whole: there is no entitlement to take
   // a part of.
   if (isRestDay(date, restDay)) return { ok: true, fraction: 1 };

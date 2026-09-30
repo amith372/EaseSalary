@@ -21,14 +21,14 @@ import type { YearMonth } from "@/lib/types";
 /**
  * The worker's own page — `EaseSalary - דף העובד`.
  *
- * **It reads the worker and changes nothing.** Her terms are edited on
+ * **It reads the worker and changes nothing.** Their terms are edited on
  * `/settings`, which is where the artboard's "פרטים והגדרות" sends them, so a
  * term has one place to be changed.
  *
  * **The hero card is the action list's and not a second opinion.** It carries
  * the first *blockage* this worker has, phrased by `alertsView` exactly as the
  * bell, the opening screen and `/alerts` phrase it (item 27) — so the four
- * cannot list what the others do not. It is absent when she has none.
+ * cannot list what the others do not. It is absent when they have none.
  *
  * **What the artboard draws and this page does not**, each an absence rather
  * than an invention (`CLAUDE.md` rule 4): the `?` explaining a *month* row. The
@@ -63,18 +63,18 @@ interface WorkerProfileScreenProps {
   months: ProfileMonth[];
   /** Whole years since the employment began, for the subtitle. */
   seniorityYears: number;
-  /** Her three balances with the sentence behind each (`WorkerBalances`). */
+  /** Their three balances with the sentence behind each (`WorkerBalances`). */
   balances: ProfileBalance[];
   /** What is still owed on each advance, walked from the opening position
    * across every month (item 20). */
   ledger: AdvanceStanding[];
-  /** Her country of origin in Hebrew, resolved on the server from the shipped
+  /** Their country of origin in Hebrew, resolved on the server from the shipped
    * holiday lists (`countryNameHe`). */
   countryName: string;
-  /** The first thing about her that blocks a correct salary today, or `null`
+  /** The first thing about them that blocks a correct salary today, or `null`
    * when there is none. */
   needsYou: AlertCard | null;
-  /** Her holiday moves agreed once a year's list was in force (item 10). */
+  /** Their holiday moves agreed once a year's list was in force (item 10). */
   amendments: HolidayAmendment[];
 }
 
@@ -91,7 +91,7 @@ export function WorkerProfileScreen({
   const words = he.workers;
   const page = words.profile;
 
-  // What she has actually been paid, added up from the same `net` each row
+  // What they have actually been paid, added up from the same `net` each row
   // shows — one figure reached one way (Part 3). **Only the months that have a
   // figure are counted**: a month still open has no net, and counting it as
   // zero would report a total that quietly grows the day it closes without
@@ -307,7 +307,7 @@ export function WorkerProfileScreen({
       </section>
 
       {/* Drawn only once there is one: the list as first agreed is otherwise
-          the list she has, and an empty section would say nothing (item 10). */}
+          the list they have, and an empty section would say nothing (item 10). */}
       {amendments.length > 0 ? (
         <section aria-labelledby="amendments-title" className="flex min-w-0 flex-col gap-3.5">
           <h2
@@ -345,7 +345,7 @@ export function WorkerProfileScreen({
         </section>
       ) : null}
 
-      {/* The two things about her that live on another screen, which is the
+      {/* The two things about them that live on another screen, which is the
           artboard's closing row. `לשתף` goes to the account section of
           `/settings`, where an invitation is actually made. */}
       <section className="flex flex-wrap items-center gap-x-5.5 gap-y-2.5 border-t border-line pt-5">

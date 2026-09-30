@@ -92,9 +92,9 @@ export function weekdayOfFirst(ym: YearMonth): number {
 /**
  * The weekly rest day of one employment.
  *
- * The law allows only these three, whichever the worker holds as her own — a
+ * The law allows only these three, whichever the worker holds as their own — a
  * Catholic Filipina worker may ask for Sunday and a Muslim worker for Friday,
- * and it is her right, while for a Jewish worker it is always Saturday
+ * and it is their right, while for a Jewish worker it is always Saturday
  * (specs.md item 5). Written as a union of the three rather than as a number,
  * so a fourth day cannot be stored: item 5 says the profile refuses any other
  * day, and a type that cannot hold one is the cheapest way to keep that true.

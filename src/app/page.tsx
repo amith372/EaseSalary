@@ -24,7 +24,7 @@ import { readToday } from "@/lib/requestToday";
  *
  * **The salary is worked out here and never in the browser** (`specs.md`
  * Part 3): the page reads the household's facts, replays each worker's months
- * from her opening position, and hands the calculated months down. The client
+ * from their opening position, and hands the calculated months down. The client
  * component below it chooses which of them to show and draws it, and holds no
  * arithmetic of its own — which is also what makes the preview and the export
  * one calculation path rather than two that agree for now.
@@ -57,7 +57,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const today = await readToday();
   // **A refused month does not take this screen down**, because this is the
   // screen the mark that caused it is corrected on (`specs.md` item 25). The
-  // calendar reads her spans and not the engine, so it draws either way; what
+  // calendar reads their spans and not the engine, so it draws either way; what
   // the refusal costs is the figures beside it, and the card says why. It costs
   // them to the worker whose month it is and to nobody else: the replay refuses
   // per worker, so the other worker's figures stay on the screen.
@@ -83,9 +83,9 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   // `today` reaches every month and only the one still running is clipped by it
   // (item 8) — `householdSeries` is where both of those are arranged.
   //
-  // **Where a worker's replay refused she has no months**, and she is drawn from
-  // her profile and her marks alone. The replay walks the whole household either
-  // way, so the rail and the switcher hold every worker whether hers stood or
+  // **Where a worker's replay refused they have no months**, and they are drawn from
+  // their profile and their marks alone. The replay walks the whole household either
+  // way, so the rail and the switcher hold every worker whether theirs stood or
   // not.
   const household: WorkerMonths[] = await Promise.all(
     replayed.map(async (worker) => ({
@@ -106,8 +106,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   // The strip reads the view `/alerts` and the bell read, so it lists the
   // page's first blockages and counts the rest. They are counted off the same
   // replay, and a worker whose replay refused is left out of it altogether
-  // (`alertsView.ts`) — her card is what she is told instead, and the other
-  // worker's blockages are still hers to see.
+  // (`alertsView.ts`) — their card is what they are told instead, and the other
+  // worker's blockages are still theirs to see.
   const blockages = blockagesOf(await householdAlerts());
 
   return (

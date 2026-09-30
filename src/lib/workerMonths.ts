@@ -9,7 +9,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
  * A worker's months as the store holds them: opening one, and carrying a change
- * to her profile into the ones that follow it (specs.md items 6 and 21,
+ * to their profile into the ones that follow it (specs.md items 6 and 21,
  * Part 3, Part 5).
  *
  * **Here and not in an action file**, because the callers are several — the
