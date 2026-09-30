@@ -95,7 +95,8 @@ a question about one of them is the expensive mistake.
 | 27 | the opening screen's warning list, the bell, and switching a kind off |
 | 28 | the three documents, their three expiry dates, and the warning windows |
 | 29 | the yearly salary summary for one worker |
-| 30 | every failure in Hebrew, addressed to a user of either gender — the fault at a control, the failure that takes the screen, an address that does not exist, and a download with no file |
+| 30 | every failure in Hebrew — the fault at a control, the failure that takes the screen, an address that does not exist, and a download with no file |
+| 31 | the worker's gender inflects every sentence naming them; the user's is never asked for, so nothing addressed to them is in one gender |
 
 1. Entering the facts of August 2025 into a worker profile and exporting produces a
    sheet whose four total lines read 6,747.65 / 2,558.10 / 9,305.75 / 7,305.75.
@@ -1254,12 +1255,9 @@ a question about one of them is the expensive mistake.
 30. **Nothing the application shows a user is in English, including its failures.** A
     family employing a caregiver reads Hebrew, and a screen that gives up in another
     language is a screen with no way out of it: the moment the user most needs to be told
-    what to do is the moment they are told nothing they can read. **And nothing said to
-    the user is said in one gender.** The worker's gender is recorded and every sentence
-    about them is inflected by it; the user's is never asked for, so a sentence addressed
-    to the user is written to fit either — which in practice means the infinitive and not
-    the imperative. Four things can fail, and each says so in Hebrew, in the place the
-    user is looking.
+    what to do is the moment they are told nothing they can read. Nothing said to the user
+    is said in one gender either (item 31). Four things can fail, and each says so in
+    Hebrew, in the place the user is looking.
     **An action that could not answer says so at the control that was pressed**, in one
     sentence, and the rest of the screen keeps working. This is a *fault* and not a
     refusal: a refusal names a reason the user can act on and is worded per rule
@@ -1284,6 +1282,21 @@ a question about one of them is the expensive mistake.
     anything else to the opening screen, showing the worker the download named. None of
     them answers with text: a body from an address the browser expected a file from is a
     bare page with no bar and no way on.
+31. **Nothing the application says is said in one gender.** Two people are spoken about and
+    only one of them is known. **The worker's gender is recorded, and every sentence naming
+    them is inflected by it** — whole words and never a suffix, since Hebrew inflects a verb
+    in more than its ending, and one table holds the forms so a screen and the exported sheet
+    cannot call the same person by two genders (Part 3). **The user's gender is never asked
+    for**, so every sentence addressed to the user is written to fit either — which in
+    practice means the infinitive and not the imperative. The inclusive `עובד/ת` survives only
+    where no worker has been chosen yet, or where the sentence states the law rather than this
+    employment.
+    **This is the failure that passes every test not looking for it.** A screen written once
+    in the feminine renders, flows and exports, while calling half the workers by the wrong
+    gender in the middle of an otherwise correct paragraph — and the family cannot correct it.
+    So a sentence is held against the words a man and a woman should each read, whole and
+    never by a substring: a check for one feminine form passes a paragraph that says it once
+    and its opposite twice.
 
 ## Part 3 — Architectural guidance
 

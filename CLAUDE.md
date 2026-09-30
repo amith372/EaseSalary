@@ -62,7 +62,7 @@ anchors below are the literal headings, so they are what you are grepping for.
 | Working on | Read |
 |---|---|
 | what the app is for, scope, what is deliberately excluded | `## Part 1 — Goal and reason` |
-| **what the application does** — every rule, entitlement and screen behaviour, as 30 numbered items — and what "done" means | `## Part 2 — Testable success criteria`, **via the index at its head** |
+| **what the application does** — every rule, entitlement and screen behaviour, as 31 numbered items — and what "done" means | `## Part 2 — Testable success criteria`, **via the index at its head** |
 | server/client boundary, storage, templates, external data | `## Part 3 — Architectural guidance` |
 | the August 2025 known case, the invalid case, what a test has to prove | `## Part 4 — Validation approach` |
 | rates, rounding, column meanings, date counting, layout traps | `## Part 5 — Known pitfalls` |
@@ -71,7 +71,7 @@ anchors below are the literal headings, so they are what you are grepping for.
 | what to build next, in what order, with what | `build_plan.md`, which is local and untracked (rule 9) and is absent in a fresh clone |
 
 Part 2's criteria are numbered and are cited by number throughout both files; find one with
-`grep -n '^[0-9]\+\. ' specs.md` rather than by scrolling. **Items 1–30 are all in Part 2 and
+`grep -n '^[0-9]\+\. ' specs.md` rather than by scrolling. **Items 1–31 are all in Part 2 and
 nowhere else** — Parts 1 and 3–5 carry no numbered items — so "item 13" always means Part 2's,
 and a citation reading "Part 3, item 13" means item 13 *and* Part 3, not an item inside Part 3. **Part 2 is 72% of `specs.md`, so it
 is read one item at a time and never whole**: the index at its head says which item settles what,
