@@ -13,7 +13,7 @@ import { formatAgorot } from "../src/lib/money";
  * a template with an engine result handed to it; nothing there proves that
  * pressing the button on `/month/export` produces a file, that the file is the
  * month the user was looking at, or that the figures in it are the figures the
- * month screen showed her. Those are three different pieces of wiring and each
+ * month screen showed them. Those are three different pieces of wiring and each
  * of them is where this breaks.
  *
  * **Every expected figure comes from outside the code under test.**
@@ -52,7 +52,7 @@ const NOTES_COLUMN = 9;
 const TAX_ROW = 20;
 const BLOCK_ROW = 28;
 /** What `seed.ts` writes into August 2026, and the only month it gives either
- * of them to: an income tax the user typed and a deduction in her own words
+ * of them to: an income tax the user typed and a deduction in their own words
  * placed after the total. */
 const INCOME_TAX = 45000;
 const AFTER_TOTAL_LINE = 20000;
@@ -178,7 +178,7 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
    * exported a month received another household's arrangements on their own
    * salary sheet.
    *
-   * **The whole path, as a user meets it**: open her profile, type the insurer,
+   * **The whole path, as a user meets it**: open their profile, type the insurer,
    * press save, then export the month and read the cell. A unit test can fill a
    * template with a string; only this can show that the field on the screen is
    * the string that arrives in the file.
@@ -234,7 +234,7 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
     // seed's older salary to it (item 3).
     expect(said(sheet, "E6")).toBe(formatAgorot(WAGE_IN_FORCE));
     // One holiday worked in August 2026, so the holiday row carries one unit and
-    // the rest-day row carries none of hers.
+    // the rest-day row carries none of theirs.
     expect(sheet.getCell("C8").value).toBe(1);
 
     // The sheet is right-to-left, which filling the stored template preserves
@@ -304,13 +304,13 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
 
     // **August 2026 is the one seeded month that shows the block at its full
     // height** (`seed.ts`): a ₪450 income tax withheld from the ברוטו, and a
-    // ₪200 deduction the user wrote in her own words, which `placementOf` puts
+    // ₪200 deduction the user wrote in their own words, which `placementOf` puts
     // after the total. So the נטו is ₪650 below the ברוטו, and the two figures
     // land in two different regions of the sheet.
     expect(said(sheet, `E${TAX_ROW}`)).toBe(formatAgorot(-INCOME_TAX));
     expect(said(sheet, `E${BLOCK_ROW}`)).toBe(formatAgorot(-AFTER_TOTAL_LINE));
     // A row the template cannot label in advance carries the user's own words
-    // (item 20), which is what she reads the deduction by.
+    // (item 20), which is what they read the deduction by.
     expect(String(sheet.getCell(`B${BLOCK_ROW}`).value)).toBe(AFTER_TOTAL_LABEL);
     expect(totals.net).toBeCloseTo(
       totals.gross - (INCOME_TAX + AFTER_TOTAL_LINE) / 100,
@@ -355,21 +355,10 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
     expect(figures(plain)).toEqual(figures(withNotes));
   });
 
-  /**
-   * The gate item 18 puts in front of the file, checked at the address rather
-   * than at the button: a disabled button is a courtesy, and a month is not
-   * exported over an unanswered question however the request arrives.
-   */
-  test("refuses the file for a month it does not have", async ({ page }) => {
-    await useHousehold(page, "unknown");
-    const response = await page.request.get(
-      "/month/export/file?worker=worker-1&month=1999-01",
-    );
-    expect(response.status()).toBe(404);
-
-    const noWorker = await page.request.get(
-      "/month/export/file?worker=nobody&month=2026-08",
-    );
-    expect(noWorker.status()).toBe(404);
-  });
+  // Every way this address can fail — an unknown worker, a month outside them
+  // replay, an unanswered question, a month nobody confirmed — is
+  // `e2e/download-failures.spec.ts`, together with the reports address, which
+  // fails the same way for the same reason. It replaced a test here that
+  // asserted the status code alone, which is what let both addresses answer in
+  // English for as long as they did.
 });

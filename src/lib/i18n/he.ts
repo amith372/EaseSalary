@@ -132,11 +132,11 @@ const AGREEMENT = {
 } as const;
 
 /**
- * The worker herself, as words — every form a screen needs in order to name
- * her without deciding for her which she is (specs.md Part 3).
+ * The worker themselves, as words — every form a screen needs in order to name
+ * them without deciding for them which they are (specs.md Part 3).
  *
  * **The same argument as `DAY_WORDS` directly above, applied to the person
- * rather than to her day.** A sentence written once as "בדף שלה" reads as
+ * rather than to their day.** A sentence written once as "בדף שלה" reads as
  * broken Hebrew for half the workers the application serves, and the family
  * cannot correct it; the profile already knows which, so the sentence asks.
  *
@@ -156,17 +156,17 @@ const AGREEMENT = {
 interface WorkerWords {
   /** "שלה" / "שלו" — the possessive four of the wizard's own sentences end on. */
   hers: string;
-  /** "לה" / "לו" — the dative: an advance given to her. */
+  /** "לה" / "לו" — the dative: an advance given to them. */
   toHer: string;
   /** "עובדת" / "עובד" — the bare noun. */
   role: string;
   /** "העובדת" / "העובד" — the definite noun. */
   roleDefinite: string;
-  /** "עבדה" / "עבד" — did she work that day. */
+  /** "עבדה" / "עבד" — did they work that day. */
   worked: string;
   /** "שעבדה" / "שעבד" — the same verb as a relative clause. */
   thatWorked: string;
-  /** "זכאית" / "זכאי" — what she is owed. */
+  /** "זכאית" / "זכאי" — what they are owed. */
   entitled: string;
   /** "חזרה" / "חזר" — back from a spell of sickness. */
   returned: string;
@@ -200,12 +200,12 @@ export function workerWords(gender: Gender): WorkerWords {
   return WORKER_WORDS[gender];
 }
 
-/** Her rest day, as words. */
+/** Their rest day, as words. */
 function day(restDay: RestDay): DayWords {
   return DAY_WORDS[restDay];
 }
 
-/** Her rest-eve, as words: the working day before her rest day (item 14). */
+/** Their rest-eve, as words: the working day before their rest day (item 14). */
 function eve(restDay: RestDay): DayWords {
   return DAY_WORDS[restEveOf(restDay)];
 }
@@ -229,6 +229,54 @@ export const he = {
     name: "EaseSalary",
     description: "ניהול המשכורת החודשית של עובד/ת סיעוד — בלי אקסל ובלי נוסחאות.",
   },
+
+  /**
+   * What a fault says, and it is one sentence for every fault there is.
+   *
+   * **A fault is not a refusal.** A refusal names a reason the user can act on
+   * and is worded per rule; a fault is the action never answering — the network,
+   * the database, a throw on the server — so it has nothing to name. The
+   * wording is the user's own (2026-09-27), and it invites a second try because
+   * trying again is what actually helps here, which is exactly what a refusal's
+   * wording must never say.
+   *
+   * **It carries no detail of what went wrong**, and nothing may be added to it
+   * from an error: a message can hold a worker id, a Postgres message or
+   * ciphertext.
+   */
+  fault: "משהו השתבש, כדאי לנסות שוב או לחזור לדף הבית",
+
+  /**
+   * The screen behind an address the application does not have (`not-found.tsx`).
+   *
+   * **It is deliberately generic, and never worded about a worker.** A worker id
+   * reaches this screen both when it is nonsense and when it is another
+   * household's real id — `workerInSeries` answers null for both — so a sentence
+   * naming a worker would tell the reader that someone else's id exists (the
+   * user, 2026-09-27).
+   *
+   * **It is not a fault either**, so it does not invite a second try: the same
+   * address will go on not existing. What it offers is the way to a screen that
+   * does.
+   */
+  notFound: {
+    title: "הכתובת הזו לא נמצאה",
+    body: "אולי הקישור השתנה, ואולי הכתובת הוקלדה אחרת. אין כאן תקלה — פשוט אין מסך בכתובת הזו.",
+  },
+
+  /**
+   * The way out of a screen that cannot be acted on — the 404 and the two error
+   * boundaries. One string for all three, because they differ in what stopped
+   * and not in where the reader is sent.
+   *
+   * **`he.month.refused.wayHome` is a different sentence on purpose.** A refusal
+   * sends them to the calendar to correct a mark, so it names the errand; these
+   * three have no errand to name.
+   *
+   * **`global-error.tsx` cannot import it** and spells it out instead, with its
+   * reason beside it there.
+   */
+  wayHome: "לדף הבית",
 
   /**
    * The sign-in screen — the one screen in the application with no artboard.
@@ -281,7 +329,7 @@ export const he = {
    * What a household that holds no worker yet is told.
    *
    * **A new account reaches this and not a calendar**, because every screen in
-   * the application is a screen about one worker: her month, her balances, her
+   * the application is a screen about one worker: their month, their balances, them
    * sheet. Until there is one, there is nothing for any of them to be about,
    * and a blank calendar would be a screen quietly pretending otherwise.
    */
@@ -430,7 +478,7 @@ export const he = {
       /** Three sentences, each about something the application actually does.
        * Nothing here promises a screen that does not exist.
        *
-       * The step before this one asked which she is, so by the time these are
+       * The step before this one asked which they are, so by the time these are
        * drawn the answer is in the draft and the sentences agree with it. */
       steps: (gender: Gender) => [
         `החודש הראשון ${workerWords(gender).hers} כבר מחכה בדף הבית — אפשר להתחיל לסמן בלוח.`,
@@ -544,7 +592,7 @@ export const he = {
       net: "שולם לעובד/ת",
       excel: "אקסל",
       payslip: "לדף המשכורת",
-      /** A worker with no confirmed month yet, which is every worker on her
+      /** A worker with no confirmed month yet, which is every worker on them
        * first day: an empty list with no sentence reads as a screen that
        * failed to load. */
       none: "עוד לא נשמר כאן אף חודש.",
@@ -624,10 +672,10 @@ export const he = {
     /** "אושר ב־…", the artboard's own words; the date is its own element. */
     confirmedOn: "אושר ב־",
     /** The tint block, and the bottom row of the composition card. It is the
-     * money that actually reaches her — the code's `net` (Part 5). */
+     * money that actually reaches them — the code's `net` (Part 5). */
     total: "סך הכל תשלום לעובד/ת",
     composition: "מה מרכיב את הסכום",
-    /** Column H, and the sentence that says why it sits outside her total
+    /** Column H, and the sentence that says why it sits outside their total
      * (item 16): the law permits deducting some of these and this application
      * deducts none. */
     thirdParty: "תשלומים לגורמים שלישיים",
@@ -642,7 +690,7 @@ export const he = {
        * words here for the eye that has not learned the weights and for the
        * reader who cannot see them at all (item 9). */
       holidaysUnworked: "ימי חג שלא נעבדו",
-      /** Her own rest day, so a Friday-resting worker reads about Fridays
+      /** Their own rest day, so a Friday-resting worker reads about Fridays
        * (item 5). */
       freeRestDays: (restDay: RestDay) =>
         `${day(restDay).plural} ${agrees(day(restDay)).freePlural}`,
@@ -751,15 +799,15 @@ export const he = {
       "נובמבר",
       "דצמבר",
     ],
-    /** A function of her rest day, because one of the four names it: a
+    /** A function of their rest day, because one of the four names it: a
      * Saturday-resting worker reads "שבת חופשית" and a Friday-resting one
      * "שישי חופשי" (specs.md item 5). */
     marks: (restDay: RestDay) => ({
       vacation: "חופשה",
       sick: "מחלה",
       /** What a holiday's own cell says, in either weight. The **weight** is
-       * what tells the two apart on the calendar — an outline for one she did
-       * not work and a fill for one she did (specs.md item 9) — so the cell
+       * what tells the two apart on the calendar — an outline for one they did
+       * not work and a fill for one they did (specs.md item 9) — so the cell
        * says only that the day is a holiday, and the legend below names the two
        * states in words for the eye that has not learned the weights yet and
        * for the reader who cannot see them at all. */
@@ -769,7 +817,7 @@ export const he = {
       freeRestDay: `${day(restDay).short} ${agrees(day(restDay)).free}`,
     }),
     /**
-     * The one fact a month records about a holiday: whether she worked it
+     * The one fact a month records about a holiday: whether they worked it
      * (specs.md item 9). The user never marks the day — the year's dates arrive
      * drawn — so this is a question and not a kind, and the two answers are the
      * whole of it.
@@ -798,7 +846,7 @@ export const he = {
        * the overflow is said in words rather than silently truncated. */
       continuesInto: "נמשך אל תוך החודש הבא",
       /** An open spell of sickness, which is how one is normally recorded: on
-       * the day she falls ill nobody knows the day she will return, so the
+       * the day they fall ill nobody knows the day they will return, so the
        * application does not ask for one (specs.md item 8). */
       stillOpen: "טרם הסתיימה",
       continuesFrom: "נמשך מהחודש הקודם",
@@ -843,7 +891,7 @@ export const he = {
     /**
      * A range applies to the days it legally can and says which it skipped and
      * why, rather than being refused whole over one day the user would then
-     * have to go and find herself.
+     * have to go and find themselves.
      */
     skipped: (restDay: RestDay) => ({
       title: "ימים שלא סומנו",
@@ -889,15 +937,24 @@ export const he = {
     done: "כבר טופל",
     nothingDone: "בתשעים הימים האחרונים לא נרשם דבר.",
     notNow: "לא עכשיו",
-    /** In place of "not now" on a month not yet exported. */
-    markHandled: "סמן כטופל",
+    /**
+     * In place of "not now" on a month not yet exported.
+     *
+     * **The infinitive, as every other action in this file is**, and not the
+     * imperative `סמן`. These three were the only strings that told the user
+     * what to do in one gender: the application records the *worker's* gender
+     * and inflects every sentence about them by it (`workerWords`), but it has
+     * never asked who is using it, so a sentence addressed to the user is
+     * written so that it fits either.
+     */
+    markHandled: "לסמן כטופל",
     /** The same, over the months of a card that stands for several: each is put
      * off by its own press (item 27's grouping), so the word leads a row of
      * months rather than sitting on one button. */
-    markHandledEach: "סמן כטופל:",
+    markHandledEach: "לסמן כטופל:",
     /** One such press, named for the month it answers — four buttons drawn
      * alike are four buttons a screen reader cannot tell apart. */
-    markHandledMonth: (month: string) => `סמן את ${month} כטופל`,
+    markHandledMonth: (month: string) => `לסמן את ${month} כטופל`,
     whatTheLawSays: "מה אומר החוק",
     /** The chip beside a title. A blockage stops a correct salary; a warning
      * still has time in it. */
@@ -1119,7 +1176,7 @@ export const he = {
    *
    * The lead says what the screen is for rather than what is on it, because a
    * user arrives here from a summarised row beside the calendar and the first
-   * thing she needs to know is that this is where that row is made.
+   * thing they need to know is that this is where that row is made.
    */
   payments: {
     title: "תשלומים",
@@ -1183,9 +1240,9 @@ export const he = {
         "כל החודשים שאחריו ממתינים לתיקון הזה, כי היתרות נגררות מחודש לחודש.",
       /**
        * The way out of a screen that states the refusal but cannot correct it.
-       * It names the calendar rather than the screen, because what she has come
-       * to do is fix a mark and "למסך הפתיחה" would tell her where to go
-       * without telling her why.
+       * It names the calendar rather than the screen, because what they have come
+       * to do is fix a mark and "למסך הפתיחה" would tell them where to go
+       * without telling them why.
        */
       wayHome: "ללוח החודשי לתיקון הרישום",
     },
@@ -1257,7 +1314,7 @@ export const he = {
          * as a sum**. A family told "2.5
          * percent" by an accountant had to work the sum out for itself, against
          * a ‏ברוטו‎ that moves every month — which is exactly the arithmetic
-         * this application exists to take off her.
+         * this application exists to take off them.
          *
          * What is *stored* is the amount either way: an override is an amount
          * put over a calculated figure, and a percentage left as a percentage
@@ -1277,7 +1334,7 @@ export const he = {
         noGross: "אין לחודש הזה ברוטו שאפשר לחשב ממנו אחוז.",
         /**
          * **Shown in words beside the control and not behind the "?"**
-         * (specs.md item 17). It is what the user has to know before she types,
+         * (specs.md item 17). It is what the user has to know before they type,
          * and someone who does not know it deducts too much — a rule that is
          * merely reachable is reachable by the user who already suspects there
          * is something to find.
@@ -1287,7 +1344,7 @@ export const he = {
          * **The rule said above is the *automatic* mode's rule, so it is not
          * said under the other two**.
          * A worker set to a flat 2.5% is not taxed by the brackets at all, and
-         * a paragraph explaining credit points beside her figure would be a
+         * a paragraph explaining credit points beside their figure would be a
          * sentence that is simply untrue of the amount above it — which is the
          * worst kind of help, because it is the kind a family would act on.
          */
@@ -1326,7 +1383,7 @@ export const he = {
          * "greater than zero".** Zero is an ordinary entry here (item 17) while
          * a line the user adds refuses it (item 20), so one sentence serving
          * both would state the wrong rule beside one of them — and beside this
-         * one it would tell her that the figure she is allowed to type is not
+         * one it would tell them that the figure they are allowed to type is not
          * allowed.
          */
         notANumber: "צריך להקליד סכום — מספר, בלי מינוס. שדה ריק מחזיר לסכום שהיישום חישב, ו־0 פירושו שהחלטת שלא לנכות מס החודש.",
@@ -1357,7 +1414,7 @@ export const he = {
         submit: "להוסיף",
         /** The same panel, reopened over a line that already exists (item 20).
          * The verb changes because the gesture does: adding makes a line and
-         * this one corrects the line she is looking at. */
+         * this one corrects the line they are looking at. */
         edit: "לתקן",
         editLabel: (label: string) => `לתקן את השורה "${label}"`,
         save: "לשמור",
@@ -1391,9 +1448,9 @@ export const he = {
        * The advances, given and repaid (specs.md item 20).
        *
        * **The number is the application's and the user never types one**, so
-       * every sentence here names an advance by a number she reads rather than
-       * one she has to remember — and a repayment is chosen from the advances
-       * she has rather than typed against a number.
+       * every sentence here names an advance by a number they read rather than
+       * one they have to remember — and a repayment is chosen from the advances
+       * they have rather than typed against a number.
        */
       advances: {
         title: "מקדמות",
@@ -1426,7 +1483,7 @@ export const he = {
         submitGrant: "לתת",
         submitRepay: "לפרוע",
         /** The same panel, reopened over a movement the month already records
-         * (item 20). The amount of a movement is what she typed, so it is
+         * (item 20). The amount of a movement is what they typed, so it is
          * corrected rather than overridden — and the verb changes because the
          * gesture does. */
         edit: "לתקן",
@@ -1458,8 +1515,8 @@ export const he = {
        */
       thirdParty: {
         title: "תשלומים לגורמים שלישיים",
-        /** Said once, above the list: this money is not hers, and it is neither
-         * added to her salary nor taken out of it (item 16). */
+        /** Said once, above the list: this money is not theirs, and it is neither
+         * added to their salary nor taken out of it (item 16). */
         lead: "כסף ששולם החודש לגורם אחר — מבטח רפואי, ביטוח לאומי, אגרות ודמי חברה. הוא אינו מתווסף למשכורת העובד/ת וגם אינו מנוכה ממנה.",
         empty: "לא נרשם החודש תשלום לגורם שלישי.",
         add: "לרשום תשלום",
@@ -1528,15 +1585,15 @@ export const he = {
        * one of them (specs.md item 17).
        *
        * **The heading names what the section holds rather than the gesture.**
-       * "החלפה ידנית" would be the word for what she does to one row; the list
-       * is every derived figure the month has, most of which she will never
+       * "החלפה ידנית" would be the word for what they do to one row; the list
+       * is every derived figure the month has, most of which they will never
        * touch, and a section named for a correction reads as a list of things
        * already gone wrong.
        *
        * **The lead says which amounts are *not* here and where they are
        * instead**, because that division is the whole of the criterion and it
-       * is not guessable: a line she typed herself and a payment she recorded
-       * are corrected where she entered them, and only an amount that reached
+       * is not guessable: a line they typed themselves and a payment they recorded
+       * are corrected where they entered them, and only an amount that reached
        * this month from somewhere else is replaced here.
        */
       overrides: {
@@ -1568,7 +1625,7 @@ export const he = {
          * calculated figure** (item 17). The two produce the same number and
          * mean opposite things, so the button says what it restores rather than
          * saying "לנקות" — a user who read "clear" would have no reason to
-         * prefer it over typing the figure she can see beside it.
+         * prefer it over typing the figure they can see beside it.
          */
         clear: "לחזור לחישוב של היישום",
         clearLabel: (label: string) =>
@@ -1598,7 +1655,7 @@ export const he = {
        * amount that is not one, a second row where the sheet holds one, more
        * than the debt — and nothing in law says any of them, so they owe the
        * user the reason and not a reference to a page that would not mention
-       * what stopped her. The engine's own `sheet.refusals` are the other case
+       * what stopped them. The engine's own `sheet.refusals` are the other case
        * and do carry one.
        */
       refused: {
@@ -1614,7 +1671,7 @@ export const he = {
          * a row this month does not draw, and a row carrying an amount the
          * month itself recorded. They have one answer — this is not a figure
          * the application worked out — and telling the user which of the two
-         * her stale page had got wrong is nothing she can act on.
+         * their stale page had got wrong is nothing they can act on.
          */
         notOverridable:
           "אי אפשר לשנות את הסכום הזה — הוא לא סכום שהיישום חישב. סכום שהוקלד ידנית מתקנים במקום שבו הוקלד.",
@@ -1632,7 +1689,7 @@ export const he = {
         advanceRepaidAlready:
           "כבר נרשמו פירעונות של המקדמה הזו, ולכן אי אפשר להסיר אותה עכשיו — היו נשארים החזרים של חוב שאינו קיים. צריך להסיר קודם את הפירעונות, ואז את המקדמה עצמה.",
         /** The same state, reached by correcting the grant instead of removing
-         * it: what she needs to know here is which figure her amount is too
+         * it: what they need to know here is which figure them amount is too
          * small for, and not that an advance cannot be removed. */
         advanceBelowRepaid:
           "הסכום קטן ממה שכבר נפרע מהמקדמה, ולכן היו נשארים החזרים של חוב שאינו קיים. צריך לתקן או להסיר קודם את הפירעונות, ואז את סכום המקדמה.",
@@ -1642,7 +1699,7 @@ export const he = {
          * `Refusal` reads them by key; one function member would make the whole
          * record `string | ((s: string) => string)` and the component would have
          * to branch on which sort each reason is. The kind is also the thing the
-         * user has this second chosen, so naming it back to her adds nothing.
+         * user has this second chosen, so naming it back to them adds nothing.
          * `sheet.refusals.thirdPartyPaidTwice` does name it, because that one is
          * read off a stored month nobody is looking at (specs.md item 16).
          *
@@ -1658,8 +1715,8 @@ export const he = {
         periodIncomplete:
           "צריך לבחור את שני החודשים — מאיזה ועד איזה — או להשאיר את שניהם ריקים.",
         /** The last month before the first. Refused rather than quietly
-         * reordered: which way round she meant it is not the application's to
-         * decide, and a period silently flipped is one she will not check. */
+         * reordered: which way round they meant it is not the application's to
+         * decide, and a period silently flipped is one they will not check. */
         periodBackwards:
           "החודש האחרון מוקדם מהחודש הראשון. כדאי לבדוק את סדר החודשים.",
         /** No day of payment. Every payment has one and the sheet asks for it,
@@ -1795,12 +1852,12 @@ export const he = {
       "בחשבון אפשר לנהל עד שני עובדים/ות. מי שהתקבל/ה בשיתוף מחשבון אחר לא נספר/ת במסגרת הזו.",
     employedSince: "מועסק/ת מאז",
     /**
-     * The chip on her card: the earliest finished month still a draft, or that
+     * The chip on their card: the earliest finished month still a draft, or that
      * everything is up to date.
      *
      * **It names a month rather than counting them**, because the user's next
      * act is to open that one; a count would say how much is outstanding and
-     * still leave her looking for where to start. A month that has not ended
+     * still leave them looking for where to start. A month that has not ended
      * cannot be confirmed (item 21) and is never what it names.
      */
     status: {
@@ -1827,19 +1884,19 @@ export const he = {
       advance: "מקדמה שנשארה לפירעון",
     },
     toProfile: (firstName: string) => `לדף של ${firstName}`,
-    /** Where her terms and identifying numbers are edited — `/settings`, with
-     * her selected. The artboard's words, on the list card and her own page. */
+    /** Where their terms and identifying numbers are edited — `/settings`, with
+     * them selected. The artboard's words, on the list card and their own page. */
     toSettings: "פרטים והגדרות",
     /** Under the add card: the wizard is short, said before it is opened. */
     addLead: "נשאל רק את הפרטים ההכרחיים, ואת המצב שממנו מתחילים",
     profile: {
       /**
-       * How long she has been employed, in the subtitle beside the date she
+       * How long they have been employed, in the subtitle beside the date they
        * started — the artboard's `ותק`.
        *
-       * It is **elapsed time and not the seniority year**: the year decides her
+       * It is **elapsed time and not the seniority year**: the year decides them
        * vacation entitlement and is stated where that is explained, while this
-       * says how long she has been here, which is what a reader of a subtitle
+       * says how long they have been here, which is what a reader of a subtitle
        * is asking. Whole years, because the two are otherwise easy to read as
        * one figure.
        */
@@ -1854,12 +1911,12 @@ export const he = {
       /**
        * The hero card: the first thing about this worker that needs the user to
        * do something, in the words `/alerts` already phrases it with (item 27).
-       * The card is absent when she has no blockage, rather than saying that
+       * The card is absent when they have no blockage, rather than saying that
        * there is nothing to do — the artboard draws no empty state for it, and
        * a card that reports calm is a card the eye learns to skip.
        */
       needsYou: "צריך לטפל",
-      /** The months she has, listed, each with the state it is in. */
+      /** The months they have, listed, each with the state it is in. */
       months: {
         title: "החודשים",
         empty: "עוד לא נרשם אף חודש.",
@@ -1936,7 +1993,7 @@ export const he = {
        */
       advanceWhy:
         "סך המקדמות שניתנו פחות מה שנפרע עד היום, על פני כל חודשי ההעסקה.",
-      /** The row that closes the page: the two things about her that live on
+      /** The row that closes the page: the two things about them that live on
        * another screen. */
       links: {
         payments: "התשלומים שקשורים אליו/ה",
@@ -1945,7 +2002,7 @@ export const he = {
       terms: {
         note: "מה שנכון לכל חודש, עד שמשנים אותו. חודש שכבר אושר שומר על התנאים שאיתם חושב.",
         /** The base salary and its changes (specs.md item 3): a change holds
-         * from a month she names. */
+         * from a month they name. */
         salary: {
           label: "שכר בסיס לחודש",
           hint: "הסכום שהוסכם עליו, לפני תוספות. לא ניתן לרדת מתחת לשכר המינימום. העלאה חלה מהחודש שבוחרים והלאה, והחודשים שלפניו נשארים כפי שחושבו.",
@@ -2004,16 +2061,16 @@ export const he = {
          * **The hint says what it is for, and that is the whole of why it is
          * asked.** A field on a profile that does not say what it changes reads
          * as a form collecting what it feels like collecting; this one settles
-         * the income-tax credit points and the endings her role is written
+         * the income-tax credit points and the endings their role is written
          * with, and saying so is what makes it an answerable question rather
          * than a personal one.
          */
         /**
-         * Her country of origin (specs.md item 10), correctable here.
+         * Their country of origin (specs.md item 10), correctable here.
          *
          * The hint says what the answer decides rather than what it is: the
-         * country is the default her holiday list is drawn from, and a worker
-         * already moved to another list stays where she was put.
+         * country is the default their holiday list is drawn from, and a worker
+         * already moved to another list stays where they were put.
          */
         country: {
           label: "ארץ מוצא",
@@ -2059,7 +2116,7 @@ export const he = {
           reminder: 'תזכורת: עפ"י החוק צריך לשלם מס הכנסה.',
         },
         /**
-         * Her passport number, beside the date it expires (items 22, 28).
+         * Their passport number, beside the date it expires (items 22, 28).
          *
          * **The hint says where it is kept**, because a family typing an
          * identifier into a web page is entitled to know: it is sealed with a
@@ -2128,7 +2185,7 @@ export const he = {
          *
          * **The row reports the entitlement rather than offering it**, because
          * the days follow from seniority and the user never chooses them — what
-         * she chooses is the month. Showing the figure beside the choice is
+         * they choose is the month. Showing the figure beside the choice is
          * what makes the choice mean something: a month named with nothing
          * beside it says only that a payment happens sometime.
          */
@@ -2189,7 +2246,7 @@ export const he = {
           },
           /** The quieter heading a line whose last month has passed sits under
            * (item 20): the edit that would start it again is on that row, so a
-           * row she cannot see is a line she cannot bring back. */
+           * row they cannot see is a line they cannot bring back. */
           ended: "שורות שנגמרו",
           endedHint: "החודש האחרון שלהן עבר, ולכן הן לא מופיעות יותר בחודש חדש. תיקון של חודש הסיום מחזיר אותן.",
         },
@@ -2263,7 +2320,7 @@ export const he = {
           salaryFrom: "צריך חודש בצורה שנה-חודש, ולא לפני תחילת ההעסקה.",
           gender: "אפשר לבחור אישה או גבר.",
           /** The offer is the countries a holiday list is stored for, so a code
-           * outside it is a stale screen rather than a mistake she made. */
+           * outside it is a stale screen rather than a mistake they made. */
           country: "אפשר לבחור רק מדינה שיש לה רשימת חגים שמורה. כדאי לרענן את הדף ולנסות שוב.",
           incomeTaxMode: "אפשר לבחור חישוב אוטומטי, ללא ניכוי, או אחוז קבוע.",
           incomeTaxRate: "האחוז צריך להיות מספר גדול מאפס ולא יותר מ־100. אם לא מנוכה מס בכלל, אפשר לבחור \"לא מנוכה מס\".",
@@ -2292,7 +2349,7 @@ export const he = {
    *
    * The screen is the only place a holiday's **date** is decided: on the month's
    * calendar the user never marks a day as a holiday (item 9), so the dates
-   * arrive from here already drawn and the month records only whether she
+   * arrive from here already drawn and the month records only whether they
    * worked one.
    */
   holidays: {
@@ -2303,7 +2360,7 @@ export const he = {
     nextYear: "לשנה הבאה",
     /** The picker's closing button, named for the screen that opened it. */
     backTo: (screen: string) => `חזרה ל${screen}`,
-    /** How many days are chosen against how many she has, and where the quota
+    /** How many days are chosen against how many they have, and where the quota
      * comes from — the reasoning behind the figure and not only the figure
      * (item 10). */
     quota: {
@@ -2343,7 +2400,7 @@ export const he = {
     /** A fetch that came back with nothing, in the three kinds a scrape can
      * fail in — the user is told which happened, because only one of the three
      * is worth retrying (`src/lib/scrape/failure.ts`). Each ends the same way:
-     * item 12 requires that she can type the dates herself and carry on. */
+     * item 12 requires that they can type the dates themselves and carry on. */
     failure: {
       title: "לא הצלחנו להביא את רשימת החגים לשנה הזו",
       unreachable:
@@ -2363,7 +2420,7 @@ export const he = {
        * elsewhere (item 25). */
       blocked: "המכסה נוצלה במלואה",
       /**
-       * A holiday that falls on her weekly rest day (item 9). Said
+       * A holiday that falls on their weekly rest day (item 9). Said
        * on the row itself, because a family choosing it and watching the quota
        * not move would otherwise read that as a mistake. The rest day is named
        * rather than assumed, since it is a term of the employment (item 5).
@@ -2372,7 +2429,7 @@ export const he = {
         `החג נופל ב${day(restDay).bare}, יום המנוחה השבועי שלה. הוא יופיע בלוח כחג, אבל ישולם כיום מנוחה רגיל ולא ינוצל מתשעת ימי החג — אפשר לבחור תאריך אחר במקומו.`,
       move: "להעביר תאריך",
       moveLabel: (date: string) => `להעביר את החג מ-${date} לתאריך אחר`,
-      /** A date nobody published: she typed it herself, or moved a holiday onto
+      /** A date nobody published: they typed it themselves, or moved a holiday onto
        * it. There is no name to show, so the row says what it is. */
       own: "תאריך שהוספת",
       empty: "אין רשימת חגים לשנה הזו.",
@@ -2434,7 +2491,7 @@ export const he = {
    *
    * **A question is a question and not an accusation.** The wording asks what
    * happened; it never says the user forgot something, because most of the time
-   * she did not and the screen is asked for on every export.
+   * they did not and the screen is asked for on every export.
    */
   beforeExport: {
     eyebrow: "לפני הייצוא",
@@ -2443,7 +2500,7 @@ export const he = {
      * nobody has confirmed yet (specs.md items 4, 17).
      *
      * **It says both halves, because the family did not ask to confirm
-     * anything** — she came for a file, and the sentence has to tell her the
+     * anything** — they came for a file, and the sentence has to tell them the
      * file is one press further on rather than that something is missing. The
      * words live here, beside the screen the link goes to, and both screens
      * read them: two wordings for one link is two places for it to drift.
@@ -2538,8 +2595,8 @@ export const he = {
       /** What confirming does with it, said plainly: the figure stops moving,
        * which is what lets a past month reproduce rather than recalculate. */
       note: "הסכום מחושב עכשיו לפי תנאי ההעסקה של החודש, ונשמר יחד עם שכר המינימום ברגע שמאשרים. מכאן והלאה החודש הזה יופק תמיד עם הסכום הזה, גם אם משהו ישתנה בהמשך.",
-      /** Where she has typed an amount over the row: what the sheet prints is
-       * hers, and it stands until she removes it (item 17). */
+      /** Where they have typed an amount over the row: what the sheet prints is
+       * theirs, and it stands until they remove it (item 17). */
       manualNote: "הסכום הזה הוזן ידנית לחודש הזה, והוא מה שיופיע בדף המשכורת גם אחרי האישור. הסכום שהיישום חישב נשמר תחתיו, כך שהסרת התיקון מחזירה אותו.",
       /** A month that departs from the setting is corrected where item 17 puts
        * that gesture, and the card says where rather than offering it twice. */
@@ -2551,7 +2608,7 @@ export const he = {
      * minimum wage is and asked only in the month the payment falls in.
      *
      * **The days are reported and only the rate is asked**, which is item 15
-     * read as it is written: the entitlement is worked out from her seniority,
+     * read as it is written: the entitlement is worked out from their seniority,
      * and the day rate is the one figure in it the application cannot derive.
      */
     recuperation: {
@@ -2606,7 +2663,7 @@ export const he = {
 
     /**
      * The seven questions. Each `ask` is what the user answers, each `from` is
-     * what the month already holds — never a sentence about what she should
+     * what the month already holds — never a sentence about what they should
      * have done — and `detail` words the items themselves.
      *
      * **Every one of them is a question the chips can answer.** The artboard
@@ -2621,7 +2678,7 @@ export const he = {
      * numeral before a plural, so a format string produces `1 חגים` and the
      * user reads it as a defect in the application. Zero never reaches the
      * counting branch: a month that recorded nothing has a wording of its own,
-     * because "no advance was recorded" is what she is being asked to confirm.
+     * because "no advance was recorded" is what they are being asked to confirm.
      */
     questions: {
       yes: "כן",
@@ -2680,7 +2737,7 @@ export const he = {
         mismatch: "פירעון של מקדמה נרשם במסך התשלומים, ומשם הוא נכנס לחישוב.",
       },
       freeRestDays: {
-        /** It names her own rest day, so a worker who rests on Friday is asked
+        /** It names their own rest day, so a worker who rests on Friday is asked
          * about Fridays (specs.md item 5) — and the adjective agrees with it,
          * since שבת is feminine and יום שישי is not. */
         ask: (restDay: RestDay) =>
@@ -2699,9 +2756,9 @@ export const he = {
         mismatch: "יום מנוחה חופשי מסומן בלוח של החודש.",
       },
       holidaysWorked: {
-        /** A question the chips can answer. *Which* holiday she worked is
+        /** A question the chips can answer. *Which* holiday they worked are
          * marked on the holiday itself, on the month's calendar, which is where
-         * the `mismatch` sentence sends her. */
+         * the `mismatch` sentence sends them. */
         ask: "היו חגים שנעבדו?",
         from: (falling: number, worked: number) => {
           if (falling === 0) return "לא נופלים חגים בחודש הזה";
@@ -2751,7 +2808,7 @@ export const he = {
     },
 
     /** What a contradicting answer produces — a warning and never a refusal.
-     * She is the one who knows what happened, and what item 18 buys is that she
+     * They are the one who knows what happened, and what item 18 buys is that they
      * was asked. */
     mismatch: {
       title: "שווה לבדוק לפני הייצוא",
@@ -2779,7 +2836,7 @@ export const he = {
        */
       actionWithNotes: "לייצא עם ההערות",
       /** Under both buttons, because a user reading the two needs to know what
-       * the difference actually is before she picks one. */
+       * the difference actually is before they pick one. */
       versions:
         "שתי הגרסאות זהות בסכומים. הן נבדלות רק בכך שעמודת ההערות מוצגת או מוסתרת, וההערות נכתבות בשתיהן.",
       back: "לחזור לחודש",
@@ -2825,10 +2882,10 @@ export const he = {
       /** The definite noun, in `I1`'s instruction to the person preparing the
        * sheet: have the worker sign it. */
       worker_definite: workerWords(gender).roleDefinite,
-      /** And send *her* a copy — the same sentence's pronoun. This one is the
+      /** And send *them* a copy — the same sentence's pronoun. This one is the
        * sheet's alone, because no screen sends anything anywhere. */
       to_worker: gender === "female" ? "אליה" : "אליו",
-      /** The verb four of the day-count labels end on: the Saturdays she
+      /** The verb four of the day-count labels end on: the Saturdays they
        * worked that month. */
       worked: workerWords(gender).thatWorked,
     }),
@@ -2845,7 +2902,7 @@ export const he = {
      * **The template says Saturday and Friday literally, and the rest day is a
      * term of the employment (item 5), so those words are the month's and not
      * the template's.** A worker who rests on Friday receives a sheet that says
-     * Friday throughout and counts her Fridays, and Hanna's sheet is unchanged
+     * Friday throughout and counts their Fridays, and Hanna's sheet is unchanged
      * word for word — which is what keeps one template rather than three.
      *
      * The one-letter prefixes compose, so `עבודה ב{{rest_day}}` is `עבודה בשבת`
@@ -2877,7 +2934,7 @@ export const he = {
     lines: {
       base: "שכר החודש",
       /**
-       * **The label is a function of her rest day; the key never is.** The key
+       * **The label is a function of their rest day; the key never is.** The key
        * is `lineKeys.restEveSupplement`, which addresses a stored override
        * (item 17) and must not move, while the label names the day the money is
        * actually for: "תוספת ימי שישי" for Hanna and "תוספת ימי חמישי"
@@ -2901,7 +2958,7 @@ export const he = {
      * items 2, 16), never a paraphrase, which item 2 does not allow: the
      * exported file has to carry
      * the labels a month tab carries, and a screen teaching the user a name the
-     * sheet does not use sends her looking for a row that is not there.
+     * sheet does not use sends them looking for a row that is not there.
      * `דמי השמה` and `דמי תאגיד` are two different fees in this
      * industry and neither of them is `דמי תיווך`.
      *
@@ -2966,7 +3023,7 @@ export const he = {
         `המשכורת החודשית משולמת במלואה גם בחודש שהיו בו ימי מחלה, ולכן השורה הזו מחזירה את החלק שדמי המחלה אינם מכסים: על היום הראשון של כל מחלה לא משולמים דמי מחלה, על השני והשלישי משולם חצי יום, ומהיום הרביעי ואילך המחלה משולמת במלואה. כך נשאר בדיוק מה שהחוק מזכה בו. החודש הניכוי הוא על ${formatDays(days)} ימים, בערך של יום מחלה. ${day(restDay).plural} שבתוך תקופת המחלה ${agrees(day(restDay)).counted} לתקופה ${agrees(day(restDay)).andSubtracted} מהמאזן, אך ${agrees(day(restDay)).arentPaid} ${agrees(day(restDay)).andArentDeducted} — המשכורת ממילא אינה כוללת ${agrees(day(restDay)).them}.`,
       /**
        * Recuperation (specs.md item 15). The sentence says the three things the
-       * user cannot see from the figure: that the days come from her seniority
+       * user cannot see from the figure: that the days come from their seniority
        * and not from a choice, that the year is measured from the employment
        * anniversary and not from January, and that the day rate is not derived
        * from the salary — which is why it is confirmed rather than calculated.
@@ -2977,7 +3034,7 @@ export const he = {
       recuperation: (days: number) =>
         `דמי הבראה משולמים פעם בשנה, בחודש שנקבע בפרופיל של העובד/ת. מספר הימים נקבע לפי הוותק: חמישה ימים על השנה הראשונה, שישה על השנייה והשלישית, שבעה מהרביעית עד העשירית, ואילך לפי הסולם שבחוק. השנה נמדדת מיום תחילת ההעסקה ועד יום השנה שאחריו — ולא לפי השנה הקלנדרית, שלפיה נמדדת החופשה — ואין זכאות עד שהושלמה שנת עבודה מלאה. החודש משולמים ${formatDays(days)} ימים. ערך יום ההבראה אינו נגזר מהשכר: הוא נקבע בחוק ומתעדכן בכל יולי, ולכן הוא מאושר ונשמר עם החודש שחושב לפיו.`,
       /**
-       * Income tax (specs.md item 17). It says the three things she cannot see
+       * Income tax (specs.md item 17). It says the three things they cannot see
        * from the amount — that the brackets are annual and the month
        * is a twelfth, that the credit points come from the gender on the
        * profile and are never asked for, and that at the minimum wage the
@@ -3041,9 +3098,9 @@ export const he = {
     refusals: {
       holidayLimit: (allowed: number) =>
         `המכסה היא ${allowed} ימי חג בשנה, והרישום הזה חורג ממנה. אפשר להסיר חג אחר שנבחר לשנה הזו במקומו.`,
-      /** Her own day, not everyone's: item 5 says the rest day is a term of
+      /** Their own day, not everyone's: item 5 says the rest day is a term of
        * the employment, so the sentence names the day this employment holds
-       * rather than telling a Friday-resting worker that Saturday is hers. */
+       * rather than telling a Friday-resting worker that Saturday is theirs. */
       freeRestDayNotRestDay: (restDay: RestDay) =>
         `${day(restDay).short} ${agrees(day(restDay)).free} ${agrees(day(restDay)).wasRecorded} על יום שאינו ${day(restDay).bare}. יום המנוחה השבועית של העובד/ת הוא ${day(restDay).bare}, ולכן הרישום הזה לא יכול להיות נכון.`,
       dayRecordedTwice:
@@ -3073,7 +3130,7 @@ export const he = {
           : `בשנת ${year} נוצלו ${formatDays(days)} ימי חופשה, מתוך ${formatDays(required)} שנצברו בה. החוק מבקש לפחות שבעה ימים בשנה, ובשנה חלקית את מה שנצבר. היתרה עצמה נשמרת ואינה נמחקת.`,
       /** The recuperation month with nothing to price its days at (item 15).
        * It names the days, because that is the part the application does know
-       * and the part the user would otherwise have to work out for herself. */
+       * and the part the user would otherwise have to work out for themselves. */
       /** A month whose tax year the application holds no bracket table for
        * (item 17). It names the year, because that is the part that says which
        * table is missing and the part a fetch would fix. */

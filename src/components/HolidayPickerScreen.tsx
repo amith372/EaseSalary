@@ -15,7 +15,13 @@ import { Chip } from "@/components/Chip";
 import { Card } from "@/components/Card";
 import { Chevron } from "@/components/icons";
 import { useWorkerScope } from "@/components/WorkerScope";
-import { busyAttrs, buttonClass, inputClass, RefusalLine } from "@/components/Field";
+import {
+  busyAttrs,
+  buttonClass,
+  FaultLine,
+  inputClass,
+  RefusalLine,
+} from "@/components/Field";
 import { useAction } from "@/components/useAction";
 import { RuleLink, WhyPanel } from "@/components/WhyDisclosure";
 import { weekdayDayLabel } from "@/lib/dateLabels";
@@ -58,7 +64,7 @@ import type { IsoDate, Worker } from "@/lib/types";
  *    way back rather than a save.
  * 3. The quota bar has **as many slots as the entitlement has days**, not nine.
  *    Nine is the full year's; a worker employed from April has 6.75, and nine
- *    slots would draw her a quota she does not have.
+ *    slots would draw them a quota they do not have.
  */
 
 /** One worker's year as the screen shows it. */
@@ -104,7 +110,7 @@ export function HolidayPickerScreen({
     household[0];
 
   const [open, setOpen] = useState<Open>(null);
-  const { refusal: reason, run, saving, busyAt } =
+  const { refusal: reason, fault, run, saving, busyAt } =
     useAction<keyof typeof words.refused>();
   // A refusal belongs to the gesture that produced it, so it is keyed by the
   // row it happened on rather than shown once at the top of a list of thirty
@@ -112,6 +118,9 @@ export function HolidayPickerScreen({
   const [refusedAt, setRefusedAt] = useState<string | null>(null);
   const refusal =
     reason === null || refusedAt === null ? null : { at: refusedAt, reason };
+  // A fault is anchored to its gesture for the same reason a refusal is: one
+  // sentence at the row it happened on, and not at the top of thirty dates.
+  const faultAt = fault ? refusedAt : null;
 
   function act(gesture: Gesture, action: () => Promise<HolidayActionResult>) {
     setRefusedAt(gesture.anchor);
@@ -287,6 +296,8 @@ export function HolidayPickerScreen({
           ) : null}
           {refusal?.at === ADD.anchor || refusal?.at === SOURCE_ANCHOR ? (
             <Refusal reason={refusal.reason} />
+          ) : faultAt === ADD.anchor || faultAt === SOURCE_ANCHOR ? (
+            <FaultLine />
           ) : null}
         </Card>
 
@@ -353,6 +364,8 @@ export function HolidayPickerScreen({
                   />
                   {refusal?.at === row.date ? (
                     <Refusal reason={refusal.reason} />
+                  ) : faultAt === row.date ? (
+                    <FaultLine />
                   ) : null}
                 </li>
               ))}
@@ -420,7 +433,7 @@ function YearStep({
  *
  * One slot per whole day and one more for a part of a day, because an
  * entitlement of 6.75 is what a year begun in April actually gives (item 10) —
- * a fixed nine would draw her a quota she does not have. A slot filled by a
+ * a fixed nine would draw them a quota they do not have. A slot filled by a
  * part day is drawn lighter than a whole one, so half a day taken does not read
  * as a whole one spent.
  */
@@ -535,7 +548,7 @@ function HolidayRowView({
   restDay: RestDay;
   year: number;
   workerId: string;
-  /** The amendment note names her page, so it agrees with her
+  /** The amendment note names their page, so it agrees with them
    * (`he.workerWords`). */
   gender: Gender;
   amending: boolean;
@@ -609,7 +622,7 @@ function HolidayRowView({
             <Bidi>{label}</Bidi>
           </span>
           {/*
-            Item 9: a holiday on her rest day is explained where it falls rather
+            Item 9: a holiday on their rest day is explained where it falls rather
             than refused, with the rule it rests on beside it (item 25). Shown
             before it is chosen as well as after, so the family decides knowing
             the date will cost nothing from the nine.

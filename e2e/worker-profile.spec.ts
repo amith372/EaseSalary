@@ -118,7 +118,7 @@ function standingLines(page: Page) {
  * `aria-busy` (`WorkerProfileScreen`, `PaymentsScreen`), and a spec that
  * navigated away in that window would be asking the next page about a write
  * that had not landed — which is a race the *test* invented and not one the
- * user can meet, since a user does not move faster than the screen tells her
+ * user can meet, since a user does not move faster than the screen tells them
  * it is saving. Every gesture below is followed by this before anything is
  * asserted or any page is opened.
  */
@@ -180,7 +180,7 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
         AUGUST_2025_REST_EVES_AS_SATURDAY_RESTER * REST_EVE_SUPPLEMENT,
       ),
     );
-    // Her rest day is Saturday, so the calendar's own legend says so.
+    // Their rest day is Saturday, so the calendar's own legend says so.
     await page.goto("/");
     await expect(
       page.getByText(he.calendar.marks(SATURDAY).freeRestDay, { exact: true }),
@@ -207,7 +207,7 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
 
     // **The calendar redraws.** A Friday-resting worker's free rest day is not
     // called "שבת חופשית", and the legend is where the wording is drawn from
-    // her own day rather than from a constant (item 5).
+    // their own day rather than from a constant (item 5).
     await page.goto("/");
     await expect(
       page.getByText(he.calendar.marks(FRIDAY).freeRestDay, { exact: true }),
@@ -216,7 +216,7 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
       page.getByText(he.calendar.marks(SATURDAY).freeRestDay, { exact: true }),
     ).toHaveCount(0);
 
-    // **And the money moves with it, from the current month on.** Her rest-eve
+    // **And the money moves with it, from the current month on.** Their rest-eve
     // is now Thursday, so the sheet's own row is named for Thursdays rather
     // than for Fridays. The row name is what is asserted because it is read off
     // the month's stored rest day and not off a count, so it separates the term
@@ -228,10 +228,10 @@ test.describe("the weekly rest day is a term of the employment (specs.md item 5)
 
     // **And never a month before it** (item 5). August 2025 is the month Part 4
     // states: five Fridays at ₪100, ₪500 of supplement, counted against the
-    // Saturday she rested on then. It keeps that day and that figure, because a
+    // Saturday they rested on then. It keeps that day and that figure, because a
     // change of rest day "reaches the current month and the months after it,
     // and never a month before" — a month already lived through did not change
-    // which day she rested on.
+    // which day they rested on.
     await openPayslip(page, AUGUST_2025);
     await expect(row(page, "restEveSupplement")).toContainText(
       he.sheet.lines.restEveSupplement(SATURDAY),
@@ -499,7 +499,7 @@ test.describe("the opening position (specs.md item 6)", () => {
     await settled(page);
 
     // **The debt the payments screen reads is the one that was entered**, and
-    // its number is minted past every advance she already carries — the seeded
+    // its number is minted past every advance they already carry — the seeded
     // one is 1, so this is 2. ₪2,000 given less ₪500 repaid is ₪1,500 still
     // owed, which is arithmetic and not a figure the engine produced.
     await page.goto("/payments");
@@ -546,7 +546,7 @@ test.describe("the opening position (specs.md item 6)", () => {
   }) => {
     await useHousehold(page, "demo", "opening-days");
     const words = he.workers.profile.terms.opening;
-    /** Nine, as `seed.ts` states her opening vacation. */
+    /** Nine, as `seed.ts` states their opening vacation. */
     const SEEDED_VACATION = 9;
     const ADDED = 5;
 

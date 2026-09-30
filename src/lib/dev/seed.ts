@@ -19,20 +19,20 @@ import type { YearMonth } from "@/lib/types";
  * **The two answer two different questions, and that division is the whole
  * shape of this file**.
  *
- * **The first worker is Hanna, and she is not a demo — she is the family's own
- * workbooks.** Every month of hers is assembled from a tab of
+ * **The first worker is Hanna, and they are not a demo — they are the family's own
+ * workbooks.** Every month of theirs is assembled from a tab of
  * `שכר_חודשי_להאנה2025.xlsx` or `…2026.xlsx`, so a person can open a month on
  * screen and hold it against the tab it came from, figure for figure.
  * `seed-against-workbooks.test.ts` asserts exactly that for all fourteen of
  * them and is what stops this drifting into something else the next time
- * somebody needs a convenient month. Nothing is invented onto her: no advance
+ * somebody needs a convenient month. Nothing is invented onto them: no advance
  * the family did not move, no line nobody wrote, no tax the workbooks do not
  * withhold.
  *
- * **The second worker is the one the browser suite works on**, and she is
+ * **The second worker is the one the browser suite works on**, and they are
  * therefore deliberately *ordinary* — Saturday, ₪100 a rest-eve, the tax worked
  * out automatically — because a test whose subject is unusual tests the unusual
- * case twice and the ordinary one never. Everything awkward is on her months
+ * case twice and the ordinary one never. Everything awkward is on their months
  * instead: an advance given and repaid over three, a line placed before the
  * total and another after it, a tax corrected by hand, a payment to a third
  * party, a spell of sickness across a month boundary, and a quarter of national
@@ -47,7 +47,7 @@ import type { YearMonth } from "@/lib/types";
  * days already accrued when the application took over an employment already
  * running do not originate inside it at all: the family states them once.
  * Hanna's come from the `חישוב ימי מחלה וחופשה` tab of the 2025 workbook, at
- * the month her seeded history begins.
+ * the month their seeded history begins.
  *
  * **No spell is left open here on purpose.** An open spell goes on drawing sick
  * days from the balance for as long as nobody closes it (item 8), so a seed
@@ -64,15 +64,15 @@ const SEEDED_MONTHS: YearMonth[] = Array.from({ length: 9 }, (_, index) => ({
 }));
 
 /**
- * **Hanna, exactly as the family's own workbooks describe her** — so the demo
+ * **Hanna, exactly as the family's own workbooks describe them** — so the demo
  * can be held against `שכר_חודשי_להאנה2025.xlsx` and `…2026.xlsx` tab by tab.
  *
  * Every field below is read off those files and none is invented: `B3` gives
- * her name, `C4` gives `התחלת עבודה: 1.4.2024`, `D7` gives the ₪100 rest-eve
- * supplement, and `B18` of `חודש 8.25` says the recuperation for her second
+ * their name, `C4` gives `התחלת עבודה: 1.4.2024`, `D7` gives the ₪100 rest-eve
+ * supplement, and `B18` of `חודש 8.25` says the recuperation for their second
  * year is paid in `3/26`. **`E20`, the income-tax row, is empty in every tab of
  * both workbooks**, which is a decision the family made once and not a zero
- * typed twelve times — so she is set to `none` (specs.md item 17).
+ * typed twelve times — so they are set to `none` (specs.md item 17).
  *
  * **The opening position is the workbook's own balances at 1 May 2025**, read
  * from the `חישוב ימי מחלה וחופשה` tab: `B25` is 4.676666… vacation days and
@@ -143,19 +143,19 @@ const firstWorker: WorkerProfile = {
  * **The second worker is the one the suite works on**: the worker from India is
  * for testing, the worker from the Philippines carries the workbooks.
  *
- * She therefore carries the *ordinary* terms — Saturday, ₪100 a rest-eve, the
+ * They therefore carry the *ordinary* terms — Saturday, ₪100 a rest-eve, the
  * tax worked out automatically — because those are the terms every browser test
  * derives its figures from, and a test whose subject is unusual tests the
  * unusual case twice and the ordinary one never. Everything genuinely awkward
- * about a month is on her *months* rather than her terms: an advance given and
+ * about a month is on their *months* rather than their terms: an advance given and
  * repaid, a line the user wrote before the total and another after it, a tax
  * corrected by hand, a payment to a third party, and a spell of sickness across
  * a month boundary.
  *
- * **She rests on Saturday and her tax is calculated.** A Friday rest day and a
+ * **They rests on Saturday and their tax is calculated.** A Friday rest day and a
  * flat rate are *set* by the tests that care about them —
- * `worker-profile.spec.ts` moves her rest day and watches the calendar follow,
- * and `income-tax.spec.ts` switches her to each of the three modes in turn —
+ * `worker-profile.spec.ts` moves their rest day and watches the calendar follow,
+ * and `income-tax.spec.ts` switches them to each of the three modes in turn —
  * which proves the change works and not merely that a seeded value is
  * displayed.
  */
@@ -170,7 +170,7 @@ const secondWorker: WorkerProfile = {
   // at all — and the tests that check the payment, the day count and the rate
   // would each be checking an absence.
   employedSince: "2024-04-01",
-  // Her months begin in January 2026 (`SEEDED_MONTHS`).
+  // Their months begin in January 2026 (`SEEDED_MONTHS`).
   firstMonth: { year: 2026, month: 1 },
   gender: "female",
   baseMonthlySalaryAgorot: WAGE_2025,
@@ -180,10 +180,10 @@ const secondWorker: WorkerProfile = {
   incomeTax: DEFAULT_INCOME_TAX,
   standingLines: [],
   country: "IN",
-  // July 2025's recuperation fell before her first month and was paid, so
+  // July 2025's recuperation fell before their first month and was paid, so
   // January carries none of it (specs.md item 15).
   openingPosition: { vacationDays: 9, sickDays: 24, vacationUsedThisYear: 0, holidayUsedThisYear: 0, recuperationPaidIn: { year: 2025, month: 7 }, advances: [] },
-  // Her permit date is the first worker's, and deliberately: the employment
+  // Their permit date is the first worker's, and deliberately: the employment
   // permit belongs to the *employer* and a household holds one of them
   // (item 28). The in-memory store has no household record, so each worker
   // carries a copy of it and the two are seeded equal so the screen shows what
@@ -201,10 +201,10 @@ const devWorkers: WorkerProfile[] = [firstWorker, secondWorker];
  * The days that departed from an ordinary month, per worker.
  *
  * **The two workers now answer two different questions.** Hanna's days are read
- * out of the family's own workbooks so her months can be held against the tabs
+ * out of the family's own workbooks so their months can be held against the tabs
  * they came from, figure by figure. The second worker's are invented on purpose
  * and are where the awkward shapes live — a rest day that is not Saturday, a
- * spell of sickness across a month boundary, a holiday falling on her own rest
+ * spell of sickness across a month boundary, a holiday falling on their own rest
  * day — because those are cases the workbooks happen not to contain and a demo
  * that showed only what the workbooks show would exercise none of them.
  *
@@ -213,13 +213,13 @@ const devWorkers: WorkerProfile[] = [firstWorker, secondWorker];
  * span, stored once, and each of the two months places its own days at the tier
  * the spell itself reached — nothing for the first day, half for the second and
  * third, and the full day from the fourth. Splitting it into two spans would
- * restart the tiers in April and pay her less, and the sheet would look
+ * restart the tiers in April and pay them less, and the sheet would look
  * ordinary.
  *
  * The holidays are seeded rather than marked: criterion 9 says the user never
  * marks a day as a holiday. The dates arrive from here in place of what
  * criterion 10's picker chooses, and the month records the one fact about each
- * of them — whether she worked it.
+ * of them — whether they worked it.
  */
 /**
  * The months of the workbooks the demo replays: `חודש 5.25` through
@@ -247,7 +247,7 @@ const WORKBOOK_SEED_MONTHS = WORKBOOK_MONTHS.filter(
 
 const devSpans: Record<string, MonthSpan[]> = {
   // **Read off `G3` and `H3` of each tab and nothing else.** `G3` is the date of
-  // the Saturday she had off and `H3` the holidays she worked — every holiday in
+  // the Saturday they had off and `H3` the holidays they worked — every holiday in
   // these workbooks was worked, which is why each reaches column F: a holiday
   // taken off earns nothing extra (item 9).
   "worker-1": WORKBOOK_SEED_MONTHS.flatMap((m) => [
@@ -271,7 +271,7 @@ const devSpans: Record<string, MonthSpan[]> = {
     // One spell across the boundary, stored once (see above).
     { id: "w2-sick-mar-apr", kind: "sick", from: "2026-03-30", to: "2026-04-02" },
     { id: "w2-holiday-0403", kind: "holiday", from: "2026-04-03", to: "2026-04-03", worked: true },
-    // A Saturday, which is her own rest day and the only day this mark may fall
+    // A Saturday, which is their own rest day and the only day this mark may fall
     // on (specs.md item 5).
     { id: "w2-rest-may", kind: "freeRestDay", from: "2026-05-16", to: "2026-05-16" },
     { id: "w2-holiday-0820", kind: "holiday", from: "2026-08-20", to: "2026-08-20", worked: true }  ],
@@ -337,9 +337,9 @@ function monthsFor(
  * the two subtotals, the ברוטו and the transfer — is what a reader can hold
  * against `E23`, `F24`, `E26` and `E29` of the same tab.
  *
- * **The income tax is absent rather than confirmed at zero.** Her profile says
- * `none`, so every month withholds nothing by a decision she made once; a
- * confirmed zero on each month would say instead that she went through the
+ * **The income tax is absent rather than confirmed at zero.** Their profile says
+ * `none`, so every month withholds nothing by a decision they made once; a
+ * confirmed zero on each month would say instead that they went through the
  * pre-export conversation fourteen times and answered the same thing.
  */
 const workbookMonths: MonthRecord[] = WORKBOOK_SEED_MONTHS.map((m) => ({
@@ -370,13 +370,13 @@ const devMonths: Record<string, MonthRecord[]> = {
   "worker-1": workbookMonths,
   /**
    * **The second worker is where everything invented lives.** The first is
-   * seeded from the workbooks, and a month of hers that carried an advance
+   * seeded from the workbooks, and a month of theirs that carried an advance
    * nobody granted, or a line nobody wrote, would no longer match the tab it
    * is meant to be held against.
    */
   "worker-2": monthsFor(secondWorker, {
     // Medical insurance, which the employer of a caregiver owes and which goes
-    // to the insurer rather than to the worker: column H, and outside her own
+    // to the insurer rather than to the worker: column H, and outside their own
     // total (specs.md item 16).
     1: {
       // Paid on the 8th, and the policy runs the year `coverExpiryOf` gives it
@@ -580,7 +580,7 @@ export const refusedSeed = {
  *
  * **Two workers is the whole household** (item 11), so this is the case where
  * the list has nothing left to state — and it is the one the screens must still
- * render rather than fail whole, which is the defect they had. Her two marks are
+ * render rather than fail whole, which is the defect they had. Their two marks are
  * invented here rather than collided with a workbook day: a mark read off a tab
  * is a figure the first worker's months are held against, and doubling one would
  * put the known case out of agreement with its own sheet.
@@ -591,9 +591,9 @@ export const bothRefusedSeed = {
     ...refusedSeed.spans,
     "worker-1": [
       ...devSpans["worker-1"],
-      // **July and not August**: her seeded months are the workbook tabs and
+      // **July and not August**: their seeded months are the workbook tabs and
       // they stop at July 2026 (`WORKBOOK_SEED_MONTHS`), so marks on an August
-      // she has no month for would be validated by nothing at all. The two
+      // they have no month for would be validated by nothing at all. The two
       // workers are therefore refused in different months, which is the
       // stronger case anyway — one card per employment and not one per
       // household.
@@ -670,7 +670,7 @@ export const refusedNoDateSeed = {
  * interface produces it, and that is deliberate rather than missing. Item 8 says
  * so outright — "There is no gesture for opening one, and there is deliberately
  * none" — because continuity is inferred from the days marked and a second
- * gesture meaning "she is still ill" would be a second way to say it.
+ * gesture meaning "they are still ill" would be a second way to say it.
  * `applyMark` therefore always closes what it writes, which
  * `src/lib/spans.test.ts` pins.
  *

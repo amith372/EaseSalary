@@ -33,33 +33,33 @@ import type { IsoDate, Worker } from "@/lib/types";
 interface WorkerTerms {
   worker: Worker;
   employedSince: IsoDate;
-  /** Her country of origin in Hebrew, resolved on the server by
+  /** Their country of origin in Hebrew, resolved on the server by
    * `countryNameHe` from the shipped holiday lists. A country nothing is stored
    * for falls back to its two-letter code. */
   country: string;
   baseMonthlySalaryAgorot: number;
   /**
    * The addresses this worker is shared with, the viewer's own excluded
-   * (`shares.ts`) — empty where she is shared with nobody, and the chip is then
+   * (`shares.ts`) — empty where they are shared with nobody, and the chip is then
    * not drawn at all rather than drawn saying so.
    */
   sharedWith: string[];
 }
 
 /**
- * A worker whose months the engine valued: her terms and the four figures the
+ * A worker whose months the engine valued: their terms and the four figures the
  * replay came to.
  */
 interface WorkerReplayed extends WorkerTerms {
   refused: null;
-  /** Her last month's closing balances, or the opening position for a worker
+  /** Their last month's closing balances, or the opening position for a worker
    * who has no months yet (items 6, 7). */
   vacationDays: number;
   sickDays: number;
-  /** What is still owed across every advance she carries (item 20). */
+  /** What is still owed across every advance they carry (item 20). */
   outstandingAgorot: number;
   /**
-   * The earliest month of hers that has ended and is still a draft, as the chip
+   * The earliest month of theirs that has ended and is still a draft, as the chip
    * says it — or `null` where every finished month has been confirmed.
    *
    * Phrased on the server, because the month's own label is, and a chip that
@@ -74,7 +74,7 @@ interface WorkerReplayed extends WorkerTerms {
  * **The four figures are absent from this arm rather than nulled in it.** A
  * refused replay has no balance, no outstanding advance and no month waiting to
  * be confirmed — so the card cannot draw a blank or a placeholder where one
- * belongs, because there is no field to read. Her terms stay: they are stored,
+ * belongs, because there is no field to read. Their terms stay: they are stored,
  * not calculated, and a refusal says nothing about them.
  */
 interface WorkerRefused extends WorkerTerms {
@@ -82,7 +82,7 @@ interface WorkerRefused extends WorkerTerms {
 }
 
 /**
- * One worker as her card draws her — either replayed or refused, never both and
+ * One worker as their card draws them — either replayed or refused, never both and
  * never neither.
  */
 export type WorkerSummary = WorkerReplayed | WorkerRefused;
@@ -201,9 +201,9 @@ export function WorkersList({
                 ) : null}
               </div>
 
-              {/* **Her refusal stands where her four figures were**, and the
+              {/* **Their refusal stands where their four figures were**, and the
                   grid is not drawn at all — an empty figure beside a real one is
-                  worse than no figure (`DESIGN.md`). Her salary is a term of the
+                  worse than no figure (`DESIGN.md`). Their salary is a term of the
                   employment and not a replayed figure, so it would still be
                   true; it goes with the grid because a grid of one cell is not
                   the grid, and the card says what this worker's row is about.
@@ -232,14 +232,14 @@ export function WorkersList({
                   </Fact>
                 </Card>
               ) : (
-                /* **No way-home link here, unlike her own page** (the user,
+                /* **No way-home link here, unlike their own page** (the user,
                    2026-09-27). The opening screen shows one worker at a time
                    and a plain link to it would arrive on whichever worker the
                    switcher's cookie last named — which on a list of two is as
-                   often the wrong one, landing her on a calendar with no
-                   refusal on it. Her own page is one link below this card and
+                   often the wrong one, landing them on a calendar with no
+                   refusal on it. Their own page is one link below this card and
                    the way home works correctly from there, because that address
-                   makes her the chosen worker (`WorkerScope`). */
+                   makes them the chosen worker (`WorkerScope`). */
                 <RefusalCard refused={summary.refused} tone="compact" />
               )}
 

@@ -5,7 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { dismiss, saveReminders } from "@/app/alerts/actions";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
-import { busyAttrs, touchTargetClass } from "@/components/Field";
+import { busyAttrs, FaultLine, touchTargetClass } from "@/components/Field";
 import type { AlertCard, AlertsView } from "@/lib/alertsView";
 import { warningKinds, type WarningKind } from "@/lib/engine/alerts";
 import { he, type Said } from "@/lib/i18n/he";
@@ -100,7 +100,10 @@ function OpenCard({ card }: { card: AlertCard }) {
   // The busy state goes on the control that was pressed and not on the card
   // (`DESIGN.md`): a card standing for four months has four buttons, and one
   // press must not say that the other three cannot be pressed.
-  const { run, saving, busyAt } = useAction<never>();
+  // `never` as the refusal: `dismiss` has no reason to give, so a fault is
+  // the only way one of these buttons can fail, and the card says so itself
+  // rather than dropping the press in silence.
+  const { run, saving, busyAt, fault } = useAction<never>();
   const dismissal = card.dismiss;
   /** `dismiss` answers nothing — it drops a fingerprint it cannot read — so the
    * success `useAction` waits for is made here. */
@@ -210,6 +213,7 @@ function OpenCard({ card }: { card: AlertCard }) {
           </button>
         ) : null}
       </div>
+      {fault ? <FaultLine /> : null}
     </Card>
   );
 }

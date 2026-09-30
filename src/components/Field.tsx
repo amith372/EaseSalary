@@ -66,7 +66,16 @@ export function busyAttrs(busy: boolean, className: string) {
 }
 
 /** A refusal, as the sentence that says why (specs.md item 25). */
-export function RefusalLine({ children }: { children: ReactNode }) {
+export function RefusalLine({
+  children,
+  role,
+}: {
+  children: ReactNode;
+  /** The suite's handle on which kind of trouble this line is, where a screen
+   * can draw more than one. Omitted for a refusal, which is read by its own
+   * sentence. */
+  role?: string;
+}) {
   return (
     /* `role="alert"` rather than `aria-live`: the paragraph is mounted with its
        sentence already in it, and a live region is only announced reliably
@@ -74,11 +83,24 @@ export function RefusalLine({ children }: { children: ReactNode }) {
     <p
       role="alert"
       dir="auto"
+      {...(role ? { "data-role": role } : {})}
       className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
     >
       {children}
     </p>
   );
+}
+
+/**
+ * A fault at the control that failed (`useAction`'s `fault`).
+ *
+ * It is the refusal's own line and not a page strip, so the message sits where
+ * the press was and the rest of the screen keeps working (the user,
+ * 2026-09-27). `data-role` is the suite's handle on it, because the sentence
+ * itself is Hebrew and is the thing under test.
+ */
+export function FaultLine() {
+  return <RefusalLine role="fault">{he.fault}</RefusalLine>;
 }
 
 /** A labelled field. The input is `dir="ltr"` wherever it takes digits, so an

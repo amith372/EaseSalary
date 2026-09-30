@@ -68,8 +68,8 @@ export function MonthConfirmation({
   sourceUrl,
 }: {
   workerId: string;
-  /** The raised-wage note and the open-spell question both name her, and agree
-   * with her rather than with a default (`he.workerWords`). */
+  /** The raised-wage note and the open-spell question both name them, and agree
+   * with them rather than with a default (`he.workerWords`). */
   gender: Gender;
   restDay: RestDay;
   shown: MonthBeforeExport;
@@ -80,7 +80,7 @@ export function MonthConfirmation({
   // `busyAt` names which of the two files was asked for, so the button that
   // was pressed is the one that says it is working — the same mechanism every
   // other list of controls uses, rather than a second one kept here.
-  const { refusal, run, saving, busyAt } = useAction<BeforeExportRefusal>();
+  const { refusal, fault, run, saving, busyAt } = useAction<BeforeExportRefusal>();
   const [done, setDone] = useState(false);
 
   const [answers, setAnswers] = useState<
@@ -205,7 +205,7 @@ export function MonthConfirmation({
         {/* Item 3: a salary may never sit below the minimum wage, so a profile
             still holding last year's figure does not stop the export — the
             month is confirmed at the wage in force, and the user is told before
-            she presses rather than after. */}
+            they press rather than after. */}
         {typedWage !== null && baseMonthlySalaryAgorot < typedWage ? (
           <p
             data-raised=""
@@ -241,6 +241,7 @@ export function MonthConfirmation({
           spell={shown.openSpell}
           onRun={run}
           refusal={refusal}
+          fault={fault}
         />
       ) : null}
 
@@ -292,8 +293,8 @@ export function MonthConfirmation({
                   : he.month.actions.incomeTax.from.manual}
               </span>
             </span>
-            {/* **The figure the sheet will print**, which is the amount she
-                typed where she typed one: a card saying ₪0.00 in front of a file
+            {/* **The figure the sheet will print**, which is the amount they
+                typed where they typed one: a card saying ₪0.00 in front of a file
                 that prints ₪450 is the one thing a confirmation may not do. The
                 figure underneath is still what is stored (item 17). */}
             <span data-income-tax-amount="">
@@ -330,7 +331,7 @@ export function MonthConfirmation({
         </Card>
       )}
 
-      {/* Item 15: the days come from her seniority and are reported; the day
+      {/* Item 15: the days come from their seniority and are reported; the day
           rate is the figure the application cannot derive, so it is confirmed
           here the way the minimum wage is. */}
       {shown.recuperation !== null ? (
@@ -415,7 +416,7 @@ export function MonthConfirmation({
         <div className="flex flex-wrap items-center gap-x-4.5 gap-y-3">
           {/* Item 2's two versions, as two buttons of equal weight: neither
               artboard draws a chooser, and the difference between the files is
-              one the user has to be able to see before she picks. Both confirm
+              one the user has to be able to see before they pick. Both confirm
               the month first, as the export button does. */}
           {[false, true].map((withNotes) => {
             const which = withNotes ? "notes" : "plain";
@@ -474,7 +475,7 @@ export function MonthConfirmation({
 
         {/* After the reason the buttons cannot be pressed, never before it: a
             user who is blocked wants to know why, and an explanation of a
-            choice she cannot yet make is in the way of the answer. */}
+            choice they cannot yet make is in the way of the answer. */}
         <p dir="auto" className="text-[14px] font-light text-ink-quiet text-pretty">
           {words.finish.versions}
         </p>
@@ -486,6 +487,15 @@ export function MonthConfirmation({
             className="text-[14px] leading-[1.5] font-light text-clay-deep text-pretty"
           >
             {refusalText(refusal)}
+          </p>
+        ) : fault ? (
+          <p
+            aria-live="polite"
+            dir="auto"
+            data-role="fault"
+            className="text-[14px] leading-[1.5] font-light text-clay-deep text-pretty"
+          >
+            {he.fault}
           </p>
         ) : null}
 
@@ -547,7 +557,7 @@ function refusalText(reason: BeforeExportRefusal): string {
 }
 
 /**
- * The open spell, and the one question item 18 words for us: has she returned,
+ * The open spell, and the one question item 18 words for us: have they returned,
  * and on what day.
  *
  * **It is a block and not a warning**, and the sentence beneath says why in the
@@ -560,12 +570,16 @@ function OpenSpellBlock({
   spell,
   onRun,
   refusal,
+  fault,
 }: {
   workerId: string;
   gender: Gender;
   spell: { spanId: string; from: IsoDate };
   onRun: (action: () => Promise<BeforeExportResult>) => void;
   refusal: BeforeExportRefusal | null;
+  /** The action never answered. Drawn in the same place as the refusal, because
+   * the question that failed is the one they are looking at. */
+  fault: boolean;
 }) {
   const words = he.beforeExport.openSpell;
   const [returnedOn, setReturnedOn] = useState("");
@@ -606,6 +620,16 @@ function OpenSpellBlock({
           <span dir="auto">{words.save}</span>
         </button>
       </div>
+      {fault ? (
+        <p
+          aria-live="polite"
+          dir="auto"
+          data-role="fault"
+          className="text-[14px] font-light text-clay-deep"
+        >
+          {he.fault}
+        </p>
+      ) : null}
       {refusal === "beforeTheSpell" ? (
         <p
           aria-live="polite"
@@ -695,7 +719,7 @@ function QuestionRow({
 }
 
 /** The question itself. Only one of the seven names a day of the week, and it
- * names *her* day (specs.md item 5). */
+ * names *their* day (specs.md item 5). */
 function askOf(key: ExportQuestionKey, restDay: RestDay): string {
   const words = he.beforeExport.questions;
   return key === "freeRestDays" ? words.freeRestDays.ask(restDay) : words[key].ask;

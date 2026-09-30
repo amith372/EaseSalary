@@ -25,7 +25,7 @@ export type ScrapeFailureKind = "unreachable" | "notFound" | "implausible";
  *
  * `detail` is English and is for a log and for a test, never for a screen: the
  * sentence the user reads is Hebrew and is chosen from `kind` in the
- * translations file, so a failure never reaches her as a message a scrape wrote
+ * translations file, so a failure never reaches them as a message a scrape wrote
  * (CLAUDE.md: every user-facing string Hebrew, in one file).
  */
 export interface ScrapeFailure {
@@ -50,7 +50,7 @@ export function scrapeFailed<T>(
  * (specs.md Part 3: a slow or broken source never delays a screen).
  *
  * **A source that never answers is a source that is down**, and the difference
- * to the user is only how long she waits to be told so. Five seconds is the
+ * to the user is only how long they wait to be told so. Five seconds is the
  * figure because the screens that scrape draw a figure the application already
  * holds: the cached rate is right until the statute changes, so the whole value
  * of waiting is the day the page has been rewritten — and against that, a

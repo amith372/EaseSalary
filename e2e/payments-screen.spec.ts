@@ -202,7 +202,7 @@ test.describe("an advance given and repaid, walked across months (item 20)", () 
     await stepBack(page, 6); // September → March
     // **The same standing, and March's own instalment beside it.** The debt did
     // not grow back because the stepper moved to a month before April and May
-    // were paid: it is walked across every month she has (item 20). The ₪1,000
+    // were paid: it is walked across every month they have (item 20). The ₪1,000
     // below is what March itself recorded, drawn as a deduction.
     await expect(advance).toContainText(he.month.actions.advances.settled);
     await expect(advance).toContainText(formatAgorot(-ADVANCE_INSTALMENT));
@@ -225,7 +225,7 @@ test.describe("an advance given and repaid, walked across months (item 20)", () 
     ).toHaveCount(0);
 
     // A new advance given this month is a second debt with a number of its own,
-    // minted one past the highest she carries.
+    // minted one past the highest they carry.
     await advances
       .getByRole("button", { name: he.month.actions.advances.grant, exact: true })
       .click();
@@ -438,7 +438,7 @@ test.describe("a payment to a third party, corrected in place (item 16)", () => 
     );
     await expect(row(page, "thirdParty.medicalInsurance")).toHaveCount(0);
 
-    // And it stays outside her own total: money paid to somebody else is column
+    // And it stays outside their own total: money paid to somebody else is column
     // H and is never added into what reaches the worker (item 16). The month's
     // subtotal for H is the payment and the worker's total does not contain it.
     await expect(row(page, "subtotal-H")).toContainText(
@@ -460,7 +460,7 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
     const label = he.sheet.lines.restDays(SATURDAY);
 
     // January 2026 for the first worker, whose rest day is Saturday, so the row
-    // is her rest-day work — a figure the application worked out from the wage
+    // is their rest-day work — a figure the application worked out from the wage
     // and therefore the kind of row an override may replace.
     await openPayslipMonthsBack(page, 8);
     // The derived figure, before anything is typed over it: five rest days at

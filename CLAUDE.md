@@ -44,9 +44,9 @@ Duplicated here on purpose, so they still hold in a session that never opens `sp
 
 - No rate is ever hardcoded. Derive from the worker's base monthly salary, which defaults to the confirmed minimum wage and may not be set below it. (Part 2, items 3 and 4)
 - The minimum wage is confirmed by the user before every export, and a month is valued at the rate in force during it. (Part 2, item 4; Part 3)
-- The user never enters a rate or a formula — only facts about the month, and the confirmations the workflow puts to her, such as the minimum wage and the recuperation rate. (Part 1; Part 2, items 5 and 15)
+- The user never enters a rate or a formula — only facts about the month, and the confirmations the workflow puts to them, such as the minimum wage and the recuperation rate. (Part 1; Part 2, items 5 and 15)
 - The export keeps the structure of the 2026 workbook's month tab. (Part 2, item 2; Part 3)
-- Income tax **is** calculated, and **how** is a term of the employment chosen once on the profile: automatic, nothing withheld, or a flat percentage of the ברוטו. Automatic works it out from the month's ברוטו, the brackets in force during that tax year, and credit points derived from her gender and never asked for — 2.25 for a foreign caregiver, half a point more for a woman. Credits never produce a refund, so the figure is floored at zero, and at the minimum wage zero is the ordinary answer. The choice is snapshotted onto a month when the month is confirmed, so changing it never restates a month already filed; a single month still departs from it by an override. The tax is confirmed before every export and stored with the month, like the minimum wage. Pension and severance are out of scope, their row empty for layout only. (Part 1; Part 2, item 17)
+- Income tax **is** calculated, and **how** is a term of the employment chosen once on the profile: automatic, nothing withheld, or a flat percentage of the ברוטו. Automatic works it out from the month's ברוטו, the brackets in force during that tax year, and credit points derived from the worker's gender and never asked for — 2.25 for a foreign caregiver, half a point more for a woman. Credits never produce a refund, so the figure is floored at zero, and at the minimum wage zero is the ordinary answer. The choice is snapshotted onto a month when the month is confirmed, so changing it never restates a month already filed; a single month still departs from it by an override. The tax is confirmed before every export and stored with the month, like the minimum wage. Pension and severance are out of scope, their row empty for layout only. (Part 1; Part 2, item 17)
 - Any computed amount can be overridden; an override is marked manual and is never silently recalculated away. (Part 2, item 17)
 - Holiday lists are fetched per country and per year and cached. No year is ever hardcoded; the shipped files are seed data. (Part 2, items 10 and 12; Part 3)
 - Four identifying numbers are encrypted at rest with a key held outside the database, decrypted server-side only for display and export, and never logged: the passport, bank account, employment permit and work visa numbers. Their **expiry dates are not encrypted** — the warnings have to query them. (Part 2, items 22 and 28; Part 3)
@@ -62,7 +62,7 @@ anchors below are the literal headings, so they are what you are grepping for.
 | Working on | Read |
 |---|---|
 | what the app is for, scope, what is deliberately excluded | `## Part 1 — Goal and reason` |
-| **what the application does** — every rule, entitlement and screen behaviour, as 29 numbered items — and what "done" means | `## Part 2 — Testable success criteria`, **via the index at its head** |
+| **what the application does** — every rule, entitlement and screen behaviour, as 30 numbered items — and what "done" means | `## Part 2 — Testable success criteria`, **via the index at its head** |
 | server/client boundary, storage, templates, external data | `## Part 3 — Architectural guidance` |
 | the August 2025 known case, the invalid case, what a test has to prove | `## Part 4 — Validation approach` |
 | rates, rounding, column meanings, date counting, layout traps | `## Part 5 — Known pitfalls` |
@@ -71,7 +71,7 @@ anchors below are the literal headings, so they are what you are grepping for.
 | what to build next, in what order, with what | `build_plan.md`, which is local and untracked (rule 9) and is absent in a fresh clone |
 
 Part 2's criteria are numbered and are cited by number throughout both files; find one with
-`grep -n '^[0-9]\+\. ' specs.md` rather than by scrolling. **Items 1–29 are all in Part 2 and
+`grep -n '^[0-9]\+\. ' specs.md` rather than by scrolling. **Items 1–30 are all in Part 2 and
 nowhere else** — Parts 1 and 3–5 carry no numbered items — so "item 13" always means Part 2's,
 and a citation reading "Part 3, item 13" means item 13 *and* Part 3, not an item inside Part 3. **Part 2 is 72% of `specs.md`, so it
 is read one item at a time and never whole**: the index at its head says which item settles what,

@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { refusedDownload, workerInSeries } from "@/lib/householdSeries";
+import { downloadSentTo, workerInSeries } from "@/lib/householdSeries";
 import { balancesFileOf } from "@/lib/export/balancesExport";
 import {
   buildReport,
@@ -19,7 +19,7 @@ import type { MonthInSeries } from "@/lib/engine/series";
  * downloads it the way it downloads anything and every report is a link.
  *
  * **All four are produced from one replay.** A worker's balances are derived by
- * walking her months from the opening position and are never stored (item 13),
+ * walking their months from the opening position and are never stored (item 13),
  * so every report here opens from the same walk. Filtering to a year before the
  * walk is the defect this guards against: a 2026 file built from 2026's months
  * alone would open that January from zero.
@@ -89,22 +89,34 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams;
   const workerId = query.get("worker");
   const report = query.get("report");
-  const year = Number(query.get("year"));
+  // **Absent is not zero.** `Number(null)` and `Number("")` are both `0`, and
+  // `0` is an integer — so the check below passed for an address with no year
+  // at all and the two yearly reports were built for the year zero, which
+  // walks their whole history and files it under a year that does not exist.
+  const askedYear = query.get("year")?.trim();
+  const year =
+    askedYear === undefined || askedYear === "" ? Number.NaN : Number(askedYear);
 
+  // **No failure here answers with a body**, for the reason
+  // `month/export/file` gives: this address hands back a workbook, so a text
+  // body is a bare page in English. Every report is offered as a built link
+  // from `/דוחות`, so each of these was crafted, and each goes back to a screen
+  // that works (`downloadSentTo`).
   if (workerId === null || !isReportKind(report)) {
-    return new Response("A worker and a report are required", { status: 400 });
+    return downloadSentTo(request, "/", null);
   }
   if (REPORTS[report].needsYear && !Number.isInteger(year)) {
-    return new Response("A year is required", { status: 400 });
+    return downloadSentTo(request, "/", workerId);
   }
 
   const replayed = await workerInSeries(workerId);
-  if (replayed === null) return new Response("No such worker", { status: 404 });
+  // Unknown, or another household's: one answer for both, or the difference
+  // would say whose id is real.
+  if (replayed === null) return downloadSentTo(request, "/", null);
   // All four reports are built from the replay, so a refused one has nothing to
-  // build from — and this address hands back a workbook and cannot word a
-  // refusal. It sends her to the screen that draws the card
-  // (`refusedDownload`).
-  if (replayed.refusal !== null) return refusedDownload(request, workerId);
+  // build from — and this address cannot word a refusal. The opening screen
+  // draws the card (`specs.md` item 25).
+  if (replayed.refusal !== null) return downloadSentTo(request, "/", workerId);
   const { profile: worker, months: series } = replayed;
 
   const { bytes, filename } = await REPORTS[report].file({ series, year, worker });

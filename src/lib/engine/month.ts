@@ -206,7 +206,7 @@ function buildLines(
   datedRates: DatedRate[],
 ): MonthLine[] {
   const rates = deriveRates(facts.confirmedWage.baseAgorot);
-  // Every label and every explanation that names a day names *her* day
+  // Every label and every explanation that names a day names *their* day
   // (specs.md item 5), and it is read off the month like every other term.
   const { restDay } = facts.terms;
   const drafts: LineDraft[] = [];
@@ -281,7 +281,7 @@ function buildLines(
 
   // Column F — the pay for rest days and holidays, both at the rest-day rate,
   // and each day paid once between the two lines. `leave.ts` owns that
-  // division: a rest day she worked which is also a holiday she worked is left
+  // division: a rest day they worked which is also a holiday they worked are left
   // with the holiday line and taken out of the rest days here, because both
   // lines pay the same rate off the same date and item 9 says the day is paid
   // once. `counts.restDaysWorked` stays the true count of rest days attended.
@@ -301,7 +301,7 @@ function buildLines(
     });
   }
 
-  // A holiday she works is paid at the rest-day rate; one she does not work
+  // A holiday they work is paid at the rest-day rate; one they do not work
   // earns nothing extra, because the monthly salary is paid on it in full
   // (item 9). Counted in days and not in spans, and a part day is paid in its
   // own proportion (item 10).
@@ -378,7 +378,7 @@ function buildLines(
   // rather than a row below them.
   //
   // Which column follows from how long the line lasts: a standing line sits in
-  // column E, because that is where what she earns every month lives, and a
+  // column E, because that is where what they earn every month lives, and a
   // one-off in G, which is what that column is for.
   const userDrafts: LineDraft[] = [];
   for (const [prefix, lines, column, source] of userLineGroups(facts)) {
@@ -429,7 +429,7 @@ function buildLines(
  * income-tax line, which the engine works out from the month's gross (item 17).
  *
  * The income-tax row belongs here and not in column E because the gross is what
- * she earned: tax is withheld from it on the way to what is actually
+ * they earned: tax is withheld from it on the way to what is actually
  * transferred, exactly as the advance instalment is.
  */
 function buildClosing(
@@ -472,7 +472,7 @@ function buildClosing(
     // the *generic* override control offers, and the tax already has a control
     // of its own on the payments screen: the card that carries the credit-point
     // rule in words beside it, which is the thing the user has to read before
-    // she changes the figure. Listing it in both places would put two controls
+    // they change the figure. Listing it in both places would put two controls
     // on one screen writing one amount, which is the collision item 17's
     // control was built to avoid. `setIncomeTax` stores the same override the
     // generic control would, so the badge and the stored shape are identical.

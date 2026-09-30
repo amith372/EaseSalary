@@ -25,9 +25,10 @@ import { CoveredMonths } from "@/components/CoveredMonths";
 import {
   AmountField,
   busyAttrs,
+  FaultLine,
   Field,
-  NoteField,
   inputClass,
+  NoteField,
   outlineButtonClass,
   RefusalLine,
 } from "@/components/Field";
@@ -95,7 +96,7 @@ const PERIOD_MONTHS_FORWARD = 12;
  * answers what the month came to; every group that *records* something is the
  * payments screen's, and this is the first of them. The preview still shows the
  * user's own lines summarised into a row apiece (item 20), and that summary is
- * what sends her here.
+ * what sends them here.
  *
  * **All four of the criterion's contents are here.** The income-tax line, which
  * is never calculated and whose figure has no other way in (item 17); the lines
@@ -124,14 +125,14 @@ const PERIOD_MONTHS_FORWARD = 12;
  * action, which parses the amount, checks the choices and writes through the
  * store; the figures beside the calendar are then the engine's answer to what
  * was saved (Part 3). The one thing read here is `parseShekels`, and it is read
- * only to tell the user her field is not a number before she presses anything —
+ * only to tell the user them field is not a number before they press anything —
  * the same function the server runs, not a second rule agreeing with it.
  */
 
 interface MonthActionsProps {
   workerId: string;
-  /** Two of the notes on this screen name her page and her profile, so they
-   * agree with her rather than picking a gender (`he.workerWords`). */
+  /** Two of the notes on this screen name their page and their profile, so they
+   * agree with them rather than picking a gender (`he.workerWords`). */
   gender: Gender;
   month: YearMonth;
   /** The month's tax, assembled on the server from the engine's own row: the
@@ -174,7 +175,7 @@ interface MonthActionsProps {
   onSubmit: Send<MonthActionRefusal>;
   /** The sections the user has unfolded. Held by the screen rather than here,
    * because this card is keyed on the month and stepping to another month
-   * would otherwise fold everything she had just opened. */
+   * would otherwise fold everything they had just opened. */
   openSections: ReadonlySet<MonthSection>;
   onToggleSection: (section: MonthSection) => void;
 }
@@ -206,8 +207,8 @@ function MonthFold(props: Omit<Parameters<typeof FoldSection>[0], "className"> &
  * sentence for holding nothing (F56, finished by run 8's R8.6).
  *
  * **Names and not a count.** Each of the three sections that draw it holds
- * things the user named or chose herself — her own lines, the payments she
- * recorded, the figures she typed over — so a name answers "what is in there"
+ * things the user named or chose themselves — their own lines, the payments they
+ * recorded, the figures they typed over — so a name answers "what is in there"
  * where a number only says how much opening it would cost. A name may be the
  * user's own words in another script, so each is its own `<bdi>` and the
  * wrapper carries no `dir="auto"`: over a lone `<bdi>` that resolves
@@ -363,9 +364,9 @@ export function MonthActions({
       />
 
       {/* The three sections above are money that reaches the worker or is
-          withheld from what reaches her, and this one never touches her total in
+          withheld from what reaches them, and this one never touches their total in
           either direction (item 16). Reading down the card the user meets
-          everything about her pay before anything about somebody else's. */}
+          everything about their pay before anything about somebody else's. */}
       <ThirdPartyControl
         fold={fold("thirdParty")}
         workerId={workerId}
@@ -376,7 +377,7 @@ export function MonthActions({
 
       {/* Last, and deliberately: everything above it *records* something and
           this one corrects what the application made of the records. A user who
-          met it first would be asked to replace figures she has not yet given
+          met it first would be asked to replace figures they have not yet given
           the facts for. */}
       <OverridesControl
         fold={fold("overrides")}
@@ -398,7 +399,7 @@ export function MonthActions({
  * words. **The two fields do not share that sentence**, because they do not
  * share the rule: zero is an ordinary entry for the tax (item 17) and a refusal
  * for a line the user adds (item 20), so one sentence would tell the user of one
- * of them that the figure she is allowed to type is not allowed.
+ * of them that the figure they are allowed to type is not allowed.
  */
 function Refusal({
   reason,
@@ -431,7 +432,7 @@ function HospitalOvertimeControl({
     hospitalOvertime ? formatAgorot(hospitalOvertime.agorot) : "",
   );
   const [note, setNote] = useState(hospitalOvertime?.note ?? "");
-  const { refusal, run, saving } = useAction(onSubmit);
+  const { refusal, fault, run, saving } = useAction(onSubmit);
 
   const cleared = amount.trim() === "";
   const parsed = cleared ? null : parseShekels(amount);
@@ -489,7 +490,11 @@ function HospitalOvertimeControl({
         </div>
       </form>
 
-      {shownRefusal ? <Refusal reason={shownRefusal} /> : null}
+      {shownRefusal ? (
+        <Refusal reason={shownRefusal} />
+      ) : fault ? (
+        <FaultLine />
+      ) : null}
 
       <Card
         tone="inset"
@@ -513,7 +518,7 @@ function HospitalOvertimeControl({
  *
  * **It corrects the figure and does not enter it.** The engine works the tax
  * out from the month's gross, the year's brackets and the credit points the
- * worker's gender gives her; this control shows that figure and stores an override over it. It is the
+ * worker's gender gives them; this control shows that figure and stores an override over it. It is the
  * tax's only control, which is why the row answers `false` to the generic
  * override control's question — the reason sits beside the row in `month.ts`.
  *
@@ -523,7 +528,7 @@ function HospitalOvertimeControl({
  * mean opposite things, which is the distinction `clearOverride` already draws.
  *
  * **The rule stands under the field in words rather than behind the "?".** It
- * is what the user has to know before she types — a foreign caregiver in home
+ * is what the user has to know before they type — a foreign caregiver in home
  * care has 2.25 credit points, more than a foreign worker in another sector,
  * and someone who does not know that deducts too much — so it is not put where
  * only the user who already suspects there is something to find will look. The
@@ -532,7 +537,7 @@ function HospitalOvertimeControl({
  * The button is disabled while the field says what is already stored, which is
  * how the control says "this is saved" without a transient message that a user
  * looking away would miss. Zero is an ordinary entry and not an empty field: it
- * is what every month holds until she says otherwise, and typing it back is how
+ * is what every month holds until they say otherwise, and typing it back is how
  * a tax entered by mistake comes off.
  */
 function IncomeTaxControl({
@@ -550,12 +555,12 @@ function IncomeTaxControl({
   const words = he.month.actions.incomeTax;
   const { agorot: incomeTaxAgorot, manual: incomeTaxManual } = incomeTax;
   // The field holds only what the *user* put there. A calculated figure is
-  // shown above, beside the heading, and leaving the field empty is how she
+  // shown above, beside the heading, and leaving the field empty is how they
   // says it stands — so an empty field is never an amount waiting to be saved.
   const [text, setText] = useState(
     incomeTaxManual ? formatAgorot(incomeTaxAgorot) : "",
   );
-  const { refusal, run, saving } = useAction(onSubmit);
+  const { refusal, fault, run, saving } = useAction(onSubmit);
 
   // **What produced the amount above**, said in the card rather than left to be
   // inferred from a field that may be empty: a manual figure first, because it
@@ -583,12 +588,12 @@ function IncomeTaxControl({
   // the field's own state and never the worker's setting: a month on the
   // automatic mode may still be corrected by a share, and a month on a flat
   // rate may still be corrected by a sum. The stored value is an amount either
-  // way, so switching the unit changes how she says it and not what is kept.
+  // way, so switching the unit changes how they say it and not what is kept.
   const [unit, setUnit] = useState<TaxCorrectionUnit>("amount");
   const percentage = unit === "percentage" ? reviewTaxPercentage(text) : null;
   const gross = incomeTax.grossAgorot;
 
-  // The same arithmetic the server will do, shown before she commits to it —
+  // The same arithmetic the server will do, shown before they commit to it —
   // and shown *only* as a preview: what is saved is what the server works out
   // against the gross it reads again, so a screen left open while the month
   // moved cannot write an amount against a gross that has gone.
@@ -713,10 +718,12 @@ function IncomeTaxControl({
           the thing the user is looking at. */}
       {shownRefusal ? (
         <Refusal reason={shownRefusal} amountText={words.notANumber} />
+      ) : fault ? (
+        <FaultLine />
       ) : null}
 
-      {/* The arithmetic, written out, so a share is never a figure she has to
-          take on trust — and so the sum that is actually stored is the one she
+      {/* The arithmetic, written out, so a share is never a figure they have to
+          take on trust — and so the sum that is actually stored is the one they
           agreed to. */}
       {unit === "percentage" && percentage !== null ? (
         <span className="text-[13px] font-light text-ink-warm">
@@ -769,18 +776,18 @@ function IncomeTaxControl({
  * conflict**: the preview answers "what did this month come to", which nine
  * rows answer worse than one, while this is where the lines are made — and a
  * control surface that hides what it has already recorded cannot be used, since
- * a user who cannot see the line she just added adds it a second time.
+ * a user who cannot see the line they just added adds it a second time.
  *
- * **The placement chips follow the direction until she touches them.** That is
+ * **The placement chips follow the direction until they touch them.** That is
  * `defaultPlacementFor` read forwards rather than a second copy of it: an
  * addition defaults to part of the month and a deduction to the transfer alone,
- * and the moment she chooses, her choice stops moving.
+ * and the moment they choose, their choice stops moving.
  *
  * **A line is edited in place and never removed and re-added** (item 20). All
  * four of the things it records may change — the words, the amount, the
  * direction and the placement — and the id does not: removing and adding again
  * would lose the note and mint a new id, and the id is what the line's own key
- * is built from (item 17), so a reader looking for the line she corrected would
+ * is built from (item 17), so a reader looking for the line they corrected would
  * find one that had never existed before.
  *
  * **Its amount is edited and never overridden**, which is the division item 17
@@ -817,6 +824,7 @@ function UserLinesControl({
     placement,
     setChosen,
     refusal,
+    fault,
     run,
     busyAt,
     reset,
@@ -918,7 +926,7 @@ function UserLinesControl({
       }
     >
       <div className="flex flex-col gap-0.5">
-        {/* **What this card can and cannot do, before she uses it.** A line
+        {/* **What this card can and cannot do, before they use it.** A line
             made here belongs to this month alone; the recurring kind is a term
             of the employment and is set on `/settings`, which shows the worker
             this screen does. Saying it here is
@@ -1009,7 +1017,7 @@ function UserLinesControl({
       {/* Drawn once, below whichever of the two is showing. Rendered inside
           each branch instead, it was the same element written twice and two
           places for its wording to drift. */}
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
     </MonthFold>
   );
 }
@@ -1072,7 +1080,7 @@ function AdvancesControl({
   const [open, setOpen] = useState<OpenAdvancePanel | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const { refusal, run, clear, busyAt } = useAction(onSubmit);
+  const { refusal, fault, run, clear, busyAt } = useAction(onSubmit);
 
   function reset() {
     setOpen(null);
@@ -1369,7 +1377,7 @@ function AdvancesControl({
         </ul>
       )}
 
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
     </MonthFold>
   );
 }
@@ -1379,11 +1387,11 @@ function AdvancesControl({
  * item 16).
  *
  * **It is on this card and outside the worker's total at the same time, and the
- * lead is what carries that.** Everything else in the group either reaches her
- * or is withheld from what reaches her; this money is neither added to her
+ * lead is what carries that.** Everything else in the group either reaches them
+ * or is withheld from what reaches them; this money is neither added to them
  * salary nor taken out of it, and a user who has just typed an income tax has
  * every reason to expect otherwise. The month screen draws the same payments in
- * a card of their own, outside her total, where their subtotal is the one
+ * a card of their own, outside their total, where their subtotal is the one
  * column total the preview prints (item 5).
  *
  * **A kind already recorded this month is not offered.** The sheet holds one row
@@ -1393,7 +1401,7 @@ function AdvancesControl({
  * The server refuses it again regardless, because what the screen offers is
  * never the rule (Part 3).
  *
- * **The covered period follows the kind until she touches it**, which is
+ * **The covered period follows the kind until they touch it**, which is
  * `offeredPeriodFor` read forwards rather than a second copy of it — the same
  * shape as the placement chips above. Only the national insurance has an offer,
  * because only it is paid on a clock the application can read backwards
@@ -1434,20 +1442,20 @@ function ThirdPartyControl({
   const [paidOn, setPaidOn] = useState("");
   // Empty takes the default `coverExpiryOf` gives the kind — a year for the
   // medical insurance and nothing for anything else. The family types over it
-  // only where her own policy ran to some other day.
+  // only where their own policy ran to some other day.
   const [expiresOn, setExpiresOn] = useState("");
-  /** `null` until she chooses, which is what lets the period follow the kind and
+  /** `null` until they choose, which is what lets the period follow the kind and
    * then stop following it. */
   const [chosenPeriod, setChosenPeriod] = useState<{
     from: string;
     to: string;
   } | null>(null);
-  const { refusal, run, clear, busyAt } = useAction(onSubmit);
+  const { refusal, fault, run, clear, busyAt } = useAction(onSubmit);
 
   const recorded = new Set(thirdPartyPayments.map((payment) => payment.kind));
   // The kinds still open this month, **and the one being corrected**: a panel
   // that hid the kind it was opened over would show the user a chip row with
-  // her own payment missing from it.
+  // their own payment missing from it.
   const available = thirdPartyKinds.filter(
     (candidate) => !recorded.has(candidate) || candidate === open,
   );
@@ -1488,7 +1496,7 @@ function ThirdPartyControl({
     setNote(payment.note ?? "");
     setPaidOn(payment.paidOn);
     // Put back as stored and never re-derived: a policy the family dated
-    // herself must not spring back to a year on the next correction.
+    // themselves must not spring back to a year on the next correction.
     setExpiresOn(payment.expiresOn ?? "");
     const covers = payment.coversMonths ?? [];
     setChosenPeriod(
@@ -1503,7 +1511,7 @@ function ThirdPartyControl({
 
   /** One call for both gestures, and the kind the panel was *opened* with is
    * what addresses the payment being corrected — not the kind now in the chips,
-   * which is the thing she may be changing. */
+   * which is the thing they may be changing. */
   function submit() {
     if (kind === null || open === null) return;
     const draft = {
@@ -1552,8 +1560,8 @@ function ThirdPartyControl({
               onClick={() => {
                 setKind(candidate);
                 // The offer follows the kind again whenever the kind changes,
-                // which is the only moment it can: once she edits a month field
-                // her choice stands for the rest of the entry.
+                // which is the only moment it can: once they edit a month field
+                // their choice stands for the rest of the entry.
                 setChosenPeriod(null);
               }}
             >
@@ -1684,7 +1692,7 @@ function ThirdPartyControl({
                 </span>
                 {/* Drawn positive. It is money that left the account, but it
                     leaves nobody's total on this screen — a minus here would
-                    read as a deduction from her pay, which is the one thing
+                    read as a deduction from their pay, which is the one thing
                     item 16 says it is not. */}
                 <MoneyValue agorot={payment.agorot} />
               </div>
@@ -1753,7 +1761,7 @@ function ThirdPartyControl({
         </button>
       ) : null}
 
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
     </MonthFold>
   );
 }
@@ -1810,7 +1818,7 @@ function OverridesControl({
   const [open, setOpen] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const { refusal, run, clear, busyAt } = useAction(onSubmit);
+  const { refusal, fault, run, clear, busyAt } = useAction(onSubmit);
 
   const overridable = lines.filter((line) => line.overridable);
 
@@ -1877,7 +1885,7 @@ function OverridesControl({
       group="overrides"
       title={words.title}
       fold={fold}
-      // **The rows she replaced, and not every row that could be.** Almost
+      // **The rows they replaced, and not every row that could be.** Almost
       // every line of the sheet is overridable, so naming those would say the
       // same long thing every month; what has been typed over is what the
       // section is for.
@@ -1908,7 +1916,7 @@ function OverridesControl({
             >
               <div className="flex items-start justify-between gap-3">
                 <span className="min-w-0 text-[15px] font-medium">
-                  {/* The engine's own label, which names her rest day where the
+                  {/* The engine's own label, which names their rest day where the
                       row does (item 5) — never a second copy kept beside this
                       control. */}
                   <Bidi>{line.label}</Bidi>
@@ -2011,8 +2019,7 @@ function OverridesControl({
         </div>
       ) : null}
 
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
     </MonthFold>
   );
 }
-

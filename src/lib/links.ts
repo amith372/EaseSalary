@@ -9,7 +9,7 @@
  * the primary link: it is the one that describes this worker. The general
  * articles are not wrong — the minimum wage is the same for a foreign worker
  * and an Israeli one — they are simply about a wider category, and the user who
- * follows a link wants the rule as it applies to her.
+ * follows a link wants the rule as it applies to them.
  *
  * **Never link to `דמי_חגים`, and this is not a style preference.** That page
  * is about workers paid by the day and by the hour, a category this worker is
@@ -90,7 +90,7 @@ export const legalLinks = {
   holidayWork: {
     label: "תשלום עבור ימי חג לעובד/ת זר/ה בסיעוד",
     // Not `דמי_חגים`. See the warning at the top of this file. This article is
-    // the caregiver's own: nine holidays of her faith or of Israel, a worked one
+    // the caregiver's own: nine holidays of them faith or of Israel, a worked one
     // paid at 150% plus an hour, and an unworked one leaving the salary whole
     // (item 10).
     url: `${KOL_ZCHUT}/תשלום_עבור_ימי_חג_לעובד_זר_בסיעוד`,
@@ -98,7 +98,7 @@ export const legalLinks = {
   annualLeave: {
     label: "חופשה שנתית לעובד/ת זר/ה בסיעוד",
     // The caregiver's own section: accrual, scheduling, and no redemption while
-    // she is employed. It links onward to the general article, which holds the
+    // they are employed. It links onward to the general article, which holds the
     // seniority ladder of item 7.
     url: termsSection("חופשה_שנתית"),
   },
@@ -133,7 +133,7 @@ export const legalLinks = {
     label: "ביטוח רפואי לעובד/ת זר/ה",
     // No dedicated article for a foreign worker's medical insurance exists, and
     // the terms page carries the rule anyway. This section is the employer's
-    // obligation to insure her; the cap on deducting for it — half the cost and
+    // obligation to insure them; the cap on deducting for it — half the cost and
     // no more than ₪154.29 a month, which this application deducts nothing of
     // (item 16) — is a paragraph of ניכויים_משכר_העובד, where `incomeTax`
     // points. The obligation is what the label promises, so it is what the link
@@ -143,11 +143,11 @@ export const legalLinks = {
   incomeTax: {
     label: "ניכוי מס הכנסה משכר העובד/ת",
     // The application never calculates the tax, so this link is the whole of
-    // what it can give the user before she types a figure (item 17). The terms
+    // what it can give the user before they type a figure (item 17). The terms
     // page states the rule — the employer deducts on the basis of the wage and
     // of the credits the worker is entitled to — and a caregiver in home care
     // receives 2.25 credit points, more than a foreign worker in another
-    // sector, which is the fact that stops her deducting too much.
+    // sector, which is the fact that stops them deducting too much.
     url: termsSection("ניכויים_משכר_העובד"),
   },
   wageDeductions: {

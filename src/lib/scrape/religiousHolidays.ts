@@ -37,7 +37,7 @@ import type { IsoDate } from "@/lib/types";
  *
  * **The rite is kept in the name.** The Christian page publishes each holiday
  * twice, in a Catholic column and an Orthodox one, and the two are weeks apart.
- * Both are offered — the user picks the nine days she pays — and the column's
+ * Both are offered — the user picks the nine days they pay — and the column's
  * own heading is appended to the name, so nothing is merged and nothing is
  * silently dropped.
  */

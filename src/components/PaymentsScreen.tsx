@@ -31,8 +31,8 @@ import type { IsoDate, OverrideCandidate, Worker, YearMonth } from "@/lib/types"
  * lines into a row apiece (item 20); this is where those lines are made, where
  * the income tax is typed, and where an advance is given and repaid. The
  * division is what keeps the calendar answerable at a glance: a calendar with
- * four control surfaces around it asks the user to find the right one before she
- * can answer the question she arrived with.
+ * four control surfaces around it asks the user to find the right one before they
+ * can answer the question they arrived with.
  *
  * **It holds no calculation and it is handed one.** Nothing here is totalled:
  * the amounts are the ones the user typed, and the one walked figure — what is
@@ -80,17 +80,17 @@ interface MonthPayments {
 }
 
 
-/** One worker as this screen needs her: who she is, each of her months, and
+/** One worker as this screen needs them: who they are, each of their months, and
  * what is still owed on each advance. */
 export interface WorkerPayments {
-  /** The month her replay refused, where it refused one (`specs.md` item 25).
+  /** The month their replay refused, where it refused one (`specs.md` item 25).
    * Nothing on this screen can be recorded against a month the engine declined
-   * to value, so the card stands in its place — for her alone. */
+   * to value, so the card stands in its place — for them alone. */
   refused: RefusedMonth | null;
   worker: Worker;
   /** Where the month arrows stop (specs.md item 6). */
   firstMonth: YearMonth;
-  /** Oldest first: every month from her first to the current one. */
+  /** Oldest first: every month from their first to the current one. */
   months: MonthPayments[];
   advances: AdvanceStanding[];
   /** What falls due in the next twelve months (specs.md item 15). */
@@ -121,7 +121,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   const entry =
     household.find((candidate) => candidate.worker.id === worker.id) ??
     household[0];
-  // Never a month before hers (specs.md item 6), as on the opening screen.
+  // Never a month before theirs (specs.md item 6), as on the opening screen.
   const month = notBefore(chosenMonth, entry.firstMonth);
   // A month ahead is not valued, and nothing can be entered in it yet.
   const future = compareMonth(month, monthOf(today)) > 0;
@@ -140,8 +140,8 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   // here; what is this screen's is the *scope* it is held at.
   const { saving, send: handleAction } = useOneAtATime<MonthActionRefusal>();
 
-  // Every section starts folded, and what she unfolds
-  // stays unfolded while she steps between months.
+  // Every section starts folded, and what they unfold
+  // stays unfolded while they step between months.
   const [openSections, setOpenSections] = useState<ReadonlySet<MonthSection>>(
     () => new Set(),
   );
@@ -153,10 +153,10 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
     });
   }
 
-  // **Her refusal and not the household's.** This screen records against a
+  // **Their refusal and not the household's.** This screen records against a
   // month, and there is nothing to record onto until the mark is put right on
-  // `/` — so the card is the screen for her, while the worker beside her keeps
-  // hers. It sits below every hook because all of them run either way.
+  // `/` — so the card is the screen for them, while the worker beside them keeps
+  // theirs. It sits below every hook because all of them run either way.
   if (entry.refused !== null) return <RefusalCard refused={entry.refused} />;
 
   return (
@@ -212,7 +212,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
         {shown ? (
           <MonthActions
             /* Keyed on the worker and the month, so the fields a user was
-               half-way through typing do not follow her to another month and
+               half-way through typing do not follow them to another month and
                offer themselves as that month's. */
             key={`${worker.id}-${month.year}-${month.month}`}
             workerId={worker.id}

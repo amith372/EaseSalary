@@ -175,7 +175,7 @@ export function belowMinimumWageWarning(
  * 10 reads "ביטוח רפואי לעובד/ת - שולם באמצעות …", and the end of that sentence
  * is a placeholder filled from the profile, so a month that pays a premium with
  * an empty profile exports a sentence that stops mid-air — which is the state
- * this asks the user to fix before she meets it in the file.
+ * this asks the user to fix before they meet it in the file.
  *
  * A month that paid no premium raises nothing: the row is empty, the sentence
  * is never reached, and chasing every month for a field most of them do not use

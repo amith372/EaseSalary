@@ -13,14 +13,14 @@ import { getRepository } from "@/lib/store";
 import { WORKER_COOKIE } from "@/lib/workerCookie";
 import type { YearMonth } from "@/lib/types";
 
-/** One worker and her months as the replay came to them. */
+/** One worker and their months as the replay came to them. */
 interface WorkerInSeries {
   profile: WorkerProfile;
-  /** Empty where her replay refused: a month the engine declined to value stops
+  /** Empty where their replay refused: a month the engine declined to value stops
    * every month after it (item 13), and there is no prefix worth handing over —
    * a balance that stopped in August is not the balance of today. */
   months: MonthInSeries[];
-  /** The refusal that stopped her replay, or `null` where it stood
+  /** The refusal that stopped their replay, or `null` where it stood
    * (`specs.md` item 25). The error itself and not the card's view of it, so a
    * caller with no place to draw a card can raise it again unchanged. */
   refusal: InvalidMonthError | null;
@@ -107,10 +107,10 @@ export async function workerInSeries(
  * One month of one worker's replay.
  *
  * A month nobody opened is in the walk like any other (`specs.md` item 6), so
- * `null` here means a month outside it altogether — before her first month, or
+ * `null` here means a month outside it altogether — before their first month, or
  * after the current one — and not a month with nothing recorded in it. It is
  * also what a worker whose replay refused has for every month, since a refusal
- * leaves her with no valued months at all.
+ * leaves them with no valued months at all.
  */
 export async function monthInSeries(
   workerId: string,
@@ -122,7 +122,7 @@ export async function monthInSeries(
   );
 }
 
-/** Her refusal as the card draws it, or `null` where her replay stood — the
+/** Their refusal as the card draws it, or `null` where their replay stood — the
  * step between the error the engine threw and `RefusalCard`'s input, made here
  * so the four screens that draw it do not each make it. */
 export function refusalShown(worker: WorkerInSeries): RefusedMonth | null {
@@ -130,30 +130,42 @@ export function refusalShown(worker: WorkerInSeries): RefusedMonth | null {
 }
 
 /**
- * Where a download goes instead of a file, for a worker the engine refused
- * (`specs.md` item 25).
+ * Where a download goes when there is no file to hand back.
  *
- * **A refusal is a sentence and a file is not a place to put one.** The two
- * addresses that hand back a workbook cannot draw the card, so they send her to
- * the screen that does — the opening screen, the only one carrying the calendar
- * the mark that caused the refusal is corrected on. Inventing a second wording
- * for a refusal the card already words is what this avoids; the 500 it replaces
- * said nothing at all.
+ * **A failure is a sentence and a file is not a place to put one.** The two
+ * addresses that produce a workbook can draw no screen of their own, so every
+ * way they can fail ends here: the browser is sent to the screen that *can* say
+ * what happened, and says it in Hebrew, in the wording that screen already
+ * uses. What this replaces is a body of English text — `No such worker`, `The
+ * month has not been confirmed` — rendered by the browser as a bare page in a
+ * language the family does not read, with no way on from it.
  *
- * **It carries the worker.** The screen is scoped by the switcher's cookie
- * (`WorkerScope`), and a request made for one worker while the cookie names the
- * other would land on a screen with no card on it — so the cookie is set to the
- * worker the download was for, which is where her card is.
+ * **Which screen depends on what is missing, and there are only two.** A month
+ * nobody confirmed goes to `/month/export`, where the confirmation is; anything
+ * else goes to the opening screen, which carries the calendar. Neither is told
+ * why it was opened, and that is deliberate for the same reason the 404 is
+ * generic: a crafted address naming another household's real worker must not be
+ * answered differently from one naming nobody.
+ *
+ * **It carries the worker where there is one.** Every screen is scoped by the
+ * switcher's cookie (`WorkerScope`), so a request made for one worker while the
+ * cookie names the other would land on a screen about the wrong one. A request
+ * that named no worker, or named one this household does not have, sets
+ * nothing — there is nothing true to set it to.
+ *
+ * **303 and not 307**: it turns the download into an ordinary page request,
+ * which is what the browser has to make of it. The address is resolved against
+ * the request, because a redirect is absolute and the origin is the
+ * deployment's rather than a constant this file could hold.
  */
-export function refusedDownload(
+export function downloadSentTo(
   request: NextRequest,
-  workerId: string,
+  to: string,
+  workerId: string | null,
 ): NextResponse {
-  // Resolved against the request, because a redirect is an absolute address and
-  // the origin is the deployment's rather than a constant this file could hold.
-  // **303 and not 307**: it turns the download into an ordinary page request,
-  // which is what the browser has to make of it.
-  const response = NextResponse.redirect(new URL("/", request.nextUrl), 303);
-  response.cookies.set(WORKER_COOKIE, workerId, { path: "/", sameSite: "lax" });
+  const response = NextResponse.redirect(new URL(to, request.nextUrl), 303);
+  if (workerId !== null) {
+    response.cookies.set(WORKER_COOKIE, workerId, { path: "/", sameSite: "lax" });
+  }
   return response;
 }

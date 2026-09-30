@@ -17,11 +17,11 @@ import { monthOf } from "../src/lib/dates";
  *
  * - Six days is the statutory ladder's figure for a second completed employment
  *   year (https://www.kolzchut.org.il/he/דמי_הבראה), and the demo worker was
- *   employed from 1.4.2024, so her second year closes on 31.3.2026 and the
- *   payment falling in 2026 is her second.
+ *   employed from 1.4.2024, so their second year closes on 31.3.2026 and the
+ *   payment falling in 2026 is their second.
  * - ₪451.50 is the same article's private-sector day rate from 1.7.2025.
  * - ₪2,709.00 is 6 × ₪451.50, worked by hand.
- * - The second worker was employed from 1.9.2025, so her first year is not out
+ * - The second worker was employed from 1.9.2025, so their first year is not out
  *   by the March 2026 the seed names — the statute's "nothing until a full
  *   working year has been completed".
  *
@@ -97,7 +97,7 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
     await useHousehold(page, "pays");
     await openSettingsForTestWorker(page);
 
-    // The days come from her seniority and are reported, never offered.
+    // The days come from their seniority and are reported, never offered.
     await expect(page.locator("[data-recuperation]")).toContainText(
       formatDays(DAYS),
     );
@@ -149,12 +149,12 @@ test.describe("the recuperation payment (specs.md item 15)", () => {
   });
 
   /**
-   * **A worker inside her first employment year is no longer in the demo, and
+   * **A worker inside their first employment year is no longer in the demo, and
    * this file no longer checks that case through the browser.**
    *
-   * It used to: the second worker began on 1.9.2025, so her recuperation month
-   * fell three months before her first year was out and the profile said so by
-   * simply being opened. She now begins on 1.4.2024, because every other test
+   * It used to: the second worker began on 1.9.2025, so their recuperation month
+   * fell three months before their first year was out and the profile said so by
+   * simply being opened. They now begin on 1.4.2024, because every other test
    * here needs a completed year to have anything to pay, and a household holds
    * no more than two workers (item 11) — the other being Hanna, whose months
    * come from the family's own workbooks and whose terms no test may edit.

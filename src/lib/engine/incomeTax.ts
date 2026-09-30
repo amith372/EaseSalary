@@ -53,7 +53,7 @@ export const WOMANS_EXTRA_CREDIT_POINTS = 0.5;
  * **The user is never asked this**, and that is the point of deriving it: a
  * family that had to answer "how many credit points" would be answering a
  * question about tax law, and the standing rule is to choose the option that
- * requires the user to know less. She states a gender on the profile, which is
+ * requires the user to know less. They states a gender on the profile, which is
  * a fact about the worker, and the entitlement follows from it.
  */
 export function creditPointsFor(gender: Gender): number {
@@ -218,12 +218,12 @@ export function effectiveTaxRate(
  * A percentage of the month's ‏ברוטו‎, as an amount in integer agorot.
  *
  * Rounded once, here, where the fraction becomes an amount — and floored at
- * zero so that a rate arriving negative past a form cannot pay her.
+ * zero so that a rate arriving negative past a form cannot pay them.
  *
  * **Two callers on purpose**: the worker's own `percentage` setting, and a
  * correction the user types against a single month as a percentage rather than
  * as a sum. Both mean the same arithmetic, and one
- * function is what keeps the month she corrected by hand agreeing to the agora
+ * function is what keeps the month they corrected by hand agreeing to the agora
  * with the month the setting produced.
  */
 export function taxFromPercentage(
@@ -238,7 +238,7 @@ export function taxFromPercentage(
  * a percentage anyone could have meant.
  *
  * **Zero is refused**, as it is on the profile: `none` is how a family says
- * nothing is withheld, and on a month an empty field is how she says the
+ * nothing is withheld, and on a month an empty field is how they say the
  * application's own figure stands. A typed zero on a month *is* meaningful —
  * "this month withholds nothing" — but it is meaningful as an **amount**, which
  * is the other unit, so nothing is lost by refusing it here. Above 100 is

@@ -154,17 +154,17 @@ function datesOf(span: ClosedSpan): IsoDate[] {
  * Dates carrying more than one entry, with the kind of the mark that collided.
  *
  * **Why this is refused rather than resolved.** A day recorded as both a sick
- * day and a holiday she worked is a contradiction in the facts, and the engine
- * has no way to know which of the two happened — she cannot have been absent
+ * day and a holiday they worked are a contradiction in the facts, and the engine
+ * has no way to know which of the two happened — they cannot have been absent
  * ill and at work on the same day. Resolving it by a rule would mean choosing
  * silently, and the figure that came out would look entirely ordinary. Two
  * entries of the same kind on one date are the same problem in its plainest
  * form: the day is paid twice and drawn twice from its entitlement.
  *
  * The cost of not refusing is not theoretical. A sick spell covering a rest day
- * that is also marked as a holiday she worked leaves `restDayUnitsOf`
+ * that is also marked as a holiday they worked leave `restDayUnitsOf`
  * subtracting a rest day that sickness had already taken out, so the sheet
- * reports three rest days worked where she worked four. The month's total can
+ * reports three rest days worked where they worked four. The month's total can
  * still come out plausible, which is exactly what makes it dangerous: item 2
  * requires every payment to carry its type, its number of units and its amount,
  * and the units are what is wrong.
@@ -180,7 +180,7 @@ function datesRecordedTwice(
   spans: ClosedSpan[],
   restDay: RestDay,
 ): Map<IsoDate, SpanKind> {
-  // A holiday on her weekly rest day is not an entry on that date at all (item
+  // A holiday on their weekly rest day is not an entry on that date at all (item
   // 9): the day is the rest day it is, so a free rest day marked on
   // it is the only thing recorded there. Without this the pair Part 4 does not
   // refuse would be refused anyway, here, as two entries on one date.
@@ -215,7 +215,7 @@ export function validateMonth(
   // disagree with itself (specs.md item 8).
   const { spans } = closeMonth(facts, context.today);
 
-  // **A holiday on her weekly rest day is not refused** (item 9). Such a day is
+  // **A holiday on their weekly rest day is not refused** (item 9). Such a day is
   // not a holiday at all: it is paid once as the rest day it is, and it spends
   // nothing from the year's nine, so it cannot be paid at both rates. A
   // calendar is not a mistake, so the picker explains it where the date is
@@ -237,7 +237,7 @@ export function validateMonth(
   //
   // The day is read off the month's own terms and never off the profile
   // (Part 3), so the refusal is this worker's rather than everyone's: a
-  // Friday-resting worker's free Friday is recorded and her free Saturday is
+  // Friday-resting worker's free Friday is recorded and them free Saturday is
   // refused, which is the reverse of Hanna's and the reason the check cannot
   // be a constant.
   const notRestDays = spans
@@ -259,8 +259,8 @@ export function validateMonth(
   // and is reduced in proportion for a year only partly worked (item 10).
   // Nine days for a full year, reduced in proportion for a year only partly
   // worked (item 10). Derived from the worker's own terms rather than defaulted
-  // to nine, so a month standing alone in her first calendar year is refused
-  // against the entitlement she actually has. The context may still hand one
+  // to nine, so a month standing alone in their first calendar year is refused
+  // against the entitlement they actually have. The context may still hand one
   // in, which is what lets a figure settled elsewhere win over the derivation.
   const allowance =
     context.holidayAllowance ??

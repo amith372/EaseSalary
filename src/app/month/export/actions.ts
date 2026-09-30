@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { ACTION_FAULT, type ActionFault } from "@/lib/actionFault";
 import { getRepository, requireWorker } from "@/lib/store";
 import { salaryFor } from "@/lib/engine/salary";
 import {
@@ -52,7 +53,8 @@ export type BeforeExportRefusal = "amount" | "beforeTheSpell" | "blocked";
 
 export type BeforeExportResult =
   | { ok: true }
-  | { ok: false; reason: BeforeExportRefusal };
+  | { ok: false; reason: BeforeExportRefusal }
+  | ActionFault;
 
 /** Asked about a worker or a month the store does not have. Actions are
  * reachable by a crafted request, so both are checked rather than assumed.
@@ -82,7 +84,7 @@ async function monthOf(workerId: string, month: YearMonth) {
  * tiers from its own first day — so closing it writes a `to` onto the span that
  * is already there, which is what `SalaryRepository.saveSpan` describes.
  *
- * The end is the day *before* she returned. The arithmetic is in the engine and
+ * The end is the day *before* they returned. The arithmetic is in the engine and
  * not in the browser, so the one place it happens has a test on it.
  */
 export async function closeSickSpell(
@@ -90,35 +92,39 @@ export async function closeSickSpell(
   spanId: string,
   returnedOn: string,
 ): Promise<BeforeExportResult> {
-  const repository = await getRepository();
-  const spans = await repository.listSpans(workerId);
-  const spell = spans.find((span) => span.id === spanId);
-  // A span that is already closed, or one this worker does not have, is a
-  // request the form cannot make. Refused as a date that cannot be accepted
-  // rather than thrown: the screen's job is to say the gesture did nothing.
-  if (spell === undefined || spell.to !== null) {
-    return { ok: false, reason: "beforeTheSpell" };
-  }
-  if (!isIsoDate(returnedOn)) {
-    return { ok: false, reason: "beforeTheSpell" };
-  }
-  if (reviewReturnDate(spell.from, returnedOn) !== null) {
-    return { ok: false, reason: "beforeTheSpell" };
-  }
+  try {
+    const repository = await getRepository();
+    const spans = await repository.listSpans(workerId);
+    const spell = spans.find((span) => span.id === spanId);
+    // A span that is already closed, or one this worker does not have, is a
+    // request the form cannot make. Refused as a date that cannot be accepted
+    // rather than thrown: the screen's job is to say the gesture did nothing.
+    if (spell === undefined || spell.to !== null) {
+      return { ok: false, reason: "beforeTheSpell" };
+    }
+    if (!isIsoDate(returnedOn)) {
+      return { ok: false, reason: "beforeTheSpell" };
+    }
+    if (reviewReturnDate(spell.from, returnedOn) !== null) {
+      return { ok: false, reason: "beforeTheSpell" };
+    }
 
-  await repository.saveSpan(workerId, {
-    ...spell,
-    to: spellEndFromReturn(returnedOn),
-  });
-  // Every screen reads the same workers and months, so the whole tree is
-  // revalidated: a list of routes kept by hand is a list that misses one.
-  revalidatePath("/", "layout");
-  return { ok: true };
+    await repository.saveSpan(workerId, {
+      ...spell,
+      to: spellEndFromReturn(returnedOn),
+    });
+    // Every screen reads the same workers and months, so the whole tree is
+    // revalidated: a list of routes kept by hand is a list that misses one.
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
  * The income tax the month is confirmed with (specs.md item 17): what the
- * engine works out for it now, from the same replay the screen showed her.
+ * engine works out for it now, from the same replay the screen showed them.
  *
  * **The calculation is `taxConfirmation.ts`'s and not this action's**, because
  * the before-export screen puts the very same figure to the user before this
@@ -150,7 +156,7 @@ async function taxConfirmedFor(
  * same reader every other amount in the application goes through. */
 interface MonthConfirmation {
   /** The minimum wage the user confirmed — the offered figure unchanged, or the
-   * one she typed instead (specs.md item 4). */
+   * one they typed instead (specs.md item 4). */
   minimumText: string;
   /** The date it took effect, always a first of month (item 4). */
   effectiveFrom: string;
@@ -192,79 +198,83 @@ export async function confirmMonth(
   month: YearMonth,
   confirmation: MonthConfirmation,
 ): Promise<BeforeExportResult> {
-  const minimumAgorot = parseShekels(confirmation.minimumText);
-  if (minimumAgorot === null) return { ok: false, reason: "amount" };
-  // Item 4: the stored date is the official תאריך תחולה, which is always a
-  // first of month. Anything else is a value this form never offered, so it is
-  // refused rather than stored as a row claiming an impossible date.
-  const effectiveFrom = confirmation.effectiveFrom;
-  if (!isIsoDate(effectiveFrom) || !effectiveFrom.endsWith("-01")) {
-    return { ok: false, reason: "amount" };
-  }
-
-  const { repository, profile, facts } = await monthOf(workerId, month);
-
-  if (blocksExport(facts, await readToday()).length > 0) {
-    return { ok: false, reason: "blocked" };
-  }
-
-  if (reviewWageConfirmation(minimumAgorot) !== null) {
-    return { ok: false, reason: "amount" };
-  }
-
-  const rates = await repository.listRates();
-  const owed = recuperationToConfirm(facts, profile, rates);
-  let recuperationDayRateAgorot = facts.recuperationDayRateAgorot;
-  if (owed !== null) {
-    const typed = parseShekels(confirmation.recuperationRateText ?? "");
-    if (typed === null || reviewRecuperationRate(typed) !== null) {
+  try {
+    const minimumAgorot = parseShekels(confirmation.minimumText);
+    if (minimumAgorot === null) return { ok: false, reason: "amount" };
+    // Item 4: the stored date is the official תאריך תחולה, which is always a
+    // first of month. Anything else is a value this form never offered, so it is
+    // refused rather than stored as a row claiming an impossible date.
+    const effectiveFrom = confirmation.effectiveFrom;
+    if (!isIsoDate(effectiveFrom) || !effectiveFrom.endsWith("-01")) {
       return { ok: false, reason: "amount" };
     }
-    recuperationDayRateAgorot = typed;
-  }
 
-  // **The row is written only where the figure is new to that date.** Confirming
-  // an offered figure changes nothing about it, so a table whose row already
-  // holds it is left alone -- and with it the address the fetch recorded, which
-  // the same primary key would otherwise replace with the sentence below. A
-  // figure the user typed instead is hers and carries her as its source.
-  const held = rates.find(
-    (rate) => rate.key === "minimumWage" && rate.effectiveFrom === effectiveFrom,
-  );
-  if (held?.value !== minimumAgorot) {
-    await repository.saveRate({
-      key: "minimumWage",
-      value: minimumAgorot,
-      effectiveFrom,
-      // Where the figure came from, which every row in that table carries. This
-      // one came from the person exporting the month, which is a source as much
-      // as an address is and is more honest than naming a page it may not have
-      // been read from. A name and not a sentence: `/settings` draws this field
-      // and the words for it are in `he.ts` (`rateSources`).
-      source: "userConfirmed",
+    const { repository, profile, facts } = await monthOf(workerId, month);
+
+    if (blocksExport(facts, await readToday()).length > 0) {
+      return { ok: false, reason: "blocked" };
+    }
+
+    if (reviewWageConfirmation(minimumAgorot) !== null) {
+      return { ok: false, reason: "amount" };
+    }
+
+    const rates = await repository.listRates();
+    const owed = recuperationToConfirm(facts, profile, rates);
+    let recuperationDayRateAgorot = facts.recuperationDayRateAgorot;
+    if (owed !== null) {
+      const typed = parseShekels(confirmation.recuperationRateText ?? "");
+      if (typed === null || reviewRecuperationRate(typed) !== null) {
+        return { ok: false, reason: "amount" };
+      }
+      recuperationDayRateAgorot = typed;
+    }
+
+    // **The row is written only where the figure is new to that date.** Confirming
+    // an offered figure changes nothing about it, so a table whose row already
+    // holds it is left alone -- and with it the address the fetch recorded, which
+    // the same primary key would otherwise replace with the sentence below. A
+    // figure the user typed instead is theirs and carries them as its source.
+    const held = rates.find(
+      (rate) => rate.key === "minimumWage" && rate.effectiveFrom === effectiveFrom,
+    );
+    if (held?.value !== minimumAgorot) {
+      await repository.saveRate({
+        key: "minimumWage",
+        value: minimumAgorot,
+        effectiveFrom,
+        // Where the figure came from, which every row in that table carries. This
+        // one came from the person exporting the month, which is a source as much
+        // as an address is and is more honest than naming a page it may not have
+        // been read from. A name and not a sentence: `/settings` draws this field
+        // and the words for it are in `he.ts` (`rateSources`).
+        source: "userConfirmed",
+      });
+    }
+
+    await repository.saveMonth(workerId, {
+      ...recordOf(facts),
+      incomeTaxAgorot: await taxConfirmedFor(repository, profile, month),
+      // Part 5's *confirmed* event, which `דף המשכורת` prints. Read from the
+      // clock here, in the action, and never in the engine or a render.
+      confirmedAt: await readNow(),
+      confirmedWage: {
+        // Item 3: a salary may never sit below the minimum wage, so a profile
+        // still holding last year's figure is raised to the wage in force rather
+        // than writing a month that pays under its own confirmed minimum. The
+        // screen says so before the user presses.
+        baseAgorot: baseForMonth(salaryFor(profile, facts.month), minimumAgorot),
+        minimumAgorot,
+        effectiveFrom,
+      },
+      ...(recuperationDayRateAgorot === undefined
+        ? {}
+        : { recuperationDayRateAgorot }),
     });
+
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch {
+    return ACTION_FAULT;
   }
-
-  await repository.saveMonth(workerId, {
-    ...recordOf(facts),
-    incomeTaxAgorot: await taxConfirmedFor(repository, profile, month),
-    // Part 5's *confirmed* event, which `דף המשכורת` prints. Read from the
-    // clock here, in the action, and never in the engine or a render.
-    confirmedAt: await readNow(),
-    confirmedWage: {
-      // Item 3: a salary may never sit below the minimum wage, so a profile
-      // still holding last year's figure is raised to the wage in force rather
-      // than writing a month that pays under its own confirmed minimum. The
-      // screen says so before the user presses.
-      baseAgorot: baseForMonth(salaryFor(profile, facts.month), minimumAgorot),
-      minimumAgorot,
-      effectiveFrom,
-    },
-    ...(recuperationDayRateAgorot === undefined
-      ? {}
-      : { recuperationDayRateAgorot }),
-  });
-
-  revalidatePath("/", "layout");
-  return { ok: true };
 }

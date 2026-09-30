@@ -16,9 +16,9 @@ import type { MonthResult } from "@/lib/types";
 /**
  * A spell of sickness that has not ended (specs.md item 8).
  *
- * **On the day a worker falls ill nobody knows the day she will return**, so
+ * **On the day a worker falls ill nobody knows the day they will return**, so
  * the application does not ask for one: the spell runs from its first day and
- * is closed when she comes back. It is never *crossed* by a month boundary — it
+ * is closed when they come back. It is never *crossed* by a month boundary — it
  * simply has not ended — and it stays one spell with one first day, which is
  * what the tiers are counted from.
  *
@@ -35,7 +35,7 @@ import type { MonthResult } from "@/lib/types";
  *
  *   Thu 28  day 1  nothing paid              1 day unpaid
  *   Fri 29  day 2  half paid               0.5 day unpaid
- *   Sat 30  day 3  her rest day                0 unpaid
+ *   Sat 30  day 3  their rest day                0 unpaid
  *   Sun 31  day 4  paid in full                0 unpaid
  *
  * The rest day takes nothing back because the standard count left it out, so
@@ -48,11 +48,11 @@ import type { MonthResult } from "@/lib/types";
  *
  * Four rest days and not five, because the 30th falls inside the spell and is
  * not worked. **Five rest-eves and not four**, though the 29th falls inside it
- * too: the supplement is paid for every rest-eve of the month whether she
+ * too: the supplement is paid for every rest-eve of the month whether they
  * worked it or not (item 14). Sickness prices itself through the deduction and
  * never through that line.
  *
- * **The same spell, closed on Friday the 29th** — she came back on the 30th.
+ * **The same spell, closed on Friday the 29th** — they came back on the 30th.
  * The deduction does not move: days three and four were already costing
  * nothing. What moves is the rest day. The 30th was worked after all:
  *
@@ -142,7 +142,7 @@ describe("an open spell is counted to the month's own last day (item 8)", () => 
       e: 637279,
       f: 170540,
       gross: 807819,
-      // 26 standard days less the 28th, 29th and 31st. The 30th is her rest
+      // 26 standard days less the 28th, 29th and 31st. The 30th is their rest
       // day and stood outside the count from the start.
       actualDays: 23,
       // Four days drawn from the balance, the rest day among them (item 8).
@@ -208,7 +208,7 @@ describe("closing a spell after the fact moves the month (criterion 13)", () => 
   ];
 
   it("gives back the rest day she turned out to have worked", () => {
-    // She came back on Saturday the 30th, so that rest day is paid after all:
+    // They came back on Saturday the 30th, so that rest day is paid after all:
     // five at ₪426.35 instead of four. Column E does not move, because days
     // three and four of the spell were already costing nothing.
     expect(figures(calculateMonth(facts(closedOn29), worker))).toEqual({

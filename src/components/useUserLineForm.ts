@@ -9,7 +9,7 @@
  * screens because they do two jobs (the user, 2026-09-22). What they share is
  * everything *behind* the look: the same four fields, the same direction and
  * placement chips, the same rule that the placement follows the direction until
- * she touches it, the same one-panel-at-a-time `open`, and the same reset. That
+ * they touch it, the same one-panel-at-a-time `open`, and the same reset. That
  * is what lives here, so the placement rule has one home rather than two that
  * drift.
  *
@@ -52,10 +52,10 @@ export function useUserLineForm<Reason>({
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [direction, setDirection] = useState<UserLineDirection>("addition");
-  // `null` until she chooses, which is what lets the chips follow the direction
+  // `null` until they choose, which is what lets the chips follow the direction
   // and then stop following it.
   const [chosen, setChosen] = useState<UserLinePlacement | null>(null);
-  const { refusal, run, clear, busyAt } = useAction(send);
+  const { refusal, fault, run, clear, busyAt } = useAction(send);
 
   const placement = chosen ?? defaultPlacementFor(direction);
 
@@ -80,8 +80,8 @@ export function useUserLineForm<Reason>({
    * already in the fields (item 20).
    *
    * **The placement is set rather than left to follow the direction.** What is
-   * stored is what she chose, so a panel that let the default take it again
-   * would silently move a line she had deliberately placed, the moment she
+   * stored is what they chose, so a panel that let the default take it again
+   * would silently move a line they had deliberately placed, the moment they
    * reopened it to correct a typo in its words.
    */
   function openEdit(line: UserLine) {
@@ -121,12 +121,13 @@ export function useUserLineForm<Reason>({
     placement,
     setChosen,
     refusal,
+    fault,
     run,
     /** Whether the control named is the one waiting — the panel is named by
      * its `open`, and a row's action by whatever the caller calls it. */
     busyAt,
     /** Drops a refusal without closing anything — for a caller that opens the
-     * panel from a button and does not want last time's reason greeting her. */
+     * panel from a button and does not want last time's reason greeting them. */
     clear,
     reset,
     openEdit,

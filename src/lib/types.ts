@@ -36,7 +36,7 @@ export type MarkKind = "vacation" | "sick" | "freeRestDay";
  * A holiday is a state the calendar draws and never a mark the user makes
  * (specs.md item 9): the year's dates are chosen in advance from the country's
  * candidate list, they arrive on the month already drawn, and the only thing the
- * month records about one is whether she worked it. Splitting the two unions is
+ * month records about one is whether they worked it. Splitting the two unions is
  * what makes that a compile error rather than a convention — `applyMark` takes a
  * `MarkKind` and so cannot produce a holiday, and the picker that offers the
  * kinds is built from the same union it stores.
@@ -63,7 +63,7 @@ export interface DaySpan {
    *
    * **A spell may be left open, and the application never asks for an end
    * date** (specs.md item 8): on the day a worker falls ill nobody knows the
-   * day she will return. But **no gesture writes one** — there is deliberately
+   * day they will return. But **no gesture writes one** — there is deliberately
    * none, so continuity is inferred from the days marked and every span
    * `applyMark` writes is closed (`spans.test.ts`); an open spell reaches the
    * engine from stored data, and the panel that closes one is the only screen
@@ -110,21 +110,21 @@ export interface HolidaySpan extends DaySpan {
    * from the year's chosen list (specs.md item 9), so its end is always known. */
   to: IsoDate;
   /**
-   * Whether she worked it, in **three** states and not two (specs.md item 9).
+   * Whether they worked it, in **three** states and not two (specs.md item 9).
    *
    * `null` is *nobody has said yet*, and it is a state of its own rather than a
    * quiet no. It has to be, because a holiday's date arrives on the calendar
    * from the year's chosen list rather than from anything the family did in
    * that month — so unlike every other mark, a holiday can sit there having
-   * been looked at by no one. With a boolean an unanswered holiday and one she
+   * been looked at by no one. With a boolean an unanswered holiday and one they
    * genuinely did not work are the same value, which is exactly the silence
    * item 9 forbids: the month paid nothing for it and nothing on the screen
    * said a question had gone unasked.
    *
-   * **The preview leans towards paying her and the export refuses to lean.** An
-   * unanswered holiday is calculated as one she worked, because a figure on a
+   * **The preview leans towards paying them and the export refuses to lean.** An
+   * unanswered holiday is calculated as one they worked, because a figure on a
    * screen has to say something and the cheaper reading is the one that costs
-   * her money; and the month cannot be exported while one is unanswered, which
+   * them money; and the month cannot be exported while one is unanswered, which
    * is what stops the lean ever reaching a filed sheet.
    */
   worked: boolean | null;
@@ -378,7 +378,7 @@ export interface MonthResult {
    * (specs.md item 5).
    */
   standardDays: number | null;
-  /** The standard count less the days she did not in fact work. Read, not paid
+  /** The standard count less the days they did not in fact work. Read, not paid
    * from. */
   actualDays: number | null;
   lines: MonthLine[];
@@ -447,7 +447,7 @@ export interface Worker {
   name: string;
   /** The first name alone, for "לדף של [שם]". */
   firstName: string;
-  /** Which way every screen's Hebrew agrees when it names her — "בדף שלה"
+  /** Which way every screen's Hebrew agrees when it names them — "בדף שלה"
    * against "בדף שלו". It rides on the scope rather than being fetched per
    * screen because a sentence that names the worker can appear on any of them,
    * and a screen that had to ask for it would be a screen that forgot to
@@ -503,4 +503,3 @@ export interface WorkerDocuments {
    * figure and the threshold is never stored here. */
   passportExpiry: IsoDate | null;
 }
-

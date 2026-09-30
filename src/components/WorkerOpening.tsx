@@ -27,9 +27,10 @@ import {
   AmountField,
   busyAttrs,
   buttonClass,
+  FaultLine,
   Field,
-  NoteField,
   inputClass,
+  NoteField,
   touchTargetClass,
 } from "@/components/Field";
 import { MoneyValue } from "@/components/MoneyValue";
@@ -132,6 +133,7 @@ export function StandingLinesControl({
     placement,
     setChosen,
     refusal,
+    fault,
     run,
     busyAt,
     clear,
@@ -270,7 +272,7 @@ export function StandingLinesControl({
         onChange={setNote}
       />
 
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
 
       <div className="flex items-center gap-3">
         <button
@@ -376,7 +378,11 @@ export function StandingLinesControl({
           </button>
         )}
 
-        {open === null && refusal ? <Refusal reason={refusal} /> : null}
+        {open === null && refusal ? (
+          <Refusal reason={refusal} />
+        ) : open === null && fault ? (
+          <FaultLine />
+        ) : null}
       </div>
     </TermRow>
   );
@@ -453,7 +459,7 @@ export function OpeningPositionControl({
   const [principal, setPrincipal] = useState("");
   const [repaid, setRepaid] = useState("");
   const [note, setNote] = useState("");
-  const { refusal, run, clear, busyAt } = useAction(onSubmit);
+  const { refusal, fault, run, clear, busyAt } = useAction(onSubmit);
 
   function closeAdd() {
     setAdding(false);
@@ -567,7 +573,7 @@ export function OpeningPositionControl({
               value={note}
               onChange={setNote}
             />
-            {refusal ? <Refusal reason={refusal} /> : null}
+            {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -601,7 +607,11 @@ export function OpeningPositionControl({
           </button>
         )}
 
-        {!adding && refusal ? <Refusal reason={refusal} /> : null}
+        {!adding && refusal ? (
+          <Refusal reason={refusal} />
+        ) : !adding && fault ? (
+          <FaultLine />
+        ) : null}
       </div>
     </TermRow>
   );

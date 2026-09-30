@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { ACTION_FAULT, type ActionFault } from "@/lib/actionFault";
 import { redirect } from "next/navigation";
 import { householdIdOf } from "@/lib/store";
 import { supabaseOnServer } from "@/lib/supabase/server";
@@ -10,7 +11,7 @@ import { supabaseOnServer } from "@/lib/supabase/server";
  *
  * **On the server and not in the browser**, because the session lives in
  * cookies the proxy reads (`supabase/client.ts`): signing out here clears them
- * in the same response that sends her to `/sign-in`, so no request can arrive
+ * in the same response that sends them to `/sign-in`, so no request can arrive
  * in between still carrying the session the user just ended.
  */
 export async function signOut(): Promise<void> {
@@ -21,7 +22,8 @@ export async function signOut(): Promise<void> {
 
 export type InvitationResult =
   | { ok: true; email: string; token: string }
-  | { ok: false; reason: "email" | "failed" };
+  | { ok: false; reason: "email" | "failed" }
+  | ActionFault;
 
 /**
  * Invite a second person into the household (specs.md item 11).
@@ -42,39 +44,43 @@ export type InvitationResult =
 export async function inviteToHousehold(
   emailText: string,
 ): Promise<InvitationResult> {
-  const email = emailText.trim();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { ok: false, reason: "email" };
-  }
+  try {
+    const email = emailText.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { ok: false, reason: "email" };
+    }
 
-  const supabase = await supabaseOnServer();
-  const householdId = await householdIdOf(supabase);
+    const supabase = await supabaseOnServer();
+    const householdId = await householdIdOf(supabase);
 
-  const inserted = await supabase
-    .from("household_invitations")
-    .insert({ household_id: householdId, email })
-    .select("token")
-    .single();
-
-  let token = inserted.data?.token as string | undefined;
-  // 23505 is a unique violation: this address is already invited here, so the
-  // link is the one already pending. Matched as typed, case aside; a different
-  // spelling of the same address is refused rather than guessed at.
-  if (inserted.error?.code === "23505") {
-    const { data: pending } = await supabase
+    const inserted = await supabase
       .from("household_invitations")
+      .insert({ household_id: householdId, email })
       .select("token")
-      .eq("household_id", householdId)
-      .ilike("email", email.replace(/[\\%_]/g, "\\$&"))
-      .is("accepted_at", null)
-      .limit(1)
-      .maybeSingle();
-    token = pending?.token as string | undefined;
-  }
-  if (token === undefined) return { ok: false, reason: "failed" };
+      .single();
 
-  revalidatePath("/settings");
-  return { ok: true, email, token };
+    let token = inserted.data?.token as string | undefined;
+    // 23505 is a unique violation: this address is already invited here, so the
+    // link is the one already pending. Matched as typed, case aside; a different
+    // spelling of the same address is refused rather than guessed at.
+    if (inserted.error?.code === "23505") {
+      const { data: pending } = await supabase
+        .from("household_invitations")
+        .select("token")
+        .eq("household_id", householdId)
+        .ilike("email", email.replace(/[\\%_]/g, "\\$&"))
+        .is("accepted_at", null)
+        .limit(1)
+        .maybeSingle();
+      token = pending?.token as string | undefined;
+    }
+    if (token === undefined) return { ok: false, reason: "failed" };
+
+    revalidatePath("/settings");
+    return { ok: true, email, token };
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /** A pending invitation withdrawn. The policy refuses one already accepted, and

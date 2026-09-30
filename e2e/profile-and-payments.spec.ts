@@ -4,7 +4,7 @@ import { he } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
 /**
- * The seven things the user asked for on 2026-09-11, each verified where she
+ * The seven things the user asked for on 2026-09-11, each verified where they
  * would meet it (`CLAUDE.md` rules 9–12).
  *
  * **Every figure is worked by hand from the seed's own stated facts.** The
@@ -61,7 +61,7 @@ test.describe("the worker's own page", () => {
   });
 
   /**
-   * **What she has been paid so far, added up.**
+   * **What they have been paid so far, added up.**
    *
    * The total is asserted against the sum of the rows above it rather than
    * against a constant, because the two are the same claim: the figure is the
@@ -97,7 +97,7 @@ test.describe("the worker's own page", () => {
    *
    * The assertion is on the painted background rather than on a class name: a
    * class can be renamed or removed from the stylesheet and still appear in the
-   * markup, and what the user asked for was something she can see. The chosen
+   * markup, and what the user asked for was something they can see. The chosen
    * and unchosen chips are compared against each other, so the test states the
    * difference rather than a colour it would have to be updated for.
    */
@@ -153,7 +153,7 @@ test.describe("the payments screen", () => {
     const field = page.getByLabel(words.fieldPercentage, { exact: true });
     await field.fill("2.5");
 
-    // The arithmetic is shown before it is saved, so she agrees to the sum and
+    // The arithmetic is shown before it is saved, so they agree to the sum and
     // not to the share alone.
     await expect(
       page.getByText(formatAgorot(TWO_AND_A_HALF_PERCENT), { exact: false }),

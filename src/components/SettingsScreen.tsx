@@ -394,9 +394,13 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
         ? copied === result.email
           ? words.copied
           : words.created
-        : result.reason === "email"
-          ? words.badEmail
-          : words.failed;
+        : // A fault carries no reason, and the invitation card has one line to
+          // say so in rather than a slot of its own.
+          "fault" in result
+          ? he.fault
+          : result.reason === "email"
+            ? words.badEmail
+            : words.failed;
 
   return (
     <div data-share className="flex flex-col gap-2.5" aria-busy={sending}>

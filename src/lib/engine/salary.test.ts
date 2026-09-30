@@ -12,7 +12,7 @@ import type { YearMonth } from "@/lib/types";
 
 /**
  * The base salary over time (specs.md item 3; decided with the user on
- * 2026-09-13 that a change holds from a month she names and the months before
+ * 2026-09-13 that a change holds from a month they name and the months before
  * it keep their salary).
  *
  * **Every figure is from the seeded rates or chosen here, and every expected
@@ -157,7 +157,7 @@ describe("what the user typed (item 3: never below the minimum wage)", () => {
   });
 
   it("refuses a month before the employment began, and a missing month", () => {
-    // Employed from 1.4.2024: March 2024 is before her, April 2024 is hers.
+    // Employed from 1.4.2024: March 2024 is before them, April 2024 is theirs.
     expect(
       reviewSalaryChange("7000", ym(2024, 3), TERMS.employedSince, floors),
     ).toEqual({ ok: false, reason: "salaryFrom" });

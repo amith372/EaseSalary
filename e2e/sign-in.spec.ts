@@ -70,6 +70,54 @@ test.describe("signed out", () => {
   });
 
   /**
+   * **A fault is not a refusal, on the one screen where getting that wrong
+   * costs the most** (`specs.md` item 30).
+   *
+   * Scenario: the authentication endpoint is made unreachable — the request is
+   * aborted the way a dropped connection aborts it — and a correct-looking
+   * sign-in is submitted.
+   *
+   * Expected: the fault sentence, which invites a second try, and **not**
+   * `badCredentials`.
+   *
+   * **What it would catch**: exactly the state this repository was in until
+   * now. `messageFor` answered every sign-in failure but an unconfirmed
+   * address with "the email or password is wrong", so Supabase being
+   * unreachable told the user their password was wrong — and the thing a user
+   * does about that is change a password that was correct all along. Signed
+   * out there is no bar, no other screen and nothing else to try, so the
+   * sentence is the whole of what the application has to say.
+   *
+   * The network is aborted rather than the client stubbed: a fault here *is* a
+   * network failure, and nothing short of one exercises the branch that reads
+   * it (`isAuthRetryableFetchError`).
+   */
+  test("a sign-in that never reached the server is a fault and not a wrong password", async ({
+    page,
+  }) => {
+    await page.goto("/sign-in");
+    await page.route("**/auth/v1/token**", (route) => route.abort("failed"));
+
+    await page.locator('[data-field="email"]').fill(address("unreachable"));
+    await page.locator('[data-field="password"]').fill("whatever-it-is");
+    await page.getByRole("button", { name: he.signIn.submitSignIn }).click();
+
+    const failure = page.locator('[data-role="sign-in-error"]');
+    await expect(failure).toHaveText(he.fault);
+    await expect(failure).not.toHaveText(he.signIn.errors.badCredentials);
+
+    // Hebrew to the last character: no fetch error, no status code, no host.
+    expect(await failure.innerText()).not.toMatch(/[A-Za-z]/);
+
+    // The form is still usable, so the second try the sentence invites is one
+    // the user can actually make.
+    await expect(page).toHaveURL(/\/sign-in$/);
+    await expect(
+      page.getByRole("button", { name: he.signIn.submitSignIn }),
+    ).toBeEnabled();
+  });
+
+  /**
    * **An empty form is refused here and never sent** (the sign-in screen's own
    * check, ahead of Supabase's).
    *

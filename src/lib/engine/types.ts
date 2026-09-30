@@ -26,10 +26,10 @@ import type { SalaryChange } from "./salary";
 
 /**
  * A span as the month stores it. A holiday must say whether the worker worked
- * it — a holiday she takes off is covered by her ordinary salary and earns
+ * it — a holiday they take off is covered by their ordinary salary and earns
  * nothing extra, so "holiday" is never recorded without saying (specs.md
  * Part 5, item 9). Writing the union this way makes a holiday span without
- * `worked` a compile error rather than a silent default that underpays her.
+ * `worked` a compile error rather than a silent default that underpays them.
  *
  * The union does the same job for the open end. `DaySpan.to` is nullable
  * because storage has to hold a spell that has not finished, but **only
@@ -43,18 +43,18 @@ export type MonthSpan =
   | HolidaySpan;
 
 /**
- * Whether a holiday is calculated as one she worked — **which an unanswered
+ * Whether a holiday is calculated as one they worked — **which an unanswered
  * holiday is** (specs.md item 9).
  *
  * **One function, because the alternative is `span.worked` read as a truth
  * value in five places.** `worked` has three states, and `null` is falsy: every
  * `if (span.worked)` written against the old boolean goes on compiling and
- * silently reads *nobody has said yet* as *she did not work it*, which is the
+ * silently reads *nobody has said yet* as *they did not work it*, which is the
  * one reading item 9 forbids. That is a change no type can catch, so the rule
  * is given a name and every caller asks it by name.
  *
- * The lean is towards paying her: a figure on a screen has to say something,
- * and of the two readings the cheaper one is the one that costs her money. It
+ * The lean is towards paying them: a figure on a screen has to say something,
+ * and of the two readings the cheaper one is the one that costs them money. It
  * never reaches a filed sheet, because `unansweredHolidays` below stops the
  * export while any holiday is unanswered.
  */
@@ -108,7 +108,7 @@ export function clipEndOf(month: YearMonth, today?: IsoDate): IsoDate {
  * what lets every reader after it take `from` and `to` as they stand.
  *
  * A spell that has not reached `clipAt` yet closes at its own first day rather
- * than before it. That cannot arise from a spell a worker actually took — she
+ * than before it. That cannot arise from a spell a worker actually took — they
  * cannot fall ill after the month being calculated — but a caller asking for a
  * future month would otherwise hand the counting an inverted range, and a range
  * that runs backwards is the kind of thing that produces a plausible number.
@@ -231,15 +231,15 @@ export interface WorkerTerms {
    * over (specs.md items 7, 10, 15). */
   employedSince: IsoDate;
   /**
-   * The month the application starts calculating her from (specs.md item 6):
-   * the month she was added in or the one before it. No month before it can be
+   * The month the application starts calculating them from (specs.md item 6):
+   * the month they were added in or the one before it. No month before it can be
    * opened or viewed. A fact about the employment like `employedSince`, so it
    * is not snapshotted onto a month.
    */
   firstMonth: YearMonth;
   /**
-   * The worker's gender, which settles her income-tax credit points and the
-   * endings the sheet writes her role with (specs.md item 17, item 28).
+   * The worker's gender, which settles them income-tax credit points and the
+   * endings the sheet writes their role with (specs.md item 17, item 28).
    *
    * It is a fact about the worker rather than a term of one month, so it is
    * **not** snapshotted onto the month by `snapshotTerms`: correcting it is
@@ -271,7 +271,7 @@ export interface WorkerTerms {
   /**
    * The weekly rest day, which is a term of the employment and not a constant
    * (specs.md item 5). Friday, Saturday or Sunday, whichever the worker holds
-   * as her own; the profile defaults it to Saturday and refuses any other day.
+   * as their own; the profile defaults it to Saturday and refuses any other day.
    */
   restDay: RestDay;
   /**
@@ -764,7 +764,7 @@ export interface ThirdPartyPayment {
 export interface LineOverride {
   agorot: number;
   /**
-   * What the row was called when she replaced its amount — a **snapshot** and
+   * What the row was called when they replaced its amount — a **snapshot** and
    * never a lookup.
    *
    * An override outlives the row it addresses (specs.md item 17): a month whose
@@ -772,9 +772,9 @@ export interface LineOverride {
    * over it is still held and comes back with the row. The control has to list
    * such an override so that a stored figure is never out of sight — and at
    * that moment there is no row left to read a name off. The name kept here is
-   * the one the row carried when she chose the figure, which is also the only
-   * name that is true of the moment she chose it: a label derived from the
-   * worker's rest day would otherwise rename an old override the day her rest
+   * the one the row carried when they chose the figure, which is also the only
+   * name that is true of the moment they chose it: a label derived from the
+   * worker's rest day would otherwise rename an old override the day their rest
    * day changed.
    *
    * Optional, because a month seeded or stored before this field existed
@@ -952,7 +952,7 @@ export interface MonthContext {
    * settled it. Left out, it is **derived** by `holidayAllowanceFor` from the
    * worker's own terms — nine days for a full year, reduced by the months
    * employed in a year only partly worked (item 10) — so a month standing alone
-   * is still refused against the entitlement she actually has rather than
+   * is still refused against the entitlement they actually have rather than
    * against a flat nine.
    */
   holidayAllowance?: number;

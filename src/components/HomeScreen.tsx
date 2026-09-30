@@ -85,11 +85,11 @@ import type {
  * browser agree on it.
  */
 
-/** One worker as this screen needs her: who she is, the day she rests, and
- * every month she has, oldest first. */
+/** One worker as this screen needs them: who they are, the day they rest, and
+ * every month they have, oldest first. */
 export interface WorkerMonths {
   worker: Worker;
-  /** Her weekly rest day *as the profile currently holds it* — the calendar's
+  /** Their weekly rest day *as the profile currently holds it* — the calendar's
    * shading and its labels. A month's own figures were calculated against the
    * rest day stored on that month, which may differ for a family that moved it
    * (specs.md Part 3), and that one is read off `facts.terms` below. */
@@ -97,12 +97,12 @@ export interface WorkerMonths {
   /** Where the month arrows stop (specs.md item 6). */
   firstMonth: YearMonth;
   months: MonthInSeries[];
-  /** The month her replay refused, where it refused one (`specs.md` item 25).
-   * She has no figures then — one refused month stops the replay of every month
-   * after it — and the card above her columns says which month and why. The
+  /** The month their replay refused, where it refused one (`specs.md` item 25).
+   * They have no figures then — one refused month stops the replay of every month
+   * after it — and the card above their columns says which month and why. The
    * other worker's figures are untouched: the replay refuses per worker. */
   refused: RefusedMonth | null;
-  /** Every mark she has. Read only for a month after the current one, which
+  /** Every mark they have. Read only for a month after the current one, which
    * the replay does not value and so does not hand over (item 21), and whose
    * calendar still shows what was marked on it. */
   spans: MonthSpan[];
@@ -165,7 +165,7 @@ export function HomeScreen({
   // month anybody has — `openingMonthOf` says why, and the payments screen asks
   // the same question so the two never open on different months. A worker whose
   // replay refused opens on the refused month instead, and ahead of the
-  // address: the mark to correct is on that month and no month of hers can be
+  // address: the mark to correct is on that month and no month of theirs can be
   // valued, so the month the address asked for is no more drawable than any
   // other.
   const [chosenMonth, setMonth] = useState<YearMonth>(
@@ -178,7 +178,7 @@ export function HomeScreen({
       ),
   );
   // Whose the chosen month is. Switching to a worker the engine refused moves
-  // the calendar to her refused month, because the card names that month and
+  // the calendar to their refused month, because the card names that month and
   // the day to correct is on it — a calendar left where the other worker was
   // cannot show it. Adjusted during render, which is React's own pattern for
   // state that follows a prop: an effect would paint the wrong month first.
@@ -199,8 +199,8 @@ export function HomeScreen({
   // answer to what was actually saved.
   const [saving, startSaving] = useTransition();
 
-  // Never a month before hers: the arrows stop at her first month, and a month
-  // chosen while another worker was on screen is shown from her first instead.
+  // Never a month before theirs: the arrows stop at their first month, and a month
+  // chosen while another worker was on screen is shown from their first instead.
   const month = notBefore(chosenMonth, entry.firstMonth);
   const future = compareMonth(month, monthOf(today)) > 0;
   const shown = entry.months.find((inSeries) => sameMonth(inSeries.facts.month, month));
@@ -211,7 +211,7 @@ export function HomeScreen({
   // The marks of the month on screen. Where there is a valued month they are
   // the ones it was valued from; where there is none — a month ahead, which the
   // replay does not value (item 21), or a month the engine refused — they come
-  // off her spans directly, which is what keeps the calendar drawn when nothing
+  // off their spans directly, which is what keeps the calendar drawn when nothing
   // else on the screen can be.
   const spans =
     shown?.facts.spans ??
@@ -314,7 +314,7 @@ export function HomeScreen({
       <Blockers blockages={blockages} heading={leads === "blockers" ? "h1" : "h2"} />
 
       {/* Above the month's content and not inside the money column: it is the
-          state of everything this screen says about her and not of one figure,
+          state of everything this screen says about them and not of one figure,
           and the calendar beneath it is where the mark that caused it is
           corrected. It is the shown worker's alone — the other worker's figures
           are on the screen beside it. */}
@@ -713,7 +713,7 @@ function MoneyCard({
 }: {
   result: MonthResult;
   /** The month's own rest day, because the work-day count's explanation names
-   * her days (specs.md items 5, 14). */
+   * their days (specs.md items 5, 14). */
   restDay: RestDay;
   openWhy: string | null;
   onToggleWhy: (key: string) => void;

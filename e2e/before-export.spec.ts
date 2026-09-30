@@ -27,7 +27,7 @@ import { dayLabel, fullDayLabel, rangeLabel } from "../src/lib/dateLabels";
  *
  * - ₪6,443.85 from 1.4.2026 is the minimum wage in force during a month of
  *   2026, read out of `שכר_חודשי_להאנה2026.xlsx` → `חודש  4.26` → D6.
- *   The seed pays her ₪6,247.65, the 1.4.2025 figure, so the demo household is
+ *   The seed pays them ₪6,247.65, the 1.4.2025 figure, so the demo household is
  *   exactly the case item 3 describes: a salary that has fallen below the
  *   minimum and is raised to it when the month is confirmed.
  * - August 2026 records one holiday worked, on the 20th, and nothing else
@@ -219,8 +219,8 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
    *
    * **The navigation is the test, and a `goto` is not it.** Every other spec
    * here opens the screen fresh, which is the one way a user never reaches it:
-   * she arrives from the month she has just been marking, through the
-   * application's own links, and what she sees then is whatever the client
+   * they arrive from the month they have just been marking, through the
+   * application's own links, and what they see then is whatever the client
    * already holds for this route. So this walks that path — the export screen,
    * back to the month, the mark, and the export screen again through the home
    * screen's link — and asserts the mark is there with its date.
@@ -313,7 +313,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
 
     // And the truthful answer now agrees with the month, which is the half the
     // user met: "yes" against a screen that had not noticed the mark warned
-    // about the very day she had marked.
+    // about the very day they had marked.
     await answerEverything(page, [
       ...AUGUST_AGREES,
       "freeRestDays",
@@ -401,9 +401,9 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
   });
 
   /**
-   * Item 3: a salary may never sit below the minimum wage. The demo pays her
+   * Item 3: a salary may never sit below the minimum wage. The demo pays them
    * the 1.4.2025 figure and August 2026 is valued at the 1.4.2026 one, so the
-   * screen says the month will be confirmed at the higher figure — before she
+   * screen says the month will be confirmed at the higher figure — before they
    * presses, and not after. What this catches is a month written that pays
    * under its own confirmed minimum, which would look ordinary on the sheet.
    */
@@ -496,7 +496,7 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
     await expect(card.locator("[data-income-tax-amount]")).toContainText(
       formatAgorot(45000),
     );
-    // Named as hers, because it is: the amount was typed over the row for this
+    // Named as theirs, because it is: the amount was typed over the row for this
     // month alone.
     await expect(card).toContainText(he.month.actions.incomeTax.from.manual);
     await page.screenshot({

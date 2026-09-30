@@ -16,7 +16,7 @@ import type { YearMonth } from "@/lib/types";
  * Every month tab carries the balance in the `J` column of its sickness row —
  * `J19` in the 2025 tabs, `J20` in `חודש  12.24`, since the rows move between
  * years. Hanna was never ill in any of the three workbooks, so the column is a
- * pure accrual ladder from her first month: 1.5 a month from 1.4.2024, written
+ * pure accrual ladder from their first month: 1.5 a month from 1.4.2024, written
  * out month after month by somebody with no engine to help them.
  *
  * **This is what item 13 and Part 3 actually rest on.** Balances are never
@@ -27,7 +27,7 @@ import type { YearMonth } from "@/lib/types";
  * completely ordinary. Twenty-eight hand-written checkpoints are the answer to
  * that.
  *
- * **The ninety-day ceiling is not checked here and cannot be.** She reaches 42
+ * **The ninety-day ceiling is not checked here and cannot be.** They reach 42
  * days by July 2026, so the workbook never approaches it; `sick.test.ts` derives
  * that case on paper, which is what `CLAUDE.md` requires of a figure the sheet
  * has no answer for.
@@ -44,7 +44,7 @@ function wageFor(month: YearMonth): { agorot: number; from: string } {
 }
 
 /**
- * Every month from her first to July 2026, with an empty calendar.
+ * Every month from their first to July 2026, with an empty calendar.
  *
  * The marks are left off deliberately. Sickness accrual does not depend on any
  * of them, and the 2025 tabs pay ten holidays against an entitlement of nine
@@ -81,7 +81,7 @@ function everyMonth(): MonthFacts[] {
 
 /** `J` of the sickness row, tab by tab. Read off the workbooks, not computed. */
 const LADDER: [YearMonth, number][] = [
-  [{ year: 2024, month: 4 }, 1.5], // `חודש  4.24`  — her first month
+  [{ year: 2024, month: 4 }, 1.5], // `חודש  4.24`  — their first month
   [{ year: 2024, month: 9 }, 9],
   [{ year: 2024, month: 11 }, 12],
   [{ year: 2024, month: 12 }, 13.5],
@@ -95,7 +95,7 @@ const LADDER: [YearMonth, number][] = [
 ];
 
 describe("the sick balance the family kept by hand", () => {
-  // The ladder starts at her first 2024 tab, earlier than the fixture's first
+  // The ladder starts at their first 2024 tab, earlier than the fixture's first
   // month, so the walk is given that month as its first (item 6).
   const series = calculateSeries(everyMonth(), {
     ...workbookWorker(WAGE_2025),

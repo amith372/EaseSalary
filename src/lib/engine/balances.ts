@@ -64,10 +64,10 @@ export function vacationDaysPerYear(seniorityYear: number): number {
  *
  * **The year here is the calendar year, not the employment year.** That is how
  * the Annual Leave Act measures one: it turns over on the 1st of January, and a
- * worker who started mid-year completes her first working year on the 31st of
- * December of that same year even though she did not work twelve months of it
- * (specs.md item 7). A worker employed from 1.4.2024 is therefore in her first
- * year through 2024 and her fifth through 2028, and steps to sixteen days on
+ * worker who started mid-year completes their first working year on the 31st of
+ * December of that same year even though they did not work twelve months of it
+ * (specs.md item 7). A worker employed from 1.4.2024 is therefore in their first
+ * year through 2024 and their fifth through 2028, and steps to sixteen days on
  * 1.1.2028 — not on an anniversary in April.
  *
  * A partial calendar year still counts as a whole year on the ladder. What it
@@ -116,13 +116,13 @@ export function monthlyVacationAccrual(
  *
  * **The two kinds are counted from different things, and that is the rule
  * rather than an implementation detail.** Vacation is counted from the spans
- * the user marked, because a vacation day is a day she asked for. Sickness is
+ * the user marked, because a vacation day is a day they asked for. Sickness is
  * counted from the **spell**, because for a worker on a monthly salary the
  * period of illness runs over calendar days and the days inside it are deducted
  * from the accrued quota whether or not anybody marked them (item 8). So a
  * family that marks Friday and Sunday and leaves the Saturday between them alone
  * draws three days and not two — the same three a single swept range would have
- * drawn, which is the point: what she drew stops depending on how the days were
+ * drawn, which is the point: what they drew stop depending on how the days were
  * entered.
  */
 export function daysUsedIn(
@@ -252,10 +252,10 @@ export function buildBalances(
 const VACATION_DAYS_A_YEAR_THE_LAW_ASKS_FOR = 7;
 
 /**
- * The vacation days a calendar year must see taken: seven, or what she accrued
- * in the year where that is less, and none in a year she was not employed in
+ * The vacation days a calendar year must see taken: seven, or what they accrued
+ * in the year where that is less, and none in a year they were not employed in
  * (specs.md item 7). The statute cannot ask for days a partial year never gave
- * her. The accrual is counted the way `holidayAllowanceFor` counts a partial
+ * them. The accrual is counted the way `holidayAllowanceFor` counts a partial
  * year — the month employment began is a whole month.
  */
 export function vacationDaysTheLawAsksFor(

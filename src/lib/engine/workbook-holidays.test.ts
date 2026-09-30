@@ -13,7 +13,7 @@ import {
  * 2024 workbook prorated by hand.
  *
  * `specs.md` item 9 gives the rule the fixture is built to exercise: a holiday
- * she works is paid at the rest-day rate, a holiday she takes off changes
+ * they work is paid at the rest-day rate, a holiday they take off changes
  * nothing. Every holiday in these fifteen months was worked, so each one reaches
  * column F — and the two months carrying none are what stop a holiday line being
  * emitted unconditionally.
@@ -88,7 +88,7 @@ describe("a holiday she does not work changes nothing (item 9)", () => {
     // The fixture has no such holiday — the family only ever recorded worked
     // ones — so the case is built by turning one of `חודש  2.26`'s two off.
     // This is the check Part 5 calls for outright: the interface must never let
-    // "holiday" be recorded without saying whether she worked it, because the
+    // "holiday" be recorded without saying whether they worked it, because the
     // two readings differ by a full rest-day rate.
     const m = byTab("חודש  2.26");
     const facts = workbookFacts(m);
@@ -110,7 +110,7 @@ describe("a holiday she does not work changes nothing (item 9)", () => {
   });
 
   it("leaves both counts alone", () => {
-    // Item 5's own check: a holiday she worked changes the money, one she did
+    // Item 5's own check: a holiday they worked change the money, one they did
     // not work changes nothing, and a holiday that moves a count is a mistake.
     const m = byTab("חודש  2.26");
     const facts = workbookFacts(m);

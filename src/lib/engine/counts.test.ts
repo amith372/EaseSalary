@@ -120,7 +120,7 @@ describe("August 2025, the known case (specs.md Part 4)", () => {
   });
 
   it("counts two worked holidays as days worked", () => {
-    // Item 9: a holiday she works is worked. Both fall on weekdays, so the
+    // Item 9: a holiday they work is worked. Both fall on weekdays, so the
     // actual count still equals the standard count.
     const counts = countMonth(facts(AUGUST_2025, august2025Spans));
     expect(counts.actualDays).toBe(26);
@@ -177,7 +177,7 @@ describe("the Saturday-start and Sunday-start pair (specs.md Part 5)", () => {
 describe("what leaves the actual count and what does not (specs.md items 5, 8)", () => {
   it("leaves the actual count for vacation while the standard count holds", () => {
     // Item 5: "nothing the worker takes reduces it — neither vacation nor
-    // sickness. The actual count is that same figure less the days she did not
+    // sickness. The actual count is that same figure less the days they did not
     // in fact work." 18-20 August 2025 is Monday to Wednesday.
     const counts = countMonth(facts(AUGUST_2025, [vacation("2025-08-18", "2025-08-20")]));
     expect(counts.standardDays).toBe(26);
@@ -201,7 +201,7 @@ describe("what leaves the actual count and what does not (specs.md items 5, 8)",
 
   it("does not pay a Saturday inside a sick spell as a Saturday worked", () => {
     // Item 8: the rest days inside a spell count toward it and are drawn from
-    // the balance, but are not paid. Paying one would be a Saturday she spent
+    // the balance, but are not paid. Paying one would be a Saturday they spent
     // sick charged at the rest-day rate.
     const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-15", "2025-08-17")]));
     expect(counts.restDaysWorked).toBe(4);
@@ -225,7 +225,7 @@ describe("what leaves the actual count and what does not (specs.md items 5, 8)",
 });
 
 describe("a holiday never moves either count (specs.md item 5)", () => {
-  // The check item 5 records: a holiday she worked changes the money, one she
+  // The check item 5 records: a holiday they worked change the money, one they
   // did not work changes nothing at all, and a holiday that moves a count is a
   // mistake. This file owns the count half; `leave.test.ts` owns the money.
   const worked = countMonth(facts(AUGUST_2025, [holiday("2025-08-19", true)]));
@@ -264,8 +264,8 @@ describe("the rest-eve supplement is unconditional (specs.md item 14)", () => {
   });
 
   it("pays every rest-eve when one of them was taken as vacation", () => {
-    // Friday the 22nd on vacation. The count she is paid for stays five while
-    // the count she attended drops to four, which is the whole difference
+    // Friday the 22nd on vacation. The count they are paid for stays five while
+    // the count they attended drops to four, which is the whole difference
     // between the two fields.
     const counts = countMonth(facts(AUGUST_2025, [vacation("2025-08-22", "2025-08-22")]));
     expect(counts.restEves).toBe(5);

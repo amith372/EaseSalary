@@ -43,7 +43,7 @@ superseded `v3 לוח במרכז` are not departures any more.
 Measured after the cuts: nothing scrolls sideways at any width, and 1440×700
 fits without scrolling.
 
-### A refused month (every screen that replays her months)
+### A refused month (every screen that replays their months)
 
 **The canvas draws no such card, because it draws no refused month.** The engine
 declines to value a month it cannot value correctly (`specs.md` item 25, Part 4)
@@ -54,19 +54,45 @@ a stack trace.
 | Departure | Why |
 |---|---|
 | One card, carrying the month at fault, one sentence per refusal with its dates and its rule, and a line saying the months after it are waiting on the same correction | Two refusals in one month are one month's state; stacked cards would read as two separate failures. The month is named because one refused month stops the replay of every later one (item 13), so the screen catching it is usually asking about a different month |
-| On the opening screen the card sits **above** the columns and the calendar still draws beneath it, with its marks | That calendar is where the mark that caused the refusal is corrected, and it reads her spans rather than the engine, so it survives. A screen that drew only the card would state a problem and withhold the one control that fixes it |
+| On the opening screen the card sits **above** the columns and the calendar still draws beneath it, with its marks | That calendar is where the mark that caused the refusal is corrected, and it reads their spans rather than the engine, so it survives. A screen that drew only the card would state a problem and withhold the one control that fixes it |
 | The money column draws nothing at all while the card stands — not the `החודש הזה עדיין ריק` card it would otherwise fall back to | A refused month is not an empty one, and the fallback would contradict the card above it |
-| The refused worker's two rows leave the balances card, and the card itself goes only where nobody is left — a one-worker household, or both refused — leaving the rail holding `לייצא לאקסל` alone, drawn full width | A balance is derived by replaying the months (item 13), so a month the engine declined to value leaves nothing to derive one from, and her rows drew `[מספר] ימים` instead — a bracketed placeholder on screen, which is what `[השם שלך]` was cut for. An empty figure beside a real one is worse than no figure. The other worker's rows stay, because the rail answers where the *household* stands and her balances were never in question |
+| The refused worker's two rows leave the balances card, and the card itself goes only where nobody is left — a one-worker household, or both refused — leaving the rail holding `לייצא לאקסל` alone, drawn full width | A balance is derived by replaying the months (item 13), so a month the engine declined to value leaves nothing to derive one from, and their rows drew `[מספר] ימים` instead — a bracketed placeholder on screen, which is what `[השם שלך]` was cut for. An empty figure beside a real one is worse than no figure. The other worker's rows stay, because the rail answers where the *household* stands and their balances were never in question |
 | On the payslip, the payments screen and `דוחות` the card **is** the screen — for the worker the switcher is showing, and not for the other | None of the three has a calendar, every figure on them comes off the replay, and `דוחות` would otherwise offer a file for a month the engine declined to value. One step of the switcher and the other worker's screen is whole (`specs.md` item 25) |
 | The blocker strip is drawn as it always is, and the card sits below it as an `h2` | The strip is the household's and a refused worker is simply left out of its count (`alertsView.ts`), so the other worker's list stands. The card led the outline only while a refusal emptied the strip for everybody |
 | On `/workers` and `/workers/[id]` the card is drawn **compact**: the reason, its dates, the month and the rule stay; the body paragraph and the “every month after it is waiting” line go (the user, 2026-09-27) | Those two are lists of an employment and not screens that explain a month. The two lines that go are prose; the four that stay are what item 25 requires. One component with a `tone`, so the wording cannot fork between the screens that explain and the screens that list |
-| On `/workers` her card keeps the terms of her employment — name, avatar, country, employed-since — and loses the whole four-figure grid, her base salary with it (the user, 2026-09-27) | The terms are stored and not replayed, so a refusal says nothing about them. The salary would still be true, and it goes anyway: a grid of one cell is not the grid, and the card is what her row is now about. An empty figure beside a real one is worse than no figure |
-| Her status chip is not drawn at all while she is refused | The chip states `waitingMonth`, which is derived from the replay: a chip reporting `הכל מעודכן` beside a card saying the month could not be valued is the plainest kind of wrong answer |
+| On `/workers` their card keeps the terms of their employment — name, avatar, country, employed-since — and loses the whole four-figure grid, their base salary with it (the user, 2026-09-27) | The terms are stored and not replayed, so a refusal says nothing about them. The salary would still be true, and it goes anyway: a grid of one cell is not the grid, and the card is what their row is now about. An empty figure beside a real one is worse than no figure |
+| Their status chip is not drawn at all while they are refused | The chip states `waitingMonth`, which is derived from the replay: a chip reporting `הכל מעודכן` beside a card saying the month could not be valued is the plainest kind of wrong answer |
 | The other worker's card on `/workers` is untouched, and the add-worker card behaves exactly as it does otherwise | A refusal belongs to the employment whose month it is (item 25). An account holds two, and whether there is room for another is not a question the replay answers |
-| On `/workers/[id]` the card **is** the screen and carries the `h1`, with her name stated above it | Her months and her balances are the whole of that screen and both come off the replay. On the list her own card's heading names her; here nothing else would, so an address reached from a bookmark still says whose month it is |
-| A way back to the calendar sits **inside** the card, under the reason, on `/workers/[id]` — and **nowhere on `/workers`** (the user, 2026-09-27) | The refusal and its exit read as one thing. It is on her own page and not on the list because the opening screen shows one worker at a time and only an address naming a worker chooses her (`WorkerScope`): from `/workers/[id]` the link lands on her calendar, and from a list of two it would as often land on the other worker's, with no refusal on it to correct |
-| Neither screen gets an `error.tsx`, then or now | A refused month is a known state with a sentence written for it, not an error. A boundary would paper over the state the card exists to say, and would swallow genuine faults with it |
-| The two download addresses draw no refusal of their own: they send her to the opening screen, showing the worker the download named | A file is not a place to word a refusal, and the card is already written. The opening screen is the only one that draws the card *and* carries the calendar the mark is corrected on |
+| On `/workers/[id]` the card **is** the screen and carries the `h1`, with their name stated above it | Their months and their balances are the whole of that screen and both come off the replay. On the list their own card's heading names them; here nothing else would, so an address reached from a bookmark still says whose month it is |
+| A way back to the calendar sits **inside** the card, under the reason, on `/workers/[id]` — and **nowhere on `/workers`** (the user, 2026-09-27) | The refusal and its exit read as one thing. It is on their own page and not on the list because the opening screen shows one worker at a time and only an address naming a worker chooses them (`WorkerScope`): from `/workers/[id]` the link lands on their calendar, and from a list of two it would as often land on the other worker's, with no refusal on it to correct |
+| Neither screen gets an `error.tsx` of its own, then or now — the root one added later catches neither, because neither throws | A refused month is a known state with a sentence written for it, not an error. A segment boundary would paper over the state the card exists to say, and would swallow genuine faults with it |
+| The two download addresses draw no refusal of their own: they send them to the opening screen, showing the worker the download named | A file is not a place to word a refusal, and the card is already written. The opening screen is the only one that draws the card *and* carries the calendar the mark is corrected on |
+
+### When something fails (no artboard draws any of it)
+
+**The canvas draws thirteen screens and not one of them is a failure**, so
+until this stage every failure the application could meet was drawn by Next:
+English, and inside an RTL container the full stop displaced to the front of
+the sentence. The four surfaces below are the code's own, sharing one shape —
+a white card on the page ground, a sentence, and a way on — so that a family
+meeting one of them twice does not meet two different applications.
+
+They are four and not one because what the reader can do about each differs,
+and that is the only thing the wording has to get right.
+
+| Surface | What it draws | Why |
+|---|---|---|
+| **A fault at a control** (`FaultLine`) — an action that could not answer at all | One line under the control that was pressed, in the refusal's own type, and the rest of the screen untouched | The press failed and nothing else did. A page strip would take away the screen the user was working on to report that one button did not work (the user, 2026-09-27) |
+| **A fault that took the page** (`error.tsx`) — a render that threw, or one of the actions with no slot to answer with | The same sentence as the line above, as a card, inside the shell | A fault is a fault wherever it lands, and two wordings for one thing would be two things to learn. The shell stays because the layout did, so every other screen is still one click away |
+| **The root layout itself threw** (`global-error.tsx`) | The same sentence again, but drawn without the design system: its own `<html lang="he" dir="rtl">`, inline styles, and no import of the translations file | It replaces the root layout while it is showing, so there is nothing to inherit the direction, the fonts or the stylesheet from. A fallback for a layout that could not render must not depend on what that layout depends on — which is why its Hebrew is written out, the one deliberate exception to the one-translations-file rule |
+| **An address that does not exist** (`not-found.tsx`) | Its own sentence, and it does not invite a second try | The same address will go on not existing, so "try again" would be false here while being true of a fault. It is deliberately generic and never worded about a worker: an id that is nonsense and another household's real id reach it alike, and a specific sentence would say which of the two had been typed (the user, 2026-09-27) |
+
+| Departure | Why |
+|---|---|
+| No retry button on any of the four (the user, 2026-09-27) | Reloading is the same act and the browser already offers it. Next 16 names the boundary's prop `retry` and not `reset`, and a button wired to the older name is accepted and silently never fires — so it is left out rather than got wrong |
+| Every one of them carries a link home, and the pop-up closes instead | A failure with no way on is the one screen in the application that is a dead end |
+| Not one of them prints what went wrong | An error's message can carry a worker id, a Postgres message or ciphertext, and the screen it would be printed on is the one the family is looking at |
+| The two download addresses draw no failure screen of their own: every way they can fail is a 303 to a screen that can say it — an unconfirmed month to `/month/export` carrying its month, everything else to the opening screen | Both hand back a workbook, so anything they wrote instead is a bare page with no bar and no way on. This generalises the refusal row above, which was the first case of it |
 
 ### The calendar (on every screen that draws it)
 
@@ -210,18 +236,18 @@ folded sheet.
   open, since a button acting on what the user cannot see is a trap, while a
   *figure or a name* is drawn folded as well. Each of the six says the thing it
   is for: the tax its amount, `מקדמות` how many are still being repaid, and the
-  three that hold what she entered herself — her own lines, the payments to
-  third parties, and the figures she typed over the calculated ones — the names
+  three that hold what they entered themselves — their own lines, the payments to
+  third parties, and the figures they typed over the calculated ones — the names
   of what is in them, or a sentence saying there is nothing. Names and not
-  counts: these hold things she named or chose, so a name answers "what is in
+  counts: these hold things they named or chose, so a name answers "what is in
   there" where a number only says how much opening it would cost.
 - **A movement of an advance carries a לתקן beside its להסיר**, which the
   canvas draws on a line the user added and not here. The amount of an advance is
-  what she typed, so it is corrected rather than overridden (`specs.md` item 20),
+  what they typed, so it is corrected rather than overridden (`specs.md` item 20),
   and without the action the only correction was to remove the movement and record
   it again — which mints a grant a new number. The panel is the group's own, opened
   under the movement it corrects and prefilled with what it holds, in the idiom the
-  line she adds already uses.
+  line they add already uses.
 
 ### The forms on payments, settings, the holiday picker, before the export and sign-in
 
@@ -295,10 +321,10 @@ folded sheet.
 - **The employment group carries an `ארץ מוצא` row the canvas does not draw**, beside
   `מין` and in the same chips: the country was written once by the wizard and by
   nothing since, so a family that chose wrong held a profile permanently wrong
-  about where she is from, and printed it on `/workers` and on her own page. The
+  about where they are from, and printed it on `/workers` and on their own page. The
   chips offer exactly the countries a holiday list is stored for — the same offer
   the wizard makes — and the hint says what the answer decides, since the country
-  is only the *default* her holiday list is drawn from: a worker already moved to
+  is only the *default* their holiday list is drawn from: a worker already moved to
   another list keeps it.
 - **The minimum wage is drawn among the employment's rows, directly under
   `שכר בסיס לחודש`**, and not in the group the canvas puts it in. The salary's own
@@ -317,7 +343,7 @@ folded sheet.
   `הוזן ואושר על ידך`. It is `specs.md` item 4's fourth thing, and until now the
   only screen that showed it was the one confirming an export — so the answer to
   "which figure is the application holding, and out of where" existed nowhere the
-  user could go and look. The failed-fetch sentence before an export sends her
+  user could go and look. The failed-fetch sentence before an export sends them
   here for it.
 - **A standing line carries a lifetime the canvas does not draw**, and it is two
   selects over months and not a typed date (`specs.md` item 20). The wording the
@@ -403,7 +429,7 @@ folded sheet.
 
 | Departure | Why |
 |---|---|
-| `מדינת מקור` is required where the artboard marks it optional, and its select **opens on `לבחור מדינה` rather than on the first country** | It is what her holiday list is drawn from (item 12), so the first of six offered as an answer is a country nobody chose — and a step whose fields all look answered is one a family presses past without reading. `reviewNewWorker` refuses an empty one, in the browser and again in the action |
+| `מדינת מקור` is required where the artboard marks it optional, and its select **opens on `לבחור מדינה` rather than on the first country** | It is what their holiday list is drawn from (item 12), so the first of six offered as an answer is a country nobody chose — and a step whose fields all look answered is one a family presses past without reading. `reviewNewWorker` refuses an empty one, in the browser and again in the action |
 
 Its other two departures are about what a step *asks* rather than how it looks —
 step 2's first month and step 3's insurer — and are in `AddWorkerScreen.tsx`'s

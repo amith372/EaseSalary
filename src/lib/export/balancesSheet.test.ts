@@ -12,11 +12,11 @@ import { BALANCES_TEMPLATE, readTemplate } from "@/lib/export/template";
  *
  * **Every figure below is derived on paper from items 7 and 8 and never read
  * back from the engine.** Hanna was employed on 1.4.2024, so the whole of the
- * summer of 2025 sits in her second employment year, whose vacation quota is
+ * summer of 2025 sits in their second employment year, whose vacation quota is
  * fourteen days: the monthly accrual is therefore fourteen twelfths, and it is
  * carried as the fraction and never as 1.17 (Part 5 — the workbook's own
  * rounding here is what makes a balance drift a hundredth of a day a year).
- * Sick days accrue at 1.5 a month (item 8). She opens with nothing of either.
+ * Sick days accrue at 1.5 a month (item 8). They open with nothing of either.
  *
  *          vacation                         sick
  *   Jun    0 + 14/12 − 0 = 14/12            0   + 1.5 − 0 = 1.5
@@ -36,7 +36,7 @@ const AUGUST_MARKS: ClosedSpan[] = [
   { id: "vac-1", kind: "vacation", from: "2025-08-11", to: "2025-08-11" },
 ];
 
-// Her first month is the earliest month these cases walk (specs.md item 6).
+// Their first month is the earliest month these cases walk (specs.md item 6).
 const worker = { ...plainWorker(), firstMonth: { year: 2025, month: 6 } };
 
 function monthOf(month: number, spans: ClosedSpan[] = []): MonthFacts {

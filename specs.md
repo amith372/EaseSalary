@@ -42,7 +42,7 @@ points, and a family that has to look both up is a family that gets it wrong in 
 direction that underpays the state or the worker. The figure is derived from the month's
 wage, from the tax brackets in force during that month, and from the credit points the
 worker is entitled to. It is offered rather than imposed: the user confirms it before
-every export, exactly as she already confirms the minimum wage and the recuperation day
+every export, exactly as they already confirm the minimum wage and the recuperation day
 rate, and the confirmed figure is stored with the month so a past month reproduces at its
 own rates. It can be overridden like any other computed amount, and a month that withholds
 nothing holds zero. Nothing about it
@@ -79,7 +79,7 @@ a question about one of them is the expensive mistake.
 | 11 | household, members, invitations, and what a member may remove |
 | 12 | a year with no holiday list fetches one |
 | 13 | a month corrected after export, and every later month's balances with it |
-| 14 | the rest-eve supplement — per worker, and paid whether she worked the day or not |
+| 14 | the rest-eve supplement — per worker, and paid whether they worked the day or not |
 | 15 | the yearly recurring items; recuperation from seniority, its month, and its own anniversary clock |
 | 16 | third-party payments — the seven kinds, the four things each records, editing and removing one |
 | 17 | overrides; the income tax, how it is arrived at, snapshotted and corrected for one month; the three figures and which names survive a collapse; what is overridden against what is edited |
@@ -90,11 +90,12 @@ a question about one of them is the expensive mistake.
 | 22 | the four encrypted identifying numbers |
 | 23 | the balances exported on their own as a yearly table |
 | 24 | a figure opened to show how it was reached, and the help screen that points rather than restates |
-| 25 | a refusal carries the rule's link, is shown where she can act on it, and belongs to one worker |
+| 25 | a refusal carries the rule's link, is shown where they can act on it, and belongs to one worker |
 | 26 | every action resting on a legal rule links the page that states it |
 | 27 | the opening screen's warning list, the bell, and switching a kind off |
 | 28 | the three documents, their three expiry dates, and the warning windows |
 | 29 | the yearly salary summary for one worker |
+| 30 | every failure in Hebrew, addressed to a user of either gender — the fault at a control, the failure that takes the screen, an address that does not exist, and a download with no file |
 
 1. Entering the facts of August 2025 into a worker profile and exporting produces a
    sheet whose four total lines read 6,747.65 / 2,558.10 / 9,305.75 / 7,305.75.
@@ -124,7 +125,7 @@ a question about one of them is the expensive mistake.
    חודשית* records two readings of what a monthly salary is divided by to value one day —
    thirty, or the working days of the week, "21.67" for a five-day week and "25" for a
    six-day week — and this worker's week is six days, one weekly rest day. So the divisor
-   the family's own sheet uses is the second reading applied to her week, which is worth
+   the family's own sheet uses is the second reading applied to their week, which is worth
    writing down: it was chosen because the workbook uses it, and it turns out also to be
    defensible from the source rather than only from precedent. There is no
    vacation-day rate, because there is no vacation payment at all; see item 7. Rates and totals are
@@ -208,24 +209,24 @@ a question about one of them is the expensive mistake.
     an ordinary month — a free rest day, a vacation day, sick days — of which a single day
     is the common case and is simply a span of one. **A holiday is not among them**: the
     year's dates are chosen in advance and arrive on the month already drawn, and the only
-    thing the month records about one is whether she worked it, which is item 9's own
+    thing the month records about one is whether they worked it, which is item 9's own
     question and not a fourth mark. A vacation span
     skips the rest days inside it, because the rest day already stands outside the
     standard count, so drawing a vacation day for one would charge the worker twice; a
     sick span keeps its rest days, for the reason given in criterion 8.
     The sheet reports two counts. The standard count is the month's days less its
     rest days, and nothing the worker takes reduces it — neither vacation nor sickness. The actual
-    count is that same figure less the days she did not in fact work, and it exists to
+    count is that same figure less the days they did not in fact work, and it exists to
     answer the Wage Protection Act's requirement to list the days the worker actually
     worked. What leaves it: a vacation day, a sick day, and — once it is built — an absence
-    with no entitlement. What does not leave it: a holiday, worked or not — one she worked
-    is a working day like any other, and one she did not is a paid day the law lets her
-    take without a deduction, which the user counts as a day of her month rather than an
+    with no entitlement. What does not leave it: a holiday, worked or not — one they worked
+    are a working day like any other, and one they did not is a paid day the law lets them
+    take without a deduction, which the user counts as a day of their month rather than an
     absence. A day taken in part leaves the
     actual count in that same proportion, so half a vacation day leaves half a day.
     Rest days stand outside both counts from the start, so a free rest day touches
     neither. A holiday never moves either count, and that is the check to hold on to: one
-    she worked changes the money, one she did not work changes nothing at all (item 9),
+    they worked change the money, one they did not work changes nothing at all (item 9),
     and a holiday that moves a count is a mistake. The salary is
     calculated from the standard count, so vacation and sickness never shrink the base;
     the actual count is there to be read. An absence with no entitlement behind it — a day
@@ -250,7 +251,7 @@ a question about one of them is the expensive mistake.
     **The month screen is the calendar and what the month came to, and nothing that
     records a payment.** Three groups carry the rest, and each is a screen of its own
     rather than a card beside the calendar: **additional payments** — the advances
-    given and repaid, the income-tax line, the lines the user adds of her own (item
+    given and repaid, the income-tax line, the lines the user adds of their own (item
     20) and the manual overrides — and **payments to third parties** — national
     insurance, medical insurance, fees — are both the payments screen's, and **yearly
     settings** — the nine holidays, the recuperation month — are the settings
@@ -260,9 +261,9 @@ a question about one of them is the expensive mistake.
     rather than argued with, because the reason is what the screens are *for*: the
     month screen answers "what did this month come to", and every one of those groups
     is a place where something is *recorded*. A calendar with four control surfaces
-    around it asks the user to find the right one before she can answer a question she
+    around it asks the user to find the right one before they can answer a question they
     came with. What stays beside the calendar is the preview, which summarises (item
-    20) — and the summary is the thing that sends her to the screen that itemises.
+    20) — and the summary is the thing that sends them to the screen that itemises.
     **The payments screen is scoped to one worker and to one month**, and carries the
     same month control the calendar does. Two of the things it records are facts about
     a month and not dated payments — what income tax was withheld, and a line the user
@@ -285,12 +286,12 @@ a question about one of them is the expensive mistake.
     criterion 1 checks them.
     **Column H keeps its subtotal, and that is not an exception to the rule but the reason
     for it.** The third-party group is money that never reaches the worker (item 16), so it
-    is drawn outside her total in a card of its own, and its lines *do* add up to the figure
+    is drawn outside their total in a card of its own, and its lines *do* add up to the figure
     printed under them. What the rule forbids is a column total sitting under a group that
     is not that column; H is the one group on the screen that is a column.
     **The weekly rest day is a term of the employment, not a constant.** The law allows
-    only Friday, Saturday or Sunday, whichever the worker holds as her own — a Catholic
-    Filipina worker may ask for Sunday and a Muslim worker for Friday, and it is her right
+    only Friday, Saturday or Sunday, whichever the worker holds as their own — a Catholic
+    Filipina worker may ask for Sunday and a Muslim worker for Friday, and it is their right
     — while for a Jewish worker it is always Saturday. The profile therefore holds one of
     those three and refuses any other day; it defaults to Saturday, which is the common
     choice rather than the legal one. Everything that counted Saturdays counts rest days
@@ -298,14 +299,14 @@ a question about one of them is the expensive mistake.
     sickness, a holiday falling on a rest day, and column F — and the exported sheet names
     the worker's own day in its labels rather than saying Saturday to everyone. In the
     Hebrew interface a Saturday-resting worker still reads "שבת חופשית"; the term is
-    derived from her rest day rather than fixed in the wording. No action asks the
+    derived from their rest day rather than fixed in the wording. No action asks the
     user for a rate or a formula.
-6. **Each worker has a first month: the month the application starts calculating her from.**
-   It is chosen once when the worker is added — the month she is added in, or the month
+6. **Each worker has a first month: the month the application starts calculating them from.**
+   It is chosen once when the worker is added — the month they are added in, or the month
    before it, so a family registering early in a month can still pay the month that just
    ended — and no month before it can be opened or viewed. The first month is never
    earlier than the month the employment began: when the employment begins after the
-   month she is added in, her first month is the month it begins, and the choice is not
+   month they are added in, their first month is the month it begins, and the choice is not
    offered. A later correction that would put the date the employment began after the
    first month is refused, because the months from the first month on would then fall
    before the employment. The date the employment began
@@ -321,7 +322,7 @@ a question about one of them is the expensive mistake.
    asks about. From then on the application keeps them.
 7. Balances carry forward: month N+1 opens with the previous balance plus the monthly
    accrual minus what was used in month N.
-   **The worker's own page adds up what she has actually been paid across every month it
+   **The worker's own page adds up what they have actually been paid across every month it
    lists**, under the same name the months are
    listed by, so the total and the column are one figure reached one way. Only months
    that have a figure are counted: a month still open has no total, and counting it as
@@ -363,18 +364,18 @@ a question about one of them is the expensive mistake.
    eighteen in year six, twenty-one in year seven, and one more each year to a ceiling of
    twenty-eight. The year that counts here is the **calendar** year, because that is how
    the Annual Leave Act measures one: it turns over on the 1st of January, and a worker
-   who started in the middle of a year completes her first working year on the 31st of
-   December of that same year even though she did not work twelve months of it. So a
-   worker employed from 1.4.2024 is in her first year through 2024, her second through
-   2025, her fifth through 2028, and steps to sixteen days on 1.1.2028. A partial
+   who started in the middle of a year completes their first working year on the 31st of
+   December of that same year even though they did not work twelve months of it. So a
+   worker employed from 1.4.2024 is in their first year through 2024, their second through
+   2025, their fifth through 2028, and steps to sixteen days on 1.1.2028. A partial
    calendar year counts as a whole year on that ladder; what it reduces is the
    entitlement earned inside it, and that reduction happens on its own, because a year
-   she was employed for nine months of accrues nine monthly twelfths — 10.5 days at the
+   they were employed for nine months of accrues nine monthly twelfths — 10.5 days at the
    first-year rate — without anything prorating it by hand. An unused balance carries
    into the following years rather than being paid out at the end of December, and the
    application warns when a calendar year passed with fewer than seven vacation days
-   taken in it — or, where the vacation she accrued in that year came to fewer than seven,
-   fewer than she accrued; a worker not employed in that year is not warned about it — said in the December that closes that year, noting plainly that the law
+   taken in it — or, where the vacation they accrued in that year came to fewer than seven,
+   fewer than they accrued; a worker not employed in that year is not warned about it — said in the December that closes that year, noting plainly that the law
    asks for at least seven days a year and without pressing the point further. The
    application never deletes accrued days on its own. The sick balance accrues at 1.5 days a month, stops at ninety
    days, and never resets at a year boundary.
@@ -404,7 +405,7 @@ a question about one of them is the expensive mistake.
    count, sickness never reduces the base; it appears instead as a deduction covering the
    unpaid part of the sick days — a whole day for the first, half a day for the second
    and third, nothing from the fourth onward — so the worker is left with exactly what
-   the tiers give her. That deduction is written as a negative amount on the
+   the tiers give them. That deduction is written as a negative amount on the
    sickness-absence row of the salary column, inside the same subtotal as the base and the
    rest-eve supplement, and never among the one-off payments: a deduction is not a payment.
    Sick days leave the actual count and not the standard one. The sick balance is a floor
@@ -418,7 +419,7 @@ a question about one of them is the expensive mistake.
    each month. A rest day inside a spell does four separate things and they must not be
    collapsed into one: it is not paid; nothing is deducted from the money for it, because
    the standard count leaves rest days out, so the salary never paid for that day, there
-   is nothing to take back, and a deduction would charge her for a day she was not paid;
+   is nothing to take back, and a deduction would charge them for a day they were not paid;
    it is nonetheless drawn from the sick balance, which is a count of days and not a sum
    of money; and it advances the position in the spell, so the day after it stands one
    tier further on. A span marked over a day that cannot take the mark is
@@ -428,7 +429,7 @@ a question about one of them is the expensive mistake.
    shown to the user rather than absorbed silently, and a spell entered as one range is
    stored as one span wherever it legally can be. **A spell ends on the first *working*
    day no sickness was reported.** Days that touch are one spell however many spans they
-   were entered as, and so are days separated only by a day she owed no attendance: for a
+   were entered as, and so are days separated only by a day they owed no attendance: for a
    worker paid a monthly salary the period of illness is counted in calendar days, so the
    weekly rest day between two reported days sits inside the period rather than breaking
    it. Kol Zchut's *חישוב דמי מחלה לעובד במשכורת חודשית* states it plainly — "עובד
@@ -438,26 +439,26 @@ a question about one of them is the expensive mistake.
    like every other day of the spell**, because the same source says they are deducted
    from the accrued quota: the balance follows the spell and not the marks. This is not a
    corner case but the ordinary one, because the natural way to record an illness is to
-   mark the days she was absent from work — a family that marks Friday and Sunday and
+   mark the days they were absent from work — a family that marks Friday and Sunday and
    leaves Saturday alone means one illness, and reading it as two restarts the tiers and
-   pays the Sunday nothing. A day she *was* expected at work and no sickness was reported
+   pays the Sunday nothing. A day they *were* expected at work and no sickness was reported
    for does break the spell, which is what keeps the rule from swallowing an interval of
    any length.
 
-   **A day she owed no attendance is the weekly rest day and a holiday she did not
+   **A day they owed no attendance is the weekly rest day and a holiday they did not
    work.** The rest day is what the source says in so many words; the holiday is carried
    by the same holding rather than by a second authority, because what was held is that
-   the count runs over calendar days and not over "ימי עבודה בפועל", and a holiday she did
+   the count runs over calendar days and not over "ימי עבודה בפועל", and a holiday they did
    not work is precisely a day not worked in fact. That the extension is an extension is
    written here rather than left to be discovered: the page speaks of the weekly rest day
    alone, and the weekly rest day is simply the day that happened to be before the court.
-   A holiday she **did** work breaks the spell like any other day of attendance, because
-   she was at work. A **vacation** day breaks it too, and for a reason that is stronger
+   A holiday they **did** work breaks the spell like any other day of attendance, because
+   they were at work. A **vacation** day breaks it too, and for a reason that is stronger
    than the balance of arguments it first looks like: the law does not let one day be
-   both. Where a worker falls ill *during* a vacation, the days she is entitled to sick
+   both. Where a worker falls ill *during* a vacation, the days they are entitled to sick
    pay for are counted as sick days and only the days beyond them are drawn from the
    vacation quota — the day is converted rather than held in two places at once. So a day
-   still recorded as vacation is by definition a day she was not ill on, and a vacation
+   still recorded as vacation is by definition a day they were not ill on, and a vacation
    day sitting *inside* a period of illness is not a state that can arise. That is what
    separates it from the weekly rest day and the unworked holiday, which sit inside a
    period without contradicting it. That is how the law measures a period of
@@ -471,19 +472,19 @@ a question about one of them is the expensive mistake.
    supplement is paid for every rest-eve of the month whichever days the illness covered
    (item 14), so nothing in this criterion has to define what losing a week would mean.
    **A spell may be left open, and the application never asks for an end date.** On the day
-   a worker falls ill nobody knows the day she will return, so it is not asked for: the
-   spell runs from its first day and is closed when she comes back.
+   a worker falls ill nobody knows the day they will return, so it is not asked for: the
+   spell runs from its first day and is closed when they come back.
 
    **There is no gesture for opening one, and there is deliberately none.** A spell is
-   entered the way an illness is actually recorded — the days she was absent are marked,
+   entered the way an illness is actually recorded — the days they were absent are marked,
    as they happen or afterwards, in one range or several — and the days that touch are one
    spell however many spans they were entered as, with the weekly rest day and an unworked
    holiday between two of them sitting inside the period rather than breaking it (above).
-   So continuity is *inferred* and never declared, and a second gesture meaning "she is
+   So continuity is *inferred* and never declared, and a second gesture meaning "they are
    still ill" would be a second way to say what marking the days already says, with two
    states to keep in step. The open shape stays in storage and in the
    engine — `to` may be null and a month clips such a spell at its own last day — because
-   a spell genuinely has no end until she returns; no screen asks the user to say so. This
+   a spell genuinely has no end until they return; no screen asks the user to say so. This
    is why a spell crossing the end of a month needs no gesture of its own — an open spell
    is never *crossed*, it simply has not ended, and it stays one spell with one first day,
    which is what the tiers are counted from. An open spell is counted in a month by
@@ -497,10 +498,10 @@ a question about one of them is the expensive mistake.
    return corrects the months it touched and carries their balances forward, which is
    criterion 13 and needs nothing built for it here.
 9. A holiday the worker does not work changes nothing: a monthly salary is paid in full
-   and no vacation day is drawn. A holiday she works is paid at the rest-day rate.
-   **A holiday that falls on her weekly rest day is drawn on the calendar as a holiday and
-   is treated as one for nothing else**: the day is her weekly rest day, it is paid as one
-   whether she works it or not, and it draws nothing from the yearly entitlement, so
+   and no vacation day is drawn. A holiday they work is paid at the rest-day rate.
+   **A holiday that falls on their weekly rest day is drawn on the calendar as a holiday and
+   is treated as one for nothing else**: the day is their weekly rest day, it is paid as one
+   whether they work it or not, and it draws nothing from the yearly entitlement, so
    nothing is spent on it and another date may be chosen in its place. Choosing it is not
    refused,
    because a calendar is not a mistake — the clash is explained where it falls, with the
@@ -508,18 +509,18 @@ a question about one of them is the expensive mistake.
    The user never marks a day as a holiday on the month's calendar. The year's holidays
    are chosen in advance from the country's candidate list (item 10), so the dates arrive
    on the calendar already drawn, and the only thing the month records about one is
-   whether she worked it. That has three answers and not two: *nobody has said yet* is a
+   whether they worked it. That has three answers and not two: *nobody has said yet* is a
    state of its own, and not a quiet no. The state is shown as one colour in three
-   weights — a holiday nobody has answered for is dashed, one she did not work is an
-   outline, and one she worked is filled — and all three appear in the calendar's legend,
+   weights — a holiday nobody has answered for is dashed, one they did not work is an
+   outline, and one they worked are filled — and all three appear in the calendar's legend,
    because a month read back later has to be tellable apart at a glance. An unanswered
-   holiday is previewed as one she worked, and paid for, so the figure on the screen is
-   never the cheaper of two readings taken on her behalf; and a month is not exported
+   holiday is previewed as one they worked, and paid for, so the figure on the screen is
+   never the cheaper of two readings taken on their behalf; and a month is not exported
    while any holiday in it is unanswered (item 18), which is what makes the question an
    answer rather than a notice. Neither reading is a default: the preview leans towards
-   paying her because a figure has to say something, and the export refuses to proceed on
+   paying them because a figure has to say something, and the export refuses to proceed on
    a lean.
-10. The worker's holidays for the year are shown in advance as her country of origin's
+10. The worker's holidays for the year are shown in advance as their country of origin's
    full candidate list, with another country's list selectable instead, of which the
    user marks the paid ones. **The country is named wherever it is shown and never
    printed as its two-letter code**: the code is
@@ -532,14 +533,14 @@ a question about one of them is the expensive mistake.
    employment like any other and is changed where
    the rest are changed, offering exactly the countries a holiday list is stored for.
    Correcting it moves the *default* the holiday list is drawn from and nothing else: a
-   worker deliberately moved to another country's list or to a faith's stays where she was
+   worker deliberately moved to another country's list or to a faith's stays where they were
    put, and no month carries the country, so nothing already filed is restated.
 
    **A religion's list may be chosen in place of a
    country's**: the candidate list is either the
    holidays of a country or the holidays of a faith — Jewish, Muslim, Christian or
    Druze — and the two are one choice with two kinds of answer rather than two separate
-   settings. A worker's own holidays need not be her country's, and the four faiths are
+   settings. A worker's own holidays need not be their country's, and the four faiths are
    published in Israel as lists of their own, so the picker offers both and the user
    picks one. A religion's list is published as one page covering every year it knows
    rather than one page per year, and where such a page prints a date without a year at
@@ -565,17 +566,17 @@ a question about one of them is the expensive mistake.
    it is an amendment to the terms of the employment, agreed between the two sides: it
    records the date it was agreed on and a note, the old and the new date must both fall
    after that date and outside every confirmed month, and it is kept, with the old date,
-   the new date and the note, in a list under her holidays on the worker's page, so the
+   the new date and the note, in a list under their holidays on the worker's page, so the
    list as first agreed can always be read back. A day beyond the entitlement is refused,
    and an incomplete selection is visible at a glance.
 
    **A holiday that falls inside a spell of sickness is a holiday and not a sick day.**
-   The day pays the ordinary monthly salary like any holiday she did not work, it is drawn
+   The day pays the ordinary monthly salary like any holiday they did not work, it is drawn
    from the yearly entitlement, and it draws **nothing** from the sick balance: a day
    cannot be both, and charging it to the sick quota would spend a day of illness on a day
-   she was not going to be working anyway. It does not break the spell around it, for the
-   same reason the weekly rest day does not — a day she owed no attendance on says nothing
-   about whether she was still ill (Part 5).
+   they were not going to be working anyway. It does not break the spell around it, for the
+   same reason the weekly rest day does not — a day they owed no attendance on says nothing
+   about whether they were still ill (Part 5).
 11. A worker belongs to a household, never to a person. An account is a person who signs
     in; a household is the group of people who look after the same workers, and it holds
     no more than two workers. Every member of a household sees the same workers, the same
@@ -606,7 +607,7 @@ a question about one of them is the expensive mistake.
     because the family agreed to pay it, and that is recorded here as an agreed term rather
     than a statutory one so a later reader does not go looking for the law behind it.
 
-    **It is paid for every rest-eve of the month, whether she worked that day or not**,
+    **It is paid for every rest-eve of the month, whether they worked that day or not**,
     and it is not conditional on anything: not on attendance, not on sickness, and not on
     a setting. A family that agreed to pay a weekly supplement pays it, and the profile
     changes the amount or stops it altogether when the agreement changes. Nothing in the
@@ -616,7 +617,7 @@ a question about one of them is the expensive mistake.
     statutory one.
 
     **There is deliberately no "is it pocket money?" setting.** There was one, and it
-    branched the behaviour: under it a rest-eve she did not work was paid all the same,
+    branched the behaviour: under it a rest-eve they did not work was paid all the same,
     and it dragged criterion 8 into defining a working week so that a week wholly lost to
     sickness could be excepted. It was never a definition — whether a family calls the
     money pocket money is a remark about the money and not a fact that changes what is
@@ -660,7 +661,7 @@ a question about one of them is the expensive mistake.
     lodging and food — and this application deducts none of them, which is what the
     family's own workbook does: the base line of every month tab is labelled
     "משכורת בסיסית ללא הורדות (לינה ,מזון, שתיה,ביטוח רפואי )". A deduction the user
-    did not ask for would quietly reduce the wage, and there is no way for her to
+    did not ask for would quietly reduce the wage, and there is no way for them to
     notice a figure that was never shown.
     The sheet holds one row per kind of payment, and a month recording two of the same
     kind is refused rather than merged: two rows under one name can be neither
@@ -679,7 +680,7 @@ a question about one of them is the expensive mistake.
     and the visa itself is a seventh kind beside it.
     **Each kind is named on screen in the template's own words and never in a paraphrase.**
     Item 2 requires the exported file to carry the same Hebrew labels a month tab carries,
-    and a screen that taught the user a different name would send her looking for it on the
+    and a screen that taught the user a different name would send them looking for it on the
     sheet. `דמי השמה` (B12) and `דמי תאגיד` (B13) are two different fees in this
     industry and neither is `דמי תיווך`; B16 is `אגרה להארכת רשיון העסקה` and not a
     licence "renewal" in general. Where the two disagree the template is the authority and
@@ -693,7 +694,7 @@ a question about one of them is the expensive mistake.
     the national insurance is paid once a quarter and in arrears (item 19), so a payment of
     it is offered the quarter that ended before the month it is being recorded in, and the
     user changes it if the family paid late. The offer stops following the kind the moment
-    she touches it, exactly as item 20's placement chips stop following the direction. No
+    they touch it, exactly as item 20's placement chips stop following the direction. No
     period is derived for the yearly fees, and deriving one would be wrong rather than
     merely unhelpful: item 15's year runs from one employment anniversary to the next, so a
     fee paid in March covers the year *forward* from March while a quarter covers the months
@@ -734,7 +735,7 @@ a question about one of them is the expensive mistake.
     **How it is arrived at is a term of the employment, chosen once on the profile**, and
     there are three choices. *Automatic* works the
     figure out from the month's ברוטו, the bracket table in force during that tax year and
-    the worker's credit points, which follow from the gender on her profile — 2.25 for a
+    the worker's credit points, which follow from the gender on their profile — 2.25 for a
     foreign caregiver in home care and half a point more for a woman — and are never asked
     for as a number; credit points reduce tax and never pay a refund, so the figure is
     floored at zero, and at the minimum wage that is the ordinary answer rather than an
@@ -750,13 +751,13 @@ a question about one of them is the expensive mistake.
     **That correction may be typed either as a sum or as a share of the ברוטו**, because a
     family told "two and a half percent" by an
     accountant would otherwise have to do the arithmetic against a ברוטו that moves every
-    month — which is the arithmetic this application exists to take off her. The unit is
+    month — which is the arithmetic this application exists to take off them. The unit is
     the field's own and never the worker's setting: a month on the automatic mode may be
     corrected by a share, and a month on a flat rate by a sum. **What is stored is the
     amount either way**, and the conversion is made on the server against the month's own
     ברוטו read there: a percentage that stayed a percentage would re-derive itself the
     next time anything about the month moved, which is the one thing an override must
-    never do. The arithmetic is shown before it is saved, so what she agrees to is the
+    never do. The arithmetic is shown before it is saved, so what they agree to is the
     sum. A month with no ברוטו has no share to take and the correction is refused rather
     than stored as a zero nobody typed.
     The tax is also confirmed before an export and stored with the month like the minimum
@@ -798,13 +799,13 @@ a question about one of them is the expensive mistake.
     the collapse takes item 26's link with it.
     **Beside the control the rule stands in words, and not behind the "?".** Everywhere
     else an explanation is reached through the button beside a figure (item 24), and this
-    one is not: it is what the user has to know *before* she types, and someone who does
+    one is not: it is what the user has to know *before* they type, and someone who does
     not know it deducts too much. A rule that is merely reachable is reachable by the user
     who already suspects there is something to find, which is the user who did not need it.
     **The figure is typed as what is withheld, and the application gives it its sign** —
     the same rule item 20 states for a line the user adds, for the same reason: a sign the
     user types can disagree with the label beside it, and a tax entered negative would pay
-    her instead. A figure of zero is not an entry but the absence of one, and it is what
+    them instead. A figure of zero is not an entry but the absence of one, and it is what
     every month holds until the user says otherwise.
     A female caregiver therefore has 2.75 points and a male one 2.25; a foreign
     worker in another sector has one, and an asylum seeker holding a 2א5 permit
@@ -818,7 +819,7 @@ a question about one of them is the expensive mistake.
     and holiday pay, the sickness deduction — and leaves the fact behind it
     standing, which is why the row still says what it would otherwise have been.
     A line the user added, an advance movement and a payment to a third party
-    carry no derived figure at all: the amount **is** what she typed, so an
+    carry no derived figure at all: the amount **is** what they typed, so an
     override on one would be a second amount standing in front of the first with
     nothing on screen to say which is which, and the row would be marked manual
     against a figure that was manual already. Those are corrected by **editing
@@ -867,11 +868,11 @@ a question about one of them is the expensive mistake.
     figure was typed**, kept with the amount rather than looked up. There is no
     row left to read a name off — that is what makes it an orphan — and the
     names of several of these rows are derived from the worker's rest day
-    (item 5), so a name worked out afresh would rename an override she set
-    years ago the day her rest day changed. The name that is true of the moment
-    she chose the figure is the one that lets her recognise it. An override
+    (item 5), so a name worked out afresh would rename an override they set
+    years ago the day their rest day changed. The name that is true of the moment
+    they chose the figure is the one that lets them recognise it. An override
     stored before the name was kept has none, and is known by its amount and by
-    the reason she gave it.
+    the reason they gave it.
     **The control lives in the additional-payments group** — item 5 puts it
     there with the advances, the income tax and the user's own lines, and item 5
     puts that group on the payments screen. So that screen sees the month's
@@ -886,11 +887,11 @@ a question about one of them is the expensive mistake.
     days the calendar holds for it, and the sums the payments screen holds. It is what
     makes the set a confirmation of the month rather than of
     its totals — a count is a figure a family agrees with while the days sit on the wrong
-    dates, and it is the dates she actually remembers. The screen is therefore also the
+    dates, and it is the dates they actually remember. The screen is therefore also the
     summary of the month it is about, which is the second thing it is for: what was
     forgotten is visible as an absence.
     Where the month holds a spell of sickness still open (item 8), the question is the
-    specific one: has she returned, and on what day. A month is not exported over an unanswered open spell, because the one
+    specific one: have they returned, and on what day. A month is not exported over an unanswered open spell, because the one
     thing an open spell can get wrong is counting days for a worker who was already back.
     A month is likewise not exported while any holiday in it is unanswered (item 9): those
     dates arrive on the calendar from the year's chosen list rather than from anything the
@@ -933,7 +934,7 @@ a question about one of them is the expensive mistake.
     every combination of them is meant:
 
     - **Which way it moves.** An *addition* is money that reaches the worker; a
-      *deduction* is money withheld from what is transferred to her. The sign follows
+      *deduction* is money withheld from what is transferred to them. The sign follows
       from what the line is, so it can never disagree with the label beside it, and the
       user picks the kind rather than typing a minus.
     - **How long it lasts.** A *one-off* line belongs to one month. A *standing* line is
@@ -972,7 +973,7 @@ a question about one of them is the expensive mistake.
 
     **Where each lands on the sheet.** A line placed *before* the month's total needs a
     column, and which one follows from how long it lasts: a standing line sits in column E
-    beside the salary and the rest-eve supplement, because that is where what she earns
+    beside the salary and the rest-eve supplement, because that is where what they earn
     every month lives, and a one-off line sits in column G, which is what that column is
     for. A line placed *after* goes to the block below the columns, beside the income tax
     and the advance instalment — that block is where everything on the way from the
@@ -999,7 +1000,7 @@ a question about one of them is the expensive mistake.
     (item 5). The preview answers "what did this month come to", which nine rows answer
     worse than one. The payments screen is where the lines are *made*, and a control
     surface that hides what it has already recorded cannot be used — a user who cannot see
-    the line she just added adds it a second time. So it lists that month's own lines, each
+    the line they just added adds it a second time. So it lists that month's own lines, each
     with its reason, its direction and the side of the total it sits on, and each can be
     removed from there. **Removing a line takes any
     manual override on it away with it** (item 17): an override is addressed by the line's
@@ -1009,7 +1010,7 @@ a question about one of them is the expensive mistake.
     the things it records may change — the words, the amount, the direction and
     the placement. Removing and adding again would lose the note and mint a new
     id, and the id is what the line's own key is built from (item 17), so a
-    reader looking for the line she corrected would find one that had never
+    reader looking for the line they corrected would find one that had never
     existed before. Its amount is edited and never overridden, for the reason
     item 17 gives: what is written on a one-off line is the figure itself, and
     nothing under it was derived.
@@ -1044,7 +1045,7 @@ a question about one of them is the expensive mistake.
 
     **The number is the application's and is never typed.** It is minted in order — one
     past the highest the worker already carries, the opening position's included — so the
-    user chooses which advance she is repaying from the advances she has, and never has to
+    user chooses which advance they are repaying from the advances they have, and never has to
     know or remember a number (Part 1: the option that requires the user to know less). It
     is the workbook's own number and it is what the closing block's rows are addressed by,
     so it belongs to the worker for the life of the employment and is never reused.
@@ -1084,7 +1085,7 @@ a question about one of them is the expensive mistake.
 
     **Hospital overtime is an amount the user types, never a figure the application works
     out.** A live-in caregiver is not entitled by law to pay for overtime, so no rule prices
-    the hours she spent with the patient in hospital; what the family pays for them is its
+    the hours they spent with the patient in hospital; what the family pays for them is its
     own choice. The payments screen records it for one month as a single amount with an
     optional note, and it appears in the preview and on the sheet's own row for it,
     `שעות עבודה נוספות במהלך אישפוז`, in the one-off column, where it reaches the worker and
@@ -1118,7 +1119,7 @@ a question about one of them is the expensive mistake.
     written in exactly one place and a page that moves is fixed there.
 25. A refusal carries the same link as the action it refused. A user who has been
     stopped is exactly the user who wants to know why, and a refusal is the moment the
-    application can least afford to be taken on its word: it has just told her she may
+    application can least afford to be taken on its word: it has just told them they may
     not do something. The reference therefore belongs to the refusal itself rather than
     to a screen that assembles one beside it, for item 24's reason — a thing is
     explained where it happens — and every refusal the engine can produce resolves to
@@ -1130,23 +1131,23 @@ a question about one of them is the expensive mistake.
     is none: an empty field, an amount that is not a number, a choice outside the two the
     application offers. Nothing in law says a line must be given a name before it can be
     added — the application says it, because it cannot show the user a line with nothing
-    written on it. Such a refusal owes her the reason and not a reference, and inventing a
-    link for it would send her to a page that does not mention what stopped her, which is
+    written on it. Such a refusal owes them the reason and not a reference, and inventing a
+    link for it would send them to a page that does not mention what stopped them, which is
     worse than the sentence alone. The test is item 26's own: a refusal carries a link
     exactly where the action it refused would have carried one.
-    **A refused month is shown to the user, and is shown where she can act on it.** The
+    **A refused month is shown to the user, and is shown where they can act on it.** The
     engine declines to value a month it cannot value correctly rather than valuing it
     wrongly in silence, and a refusal nobody draws is the same as no refusal at all:
-    every screen that replays her months says which month was refused, one sentence per
+    every screen that replays their months says which month was refused, one sentence per
     refusal with the dates it names and the rule behind it. One refused month stops the
     replay of every month after it, so the sentence names the month at fault and not the
-    month the screen was asked for. Where the screen draws her calendar it keeps drawing
+    month the screen was asked for. Where the screen draws their calendar it keeps drawing
     it, because the mark to correct is on it.
-    **A refusal belongs to the worker whose month it is.** Each worker is replayed on her
-    own, so a refusal in one worker's months takes her figures off the screen and leaves
+    **A refusal belongs to the worker whose month it is.** Each worker is replayed on their
+    own, so a refusal in one worker's months takes their figures off the screen and leaves
     the other worker's standing — an account holds two, and a refusal in one employment
     says nothing about the other. **And a refused month has no file.** The two addresses
-    that hand back a workbook cannot draw a card, so they send her to the screen that
+    that hand back a workbook cannot draw a card, so they send them to the screen that
     does, where the mark to correct is; a download is not a second place to word a
     refusal.
 26. Every action that rests on a legal rule carries a link to the page that states it —
@@ -1250,6 +1251,39 @@ a question about one of them is the expensive mistake.
     every year at once, so the file stays one a person can read. It carries no passport
     number and no bank account number: those are shown on the screen that needs them and
     are not written into a file that leaves the application (item 22).
+30. **Nothing the application shows a user is in English, including its failures.** A
+    family employing a caregiver reads Hebrew, and a screen that gives up in another
+    language is a screen with no way out of it: the moment the user most needs to be told
+    what to do is the moment they are told nothing they can read. **And nothing said to
+    the user is said in one gender.** The worker's gender is recorded and every sentence
+    about them is inflected by it; the user's is never asked for, so a sentence addressed
+    to the user is written to fit either — which in practice means the infinitive and not
+    the imperative. Four things can fail, and each says so in Hebrew, in the place the
+    user is looking.
+    **An action that could not answer says so at the control that was pressed**, in one
+    sentence, and the rest of the screen keeps working. This is a *fault* and not a
+    refusal: a refusal names a reason the user can act on and is worded per rule
+    (item 25), while a fault is the action never answering at all — the network, the
+    database, a failure on the server — so it has nothing to name and one sentence covers
+    every one of them. Because trying again is what actually helps, the sentence says so,
+    which is exactly what a refusal's wording may never do.
+    **A failure that takes the whole screen says the same sentence**, and offers the way
+    to a screen that works. A fault is a fault wherever it lands, and two wordings for one
+    thing would be two things to learn.
+    **An address the application does not have says so without saying what is missing.** A
+    worker id reaches it both when it is nonsense and when it belongs to another
+    household, so a sentence naming a worker would tell the reader that someone else's id
+    is real. It does not invite a second try, because the same address will go on not
+    existing.
+    **No failure shows what went wrong.** An error's own message can carry a worker id, a
+    database message or ciphertext (item 22), so none of it is passed on: what the user is
+    shown is written in advance and never assembled from the failure.
+    **An address that hands back a file has no screen of its own, so it borrows one.**
+    Every way the two download addresses can fail sends the browser to a screen that can
+    say what is wrong — a month nobody confirmed to the confirmation, carrying its month;
+    anything else to the opening screen, showing the worker the download named. None of
+    them answers with text: a body from an address the browser expected a file from is a
+    bare page with no bar and no way on.
 
 ## Part 3 — Architectural guidance
 
@@ -1322,7 +1356,7 @@ day counts `B33` and `B34` all say "not including Saturdays"; `G1`, `B9`, `B24` 
 total sentence in `A26` all say "Saturdays"; `F5` says "a holiday or a Saturday"; and `B7`
 names Fridays for the weekly supplement. Every one of those becomes a placeholder filled
 from the month's stored rest day, so a worker whose rest day is Friday receives a sheet
-that says Friday throughout and counts her Fridays, while a Saturday worker's sheet is
+that says Friday throughout and counts their Fridays, while a Saturday worker's sheet is
 unchanged word for word. There is **one** template and not one per rest day: three templates would be
 three copies of a layout that must not diverge, and the rule below that a layout change is
 a template change would then mean making it three times. The closing block is built from however many advance lines the month has — one for
@@ -1377,8 +1411,8 @@ The worker's name is written into the export in Hebrew only, never with a Latin
 transliteration beside it, so a line of Hebrew is never broken up by a run in another
 script. Wording that names the worker by gender is filled from the profile rather than
 fixed in the template, so a sheet never calls a man a woman. **The screens do the
-same.** Every sentence in the application that names the worker — her page, her month,
-her seniority, whether she worked a holiday — is inflected from the gender on her
+same.** Every sentence in the application that names the worker — their page, their month,
+their seniority, whether they worked a holiday — is inflected from the gender on their
 profile, and the inclusive form survives only where no worker has been chosen yet or
 where the sentence states the law rather than this employment. A screen written in one
 gender is not a smaller version of the same fault than a sheet written in one: it
@@ -1395,7 +1429,7 @@ month draws from the balance only the days that fell inside it. Storing a copy o
 spell against each month would say the same thing twice, and closing it would then have to
 find every copy. An open spell overlaps every month from the one it began in onward, so a
 spell nobody closed goes on drawing sick days month after month: that is what an unclosed
-spell means and the application says so rather than quietly deciding she recovered, since
+spell means and the application says so rather than quietly deciding they recovered, since
 the only thing that ends a spell is the worker coming back. It does not run away
 unnoticed, because it runs into the floor — once the days it draws pass the sick balance
 the month is refused with its reason rather than over-drawn (item 8), so a spell left open
@@ -1467,7 +1501,7 @@ them sends whoever reads the log to the wrong place.
 **A failed fetch says which of the three failures happened and not merely that it failed**
 — the source could not be reached, the page arrived and the statement was not in it, or the
 figure was read and disbelieved. The user is told which, because they mean different things
-to her: the first may work in a minute, the second is a defect in this application, and the
+to them: the first may work in a minute, the second is a defect in this application, and the
 third means the page and this application disagree about a number.
 
 ## Part 4 — Validation approach
@@ -1484,17 +1518,17 @@ facts must produce a base of ₪6,247.65 plus a Friday supplement of ₪500, giv
 agora, with no tolerance.
 
 The deliberately invalid case is a date carrying more than one entry: the user records a
-day as one the worker was absent ill, and the same day as a holiday she worked. The
-application must refuse it and explain why, because she cannot have been absent ill and
+day as one the worker was absent ill, and the same day as a holiday they worked. The
+application must refuse it and explain why, because they cannot have been absent ill and
 at work on the same day. The same refusal covers a tenth paid holiday within a year, and
-a day recorded twice over. A holiday landing on a Saturday she had off is **not** among
+a day recorded twice over. A holiday landing on a Saturday they had off is **not** among
 them: such a day is not a holiday at all but the rest day it
 is, paid once and spending nothing from the nine (item 9), so there is no second rate
-for it to be paid at. The sick-and-worked day is a contradiction the application cannot resolve: she
+for it to be paid at. The sick-and-worked day is a contradiction the application cannot resolve: they
 cannot have been absent ill and at work on the same day, and choosing one reading
 silently would produce a figure that looks entirely ordinary. Left unrefused it costs a
 rest day — a spell of sickness covering a Saturday that is also marked as a holiday
-worked makes the sheet report three Saturdays where she worked four, because the
+worked makes the sheet report three Saturdays where they worked four, because the
 holiday is subtracted from a count sickness had already reduced.
 
 A count of worked Saturdays higher than the number of Saturdays in the month is **not**
@@ -1617,7 +1651,7 @@ naming either. They are written down here because the export and the on-screen p
 two views of one calculation and must call the same figure by the same word; two names for
 one number is how the sheet and the screen begin to disagree while both are right. The
 income-tax line sits in the closing block and not in column E, so it reduces the net and
-never the gross: the gross is what she earned, the net is what she is handed.
+never the gross: the gross is what they earned, the net is what they are handed.
 
 **In Hebrew there are three figures and not two, and `net` is not נטו.** The user's own
 words are ברוטו for the month's total and סך הכל תשלום לעובד/ת for the figure actually
@@ -1655,9 +1689,9 @@ salary divided by 25 plus the same salary divided by 182, multiplied by 1.5. A p
 150% of the daily rate is short by roughly fifty shekels a day and will quietly
 underpay every rest day of the year.
 
-The premium is owed for a holiday the worker works. A holiday she takes off is covered
-by her ordinary salary and earns nothing extra, so the interface must never let
-"holiday" be recorded without saying whether she worked it.
+The premium is owed for a holiday the worker works. A holiday they take off is covered
+by their ordinary salary and earns nothing extra, so the interface must never let
+"holiday" be recorded without saying whether they worked it.
 
 Do not copy numbers out of the source workbooks. Several are stale: the vacation-day
 rate stayed at the 2024 figure through 2025 and 2026 — and is not carried forward at all,

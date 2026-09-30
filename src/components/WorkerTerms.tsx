@@ -39,6 +39,7 @@ import { Chip } from "@/components/Chip";
 import {
   busyAttrs,
   buttonClass,
+  FaultLine,
   Field,
   inputClass,
   RefusalLine,
@@ -81,7 +82,7 @@ import {
  * It is reached from `הגדרות`, as the artboard draws it; the alert that names
  * an incomplete selection is the other way in.
  *
- * It shows what is chosen against what she has, because "an incomplete
+ * It shows what is chosen against what they have, because "an incomplete
  * selection is visible at a glance" is item 10's, and a row that only said
  * "choose holidays" would hide exactly the thing worth glancing at.
  */
@@ -218,7 +219,7 @@ export function RestDayControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.restDay;
-  const { refusal, run, busyAt } = useAction(onSubmit);
+  const { refusal, fault, run, busyAt } = useAction(onSubmit);
   // The question the change raised, and the day it was going to be changed to.
   // Set on every attempt, so an answer cannot be sent against a day the user
   // has since moved away from.
@@ -238,7 +239,7 @@ export function RestDayControl({
         return result;
       },
       undefined,
-      // The chip she pressed, or — once the panel is up — the panel's own save.
+      // The chip they pressed, or — once the panel is up — the panel's own save.
       Object.keys(answers).length === 0 ? String(day) : "stranded",
     );
   }
@@ -270,7 +271,7 @@ export function RestDayControl({
           onCancel={() => setAsking(null)}
         />
       ) : null}
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
     </TermRow>
   );
 }
@@ -283,11 +284,11 @@ export function RestDayControl({
  * canvas draws the rest day as three chips and says nothing about the question
  * behind them, so the panel is built in the idiom of the rows around it rather
  * than as a screen of its own: the question belongs where the change is made,
- * and a user sent elsewhere to answer it would have lost the change she was
+ * and a user sent elsewhere to answer it would have lost the change they were
  * making.
  *
  * **Nothing is saved until every mark has been answered**, because a partial
- * answer leaves the worker exactly where the change with no answers leaves her.
+ * answer leaves the worker exactly where the change with no answers leaves them.
  * Cancelling saves nothing at all (`build_plan.md` stage 8.5).
  */
 function StrandedPanel({
@@ -446,8 +447,8 @@ function StrandedChoiceRow({
  *
  * **It is here because it is correctable, and it was not before**: the wizard
  * wrote it once and nothing since could change it, so a family that chose wrong
- * held a profile permanently wrong about where she is from — and the country is
- * printed as a fact about her on `/workers` and on her page.
+ * held a profile permanently wrong about where they are from — and the country is
+ * printed as a fact about them on `/workers` and on their page.
  *
  * **Chips and not the wizard's select**, for the reason `RecuperationControl`
  * gives: every choice on this screen is a row of chips, and a dropdown would be
@@ -472,7 +473,7 @@ export function CountryControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.country;
-  const { refusal, run, busyAt } = useAction(onSubmit);
+  const { refusal, fault, run, busyAt } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -490,7 +491,7 @@ export function CountryControl({
           </Chip>
         ))}
       </div>
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
     </TermRow>
   );
 }
@@ -519,7 +520,7 @@ export function GenderControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.gender;
-  const { refusal, run, busyAt } = useAction(onSubmit);
+  const { refusal, fault, run, busyAt } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -535,7 +536,7 @@ export function GenderControl({
           </Chip>
         ))}
       </div>
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
     </TermRow>
   );
 }
@@ -571,7 +572,7 @@ export function IncomeTaxControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.incomeTax;
-  const { refusal, run, busyAt } = useAction(onSubmit);
+  const { refusal, fault, run, busyAt } = useAction(onSubmit);
   const [mode, setMode] = useState<IncomeTaxMode>(setting.mode);
   // The stored fraction shown back as a percentage, which is the unit the user
   // types in: 0.025 is 2.5. The conversion happens here and on the server, and
@@ -655,7 +656,7 @@ export function IncomeTaxControl({
       <p dir="auto" className="text-[13px] font-medium text-ink">
         {words.reminder}
       </p>
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
     </TermRow>
   );
 }
@@ -665,7 +666,7 @@ export function IncomeTaxControl({
  * (specs.md item 15).
  *
  * **The user chooses the month and never the days.** The entitlement follows
- * from her seniority and is reported beside the choice rather than offered as
+ * from their seniority and is reported beside the choice rather than offered as
  * one: item 15 is explicit that the days are worked out, and a field for them
  * would be a number the family has to know — which is what this application
  * exists not to ask.
@@ -692,7 +693,7 @@ export function RecuperationControl({
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.recuperation;
-  const { refusal, run, busyAt } = useAction(onSubmit);
+  const { refusal, fault, run, busyAt } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -730,14 +731,14 @@ export function RecuperationControl({
           {words.notYet}
         </p>
       )}
-      {refusal ? <Refusal reason={refusal} /> : null}
+      {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
     </TermRow>
   );
 }
 
 
 /**
- * Her base salary, and a change of it from a month the family names (specs.md
+ * Their base salary, and a change of it from a month the family names (specs.md
  * item 3).
  *
  * **It shows the salary in force this month**, which is not the profile's
@@ -765,7 +766,7 @@ export function SalaryControl({
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [from, setFrom] = useState("");
-  const { refusal, run, clear, saving } = useAction(onSubmit);
+  const { refusal, fault, run, clear, saving } = useAction(onSubmit);
   const changes = profile.salaryChanges ?? [];
 
   return (
@@ -858,7 +859,7 @@ export function SalaryControl({
             <span dir="auto">{words.change}</span>
           </button>
         )}
-        {refusal ? <Refusal reason={refusal} /> : null}
+        {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
       </div>
     </TermRow>
   );
@@ -886,7 +887,7 @@ export function InsurerControl({
 }) {
   const words = he.workers.profile.terms.insurer;
   const [value, setValue] = useState(insurer);
-  const { refusal, run, saving } = useAction(onSubmit);
+  const { refusal, fault, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -901,7 +902,7 @@ export function InsurerControl({
             dir="auto"
             className={inputClass}
           />
-          {refusal ? <Refusal reason={refusal} /> : null}
+          {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
           <button
             type="button"
             onClick={() => run(() => setInsurer(workerId, value))}
@@ -944,7 +945,7 @@ export function DocumentsControl({
   const [permit, setPermit] = useState(documents.employmentPermitExpiry ?? "");
   const [visa, setVisa] = useState(documents.workVisaExpiry ?? "");
   const [passport, setPassport] = useState(documents.passportExpiry ?? "");
-  const { refusal, run, saving } = useAction(onSubmit);
+  const { refusal, fault, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.title} hint={words.note}>
@@ -970,7 +971,7 @@ export function DocumentsControl({
           onChange={setPassport}
           stored={documents.passportExpiry}
         />
-        {refusal ? <Refusal reason={refusal} /> : null}
+        {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
         <button
           type="button"
           onClick={() =>
@@ -1023,7 +1024,7 @@ export function IdentifyingNumberControl({
 }) {
   const words = he.workers.profile.terms[numberWords[name]];
   const [typed, setTyped] = useState(number ?? "");
-  const { refusal, run, saving } = useAction(onSubmit);
+  const { refusal, fault, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -1054,7 +1055,7 @@ export function IdentifyingNumberControl({
           >
             <span dir="auto">{words.save}</span>
           </button>
-          {refusal ? <Refusal reason={refusal} /> : null}
+          {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
         </div>
       )}
     </TermRow>
@@ -1073,8 +1074,8 @@ export function EmployedSinceControl({
   onSubmit,
 }: {
   workerId: string;
-  /** The hint and the refusal both name her first month in the application,
-   * and agree with her (`he.workerWords`). */
+  /** The hint and the refusal both name their first month in the application,
+   * and agree with them (`he.workerWords`). */
   gender: Gender;
   employedSince: string;
   firstMonth: YearMonth;
@@ -1082,7 +1083,7 @@ export function EmployedSinceControl({
 }) {
   const words = he.workers.profile.terms.employedSince;
   const [typed, setTyped] = useState(employedSince);
-  const { refusal, run, saving } = useAction(onSubmit);
+  const { refusal, fault, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint(gender)}>
@@ -1108,6 +1109,8 @@ export function EmployedSinceControl({
             </RefusalLine>
           ) : refusal ? (
             <Refusal reason={refusal} />
+          ) : fault ? (
+            <FaultLine />
           ) : null}
         </div>
       )}
@@ -1135,7 +1138,7 @@ export function RestEveSupplementControl({
   onSubmit,
 }: {
   workerId: string;
-  /** The hint asks whether she worked that evening, and agrees with her
+  /** The hint asks whether they worked that evening, and agrees with them
    * (`he.workerWords`). */
   gender: Gender;
   agorot: number;
@@ -1144,7 +1147,7 @@ export function RestEveSupplementControl({
   const words = he.workers.profile.terms.restEveSupplement;
   const stored = agorot === 0 ? "" : amountFieldValue(agorot);
   const [typed, setTyped] = useState(stored);
-  const { refusal, run, saving } = useAction(onSubmit);
+  const { refusal, fault, run, saving } = useAction(onSubmit);
 
   return (
     <TermRow label={words.label} hint={words.hint(gender)}>
@@ -1171,7 +1174,7 @@ export function RestEveSupplementControl({
           >
             <span dir="auto">{words.save}</span>
           </button>
-          {refusal ? <Refusal reason={refusal} /> : null}
+          {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
         </div>
       )}
     </TermRow>

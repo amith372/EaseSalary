@@ -15,8 +15,8 @@ import type {
  *
  * **The amount travels as the user typed it and is parsed here**, on the server
  * side of the boundary, because the browser collects facts and decides nothing
- * (Part 3). The form runs the same `parseShekels` while she types, so the field
- * can say "that is not an amount" before she presses anything — one rule read
+ * (Part 3). The form runs the same `parseShekels` while they type, so the field
+ * can say "that is not an amount" before they press anything — one rule read
  * twice rather than two rules that must agree.
  *
  * **Nothing here signs anything.** The sign comes from `direction` wherever the
@@ -32,7 +32,7 @@ export interface UserLineDraft {
   direction: UserLineDirection;
   placement: UserLinePlacement;
   /** The reason, which is the part the application cannot derive and the part a
-   * later reader needs (item 20). Empty means she did not give one. */
+   * later reader needs (item 20). Empty means they did not give one. */
   note: string;
 }
 
@@ -88,7 +88,7 @@ export function reviewUserLine(
       label,
       direction: draft.direction,
       // Written even where it equals the default, because a stored value is
-      // what the user chose and `placementOf`'s default is what she was offered
+      // what the user chose and `placementOf`'s default is what they were offered
       // (item 20). A line saved without one would move if the default ever did.
       placement: draft.placement,
       agorot,

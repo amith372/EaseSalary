@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { ACTION_FAULT, type ActionFault } from "@/lib/actionFault";
 import { revalidatePath } from "next/cache";
 import { getRepository, requireWorker } from "@/lib/store";
 import { advanceLedger, nextAdvanceNumber } from "@/lib/engine/advances";
@@ -102,16 +103,17 @@ export type ProfileActionRefusal =
 
 export type ProfileActionResult =
   | { ok: true }
-  | { ok: false; reason: ProfileActionRefusal };
+  | { ok: false; reason: ProfileActionRefusal }
+  | ActionFault;
 
 /**
- * Save the worker, and carry the change into the months that follow her
+ * Save the worker, and carry the change into the months that follow them
  * profile (`specs.md` Part 5).
  *
  * **A term changed on the profile reaches every month that has not been
  * confirmed**, which is Part 5's own definition of a draft: confirming a month
  * is "the moment its figures stop moving with the profile". Today it reaches
- * every month she has, confirmed ones included — `monthsFollowingProfile` has
+ * every month they have, confirmed ones included — `monthsFollowingProfile` has
  * no predicate that excludes a confirmed month yet, and that is the one place
  * it would go.
  *
@@ -171,7 +173,8 @@ const restDayAnswers = [
 type SetRestDayResult =
   | { ok: true }
   | { ok: false; reason: ProfileActionRefusal }
-  | { ok: false; reason: "stranded"; stranded: StrandedFreeRestDay[] };
+  | { ok: false; reason: "stranded"; stranded: StrandedFreeRestDay[] }
+  | ActionFault;
 
 /**
  * The weekly rest day, which is a term of the employment and not a constant
@@ -202,57 +205,61 @@ export async function setRestDay(
   restDay: RestDay,
   answers: RestDayAnswers = {},
 ): Promise<SetRestDayResult> {
-  if (!isAllowedRestDay(restDay)) return { ok: false, reason: "restDay" };
-  const profile = await requireWorker(workerId);
-  const repository = await getRepository();
-  const [months, today] = await Promise.all([
-    repository.listMonths(workerId),
-    readToday(),
-  ]);
+  try {
+    if (!isAllowedRestDay(restDay)) return { ok: false, reason: "restDay" };
+    const profile = await requireWorker(workerId);
+    const repository = await getRepository();
+    const [months, today] = await Promise.all([
+      repository.listMonths(workerId),
+      readToday(),
+    ]);
 
-  const stranded = strandedFreeRestDays(
-    months,
-    restDay,
-    today,
-    await vacationClosingOf(workerId),
-  );
-  if (stranded.length === 0) {
+    const stranded = strandedFreeRestDays(
+      months,
+      restDay,
+      today,
+      await vacationClosingOf(workerId),
+    );
+    if (stranded.length === 0) {
+      return saveProfile(profile, { ...profile, restDay });
+    }
+
+    const writes: StrandedWrite[] = [];
+    for (const mark of stranded) {
+      const answer = answers[mark.id];
+      if (!isOneOfAnswers(answer)) return { ok: false, reason: "stranded", stranded };
+      if (answer !== "delete" && !mark[answer].offered) {
+        return { ok: false, reason: "stranded", stranded };
+      }
+      writes.push({ mark, answer });
+    }
+
+    // The spans first and the rest day after, so a write that fails leaves a
+    // month whose marks still agree with its own rest day. The reverse order
+    // would leave the worker in exactly the state this action exists to prevent.
+    const spans = await repository.listSpans(workerId);
+    for (const { mark, answer } of writes) {
+      // Narrowed on the kind as well as the id: a free rest day is always a
+      // closed single day, and that is what lets a move write `from` and `to`
+      // without inventing an end for a span that had none.
+      const span = spans.find((candidate) => candidate.id === mark.id);
+      // A mark another tab removed between the offer and the answer: there is
+      // nothing left to move, and nothing to put right either.
+      if (span === undefined || span.kind !== "freeRestDay") continue;
+      if (answer === "delete") {
+        await repository.deleteSpan(workerId, mark.id);
+      } else if (answer === "convert") {
+        await repository.saveSpan(workerId, { ...span, kind: "vacation" });
+      } else {
+        const date = mark[answer].date;
+        await repository.saveSpan(workerId, { ...span, from: date, to: date });
+      }
+    }
+
     return saveProfile(profile, { ...profile, restDay });
+  } catch {
+    return ACTION_FAULT;
   }
-
-  const writes: StrandedWrite[] = [];
-  for (const mark of stranded) {
-    const answer = answers[mark.id];
-    if (!isOneOfAnswers(answer)) return { ok: false, reason: "stranded", stranded };
-    if (answer !== "delete" && !mark[answer].offered) {
-      return { ok: false, reason: "stranded", stranded };
-    }
-    writes.push({ mark, answer });
-  }
-
-  // The spans first and the rest day after, so a write that fails leaves a
-  // month whose marks still agree with its own rest day. The reverse order
-  // would leave the worker in exactly the state this action exists to prevent.
-  const spans = await repository.listSpans(workerId);
-  for (const { mark, answer } of writes) {
-    // Narrowed on the kind as well as the id: a free rest day is always a
-    // closed single day, and that is what lets a move write `from` and `to`
-    // without inventing an end for a span that had none.
-    const span = spans.find((candidate) => candidate.id === mark.id);
-    // A mark another tab removed between the offer and the answer: there is
-    // nothing left to move, and nothing to put right either.
-    if (span === undefined || span.kind !== "freeRestDay") continue;
-    if (answer === "delete") {
-      await repository.deleteSpan(workerId, mark.id);
-    } else if (answer === "convert") {
-      await repository.saveSpan(workerId, { ...span, kind: "vacation" });
-    } else {
-      const date = mark[answer].date;
-      await repository.saveSpan(workerId, { ...span, from: date, to: date });
-    }
-  }
-
-  return saveProfile(profile, { ...profile, restDay });
 }
 
 /** One answered mark, held until every one of them has been answered: a
@@ -273,9 +280,9 @@ function isOneOfAnswers(value: unknown): value is RestDayAnswer {
  *
  * **A replay that refuses hands back nothing**: a worker already holding a
  * stranded mark from before this check existed cannot be replayed at all, and
- * that is precisely the worker who needs to answer the question. Her months
+ * that is precisely the worker who needs to answer the question. Their months
  * come back empty (`householdSeries.ts`), so with no balance to draw on the
- * conversion is not offered and the other two answers still put her right.
+ * conversion is not offered and the other two answers still put their right.
  */
 async function vacationClosingOf(workerId: string): Promise<Map<string, number>> {
   const closing = new Map<string, number>();
@@ -304,10 +311,14 @@ export async function setRestEveSupplement(
   workerId: string,
   amountText: string,
 ): Promise<ProfileActionResult> {
-  const agorot = parseRestEveSupplement(amountText);
-  if (agorot === null) return { ok: false, reason: "supplement" };
-  const profile = await requireWorker(workerId);
-  return saveProfile(profile, { ...profile, restEveSupplementAgorot: agorot });
+  try {
+    const agorot = parseRestEveSupplement(amountText);
+    if (agorot === null) return { ok: false, reason: "supplement" };
+    const profile = await requireWorker(workerId);
+    return saveProfile(profile, { ...profile, restEveSupplementAgorot: agorot });
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -329,14 +340,18 @@ export async function setEmployedSince(
   workerId: string,
   dateText: string,
 ): Promise<ProfileActionResult> {
-  const profile = await requireWorker(workerId);
-  const date = reviewEmployedSince(dateText, await readToday(), profile.firstMonth);
-  if (date === "invalid") return { ok: false, reason: "date" };
-  if (date === "range") return { ok: false, reason: "employedSinceRange" };
-  if (date === "afterFirstMonth") {
-    return { ok: false, reason: "employedSinceAfterFirstMonth" };
+  try {
+    const profile = await requireWorker(workerId);
+    const date = reviewEmployedSince(dateText, await readToday(), profile.firstMonth);
+    if (date === "invalid") return { ok: false, reason: "date" };
+    if (date === "range") return { ok: false, reason: "employedSinceRange" };
+    if (date === "afterFirstMonth") {
+      return { ok: false, reason: "employedSinceAfterFirstMonth" };
+    }
+    return saveProfile(profile, { ...profile, employedSince: date });
+  } catch {
+    return ACTION_FAULT;
   }
-  return saveProfile(profile, { ...profile, employedSince: date });
 }
 
 /**
@@ -346,33 +361,37 @@ export async function setEmployedSince(
  * else the user would have to know: a legally employed foreign caregiver holds
  * 2.25 credit points and a woman holds half a point more, so this one answer
  * settles the credit and the family is never asked for a number of points. It
- * also settles the endings the sheet writes her role with, which is why item
+ * also settles the endings the sheet writes their role with, which is why item
  * 28's `עובד/ת` carries both.
  *
  * Checked against `genders` rather than trusted from the chip that sent it, for
  * the reason `setRestDay` gives: an action is reachable by a crafted request,
- * and a value outside the two would sit on the profile and quietly credit her
+ * and a value outside the two would sit on the profile and quietly credit them
  * the smaller figure.
  */
 export async function setGender(
   workerId: string,
   gender: Gender,
 ): Promise<ProfileActionResult> {
-  if (!isAllowedGender(gender)) return { ok: false, reason: "gender" };
-  const profile = await requireWorker(workerId);
-  return saveProfile(profile, { ...profile, gender });
+  try {
+    if (!isAllowedGender(gender)) return { ok: false, reason: "gender" };
+    const profile = await requireWorker(workerId);
+    return saveProfile(profile, { ...profile, gender });
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
  * The worker's country of origin (specs.md item 10).
  *
  * **It is correctable, and correcting it is not restating anything.** The
- * country is the default her holiday list is drawn from and a fact printed
- * about her on `/workers` and on her page, so a family that chose wrong in the
- * wizard would otherwise hold a profile permanently wrong about who she is. No
+ * country is the default their holiday list is drawn from and a fact printed
+ * about them on `/workers` and on their page, so a family that chose wrong in the
+ * wizard would otherwise hold a profile permanently wrong about who they are. No
  * month carries it — `MonthTerms` does not — so nothing already filed moves.
  *
- * **A worker deliberately moved to another source stays where she was put**,
+ * **A worker deliberately moved to another source stays where they were put**,
  * which is `holidaySourceOf`'s own rule and needs nothing here: the correction
  * changes the default, and a stored `holidaySource` outranks the default.
  *
@@ -385,15 +404,19 @@ export async function setCountry(
   workerId: string,
   code: string,
 ): Promise<ProfileActionResult> {
-  const country = code.trim();
-  if (country === "") return { ok: false, reason: "country" };
-  const repository = await getRepository();
-  const offered = countriesWithLists(await repository.listHolidayLists());
-  if (!offered.some((candidate) => candidate.code === country)) {
-    return { ok: false, reason: "country" };
+  try {
+    const country = code.trim();
+    if (country === "") return { ok: false, reason: "country" };
+    const repository = await getRepository();
+    const offered = countriesWithLists(await repository.listHolidayLists());
+    if (!offered.some((candidate) => candidate.code === country)) {
+      return { ok: false, reason: "country" };
+    }
+    const profile = await requireWorker(workerId);
+    return saveProfile(profile, { ...profile, country });
+  } catch {
+    return ACTION_FAULT;
   }
-  const profile = await requireWorker(workerId);
-  return saveProfile(profile, { ...profile, country });
 }
 
 /**
@@ -418,10 +441,14 @@ export async function setIncomeTaxSetting(
   mode: string,
   percentageText: string,
 ): Promise<ProfileActionResult> {
-  const reviewed = reviewIncomeTax(mode, percentageText);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
-  const profile = await requireWorker(workerId);
-  return saveProfile(profile, { ...profile, incomeTax: reviewed.setting });
+  try {
+    const reviewed = reviewIncomeTax(mode, percentageText);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+    const profile = await requireWorker(workerId);
+    return saveProfile(profile, { ...profile, incomeTax: reviewed.setting });
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -442,11 +469,15 @@ export async function setRecuperationMonth(
   workerId: string,
   month: number,
 ): Promise<ProfileActionResult> {
-  if (!isMonthNumber(month)) {
-    return { ok: false, reason: "recuperationMonth" };
+  try {
+    if (!isMonthNumber(month)) {
+      return { ok: false, reason: "recuperationMonth" };
+    }
+    const profile = await requireWorker(workerId);
+    return saveProfile(profile, { ...profile, recuperationMonth: month });
+  } catch {
+    return ACTION_FAULT;
   }
-  const profile = await requireWorker(workerId);
-  return saveProfile(profile, { ...profile, recuperationMonth: month });
 }
 
 /**
@@ -463,12 +494,16 @@ export async function setInsurer(
   workerId: string,
   insurer: string,
 ): Promise<ProfileActionResult> {
-  const profile = await requireWorker(workerId);
-  return saveProfile(profile, { ...profile, insurer: insurer.trim() });
+  try {
+    const profile = await requireWorker(workerId);
+    return saveProfile(profile, { ...profile, insurer: insurer.trim() });
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
- * A change of her base salary, from a month the family names (specs.md item 3).
+ * A change of them base salary, from a month the family names (specs.md item 3).
  *
  * **The months before it keep the salary they were calculated with**, and the
  * months from it on carry the new one — a raise is agreed from some month and
@@ -487,29 +522,33 @@ export async function setSalaryChange(
   amountText: string,
   fromText: string,
 ): Promise<ProfileActionResult> {
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId);
-  const from = parseYearMonth(fromText.trim());
-  const rates = await repository.listRates();
+  try {
+    const repository = await getRepository();
+    const profile = await requireWorker(workerId);
+    const from = parseYearMonth(fromText.trim());
+    const rates = await repository.listRates();
 
-  const reviewed = reviewSalaryChange(
-    amountText,
-    from,
-    profile.employedSince,
-    from === null ? null : (rateInForce(rates, "minimumWage", from)?.value ?? null),
-  );
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+    const reviewed = reviewSalaryChange(
+      amountText,
+      from,
+      profile.employedSince,
+      from === null ? null : (rateInForce(rates, "minimumWage", from)?.value ?? null),
+    );
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  const updated: WorkerProfile = {
-    ...profile,
-    salaryChanges: withSalaryChange(profile.salaryChanges, reviewed.change),
-  };
-  await repository.saveWorker(updated);
+    const updated: WorkerProfile = {
+      ...profile,
+      salaryChanges: withSalaryChange(profile.salaryChanges, reviewed.change),
+    };
+    await repository.saveWorker(updated);
 
-  await saveMonthsReachedBySalaryChange(repository, updated, reviewed.change.from);
+    await saveMonthsReachedBySalaryChange(repository, updated, reviewed.change.from);
 
-  revalidatePath("/", "layout");
-  return { ok: true };
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -531,14 +570,18 @@ export async function addStandingLine(
   workerId: string,
   draft: StandingLineDraft,
 ): Promise<ProfileActionResult> {
-  const reviewed = reviewStandingLine(draft, randomUUID());
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+  try {
+    const reviewed = reviewStandingLine(draft, randomUUID());
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  const profile = await requireWorker(workerId);
-  return saveProfile(
-    profile,
-    { ...profile, standingLines: [...profile.standingLines, reviewed.line] },
-  );
+    const profile = await requireWorker(workerId);
+    return saveProfile(
+      profile,
+      { ...profile, standingLines: [...profile.standingLines, reviewed.line] },
+    );
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -560,26 +603,30 @@ export async function updateStandingLine(
   lineId: string,
   draft: StandingLineDraft,
 ): Promise<ProfileActionResult> {
-  const reviewed = reviewStandingLine(draft, lineId);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+  try {
+    const reviewed = reviewStandingLine(draft, lineId);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  const profile = await requireWorker(workerId);
-  if (!profile.standingLines.some((line) => line.id === lineId)) {
-    // A page held open over a line another tab has since removed. Refused
-    // rather than added back: she is looking at a form for something that is
-    // gone.
-    return { ok: false, reason: "entryUnknown" };
+    const profile = await requireWorker(workerId);
+    if (!profile.standingLines.some((line) => line.id === lineId)) {
+      // A page held open over a line another tab has since removed. Refused
+      // rather than added back: they are looking at a form for something that is
+      // gone.
+      return { ok: false, reason: "entryUnknown" };
+    }
+
+    return saveProfile(
+      profile,
+      {
+        ...profile,
+        standingLines: profile.standingLines.map((line) =>
+          line.id === lineId ? reviewed.line : line,
+        ),
+      },
+    );
+  } catch {
+    return ACTION_FAULT;
   }
-
-  return saveProfile(
-    profile,
-    {
-      ...profile,
-      standingLines: profile.standingLines.map((line) =>
-        line.id === lineId ? reviewed.line : line,
-      ),
-    },
-  );
 }
 
 /**
@@ -609,16 +656,20 @@ export async function removeStandingLine(
   workerId: string,
   lineId: string,
 ): Promise<ProfileActionResult> {
-  const profile = await requireWorker(workerId);
-  return saveProfile(
-    profile,
-    {
-      ...profile,
-      standingLines: profile.standingLines.filter(
-        (line) => line.id !== lineId,
-      ),
-    },
-  );
+  try {
+    const profile = await requireWorker(workerId);
+    return saveProfile(
+      profile,
+      {
+        ...profile,
+        standingLines: profile.standingLines.filter(
+          (line) => line.id !== lineId,
+        ),
+      },
+    );
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -639,11 +690,15 @@ export async function setOpeningDays(
   workerId: string,
   draft: OpeningDaysDraft,
 ): Promise<ProfileActionResult> {
-  const profile = await requireWorker(workerId);
-  const reviewed = reviewOpeningDays(draft, profile.openingPosition);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+  try {
+    const profile = await requireWorker(workerId);
+    const reviewed = reviewOpeningDays(draft, profile.openingPosition);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  return saveProfile(profile, { ...profile, openingPosition: reviewed.position });
+    return saveProfile(profile, { ...profile, openingPosition: reviewed.position });
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -661,25 +716,29 @@ export async function addOpeningAdvance(
   workerId: string,
   draft: OpeningAdvanceDraft,
 ): Promise<ProfileActionResult> {
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId);
-  const ledger = advanceLedger(
-    profile.openingPosition,
-    await repository.listMonths(workerId),
-  );
-  const reviewed = reviewOpeningAdvance(draft, nextAdvanceNumber(ledger));
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+  try {
+    const repository = await getRepository();
+    const profile = await requireWorker(workerId);
+    const ledger = advanceLedger(
+      profile.openingPosition,
+      await repository.listMonths(workerId),
+    );
+    const reviewed = reviewOpeningAdvance(draft, nextAdvanceNumber(ledger));
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  return saveProfile(
-    profile,
-    {
-      ...profile,
-      openingPosition: {
-        ...profile.openingPosition,
-        advances: [...profile.openingPosition.advances, reviewed.advance],
+    return saveProfile(
+      profile,
+      {
+        ...profile,
+        openingPosition: {
+          ...profile.openingPosition,
+          advances: [...profile.openingPosition.advances, reviewed.advance],
+        },
       },
-    },
-  );
+    );
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -696,35 +755,39 @@ export async function removeOpeningAdvance(
   workerId: string,
   advanceNumber: number,
 ): Promise<ProfileActionResult> {
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId);
-  const opening = profile.openingPosition.advances.find(
-    (advance) => advance.number === advanceNumber,
-  );
-  if (opening === undefined) return { ok: false, reason: "entryUnknown" };
+  try {
+    const repository = await getRepository();
+    const profile = await requireWorker(workerId);
+    const opening = profile.openingPosition.advances.find(
+      (advance) => advance.number === advanceNumber,
+    );
+    if (opening === undefined) return { ok: false, reason: "entryUnknown" };
 
-  const months = await repository.listMonths(workerId);
-  const repaidInMonths = months
-    .flatMap((facts) => facts.advances)
-    .filter(
-      (advance) =>
-        advance.number === advanceNumber && advance.kind === "repaid",
-    )
-    .reduce((total, advance) => total + advance.agorot, 0);
-  if (repaidInMonths > 0) return { ok: false, reason: "overRepaid" };
+    const months = await repository.listMonths(workerId);
+    const repaidInMonths = months
+      .flatMap((facts) => facts.advances)
+      .filter(
+        (advance) =>
+          advance.number === advanceNumber && advance.kind === "repaid",
+      )
+      .reduce((total, advance) => total + advance.agorot, 0);
+    if (repaidInMonths > 0) return { ok: false, reason: "overRepaid" };
 
-  return saveProfile(
-    profile,
-    {
-      ...profile,
-      openingPosition: {
-        ...profile.openingPosition,
-        advances: profile.openingPosition.advances.filter(
-          (advance) => advance.number !== advanceNumber,
-        ),
+    return saveProfile(
+      profile,
+      {
+        ...profile,
+        openingPosition: {
+          ...profile.openingPosition,
+          advances: profile.openingPosition.advances.filter(
+            (advance) => advance.number !== advanceNumber,
+          ),
+        },
       },
-    },
-  );
+    );
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -742,11 +805,15 @@ export async function setDocuments(
   workerId: string,
   draft: DocumentsDraft,
 ): Promise<ProfileActionResult> {
-  const reviewed = reviewDocuments(draft);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+  try {
+    const reviewed = reviewDocuments(draft);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  const profile = await requireWorker(workerId);
-  return saveProfile(profile, { ...profile, documents: reviewed.documents });
+    const profile = await requireWorker(workerId);
+    return saveProfile(profile, { ...profile, documents: reviewed.documents });
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -832,7 +899,7 @@ export async function createWorker(
  *
  * **The distinction is not academic and the other reading is a bug.** The floor
  * item 3 sets is a floor on the salary being agreed today — a family adding a
- * worker they have employed since 2019 is stating what they pay her now, not
+ * worker they have employed since 2019 is stating what they pay them now, not
  * what the law allowed then — and the seeded table begins in April 2025, so
  * checking against the start month would refuse every employment older than
  * the table with a sentence about the minimum wage. What a *month* was valued
@@ -884,15 +951,19 @@ export async function setIdentifyingNumber(
   name: string,
   value: string,
 ): Promise<ProfileActionResult> {
-  const known = identifyingNumberNames.find((one) => one === name);
-  if (known === undefined) return { ok: false, reason: "numberName" };
+  try {
+    const known = identifyingNumberNames.find((one) => one === name);
+    if (known === undefined) return { ok: false, reason: "numberName" };
 
-  const repository = await getRepository();
-  // Checked rather than assumed: a number written against an id nobody checked
-  // is a number written into somebody else's worker.
-  await requireWorker(workerId);
+    const repository = await getRepository();
+    // Checked rather than assumed: a number written against an id nobody checked
+    // is a number written into somebody else's worker.
+    await requireWorker(workerId);
 
-  await saveIdentifyingNumbers(repository, workerId, { [known]: value });
-  revalidatePath("/", "layout");
-  return { ok: true };
+    await saveIdentifyingNumbers(repository, workerId, { [known]: value });
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch {
+    return ACTION_FAULT;
+  }
 }

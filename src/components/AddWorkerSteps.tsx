@@ -67,7 +67,7 @@ import { formatAgorot } from "@/lib/money";
  *
  * **Three departures from the artboard, each because the drawing asks for
  * something the spec does not.** The artboard marks the country optional and it
- * cannot be — it is where her holiday list comes from, and a worker without one
+ * cannot be — it is where their holiday list comes from, and a worker without one
  * would be offered no list at all. Its step 2 offers calculating "from this
  * month" or "from the start of the employment"; item 6 offers this month or the
  * month before, never earlier than the employment, and asks for the opening
@@ -318,8 +318,8 @@ export function WhoStep({
             data-field="country"
           >
             {/* The select opens on nothing, so the country is chosen. It is
-                what her holiday list comes from, and the first of six is an
-                answer she never gave. */}
+                what their holiday list comes from, and the first of six is an
+                answer they never gave. */}
             <option value="">{words.countryPlaceholder}</option>
             {countries.map((country) => (
               <option key={country.code} value={country.code}>
@@ -530,7 +530,7 @@ function OpeningQuestions({
 }: {
   opening: OpeningDraft;
   /** The step before this one asked, so these sentences can say "שלו" or
-   * "שלה" rather than choosing one for her (`he.workerWords`). */
+   * "שלה" rather than choosing one for them (`he.workerWords`). */
   gender: Gender;
   plan: WizardPlan;
   change: (over: Partial<OpeningDraft>) => void;
@@ -886,7 +886,7 @@ export function DoneStep({
   headingRef,
 }: {
   workerId: string | null;
-  /** Every sentence on this step names her, so every one of them agrees with
+  /** Every sentence on this step names them, so every one of them agrees with
    * the answer the first step collected (`he.workerWords`). */
   gender: Gender;
   headingRef: HeadingRef;
@@ -935,4 +935,3 @@ export function DoneStep({
     </>
   );
 }
-

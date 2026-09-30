@@ -177,8 +177,8 @@ export function nextAdvanceNumber(ledger: readonly AdvanceStanding[]): number {
 
 /**
  * A movement the user is recording, as it leaves the browser. The amount
- * travels as she typed it and is parsed on the server side of the boundary
- * (Part 3), exactly as a line she adds does.
+ * travels as they typed it and is parsed on the server side of the boundary
+ * (Part 3), exactly as a line they add does.
  *
  * A grant carries no number: the application mints it (item 20), so there is
  * nothing about it for the user to choose beyond the amount and the reason.
@@ -192,8 +192,8 @@ export type AdvanceDraft =
  * of these carries a legal link**, which is item 25's own rule rather than an
  * omission: each is a refusal about the *form* of an entry — an amount that is
  * not one, a second row where the sheet holds one, more than the debt — and
- * nothing in law says any of them, so they owe her the reason and not a
- * reference to a page that would not mention what stopped her.
+ * nothing in law says any of them, so they owe them the reason and not a
+ * reference to a page that would not mention what stopped them.
  *
  * **That is not the same claim as the engine's own `advanceRecordedTwice`**,
  * which `validate.ts` does give a link. There the refused action is a *row on
@@ -222,9 +222,9 @@ export type AdvanceRefusal =
    * (see `reviewAdvanceEdit`).
    *
    * **It is the same state `advanceRepaidAlready` refuses and it is not the
-   * same sentence**, because what the user must do about it differs: there she
+   * same sentence**, because what the user must do about it differs: there they
    * is removing the advance and is told to take the repayments off first, here
-   * she has typed a figure and needs to know which figure it is too small for.
+   * they have typed a figure and needs to know which figure it is too small for.
    */
   | "advanceBelowRepaid";
 
@@ -255,7 +255,7 @@ export function whyRepaymentIsRefused(
   if (standing === undefined) return "advanceUnknown";
 
   // Refused before anything else, because the sentence the user needs is that
-  // the month already records one — not that her figure is wrong. The two rows
+  // the month already records one — not that their figure is wrong. The two rows
   // would share a key and neither could then be overridden or explained apart
   // from the other (items 17, 24).
   const already = monthAdvances.some(
@@ -508,7 +508,7 @@ export function reviewAdvanceEdit(
  * over that row dropped with it** (specs.md items 17, 20).
  *
  * The row keeps its key, so an override addressed to it would survive the
- * correction and stand in front of the figure she just corrected — the amount
+ * correction and stand in front of the figure they just corrected — the amount
  * on the sheet would be the old one, marked manual, with nothing on the screen
  * to say why. No advance row is overridable (`month.ts`), so this can only
  * reach an amount stored before that division was drawn, which is exactly the

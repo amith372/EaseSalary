@@ -20,8 +20,8 @@ import type { IsoDate } from "@/lib/types";
  * the file's silence on vacation is deliberate and `leave.test.ts` asserts it.
  *
  * What is left is the holiday half. A holiday behaves oppositely in money and
- * in the counts (item 5): one she worked changes the money and not the count,
- * one she did not work changes the count and not the money. `counts.ts` owns
+ * in the counts (item 5): one they worked change the money and not the count,
+ * one they did not work changes the count and not the money. `counts.ts` owns
  * that second half; this file owns the first.
  */
 
@@ -57,7 +57,7 @@ function holidayDaysIn(
     )
     .flatMap((span) => {
       return eachDate(span.from, span.to)
-        // A holiday on her weekly rest day is not a holiday (item 9): the day
+        // A holiday on their weekly rest day is not a holiday (item 9): the day
         // is paid as a rest day, worked or not, and spends nothing from the
         // year's nine.
         .filter((date) => counted.has(date))
@@ -76,12 +76,12 @@ function totalFraction(days: HolidayDay[]): number {
  *
  * **A holiday inside a spell of sickness is a holiday and is drawn from here**
  * (item 10). It pays the ordinary salary
- * like any holiday she did not work and draws nothing from the sick balance —
+ * like any holiday they did not work and draws nothing from the sick balance —
  * `sick.ts` is the other half of that — because charging it to the sick quota
- * would spend a day of illness on a day she was not going to be working anyway.
+ * would spend a day of illness on a day they were not going to be working anyway.
  *
- * **A holiday on her weekly rest day is not drawn from here either**, and for
- * the opposite reason (item 9): that day is her rest day and is paid as one, so
+ * **A holiday on their weekly rest day is not drawn from here either**, and for
+ * the opposite reason (item 9): that day is their rest day and is paid as one, so
  * nothing about it is a holiday except how the calendar draws it.
  */
 export function holidayDaysOf(
@@ -92,10 +92,10 @@ export function holidayDaysOf(
 }
 
 /**
- * Holiday days she worked — the ones that are paid, at the rest-day rate
+ * Holiday days they worked — the ones that are paid, at the rest-day rate
  * (specs.md item 9). **A holiday nobody has answered for is among them**, which
- * is `countsAsWorked`'s whole subject: the preview leans towards paying her, and
- * the export refuses to proceed while the question is still open. A holiday she does not work changes nothing: the monthly
+ * is `countsAsWorked`'s whole subject: the preview leans towards paying them, and
+ * the export refuses to proceed while the question is still open. A holiday they do not work changes nothing: the monthly
  * salary is paid in full on it and no vacation day is drawn, so it produces no
  * line at all rather than a line worth nothing.
  */
@@ -110,7 +110,7 @@ export function holidayDaysWorked(
  * The rest days paid on the rest-day line.
  *
  * **It is the count itself** (item 9). A holiday on the weekly rest day is not
- * a holiday at all, so it is paid on this line like any other rest day she
+ * a holiday at all, so it is paid on this line like any other rest day they
  * worked and there is nothing to take out. The function stays so the call site
  * goes on naming the rule it obeys.
  */

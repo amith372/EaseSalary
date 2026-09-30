@@ -100,7 +100,7 @@ test("an empty name keeps the wizard on its first step", async ({ page }) => {
 });
 
 /**
- * **`מדינת מקור` opens on nothing, and the step is not left until she chooses.**
+ * **`מדינת מקור` opens on nothing, and the step is not left until they choose.**
  *
  * The country is what the worker's holiday list is drawn from (`specs.md`
  * item 12), so a select that opens on the first of six saves a country nobody
@@ -217,13 +217,13 @@ test("adds the household's first worker, and every screen then has somebody to b
 
   await page.locator('[data-role="add-worker-finish"]').click();
 
-  // Her own page, with the shell back around it.
+  // Their own page, with the shell back around it.
   await expect(page).toHaveURL(/\/workers\/[0-9a-f-]+$/);
   await expect(page.getByRole("navigation", { name: he.nav.landmark })).toBeVisible();
   await expect(page.getByRole("heading", { name: NAME })).toBeVisible();
 
-  // The terms as they were typed, read back where they are changed. She is the
-  // household's only worker, so `/settings` opens on her.
+  // The terms as they were typed, read back where they are changed. They are the
+  // household's only worker, so `/settings` opens on them.
   await page.goto("/settings");
   await openSettingsGroups(page);
   const terms = page.locator('[data-terms="restDay"]');
@@ -235,7 +235,7 @@ test("adds the household's first worker, and every screen then has somebody to b
   await expect(page.getByRole("heading", { name: NAME })).toBeVisible();
 
   // And the home screen, which was the empty-household panel a moment ago and
-  // is now her month.
+  // is now their month.
   await page.goto("/");
   await expect(page.locator('[data-role="empty-household"]')).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: he.nav.landmark })).toBeVisible();
@@ -306,7 +306,7 @@ test.describe("the fourth step agrees with the worker described", () => {
         page.locator('[data-role="add-worker-finish"]'),
       ).toHaveText(`לדף ${hers}`);
 
-      // The lead above the card names her page too, so the whole step is read
+      // The lead above the card names their page too, so the whole step is read
       // and not only the part that was reported.
       await expect(
         page.getByText(`שמרנו את הפרטים. אפשר לשנות כל דבר בדף ${hers}.`),
@@ -407,11 +407,11 @@ test("the passport number survives the round trip", async ({ page }) => {
   await page.locator('[data-role="add-worker-finish"]').click();
 
   await expect(page.getByRole("heading", { name: NAME })).toBeVisible();
-  // The country chosen in step 1 is the country saved: her profile names the
+  // The country chosen in step 1 is the country saved: their profile names the
   // Philippines and not whichever list happens to sort first.
   await expect(page.getByText(COUNTRY_NAME)).toBeVisible();
   // Opened where it is shown: `/settings`, since the terms moved there on
-  // 2026-09-13. She is the household's only worker, so it opens on her.
+  // 2026-09-13. They are the household's only worker, so it opens on them.
   await page.goto("/settings");
   await openSettingsGroups(page);
   await expect(page.locator('[data-terms="passportNumber"]')).toContainText(PASSPORT);

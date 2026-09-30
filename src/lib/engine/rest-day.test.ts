@@ -30,10 +30,10 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  *
  * In August the Saturday- and Sunday-resting workers have five rest days each
  * and five rest-eves each, so their counts and their money agree to the agora;
- * only the Friday-resting worker stands out, on her four Thursdays. In March it
+ * only the Friday-resting worker stands out, on their four Thursdays. In March it
  * reverses: Friday and Saturday both give four rest days and four rest-eves,
- * and the Sunday-resting worker is the one that stands out, on her five
- * Sundays. **Each worker is therefore checked in the month that can see her.**
+ * and the Sunday-resting worker is the one that stands out, on their five
+ * Sundays. **Each worker is therefore checked in the month that can see them.**
  * This was found by mutation — forcing the rest day back to Saturday left every
  * Sunday-resting case in August passing — and it is written down because a
  * later reader tidying these two into one month would quietly undo them.
@@ -50,10 +50,10 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  * ₪2,558.10 Part 4 states outright. The method that reproduces the known case
  * to the agora is the method used below on the two that have no known case.
  *
- * **The Friday-resting worker, August 2025, nothing marked.** Her rest days are
+ * **The Friday-resting worker, August 2025, nothing marked.** Their rest days are
  * the five Fridays, so the standard count is 31 − 5 = 26 — the same 26 as
- * Hanna's, and for a different reason. Her rest-eve is the working day
- * immediately before her rest day (item 14), which is Thursday, and August
+ * Hanna's, and for a different reason. Their rest-eve is the working day
+ * immediately before their rest day (item 14), which is Thursday, and August
  * holds only four of those:
  *
  *   column E   624,765 + 4 × 10,000                 = 664,765   ₪6,647.65
@@ -61,11 +61,11 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  *   gross                                            = 877,940   ₪8,779.40
  *
  * Hanna's own August is ₪6,747.65 and ₪9,305.75, so no figure above can be
- * reached by a run that never left her calendar.
+ * reached by a run that never left their calendar.
  *
- * **The Sunday-resting worker, March 2026, nothing marked.** Her rest days are
+ * **The Sunday-resting worker, March 2026, nothing marked.** Their rest days are
  * the five Sundays — 1, 8, 15, 22, 29 — so the standard count is 31 − 5 = 26,
- * where a Saturday-resting worker's March is 31 − 4 = 27. Her rest-eve is
+ * where a Saturday-resting worker's March is 31 − 4 = 27. Their rest-eve is
  * Saturday, and March holds four:
  *
  *   column E   624,765 + 4 × 10,000                 = 664,765   ₪6,647.65
@@ -132,7 +132,7 @@ describe("a Friday-resting worker, August 2025 (specs.md items 5, 14)", () => {
   const result = calculateMonth(facts(worker, AUGUST_2025), worker);
 
   it("counts her five Fridays as rest days and her four Thursdays as rest-eves", () => {
-    // **The rest-eve count is what tells her from Hanna**: August holds five
+    // **The rest-eve count is what tells them from Hanna**: August holds five
     // Fridays but only four Thursdays — 7, 14, 21, 28 — so a run that still
     // answers five here never left Hanna's calendar. The standard count cannot
     // catch it, since 31 − 5 is 26 either way, which is why it is not asserted
@@ -168,7 +168,7 @@ describe("a Sunday-resting worker, March 2026 (specs.md items 5, 14)", () => {
 
   it("counts her five Sundays as rest days, against a Saturday-rester's four", () => {
     // March 2026 begins on a Sunday, so it holds five Sundays — 1, 8, 15, 22,
-    // 29 — and four Saturdays. **August could not have caught this**: there she
+    // 29 — and four Saturdays. **August could not have caught this**: there they
     // and Hanna hold five rest days and five rest-eves each and agree on every
     // figure to the agora.
     const counts = countMonth(facts(worker, MARCH_2026));
@@ -178,7 +178,7 @@ describe("a Sunday-resting worker, March 2026 (specs.md items 5, 14)", () => {
   });
 
   it("pays ₪6,647.65 in column E — the base plus four rest-eves", () => {
-    // 624,765 + 4 × 10,000; March holds four Saturdays, which are her
+    // 624,765 + 4 × 10,000; March holds four Saturdays, which are them
     // rest-eves.
     expect(columnTotal(result, "E")).toBe(664765);
   });
@@ -208,7 +208,7 @@ describe("a Sunday-resting worker, March 2026 (specs.md items 5, 14)", () => {
 
 /**
  * A rest day inside a spell of sickness advances the tier without being paid
- * and without being deducted for (item 8), so **which** day of the spell is her
+ * and without being deducted for (item 8), so **which** day of the spell is them
  * rest day changes what the month deducts.
  *
  * The spell 13–17 August 2025, read twice. Counting from its own first day:
@@ -220,10 +220,10 @@ describe("a Sunday-resting worker, March 2026 (specs.md items 5, 14)", () => {
  *   Sun 17  day 5   paid in full            0 unpaid
  *
  * A Saturday-resting worker's rest day is the 16th, which was costing nothing
- * anyway, so she deducts 1 + 0.5 + 0.5 = 2 days. A Friday-resting worker's rest
+ * anyway, so they deduct 1 + 0.5 + 0.5 = 2 days. A Friday-resting worker's rest
  * day is the 15th, which was carrying half a day, and a rest day is deducted
  * for nothing — the standard count left it out, so the salary never paid for it
- * and there is nothing to take back. She deducts 1.5 days.
+ * and there is nothing to take back. They deducts 1.5 days.
  *
  *   Friday-resting    1.5 × 24,990.6 = 37,485.9   →  −₪374.86
  *   Saturday-resting  2.0 × 24,990.6 = 49,981.2   →  −₪499.81
@@ -255,8 +255,8 @@ describe("a rest day inside a spell is not deducted for (specs.md item 8)", () =
   });
 
   it("deducts 2 days from a Saturday-resting worker, whose rest day is day four", () => {
-    // Her rest day falls where the tiers already pay in full, so it takes
-    // nothing off — the same spell costs her half a day more.
+    // Their rest day falls where the tiers already pay in full, so it takes
+    // nothing off — the same spell costs them half a day more.
     const worker = terms({ restDay: SATURDAY, openingPosition: opening });
     expect(deduction(worker)).toEqual({ units: -2, amount: -49981 });
   });
@@ -264,7 +264,7 @@ describe("a rest day inside a spell is not deducted for (specs.md item 8)", () =
 
 /**
  * The refusal is this worker's and not everyone's (item 5). A free rest day is
- * recorded on her own rest day, so the same date is a valid entry for one
+ * recorded on their own rest day, so the same date is a valid entry for one
  * worker and an impossible one for the next.
  */
 describe("a free rest day is refused per worker (specs.md item 5)", () => {
@@ -276,7 +276,7 @@ describe("a free rest day is refused per worker (specs.md item 5)", () => {
   });
 
   it("accepts a Friday-resting worker's free Friday and pays four rest days", () => {
-    // Friday the 15th is hers. Four of her five Fridays are then worked:
+    // Friday the 15th is theirs. Four of their five Fridays are then worked:
     // 4 × 42,635.062087912… = 170,540.24…, over an unchanged column E.
     const worker = terms({ restDay: FRIDAY });
     const result = calculateMonth(
@@ -292,7 +292,7 @@ describe("a free rest day is refused per worker (specs.md item 5)", () => {
     const month = facts(worker, AUGUST_2025, [free("2025-08-16")]);
     // Refused with the reason, not merely refused: a month that cannot be
     // calculated correctly is never calculated wrongly in silence, and the code
-    // is what the interface shows her.
+    // is what the interface shows them.
     expect(validateMonth(month, worker).map((r) => r.code)).toEqual([
       "freeRestDayNotRestDay",
     ]);
@@ -323,7 +323,7 @@ describe("a free rest day is refused per worker (specs.md item 5)", () => {
 });
 
 /**
- * The sheet names her own day (specs.md item 5).
+ * The sheet names their own day (specs.md item 5).
  *
  * Every string below is written out here from the Hebrew, not read back from
  * `he.ts`: the point of the assertion is that the wording the engine produces
@@ -335,7 +335,7 @@ describe("a free rest day is refused per worker (specs.md item 5)", () => {
  * reads as broken Hebrew for exactly the workers this step exists to serve.
  * Hanna's own wording is held byte-identical by `august-2025.snap.md`, which is
  * the other half of the check: the derivation has to move for these two and not
- * move at all for her.
+ * move at all for them.
  */
 describe("the sheet names her own rest day (specs.md item 5)", () => {
   function labels(worker: WorkerTerms, month: YearMonth) {
@@ -348,7 +348,7 @@ describe("the sheet names her own rest day (specs.md item 5)", () => {
   }
 
   it("says עבודה ביום שישי and תוספת ימי חמישי for a Friday-resting worker", () => {
-    // Her rest day is Friday and her rest-eve is Thursday, so the pay line
+    // Their rest day is Friday and their rest-eve is Thursday, so the pay line
     // names one and the supplement line the other.
     expect(labels(terms({ restDay: FRIDAY }), AUGUST_2025)).toEqual({
       restDays: "עבודה ביום שישי",
@@ -358,7 +358,7 @@ describe("the sheet names her own rest day (specs.md item 5)", () => {
   });
 
   it("says עבודה ביום ראשון and תוספת שבתות for a Sunday-resting worker", () => {
-    // Her rest-eve is Saturday, whose plural is שבתות and not ימי שבת — the
+    // Their rest-eve is Saturday, whose plural is שבתות and not ימי שבת — the
     // reason the words are a table and not a format string.
     expect(labels(terms({ restDay: SUNDAY }), MARCH_2026)).toEqual({
       restDays: "עבודה ביום ראשון",
@@ -379,7 +379,7 @@ describe("the sheet names her own rest day (specs.md item 5)", () => {
 
   it("agrees in gender in the refusal, which is where it would break first", () => {
     // נרשם for a masculine day and נרשמה for שבת. A refusal is the one sentence
-    // a user meets at her least forgiving moment, and it is assembled from more
+    // a user meets at them least forgiving moment, and it is assembled from more
     // inflected words than any other.
     const free = (date: string): ClosedSpan => ({
       id: `free-${date}`,

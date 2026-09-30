@@ -39,7 +39,7 @@ export const SALARY = 624765;
  * from. Derived in the docblock, not read back. */
 export const PLAIN_GROSS = 887940;
 
-/** The worker of Part 4: she rests on Saturday, so her rest-eve is Friday. */
+/** The worker of Part 4: they rest on Saturday, so their rest-eve is Friday. */
 export function plainWorker(standingLines: UserLine[] = []): WorkerTerms {
   return {
     employedSince: "2024-04-01",

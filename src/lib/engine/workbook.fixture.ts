@@ -82,10 +82,10 @@ interface WorkbookMonth {
   month: YearMonth;
   /** `D6` — the base monthly salary the month was valued at. */
   salaryAgorot: number;
-  /** `G3`. Empty where she worked every rest day. */
+  /** `G3`. Empty where they worked every rest day. */
   freeRestDays: IsoDate[];
   /** `H3`. Every holiday in these months was worked, which is why each one
-   * reaches column F: a holiday she takes off earns nothing extra (item 9). */
+   * reaches column F: a holiday they take off earns nothing extra (item 9). */
   holidaysWorked: IsoDate[];
   /** `E23` — the base plus the rest-eve supplement. */
   subtotalE: number;
@@ -112,7 +112,7 @@ interface WorkbookMonth {
   restDaysWorked: number;
   /**
    * Money that went to somebody other than the worker — column `H`, and outside
-   * her own total (specs.md item 16).
+   * their own total (specs.md item 16).
    *
    * **Absent on almost every tab, and that is the ordinary case.** Where a tab
    * does carry one, the figure is in `H` and the sentence describing it is in
@@ -498,8 +498,8 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
   },
 ];
 
-/** Hanna, as the three workbooks describe her: `C4` of every tab gives
- * "התחלת עבודה:  1.4.2024", and she rests on Saturday, so her rest-eve is
+/** Hanna, as the three workbooks describe them: `C4` of every tab gives
+ * "התחלת עבודה:  1.4.2024", and they rest on Saturday, so their rest-eve is
  * Friday. The recuperation month is March, which is where the payment actually
  * falls — `חודש  3.25` pays five days and `חודש  3.26` six — and not the July
  * the non-workbook fixtures happen to use. */

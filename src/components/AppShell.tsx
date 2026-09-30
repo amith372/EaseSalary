@@ -83,9 +83,9 @@ function useScrollRestoration(pathname: string): void {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  // **Read when she leaves, not while she scrolls.** The framework scrolls this
+  // **Read when they leave, not while they scroll.** The framework scrolls this
   // element to the top as a navigation starts, and a scroll listener records
-  // that nought over the place she was at — so the offset is taken in the click
+  // that nought over the place they were at — so the offset is taken in the click
   // that begins the navigation, before anything has moved, and again on a
   // `popstate` so that Forward has somewhere to return to as well.
   useEffect(() => {

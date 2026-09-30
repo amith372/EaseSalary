@@ -89,8 +89,8 @@ export type ExportQuestionKey = (typeof exportQuestionKeys)[number];
  * confirmed**. "Two sick days were
  * marked" is a figure a family agrees with while the days sit on the wrong
  * dates, and a month whose figure is right and whose dates are wrong exports a
- * sheet nobody can reconcile against the calendar. The dates are what she
- * actually remembers, so they are what she is shown.
+ * sheet nobody can reconcile against the calendar. The dates are what they
+ * actually remembers, so they are what they are shown.
  */
 export interface ExportQuestion {
   key: ExportQuestionKey;
@@ -104,7 +104,7 @@ export interface ExportQuestion {
    * dates, and empty where it recorded nothing.
    *
    * The holidays are the one place a `false` still carries items: `recorded`
-   * answers whether any was *worked*, and a holiday she did not work still
+   * answers whether any was *worked*, and a holiday they did not work still
    * falls in the month and is still listed — a family that reads the date and
    * remembers working it has found the mark that was never made.
    */
@@ -140,7 +140,7 @@ interface ExportQuestionCounts {
   days?: number;
   /** How many of a thing there are — payments recorded, holidays falling. */
   items?: number;
-  /** How many of `items` the month says yes about — the holidays she worked. */
+  /** How many of `items` the month says yes about — the holidays they worked. */
   of?: number;
   /** Money, in agorot, where the question is about a sum. */
   agorot?: number;
@@ -170,7 +170,7 @@ function spansOfKind<T extends MonthSpan>(
  * **The dates the screen lists are clipped by the same `clipToMonth`**, so the
  * days it counts and the dates it names can never be two different answers: a
  * question reading "2 days" above "30 March – 2 April" is a contradiction the
- * user has to resolve herself.
+ * user has to resolve themselves.
  */
 function daysInsideMonth(span: ClosedSpan, month: YearMonth): number {
   const clipped = clipToMonth(span, month);
@@ -231,7 +231,7 @@ export function exportQuestions(
   // Answered *and* worked, not `countsAsWorked`: the question asks what the
   // month records, and a holiday nobody has answered for records nothing. The
   // preview pays for it and the sentence must not therefore claim the family
-  // said she worked it.
+  // said they worked it.
   const holidaysWorked = holidays.filter(
     (span) => span.kind === "holiday" && span.worked === true,
   );
@@ -295,7 +295,7 @@ export function exportQuestions(
         agorot: sum(facts.thirdPartyPayments),
       },
       // Each payment says what it was for: "one payment to a third party" is a
-      // sentence a family cannot check, and the kinds are what she recognises
+      // sentence a family cannot check, and the kinds are what they recognise
       // (specs.md item 16).
       details: facts.thirdPartyPayments.map((payment) => ({
         shape: "money",
@@ -318,9 +318,9 @@ export function exportQuestions(
  * **Everything else on the screen is a warning**, including the current month
  * still running (`monthStillRunning`) and an answer that disagrees with what
  * the month recorded.
- * The user is the one who knows what happened, and a month she has looked at
- * and answered for is a month she is entitled to export; what item 18 buys is
- * that she was asked, not that the application overrules her.
+ * The user is the one who knows what happened, and a month they have looked at
+ * and answered for is a month they are entitled to export; what item 18 buys is
+ * that they were asked, not that the application overrules them.
  */
 // The list is the source and the union below is derived from it, so nothing
 // reads the array at run time today — the `export` that once made it a used
@@ -372,14 +372,14 @@ export function blocksExport(
   if (compareMonth(facts.month, monthOf(today)) > 0) blocks.push("monthNotBegun");
   if (openSickSpellOf(facts) !== null) blocks.push("openSickSpell");
   // Item 9. The preview reads an
-  // unanswered holiday as one she worked and pays for it, and this is what
+  // unanswered holiday as one they worked and pays for it, and this is what
   // stops that lean reaching a filed sheet: the figure on the screen has to say
   // something, and the export does not.
   //
-  // Only a holiday that counts as one. A holiday on her weekly rest day is
-  // treated as a holiday for nothing (item 9), so whether she "worked" it is
+  // Only a holiday that counts as one. A holiday on their weekly rest day is
+  // treated as a holiday for nothing (item 9), so whether they "worked" it is
   // already answered by the rest day itself — unmarked is a rest day worked, a
-  // free rest day mark is one she had off — and holding the export for a
+  // free rest day mark is one they had off — and holding the export for a
   // question whose answer changes nothing would be a question for its own sake.
   const counted = holidayDatesCounted(
     closeMonth(facts, today).spans,
@@ -394,7 +394,7 @@ export function blocksExport(
 /**
  * The last day of a spell, from the day the worker came back.
  *
- * **The user is asked the day she returned and not the last day she was ill**,
+ * **The user is asked the day they returned and not the last day they were ill**,
  * because the returning is the event the family witnessed — item 18 words the
  * question that way, and the artboard asks it in those words. The spell ends
  * the day before, and doing the subtraction here rather than in the browser is
@@ -409,7 +409,7 @@ export function spellEndFromReturn(returnedOn: IsoDate): IsoDate {
  *
  * A return on or before the day the spell began would leave a spell that ran
  * for no days at all, or one that ran backwards — the inverted range `types.ts`
- * already refuses to hand the counting. She was ill on the day she fell ill, so
+ * already refuses to hand the counting. They were ill on the day they fell ill, so
  * the earliest return that means anything is the day after it.
  */
 export function reviewReturnDate(
@@ -431,7 +431,7 @@ export function reviewReturnDate(
  *
  * `offered` may be `null`: the table begins in July 2025 and says nothing about
  * a month before it, which is the honest answer rather than a guessed date. The
- * user then types the figure, exactly as a failed wage fetch leaves her doing.
+ * user then types the figure, exactly as a failed wage fetch leaves them doing.
  */
 export function recuperationToConfirm(
   facts: MonthFacts,
@@ -476,7 +476,7 @@ export function reviewWageConfirmation(
  * (specs.md item 3), so a confirmation that meets a profile still holding last
  * year's figure raises the month to the wage in force rather than writing a
  * month that pays under its own confirmed minimum. The screen says it is
- * happening before she presses.
+ * happening before they press.
  *
  * **The profile itself is not rewritten**, which is the other half of item 3:
  * the salary does not follow a rise on its own, and how far *above* the minimum

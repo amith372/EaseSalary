@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { ACTION_FAULT, type ActionFault } from "@/lib/actionFault";
 import { revalidatePath } from "next/cache";
 import { getRepository, requireWorker } from "@/lib/store";
 import {
@@ -102,7 +103,7 @@ export async function markRange(
   }
   const existing = await repository.listSpans(workerId);
 
-  // Her own rest day, read from the profile because this is a new mark and not
+  // Their own rest day, read from the profile because this is a new mark and not
   // the recalculation of a month already confirmed — a month's stored terms are
   // what its *figures* are read against (Part 3), and those are the engine's.
   const { spans, skipped } = applyMark(intent, profile.restDay, existing);
@@ -158,7 +159,7 @@ export async function clearRange(
 }
 
 /**
- * The one fact a month records about a holiday: whether she worked it (item 9).
+ * The one fact a month records about a holiday: whether they worked it (item 9).
  *
  * The span is saved again with the answer changed, which is all a holiday's
  * record is — the date is not touched, because it came from the year's chosen
@@ -176,7 +177,7 @@ export async function setHolidayWorked(
     (candidate) => candidate.id === spanId,
   );
   // Not an error: a stale page can ask about a holiday the year no longer has,
-  // and the answer to "did she work a day that is not a holiday" is nothing.
+  // and the answer to "did they work a day that is not a holiday" is nothing.
   if (span === undefined || span.kind !== "holiday") return;
 
   await repository.saveSpan(workerId, { ...span, worked });
@@ -218,7 +219,8 @@ export type MonthActionRefusal =
 
 type MonthActionResult =
   | { ok: true }
-  | { ok: false; reason: MonthActionRefusal };
+  | { ok: false; reason: MonthActionRefusal }
+  | ActionFault;
 
 /**
  * The month a figure is being entered in, or `null`.
@@ -284,7 +286,7 @@ async function changeMonth(
  * amount. The reason lives beside the row in `month.ts`.
  *
  * The amount is stored positive and signed by the engine, so a tax can never be
- * entered in a direction that pays her.
+ * entered in a direction that pays them.
  */
 export async function setIncomeTax(
   workerId: string,
@@ -292,23 +294,27 @@ export async function setIncomeTax(
   amount: string,
   unit: TaxCorrectionUnit = "amount",
 ): Promise<MonthActionResult> {
-  if (amount.trim() === "") {
-    return clearOverride(workerId, month, lineKeys.incomeTax);
+  try {
+    if (amount.trim() === "") {
+      return clearOverride(workerId, month, lineKeys.incomeTax);
+    }
+
+    const agorot =
+      unit === "percentage"
+        ? await taxFromPercentageTyped(workerId, month, amount)
+        : parseShekels(amount);
+    if (agorot === null) return { ok: false, reason: "amount" };
+    if (agorot === "noGross") return { ok: false, reason: "noGross" };
+
+    return changeMonth(workerId, month, (record) =>
+      withOverride(record, lineKeys.incomeTax, {
+        agorot,
+        label: he.sheet.lines.incomeTax,
+      }),
+    );
+  } catch {
+    return ACTION_FAULT;
   }
-
-  const agorot =
-    unit === "percentage"
-      ? await taxFromPercentageTyped(workerId, month, amount)
-      : parseShekels(amount);
-  if (agorot === null) return { ok: false, reason: "amount" };
-  if (agorot === "noGross") return { ok: false, reason: "noGross" };
-
-  return changeMonth(workerId, month, (record) =>
-    withOverride(record, lineKeys.incomeTax, {
-      agorot,
-      label: he.sheet.lines.incomeTax,
-    }),
-  );
 }
 
 /**
@@ -322,19 +328,23 @@ export async function setHospitalOvertime(
   amount: string,
   note: string,
 ): Promise<MonthActionResult> {
-  if (amount.trim() === "") {
+  try {
+    if (amount.trim() === "") {
+      return changeMonth(workerId, month, (record) => ({
+        ...record,
+        hospitalOvertime: undefined,
+      }));
+    }
+    const agorot = parseShekels(amount);
+    if (agorot === null || agorot <= 0) return { ok: false, reason: "amount" };
+    const trimmed = note.trim();
     return changeMonth(workerId, month, (record) => ({
       ...record,
-      hospitalOvertime: undefined,
+      hospitalOvertime: trimmed === "" ? { agorot } : { agorot, note: trimmed },
     }));
+  } catch {
+    return ACTION_FAULT;
   }
-  const agorot = parseShekels(amount);
-  if (agorot === null || agorot <= 0) return { ok: false, reason: "amount" };
-  const trimmed = note.trim();
-  return changeMonth(workerId, month, (record) => ({
-    ...record,
-    hospitalOvertime: trimmed === "" ? { agorot } : { agorot, note: trimmed },
-  }));
 }
 
 /**
@@ -346,11 +356,15 @@ export async function setMonthNote(
   month: YearMonth,
   note: string,
 ): Promise<MonthActionResult> {
-  const trimmed = note.trim();
-  return changeMonth(workerId, month, (record) => ({
-    ...record,
-    note: trimmed === "" ? undefined : trimmed,
-  }));
+  try {
+    const trimmed = note.trim();
+    return changeMonth(workerId, month, (record) => ({
+      ...record,
+      note: trimmed === "" ? undefined : trimmed,
+    }));
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -397,13 +411,17 @@ export async function addUserLine(
   month: YearMonth,
   draft: UserLineDraft,
 ): Promise<MonthActionResult> {
-  const reviewed = reviewUserLine(draft, randomUUID());
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+  try {
+    const reviewed = reviewUserLine(draft, randomUUID());
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  return changeMonth(workerId, month, (record) => ({
-    ...record,
-    userLines: [...record.userLines, reviewed.line],
-  }));
+    return changeMonth(workerId, month, (record) => ({
+      ...record,
+      userLines: [...record.userLines, reviewed.line],
+    }));
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -418,9 +436,13 @@ export async function removeUserLine(
   month: YearMonth,
   lineId: string,
 ): Promise<MonthActionResult> {
-  return changeMonth(workerId, month, (record) =>
-    withoutOneOffUserLine(record, lineId),
-  );
+  try {
+    return changeMonth(workerId, month, (record) =>
+      withoutOneOffUserLine(record, lineId),
+    );
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -444,26 +466,30 @@ export async function addAdvance(
   month: YearMonth,
   draft: AdvanceDraft,
 ): Promise<MonthActionResult> {
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId);
-  if ((await monthToChange(workerId, profile, month)) === null) {
-    return { ok: false, reason: "noMonth" };
+  try {
+    const repository = await getRepository();
+    const profile = await requireWorker(workerId);
+    if ((await monthToChange(workerId, profile, month)) === null) {
+      return { ok: false, reason: "noMonth" };
+    }
+    const months = await repository.listMonths(workerId);
+    const facts = months.find((candidate) => sameMonth(candidate.month, month));
+    if (facts === undefined) return { ok: false, reason: "noMonth" };
+
+    const reviewed = reviewAdvance(draft, {
+      ledger: advanceLedger(profile.openingPosition, months),
+      monthAdvances: facts.advances,
+      month,
+    });
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+    return changeMonth(workerId, month, (record) => ({
+      ...record,
+      advances: [...record.advances, reviewed.advance],
+    }));
+  } catch {
+    return ACTION_FAULT;
   }
-  const months = await repository.listMonths(workerId);
-  const facts = months.find((candidate) => sameMonth(candidate.month, month));
-  if (facts === undefined) return { ok: false, reason: "noMonth" };
-
-  const reviewed = reviewAdvance(draft, {
-    ledger: advanceLedger(profile.openingPosition, months),
-    monthAdvances: facts.advances,
-    month,
-  });
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
-
-  return changeMonth(workerId, month, (record) => ({
-    ...record,
-    advances: [...record.advances, reviewed.advance],
-  }));
 }
 
 /**
@@ -484,24 +510,28 @@ export async function removeAdvance(
   advanceNumber: number,
   kind: AdvanceKind,
 ): Promise<MonthActionResult> {
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId);
-  const months = await repository.listMonths(workerId);
-  const facts = months.find((candidate) => sameMonth(candidate.month, month));
-  if (facts === undefined) return { ok: false, reason: "noMonth" };
+  try {
+    const repository = await getRepository();
+    const profile = await requireWorker(workerId);
+    const months = await repository.listMonths(workerId);
+    const facts = months.find((candidate) => sameMonth(candidate.month, month));
+    if (facts === undefined) return { ok: false, reason: "noMonth" };
 
-  const ledger = advanceLedger(profile.openingPosition, months);
-  const refused = whyRemovalIsRefused(
-    ledger.find((standing) => standing.number === advanceNumber),
-    facts.advances.find(
-      (advance) => advance.number === advanceNumber && advance.kind === kind,
-    ),
-  );
-  if (refused !== null) return { ok: false, reason: refused };
+    const ledger = advanceLedger(profile.openingPosition, months);
+    const refused = whyRemovalIsRefused(
+      ledger.find((standing) => standing.number === advanceNumber),
+      facts.advances.find(
+        (advance) => advance.number === advanceNumber && advance.kind === kind,
+      ),
+    );
+    if (refused !== null) return { ok: false, reason: refused };
 
-  return changeMonth(workerId, month, (record) =>
-    withoutAdvance(record, advanceNumber, kind),
-  );
+    return changeMonth(workerId, month, (record) =>
+      withoutAdvance(record, advanceNumber, kind),
+    );
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -527,31 +557,35 @@ export async function updateAdvance(
   kind: AdvanceKind,
   draft: AdvanceEditDraft,
 ): Promise<MonthActionResult> {
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId);
-  const months = await repository.listMonths(workerId);
-  const facts = months.find((candidate) => sameMonth(candidate.month, month));
-  if (facts === undefined) return { ok: false, reason: "noMonth" };
+  try {
+    const repository = await getRepository();
+    const profile = await requireWorker(workerId);
+    const months = await repository.listMonths(workerId);
+    const facts = months.find((candidate) => sameMonth(candidate.month, month));
+    if (facts === undefined) return { ok: false, reason: "noMonth" };
 
-  const movement = facts.advances.find(
-    (advance) => advance.number === advanceNumber && advance.kind === kind,
-  );
-  const standing = advanceLedger(profile.openingPosition, months).find(
-    (candidate) => candidate.number === advanceNumber,
-  );
-  // A page held open over a movement another tab has since removed. Refused
-  // rather than recorded again, as `updateUserLine` refuses it: she is looking
-  // at a form for something that is gone.
-  if (movement === undefined || standing === undefined) {
-    return { ok: false, reason: "entryUnknown" };
+    const movement = facts.advances.find(
+      (advance) => advance.number === advanceNumber && advance.kind === kind,
+    );
+    const standing = advanceLedger(profile.openingPosition, months).find(
+      (candidate) => candidate.number === advanceNumber,
+    );
+    // A page held open over a movement another tab has since removed. Refused
+    // rather than recorded again, as `updateUserLine` refuses it: they are looking
+    // at a form for something that is gone.
+    if (movement === undefined || standing === undefined) {
+      return { ok: false, reason: "entryUnknown" };
+    }
+
+    const reviewed = reviewAdvanceEdit(draft, movement, standing);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+    return changeMonth(workerId, month, (record) =>
+      withUpdatedAdvance(record, reviewed.advance),
+    );
+  } catch {
+    return ACTION_FAULT;
   }
-
-  const reviewed = reviewAdvanceEdit(draft, movement, standing);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
-
-  return changeMonth(workerId, month, (record) =>
-    withUpdatedAdvance(record, reviewed.advance),
-  );
 }
 
 /**
@@ -575,16 +609,20 @@ export async function addThirdPartyPayment(
   month: YearMonth,
   draft: ThirdPartyDraft,
 ): Promise<MonthActionResult> {
-  const facts = await monthToChange(workerId, await requireWorker(workerId), month);
-  if (facts === null) return { ok: false, reason: "noMonth" };
+  try {
+    const facts = await monthToChange(workerId, await requireWorker(workerId), month);
+    if (facts === null) return { ok: false, reason: "noMonth" };
 
-  const reviewed = reviewThirdPartyPayment(draft, facts.thirdPartyPayments);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+    const reviewed = reviewThirdPartyPayment(draft, facts.thirdPartyPayments);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  return changeMonth(workerId, month, (record) => ({
-    ...record,
-    thirdPartyPayments: [...record.thirdPartyPayments, reviewed.payment],
-  }));
+    return changeMonth(workerId, month, (record) => ({
+      ...record,
+      thirdPartyPayments: [...record.thirdPartyPayments, reviewed.payment],
+    }));
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -603,9 +641,13 @@ export async function removeThirdPartyPayment(
   month: YearMonth,
   kind: ThirdPartyKind,
 ): Promise<MonthActionResult> {
-  return changeMonth(workerId, month, (record) =>
-    withoutThirdPartyPayment(record, kind),
-  );
+  try {
+    return changeMonth(workerId, month, (record) =>
+      withoutThirdPartyPayment(record, kind),
+    );
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -641,22 +683,26 @@ export async function setOverride(
   month: YearMonth,
   draft: OverrideDraft,
 ): Promise<MonthActionResult> {
-  const entry = await linesOf(workerId, month);
-  if (entry === null) return { ok: false, reason: "noMonth" };
+  try {
+    const entry = await linesOf(workerId, month);
+    if (entry === null) return { ok: false, reason: "noMonth" };
 
-  // **Both the columns and the closing block.** A standing line placed after
-  // the month's total is a row of the closing block whose amount came from the
-  // profile, so it is overridable too (item 17, `types.ts`) — and a call that
-  // passed the columns alone would refuse the one override the block has.
-  const reviewed = reviewOverride(draft, [
-    ...entry.result.lines,
-    ...entry.result.closing,
-  ]);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+    // **Both the columns and the closing block.** A standing line placed after
+    // the month's total is a row of the closing block whose amount came from the
+    // profile, so it is overridable too (item 17, `types.ts`) — and a call that
+    // passed the columns alone would refuse the one override the block has.
+    const reviewed = reviewOverride(draft, [
+      ...entry.result.lines,
+      ...entry.result.closing,
+    ]);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  return changeMonth(workerId, month, (record) =>
-    withOverride(record, reviewed.key, reviewed.override),
-  );
+    return changeMonth(workerId, month, (record) =>
+      withOverride(record, reviewed.key, reviewed.override),
+    );
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -674,7 +720,11 @@ export async function clearOverride(
   month: YearMonth,
   key: string,
 ): Promise<MonthActionResult> {
-  return changeMonth(workerId, month, (record) => withoutOverride(record, key));
+  try {
+    return changeMonth(workerId, month, (record) => withoutOverride(record, key));
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -683,7 +733,7 @@ export async function clearOverride(
  * **All four of the things it records may change — the words, the amount, the
  * direction and the placement — and the id does not.** Removing it and adding
  * it again would lose the note and mint a new id, and the id is what the line's
- * own key is built from (item 17), so a reader looking for the line she
+ * own key is built from (item 17), so a reader looking for the line they
  * corrected would find one that had never existed before.
  *
  * Its amount is edited and never overridden, for the reason item 17 gives: what
@@ -696,27 +746,31 @@ export async function updateUserLine(
   lineId: string,
   draft: UserLineDraft,
 ): Promise<MonthActionResult> {
-  // Reviewed with the id it already has, which is the whole of what makes this
-  // an edit rather than a removal and an addition.
-  const reviewed = reviewUserLine(draft, lineId);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+  try {
+    // Reviewed with the id it already has, which is the whole of what makes this
+    // an edit rather than a removal and an addition.
+    const reviewed = reviewUserLine(draft, lineId);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
-  const repository = await getRepository();
-  await requireWorker(workerId);
-  const facts = await repository.getMonth(workerId, month);
-  if (facts === null) return { ok: false, reason: "noMonth" };
-  // A page held open over a line another tab has since removed. Refused rather
-  // than added back: she is looking at a form for something that is gone.
-  if (!facts.userLines.some((line) => line.id === lineId)) {
-    return { ok: false, reason: "entryUnknown" };
+    const repository = await getRepository();
+    await requireWorker(workerId);
+    const facts = await repository.getMonth(workerId, month);
+    if (facts === null) return { ok: false, reason: "noMonth" };
+    // A page held open over a line another tab has since removed. Refused rather
+    // than added back: they are looking at a form for something that is gone.
+    if (!facts.userLines.some((line) => line.id === lineId)) {
+      return { ok: false, reason: "entryUnknown" };
+    }
+
+    return changeMonth(workerId, month, (record) => ({
+      ...record,
+      userLines: record.userLines.map((line) =>
+        line.id === lineId ? reviewed.line : line,
+      ),
+    }));
+  } catch {
+    return ACTION_FAULT;
   }
-
-  return changeMonth(workerId, month, (record) => ({
-    ...record,
-    userLines: record.userLines.map((line) =>
-      line.id === lineId ? reviewed.line : line,
-    ),
-  }));
 }
 
 /**
@@ -745,33 +799,37 @@ export async function updateThirdPartyPayment(
   kind: ThirdPartyKind,
   draft: ThirdPartyDraft,
 ): Promise<MonthActionResult> {
-  const repository = await getRepository();
-  await requireWorker(workerId);
+  try {
+    const repository = await getRepository();
+    await requireWorker(workerId);
 
-  const facts = await repository.getMonth(workerId, month);
-  if (facts === null) return { ok: false, reason: "noMonth" };
+    const facts = await repository.getMonth(workerId, month);
+    if (facts === null) return { ok: false, reason: "noMonth" };
 
-  const others = facts.thirdPartyPayments.filter(
-    (payment) => payment.kind !== kind,
-  );
-  if (others.length === facts.thirdPartyPayments.length) {
-    return { ok: false, reason: "entryUnknown" };
+    const others = facts.thirdPartyPayments.filter(
+      (payment) => payment.kind !== kind,
+    );
+    if (others.length === facts.thirdPartyPayments.length) {
+      return { ok: false, reason: "entryUnknown" };
+    }
+
+    const reviewed = reviewThirdPartyPayment(draft, others);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+    return changeMonth(workerId, month, (record) => {
+      const changed = {
+        ...record,
+        // Replaced where it stood, so the list does not reorder itself under a
+        // user who only changed an amount.
+        thirdPartyPayments: record.thirdPartyPayments.map((payment) =>
+          payment.kind === kind ? reviewed.payment : payment,
+        ),
+      };
+      return reviewed.payment.kind === kind
+        ? changed
+        : withoutOverride(changed, thirdPartyLineKey(kind));
+    });
+  } catch {
+    return ACTION_FAULT;
   }
-
-  const reviewed = reviewThirdPartyPayment(draft, others);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
-
-  return changeMonth(workerId, month, (record) => {
-    const changed = {
-      ...record,
-      // Replaced where it stood, so the list does not reorder itself under a
-      // user who only changed an amount.
-      thirdPartyPayments: record.thirdPartyPayments.map((payment) =>
-        payment.kind === kind ? reviewed.payment : payment,
-      ),
-    };
-    return reviewed.payment.kind === kind
-      ? changed
-      : withoutOverride(changed, thirdPartyLineKey(kind));
-  });
 }

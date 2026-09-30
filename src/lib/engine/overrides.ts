@@ -25,7 +25,7 @@ import type { MonthLine, MonthResult } from "@/lib/types";
 /** An override as it leaves the browser: which row, the amount as typed, and
  * the reason. The amount is parsed here, on the server side of the boundary,
  * for the reason `reviewUserLine` gives — the form runs the same
- * `parseShekels` while she types, which is one rule read twice. */
+ * `parseShekels` while they type, which is one rule read twice. */
 export interface OverrideDraft {
   key: string;
   /** As typed — "180", "1,234.50". A minus is refused: an override is a
@@ -41,8 +41,8 @@ export interface OverrideDraft {
  * halves of one question: a key naming no row this month draws, and a key
  * naming a row that carries an amount the month itself recorded. They are one
  * refusal because they have one answer — this is not a figure the application
- * worked out — and splitting them would tell the user which of the two her
- * stale page had got wrong, which she cannot act on either way.
+ * worked out — and splitting them would tell the user which of the two them
+ * stale page had got wrong, which they cannot act on either way.
  */
 export type OverrideRefusal = "amount" | "notOverridable";
 
@@ -70,8 +70,8 @@ type ReviewedOverride =
  * whose rest-day work is all unmarked stops drawing that row, and the amount
  * typed over it is still held. When the control lists such an override there is
  * no row left to read a name off, so the name it carries is the one the row
- * had when she typed the figure — which is also the only name that is true of
- * the moment she chose it.
+ * had when they typed the figure — which is also the only name that is true of
+ * the moment they chose it.
  */
 /**
  * Enough of a row to decide an override, which both a column line and a row of
@@ -162,7 +162,7 @@ export interface OrphanedOverride {
  * of them is overridable (`types.ts`), so an amount over one of them can only
  * have been seeded or stored before that division was drawn — it is visible on
  * the month screen, and calling it invisible here would offer the user a clear
- * button for a figure she can see.
+ * button for a figure they can see.
  */
 export function orphanedOverrides(
   result: Pick<MonthResult, "lines" | "closing">,

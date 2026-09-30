@@ -8,6 +8,7 @@ import { inputClass } from "@/components/Field";
 import { LogoMark } from "@/components/icons";
 import { he } from "@/lib/i18n/he";
 import { supabaseInBrowser } from "@/lib/supabase/client";
+import { isAuthRetryableFetchError, type AuthError } from "@supabase/supabase-js";
 
 /**
  * The first screen the application has.
@@ -111,7 +112,7 @@ export function SignInScreen({
           password,
         });
         // The redirect on success is the listener's, not this branch's.
-        if (failure) setError(messageFor(failure.message, "signIn"));
+        if (failure) setError(messageFor(failure, "signIn"));
         return;
       }
 
@@ -130,7 +131,7 @@ export function SignInScreen({
       });
 
       if (failure) {
-        setError(messageFor(failure.message, "signUp"));
+        setError(messageFor(failure, "signUp"));
         return;
       }
 
@@ -296,8 +297,19 @@ export function SignInScreen({
  * telling them apart turns the form into a way of asking who has an account
  * here.
  */
-function messageFor(message: string, mode: "signIn" | "signUp"): string {
-  const lower = message.toLowerCase();
+function messageFor(failure: AuthError, mode: "signIn" | "signUp"): string {
+  // **A fault and not a refusal** (`specs.md` item 30), and it is checked
+  // before anything else because the branches below read a *message* — a
+  // request that never reached the Auth server carries none worth reading.
+  //
+  // Without this the `badCredentials` line below answered every sign-in
+  // failure that was not an unconfirmed address, so Supabase being unreachable
+  // told the user their password was wrong and they went and changed a
+  // correct one. It is the worst screen in the application to say that on:
+  // signed out there is nothing else to try and no other screen to go to.
+  if (isAuthRetryableFetchError(failure)) return he.fault;
+
+  const lower = failure.message.toLowerCase();
 
   if (lower.includes("not confirmed")) return he.signIn.errors.unconfirmed;
   if (mode === "signIn") return he.signIn.errors.badCredentials;
