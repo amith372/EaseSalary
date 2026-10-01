@@ -110,11 +110,24 @@ export function FaultLine() {
 export function Field({
   label,
   hint,
+  hintFloats,
   className,
   children,
 }: {
   label: string;
   hint?: string;
+  /**
+   * Draws the hint under the field without giving it height, for a field on a
+   * row whose inputs have to share one line.
+   *
+   * A hint in the flow makes this box taller at the bottom, and a row aligned
+   * on `items-end` then lifts *this* input by exactly the hint's height while
+   * everything beside it stays put — four controls at four heights, which is
+   * what this exists to stop. Floated, the hint stays where it was drawn and
+   * under the field it belongs to; **the caller reserves the room for it**
+   * under the row, since nothing else now does (`DESIGN.md`).
+   */
+  hintFloats?: boolean;
   /** Added to the field's own box, for a caller that has to size it — a width
    * cap, or `flex-none` where the field is one item of a row. */
   className?: string;
@@ -122,7 +135,9 @@ export function Field({
 }) {
   const hintId = useId();
   return (
-    <div className={`flex min-w-0 flex-col gap-1${className ? ` ${className}` : ""}`}>
+    <div
+      className={`flex min-w-0 flex-col gap-1${hintFloats ? " relative" : ""}${className ? ` ${className}` : ""}`}
+    >
       <label className="flex min-w-0 flex-col gap-1">
         <span dir="auto" className="text-[13px] font-medium text-ink-warm">
           {label}
@@ -135,7 +150,7 @@ export function Field({
         <span
           id={hintId}
           dir="auto"
-          className="text-[12px] font-light text-ink-quiet"
+          className={`text-[12px] font-light text-ink-quiet${hintFloats ? " absolute inset-x-0 top-full pt-1" : ""}`}
         >
           {hint}
         </span>

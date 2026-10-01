@@ -172,6 +172,10 @@ export function SettingsScreen({
             workerId={profile.id}
             profile={profile}
             month={month}
+            // The floor the row measures itself against, and the figure it
+            // offers to take: the same rate the row below draws, so the screen
+            // cannot say one wage is in force and compare against another.
+            minimumWageAgorot={minimumWage?.value ?? null}
             onSubmit={handleAction}
           />
           {/* Under the salary and not with the insurances: it is the floor that

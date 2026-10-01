@@ -247,6 +247,16 @@ export const he = {
   fault: "משהו השתבש, כדאי לנסות שוב או לחזור לדף הבית",
 
   /**
+   * The way back out of a question asked before a press that destroys
+   * something (`Confirm.tsx`).
+   *
+   * **The word is here and not beside each question**, so every confirmation in
+   * the application is cancelled in the same word; the affirmative is each
+   * question's own, because only the question knows what it is agreeing to.
+   */
+  confirm: { cancel: "ביטול" },
+
+  /**
    * The screen behind an address the application does not have (`not-found.tsx`).
    *
    * **It is deliberately generic, and never worded about a worker.** A worker id
@@ -1551,6 +1561,26 @@ export const he = {
           kind === "granted"
             ? `להסיר את מקדמה ${advanceNumber} שניתנה החודש`
             : `להסיר את הפירעון של מקדמה ${advanceNumber} החודש`,
+        /**
+         * What is asked before a movement is removed (the user, 2026-10-01).
+         *
+         * **A grant and a repayment are two questions and not one**, because
+         * they do not cost the same thing: a repayment retyped is the same
+         * repayment, while a grant carries the debt every later repayment was
+         * measured against. Both say what goes with it — item 20 takes any
+         * amount the user typed over the row away with the row.
+         *
+         * A grant that still has repayments against it is refused and is never
+         * asked about, so the grant's sentence is written for the only grant
+         * that reaches it: one nothing has been repaid against.
+         */
+        confirmRemove: {
+          granted:
+            "להסיר את המקדמה? היא תיעלם מכל החודשים, ואם הוקלד סכום ידני על השורה שלה — הוא יימחק איתה.",
+          repaid:
+            "להסיר את הפירעון? הסכום יחזור להיות חוב, ואם הוקלד סכום ידני על השורה שלו — הוא יימחק איתו.",
+          yes: "כן, להסיר",
+        },
       },
       /**
        * The payments that go to a third party rather than to the worker
@@ -2087,6 +2117,22 @@ export const he = {
           cancel: "ביטול",
           /** A change already recorded, listed under the figure. */
           changedFrom: "מ־",
+          /**
+           * Said when the salary in force sits below the minimum wage in force
+           * (specs.md item 3), with the figure between the two halves so it can
+           * be isolated where it is drawn.
+           *
+           * **It says so and decides nothing.** Item 3 leaves the decision to
+           * the user, so the sentence names the minimum — the salary it is
+           * measured against is the figure drawn above it — and the control
+           * beside it fills the field with that minimum. The month the change
+           * holds from, and the saving, stay theirs.
+           */
+          below: {
+            before: "השכר שבתוקף נמוך משכר המינימום, שהוא ",
+            after: " לחודש.",
+          },
+          takeMinimum: "למלא את שכר המינימום",
         },
         restDay: {
           label: "יום המנוחה השבועי",

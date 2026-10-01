@@ -22,6 +22,7 @@ import {
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
+import { Confirm } from "@/components/Confirm";
 import { CoveredMonths } from "@/components/CoveredMonths";
 import {
   AmountField,
@@ -46,6 +47,7 @@ import {
   splitInstalments,
   splitSpan,
   SPLIT_MONTHS_LIMIT,
+  whyRemovalIsRefused,
   whyRepaymentIsRefused,
 } from "@/lib/engine/advances";
 import type { AdvanceStanding } from "@/lib/engine/advances";
@@ -1141,6 +1143,19 @@ function AdvancesControl({
    * which of the two the correction meant.
    */
   const [edited, setEdited] = useState<Record<number, string>>({});
+  /**
+   * The movement a question is open about, or `null` with nothing asked
+   * (`Confirm`).
+   *
+   * **A removal is asked about and the other three gestures are not**, because
+   * only this one destroys something the screen is not showing: the debt every
+   * later repayment was measured against, and any amount the user typed over
+   * the row (specs.md item 20). One question at a time, like the panels.
+   */
+  const [asking, setAsking] = useState<{
+    number: number;
+    kind: AdvanceKind;
+  } | null>(null);
   const { refusal, fault, run, clear, busyAt } = useAction(onSubmit);
 
   function reset() {
@@ -1150,6 +1165,7 @@ function AdvancesControl({
     setGivenOn("");
     setSplitMonths("");
     setEdited({});
+    setAsking(null);
     clear();
   }
 
@@ -1157,6 +1173,7 @@ function AdvancesControl({
    * holds already in the fields (item 20). */
   function openEdit(advance: Advance) {
     clear();
+    setAsking(null);
     setOpen({ gesture: "edit", number: advance.number, kind: advance.kind });
     setAmount(amountFieldValue(advance.agorot));
     setNote(advance.note ?? "");
@@ -1238,6 +1255,26 @@ function AdvancesControl({
       undefined,
       busyKey.advance(advanceNumber, kind),
     );
+  }
+
+  /**
+   * The press that asks, rather than the press that removes (the user,
+   * 2026-10-01).
+   *
+   * **A removal the server would refuse is sent and never asked about.** The
+   * refusal is the server's, as it is today — a grant with repayments standing
+   * against it — and a question in front of it would ask the user to confirm
+   * something that is not going to happen. Asked of the engine and never
+   * restated here, for the reason `canRepay` gives below.
+   */
+  function askToRemove(standing: AdvanceStanding, advance: Advance) {
+    if (whyRemovalIsRefused(standing, advance) !== null) {
+      remove(advance.number, advance.kind);
+      return;
+    }
+    clear();
+    setOpen(null);
+    setAsking({ number: advance.number, kind: advance.kind });
   }
 
   const granting = open?.gesture === "grant";
@@ -1432,7 +1469,10 @@ function AdvancesControl({
         open === null ? (
           <button
             type="button"
-            onClick={() => setOpen({ gesture: "grant" })}
+            onClick={() => {
+              setAsking(null);
+              setOpen({ gesture: "grant" });
+            }}
             className="rounded-full border border-line-strong bg-surface px-3 py-1.5 text-[13px] font-medium text-ink transition-colors hover:border-line-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
           >
             <span dir="auto">{words.grant}</span>
@@ -1544,9 +1584,10 @@ function AdvancesControl({
                   {canRepay ? (
                     <button
                       type="button"
-                      onClick={() =>
-                        setOpen({ gesture: "repay", number: standing.number })
-                      }
+                      onClick={() => {
+                        setAsking(null);
+                        setOpen({ gesture: "repay", number: standing.number });
+                      }}
                       aria-label={words.repayLabel(standing.number)}
                       className={`ms-auto font-medium hover:text-ink ${rowActionClass}`}
                     >
@@ -1590,7 +1631,7 @@ function AdvancesControl({
                           </button>
                           <button
                             type="button"
-                            onClick={() => remove(standing.number, advance.kind)}
+                            onClick={() => askToRemove(standing, advance)}
                             aria-label={words.removeLabel(
                               standing.number,
                               advance.kind,
@@ -1603,6 +1644,24 @@ function AdvancesControl({
                             <span dir="auto">{words.remove}</span>
                           </button>
                         </div>
+                        {/* Asked under the movement it is about, so the row and
+                            the question are read together (`Confirm`). */}
+                        {asking !== null &&
+                        asking.number === standing.number &&
+                        asking.kind === advance.kind ? (
+                          <Confirm
+                            name={`advance:${standing.number}:${advance.kind}`}
+                            question={words.confirmRemove[advance.kind]}
+                            confirmLabel={words.confirmRemove.yes}
+                            busy={busyAt(
+                              busyKey.advance(standing.number, advance.kind),
+                            )}
+                            onConfirm={() =>
+                              remove(standing.number, advance.kind)
+                            }
+                            onCancel={() => setAsking(null)}
+                          />
+                        ) : null}
                         {advance.note ? (
                           <span
                             className="text-[13px] leading-[1.5] font-light text-ink-warm text-pretty"

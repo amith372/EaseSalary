@@ -748,18 +748,27 @@ export function RecuperationControl({
  *
  * The amount and the month are sent as typed. What counts as a month and where
  * the floor sits are the server's (`reviewSalaryChange`), so nothing here
- * compares against a minimum wage.
+ * compares against a minimum wage — **except to say so**: item 3 asks the
+ * application to tell the user when the salary on the profile sits below the
+ * minimum in force and to leave the decision to them, which is the sentence
+ * under the figure and the control that fills the field with that minimum. It
+ * fills and does not save: the month the raise holds from is theirs to name,
+ * and the server reviews it as it reviews any other.
  */
 export function SalaryControl({
   workerId,
   profile,
   month,
+  minimumWageAgorot,
   onSubmit,
 }: {
   workerId: string;
   profile: WorkerProfile;
   /** This month, passed in because nothing reads a clock during a render. */
   month: YearMonth;
+  /** The minimum wage in force this month, or `null` where the table holds
+   * none for it — then nothing is said, rather than a figure guessed. */
+  minimumWageAgorot: number | null;
   onSubmit: Submit;
 }) {
   const words = he.workers.profile.terms.salary;
@@ -768,6 +777,9 @@ export function SalaryControl({
   const [from, setFrom] = useState("");
   const { refusal, fault, run, clear, saving } = useAction(onSubmit);
   const changes = profile.salaryChanges ?? [];
+  const inForce = salaryFor(profile, month);
+  const belowMinimum =
+    minimumWageAgorot !== null && inForce < minimumWageAgorot;
 
   return (
     <TermRow label={words.label} hint={words.hint}>
@@ -777,9 +789,38 @@ export function SalaryControl({
             {words.now}
           </span>
           <Bidi noTranslate className="font-semibold">
-            {formatAgorot(salaryFor(profile, month))}
+            {formatAgorot(inForce)}
           </Bidi>
         </span>
+
+        {/* Item 3's statement, and the offer beside it. Not a refusal: nothing
+            was refused, and the salary is theirs to leave where it is. */}
+        {belowMinimum ? (
+          <div
+            data-salary-below-minimum=""
+            className="flex flex-wrap items-center gap-x-3 gap-y-1"
+          >
+            <p
+              dir="auto"
+              className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
+            >
+              <span>{words.below.before}</span>
+              <Bidi noTranslate>{formatAgorot(minimumWageAgorot)}</Bidi>
+              <span>{words.below.after}</span>
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(true);
+                setAmount(amountFieldValue(minimumWageAgorot));
+                clear();
+              }}
+              className={`${quietButtonClass} text-forest hover:text-forest-deep`}
+            >
+              <span dir="auto">{words.takeMinimum}</span>
+            </button>
+          </div>
+        ) : null}
 
         {changes.length === 0 ? null : (
           <ul className="flex flex-col gap-1 text-[13px] font-light text-ink-quiet">
@@ -805,50 +846,74 @@ export function SalaryControl({
         )}
 
         {open ? (
-          <div className="flex flex-wrap items-end gap-3">
-            <Field label={words.amount}>
+          /* One line and never wrapped: the two inputs and the two buttons are
+             one gesture, and each field shrinks instead of dropping to a line of
+             its own (`DESIGN.md`). The bottom padding is the room the month's
+             floated hint no longer takes for itself. */
+          <div className="flex min-w-0 items-end gap-2 pb-5 sm:gap-3">
+            <Field label={words.amount} className="max-w-40 flex-1 basis-24">
               <input
                 type="text"
                 inputMode="decimal"
                 value={amount}
-                onChange={(event) => setAmount(event.target.value)}
+                onChange={(event) => {
+                  setAmount(event.target.value);
+                  // The refusal was about the figure being corrected, so it goes
+                  // the moment the figure does — or the user reads a sentence
+                  // about an amount that is no longer on screen.
+                  clear();
+                }}
                 dir="ltr"
-                className={`${inputClass} max-w-40 text-start`}
+                className={`${inputClass} text-start`}
               />
             </Field>
-            <Field label={words.from} hint={words.fromHint}>
+            <Field
+              label={words.from}
+              hint={words.fromHint}
+              hintFloats
+              className="max-w-32 flex-1 basis-20"
+            >
               <input
                 type="text"
                 value={from}
-                onChange={(event) => setFrom(event.target.value)}
+                onChange={(event) => {
+                  setFrom(event.target.value);
+                  clear();
+                }}
                 placeholder={yearMonthText(addMonths(month, 1))}
                 dir="ltr"
-                className={`${inputClass} max-w-32 text-start`}
+                className={`${inputClass} text-start`}
               />
             </Field>
-            <button
-              type="button"
-              onClick={() =>
-                run(() => setSalaryChange(workerId, amount, from), () => {
+            {/* The two buttons in a box of their own, centred on the line the
+                inputs make: the quiet one's touch padding hangs below its own
+                text, so aligned on the row itself its words sit 8px under the
+                save beside it. */}
+            <div className="flex flex-none items-center gap-1">
+              <button
+                type="button"
+                onClick={() =>
+                  run(() => setSalaryChange(workerId, amount, from), () => {
+                    setOpen(false);
+                    setAmount("");
+                    setFrom("");
+                  })
+                }
+                {...busyAttrs(saving, buttonClass)}
+              >
+                <span dir="auto">{words.save}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   setOpen(false);
-                  setAmount("");
-                  setFrom("");
-                })
-              }
-              {...busyAttrs(saving, buttonClass)}
-            >
-              <span dir="auto">{words.save}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                clear();
-              }}
-              className={quietButtonClass}
-            >
-              <span dir="auto">{words.cancel}</span>
-            </button>
+                  clear();
+                }}
+                className={quietButtonClass}
+              >
+                <span dir="auto">{words.cancel}</span>
+              </button>
+            </div>
           </div>
         ) : (
           <button

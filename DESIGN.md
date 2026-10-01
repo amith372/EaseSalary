@@ -94,6 +94,22 @@ and that is the only thing the wording has to get right.
 | Not one of them prints what went wrong | An error's message can carry a worker id, a Postgres message or ciphertext, and the screen it would be printed on is the one the family is looking at |
 | The two download addresses draw no failure screen of their own: every way they can fail is a 303 to a screen that can say it — an unconfirmed month to `/month/export` carrying its month, everything else to the opening screen | Both hand back a workbook, so anything they wrote instead is a bare page with no bar and no way on. This generalises the refusal row above, which was the first case of it |
 
+### Asking before a press (no artboard draws it)
+
+**The canvas draws no question and the application asked none until
+2026-10-01**, so `Confirm.tsx` is the one idiom and every confirmation after it
+takes the same shape: an inset `bg-ground` card under the control that was
+pressed, the question in one sentence, the affirmative naming what it does, and
+`ביטול` beside it. It is never a dialog, for the reason the rest-day question
+already gave below — the question belongs where the change is being made, and a
+user sent elsewhere to answer it has lost the thing they were doing.
+
+| Departure | Why |
+|---|---|
+| Only a press whose cost is **not on the screen** is asked about — today, removing an advance (the user, 2026-10-01) | A line the user can see and retype needs no question. A grant carries the debt every later repayment was measured against, and item 20 takes any amount typed over the row away with it, so what is lost is not what the row is showing. A question in front of every remove is a question nobody reads |
+| The affirmative is the ordinary filled forest button, not a destructive red | There is no filled destructive token, and inventing a colour here would be a second visual change riding along with a behavioural one. The question above it is what says the press destroys something |
+| A press the server would **refuse** is answered with the refusal and never with a question | Confirming something that is not going to happen teaches the user that the question means nothing. The caller asks the engine first (`whyRemovalIsRefused`), which is the rule every other control here follows |
+
 ### The calendar (on every screen that draws it)
 
 - A line under the grid after the first press says to press the last day —
@@ -381,6 +397,26 @@ folded sheet.
   line with no lifetime says nothing — the plain case is the quiet one. The salary
   row's `YYYY-MM` text field in the same group is not the model here and is the
   thing that should move: a family should not have to know the idiom.
+- **The salary row's open form is one line that shrinks and never wraps**, and
+  the month's `בצורה שנה-חודש` hint is floated under its own field rather than
+  drawn in the flow. The canvas draws the four controls on one line and the code
+  drew them at four heights: a hint inside a `Field` makes that box taller at the
+  bottom, and the row's `items-end` lifted the month's input by exactly the
+  hint's height while the amount beside it stayed put, with the two buttons
+  4px apart on top of that. `Field`'s `hintFloats` is the idiom, the row reserves
+  the room under it, and the two buttons sit in a box of their own centred on the
+  line the inputs make — the quiet one's touch padding hangs below its own words,
+  so aligned on the row itself it reads 8px low. One line is held down to 390px
+  by shrinking the fields, which is what `basis` and `min-w-0` are doing there.
+- **The salary row says when the salary in force sits below the minimum wage in
+  force, and offers that figure in one press** (`specs.md` item 3, the user,
+  2026-10-01). The canvas draws the row with no such sentence, and the state is
+  the ordinary one: the seeded salary is 2025's and the minimum rose in April
+  2026. The sentence is in the clay of a deduction rather than a refusal's slot,
+  because nothing was refused — the salary is theirs to leave where it is — and
+  the control **fills the field and does not save**: item 3 leaves the decision
+  to the user, so the month the raise holds from is still typed and the server
+  still reviews it.
 - **A line whose last month has passed keeps a row, under a quieter heading**
   (`שורות שנגמרו`) rather than leaving the screen. Item 20 asks for it, and the
   reason is the gesture beside it: the edit that clears or extends the last month

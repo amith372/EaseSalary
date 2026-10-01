@@ -1085,6 +1085,10 @@ a question about one of them is the expensive mistake.
     (item 17), and one left behind is an amount waiting to reattach itself to a row that
     never asked for it.
 
+    **Removing an advance or a repayment is confirmed before it happens**, with a question
+    that names which of the two is going and what goes with it; a removal the application
+    would refuse is refused rather than asked about.
+
     **Hospital overtime is an amount the user types, never a figure the application works
     out.** A live-in caregiver is not entitled by law to pay for overtime, so no rule prices
     the hours they spent with the patient in hospital; what the family pays for them is its
