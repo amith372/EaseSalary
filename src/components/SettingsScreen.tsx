@@ -10,6 +10,7 @@ import {
   type InvitationResult,
 } from "@/app/settings/actions";
 import type { ProfileActionResult } from "@/app/workers/actions";
+import type { Done } from "@/lib/actionFault";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { FoldSection } from "@/components/FoldSection";
@@ -35,7 +36,7 @@ import {
   OpeningPositionControl,
   StandingLinesControl,
 } from "@/components/WorkerOpening";
-import { touchTargetClass } from "@/components/Field";
+import { FaultLine, touchTargetClass } from "@/components/Field";
 import { fullDayLabel } from "@/lib/dateLabels";
 import { drawnRateSource } from "@/lib/datedRates";
 import type { DatedRate } from "@/lib/datedRates";
@@ -379,6 +380,24 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
   const [result, setResult] = useState<InvitationResult | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [sending, startSending] = useTransition();
+  // Whether a press on a listed invitation failed to answer at all (specs.md
+  // item 30). The database answers nothing either way, so there is no reason to
+  // keep beside it. A flag and not `useAction`, whose guard drops a second press
+  // while the first is in flight: two invitations withdrawn in quick succession
+  // are two different rows, and the dropped one would read as withdrawn.
+  const [listFault, setListFault] = useState(false);
+
+  /** Withdrawing an invitation, or taking a share back. */
+  function sendListed(gesture: () => Promise<Done>) {
+    setListFault(false);
+    startSending(async () => {
+      try {
+        if (!(await gesture()).ok) setListFault(true);
+      } catch {
+        setListFault(true);
+      }
+    });
+  }
 
   async function copyInvitation(address: string, token: string) {
     try {
@@ -481,7 +500,7 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
                   invitation.sentByMe ? (
                     <button
                       type="button"
-                      onClick={() => startSending(() => removeShare(invitation.id))}
+                      onClick={() => sendListed(() => removeShare(invitation.id))}
                       className="text-[13px] font-medium text-ink-mute transition-colors hover:text-ink"
                     >
                       <span dir="auto">{words.remove}</span>
@@ -500,7 +519,7 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => startSending(() => withdrawInvitation(invitation.id))}
+                      onClick={() => sendListed(() => withdrawInvitation(invitation.id))}
                       className="text-[13px] font-medium text-ink-mute transition-colors hover:text-ink"
                     >
                       <span dir="auto">{words.withdraw}</span>
@@ -510,6 +529,9 @@ function ShareSection({ invitations }: { invitations: Invitation[] }) {
               </li>
             ))}
           </ul>
+          {/* Under the list, where the press was: the rows stay drawn so the
+              press can be made again (specs.md item 30). */}
+          {listFault ? <FaultLine /> : null}
         </div>
       )}
     </div>

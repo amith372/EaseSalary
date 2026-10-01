@@ -41,3 +41,17 @@ export async function answering<T>(
     return ACTION_FAULT;
   }
 }
+
+/**
+ * What an action with no refusal of its own answers: it was done, or it could
+ * not answer at all.
+ *
+ * Named rather than written out at each one, because the four that share it —
+ * clearing a range, answering a holiday, withdrawing an invitation, taking back
+ * a share — have nothing in common except having no reason to give, and a union
+ * spelled four times is a union that comes to differ in one of them.
+ */
+export type Done = { ok: true } | ActionFault;
+
+/** The answer every one of them gives when it worked. */
+export const DONE: Done = { ok: true };

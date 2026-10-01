@@ -118,6 +118,10 @@ export function AddWorkerScreen({
   const [saveRefusal, setSaveRefusal] = useState<CreateWorkerRefusal | null>(
     null,
   );
+  /** The save never answered at all. Its own flag beside the reason, because a
+   * fault has none to carry and the wizard stays on the step it was on: there is
+   * no field to send the user back to (specs.md item 30). */
+  const [saveFault, setSaveFault] = useState(false);
 
   const [draft, setDraft] = useState<NewWorkerDraft>(() => ({
     name: "",
@@ -248,8 +252,24 @@ export function AddWorkerScreen({
 
     // Step 2 to step 3 is the save. Everything is reviewed again on the server,
     // which is where the rule actually holds.
+    setSaveRefusal(null);
+    setSaveFault(false);
     startSaving(async () => {
-      const saved = await createWorker(effective);
+      let saved;
+      try {
+        saved = await createWorker(effective);
+      } catch {
+        // The action never reached the server, so there is no return to carry a
+        // fault and the wizard says it here (`actionFault.ts`).
+        setSaveFault(true);
+        return;
+      }
+      // A fault carries no reason, so it reaches neither `setSaveRefusal` nor a
+      // step: nothing was written and the wizard is still asking what it asked.
+      if (!saved.ok && "fault" in saved) {
+        setSaveFault(true);
+        return;
+      }
       if (!saved.ok) {
         setShown(true);
         setSaveRefusal(saved.reason);
@@ -342,6 +362,21 @@ export function AddWorkerScreen({
               {saveRefusal === "householdFull"
                 ? words.errors.householdFull
                 : words.errors.save}
+            </p>
+          ) : null}
+
+          {/* The refusal's own box, because the wizard's sentences are drawn
+              that way and two looks for one slot would read as two different
+              kinds of trouble. `data-role` is the fault's, which is how the
+              suite tells them apart (specs.md item 30). */}
+          {saveFault ? (
+            <p
+              dir="auto"
+              role="alert"
+              data-role="fault"
+              className="rounded-card-sm bg-chip px-3.5 py-2.5 text-[15px] text-clay-deep"
+            >
+              {he.fault}
             </p>
           ) : null}
 
