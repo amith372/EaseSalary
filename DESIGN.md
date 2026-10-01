@@ -153,6 +153,14 @@ inherited by every `band-*` utility inside it, so a scene is a list of tokens in
   artboard draws; the user asked for it on 2026-09-17 (item 27). Below `sm` the
   panel spans the screen under the top row, because hung from the pill it ran
   past the edge.
+- The bar carries the way out of the account, last in its cluster and so at the
+  row's logical end, past the greeting and the avatar (the user, 2026-10-01). No
+  artboard draws one there; `הגדרות` draws it in its own account section, and that
+  control stays. It is in the bar because until the household has a worker the
+  shell draws `EmptyHousehold` in place of every screen, `/settings` among them, so
+  the one state every account begins in was the one state with no way out of it.
+  It takes `הגדרות`'s own glyph and its `#A15738`, and below `lg` the word is read
+  but not drawn as the greeting is — a fourth label at 390px bought a third row.
 - Every control in the bar is at least 44px in each direction.
 
 ### The alerts page

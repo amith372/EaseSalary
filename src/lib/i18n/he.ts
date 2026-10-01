@@ -1808,6 +1808,9 @@ export const he = {
     account: {
       title: "החשבון",
       yearlySummary: "להוריד סיכום שנתי לעובד/ת",
+      /** Read from two places — this screen's account section and the top bar's
+       * own control (`AppShell`) — and kept as one string on purpose: two copies
+       * of the word are how the two controls would come to disagree. */
       signOut: "להתנתק",
       /** Item 11: a second person joins by an invitation they accept, and
        * becomes a member who sees the same workers, months and balances. */

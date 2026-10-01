@@ -43,6 +43,34 @@ export function Chevron({
   );
 }
 
+/**
+ * The way out of the account: a doorway with an arrow leaving it, taken from the
+ * glyph the `הגדרות` artboard already draws beside `להתנתק` rather than drawn
+ * again.
+ *
+ * **It is not mirrored.** The artboard drew it inside a `dir="rtl"` page, where
+ * the arrow leaving leftwards is the arrow leaving *forwards*; `Chevron`'s
+ * `towards` exists for a direction in time, which a doorway has none of.
+ */
+export function SignOutIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={["size-[17px] flex-none", className ?? ""].filter(Boolean).join(" ")}
+    >
+      <path d="M11 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-3" />
+      <path d="M7 5 3 9l4 4M3 9h8" />
+    </svg>
+  );
+}
+
 /** The badge on a "לייצא לאקסל" action: a white tile on the filled button, a
  * sage one on a bare link, where white would vanish into the card. It holds a
  * spreadsheet's ruled cells, not the canvas's crossed mark, which on the most

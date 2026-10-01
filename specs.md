@@ -580,9 +580,10 @@ a question about one of them is the expensive mistake.
    about whether they were still ill (Part 5).
 11. A worker belongs to a household, never to a person. An account is a person who signs
     in; a household is the group of people who look after the same workers, and it holds
-    no more than two workers. Every member of a household sees the same workers, the same
-    months and the same balances, and reaches nothing outside the households it belongs
-    to. A second person joins by an invitation they accept, which makes them a member
+    no more than two workers. A signed-in person can leave their account from any screen,
+    including a household with no worker in it. Every member of a household sees the same
+    workers, the same months and the same balances, and reaches nothing outside the
+    households it belongs to. A second person joins by an invitation they accept, which makes them a member
     rather than handing them a copy of a worker. The member who sent an invitation may later remove the person who accepted it, and nobody else may remove a member; what that person recorded stays with the household, and a person left with no household is given an empty one of their own. The invitation is a link the member passes
     on; nothing creates the invited person's account, which they open themselves with the
     invited address, or sign in with if they already have one. Membership rather than a copy
