@@ -440,6 +440,25 @@ own header, beside the spec items that decide them.
 It has no artboard. It is built from the tokens, and its wordmark is the top
 bar's: the v4 mark beside the name.
 
+### The help screen (`עזרה`)
+
+| Departure | Why |
+|---|---|
+| **The way in floats in the bottom corner instead of standing in the top bar.** The artboard draws it as an amber pill beside `התראות`; the code puts the same pill, same colours and same mark, fixed at the bottom right (`HelpLauncher`) | The user's own decision, 2026-10-01. Only where it sits changed, so the artboard's colouring and its mark are kept exactly — including its own reason for not being a `?`, which holds wherever the control stands |
+| It is a **labelled** pill and never a bare glyph, floating or not | A `?` already means "explain this figure" (item 24), and Chrome can translate neither an image nor a CSS `content:` — an icon alone says nothing to someone reading the page in English |
+| **It is called `עוזר דיגיטלי`, not the artboard's `עזרה`** — the launcher and the screen's own heading both | The user's name for it, 2026-10-01. It is what the screen becomes once stage 11 lands, and the two must match: press `עוזר דיגיטלי` and land on a screen headed `עזרה` and they read as two different things |
+| `<main>` carries 80px of bottom padding on every screen | The launcher floats over the bottom corner, so without it the last row of a scrolling screen sits under the control. Measured at 390px, where it covered `/payments`'s rounding row. It costs a scroll only where something would otherwise have been hidden behind the control |
+| The closed list holds ten questions; the artboard draws eight | `markVacation` and `addPayment` are the user's own, 2026-10-01 |
+| The lead is the user's own sentence, not the artboard's | Settled verbatim on 2026-10-01: it is impersonal (`ניתן`, never `אני`), so the screen is never given a gender, and it states the boundary as well as the purpose — navigation and where to press, not the law |
+| `כל המסכים` lists ten screens; the artboard's grid draws eight | Its own heading says *all* of them. `בחירת חגים` and `הוספת עובד/ת` are both addresses an answer sends someone to, and the artboard links to the first from a topic while leaving it out of the grid below |
+| An answer links to a screen and never to a fold inside it; which fold to open is said in words | Tried as `/settings#rates` and removed: the settings folds carry `data-group` and no `id`, so the address resolved, scrolled nowhere and left every fold shut — a dead anchor that looks right in the code and in the markup |
+| `איך בוחרים את תשעת החגים?` names its path in words where the artboard writes `מהגדרות ← חגים` | An arrow inside a Hebrew string is untranslatable and a bidi hazard |
+| The balances row is `בקטע היתרות שליד הלוח`, not the artboard's `בסרגל שמימין` | A position that moves with the layout is a sentence that goes stale without anything looking wrong |
+| The radii come from the token scale — 20px for the lists, 24px for the answer card — where the artboard draws 18 and 22 | The scale exists so a screen does not invent one; neither difference is visible beside the other cards on the page |
+
+The bar keeps its five tabs and carries no help entry at all, which is recorded
+in `AppShell.tsx` beside the v3 `?` it replaces.
+
 ### Still owed to the canvas
 
 The thirteen artboards do not yet draw the tab icons, the heading icons, the

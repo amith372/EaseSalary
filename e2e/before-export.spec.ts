@@ -292,7 +292,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
     // one, so an unscoped substring match resolves to two links.
     await page
       .getByRole("navigation", { name: he.nav.landmark })
-      .getByRole("link", { name: he.nav.home, exact: true })
+      .getByRole("link", { name: he.screens.home.name, exact: true })
       .click();
     await page
       .getByRole("link", { name: he.home.paid.exportToExcel })

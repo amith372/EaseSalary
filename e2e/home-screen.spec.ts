@@ -77,6 +77,15 @@ function row(page: Page, key: string) {
   return page.locator(`[data-row="${key}"]`);
 }
 
+/** Waits out a server action before the test navigates away. A `page.goto` in
+ * the same tick as a submit cancels the request the submit made: the action
+ * never reaches the store, the next screen draws the month unchanged, and the
+ * assertion fails on a row that is correctly absent rather than on a wrong
+ * figure. `aria-busy` is the same attribute the pressed control sets. */
+async function settled(page: Page): Promise<void> {
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+}
+
 /** The "days used this month" hint on a balance row in the rail, which is where
  * a mark's effect on the balance is legible as a whole number rather than as a
  * running fraction. */
@@ -478,6 +487,7 @@ test.describe("the known case of Part 4, entered through the screen", () => {
         exact: true,
       })
       .click();
+    await settled(page);
 
     // **Now three levels are drawn and not one**, because the instalment changes
     // what is transferred: the month's total stands above the advance and the

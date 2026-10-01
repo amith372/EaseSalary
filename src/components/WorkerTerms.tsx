@@ -45,6 +45,7 @@ import {
   RefusalLine,
 } from "@/components/Field";
 import { useAction, type Send } from "@/components/useAction";
+import { RuleLink } from "@/components/WhyDisclosure";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import { addMonths, compareMonth, yearMonthText } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
@@ -902,6 +903,17 @@ export function InsurerControl({
             dir="auto"
             className={inputClass}
           />
+          {/* specs.md items 16 and 24: the help screen points at an answer and
+              never writes one, so the only topic with no screen of its own is
+              settled here, beside the field. */}
+          <p
+            dir="auto"
+            data-role="insurer-deduction"
+            className="max-w-prose text-[14px] font-light text-ink-mute text-pretty"
+          >
+            {words.deduction}
+          </p>
+          <RuleLink rule="medicalInsurance" className="self-start text-[14px]" />
           {refusal ? <Refusal reason={refusal} /> : fault ? <FaultLine /> : null}
           <button
             type="button"

@@ -1114,10 +1114,27 @@ a question about one of them is the expensive mistake.
     words rather than as a formula, so a user who wants to follow the reasoning can,
     while a user who does not never has to read arithmetic to use the application. These
     explanations, with the reference links beside them, stay beside the figure they
-    explain and are never restated in a manual. A single help screen may sit alongside
-    them, but it holds no explanation of its own: it points at the explanation, the
+    explain and are never restated in a manual. A single help screen sits alongside
+    them, and it holds no explanation of its own: it points at the explanation, the
     reference link, or the screen that settles the question, so a given answer is
     written in exactly one place and a page that moves is fixed there.
+    **That screen is `עוזר דיגיטלי`, and what it does is navigate.** For a question the
+    user types in their own words it names the screen that settles it, says where to
+    press once there, and puts the rule's reference link beside it — and it writes no
+    explanation of its own, so an answer still lives in exactly one place. **It is
+    account-blind:** it never names a worker, never draws a figure and never replays a
+    month, which is what makes one screen correct for an account whose months are
+    refused, whose workers are of either gender, or which has no worker in it yet.
+    **What the user types is matched by hand and never by a model** — over the screen
+    list, the reference links of criterion 26, and the cached page sections of Part 3 —
+    so it answers in full in an installation that has never fetched anything. A closed
+    list of the questions families ask sits above the box and narrows as they type; a
+    question that reaches nothing still leaves them the list of screens, because a help
+    screen that says only "not found" has returned them to where they started. **It
+    opens by saying what it is for** — navigation and where to press, not the law itself
+    — rather than by saying how to operate it. The one topic with no screen of its own,
+    whether the medical insurance may be deducted, is answered beside the insurer field
+    rather than here, for the same reason.
 25. A refusal carries the same link as the action it refused. A user who has been
     stopped is exactly the user who wants to know why, and a refusal is the moment the
     application can least afford to be taken on its word: it has just told them they may

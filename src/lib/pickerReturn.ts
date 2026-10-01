@@ -1,3 +1,4 @@
+import { screenName } from "@/lib/help/screens";
 import { he } from "@/lib/i18n/he";
 
 /**
@@ -10,12 +11,12 @@ import { he } from "@/lib/i18n/he";
  * and no value at all, is `/settings`, where the picker lives.
  */
 const RETURNS = {
-  "/": he.nav.home,
-  "/workers": he.nav.workers,
-  "/payments": he.nav.payments,
-  "/settings": he.nav.settings,
-  "/reports": he.nav.reports,
-  "/alerts": he.alerts.title,
+  "/": screenName("home"),
+  "/workers": screenName("workers"),
+  "/payments": screenName("payments"),
+  "/settings": screenName("settings"),
+  "/reports": screenName("reports"),
+  "/alerts": screenName("alerts"),
 } as const;
 
 export type PickerReturn = keyof typeof RETURNS;

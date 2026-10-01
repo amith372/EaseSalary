@@ -80,7 +80,7 @@ test.describe("the reports screen (item 23, item 29)", () => {
   test("reaches /reports from the nav rather than 404ing", async ({ page }) => {
     await useHousehold(page, "nav");
     await page.goto("/");
-    await page.getByRole("link", { name: he.nav.reports, exact: true }).click();
+    await page.getByRole("link", { name: he.screens.reports.name, exact: true }).click();
     await expect(page).toHaveURL(/\/reports$/);
     await expect(
       page.getByRole("heading", { name: he.reports.title, level: 1 }),

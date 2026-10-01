@@ -13,9 +13,11 @@ import {
 import { Bell } from "@/components/Bell";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
-import { LogoMark, TwoToneIcon, type TwoToneName } from "@/components/icons";
+import { HelpLauncher } from "@/components/HelpLauncher";
+import { LogoMark, TwoToneIcon } from "@/components/icons";
 import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
 import type { BellView } from "@/lib/alertsView";
+import { NAV_SCREENS, screenName } from "@/lib/help/screens";
 import { he } from "@/lib/i18n/he";
 import { partOfDay } from "@/lib/partOfDay";
 import type { Worker } from "@/lib/types";
@@ -32,9 +34,12 @@ import type { Worker } from "@/lib/types";
  * server action that changes a month or a warning revalidates, and a
  * revalidation refreshes the layout with the page.
  *
- * The circular "?" v3 draws in the bar, linking `/help`, is left out until
- * Stage 9 decides whether that screen is built: a link
- * on every screen to an address that 404s is a promise the bar cannot keep.
+ * **The bar carries no help entry**, and that is a decision rather than an
+ * omission. v3 draws a circular "?" here and the `עזרה` artboard replaces it
+ * with a labelled pill; the user chose on 2026-10-01 to put the way in to
+ * `/help` in the bottom corner instead, as a floating control
+ * (`HelpLauncher`), so the bar keeps the five tabs and nothing else.
+ * `DESIGN.md` records the departure.
  *
  * The greeting and the worker switcher sit here too, where v3 draws them as a
  * row of their own at the top of the home screen. That row cost about seventy
@@ -123,16 +128,6 @@ function useScrollRestoration(pathname: string): void {
  * anchor that stops agreeing with its target skips to nowhere, silently. */
 const MAIN_ID = "main";
 
-interface NavItem {
-  href: string;
-  label: string;
-  /** The shape beside the label, one per screen. It is
-   * recognised before the label is read, and on a phone — where the tabs
-   * scroll sideways — it is what a half-scrolled tab still shows. Decorative:
-   * the label is what names the tab, so the icon is `aria-hidden`. */
-  icon: TwoToneName;
-}
-
 /**
  * What a new account sees until its first worker exists.
  *
@@ -157,14 +152,6 @@ function EmptyHousehold() {
     </Card>
   );
 }
-
-const navItems: NavItem[] = [
-  { href: "/", label: he.nav.home, icon: "home" },
-  { href: "/workers", label: he.nav.workers, icon: "people" },
-  { href: "/payments", label: he.nav.payments, icon: "coin" },
-  { href: "/settings", label: he.nav.settings, icon: "gear" },
-  { href: "/reports", label: he.nav.reports, icon: "doc" },
-];
 
 interface AppShellProps {
   children: ReactNode;
@@ -279,7 +266,18 @@ export function AppShell({
   // is a promise about a household that has a worker in it, and this is the
   // flow reached precisely when that is not yet true; a family half-way through
   // it would otherwise be offered five tabs into screens about nobody.
-  if (pathname === "/sign-in" || pathname === ADD_WORKER) return <>{children}</>;
+  // The launcher follows every screen, including the wizard, which has no bar:
+  // someone half-way through it is exactly who wants to ask where to press. It
+  // is left off the sign-in screen, where there is no application to navigate.
+  if (pathname === "/sign-in") return <>{children}</>;
+  if (pathname === ADD_WORKER) {
+    return (
+      <>
+        {children}
+        <HelpLauncher />
+      </>
+    );
+  }
 
   // A household with no worker in it yet, which is what every new account is
   // until the first profile is created. Every screen below is a screen about
@@ -360,13 +358,13 @@ export function AppShell({
             aria-label={he.nav.landmark}
             className="flex min-w-0 items-center gap-1 overflow-x-auto px-4 md:px-7 xl:px-0"
           >
-            {navItems.map((item) => {
+            {NAV_SCREENS.map((item) => {
               const active =
-                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                item.route === "/" ? pathname === "/" : pathname.startsWith(item.route);
               return (
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  key={item.route}
+                  href={item.route}
                   ref={active ? activeTabRef : undefined}
                   aria-current={active ? "page" : undefined}
                   className={[
@@ -377,8 +375,10 @@ export function AppShell({
                       : "font-normal text-ink-mute hover:bg-hover hover:text-ink",
                   ].join(" ")}
                 >
-                  <TwoToneIcon name={item.icon} className="size-4" />
-                  <span dir="auto">{item.label}</span>
+                  {/* Decorative: the label is what names the tab, so the icon
+                      is `aria-hidden` inside `TwoToneIcon`. */}
+                  <TwoToneIcon name={item.tab} className="size-4" />
+                  <span dir="auto">{screenName(item.id)}</span>
                 </Link>
               );
             })}
@@ -446,12 +446,19 @@ export function AppShell({
       <main
         id={MAIN_ID}
         tabIndex={-1}
-        className="flex min-h-0 flex-1 justify-center overflow-auto px-4 pt-3 pb-3 md:px-7"
+        /* `pb-20` is the launcher's clearance, not decoration: it floats over
+           the bottom corner, and without this the last row of a scrolling
+           screen sits under it — measured at 390px, where it covered the
+           rounding row of `/payments`. It costs a scroll only on a screen that
+           would otherwise have hidden something behind the control, so the case
+           it loses is the case it exists for. */
+        className="flex min-h-0 flex-1 justify-center overflow-auto px-4 pt-3 pb-20 md:px-7"
       >
         <div className="flex w-full max-w-[1320px] min-w-0 flex-col gap-2.5">
           {noWorkerYet ? <EmptyHousehold /> : children}
         </div>
       </main>
+      <HelpLauncher />
     </div>
     </WorkerScopeProvider>
   );

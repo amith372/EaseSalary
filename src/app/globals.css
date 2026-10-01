@@ -84,6 +84,19 @@
   --color-ask-line-hover: #c08a5e;
   --color-ask-ink-hover: #8a6a45;
 
+  /* `עזרה`: the answer card, and the launcher that opens the screen. The warm
+     amber is the artboard's own choice for help and it is the whole reason it
+     cannot be mistaken for the "?" above — that one is grey-brown on white and
+     explains an amount, this one is amber and moves you to a screen. `help-ink`
+     measures 7.1:1 on `help-launcher`, and `help-eyebrow` 4.6:1 on
+     `help-answer`. */
+  --color-help-answer: #fdf3e7; /* the ground of the answer card */
+  --color-help-answer-line: #eedcc4;
+  --color-help-eyebrow: #a9764a; /* "המסך שמטפל בזה", above the screen's name */
+  --color-help-launcher: #faeddc;
+  --color-help-launcher-hover: #f6e2cb;
+  --color-help-ink: #8a4f2c;
+
   /* The four text colours above that sit on a tint were darkened on
      2026-09-15 to reach 4.5:1 on the palest surface they meet (`chip`), the
      same values the canvas carries since its contrast pass. */

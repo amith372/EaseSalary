@@ -215,7 +215,7 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
 
     // The picker is reached from `הגדרות`, so `הגדרות` is the tab that lights.
     await expect(
-      page.getByRole("link", { name: he.nav.settings, exact: true }),
+      page.getByRole("link", { name: he.screens.settings.name, exact: true }),
     ).toHaveAttribute("aria-current", "page");
 
     await page.screenshot({

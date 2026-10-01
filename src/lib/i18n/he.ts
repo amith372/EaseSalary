@@ -89,6 +89,43 @@ const DOCUMENT_NAMES: Record<ExpiringDocument, string> = {
   medicalInsurance: "הביטוח הרפואי",
 };
 
+/**
+ * Every screen's name, in one place, because four things name a screen and a
+ * name written twice is a name that stops agreeing with itself: the tab in the
+ * bar, the holiday picker's way back, the heading on the screen itself, and —
+ * since stage 9 — the help panel saying which screen settles a question.
+ *
+ * **A name here is year-free and worker-free**, which is what lets help use it:
+ * the help screen is account-blind, so a name with a year or a worker in it
+ * could not be said there. `he.holidays.title` is the picker's own heading and
+ * takes the year after it; this is the screen's name.
+ */
+const SCREEN_NAMES = {
+  home: "דף הבית",
+  workers: "עובדים/ות",
+  payments: "תשלומים",
+  settings: "הגדרות",
+  reports: "דוחות",
+  alerts: "התראות",
+  payslip: "דף המשכורת",
+  beforeExport: "לפני הייצוא",
+  holidays: "בחירת חגים",
+  addWorker: "הוספת עובד/ת",
+  /**
+   * Not in the registry: help never answers a question by sending the user back
+   * to help. It is here because the launcher and the screen's own heading must
+   * say the same word — press `עוזר דיגיטלי` and land on a screen headed
+   * `עזרה` and they read as two different things.
+   *
+   * **The user's name for it, 2026-10-01**, over the artboard's `עזרה`. It is
+   * what the thing will be once stage 11 lands: the screen says where to press,
+   * and the assistant that stages the press sits on this same screen. Naming it
+   * for what it is becoming costs nothing now — the opening line already says
+   * it answers where to press and does not press for you.
+   */
+  help: "עוזר דיגיטלי",
+} as const;
+
 /** The words that agree with the day rather than describing it. */
 const AGREEMENT = {
   feminine: {
@@ -354,7 +391,7 @@ export const he = {
    * up to the last button: nothing is written until it is pressed.
    */
   addWorker: {
-    title: "הוספת עובד/ת",
+    title: SCREEN_NAMES.addWorker,
     /** "שלב 2 מתוך 4". The numbers are substituted, so each is its own element
      * and neither is translated. */
     stepOf: { before: "שלב ", between: " מתוך ", total: "4" },
@@ -518,21 +555,222 @@ export const he = {
     },
   },
 
+  /**
+   * Every screen the application has an address for, with what it settles.
+   *
+   * **The name is the screen's name everywhere** — the tab in the bar, the
+   * holiday picker's way back, the help panel's answer — and the registry in
+   * `src/lib/help/screens.ts` is what joins it to a route.
+   *
+   * **`settles` is what the screen decides, not what it looks like.** It is
+   * the only sentence help has to match a question against before anything has
+   * been scraped, so it names the things a user would ask about by name:
+   * `settings` says the words שכר מינימום and מס הכנסה because a question
+   * about either of them has nowhere else to land.
+   *
+   * It is worker-blind and year-free, because help never names a worker
+   * (specs.md item 24), and it uses the inclusive עובד/ת for the same reason:
+   * no worker is chosen on that screen.
+   */
+  screens: {
+    home: {
+      name: SCREEN_NAMES.home,
+      settles: "מה החודש הסתכם בו, וסימון ימים בלוח",
+    },
+    workers: {
+      name: SCREEN_NAMES.workers,
+      settles: "מי העובדים/ות בחשבון, ומעבר לתיק של אחד/ת",
+    },
+    payments: {
+      name: SCREEN_NAMES.payments,
+      settles: "כל מה שמזינים לחודש ולא נובע מהלוח",
+    },
+    settings: {
+      name: SCREEN_NAMES.settings,
+      settles: "תנאי ההעסקה, הביטוחים והמסמכים",
+    },
+    reports: {
+      name: SCREEN_NAMES.reports,
+      settles: "איזה קובץ להוריד",
+    },
+    alerts: {
+      name: SCREEN_NAMES.alerts,
+      settles: "מה דורש טיפול ומה כבר טופל",
+    },
+    payslip: {
+      name: SCREEN_NAMES.payslip,
+      settles: "החודש שורה אחר שורה, כמו בגיליון",
+    },
+    beforeExport: {
+      name: SCREEN_NAMES.beforeExport,
+      settles: "אישור הנתונים שהחודש נסגר איתם",
+    },
+    /** The two the artboard's grid does not draw, and which the screen draws
+     * anyway: its heading says `כל המסכים`, and both are addresses a question
+     * is answered by sending someone to. */
+    holidays: {
+      name: SCREEN_NAMES.holidays,
+      settles: "אילו תשעה ימי חג משולמים השנה",
+    },
+    addWorker: {
+      name: SCREEN_NAMES.addWorker,
+      settles: "פתיחת תיק לעובד/ת חדש/ה בחשבון",
+    },
+  },
+
   nav: {
-    home: "דף הבית",
-    workers: "עובדים/ות",
-    payments: "תשלומים",
-    settings: "הגדרות",
-    reports: "דוחות",
     /** Read by a screen reader in place of the nav itself. */
     landmark: "ניווט ראשי",
     /** The first thing the keyboard reaches, and visible only while focused:
      * without it every screen begins with five tabs to walk past. */
     skip: "דילוג לתוכן",
-    help: {
-      /** The circular "?" in the top bar shows no text, so this is its whole
-       * meaning to a screen reader. */
-      title: "צריך/ה עזרה?",
+  },
+
+  /**
+   * The `עזרה` screen (specs.md item 24).
+   *
+   * **Every sentence here points and none explains.** A topic says which screen
+   * settles the question and where to press on it; the rule itself is a link
+   * from `legalLinks` and the arithmetic behind a figure stays in the `?` beside
+   * that figure. A second wording of either here is the manual item 24 refuses,
+   * and it is the wording nobody would think to correct.
+   *
+   * **It is worker-blind and figure-blind**, which is what keeps the screen
+   * clear of inflection, of the replay and of a refused month: `עובד/ת` is the
+   * inclusive form on purpose, because no worker is chosen here.
+   */
+  help: {
+    title: SCREEN_NAMES.help,
+    /**
+     * **The user's own wording, 2026-10-01, used verbatim**, in place of the
+     * artboard's lead.
+     *
+     * It is impersonal — `ניתן`, never `אני` — so the screen is never given a
+     * gender in any sentence it says, and it states the boundary as well as the
+     * purpose: navigation and where to press, not the law itself.
+     */
+    lead: "כאן ניתן לשאול שאלות לניווט באתר ועל מה ללחוץ כדי לבצע פעולה מסוימת. אפשר לכתוב או לבחור מהרשימה.",
+    /** What the launcher and the search field say. */
+    ask: {
+      /** The floating control that opens the screen, and its only visible
+       * text: a glyph alone cannot be translated (`CLAUDE.md`). */
+      launcher: SCREEN_NAMES.help,
+      label: "מה רוצים לעשות?",
+      placeholder: "לכתוב כאן, או לבחור מהרשימה שלמטה",
+      submit: "לחפש",
+      /** Under the field, as the artboard draws it. The two examples are
+       * topics' own questions, shortened. */
+      examples: 'אפשר לכתוב בשפה חופשית — "כמה ימי חופשה נשארו", "איך מזינים מקדמה".',
+      /** Empties the field and puts the whole list back. */
+      clear: "לנקות",
+    },
+    /** The answer card: where to go, what to press, and the rule beside it. */
+    answer: {
+      title: "התשובה",
+      /** Above the screen's name, saying what the name is. */
+      eyebrow: "המסך שמטפל בזה",
+      /**
+       * "לדף הבית" — the button that goes there.
+       *
+       * It is built here and handed over as one string, so the element holds a
+       * single text node. Two JSX expressions side by side would be two sibling
+       * text nodes, which is what Chrome swaps in place when it translates and
+       * what then throws `NotFoundError` on `removeChild` (`CLAUDE.md`). The
+       * same reason `he.holidays.backTo` is a function.
+       */
+      goTo: (screen: string) => `ל${screen}`,
+      rule: "הכלל עצמו:",
+    },
+    /**
+     * Nothing matched.
+     *
+     * **It is not a fault and it does not invite a second try at the same
+     * words.** What it offers is the list of screens below it, which is the
+     * whole application — a help screen that says only "not found" has returned
+     * the user to where they started.
+     */
+    noMatch: {
+      title: "לא נמצאה שאלה מתאימה",
+      body: "אפשר לנסח אחרת, או לבחור מתוך רשימת המסכים שלמטה.",
+    },
+    topicsTitle: "מה שואלים הכי הרבה",
+    screensTitle: "כל המסכים",
+    screensNote: "מה שכל מסך מסדר",
+    /**
+     * The eight questions of the `עזרה` artboard, keyed as `HELP_TOPICS` keys
+     * them.
+     *
+     * **`where` is the gesture and not a tour**: the fold to open, the control
+     * to press. It is read after the screen's name, so it never repeats it, and
+     * it is written once — the list row truncates it and the answer card gives
+     * it whole, rather than the two carrying wordings that could drift.
+     */
+    topics: {
+      /**
+       * **The mark is named first, and that is not a stylistic preference.**
+       * These two differ only in the mark chosen, and the list row truncates
+       * `where` — so with the gesture first they drew as two identical rows
+       * with the one word that tells them apart cut off the end.
+       */
+      markSick: {
+        ask: "איפה מסמנים יום מחלה?",
+        where: "בלוח של החודש בוחרים מחלה — לוחצים על היום, או גוררים על כמה ימים",
+      },
+      /** Asked for by the user on 2026-10-01, beside `markSick`: the same
+       * gesture and the other mark, and the one a family makes most often. */
+      markVacation: {
+        ask: "איך מסמנים יום חופשה?",
+        where: "בלוח של החודש בוחרים חופשה — לוחצים על היום, או גוררים על כמה ימים",
+      },
+      vacationLeft: {
+        ask: "כמה ימי חופשה נשארו?",
+        // Not "the rail on the right": a position that moves with the layout
+        // is a sentence that goes stale without anything looking wrong.
+        where: "בקטע היתרות שליד הלוח, בשורת החופשה",
+      },
+      /**
+       * Asked for by the user on 2026-10-01.
+       *
+       * **It names the one-off line and says where the recurring one is set**,
+       * because the two are made in different places and a family that could
+       * not find the recurring one asked for it to be built when it already
+       * existed (`he.payments.actions.lines.oneOffOnly`).
+       */
+      addPayment: {
+        // Not "תשלום לחודש": that wording put the word for *month* in the
+        // question, and every question a family asks about a month then reached
+        // it as readily as the one about adding a line.
+        ask: "איך מוסיפים תוספת או הורדה לשכר?",
+        where:
+          "בקטע תוספות והורדות שהוספת, בכפתור להוסיף שורה חד־פעמית. שורה שחוזרת בכל חודש נקבעת בדף האישי",
+      },
+      addAdvance: {
+        ask: "איך מזינים מקדמה?",
+        where: "בקטע מקדמות, בכפתור שמוסיף מקדמה חדשה",
+      },
+      recuperationWhen: {
+        ask: "מתי משלמים דמי הבראה?",
+        where: "בקטע לקראת החודשים הבאים, שאומר באיזה חודש הם משולמים",
+      },
+      chooseHolidays: {
+        ask: "איך בוחרים את תשעת החגים?",
+        // The artboard writes this with an arrow glyph. An arrow inside a
+        // Hebrew string is both untranslatable and a bidi hazard, so the path
+        // is named in words (`CLAUDE.md`).
+        where: "מגיעים לשם מהגדרות, בקטע חופשה, מחלה וחגים",
+      },
+      deductMedicalInsurance: {
+        ask: "מותר לנכות ביטוח רפואי מהשכר?",
+        where: "בקטע ביטוחים, ליד שם חברת הביטוח",
+      },
+      changeRestDay: {
+        ask: "איפה משנים את יום המנוחה?",
+        where: "בקטע תנאי ההעסקה, בשורת יום המנוחה",
+      },
+      monthNotConfirmed: {
+        ask: "למה החודש עדיין לא מאושר?",
+        where: "בשאלות שלפני הייצוא, שאחריהן החודש מאושר",
+      },
     },
   },
 
@@ -544,7 +782,7 @@ export const he = {
    * numbered criterion.
    */
   reports: {
-    title: "דוחות",
+    title: SCREEN_NAMES.reports,
     lead: "כל קובץ כאן מוכן להורדה — לשמירה אצלך, לרואה חשבון או לביטוח הלאומי.",
 
     /**
@@ -665,7 +903,7 @@ export const he = {
    * (specs.md item 5); the link beside the others leads there.
    */
   payslip: {
-    eyebrow: "דף המשכורת",
+    eyebrow: SCREEN_NAMES.payslip,
     /** "עבור חנה" — the name is its own element beside this one, never inside
      * a template, for the reason `CLAUDE.md` gives about Chrome's translation. */
     forWorker: "עבור",
@@ -909,7 +1147,7 @@ export const he = {
    * from its key and fields; the engine returns none of these words.
    */
   alerts: {
-    title: "התראות",
+    title: SCREEN_NAMES.alerts,
     lead: "כל מה שדורש טיפול, ומה שכבר טופל.",
     settingsLink: "להגדיר אילו תזכורות לקבל",
     /** Beside "הצג הכל", where a short list leaves the rest to the page. */
@@ -1179,7 +1417,7 @@ export const he = {
    * thing they need to know is that this is where that row is made.
    */
   payments: {
-    title: "תשלומים",
+    title: SCREEN_NAMES.payments,
     lead: "כאן נרשם כל מה שאינו נגזר מהלוח — מקדמות, מס הכנסה, ותוספות והורדות משלך. השורות האלה נכנסות לחישוב החודש, ומופיעות בפירוט בדף המשכורת.",
     /** The screen records one month at a time, so it says which (item 5). */
     forMonth: "החודש שנרשם",
@@ -1736,7 +1974,7 @@ export const he = {
    * read-only rows.
    */
   settings: {
-    title: "הגדרות",
+    title: SCREEN_NAMES.settings,
     lead: "הדברים שנקבעים פעם אחת ומשפיעים על כל החישובים. אין צורך לגעת בהם כל חודש.",
     /** The badge on a row the user never sets (items 3, 7, 8, 19). */
     derived: "מחושב לפי החוק",
@@ -1843,7 +2081,7 @@ export const he = {
    * `profile.terms` holds the words of the rows `/settings` draws.
    */
   workers: {
-    title: "עובדים/ות",
+    title: SCREEN_NAMES.workers,
     lead: "כל מה ששייך לעובד/ת נמצא בדף האישי — החודשים, היתרות והפרטים.",
     /** Item 11's limit, said as a fact about the account rather than as a
      * refusal: a household holds no more than two workers, and a worker shared
@@ -2282,6 +2520,20 @@ export const he = {
           hint: "הסוכנות, חברת הביטוח וקופת החולים — במילים שלכם. מה שנכתב כאן מופיע בשורת הביטוח הרפואי בדף המשכורת.",
           placeholder: "סוכנות, חברת ביטוח, קופת חולים",
           save: "לשמור",
+          /**
+           * **The one help topic with no screen of its own, and it is settled
+           * here rather than there** (specs.md items 16 and 24): the help screen
+           * points at an answer and never writes one, so the sentence that says
+           * the application deducts nothing sits beside the field it is about.
+           *
+           * It states the law and then what this application does with it, in
+           * that order, because the user who asks has usually been told by an
+           * agency that the deduction is permitted — and it is. What they need
+           * to know is that nothing here is taken off the wage, so a payslip
+           * showing the full salary is not a mistake.
+           */
+          deduction:
+            "החוק מתיר לנכות מהשכר חלק מעלות הביטוח הרפואי, והיישום הזה אינו מנכה דבר — לא ממנו ולא מתשלום אחר לגורם שלישי. הסכום ששולם נרשם בשורה שלו בדף המשכורת, והמשכורת נשארת מלאה.",
         },
         documents: {
           title: "המסמכים",
@@ -2494,7 +2746,7 @@ export const he = {
    * they did not and the screen is asked for on every export.
    */
   beforeExport: {
-    eyebrow: "לפני הייצוא",
+    eyebrow: SCREEN_NAMES.beforeExport,
     /**
      * What the payslip and `/דוחות` offer instead of the file, for a month
      * nobody has confirmed yet (specs.md items 4, 17).

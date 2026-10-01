@@ -7,10 +7,16 @@ import type { Explanation } from "@/lib/types";
 
 /**
  * The circular "?" and the panel it opens — the most repeated element on the
- * canvas, and the whole of the application's help: there is no separate help
- * section to visit (specs.md item 24). Every figure carries one: the
- * explanation stays beside the thing it explains. An alert is not a figure and
- * carries item 26's link to the law instead (`AlertsScreen`).
+ * canvas, and where every explanation in the application lives (specs.md item
+ * 24). Every figure carries one: the explanation stays beside the thing it
+ * explains. An alert is not a figure and carries item 26's link to the law
+ * instead (`AlertsScreen`).
+ *
+ * **There is a help screen now (`/help`), and it does not change that.** It
+ * navigates — it says which screen settles a question and where to press there
+ * — and it writes no explanation of its own, so an answer is still in exactly
+ * one place. The two must not be confused in the interface either, which is why
+ * the way in to it carries a word and is never a second "?".
  *
  * It is two components rather than one because the canvas puts them in two
  * different places: the button sits beside the value at the end of a row, the

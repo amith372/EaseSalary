@@ -294,7 +294,7 @@ export function AddWorkerScreen({
           href="/"
           className="text-[16px] font-medium text-ink-mute transition-colors hover:text-forest"
         >
-          <span dir="auto">{step === LAST_STEP ? he.nav.home : words.leave}</span>
+          <span dir="auto">{step === LAST_STEP ? he.screens.home.name : words.leave}</span>
         </Link>
       </header>
 
