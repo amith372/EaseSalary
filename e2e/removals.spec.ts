@@ -302,6 +302,9 @@ test.describe("a movement removed from an advance (specs.md item 20)", () => {
       // "סכום אחר, אם חושב אחרת" and an accessible name matches by substring.
       .getByRole("textbox", { name: words.amount, exact: true })
       .fill(String(SECOND_ADVANCE / 100));
+    // The day it was given, inside the month on screen — September, the month
+    // still running (specs.md item 20).
+    await advances.getByLabel(words.givenOn).fill("2026-09-10");
     await advances
       .getByRole("button", { name: words.submitGrant, exact: true })
       .click();

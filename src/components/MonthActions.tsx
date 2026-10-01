@@ -13,6 +13,7 @@ import {
   setHospitalOvertime,
   setIncomeTax,
   setOverride,
+  splitAdvance,
   updateAdvance,
   updateThirdPartyPayment,
   updateUserLine,
@@ -39,7 +40,14 @@ import { FoldSection, type Fold } from "@/components/FoldSection";
 import { MoneyValue } from "@/components/MoneyValue";
 import { MonthSelect } from "@/components/MonthSelect";
 import { yearMonthText } from "@/lib/dates";
-import { whyRepaymentIsRefused } from "@/lib/engine/advances";
+import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
+import {
+  blockingConfirmedMonth,
+  splitInstalments,
+  splitSpan,
+  SPLIT_MONTHS_LIMIT,
+  whyRepaymentIsRefused,
+} from "@/lib/engine/advances";
 import type { AdvanceStanding } from "@/lib/engine/advances";
 import type { OrphanedOverride } from "@/lib/engine/overrides";
 import {
@@ -154,6 +162,17 @@ interface MonthActionsProps {
   /** What this month itself records about them — the itemisation the group owes
    * beside the preview's summary. */
   monthAdvances: Advance[];
+  /**
+   * The months this worker has confirmed, which is what a split is held against
+   * (specs.md item 20).
+   *
+   * **The whole worker's and not this month's**, because a split reaches months
+   * the screen is not showing: a confirmed month anywhere in the span refuses the
+   * whole split, and the form names the month rather than letting the press
+   * answer with a refusal. The rule itself is the engine's
+   * (`blockingConfirmedMonth`) and the server refuses on it again.
+   */
+  confirmedMonths: YearMonth[];
   /** What this month paid to somebody other than the worker (specs.md item 16).
    * One row per kind, which is what makes a payment addressable by its kind
    * alone. */
@@ -313,6 +332,7 @@ export function MonthActions({
   hospitalOvertime,
   ledger,
   monthAdvances,
+  confirmedMonths,
   thirdPartyPayments,
   lines,
   orphanedOverrides,
@@ -356,6 +376,7 @@ export function MonthActions({
 
       <AdvancesControl
         fold={fold("advances")}
+        confirmedMonths={confirmedMonths}
         workerId={workerId}
         month={month}
         ledger={ledger}
@@ -1054,6 +1075,23 @@ type OpenAdvancePanel =
   | { gesture: "repay"; number: number }
   | { gesture: "edit"; number: number; kind: AdvanceKind };
 
+/**
+ * How many months a typed count splits a grant across, or `null` where it splits
+ * it across none (specs.md item 20).
+ *
+ * **Empty means a grant on its own** — the gesture that existed before the split
+ * did, and the one a family who agreed no repayment yet still needs. Anything
+ * else that is not a whole number inside the engine's own limit is neither: it is
+ * said in the form and the button is not offered, because writing the grant alone
+ * would be answering a request for a hundred months with silence.
+ */
+function splitCountOf(typed: string): number | null {
+  const text = typed.trim();
+  if (!/^[0-9]+$/.test(text)) return null;
+  const count = Number(text);
+  return count >= 1 && count <= SPLIT_MONTHS_LIMIT ? count : null;
+}
+
 /** The open panel's own name, so the busy state sits on its button and not on
  * a row's action beside it. */
 function panelKey(open: OpenAdvancePanel) {
@@ -1068,24 +1106,50 @@ function AdvancesControl({
   month,
   ledger,
   monthAdvances,
+  confirmedMonths,
   onSubmit,
 }: FoldProps &
   Pick<
   MonthActionsProps,
-  "workerId" | "month" | "ledger" | "monthAdvances" | "onSubmit"
+  | "workerId"
+  | "month"
+  | "ledger"
+  | "monthAdvances"
+  | "confirmedMonths"
+  | "onSubmit"
 >) {
   const words = he.month.actions.advances;
+  const splitWords = words.split;
   /** `null` when nothing is open — one panel at a time, so two half-filled
    * forms cannot both be on screen claiming the same month. */
   const [open, setOpen] = useState<OpenAdvancePanel | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  /** The day the money was handed over — a grant's own field (item 20). */
+  const [givenOn, setGivenOn] = useState("");
+  /** How many months to split the grant across, as typed. Empty is a grant on
+   * its own, which is the gesture that existed before the split did. */
+  const [splitMonths, setSplitMonths] = useState("");
+  /**
+   * The instalments the user has typed over the proposal, by their place in the
+   * span.
+   *
+   * **Only the ones they touched are held.** The rest are proposed from the
+   * amount and the count as those change — so correcting ₪5,000 to ₪6,000
+   * re-divides the months nobody has edited and leaves the ones they set alone,
+   * which a stored array of every field could not do without deciding for them
+   * which of the two the correction meant.
+   */
+  const [edited, setEdited] = useState<Record<number, string>>({});
   const { refusal, fault, run, clear, busyAt } = useAction(onSubmit);
 
   function reset() {
     setOpen(null);
     setAmount("");
     setNote("");
+    setGivenOn("");
+    setSplitMonths("");
+    setEdited({});
     clear();
   }
 
@@ -1096,10 +1160,50 @@ function AdvancesControl({
     setOpen({ gesture: "edit", number: advance.number, kind: advance.kind });
     setAmount(amountFieldValue(advance.agorot));
     setNote(advance.note ?? "");
+    // The split is the grant panel's and a correction is not a grant: left
+    // standing, a count typed and abandoned would ride along with the next
+    // thing saved from the same panel.
+    setSplitMonths("");
+    setEdited({});
   }
 
-  /** One call for all three gestures: what is open is what tells them apart,
-   * and a correction keeps the number and the kind it was opened on. */
+  /**
+   * The split as the form has it (specs.md item 20).
+   *
+   * **Nothing of it is stored and nothing of it is a rule of its own.** The
+   * instalments are proposed by the engine's own division and the blocking month
+   * is the engine's own answer, so what the form offers and what the server
+   * writes cannot drift — the two read one function each. An empty count is a
+   * grant on its own and leaves every one of these empty.
+   */
+  const splitCount = splitCountOf(splitMonths);
+  const principalAgorot = parseShekels(amount);
+  const span = splitCount === null ? [] : splitSpan(month, splitCount);
+  const proposed =
+    splitCount === null || principalAgorot === null
+      ? []
+      : splitInstalments(principalAgorot, splitCount);
+  /** What each month's field holds: what the user typed over it, or the even
+   * division of what they have typed as the amount. */
+  const instalments = span.map((_, at) => {
+    const typed = edited[at];
+    if (typed !== undefined) return typed;
+    const share = proposed[at];
+    return share === undefined ? "" : amountFieldValue(share);
+  });
+  const plannedAgorot = instalments.reduce((sum, typed) => {
+    const agorot = parseShekels(typed);
+    return agorot === null ? sum : sum + agorot;
+  }, 0);
+  /** The confirmed month inside the span, which refuses the whole split — asked
+   * of the engine, so the button is not offered for a press the server would
+   * answer with a refusal. */
+  const blocked =
+    splitCount === null ? null : blockingConfirmedMonth(span, confirmedMonths);
+
+  /** One call for all three gestures, and for the one that splits a grant as it
+   * gives it: what is open is what tells them apart, and a correction keeps the
+   * number and the kind it was opened on. */
   function submit() {
     if (open === null) return;
     run(
@@ -1109,13 +1213,20 @@ function AdvancesControl({
               amount,
               note,
             })
-          : addAdvance(
-              workerId,
-              month,
-              open.gesture === "grant"
-                ? { kind: "granted", amount, note }
-                : { kind: "repaid", number: open.number, amount, note },
-            ),
+          : open.gesture === "grant" && splitCount !== null
+            ? splitAdvance(workerId, month, {
+                amount,
+                note,
+                givenOn,
+                instalments,
+              })
+            : addAdvance(
+                workerId,
+                month,
+                open.gesture === "grant"
+                  ? { kind: "granted", amount, note, givenOn }
+                  : { kind: "repaid", number: open.number, amount, note },
+              ),
       reset,
       panelKey(open),
     );
@@ -1129,6 +1240,106 @@ function AdvancesControl({
     );
   }
 
+  const granting = open?.gesture === "grant";
+  /** A count typed that is not a span: said here, and the button withheld while
+   * it stands (`splitCountOf`). */
+  const splitRefused = splitMonths.trim() !== "" && splitCount === null;
+
+  /**
+   * The repayments a grant is being split into, under the grant's own fields
+   * (specs.md item 20).
+   *
+   * **The application proposes and the user presses.** Every month's field opens
+   * holding the engine's own even division, with the last absorbing the
+   * remainder, and the user overtypes whichever of them the family actually
+   * agreed. The sum beside them is what makes a plan for less than the whole debt
+   * visible — that is allowed and leaves the rest owed, so the figure is shown
+   * rather than refused.
+   */
+  const splitFields = (
+    <div className="flex flex-col gap-2.5 border-t border-line-soft pt-2.5">
+      <span dir="auto" className="text-[13px] font-medium text-ink-warm">
+        {splitWords.title}
+      </span>
+      <Field
+        label={splitWords.months}
+        hint={splitWords.monthsHint}
+        className="max-w-[11rem]"
+      >
+        <input
+          type="text"
+          inputMode="numeric"
+          dir="ltr"
+          value={splitMonths}
+          onChange={(event) => {
+            setSplitMonths(event.target.value);
+            // The span changed, so the amounts the user typed into it no longer
+            // address the months they were typed for.
+            setEdited({});
+          }}
+          className={`${inputClass} text-start`}
+        />
+      </Field>
+      {splitRefused ? (
+        <RefusalLine>{splitWords.monthsRefused(SPLIT_MONTHS_LIMIT)}</RefusalLine>
+      ) : null}
+      {span.length > 0 ? (
+        <>
+          <ul className="flex flex-col gap-2">
+            {span.map((spanMonth, at) => (
+              <li
+                key={yearMonthText(spanMonth)}
+                className="flex items-center gap-3"
+              >
+                {/* The month beside the field rather than inside its label: it
+                    is a mixed run and needs its own isolate, which a label
+                    passed as a string could not carry (`CLAUDE.md`). The
+                    sentence a screen reader hears is the input's own. */}
+                <span className="w-26 flex-none text-[13px] font-medium text-ink-warm">
+                  <Bidi>{monthLabel(spanMonth)}</Bidi>
+                </span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  dir="ltr"
+                  aria-label={splitWords.perMonth(monthLabel(spanMonth))}
+                  /* The browser suite's handle on one instalment, by the month
+                     it belongs to rather than by the Hebrew beside it. */
+                  data-instalment={yearMonthText(spanMonth)}
+                  value={instalments[at] ?? ""}
+                  onChange={(event) =>
+                    setEdited((current) => ({
+                      ...current,
+                      [at]: event.target.value,
+                    }))
+                  }
+                  className={inputClass}
+                />
+              </li>
+            ))}
+          </ul>
+          <span className="text-[12px] font-light text-ink-quiet">
+            <span dir="auto">{splitWords.sum} </span>
+            <Bidi noTranslate>{formatAgorot(plannedAgorot)}</Bidi>
+            <span dir="auto"> {splitWords.of} </span>
+            <Bidi noTranslate>{formatAgorot(principalAgorot ?? 0)}</Bidi>
+          </span>
+          {blocked === null ? null : (
+            <RefusalLine>
+              {splitWords.confirmedMonth(monthLabel(blocked))}
+            </RefusalLine>
+          )}
+          <span
+            dir="auto"
+            className="text-[12px] leading-[1.5] font-light text-ink-quiet text-pretty"
+          >
+            {splitWords.note}
+          </span>
+        </>
+      ) : null}
+    </div>
+  );
+
   const panel = (
     <Card
       tone="inset"
@@ -1141,20 +1352,46 @@ function AdvancesControl({
         value={amount}
         onChange={(event) => setAmount(event.target.value)}
       />
+      {/* The day the money was handed over — a grant's alone, and a repayment is
+          dated by the month it is entered for (item 20). A correction does not
+          ask for it again: the movement carries it through
+          (`reviewAdvanceEdit`). */}
+      {granting ? (
+        <Field
+          label={words.givenOn}
+          hint={words.givenOnHint(monthLabel(month))}
+        >
+          <input
+            type="date"
+            dir="ltr"
+            value={givenOn}
+            onChange={(event) => setGivenOn(event.target.value)}
+            className={`${inputClass} text-start`}
+          />
+        </Field>
+      ) : null}
       <NoteField
         label={words.note}
         hint={words.noteHint}
         value={note}
         onChange={setNote}
       />
+      {granting ? splitFields : null}
       <PanelButtons
         submitLabel={
           open?.gesture === "edit"
             ? words.save
-            : open?.gesture === "grant"
-              ? words.submitGrant
+            : granting
+              ? splitCount === null
+                ? words.submitGrant
+                : splitWords.submit
               : words.submitRepay
         }
+        /* Withheld while the form already knows the server would refuse: a
+           count that is not a span, or a confirmed month inside one. A control
+           that answers a press with a refusal is a control that should not have
+           been pressable (item 20). */
+        disabled={granting && (splitRefused || blocked !== null)}
         onSubmit={submit}
         busy={open !== null && busyAt(panelKey(open))}
         cancelLabel={words.cancel}
@@ -1279,6 +1516,19 @@ function AdvancesControl({
                       <span dir="auto">{words.fromOpening}</span>
                     </>
                   ) : null}
+                  {/* The day the money was handed over, carried on the standing
+                      so it reads from every month and not only from the one that
+                      granted it (item 20). An advance from the opening position
+                      has none. */}
+                  {standing.givenOn === undefined ? null : (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span>
+                        <span dir="auto">{words.givenOnShown}</span>
+                        <Bidi noTranslate>{fullDayLabel(standing.givenOn)}</Bidi>
+                      </span>
+                    </>
+                  )}
                   {standing.note ? (
                     <>
                       <span aria-hidden="true">·</span>

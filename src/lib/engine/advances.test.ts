@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   advanceKey,
   advanceLedger,
+  blockingConfirmedMonth,
   duplicateAdvanceMovements,
   nextAdvanceNumber,
   reviewAdvance,
   reviewAdvanceEdit,
+  reviewAdvanceSplit,
+  splitInstalments,
+  splitSpan,
+  SPLIT_MONTHS_LIMIT,
   whyRemovalIsRefused,
   withUpdatedAdvance,
   withoutAdvance,
@@ -59,8 +64,19 @@ const repaid = (number: number, agorot: number): Advance => ({
   agorot,
 });
 
+/** A grant carries the day the money was handed over, inside the month it is
+ * recorded in (item 20) — March here, which is the month the shared context
+ * below is for. */
+const GIVEN_ON_IN_MARCH = "2026-03-10";
+
 const draft = (over: Partial<AdvanceDraft> = {}): AdvanceDraft =>
-  ({ kind: "granted", amount: "3000", note: "", ...over }) as AdvanceDraft;
+  ({
+    kind: "granted",
+    amount: "3000",
+    note: "",
+    givenOn: GIVEN_ON_IN_MARCH,
+    ...over,
+  }) as AdvanceDraft;
 
 describe("what is still owed on an advance", () => {
   /**
@@ -193,6 +209,7 @@ describe("giving an advance", () => {
       number: 2,
       kind: "granted",
       agorot: 250050,
+      givenOn: GIVEN_ON_IN_MARCH,
     });
   });
 
@@ -212,7 +229,7 @@ describe("giving an advance", () => {
    */
   it("gives a grant a number no movement of this month already holds", () => {
     const alreadyHere = [granted(2, 100000), repaid(1, 50000)];
-    const reviewed = reviewAdvance(draft({ amount: "800" }), {
+    const reviewed = reviewAdvance(draft({ amount: "800", givenOn: "2026-04-10" }), {
       ledger: advanceLedger(opening(), [
         monthOf(february, [granted(1, 300000)]),
         monthOf(april, alreadyHere),
@@ -610,5 +627,271 @@ describe("the reason an advance was given", () => {
       [],
     );
     expect(standing.note).toBe("מלפני המעבר ליישום");
+  });
+});
+
+/**
+ * The day the money was handed over (specs.md item 20).
+ *
+ * **Every date here is stated and none is read from a clock**: the engine reads
+ * none, and the month a grant is recorded in is what the date is held against.
+ */
+describe("the day an advance was given", () => {
+  const context = {
+    ledger: advanceLedger(opening(), []),
+    monthAdvances: [],
+    month: march,
+  };
+
+  it("is stored as the grant's own, inside the month it is recorded in", () => {
+    const reviewed = reviewAdvance(draft({ givenOn: "2026-03-31" }), context);
+    expect(reviewed.ok && reviewed.advance.givenOn).toBe("2026-03-31");
+  });
+
+  /**
+   * Missing, not a date, and outside the month are one refusal: a grant dated in
+   * April and recorded as March's is a contradiction rather than a choice, and
+   * what the user does about all three is put a day of this month in the field.
+   */
+  it("refuses nothing, a non-date, and a day of another month", () => {
+    for (const givenOn of ["", "   ", "10.3.2026", "2026-02-28", "2026-04-01"]) {
+      expect(reviewAdvance(draft({ givenOn }), context)).toEqual({
+        ok: false,
+        reason: "advanceDate",
+      });
+    }
+  });
+
+  /** A repayment is dated by the month it is entered for, so there is no field
+   * on it and nothing to refuse. */
+  it("is not asked of a repayment", () => {
+    const reviewed = reviewAdvance(
+      { kind: "repaid", number: 1, amount: "500", note: "" },
+      {
+        ledger: advanceLedger(opening(), [monthOf(february, [granted(1, 300000)])]),
+        monthAdvances: [],
+        month: march,
+      },
+    );
+    expect(reviewed.ok && "givenOn" in reviewed.advance).toBe(false);
+  });
+
+  /**
+   * A correction changes the amount and the reason, and the panel does not ask
+   * for the date again — so the movement has to carry it through. Without this
+   * the first correction of a figure would drop the date in silence, with
+   * nothing on the screen to say there had been one.
+   */
+  it("survives a correction of the amount", () => {
+    const movement: Advance = {
+      number: 1,
+      kind: "granted",
+      agorot: 300000,
+      givenOn: "2026-02-14",
+    };
+    const reviewed = reviewAdvanceEdit({ amount: "2500", note: "" }, movement, {
+      number: 1,
+      principalAgorot: 300000,
+      repaidAgorot: 0,
+      outstandingAgorot: 300000,
+      grantedIn: february,
+    });
+    expect(reviewed.ok && reviewed.advance).toEqual({
+      number: 1,
+      kind: "granted",
+      agorot: 250000,
+      givenOn: "2026-02-14",
+    });
+  });
+});
+
+/**
+ * A grant split into repayments as it is entered (specs.md item 20).
+ *
+ * **Every figure below is the user's own decision written out by hand.** ₪5,000
+ * over three months is 1,666.66 / 1,666.66 / 1,666.68 — the even floor for as
+ * long as possible and the odd figure once, at the end — and the three sum to
+ * 500,000 agorot exactly, which is the whole point of the rule: money is integer
+ * agorot, and a split that lost one would leave a debt no repayment could close,
+ * since zero is refused as an amount.
+ */
+describe("splitting a grant across months", () => {
+  const PRINCIPAL = 500000;
+  const EVEN_THIRD = 166666;
+  const LAST_THIRD = 166668;
+
+  const context = {
+    ledger: advanceLedger(opening(), [monthOf(february, [granted(1, 100000)])]),
+    monthAdvances: [],
+    month: march,
+  };
+
+  const splitDraft = (instalments: string[]) => ({
+    amount: "5000",
+    note: "",
+    givenOn: GIVEN_ON_IN_MARCH,
+    instalments,
+  });
+
+  it("divides evenly and gives the remainder to the last month", () => {
+    expect(splitInstalments(PRINCIPAL, 3)).toEqual([
+      EVEN_THIRD,
+      EVEN_THIRD,
+      LAST_THIRD,
+    ]);
+    expect(splitInstalments(PRINCIPAL, 1)).toEqual([PRINCIPAL]);
+    // ₪1,000.01 over three: 333.33 twice and 333.35 once, which sums to the
+    // principal where three equal thirds would lose two agorot.
+    expect(splitInstalments(100001, 3)).toEqual([33333, 33333, 33335]);
+    for (const [principal, count] of [
+      [PRINCIPAL, 3],
+      [PRINCIPAL, 7],
+      [100001, 3],
+      [1, 1],
+    ] as const) {
+      expect(
+        splitInstalments(principal, count).reduce((sum, part) => sum + part, 0),
+      ).toBe(principal);
+    }
+  });
+
+  /** The month the advance was given in is the first month it may be repaid in
+   * (item 20), so the span starts there and not in the month after it. */
+  it("spans from the month the grant is recorded in", () => {
+    expect(splitSpan(february, 3)).toEqual([february, march, april]);
+    expect(splitSpan(february, 1)).toEqual([february]);
+  });
+
+  it("writes one ordinary repayment per month, summing to the grant exactly", () => {
+    const reviewed = reviewAdvanceSplit(
+      splitDraft(["1666.66", "1666.66", "1666.68"]),
+      context,
+      [],
+    );
+    expect(reviewed.ok).toBe(true);
+    if (!reviewed.ok) return;
+    // The number is minted past the highest the worker carries, as any grant's
+    // is: they already have advance 1.
+    expect(reviewed.advance).toEqual({
+      number: 2,
+      kind: "granted",
+      agorot: PRINCIPAL,
+      givenOn: GIVEN_ON_IN_MARCH,
+    });
+    expect(reviewed.repayments).toEqual([
+      { month: march, agorot: EVEN_THIRD },
+      { month: april, agorot: EVEN_THIRD },
+      { month: { year: 2026, month: 5 }, agorot: LAST_THIRD },
+    ]);
+
+    // **What the exact-sum rule is for**: replayed, the three close the debt and
+    // leave nothing owed. 500,000 − 166,666 − 166,666 − 166,668 = 0.
+    const ledger = advanceLedger(opening(), [
+      monthOf(march, [
+        reviewed.advance,
+        repaid(2, reviewed.repayments[0].agorot),
+      ]),
+      monthOf(april, [repaid(2, reviewed.repayments[1].agorot)]),
+      monthOf({ year: 2026, month: 5 }, [
+        repaid(2, reviewed.repayments[2].agorot),
+      ]),
+    ]);
+    expect(
+      ledger.find((standing) => standing.number === 2)?.outstandingAgorot,
+    ).toBe(0);
+  });
+
+  /** The amounts are the user's to set, and ₪2,000 / ₪1,000 / ₪2,000 is the
+   * family's own agreement rather than an even division. */
+  it("takes the amounts the user set", () => {
+    const reviewed = reviewAdvanceSplit(
+      splitDraft(["2000", "1000", "2000"]),
+      context,
+      [],
+    );
+    expect(reviewed.ok && reviewed.repayments.map((one) => one.agorot)).toEqual([
+      200000, 100000, 200000,
+    ]);
+  });
+
+  /** Summing to less than the grant is allowed and leaves the rest owed: only
+   * repaying *more* than was given is refused (item 20). */
+  it("allows a plan for less than the whole debt", () => {
+    const reviewed = reviewAdvanceSplit(splitDraft(["1000", "1000"]), context, []);
+    expect(reviewed.ok).toBe(true);
+    if (!reviewed.ok) return;
+    expect(reviewed.repayments.map((one) => one.agorot)).toEqual([
+      100000, 100000,
+    ]);
+  });
+
+  it("refuses instalments summing past the grant itself", () => {
+    expect(
+      reviewAdvanceSplit(splitDraft(["3000", "3000"]), context, []),
+    ).toEqual({ ok: false, reason: "splitExceedsPrincipal" });
+  });
+
+  it("refuses an instalment that is not an amount, and zero", () => {
+    for (const instalment of ["", "0", "-100", "לא סכום"]) {
+      expect(
+        reviewAdvanceSplit(splitDraft(["1000", instalment]), context, []),
+      ).toEqual({ ok: false, reason: "amount" });
+    }
+  });
+
+  it("refuses a span of no months and one past the limit", () => {
+    expect(reviewAdvanceSplit(splitDraft([]), context, [])).toEqual({
+      ok: false,
+      reason: "splitMonths",
+    });
+    expect(
+      reviewAdvanceSplit(
+        splitDraft(Array.from({ length: SPLIT_MONTHS_LIMIT + 1 }, () => "1")),
+        context,
+        [],
+      ),
+    ).toEqual({ ok: false, reason: "splitMonths" });
+  });
+
+  /**
+   * A filed month is never rewritten by an action taken elsewhere, so a confirmed
+   * month anywhere in the span refuses the whole split — and the month is named,
+   * because what the user does about it is shorten the span to before it.
+   */
+  it("refuses the whole split when a month in the span is confirmed", () => {
+    expect(
+      reviewAdvanceSplit(splitDraft(["1666.66", "1666.66", "1666.68"]), context, [
+        april,
+      ]),
+    ).toEqual({ ok: false, reason: "confirmedMonthInSpan" });
+
+    expect(blockingConfirmedMonth(splitSpan(march, 3), [april])).toEqual(april);
+    // The earliest confirmed month in the span and not the last of them: it is
+    // the one the span has to stop before.
+    expect(
+      blockingConfirmedMonth(splitSpan(march, 3), [
+        { year: 2026, month: 5 },
+        april,
+      ]),
+    ).toEqual(april);
+    expect(blockingConfirmedMonth(splitSpan(march, 3), [february])).toBe(null);
+    // A month nobody has opened cannot have been confirmed, which is what makes
+    // a grant given this month splittable over the months after it.
+    expect(blockingConfirmedMonth(splitSpan(march, 3), [])).toBe(null);
+  });
+
+  /** The grant is reviewed by the one function that reviews a grant, so a split
+   * cannot accept a grant the ordinary gesture would refuse. */
+  it("refuses the grant's own faults before the instalments", () => {
+    expect(
+      reviewAdvanceSplit(
+        { ...splitDraft(["1000"]), givenOn: "2026-04-02" },
+        context,
+        [],
+      ),
+    ).toEqual({ ok: false, reason: "advanceDate" });
+    expect(
+      reviewAdvanceSplit({ ...splitDraft(["1000"]), amount: "0" }, context, []),
+    ).toEqual({ ok: false, reason: "amount" });
   });
 });

@@ -257,6 +257,21 @@ folded sheet.
   under the movement it corrects and prefilled with what it holds, in the idiom the
   line they add already uses.
 
+- **The grant panel asks two things the canvas does not draw**: the day the money
+  was handed over, and how many months to split the repayment across (`specs.md`
+  item 20). The `תשלומים` artboard draws an advance as an amount and a reason,
+  which is what an advance was when it was drawn. The date sits under the amount
+  as an ordinary date field; the split sits below the reason behind a hairline,
+  because it is the one part of the panel a family may leave empty — a count, and
+  then one amount per month of the span, each proposed by the application and
+  overtypable. The month is drawn beside its field rather than inside its label: a
+  month name carries a year, so it is a mixed run needing its own isolate, which a
+  label passed as a string cannot give it.
+- **The split names the month that stops it and withholds the button**, rather
+  than letting the press come back with a refusal: a confirmed month anywhere in
+  the span refuses the whole split, and the span reaches months this screen is not
+  showing. The sentence stands where a refusal would, under the instalments.
+
 ### The forms on payments, settings, the holiday picker, before the export and sign-in
 
 - A text field's border is `line-field`, far firmer than the artboards'

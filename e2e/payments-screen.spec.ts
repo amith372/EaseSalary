@@ -238,6 +238,12 @@ test.describe("an advance given and repaid, walked across months (item 20)", () 
         exact: true,
       })
       .fill(String(ADVANCE_INSTALMENT / 100));
+    // An advance carries the day it was given, inside the month it is recorded
+    // in — February, which is the month this screen is stepped back to
+    // (specs.md item 20).
+    await advances
+      .getByLabel(he.month.actions.advances.givenOn)
+      .fill("2026-02-12");
     await advances
       .getByRole("button", {
         name: he.month.actions.advances.submitGrant,

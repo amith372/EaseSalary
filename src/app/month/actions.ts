@@ -8,7 +8,9 @@ import {
   advanceLedger,
   reviewAdvance,
   reviewAdvanceEdit,
+  reviewAdvanceSplit,
   whyRemovalIsRefused,
+  withAdvanceSplitMovements,
   withUpdatedAdvance,
   withoutAdvance,
 } from "@/lib/engine/advances";
@@ -16,6 +18,7 @@ import type {
   AdvanceDraft,
   AdvanceEditDraft,
   AdvanceRefusal,
+  AdvanceSplitDraft,
 } from "@/lib/engine/advances";
 import {
   reviewOverride,
@@ -487,6 +490,90 @@ export async function addAdvance(
       ...record,
       advances: [...record.advances, reviewed.advance],
     }));
+  } catch {
+    return ACTION_FAULT;
+  }
+}
+
+/**
+ * A grant and the repayments it is split into, written in one go (specs.md item
+ * 20).
+ *
+ * **What it writes is N ordinary repayments and no schedule.** Each instalment
+ * is thereafter a movement the user could have typed one at a time — editable,
+ * removable, overridable — and nothing remembers that they arrived together, so
+ * correcting one rebalances none of the others. That is the whole reason this is
+ * one action and not a new kind of record: the engine gains nothing, and no
+ * second source of truth sits beside the replayed months (item 13).
+ *
+ * **All of it or none of it.** The span is reviewed whole before anything is
+ * written, and the write is one `saveMonths` — one upsert, one transaction
+ * (`supabase/repository.ts`) — so a month in the middle of the span cannot end
+ * up holding a repayment of an advance that was never granted. A confirmed month
+ * anywhere in the span refuses the lot, for the reason a holiday move is refused
+ * the same way: a filed month is never rewritten by an action taken elsewhere.
+ *
+ * **The months of the span are opened first, including the ones ahead of
+ * today.** A future month is opened by a gesture that records something in it,
+ * exactly as marking a range ahead of time opens one (item 21) — and the
+ * repayments of an advance given this month fall in the months after it by
+ * definition.
+ */
+export async function splitAdvance(
+  workerId: string,
+  month: YearMonth,
+  draft: AdvanceSplitDraft,
+): Promise<MonthActionResult> {
+  try {
+    const repository = await getRepository();
+    const profile = await requireWorker(workerId);
+    if ((await monthToChange(workerId, profile, month)) === null) {
+      return { ok: false, reason: "noMonth" };
+    }
+    const months = await repository.listMonths(workerId);
+    const facts = months.find((candidate) => sameMonth(candidate.month, month));
+    if (facts === undefined) return { ok: false, reason: "noMonth" };
+
+    const reviewed = reviewAdvanceSplit(
+      draft,
+      {
+        ledger: advanceLedger(profile.openingPosition, months),
+        monthAdvances: facts.advances,
+        month,
+      },
+      months
+        .filter((candidate) => candidate.confirmedAt !== undefined)
+        .map((candidate) => candidate.month),
+    );
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+    // Every month of the span, read as it stands now. A month nobody had opened
+    // is opened here — it is after the month the grant is in, so it is after
+    // their first month and the wage carries into it, and the only way this
+    // answers `null` is a month the worker cannot have at all.
+    const records: MonthRecord[] = [];
+    for (const repayment of reviewed.repayments) {
+      await openMonthIfMissing(repository, profile, repayment.month);
+      const stored = await repository.getMonth(workerId, repayment.month);
+      if (stored === null) return { ok: false, reason: "noMonth" };
+      // The grant goes in its own month, which is the span's first, and a
+      // repayment in every month — written by the engine's own function, so the
+      // months this produces are the months rule 12's agreement test holds the
+      // sheet against.
+      records.push(
+        withAdvanceSplitMovements(
+          recordOf(stored),
+          month,
+          reviewed.advance,
+          repayment.agorot,
+        ),
+      );
+    }
+
+    await repository.saveMonths(workerId, records);
+
+    revalidatePath("/", "layout");
+    return { ok: true };
   } catch {
     return ACTION_FAULT;
   }

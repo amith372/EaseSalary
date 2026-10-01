@@ -1,8 +1,10 @@
+import { fullDayLabel } from "@/lib/dateLabels";
 import { advanceKey } from "@/lib/engine/advances";
 import { lineKeys } from "@/lib/engine/lines";
 import { userLineKey, userLinePrefix } from "@/lib/engine/month";
 import { thirdPartyLineKey } from "@/lib/engine/thirdParty";
 import type { MonthFacts } from "@/lib/engine/types";
+import { he } from "@/lib/i18n/he";
 
 /**
  * The notes the user wrote on the month's actions, gathered by the row each
@@ -56,6 +58,18 @@ export function notesOf(
   }
 
   for (const advance of facts.advances) {
+    // **The date before the reason**, and both in column I: an advance carries
+    // the day it was given (item 20) and it reaches the sheet here rather than
+    // as a column of its own, so the month tab's structure is untouched. It is
+    // added as a note of its own and joined by the same separator two notes on
+    // one row are, which is why a grant with no reason still says when it was
+    // given and a grant with one says both.
+    add(
+      advanceKey(advance.number, advance.kind),
+      advance.givenOn === undefined
+        ? undefined
+        : he.sheet.advanceGivenOn(fullDayLabel(advance.givenOn)),
+    );
     add(advanceKey(advance.number, advance.kind), advance.note);
   }
 

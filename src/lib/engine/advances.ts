@@ -1,4 +1,4 @@
-import { compareMonth } from "@/lib/dates";
+import { addMonths, compareMonth, isIsoDate, monthOf, sameMonth } from "@/lib/dates";
 import { advanceKinds } from "@/lib/engine/types";
 import { parseShekels } from "@/lib/money";
 import type {
@@ -7,7 +7,7 @@ import type {
   MonthFacts,
   OpeningPosition,
 } from "@/lib/engine/types";
-import type { YearMonth } from "@/lib/types";
+import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
  * Advances, and what is still owed on each (specs.md item 20).
@@ -71,6 +71,16 @@ export interface AdvanceStanding {
    */
   outstandingAgorot: number;
   grantedIn: YearMonth | null;
+  /**
+   * The day the money was handed over, carried forward from the movement that
+   * granted it (specs.md item 20).
+   *
+   * It travels on the standing for the reason `note` below does: from a later
+   * month the grant is a debt with a number, and the date is one of the two
+   * things that say which handover it was. An advance carried in from the
+   * opening position has none.
+   */
+  givenOn?: IsoDate;
   /**
    * Why the advance was given, carried forward from whichever record gave it —
    * the opening position's own note first, and otherwise the grant's.
@@ -139,6 +149,7 @@ export function advanceLedger(
         // The earliest month that granted it, which is what the sort is for.
         standing.grantedIn ??= month.month;
         if (advance.note !== undefined) standing.note ??= advance.note;
+        if (advance.givenOn !== undefined) standing.givenOn ??= advance.givenOn;
       } else {
         standing.repaidAgorot += advance.agorot;
       }
@@ -181,10 +192,16 @@ export function nextAdvanceNumber(ledger: readonly AdvanceStanding[]): number {
  * (Part 3), exactly as a line they add does.
  *
  * A grant carries no number: the application mints it (item 20), so there is
- * nothing about it for the user to choose beyond the amount and the reason.
+ * nothing about it for the user to choose beyond the amount, the reason and the
+ * day the money was handed over.
+ *
+ * **The date travels as typed, like the amount**, and is read on the server side
+ * of the boundary: an `<input type="date">` hands over whatever is in it,
+ * including nothing at all, so the string is what crosses and `IsoDate` is what
+ * comes out of the check.
  */
 export type AdvanceDraft =
-  | { kind: "granted"; amount: string; note: string }
+  | { kind: "granted"; amount: string; note: string; givenOn: string }
   | { kind: "repaid"; number: number; amount: string; note: string };
 
 /**
@@ -214,6 +231,49 @@ export type AdvanceRefusal =
   | "advanceRecordedTwice"
   /** More than is still owed. */
   | "advanceOverRepaid"
+  /**
+   * A grant with no date, with something that is not a date, or with one
+   * outside the month the grant is recorded in (specs.md item 20).
+   *
+   * **The three are one refusal and not three.** A date outside the month is a
+   * contradiction rather than a choice — the money cannot have been handed over
+   * in April and recorded as March's — and what the user does about any of the
+   * three is the same thing: put a day of this month in the field. The field
+   * says which month that is, so a sentence naming it again would be the
+   * screen telling them what the screen already shows.
+   */
+  | "advanceDate"
+  /**
+   * A split whose months are not a span this application can write: fewer than
+   * one, or more than `SPLIT_MONTHS_LIMIT`.
+   *
+   * It is unreachable from the form, which offers a count inside the limit, and
+   * it is checked all the same because the split *opens* every month of its own
+   * span — an unbounded count is an unbounded number of month rows written from
+   * one request (Part 3).
+   */
+  | "splitMonths"
+  /**
+   * Instalments summing past the grant itself.
+   *
+   * Summing to *less* is allowed and leaves the rest owed, which is the whole
+   * difference between this and the ordinary over-repayment: what item 20
+   * refuses is repaying more than was given, not planning less than all of it.
+   */
+  | "splitExceedsPrincipal"
+  /**
+   * A month inside the span has been confirmed, so the whole split is refused
+   * and nothing is written (specs.md item 20).
+   *
+   * **The month is named where the split is made and not in this sentence.**
+   * `blockingConfirmedMonth` is one rule with two readers: the form asks it
+   * before it will offer the button and names the month it answers with, and
+   * the server asks it again and refuses on it. So this reason is reached only
+   * by a stale page or a crafted request — the state `advanceUnknown` is
+   * reached from too — and the sentence it carries says to look again rather
+   * than naming a month the screen is no longer showing.
+   */
+  | "confirmedMonthInSpan"
   /** A grant removed while a later month still repays it (see
    * `whyRemovalIsRefused`). */
   | "advanceRepaidAlready"
@@ -347,6 +407,20 @@ export function reviewAdvance(
     return { ok: false, reason: "advanceOverRepaid" };
   }
 
+  // **The day the money was handed over, and it has to fall inside the month
+  // the grant is recorded in** (item 20): a grant dated outside its own month is
+  // a contradiction, and it is refused here rather than corrected to something
+  // the user did not type. A repayment carries no date — the month it is entered
+  // for is what dates it.
+  let givenOn: IsoDate | null = null;
+  if (draft.kind === "granted") {
+    if (!isIsoDate(draft.givenOn)) return { ok: false, reason: "advanceDate" };
+    if (!sameMonth(monthOf(draft.givenOn), context.month)) {
+      return { ok: false, reason: "advanceDate" };
+    }
+    givenOn = draft.givenOn;
+  }
+
   const note = draft.note.trim();
   return {
     ok: true,
@@ -355,6 +429,7 @@ export function reviewAdvance(
       kind: draft.kind,
       agorot,
       ...(note === "" ? {} : { note }),
+      ...(givenOn === null ? {} : { givenOn }),
     },
   };
 }
@@ -499,6 +574,12 @@ export function reviewAdvanceEdit(
       kind: movement.kind,
       agorot,
       ...(note === "" ? {} : { note }),
+      // **Carried and not asked for again.** A correction changes the amount and
+      // the reason; the day the money was handed over is not on this panel, and
+      // rebuilding the movement without it would drop the date on the first
+      // correction of a figure — silently, since nothing on the screen would
+      // then say there had ever been one.
+      ...(movement.givenOn === undefined ? {} : { givenOn: movement.givenOn }),
     },
   };
 }
@@ -529,5 +610,209 @@ export function withUpdatedAdvance<T extends WhereAdvancesLive>(
         : advance,
     ),
     overrides,
+  };
+}
+
+/**
+ * One month of a split's span with the movements it is owed (specs.md item 20).
+ *
+ * **The grant goes in the span's first month and a repayment in every month,
+ * that one included.** It is one function rather than two lines inside the
+ * action for the reason `advanceKey` is one: the write and the test that holds
+ * the preview against the sheet have to produce the same months, or the test
+ * proves the agreement of a shape nothing writes.
+ *
+ * Nothing here is a schedule. What it adds is an ordinary repayment, so the month
+ * it lands in is indistinguishable afterwards from a month the user typed it into
+ * by hand.
+ */
+export function withAdvanceSplitMovements<
+  T extends WhereAdvancesLive & Pick<MonthFacts, "month">,
+>(
+  record: T,
+  grantMonth: YearMonth,
+  advance: Advance,
+  repaymentAgorot: number,
+): T {
+  return {
+    ...record,
+    advances: [
+      ...record.advances,
+      ...(sameMonth(record.month, grantMonth) ? [advance] : []),
+      { number: advance.number, kind: "repaid" as const, agorot: repaymentAgorot },
+    ],
+  };
+}
+
+/**
+ * How far a split may reach, in months (specs.md item 20).
+ *
+ * **It is a ceiling on what one request may write and not a rule about
+ * repayment.** The split writes a real movement into every month of its span,
+ * opening each month that nobody had opened yet, so the count decides how many
+ * month rows one press creates. Three years is past any repayment a family would
+ * agree at the moment they hand money over, and a span longer than that is a
+ * crafted request rather than a plan.
+ */
+export const SPLIT_MONTHS_LIMIT = 36;
+
+/**
+ * The months a split covers: `count` months from the one the grant is recorded
+ * in (specs.md item 20).
+ *
+ * **It starts in the grant's own month** and not in the one after it, because
+ * that is the first month the advance may be repaid in — item 20's own rule,
+ * which `whyRepaymentIsRefused` already applies from the other direction.
+ */
+export function splitSpan(grantMonth: YearMonth, count: number): YearMonth[] {
+  return Array.from({ length: count }, (_, at) => addMonths(grantMonth, at));
+}
+
+/**
+ * The principal divided into `count` instalments, **the last absorbing the
+ * remainder** (specs.md item 20).
+ *
+ * ₪5,000 over three is 1,666.66 / 1,666.66 / 1,666.68: the even floor for as
+ * long as possible, the odd figure once, at the end. The instalments sum to the
+ * principal exactly, because money is integer agorot and a split that lost one
+ * would leave a debt nothing could close — a worker owing a single agora that no
+ * repayment can be entered for, since zero is refused as an amount.
+ *
+ * Pure arithmetic over agorot, so nothing here rounds and nothing here can
+ * accumulate a floating-point remainder (`CLAUDE.md`).
+ */
+export function splitInstalments(
+  principalAgorot: number,
+  count: number,
+): number[] {
+  const even = Math.floor(principalAgorot / count);
+  return Array.from({ length: count }, (_, at) =>
+    at === count - 1 ? principalAgorot - even * (count - 1) : even,
+  );
+}
+
+/**
+ * The first confirmed month inside the span, or `null` where none is (specs.md
+ * item 20).
+ *
+ * **One rule with two readers**, which is the reason it is a function rather
+ * than a condition inside the action: the form asks it before it will offer the
+ * button and names the month it answers with, and the server asks it again and
+ * refuses the whole split on it. A screen that decided this for itself would be
+ * a second copy that agrees today and drifts the first time either is
+ * corrected — the same argument `whyRepaymentIsRefused` is written for.
+ *
+ * **The first and not all of them**, because what the user needs is a month to
+ * shorten the span to; a list of three would still be answered by looking at the
+ * earliest.
+ *
+ * A month the worker has no row for cannot have been confirmed, so a span
+ * reaching into months nobody has opened is blocked by nothing — which is what
+ * makes an advance granted this month splittable over the two that follow it.
+ */
+export function blockingConfirmedMonth(
+  span: readonly YearMonth[],
+  confirmedMonths: readonly YearMonth[],
+): YearMonth | null {
+  return (
+    span.find((month) =>
+      confirmedMonths.some((confirmed) => sameMonth(confirmed, month)),
+    ) ?? null
+  );
+}
+
+/**
+ * A grant being entered with its repayments beside it (specs.md item 20).
+ *
+ * `instalments` is one amount per month of the span, oldest first and starting
+ * in the grant's own month, and it travels as the user typed it for the reason
+ * the grant's own amount does: the parsing is the server's (Part 3). Its length
+ * is the span's length, so the count is never sent twice and the two cannot
+ * disagree.
+ */
+export interface AdvanceSplitDraft {
+  amount: string;
+  note: string;
+  givenOn: string;
+  instalments: string[];
+}
+
+/** One instalment as it is to be written: an ordinary repayment, in the month it
+ * belongs to. */
+export interface SplitRepayment {
+  month: YearMonth;
+  agorot: number;
+}
+
+type ReviewedSplit =
+  | { ok: true; advance: Advance; repayments: SplitRepayment[] }
+  | { ok: false; reason: AdvanceRefusal };
+
+/**
+ * The grant and the N repayments it is split into, or the reason it is none
+ * (specs.md item 20).
+ *
+ * **What it produces is N movements the user could have typed one at a time.**
+ * Nothing of the split is stored as a plan: each instalment is thereafter an
+ * ordinary repayment, editable, removable and overridable like any other, and
+ * editing one rebalances none of the rest. So this function values nothing and
+ * decides nothing about later months — it is the grant's own review plus the
+ * arithmetic of dividing it.
+ *
+ * **The instalments are refused as a whole and never one by one.** A split that
+ * wrote the months it could and refused the rest would leave a debt half
+ * planned, with nothing on screen to say which half, so the first fault takes
+ * all of it.
+ *
+ * Pure, like `reviewAdvance`, so the exact-sum rule and the refusals can be
+ * tested without a store or a request.
+ */
+export function reviewAdvanceSplit(
+  draft: AdvanceSplitDraft,
+  context: AdvanceContext,
+  confirmedMonths: readonly YearMonth[],
+): ReviewedSplit {
+  const count = draft.instalments.length;
+  if (count < 1 || count > SPLIT_MONTHS_LIMIT) {
+    return { ok: false, reason: "splitMonths" };
+  }
+
+  const span = splitSpan(context.month, count);
+  // **Before the amounts are read**, because a confirmed month in the span
+  // refuses the whole split whatever the figures are, and the sentence the user
+  // needs is about the month and not about what they typed.
+  if (blockingConfirmedMonth(span, confirmedMonths) !== null) {
+    return { ok: false, reason: "confirmedMonthInSpan" };
+  }
+
+  // The grant itself, reviewed by the one function that reviews a grant — the
+  // amount, the date and the number it is minted with all come from there, so a
+  // split cannot accept a grant the ordinary gesture would refuse.
+  const reviewed = reviewAdvance(
+    { kind: "granted", amount: draft.amount, note: draft.note, givenOn: draft.givenOn },
+    context,
+  );
+  if (!reviewed.ok) return reviewed;
+
+  const amounts: number[] = [];
+  for (const instalment of draft.instalments) {
+    const agorot = parseShekels(instalment);
+    // Zero is refused as it is on a movement of its own: a repayment of nothing
+    // is not one, and a month that repays nothing is a shorter span.
+    if (agorot === null || agorot === 0) return { ok: false, reason: "amount" };
+    amounts.push(agorot);
+  }
+
+  // More than was given is not a repayment at all (item 20). Less is allowed and
+  // leaves the rest owed, so only the one direction is refused.
+  const planned = amounts.reduce((sum, agorot) => sum + agorot, 0);
+  if (planned > reviewed.advance.agorot) {
+    return { ok: false, reason: "splitExceedsPrincipal" };
+  }
+
+  return {
+    ok: true,
+    advance: reviewed.advance,
+    repayments: span.map((month, at) => ({ month, agorot: amounts[at]! })),
   };
 }

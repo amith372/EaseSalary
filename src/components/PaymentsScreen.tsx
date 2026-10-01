@@ -128,6 +128,15 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   const shown = entry.months.find(({ record }) =>
     sameMonth(record.month, month),
   );
+  // **The months they have confirmed, for the split a grant may be entered with**
+  // (specs.md item 20). A confirmed month anywhere in the span refuses the whole
+  // split, and the span reaches months this screen is not showing — so the form
+  // asks the engine which month blocks it and names that month, instead of
+  // letting the press come back with a refusal. The server asks the same rule
+  // again, because the offer is not the rule (Part 3).
+  const confirmedMonths = entry.months
+    .filter(({ record }) => record.confirmedAt !== undefined)
+    .map(({ record }) => record.month);
 
   // A change reaches the store and the page re-renders from it, so nothing here
   // predicts what was saved. The card says so with `aria-busy` alone: the dim
@@ -228,6 +237,7 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
             hospitalOvertime={shown.record.hospitalOvertime}
             ledger={entry.advances}
             monthAdvances={shown.record.advances}
+            confirmedMonths={confirmedMonths}
             thirdPartyPayments={shown.record.thirdPartyPayments}
             lines={shown.lines}
             orphanedOverrides={shown.orphanedOverrides}
