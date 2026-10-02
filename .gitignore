@@ -77,3 +77,8 @@ next-env.d.ts
 # the build plan — a working list of what is not built yet, kept out of the
 # repository because it changes by the hour and is meaningful only locally.
 /build_plan.md
+
+# Government and Kol Zchut pages the user saves for the rule-by-rule pass.
+# They are someone else's copyrighted pages, they are large, and they are read once —
+# so they are kept beside the work and never committed.
+.sources/
