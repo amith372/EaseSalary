@@ -1041,9 +1041,27 @@ a question about one of them is the expensive mistake.
 
     Advances are numbered and tracked one by one, and stay their own mechanism rather than
     becoming standing deductions: a month may both grant one advance and repay another,
-    each on its own line, the amount repaid is entered for the month rather than fixed by
-    a schedule, and what is still owed is carried from the opening position (item 6). A
-    repayment that varies month by month is exactly what a standing line cannot express.
+    each on its own line, the amount repaid is entered for the month, and what is still
+    owed is carried from the opening position (item 6). A repayment that varies month by
+    month is exactly what a standing line cannot express.
+
+    **A grant may be split across several months as it is entered**, evenly or in amounts
+    the user sets per month, because the repayment is the part the family agreed at the
+    moment they handed the money over and the application should not make them remember
+    it. **The split writes ordinary repayments and stores no schedule**: what it produces
+    is N movements the user could have typed one at a time, so each is thereafter
+    editable, removable and overridable like any other, and editing one rebalances none of
+    the rest. The instalments sum to the principal exactly, the last absorbing any
+    remainder, since money is integer agorot and a split that lost one would leave a debt
+    nothing could close. **A confirmed month anywhere in the span refuses the whole split**
+    and names the month that blocked it, for the reason a holiday move is refused the same
+    way: a filed month is never rewritten by an action taken elsewhere.
+
+    **An advance carries the date it was given**, which the family's own workbook already
+    records by naming one "מקדמה מס' 7.26". It must fall inside the month the grant is
+    recorded in; an advance carried in from the opening position has none. It reaches the
+    sheet through `הערות` beside the reason and never as a column of its own, so the
+    month tab's structure is untouched.
 
     **The number is the application's and is never typed.** It is minted in order — one
     past the highest the worker already carries, the opening position's included — so the

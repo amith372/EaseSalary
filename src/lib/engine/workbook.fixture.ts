@@ -76,7 +76,7 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  */
 
 /** One month tab, reduced to what the engine needs and what it should produce. */
-interface WorkbookMonth {
+export interface WorkbookMonth {
   /** The tab, as `CLAUDE.md` rule 6 asks it to be named. */
   tab: string;
   month: YearMonth;

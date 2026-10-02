@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { acceptInvitation } from "@/app/sign-in/actions";
 import { Card } from "@/components/Card";
-import { inputClass } from "@/components/Field";
+import { busyAttrs, inputClass } from "@/components/Field";
 import { LogoMark } from "@/components/icons";
 import { he } from "@/lib/i18n/he";
 import { supabaseInBrowser } from "@/lib/supabase/client";
@@ -96,6 +96,14 @@ export function SignInScreen({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+
+    // **One attempt at a time, enforced here rather than by disabling the
+    // button** — the busy control stays pressable by `DESIGN.md`'s rule, and
+    // Enter in either field submits the form without touching it at all. A
+    // second attempt sent while the first is in flight would race two sessions
+    // onto the same screen.
+    if (working) return;
+
     setError(null);
     setNotice(null);
 
@@ -254,10 +262,20 @@ export function SignInScreen({
               </p>
             ) : null}
 
+            {/* **Busy, never disabled** (`DESIGN.md`, the forms section, which
+                names this screen). The dim and `cursor-wait` are `busyAttrs`'s,
+                the same ones every other pressed control in the application
+                wears, and `aria-busy` is what says "working" to a reader that
+                cannot see the colour change — on the one screen where the wait
+                is a whole round trip to the Auth server and there is nothing
+                else on the page to look at. The repeat press it admits is
+                dropped by `submit`. */}
             <button
               type="submit"
-              disabled={working}
-              className="mt-1 rounded-card-sm bg-forest px-6 py-2.75 text-[16px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:cursor-not-allowed disabled:opacity-45"
+              {...busyAttrs(
+                working,
+                "mt-1 rounded-card-sm bg-forest px-6 py-2.75 text-[16px] font-semibold text-surface transition-colors hover:bg-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest",
+              )}
             >
               <span dir="auto">
                 {working
