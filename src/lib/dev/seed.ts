@@ -234,9 +234,12 @@ const devWorkers: WorkerProfile[] = [firstWorker, secondWorker];
  * same one `חודש 7.25` reaches.
  *
  * **`חודש 3.26` is absent too, and for a different reason.** It pays six days
- * of recuperation and the *rate* the family valued them at was never read out
- * of the tab, so the application cannot reproduce its ברוטו — and a month the
- * demo cannot reproduce is worse than a month it does not show. That leaves a
+ * of recuperation at ₪418 a day (`I18` of that tab), which is the rate that
+ * preceded 1.7.2025; `datedRates.ts` holds ₪451.50 from that day, so the engine
+ * reaches ₪2,709 where the tab pays ₪2,508 and the two ברוטו figures differ by
+ * ₪201. The sheet is stale and the application is right, so this is a month the
+ * demo is *correct* not to reproduce — and a month whose ברוטו the application
+ * is right to disagree with is not a month to hold it against. That leaves a
  * gap between February and April 2026, which is visible and honest: the
  * balances carry across it either way, because they are replayed and never
  * stored (item 13).
