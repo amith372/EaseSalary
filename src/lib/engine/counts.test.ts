@@ -254,10 +254,10 @@ describe("the rest-eve supplement is unconditional (specs.md item 14)", () => {
   // setting. The supplement is an agreed term of the employment, and the
   // sick-pay tiers price the sickness and never it.
   it("pays every rest-eve even when the whole week was lost to sickness", () => {
-    // The case that used to answer four: sickness running Sunday the 17th
-    // through Friday the 22nd took that Friday's supplement away under the old
-    // pocket-money branch. It does not any more, and there is no week to
-    // compute in order to know that.
+    // The case that answers four if sickness is allowed to reduce the count: a
+    // spell running Sunday the 17th through Friday the 22nd covers that Friday's
+    // supplement. It is paid all the same, and there is no week to compute in
+    // order to know that.
     const counts = countMonth(facts(AUGUST_2025, [sick("2025-08-17", "2025-08-22")]));
     expect(counts.restEves).toBe(5);
     expect(counts.restEvesWorked).toBe(4);

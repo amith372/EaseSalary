@@ -513,9 +513,9 @@ describe("the preview and the file, from one engine result", () => {
    * template's** (specs.md item 16, Part 3: a template may never carry one
    * family's data into another's sheet).
    *
-   * Until 2026-09-12 cell `B10` read "שולם באמצעות סוכנות ביטוח הילית
-   * בחברת הראל - קופ\"ח כללית" — one household's agency, insurer and health
-   * fund, written into the committed binary where no diff could show them.
+   * Cell `B10` names no agency, insurer or health fund of its own. One
+   * household's, written into the committed binary, sits where no diff could
+   * show it and reaches every other household's sheet.
    *
    * **What it would catch**: the names coming back into the template, which is
    * the whole defect and is invisible to every other check in this repository;

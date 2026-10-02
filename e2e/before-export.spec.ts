@@ -250,7 +250,7 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
     // Waited for, and not assumed: both screens carry a month stepper with the
     // same two buttons, so a click sent before the navigation lands steps the
     // screen being left instead of the one arriving.
-    // A predicate and not a glob: the calendar is at `/` since 2026-09-16, and
+    // A predicate and not a glob: the calendar is at `/`, and
     // `"**/"` matches every address there is — it would pass without leaving
     // the export screen at all.
     await page.waitForURL((url) => url.pathname === "/");
@@ -287,8 +287,8 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
       .click();
     await settled(page);
 
-    // Scoped to the bar's own nav, and exact: since 2026-09-16 the month
-    // screen carries its own way back (`לדף הבית`), whose name contains this
+    // Scoped to the bar's own nav, and exact: the month screen carries its own
+    // way back (`לדף הבית`), whose name contains this
     // one, so an unscoped substring match resolves to two links.
     await page
       .getByRole("navigation", { name: he.nav.landmark })
@@ -467,8 +467,8 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
   /**
    * **The income tax is put to the user before the export, like the minimum
    * wage** (specs.md item 17: it is confirmed before an export and stored with
-   * the month). Until 2026-09-24 it was worked out and written when the export
-   * button was pressed, and no screen ever said what it would be.
+   * the month). Worked out and written when the export button is pressed, no
+   * screen would ever say what it was going to be.
    *
    * August 2026 carries an override of ₪450 on the tax row (`seed.ts`), which
    * is the case that decides what the card must show: an override is what the
@@ -559,13 +559,13 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
 
 /**
  * Item 4's third thing — **where the figure was read from** — and the one way it
- * used to be lost.
+ * can be lost.
  *
  * `confirmMonth` writes the confirmed wage into the dated-rates table, and that
  * table is keyed by `(key, effective_from)`: a write at a date the table already
  * holds *replaces* the row, source and all. So confirming a month at the very
- * figure the fetch had put there used to overwrite the address it came from with
- * the user's own name for it, and the first export of any month took the
+ * figure the fetch put there can overwrite the address it came from with the
+ * user's own name for it, and the first export of any month would take the
  * provenance of every later one with it.
  *
  * **Both branches are driven, because "never write" would pass one of them.**
@@ -576,8 +576,8 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
  * seeded 1.4.2026 row is cited to `שכר_חודשי_להאנה2026.xlsx` → `חודש  4.26`
  * → D6 — the row in force during September 2026 and therefore the one `/settings`
  * draws. **That citation is here and never on the screen**: the row says the
- * fact in words, and the path it used to print was a path into a file the
- * application does not hold, reordered by the right-to-left run it sat in.
+ * fact in words, and a printed path would be a path into a file the application
+ * does not hold, reordered by the right-to-left run it sat in.
  */
 test.describe("a confirmation keeps where the wage came from (item 4)", () => {
   const SEEDED_SOURCE = he.settings.sourceSaid.familyWorkbook;

@@ -103,9 +103,7 @@ async function stepBack(page: Page, times: number): Promise<void> {
  *
  * **An itemised row is read here and not on the opening screen** (specs.md item
  * 5): the screen beside the calendar summarises what the month came to, and the
- * sheet is where a month is laid out line by line. Until 2026-09-16 both were
- * drawn on `/month`, which is why these assertions used to be made one screen
- * earlier.
+ * sheet is where a month is laid out line by line.
  *
  * The month is derived from today for the same reason `stepBack` counted from
  * the month the screen opens on — a literal here would be a fixed month, and
@@ -568,11 +566,11 @@ test.describe("an override on a derived row (specs.md item 17)", () => {
 /**
  * A folded section says what is inside it.
  *
- * Until 2026-09-24 `/payments` opened as six headings and no figure, and the
- * advances under `מקדמות` were invisible until the section was pressed. The
- * `aside` is the one place a count can sit, and it was drawn only while the
- * section was open — which for `מקדמות` is where the control sits, so the
- * folded line needed one of its own.
+ * A `/payments` that opened as six headings and no figure would leave the
+ * advances under `מקדמות` invisible until the section was pressed. The `aside`
+ * is the one place a count can sit, and it is drawn only while the section is
+ * open — which for `מקדמות` is where the control sits, so the folded line
+ * carries one of its own.
  *
  * What it catches: the folded summary dropped, and a control drawn into it —
  * a button inside a folded section acts on what the user cannot see.

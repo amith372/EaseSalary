@@ -25,9 +25,9 @@ function taxSave(page: Page) {
  * **It is here because a unit test could not have caught what this found.** The
  * engine, its own suite and the export agreement all passed while every screen
  * in the application showed a tax of zero — the demo seed wrote
- * `incomeTaxAgorot: 0` onto every month, which used to mean "nothing typed yet"
- * and now means "confirmed to withhold nothing", so the calculation never ran
- * anywhere a user could see it. Nothing about that is visible from inside the
+ * `incomeTaxAgorot: 0` onto every month, and that value means "confirmed to
+ * withhold nothing" rather than "nothing typed yet", so the calculation never
+ * ran anywhere a user could see it. Nothing about that is visible from inside the
  * engine, and the seed is not test data: it is the running application.
  *
  * **Every expected figure is worked by hand from the statute and from the
@@ -37,8 +37,7 @@ function taxSave(page: Page) {
  * ## The month
  *
  * September 2026, **the second demo worker** — the one the browser suite works
- * on since 2026-09-11, when the first was reseeded from the family's own
- * workbooks (`seed.ts`). `seed.ts` pays them the ₪6,443.85 minimum wage in force
+ * on, the first being seeded from the family's own workbooks (`seed.ts`). `seed.ts` pays them the ₪6,443.85 minimum wage in force
  * from 1.4.2026 and a ₪100 rest-eve supplement, and rests them on Saturday.
  * September 2026 has thirty days and four Saturdays — the 5th, 12th, 19th and
  * 26th — so twenty-six are standard days, and four Fridays fall before those

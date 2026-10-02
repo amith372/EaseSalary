@@ -16,9 +16,8 @@ import { he } from "@/lib/i18n/he";
  * month. Where a sentence has to say "the worker" it says the inclusive
  * `עובד/ת`, because no worker is chosen here (`CLAUDE.md`).
  *
- * **The list grows only when the user asks it to.** It began as the `עזרה`
- * artboard's eight; `markVacation` and `addPayment` are the user's own, added
- * 2026-10-01. A question nobody asked for is a product decision taken by
+ * **The list grows only when the user asks it to**, and every question in it is
+ * one they asked for. A question nobody asked for is a product decision taken by
  * nobody, and the hardest kind of wrong answer to find later (`CLAUDE.md` rule
  * 4). What covers everything else is the screen list the panel falls back to,
  * which is the whole registry.

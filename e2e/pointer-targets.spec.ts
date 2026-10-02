@@ -31,8 +31,8 @@ import {
  * sits in a flex or grid row, and only the first is exempt.
  *
  * What it catches: a bare text action added without the padding idiom
- * `DESIGN.md` records — the state of the blocker strip, both `כל זכות` links,
- * the two account actions and the holiday tick until 2026-09-24.
+ * `DESIGN.md` records. The blocker strip's state, both `כל זכות` links, the
+ * two account actions and the holiday tick are where it is easiest to forget.
  */
 
 const SCREENS = ["/", "/alerts", "/settings", "/settings/holidays"] as const;

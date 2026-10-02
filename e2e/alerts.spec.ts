@@ -442,14 +442,13 @@ test.describe("the national-insurance quarter, paid through the payments screen 
 test.describe("a finished month never confirmed (specs.md item 27)", () => {
   /**
    * **And `/דוחות` has no file to hand over for it** (specs.md items 4, 17).
-   * Until 2026-09-24 it had one: the list linked straight to the file address,
-   * which asked none of item 18's questions, and the blockage then stood beside
-   * a month the family had already filed. The route refuses such a month now, so
-   * the list offers the confirmation instead — and the blockage is what it was.
+   * The route refuses such a month, so the list offers the confirmation instead.
+   * A list linking straight to the file address would ask none of item 18's
+   * questions and stand the blockage beside a month the family had already
+   * filed.
    *
    * **What it would catch**: the file link coming back for an unconfirmed month;
-   * and a download of it clearing the alert, which was the older failure this
-   * test was written for.
+   * and a download of it clearing the alert.
    */
   test("is a blockage, and the reports offer the confirmation rather than a file", async ({ page }) => {
     // The demo confirms none of its months (`seed.ts`), so August 2026 — ended

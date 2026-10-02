@@ -707,8 +707,9 @@ export const he = {
     screensTitle: "כל המסכים",
     screensNote: "מה שכל מסך מסדר",
     /**
-     * The eight questions of the `עזרה` artboard, keyed as `HELP_TOPICS` keys
-     * them.
+     * The questions of the closed list, keyed as `HELP_TOPICS` keys them. The
+     * count is not stated here, because the list grows when the user asks it to
+     * (`topics.ts`) and a number in a comment is a number that goes stale.
      *
      * **`where` is the gesture and not a tour**: the fold to open, the control
      * to press. It is read after the screen's name, so it never repeats it, and
@@ -3248,9 +3249,8 @@ export const he = {
      * **Whole words and never a suffix.** Hebrew inflects a verb in more than
      * its ending — `שעבדה` and `שעבד` differ at the end, `אליה` and
      * `אליו` do not — so each form is written out, as `restDayTokens`
-     * writes each day out. The inclusive `עובד/ת` the template used to carry
-     * is not among them: it was a stand-in for a profile field that did not
-     * exist yet, and a sheet that knows which it is has no reason to offer both.
+     * writes each day out. The inclusive `עובד/ת` is not among them: a sheet
+     * that knows which it is has no reason to offer both.
      */
     genderTokens: (gender: Gender) => ({
       /** The noun a label needs — `ביטוח רפואי ל{{worker_role}}`. */

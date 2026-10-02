@@ -13,11 +13,11 @@ import { he } from "../src/lib/i18n/he";
  * **The busy state sits on the control that was pressed, and on nothing else**
  * (`DESIGN.md`, run 7's R7.14).
  *
- * Until 2026-09-25 a save dimmed a whole region: `/payments` put `opacity-60`
- * and `pointer-events-none` on the card holding all six sections, and
- * `/settings` on the card holding all four groups, so writing one note greyed
- * every other row and, on a slow answer, read as the page failing rather than
- * as one field being saved.
+ * **A region is never dimmed for one field's save**, which is the defect these
+ * tests exist to catch. `opacity-60` and `pointer-events-none` on the card
+ * holding all six payment sections, or all four settings groups, greys every
+ * other row while one note is written and, on a slow answer, reads as the page
+ * failing rather than as one field being saved.
  *
  * **These tests need the answer to be slow**, because the defect is only
  * visible while the round trip is in flight — a fast local write is over before

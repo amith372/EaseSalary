@@ -288,15 +288,15 @@ test.describe("the payslip (specs.md item 2, criterion 1)", () => {
   });
 
   /**
-   * **The rest day is changed and the row follows it**, which is stronger than
-   * the two seeded rest days this used to compare: those proved a value was
-   * displayed, and this proves the term is what the row is drawn from.
+   * **The rest day is changed and the row follows it**, which proves the term is
+   * what the row is drawn from — comparing two seeded rest days would prove only
+   * that a value is displayed.
    *
    * **On the known household, not the demo one.** Both demo workers rest on
-   * Saturday since 2026-09-11, when the first was reseeded from the family's
-   * workbooks and the second took their ordinary terms (`seed.ts`) — and the
-   * second also carries a free rest day marked on a Saturday, which since stage
-   * 8.5 raises a question of its own before the change can be saved
+   * Saturday — the first is seeded from the family's workbooks and the second
+   * takes their ordinary terms (`seed.ts`) — and the second also carries a free
+   * rest day marked on a Saturday, which raises a question of its own before the
+   * change can be saved
    * (`rest-day-change.spec.ts`). Part 4's household holds one worker and no such
    * mark, so here the change is a change and nothing else.
    */

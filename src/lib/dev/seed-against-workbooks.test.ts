@@ -13,8 +13,8 @@ import { WORKBOOK_MONTHS } from "@/lib/engine/workbook.fixture";
  * neighbours already hold the engine against those tabs. What this holds is the
  * **seed**: that the household a person actually opens is the one the workbooks
  * describe, and that it has not drifted from them. The distinction matters
- * because the engine was right and every screen still showed the wrong month —
- * that is exactly how the income-tax zero of 2026-09-11 survived a green suite.
+ * because the engine can be right while every screen still shows the wrong
+ * month — which is how an income-tax zero survives a green suite.
  *
  * Every expected figure is `WORKBOOK_MONTHS`, which carries `E26` and `E29` of
  * each tab with the cell named beside it (`CLAUDE.md` rule 6, rule 10). Nothing
@@ -62,17 +62,12 @@ describe("the demo household is the workbooks", () => {
    *
    * Seven tabs in the seeded range carry one, and the day each was paid is in
    * the sentence in `I` beside it — the only place the workbook records it.
-   * Every one of them was missing from this demo until 2026-09-12: the fixture
-   * built each month with an empty list, so no month of Hanna's had ever shown
-   * a medical insurance, a quarter of national insurance or a licence fee.
-   *
-   * **Two of the seven were still missing after that**, and were found the same
-   * day by reading column `I` of all thirty-six tabs against this fixture
-   * rather than reading column `H`: the Q4/25 national insurance filed under
-   * `חודש  1.26`, and the 2025 medical-insurance premium of `חודש  6.25`, which
-   * the family typed into `C10` instead of `H10`. Both are asserted below, so
-   * the count here is seven and a scan down one column cannot make it five
-   * again.
+   * **The count is seven, and it is found by reading column `I` of all
+   * thirty-six tabs and never column `H`.** Two of the seven are not in `H` at
+   * all: the Q4/25 national insurance filed under `חודש  1.26`, and the 2025
+   * medical-insurance premium of `חודש  6.25`, which the family typed into
+   * `C10` instead of `H10`. Both are asserted below, so a scan down one column
+   * cannot make the count five.
    *
    * **What it would catch**: the payments dropping out of the seed again, which
    * is a defect nothing else here would see — a third-party payment is column

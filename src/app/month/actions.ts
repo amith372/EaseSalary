@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { ACTION_FAULT, DONE, type ActionFault, type Done } from "@/lib/actionFault";
+import { answering, DONE, type ActionFault, type Done } from "@/lib/actionFault";
 import { revalidatePath } from "next/cache";
 import { getRepository, requireWorker } from "@/lib/store";
 import {
@@ -95,7 +95,7 @@ export async function markRange(
   workerId: string,
   intent: MarkIntent,
 ): Promise<MarkRangeResult> {
-  try {
+  return answering(async () => {
     // **The part of a day, checked and not trusted.** Only one day of vacation
     // may be taken in part (specs.md item 7), and the picker offers no other
     // combination — so a half day of sickness can only arrive from a crafted
@@ -138,9 +138,7 @@ export async function markRange(
     // The days that could not take the mark and why, shown to the user rather
     // than absorbed silently (items 5, 8).
     return { ok: true, skipped };
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -159,7 +157,7 @@ export async function clearRange(
   from: IsoDate,
   to: IsoDate,
 ): Promise<Done> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     await requireWorker(workerId);
     const ordered = orderDates(from, to);
@@ -173,9 +171,7 @@ export async function clearRange(
 
     revalidatePath("/", "layout");
     return DONE;
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -190,7 +186,7 @@ export async function setHolidayWorked(
   spanId: string,
   worked: boolean,
 ): Promise<Done> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     await requireWorker(workerId);
 
@@ -206,9 +202,7 @@ export async function setHolidayWorked(
     await repository.saveSpan(workerId, { ...span, worked });
     revalidatePath("/", "layout");
     return DONE;
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -321,7 +315,7 @@ export async function setIncomeTax(
   amount: string,
   unit: TaxCorrectionUnit = "amount",
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     if (amount.trim() === "") {
       return clearOverride(workerId, month, lineKeys.incomeTax);
     }
@@ -339,9 +333,7 @@ export async function setIncomeTax(
         label: he.sheet.lines.incomeTax,
       }),
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -355,7 +347,7 @@ export async function setHospitalOvertime(
   amount: string,
   note: string,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     if (amount.trim() === "") {
       return changeMonth(workerId, month, (record) => ({
         ...record,
@@ -369,9 +361,7 @@ export async function setHospitalOvertime(
       ...record,
       hospitalOvertime: trimmed === "" ? { agorot } : { agorot, note: trimmed },
     }));
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -383,15 +373,13 @@ export async function setMonthNote(
   month: YearMonth,
   note: string,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     const trimmed = note.trim();
     return changeMonth(workerId, month, (record) => ({
       ...record,
       note: trimmed === "" ? undefined : trimmed,
     }));
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -438,7 +426,7 @@ export async function addUserLine(
   month: YearMonth,
   draft: UserLineDraft,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     const reviewed = reviewUserLine(draft, randomUUID());
     if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
@@ -446,9 +434,7 @@ export async function addUserLine(
       ...record,
       userLines: [...record.userLines, reviewed.line],
     }));
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -463,13 +449,11 @@ export async function removeUserLine(
   month: YearMonth,
   lineId: string,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     return changeMonth(workerId, month, (record) =>
       withoutOneOffUserLine(record, lineId),
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -493,7 +477,7 @@ export async function addAdvance(
   month: YearMonth,
   draft: AdvanceDraft,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     const profile = await requireWorker(workerId);
     if ((await monthToChange(workerId, profile, month)) === null) {
@@ -514,9 +498,7 @@ export async function addAdvance(
       ...record,
       advances: [...record.advances, reviewed.advance],
     }));
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -548,7 +530,7 @@ export async function splitAdvance(
   month: YearMonth,
   draft: AdvanceSplitDraft,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     const profile = await requireWorker(workerId);
     if ((await monthToChange(workerId, profile, month)) === null) {
@@ -598,9 +580,7 @@ export async function splitAdvance(
 
     revalidatePath("/", "layout");
     return { ok: true };
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -621,7 +601,7 @@ export async function removeAdvance(
   advanceNumber: number,
   kind: AdvanceKind,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     const profile = await requireWorker(workerId);
     const months = await repository.listMonths(workerId);
@@ -640,9 +620,7 @@ export async function removeAdvance(
     return changeMonth(workerId, month, (record) =>
       withoutAdvance(record, advanceNumber, kind),
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -668,7 +646,7 @@ export async function updateAdvance(
   kind: AdvanceKind,
   draft: AdvanceEditDraft,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     const profile = await requireWorker(workerId);
     const months = await repository.listMonths(workerId);
@@ -694,9 +672,7 @@ export async function updateAdvance(
     return changeMonth(workerId, month, (record) =>
       withUpdatedAdvance(record, reviewed.advance),
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -720,7 +696,7 @@ export async function addThirdPartyPayment(
   month: YearMonth,
   draft: ThirdPartyDraft,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     const facts = await monthToChange(workerId, await requireWorker(workerId), month);
     if (facts === null) return { ok: false, reason: "noMonth" };
 
@@ -731,9 +707,7 @@ export async function addThirdPartyPayment(
       ...record,
       thirdPartyPayments: [...record.thirdPartyPayments, reviewed.payment],
     }));
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -752,13 +726,11 @@ export async function removeThirdPartyPayment(
   month: YearMonth,
   kind: ThirdPartyKind,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     return changeMonth(workerId, month, (record) =>
       withoutThirdPartyPayment(record, kind),
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -794,7 +766,7 @@ export async function setOverride(
   month: YearMonth,
   draft: OverrideDraft,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     const entry = await linesOf(workerId, month);
     if (entry === null) return { ok: false, reason: "noMonth" };
 
@@ -811,9 +783,7 @@ export async function setOverride(
     return changeMonth(workerId, month, (record) =>
       withOverride(record, reviewed.key, reviewed.override),
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -831,11 +801,9 @@ export async function clearOverride(
   month: YearMonth,
   key: string,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     return changeMonth(workerId, month, (record) => withoutOverride(record, key));
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -857,7 +825,7 @@ export async function updateUserLine(
   lineId: string,
   draft: UserLineDraft,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     // Reviewed with the id it already has, which is the whole of what makes this
     // an edit rather than a removal and an addition.
     const reviewed = reviewUserLine(draft, lineId);
@@ -879,9 +847,7 @@ export async function updateUserLine(
         line.id === lineId ? reviewed.line : line,
       ),
     }));
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -910,7 +876,7 @@ export async function updateThirdPartyPayment(
   kind: ThirdPartyKind,
   draft: ThirdPartyDraft,
 ): Promise<MonthActionResult> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     await requireWorker(workerId);
 
@@ -940,7 +906,5 @@ export async function updateThirdPartyPayment(
         ? changed
         : withoutOverride(changed, thirdPartyLineKey(kind));
     });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }

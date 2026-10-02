@@ -2,8 +2,11 @@
 import {
   openPaymentSections,
   openSettingsForTestWorker,
+  settled,
+  stepBack,
   switchToTestWorker,
   TODAY,
+  useHousehold,
 } from "./household";
 import { monthOf } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
@@ -55,25 +58,6 @@ const STANDING_A = 25000;
 const STANDING_B = 11000;
 const OPENING_PRINCIPAL = 200000;
 
-const RUN = Date.now().toString(36);
-
-async function useHousehold(page: Page, label: string): Promise<void> {
-  await page.context().addCookies([
-    {
-      name: "household",
-      value: `demo-e2e-${RUN}-${label}`,
-      url: "http://localhost:3000",
-    },
-  ]);
-}
-
-/** Wait until the write has reached the store and come back. Both screens dim
- * and say so with `aria-busy`, and a spec that asserted inside that window
- * would be racing a write no user can race. */
-async function settled(page: Page): Promise<void> {
-  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
-}
-
 /** The month the demo household opens on, as `YYYY-MM`. Read off the clock so
  * the spec does not pin itself to one month. */
 function thisMonth(): string {
@@ -104,13 +88,6 @@ async function openPayments(page: Page): Promise<void> {
   await page.goto("/payments");
   await switchToTestWorker(page);
   await openPaymentSections(page);
-}
-
-/** Step back through the months on whichever screen is showing. */
-async function stepBack(page: Page, times: number): Promise<void> {
-  for (let i = 0; i < times; i += 1) {
-    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
-  }
 }
 
 /** Add a one-off line to the month on screen, as a family adds one. */
@@ -151,7 +128,7 @@ test.describe("a line removed from a month (specs.md item 20)", () => {
   test("takes the line it names and leaves the other, in the list and in the total", async ({
     page,
   }) => {
-    await useHousehold(page, "line-removal");
+    await useHousehold(page, "demo", "line-removal");
     const words = he.month.actions.lines;
     const travel = "החזר נסיעה";
     const pocket = "דמי כיס";
@@ -228,7 +205,7 @@ test.describe("a payment to a third party, removed (specs.md item 16)", () => {
   test("takes the fee it names and leaves the insurance, in the list and in column H", async ({
     page,
   }) => {
-    await useHousehold(page, "third-party-removal");
+    await useHousehold(page, "demo", "third-party-removal");
     const words = he.month.actions.thirdParty;
     const medical = he.sheet.thirdParty.medicalInsurance;
     const agency = he.sheet.thirdParty.agencyFee;
@@ -288,7 +265,7 @@ test.describe("a movement removed from an advance (specs.md item 20)", () => {
   test("takes the grant it names and leaves the settled advance standing", async ({
     page,
   }) => {
-    await useHousehold(page, "advance-removal");
+    await useHousehold(page, "demo", "advance-removal");
     const words = he.month.actions.advances;
 
     await openPayments(page);
@@ -361,7 +338,7 @@ test.describe("a removal that asks first (specs.md item 20)", () => {
   test("removes nothing when the question is answered with ביטול", async ({
     page,
   }) => {
-    await useHousehold(page, "advance-removal-cancelled");
+    await useHousehold(page, "demo", "advance-removal-cancelled");
     const words = he.month.actions.advances;
 
     await openPayments(page);
@@ -408,7 +385,7 @@ test.describe("a removal that asks first (specs.md item 20)", () => {
   test("asks nothing where the removal is refused, and refuses as before", async ({
     page,
   }) => {
-    await useHousehold(page, "advance-removal-refused");
+    await useHousehold(page, "demo", "advance-removal-refused");
     const words = he.month.actions.advances;
 
     await openPayments(page);
@@ -451,7 +428,7 @@ test.describe("a standing line removed from the profile (specs.md item 20)", () 
   test("takes the line it names out of every month, and leaves the other", async ({
     page,
   }) => {
-    await useHousehold(page, "standing-removal");
+    await useHousehold(page, "demo", "standing-removal");
     const terms = he.workers.profile.terms.standing;
     const lines = he.month.actions.lines;
     const first = "השתתפות בטלפון";
@@ -532,7 +509,7 @@ test.describe("an opening advance removed from the profile (specs.md item 6)", (
   test("takes the entered debt off the payments screen, leaving the seeded one", async ({
     page,
   }) => {
-    await useHousehold(page, "opening-removal");
+    await useHousehold(page, "demo", "opening-removal");
     const words = he.workers.profile.terms.opening;
 
     await openSettingsForTestWorker(page);

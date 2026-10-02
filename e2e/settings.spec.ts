@@ -16,7 +16,7 @@ import type { YearMonth } from "../src/lib/types";
 
 /**
  * `/settings` — `EaseSalary - הגדרות`, the one screen a worker's terms are
- * changed on since 2026-09-13.
+ * changed on.
  *
  * The controls themselves are exercised where their consequence is: the rest
  * day in `worker-profile` and `payslip`, the tax in `income-tax`, the
@@ -154,7 +154,7 @@ test.describe("the settings screen", () => {
  *
  * **The base is read off the payslip** (specs.md item 5): it is one of the lines
  * behind the ‏ברוטו‎, and the screen beside the calendar summarises rather than
- * itemising. Both were on `/month` until 2026-09-16.
+ * itemising.
  *
  * What it catches: a raise written onto every month the worker has — which is
  * what "every month not yet confirmed" did to the other terms — restating months
@@ -556,10 +556,11 @@ test.describe("the identifying numbers (specs.md items 22, 28)", () => {
  * Every field on the screen is announced by the row it sits in.
  *
  * A term draws its name once, as the row's heading, and the control under it is
- * a bare input — so until 2026-09-24 seven fields had no accessible name at
- * all, four of them the identifying numbers. A screen reader read four
- * different boxes alike, and the one holding the passport was told apart from
- * the one holding the bank account only by counting.
+ * a bare input — so a control that does not take its heading's id has no
+ * accessible name at all. Four of the fields here are the identifying numbers:
+ * unnamed, a screen reader reads four different boxes alike, and the one holding
+ * the passport is told apart from the one holding the bank account only by
+ * counting.
  *
  * What it catches: a new term whose control is dropped under a `TermRow`
  * without taking its heading's id, and the four numbers collapsing onto one
@@ -600,9 +601,9 @@ test.describe("every field is announced by its own row", () => {
  * The switcher on a worker's own page (`build_plan.md` stage 3). That page takes
  * its worker from the address, so switching there has to change the address.
  *
- * What it catches: the bar renaming itself to the other worker while them
+ * What it catches: the bar renaming itself to the other worker while their
  * profile stays on screen — a page showing one person's months under another
- * person's name, which is what the switcher did until 2026-09-13.
+ * person's name.
  */
 test.describe("the switcher on a worker's page", () => {
   test("goes to the other worker's page", async ({ page }) => {
@@ -720,9 +721,9 @@ test.describe("the start of the employment", () => {
 /**
  * A group's heading and what it opens are one card.
  *
- * Until 2026-09-24 the four headings sat on the page ground above four separate
- * cards, so a heading was not visibly attached to what it opened. They take
- * `/payments`' arrangement now: one card, the folds divided by a hairline.
+ * They take `/payments`' arrangement: one card, the folds divided by a hairline.
+ * Four headings on the page ground above four separate cards would leave a
+ * heading not visibly attached to what it opened.
  *
  * What it catches: a group given a card of its own again, which separates it
  * from its heading without any test noticing.

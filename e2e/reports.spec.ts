@@ -178,9 +178,9 @@ test.describe("the reports screen (item 23, item 29)", () => {
    * export and stored by that confirmation, so the file address refuses such a
    * month and this screen may not link to it.
    *
-   * **What it would catch**: the excel link drawn anyway, which is what stood
-   * until 2026-09-24 — `/דוחות` handed over a file for a month that had answered
-   * none of item 18's questions, and the link worked.
+   * **What it would catch**: the excel link drawn anyway, so `/דוחות` hands over
+   * a file for a month that has answered none of item 18's questions — a link
+   * that works and should not exist.
    */
   test("offers the confirmation for a month nobody confirmed, and no file", async ({
     page,
@@ -257,10 +257,10 @@ test.describe("the reports screen (item 23, item 29)", () => {
     ]);
 
     // April withholds tax like every unconfirmed month and also repays an
-    // advance, so all three are real here too. **It read
-    // `["afterWithholding", "net"]` until 2026-09-10**, when the tax stopped
-    // being a figure the user typed and started being calculated: no seeded
-    // month withheld anything then, and April's ברוטו and נטו were one number.
+    // advance, so all three are real here too. **The tax is calculated and never
+    // a figure the user types** (item 17), which is what makes them three: were
+    // nothing withheld, April's ברוטו and נטו would be one number and the row
+    // would read `["afterWithholding", "net"]`.
     expect(await figures("2026-4")).toEqual([
       "gross",
       "afterWithholding",

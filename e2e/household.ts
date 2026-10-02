@@ -11,8 +11,8 @@ import { TODAY_COOKIE } from "../src/lib/today";
  * behind. Each spec passes its own label and each test its own, which is why
  * the same run can hold a dozen independent stores.
  *
- * **The worker the suite works on.** Since 2026-09-11 the first worker is Hanna,
- * seeded from the family's own workbooks so the demo can be held against them
+ * **The worker the suite works on.** The first worker is Hanna, seeded from the
+ * family's own workbooks so the demo can be held against them
  * tab by tab (`seed.ts`), and the *second* is the one to test on — that is the
  * division the user asked for. Every screen opens on the first worker, so a
  * spec that asserts a figure has to step across first. It is a click on the
@@ -66,8 +66,8 @@ export async function useToday(page: Page, today: string): Promise<void> {
  * the same tick reads the *first* worker's month and passes or fails for
  * reasons that have nothing to do with the test.
  *
- * **It steps only when they are not already showing.** Since 2026-09-13 the
- * choice survives a reload and a navigation (a cookie the layout reads), so a
+ * **It steps only when they are not already showing.** The choice survives a
+ * reload and a navigation (a cookie the layout reads), so a
  * second call in the same test would otherwise step past them and back to the
  * first worker.
  */
@@ -103,8 +103,8 @@ async function stepUntilShowing(page: Page, name: string): Promise<void> {
 }
 
 /**
- * `/settings` showing the test worker — the only screen their terms are changed on
- * since 2026-09-13.
+ * `/settings` showing the test worker — the only screen their terms are changed
+ * on.
  *
  * **The address names no worker**: the screen shows whoever the switcher holds.
  * A spec on the one-worker known case just opens `/settings`; a spec in the
@@ -155,4 +155,33 @@ export async function openPaymentSections(page: Page): Promise<void> {
 /** The four groups of `/settings`; the account section below them does not fold. */
 export async function openSettingsGroups(page: Page): Promise<void> {
   await openFoldedSections(page, 4);
+}
+
+/**
+ * Waits until a change has reached the store and come back.
+ *
+ * The pressed control says it is working with `aria-busy`, and an assertion made
+ * inside that window races a write no user can race: a navigation in the same
+ * tick as a submit cancels the request the submit made, and the assertion then
+ * fails on a row that is correctly absent rather than on a wrong figure.
+ */
+export async function settled(page: Page): Promise<void> {
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+}
+
+/** Steps the calendar back by a count of months, on whichever screen is showing
+ * — both carry the same stepper (specs.md item 5). A count is right only for a
+ * fixed `today`, which `TODAY` is; a walk to a named month belongs in the spec
+ * that needs one. */
+export async function stepBack(page: Page, months: number): Promise<void> {
+  for (let step = 0; step < months; step += 1) {
+    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
+  }
+}
+
+/** Steps the calendar forward by a count of months. */
+export async function stepForward(page: Page, months: number): Promise<void> {
+  for (let step = 0; step < months; step += 1) {
+    await page.getByRole("button", { name: he.calendar.nextMonth }).click();
+  }
 }

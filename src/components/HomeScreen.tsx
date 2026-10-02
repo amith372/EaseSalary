@@ -213,8 +213,7 @@ export function HomeScreen({
   // drops a second press while the first is in flight, which is right for a
   // control that writes one field twice and wrong here: these are three
   // different marks, and a sweep dropped in silence is a day the user marked
-  // that the sheet never pays. It cost a third of the known case the first time
-  // this was written with it.
+  // that the sheet never pays.
   const [fault, setFault] = useState(false);
 
   /** The two gestures whose whole answer is "done", or a fault. */
@@ -438,8 +437,8 @@ export function HomeScreen({
         {/* `aria-busy` while a gesture is on its way to the store and back:
             the figures here are the engine's answer to what was saved, so
             between the click and the answer they are the *previous* month's.
-            The dim that used to say it is on the control that was pressed
-            instead (`busyAttrs` in `Field.tsx`) — a column greying itself
+            The dim that says it is on the control that was pressed
+            (`busyAttrs` in `Field.tsx`) — a column greying itself
             because a day was marked on the calendar beside it reads as the
             page failing rather than as one mark being written. */}
         <div

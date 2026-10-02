@@ -34,8 +34,8 @@ const SHIPPED = holidayListFor(SEEDED_HOLIDAY_LISTS, PH, 2026)!;
  * below.
  *
  * **The quota cases fill the year from these and not from the whole list**,
- * because the shipped list carries Black Saturday, 4 April 2026, and since
- * 2026-09-12 a holiday on their rest day spends nothing from the nine (item 9).
+ * because the shipped list carries Black Saturday, 4 April 2026, and a holiday
+ * on their rest day spends nothing from the nine (item 9).
  * Filling the nine from the full list would leave the quota a day short of full
  * and every one of these cases would test the rest-day rule by accident rather
  * than the arithmetic it names. The rest-day rule has its own case at the end.

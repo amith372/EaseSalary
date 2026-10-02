@@ -139,10 +139,10 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
     .map(({ record }) => record.month);
 
   // A change reaches the store and the page re-renders from it, so nothing here
-  // predicts what was saved. The card says so with `aria-busy` alone: the dim
-  // that used to come with it is on the control that was pressed instead
-  // (`busyAttrs` in `Field.tsx`), because greying the calendar and every other
-  // row to save one note reads as the page failing.
+  // predicts what was saved. The card says so with `aria-busy` alone: the dim is
+  // on the control that was pressed (`busyAttrs` in `Field.tsx`), because greying
+  // the calendar and every other row to save one note reads as the page
+  // failing.
   // **Screen-wide and not per control**: every section writes the same month
   // record, read-modify-write, so two sections saving at once would lose one of
   // the two changes. The rule itself is `useOneAtATime`'s and is not repeated

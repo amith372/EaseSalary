@@ -113,11 +113,12 @@ function stemsOf(word: string): string[] {
  * nothing.
  *
  * **Without this list a matcher is confidently wrong, which is worse than being
- * empty-handed.** Five of the eight questions begin with an interrogative, so
- * "when were the first coins struck" scored a full hit on the question asking
- * when recuperation is paid — on the word "when" alone — and answered it. A
- * question word, a pronoun and a preposition appear in every other sentence a
- * family types; what distinguishes one question from another is the nouns.
+ * empty-handed.** Question after question in the closed list opens with an
+ * interrogative, so without it "when were the first coins struck" takes a full
+ * hit on the question asking when recuperation is paid — on the word "when"
+ * alone — and answers it. A question word, a pronoun and a preposition appear
+ * in every other sentence a family types; what distinguishes one question from
+ * another is the nouns.
  *
  * **It holds no word that names anything.** `לפני` and `אחרי` are deliberately
  * absent, because `לפני הייצוא` is a screen's name and a user typing it must

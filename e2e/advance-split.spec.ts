@@ -1,5 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
-import { openPaymentSections, switchToTestWorker } from "./household";
+import {
+  openPaymentSections,
+  settled,
+  stepBack,
+  stepForward,
+  switchToTestWorker,
+  useHousehold,
+} from "./household";
 import { he } from "../src/lib/i18n/he";
 import { monthLabel } from "../src/lib/dateLabels";
 import { formatAgorot } from "../src/lib/money";
@@ -50,37 +57,6 @@ const GIVEN_ON = "2026-07-10";
  * confirmation below has to give before it can confirm it. */
 const AUGUST_AGREES = ["holidaysWorked"];
 
-const RUN = Date.now().toString(36);
-
-async function useHousehold(page: Page, label: string): Promise<void> {
-  await page.context().addCookies([
-    {
-      name: "household",
-      value: `demo-e2e-${RUN}-${label}`,
-      url: "http://localhost:3000",
-    },
-  ]);
-}
-
-/** Wait until a change has reached the store and come back: the card says so
- * with `aria-busy`, and an assertion made inside that window races a write the
- * user never races. */
-async function settled(page: Page): Promise<void> {
-  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
-}
-
-async function stepBack(page: Page, months: number): Promise<void> {
-  for (let step = 0; step < months; step += 1) {
-    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
-  }
-}
-
-async function stepForward(page: Page, months: number): Promise<void> {
-  for (let step = 0; step < months; step += 1) {
-    await page.getByRole("button", { name: he.calendar.nextMonth }).click();
-  }
-}
-
 /** The advances group, and one advance inside it. */
 function advances(page: Page) {
   return page.locator('[data-group="advances"]');
@@ -114,7 +90,7 @@ test.describe("an advance repaid over several months (item 20)", () => {
     page,
   }) => {
     const words = he.month.actions.advances;
-    await useHousehold(page, "split");
+    await useHousehold(page, "demo", "split");
     await openJuly(page);
     await fillGrant(page, "3");
 
@@ -179,7 +155,7 @@ test.describe("an advance repaid over several months (item 20)", () => {
   test("keeps the day the advance was given, and shows it from a later month", async ({
     page,
   }) => {
-    await useHousehold(page, "splitdate");
+    await useHousehold(page, "demo", "splitdate");
     await openJuly(page);
     await fillGrant(page, "3");
     await advances(page)
@@ -214,7 +190,7 @@ test.describe("an advance repaid over several months (item 20)", () => {
   test("refuses a span that crosses a confirmed month, naming it", async ({
     page,
   }) => {
-    await useHousehold(page, "splitblocked");
+    await useHousehold(page, "demo", "splitblocked");
 
     // Confirm August 2026 — the month `/month/export` opens on, being the last
     // that ended (item 21).

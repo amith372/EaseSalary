@@ -1,5 +1,5 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { TEST_WORKER_NAME, useHousehold, switchToTestWorker, openPaymentSections, TODAY } from "./household";
+import { TEST_WORKER_NAME, useHousehold, switchToTestWorker, openPaymentSections, settled, TODAY } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { monthLabel } from "../src/lib/dateLabels";
 import { monthOf, SATURDAY } from "../src/lib/dates";
@@ -11,10 +11,7 @@ import { formatAgorot, formatDays } from "../src/lib/money";
  * and the known case of Part 4 entered as a user enters it.
  *
  * **Why all of that is one file.** It is one screen and one calculation path.
- * Until 2026-09-16 the second half of this lived in `month-screen.spec.ts`,
- * against a `/month` that drew the same calendar one link further in while this
- * screen was a fixture of it; the wiring moved here and that screen went, so the
- * two specs became one. Rule 10 is explicit that a flow assembled out of unit
+ * Rule 10 is explicit that a flow assembled out of unit
  * tests that each pass is a flow nobody has performed. The engine's answer to
  * August 2025 is already checked to the agora in `august-2025.test.ts`; what is
  * checked here is everything between a click and that answer — the calendar's
@@ -88,15 +85,6 @@ const VACATION_SEPTEMBER = 15.5;
  * beside it. */
 function row(page: Page, key: string) {
   return page.locator(`[data-row="${key}"]`);
-}
-
-/** Waits out a server action before the test navigates away. A `page.goto` in
- * the same tick as a submit cancels the request the submit made: the action
- * never reaches the store, the next screen draws the month unchanged, and the
- * assertion fails on a row that is correctly absent rather than on a wrong
- * figure. `aria-busy` is the same attribute the pressed control sets. */
-async function settled(page: Page): Promise<void> {
-  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
 }
 
 /** The "days used this month" hint on a balance row in the rail, which is where
@@ -771,8 +759,8 @@ test.describe("half a day of vacation (specs.md items 5, 7)", () => {
  * **The screen opens straight onto the calendar with no heading of its own**
  * (`DESIGN.md`), so the level goes to whatever leads rather than a heading
  * being added: the blocker strip where it is drawn, then a refused month's
- * card, then the month. Until 2026-09-24 the strip was an `h2` and the month
- * an `h1`, so the outline opened at `צריך לטפל` and reached the `h1` second.
+ * card, then the month. A strip at `h2` with the month at `h1` would open the
+ * outline at `צריך לטפל` and reach the `h1` second.
  *
  * **The refused household leads with the strip too**, and that is the whole of
  * what the refusal being one worker's changed: the strip is the household's and
@@ -810,8 +798,8 @@ test.describe("the opening screen's outline", () => {
 /**
  * A day keeps its shape however tall the window is.
  *
- * The grid's rows are `1fr` inside a screen-height column, so until 2026-09-24
- * the day took whatever the window had left: 91×99 at 1440×900 and 91×177 at
+ * The grid's rows are `1fr` inside a screen-height column, so without a cap the
+ * day takes whatever the window has left — 91×99 at 1440×900 against 91×177 at
  * 1440×1440, the number floating in the middle of an empty rectangle. The cap
  * is on the grid rather than on the row, because a row whose max is a length
  * sizes to its content and would draw a 58px day at every height.
@@ -853,9 +841,9 @@ test("a day keeps its proportion however tall the window is", async ({
  * Back puts the screen where it was.
  *
  * `<main>` is the scroller from `md` up, which is what keeps the bar on screen
- * and is why the browser's own restoration — which acts on the document — had
- * nothing to restore: until 2026-09-24, following a blocker from the foot of
- * this screen and coming back landed at the top of it.
+ * and is why the browser's own restoration — which acts on the document — has
+ * nothing to restore: without the restoration below, following a blocker from
+ * the foot of this screen and coming back lands at the top of it.
  *
  * What it catches: the restoration removed, and a restoration that fires on a
  * fresh navigation too, which would undo an address naming an anchor.

@@ -6,10 +6,10 @@ import { SEEDED_HOLIDAY_LISTS, countryNameHe } from "@/lib/holidayLists";
  * in this test — `PH-2026.json` carries `"country_name_he": "הפיליפינים"`, and
  * that file is the source of truth a scrape is judged against.
  *
- * **What it would catch**: a profile that printed the filing code at the user,
- * which is what it did until 2026-09-11; and a lookup that threw or returned
+ * **What it would catch**: a profile that printed the filing code at the user
+ * instead of the country's name; and a lookup that threw or returned
  * `undefined` for a country nothing is stored for, which is how a worker from a
- * seventh country would have taken the page down.
+ * seventh country would take the page down.
  */
 describe("naming a country of origin", () => {
   it("names the six countries that ship with a list", () => {

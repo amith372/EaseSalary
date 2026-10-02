@@ -50,7 +50,7 @@ async function settled(page: Page): Promise<void> {
 }
 
 /** Flips the one chip that records the gender, on the only screen that changes
- * a worker's terms since 2026-09-13 (`household.ts`). */
+ * a worker's terms (`household.ts`). */
 async function chooseGender(page: Page, choice: "male" | "female"): Promise<void> {
   await openSettingsForTestWorker(page);
   await settled(page);

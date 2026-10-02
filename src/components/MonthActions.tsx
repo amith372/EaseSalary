@@ -1449,10 +1449,10 @@ function AdvancesControl({
       group="advances"
       title={words.title}
       fold={fold}
-      // Folded, the section says how many advances are still being repaid —
-      // the aside's place, which until 2026-09-24 held a control and so could
-      // only be drawn open. Five advances behind a bare heading are five things
-      // nobody can see.
+      // Folded, the section says how many advances are still being repaid, in
+      // the aside's place. A summary there and never a control: a control could
+      // only be drawn open, and five advances behind a bare heading are five
+      // things nobody can see.
       summary={
         <span dir="auto" className="text-[13px] font-light text-ink-quiet">
           {ledger.length === 0 ? (

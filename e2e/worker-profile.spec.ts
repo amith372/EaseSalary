@@ -67,7 +67,7 @@ function row(page: Page, key: string) {
  * **A term's effect is read off the sheet and not off the opening screen**
  * (specs.md item 5): the rest-eve supplement and a standing line are lines
  * behind the ‏ברוטו‎, and the card beside the calendar summarises rather than
- * itemising. Both were drawn on `/month` until 2026-09-16. `switch` is the
+ * itemising. `switch` is the
  * caller's, because the known household holds one worker and has nothing to
  * step to.
  */

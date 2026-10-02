@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { HELP_SCREENS, NAV_SCREENS, screenAt, screenName } from "@/lib/help/screens";
+import { HELP_SCREENS, NAV_SCREENS, screenName } from "@/lib/help/screens";
 import { he } from "@/lib/i18n/he";
 
 /**
@@ -57,13 +57,8 @@ describe("the help screen registry", () => {
     );
   });
 
-  it("gives each address one entry, and matches an address whole", () => {
+  it("gives each address one entry", () => {
     const routes = HELP_SCREENS.map((screen) => screen.route);
     expect(new Set(routes).size).toBe(routes.length);
-    expect(screenAt("/settings/holidays")?.id).toBe("holidays");
-    expect(screenAt("/settings")?.id).toBe("settings");
-    // Not a screen: `/workers/[id]` names a worker, and help is account-blind.
-    expect(screenAt("/workers/abc")).toBeNull();
-    expect(screenAt("/help")).toBeNull();
   });
 });

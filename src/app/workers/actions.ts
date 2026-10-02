@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { ACTION_FAULT, type ActionFault } from "@/lib/actionFault";
+import { answering, type ActionFault } from "@/lib/actionFault";
 import { revalidatePath } from "next/cache";
 import { getRepository, requireWorker } from "@/lib/store";
 import { advanceLedger, nextAdvanceNumber } from "@/lib/engine/advances";
@@ -205,7 +205,7 @@ export async function setRestDay(
   restDay: RestDay,
   answers: RestDayAnswers = {},
 ): Promise<SetRestDayResult> {
-  try {
+  return answering(async () => {
     if (!isAllowedRestDay(restDay)) return { ok: false, reason: "restDay" };
     const profile = await requireWorker(workerId);
     const repository = await getRepository();
@@ -257,9 +257,7 @@ export async function setRestDay(
     }
 
     return saveProfile(profile, { ...profile, restDay });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /** One answered mark, held until every one of them has been answered: a
@@ -311,14 +309,12 @@ export async function setRestEveSupplement(
   workerId: string,
   amountText: string,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const agorot = parseRestEveSupplement(amountText);
     if (agorot === null) return { ok: false, reason: "supplement" };
     const profile = await requireWorker(workerId);
     return saveProfile(profile, { ...profile, restEveSupplementAgorot: agorot });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -340,7 +336,7 @@ export async function setEmployedSince(
   workerId: string,
   dateText: string,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const profile = await requireWorker(workerId);
     const date = reviewEmployedSince(dateText, await readToday(), profile.firstMonth);
     if (date === "invalid") return { ok: false, reason: "date" };
@@ -349,9 +345,7 @@ export async function setEmployedSince(
       return { ok: false, reason: "employedSinceAfterFirstMonth" };
     }
     return saveProfile(profile, { ...profile, employedSince: date });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -373,13 +367,11 @@ export async function setGender(
   workerId: string,
   gender: Gender,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     if (!isAllowedGender(gender)) return { ok: false, reason: "gender" };
     const profile = await requireWorker(workerId);
     return saveProfile(profile, { ...profile, gender });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -404,7 +396,7 @@ export async function setCountry(
   workerId: string,
   code: string,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const country = code.trim();
     if (country === "") return { ok: false, reason: "country" };
     const repository = await getRepository();
@@ -414,9 +406,7 @@ export async function setCountry(
     }
     const profile = await requireWorker(workerId);
     return saveProfile(profile, { ...profile, country });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -441,14 +431,12 @@ export async function setIncomeTaxSetting(
   mode: string,
   percentageText: string,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const reviewed = reviewIncomeTax(mode, percentageText);
     if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
     const profile = await requireWorker(workerId);
     return saveProfile(profile, { ...profile, incomeTax: reviewed.setting });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -469,15 +457,13 @@ export async function setRecuperationMonth(
   workerId: string,
   month: number,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     if (!isMonthNumber(month)) {
       return { ok: false, reason: "recuperationMonth" };
     }
     const profile = await requireWorker(workerId);
     return saveProfile(profile, { ...profile, recuperationMonth: month });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -494,12 +480,10 @@ export async function setInsurer(
   workerId: string,
   insurer: string,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const profile = await requireWorker(workerId);
     return saveProfile(profile, { ...profile, insurer: insurer.trim() });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -522,7 +506,7 @@ export async function setSalaryChange(
   amountText: string,
   fromText: string,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     const profile = await requireWorker(workerId);
     const from = parseYearMonth(fromText.trim());
@@ -546,9 +530,7 @@ export async function setSalaryChange(
 
     revalidatePath("/", "layout");
     return { ok: true };
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -570,7 +552,7 @@ export async function addStandingLine(
   workerId: string,
   draft: StandingLineDraft,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const reviewed = reviewStandingLine(draft, randomUUID());
     if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
@@ -579,9 +561,7 @@ export async function addStandingLine(
       profile,
       { ...profile, standingLines: [...profile.standingLines, reviewed.line] },
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -603,7 +583,7 @@ export async function updateStandingLine(
   lineId: string,
   draft: StandingLineDraft,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const reviewed = reviewStandingLine(draft, lineId);
     if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
@@ -624,9 +604,7 @@ export async function updateStandingLine(
         ),
       },
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -656,7 +634,7 @@ export async function removeStandingLine(
   workerId: string,
   lineId: string,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const profile = await requireWorker(workerId);
     return saveProfile(
       profile,
@@ -667,9 +645,7 @@ export async function removeStandingLine(
         ),
       },
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -690,15 +666,13 @@ export async function setOpeningDays(
   workerId: string,
   draft: OpeningDaysDraft,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const profile = await requireWorker(workerId);
     const reviewed = reviewOpeningDays(draft, profile.openingPosition);
     if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
     return saveProfile(profile, { ...profile, openingPosition: reviewed.position });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -716,7 +690,7 @@ export async function addOpeningAdvance(
   workerId: string,
   draft: OpeningAdvanceDraft,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     const profile = await requireWorker(workerId);
     const ledger = advanceLedger(
@@ -736,9 +710,7 @@ export async function addOpeningAdvance(
         },
       },
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -755,7 +727,7 @@ export async function removeOpeningAdvance(
   workerId: string,
   advanceNumber: number,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
     const profile = await requireWorker(workerId);
     const opening = profile.openingPosition.advances.find(
@@ -785,9 +757,7 @@ export async function removeOpeningAdvance(
         },
       },
     );
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -805,15 +775,13 @@ export async function setDocuments(
   workerId: string,
   draft: DocumentsDraft,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const reviewed = reviewDocuments(draft);
     if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
     const profile = await requireWorker(workerId);
     return saveProfile(profile, { ...profile, documents: reviewed.documents });
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -876,7 +844,7 @@ export type CreateWorkerResult =
 export async function createWorker(
   draft: NewWorkerDraft,
 ): Promise<CreateWorkerResult> {
-  try {
+  return answering(async () => {
     const repository = await getRepository();
 
     if (!(await repository.hasRoomForWorker())) {
@@ -898,9 +866,7 @@ export async function createWorker(
 
     revalidatePath("/", "layout");
     return { ok: true, workerId };
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /**
@@ -961,7 +927,7 @@ export async function setIdentifyingNumber(
   name: string,
   value: string,
 ): Promise<ProfileActionResult> {
-  try {
+  return answering(async () => {
     const known = identifyingNumberNames.find((one) => one === name);
     if (known === undefined) return { ok: false, reason: "numberName" };
 
@@ -973,7 +939,5 @@ export async function setIdentifyingNumber(
     await saveIdentifyingNumbers(repository, workerId, { [known]: value });
     revalidatePath("/", "layout");
     return { ok: true };
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }

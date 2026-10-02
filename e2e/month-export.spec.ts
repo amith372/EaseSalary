@@ -172,11 +172,11 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
    * **The insurer the family typed reaches the sheet, and no other household's does**
    * (specs.md item 16, Part 3).
    *
-   * Cell `B10` of both month templates named a real agency, a real insurer and
-   * a real health fund until 2026-09-12. They sat inside the committed .xlsx,
-   * where no search and no diff could find them, and every family that ever
-   * exported a month received another household's arrangements on their own
-   * salary sheet.
+   * Cell `B10` of both month templates names no agency, insurer or health fund
+   * of its own: it is filled from the profile. A name left inside the committed
+   * .xlsx sits where no search and no diff can find it, and every family that
+   * exported a month would receive another household's arrangements on their
+   * own salary sheet.
    *
    * **The whole path, as a user meets it**: open their profile, type the insurer,
    * press save, then export the month and read the cell. A unit test can fill a
@@ -209,7 +209,7 @@ test.describe("the month's file (specs.md item 2, criterion 1)", () => {
 
     expect(label).toContain(typed);
     expect(label).not.toContain("{{");
-    // The names the template used to carry, written out because there is
+    // The names that must never reach the template, written out because there is
     // nowhere left to import them from.
     expect(label).not.toContain("הילית");
     expect(label).not.toContain("הראל");

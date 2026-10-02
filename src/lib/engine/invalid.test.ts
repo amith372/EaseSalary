@@ -270,8 +270,8 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
     // and at work on the same day, and the engine has no way to know which
     // happened.
     //
-    // **A weekday and not the Saturday this used**, because a holiday on them
-    // rest day is not a holiday at all since 2026-09-12 (item 9): on the 16th
+    // **A weekday and not the Saturday this used**, because a holiday on their
+    // rest day is not a holiday at all (item 9): on the 16th
     // there would be nothing but a sick Saturday, and no contradiction to find.
     const spans: ClosedSpan[] = [
       { id: "sick", kind: "sick", from: "2025-08-12", to: "2025-08-14" },
@@ -329,7 +329,7 @@ describe("a date carrying more than one entry (specs.md Part 4)", () => {
   });
 
   /**
-   * Part 4's deliberately invalid case since 2026-09-12: they cannot have been
+   * Part 4's deliberately invalid case: they cannot have been
    * absent ill and at work on the same day, and choosing one reading silently
    * would produce a figure that looks entirely ordinary.
    */

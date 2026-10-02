@@ -125,9 +125,9 @@ describe("only a rest day can be marked as the rest day the worker had off", () 
  * **A holiday is no longer something a sweep can produce** (specs.md item 9).
  * The user never marks a day as a holiday: the year's dates are chosen in
  * advance and arrive on the calendar drawn, and `MarkIntent.kind` is a
- * `MarkKind`, which no longer includes one — so the case this block used to
- * assert, a swept holiday refused for landing on a free rest day, is a compile
- * error rather than a runtime refusal and cannot be written here at all.
+ * `MarkKind`, which does not include one — so a swept holiday refused for
+ * landing on a free rest day is a compile error rather than a runtime refusal
+ * and cannot be written here at all.
  *
  * The refusal itself has not gone: a stored holiday on a free rest day is still
  * refused by `validate.ts`, which is where it belongs now that the only caller

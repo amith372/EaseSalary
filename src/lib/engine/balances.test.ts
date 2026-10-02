@@ -537,9 +537,8 @@ describe("the month that has not ended yet (specs.md item 21)", () => {
  * **Every figure is the seeded table's own**, which is sourced to the family's
  * workbooks: ₪6,247.65 from 1.4.2025 and ₪6,443.85 from 1.4.2026.
  *
- * **What it would catch**: the state the application was actually in until
- * 2026-09-11 — a July 2026 valued at the April 2025 wage, below the legal
- * minimum, with nothing anywhere on the screen saying so; a warning that
+ * **What it would catch**: a July 2026 valued at the April 2025 wage, below the
+ * legal minimum, with nothing anywhere on the screen saying so; a warning that
  * compared against *today's* minimum instead of the month's, which would
  * retroactively accuse every correctly filed month the day a rise lands; and a
  * warning that fired on a month the table cannot speak for, which is the
@@ -596,10 +595,9 @@ describe("a premium paid to nobody named (specs.md item 16)", () => {
   const premium = { kind: "medicalInsurance" as const, agorot: 130000, paidOn: "2025-08-15" };
 
   /**
-   * Row 10 of the sheet reads "ביטוח רפואי לעובד/ת - שולם באמצעות …",
-   * and until 2026-09-12 the end of it was one family's own agency written into
-   * the template. It is filled from the profile now, so an empty profile ends
-   * the sentence mid-air.
+   * Row 10 of the sheet reads "ביטוח רפואי לעובד/ת - שולם באמצעות …", and the
+   * end of that sentence is filled from the profile's insurer and never from the
+   * template — so an empty profile ends it mid-air.
    *
    * **What it would catch**: the warning never firing, which lets that sheet be
    * exported; and the warning firing on a month that paid no premium, which is

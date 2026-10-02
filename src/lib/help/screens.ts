@@ -11,11 +11,10 @@ import { he } from "@/lib/i18n/he";
  * always answer from (specs.md item 24). That is why `settles` is written to
  * name the things a user asks about and not to describe a layout.
  *
- * **The bar reads it too, so the tabs and the help answers cannot disagree.**
- * `AppShell` held its own five-item `navItems` until stage 9, which meant a
- * screen could be renamed in the bar and keep its old name in an answer. The
- * `tab` field is what the bar filters on, and this list's order is the order
- * the tabs are drawn in.
+ * **The bar reads it too, so the tabs and the help answers cannot disagree.** A
+ * second list of tabs kept beside this one is a list in which a screen can be
+ * renamed in the bar and keep its old name in an answer. The `tab` field is what
+ * the bar filters on, and this list's order is the order the tabs are drawn in.
  *
  * **Three addresses are deliberately absent**, because an answer that points at
  * one of them is a wrong answer rather than a missing one:
@@ -77,19 +76,9 @@ export function screenName(id: ScreenId): string {
   return he.screens[id].name;
 }
 
-/** Every screen by its id, so a lookup is a lookup and not a scan that has to
- * decide what to do when it finds nothing. `screens.test.ts` holds the registry
- * and `he.screens` to each other, which is what makes this total. */
-const BY_ID = new Map(HELP_SCREENS.map((screen) => [screen.id, screen]));
-
-/** The address of a screen. */
+/** The address of a screen. A scan of ten entries rather than an index built
+ * over them: `screens.test.ts` holds the registry and `he.screens` to each
+ * other, so every `ScreenId` is in the list and the fallback is unreachable. */
 export function routeOf(id: ScreenId): string {
-  return BY_ID.get(id)?.route ?? "/";
-}
-
-/** The screen at an address, or null when nothing in the application answers
- * to it. The address is matched whole: `/settings/holidays` is its own screen
- * and not a part of `/settings`. */
-export function screenAt(route: string): HelpScreen | null {
-  return HELP_SCREENS.find((screen) => screen.route === route) ?? null;
+  return HELP_SCREENS.find((screen) => screen.id === id)?.route ?? "/";
 }

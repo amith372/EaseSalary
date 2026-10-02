@@ -89,10 +89,9 @@ export interface DatedRate {
  *
  * **A source is an address or one of these, and never a sentence.** The rates
  * group on `/settings` draws this field, so prose put here is a user-facing
- * string living outside `he.ts` (`CLAUDE.md`) — and the workbook citation the
- * seed used to carry was worse than that: a path into a file the application
- * does not hold, in a mixed Hebrew-and-Latin run that the right-to-left span
- * reordered, so `שכר_חודשי_להאנה2026.xlsx` was drawn with its extension in
+ * string living outside `he.ts` (`CLAUDE.md`) — and a workbook citation is worse
+ * than that: a path into a file the application does not hold, in a mixed
+ * Hebrew-and-Latin run that the right-to-left span reorders, so `שכר_חודשי_להאנה2026.xlsx` draws with its extension in
  * front of its name. The citation belongs in the test and the commit message
  * instead, which is `CLAUDE.md` rule 6's own division.
  */

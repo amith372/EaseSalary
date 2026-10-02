@@ -66,8 +66,7 @@ function row(page: Page, key: string) {
  *
  * **The recuperation line is read off the sheet and not off the opening screen**
  * (specs.md item 5): it is a column G line behind the ‏ברוטו‎, and the card
- * beside the calendar summarises rather than itemising. Both were drawn on
- * `/month` until 2026-09-16, which is why this used to be one screen.
+ * beside the calendar summarises rather than itemising.
  *
  * The year comes from today rather than being written here, for the reason
  * every spec that opens on "the current month" gives — the demo household holds

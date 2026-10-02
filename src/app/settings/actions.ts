@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ACTION_FAULT, DONE, type ActionFault, type Done } from "@/lib/actionFault";
+import { answering, DONE, type ActionFault, type Done } from "@/lib/actionFault";
 import { redirect } from "next/navigation";
 import { householdIdOf } from "@/lib/store";
 import { supabaseOnServer } from "@/lib/supabase/server";
@@ -44,7 +44,7 @@ export type InvitationResult =
 export async function inviteToHousehold(
   emailText: string,
 ): Promise<InvitationResult> {
-  try {
+  return answering(async () => {
     const email = emailText.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { ok: false, reason: "email" };
@@ -78,34 +78,28 @@ export async function inviteToHousehold(
 
     revalidatePath("/settings");
     return { ok: true, email, token };
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /** A pending invitation withdrawn. The policy refuses one already accepted, and
  * one from another household is invisible to the delete — so there is no reason
  * to give either way and `Done` is the whole answer. */
 export async function withdrawInvitation(invitationId: string): Promise<Done> {
-  try {
+  return answering(async () => {
     const supabase = await supabaseOnServer();
     await supabase.from("household_invitations").delete().eq("id", invitationId);
     revalidatePath("/settings");
     return DONE;
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }
 
 /** A share taken back by the member who sent its invitation (specs.md item 11).
  * The database decides whether this caller may, and answers nothing either way. */
 export async function removeShare(invitationId: string): Promise<Done> {
-  try {
+  return answering(async () => {
     const supabase = await supabaseOnServer();
     await supabase.rpc("remove_household_share", { invitation_id: invitationId });
     revalidatePath("/settings");
     return DONE;
-  } catch {
-    return ACTION_FAULT;
-  }
+  });
 }

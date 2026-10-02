@@ -214,7 +214,7 @@ test.describe("a refused month says so", () => {
     // The addresses behind the two download buttons, reached the way a stale
     // link or a bookmark reaches them — which is the only way they can be
     // reached now, since every screen that offers them draws the card instead.
-    // They used to replay without a catch and answer with a 500.
+    // Without a catch they would replay and answer with a 500.
     for (const address of [
       `/month/export/file?worker=${REFUSED_WORKER}&month=2026-08`,
       `/reports/file?worker=${REFUSED_WORKER}&report=recuperation`,
@@ -370,8 +370,8 @@ test.describe("a refused month on the workers screens", () => {
     ).toHaveCount(0);
 
     // **The control**: the first worker's card is untouched. A refusal belongs
-    // to the employment whose month it is, and the catch used to be around the
-    // whole household.
+    // to the employment whose month it is, so a catch around the whole household
+    // would take this card down with the other's.
     const first = cardOf(page, "worker-1");
     await expect(first.locator('[data-role="refusal"]')).toHaveCount(0);
     await expect(first.getByText(he.workers.facts.vacation)).toBeVisible();

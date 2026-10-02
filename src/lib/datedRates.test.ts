@@ -146,12 +146,12 @@ describe("what the application ships knowing", () => {
 /**
  * What the rates group on `/settings` is allowed to say about a source.
  *
- * **The defect this stands against is a stored string printed verbatim.** The
- * seed used to carry `שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6` in this
- * field — the citation belongs here and in the commit message (`CLAUDE.md`
- * rule 6) and never on a screen, both because it is a path into a file the
- * application does not hold and because a mixed Hebrew-and-Latin run drawn in a
- * right-to-left span reorders: it rendered with `.xlsx` in front of the name.
+ * **The defect this stands against is a stored string printed verbatim.** A
+ * citation such as `שכר_חודשי_להאנה2026.xlsx → חודש  4.26 → D6` belongs here and in
+ * the commit message (`CLAUDE.md` rule 6) and never in this field, both because
+ * it is a path into a file the application does not hold and because a mixed
+ * Hebrew-and-Latin run drawn in a right-to-left span reorders: it renders with
+ * `.xlsx` in front of the name.
  *
  * The expected values are this file's, stated before the resolver is called,
  * and none is read back from what it returned.

@@ -181,8 +181,8 @@ test.describe("the four reports, where there is no file to hand back", () => {
  * family actually ends up looking at.
  */
 test.describe("what the browser lands on", () => {
-  /** Every sentence these two addresses used to answer with. None may appear
-   * on a screen, and none may be left anywhere in what is served. */
+  /** Every English sentence these two addresses must never answer with. None may
+   * appear on a screen, and none may be left anywhere in what is served. */
   const THE_OLD_ENGLISH = [
     "No such worker",
     "No such month",

@@ -125,7 +125,7 @@ test.describe("a control whose action cannot answer", () => {
  * figures with the page-level screen. **Measured against that state on
  * 2026-10-02**, this test fails on the `h1` reading the fault sentence where
  * the calendar should be — so what it catches is not an untranslated sentence
- * (`error.tsx` has said it in Hebrew since 2026-09-30) but the screen being
+ * (`error.tsx` says it in Hebrew) but the screen being
  * lost to a gesture the user can repeat.
  *
  * **The defect a weaker version of this would miss.** Routing the three gestures
