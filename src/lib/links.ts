@@ -47,7 +47,7 @@ export const CAREGIVER_TERMS = `${KOL_ZCHUT}/תנאי_העסקה_של_עובד_�
  *
  * **The anchor is not a nicety and it is not assembled from a label.** The page
  * text is cached segmented by those same headings (Part 3), so a key here, a
- * cached section and — in stage 9 — a question all resolve to one unit only
+ * cached section and — on the help screen — a question all resolve to one unit only
  * because they all carry the heading id. An anchor invented from a Hebrew label
  * would land the user at the top of the page and match no section at all, which
  * is the same silent failure `links.ts` already refuses for addresses.
@@ -142,12 +142,14 @@ export const legalLinks = {
   },
   incomeTax: {
     label: "ניכוי מס הכנסה משכר העובד/ת",
-    // The application never calculates the tax, so this link is the whole of
-    // what it can give the user before they type a figure (item 17). The terms
-    // page states the rule — the employer deducts on the basis of the wage and
-    // of the credits the worker is entitled to — and a caregiver in home care
+    // The application calculates the tax (item 17), so this link is not a
+    // substitute for a figure but the source of the rule behind it: the terms
+    // page states that the employer deducts on the basis of the wage and of the
+    // credits the worker is entitled to, and that a caregiver in home care
     // receives 2.25 credit points, more than a foreign worker in another
-    // sector, which is the fact that stops them deducting too much.
+    // sector. That credit is what the automatic mode derives from the gender on
+    // the profile, and what stops a family deducting too much when they choose
+    // a flat percentage instead.
     url: termsSection("ניכויים_משכר_העובד"),
   },
   wageDeductions: {
