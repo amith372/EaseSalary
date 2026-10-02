@@ -23,8 +23,8 @@
 // and the spans are reached one join further out than the worker is, through
 // `private.owns_worker`, so they are asked separately rather than assumed to
 // follow. The last few checks ask the database for the rules its constraints
-// carry -- only sickness may be left open, a holiday says whether she worked
-// it, a part day is one day -- because each of those is a state the engine's
+// carry -- only sickness may be left open, only a holiday says whether she
+// worked it, a part day is one day -- because each of those is a state the engine's
 // types make a compile error and a crafted request does not go through the
 // types.
 //
@@ -525,7 +525,11 @@ try {
     "only a spell of sickness may be left open",
   );
 
-  const silentHoliday = await rest("spans", {
+  // **A holiday nobody has answered for is a state, not an error** (specs.md
+  // items 9 and 18). Chosen in advance it is stored with `worked` null, paid as
+  // worked in the preview, and stops the export until somebody says. So the
+  // constraint runs the other way: only a holiday may carry the column at all.
+  const unansweredHoliday = await rest("spans", {
     token: a.token,
     method: "POST",
     body: {
@@ -537,8 +541,28 @@ try {
     },
   });
   check(
-    silentHoliday.status >= 400,
-    "a holiday is never recorded without saying whether she worked it",
+    unansweredHoliday.status < 400,
+    "a holiday chosen in advance is stored before anybody has answered for it",
+  );
+
+  const vacationThatAnswers = await rest("spans", {
+    token: a.token,
+    method: "POST",
+    body: {
+      worker_id: a.workerId,
+      id: "vacation-2026-04-10",
+      kind: "vacation",
+      from: "2026-04-10",
+      to: "2026-04-10",
+      worked: true,
+    },
+  });
+  check(
+    vacationThatAnswers.status >= 400 &&
+      JSON.stringify(vacationThatAnswers.body ?? "").includes(
+        "only_a_holiday_says_whether_she_worked",
+      ),
+    "only a holiday says whether she worked it, and the constraint is what refuses",
   );
 
   const spreadPartDay = await rest("spans", {
