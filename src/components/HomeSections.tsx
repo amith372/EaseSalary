@@ -162,6 +162,10 @@ export function BalancesRail({
             const herMarks = he.calendar.marks(
               herMonth?.facts.terms.restDay ?? hers?.restDay ?? fallbackRestDay,
             );
+            // A fact about the worker and not about the month on screen: it was
+            // counted on the server against the month today falls in (item 21),
+            // so stepping the calendar never moves it.
+            const markedAhead = hers?.vacationMarkedAhead ?? 0;
             return (
               <div key={each.id} className="mt-0.5 flex flex-col gap-1.5 border-t border-line px-2.75 pt-2.25">
                 <span className="flex min-w-0 items-center gap-2">
@@ -219,6 +223,26 @@ export function BalancesRail({
                             <span>: </span>
                             <Bidi noTranslate>{formatDays(balance.used ?? 0)}</Bidi>
                           </span>
+                          {/* Vacation marked in a month after the current one,
+                              said under the days used and outside the balance
+                              (item 21). No month after this one is valued, so
+                              nothing marked in one has come off the balance —
+                              and a day the user recorded with nothing on screen
+                              to acknowledge it reads as a day that was never
+                              saved. Drawn only where there is something to say,
+                              since a nil line would sit under every balance for
+                              the whole of a year. v4 draws neither hint — a
+                              departure recorded in `DESIGN.md`. */}
+                          {balance.kind === "vacation" && markedAhead > 0 ? (
+                            <span
+                              data-row={`${each.id}-vacation-ahead`}
+                              className="text-[13px] font-light text-ink-quiet"
+                            >
+                              <span dir="auto">{he.home.rail.markedAhead}</span>
+                              <span>: </span>
+                              <Bidi noTranslate>{formatDays(markedAhead)}</Bidi>
+                            </span>
+                          ) : null}
                         </span>
                         <span className="flex-none text-[15px] font-semibold whitespace-nowrap">
                           <Bidi noTranslate>

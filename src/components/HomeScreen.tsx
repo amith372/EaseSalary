@@ -107,6 +107,13 @@ export interface WorkerMonths {
    * the replay does not value and so does not hand over (item 21), and whose
    * calendar still shows what was marked on it. */
   spans: MonthSpan[];
+  /** Vacation days they have marked in a month **after** the current one,
+   * counted off those same spans by the engine on the server (item 21). It is
+   * stated apart from the balance and is not in it: no month after the current
+   * one is valued, so nothing marked in one can have come off a balance. The
+   * figure is a fact about the worker and not about the month on screen, which
+   * is why it arrives beside their months rather than inside one. */
+  vacationMarkedAhead: number;
 }
 
 /** What the day panel says about one day, in the day's own colours. */

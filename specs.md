@@ -1103,6 +1103,13 @@ a question about one of them is the expensive mistake.
     days still ahead of it are counted as ordinary working days; a later event in those
     days is recorded as a correction and the month is exported again. A month after the
     current one cannot be exported, because it is not valued until it begins.
+
+    **Vacation marked in a month after the current one is counted and shown apart from the
+    balance**, under its own name on the opening screen, because a month that is not valued
+    cannot have taken anything from a balance — and a day recorded with nothing on screen to
+    acknowledge it is indistinguishable from a day that was not saved. It is counted by the rule
+    a valued month counts by, so the two figures can never disagree; it is derived and never
+    stored; and it reaches no export, since a month that is not valued has nothing to file.
 22. Reading the identifying columns straight out of the database shows unreadable values;
     the real numbers appear only on the worker's own screen and in the export. The
     columns are the passport number, the bank account number, the employment permit

@@ -1130,6 +1130,12 @@ export const he = {
       balances: "יתרות חופשה ומחלה",
       balancesNote: "נכון לסוף החודש הזה",
       exportNote: "גיליון השכר של החודש",
+      /** Vacation marked in a month after the current one, said apart from the
+       * balance (specs.md item 21): a month that is not valued has taken
+       * nothing from a balance, and a day recorded with nothing on screen to
+       * acknowledge it reads as a day that was not saved. The user's own
+       * wording (2026-10-02). */
+      markedAhead: "מסומן בחודשים הבאים",
     },
     /** The panel beside the calendar, which reads back the day last pressed. */
     day: {

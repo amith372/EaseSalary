@@ -71,6 +71,19 @@ const IN_FORCE_2026 = 644385;
 const REST_EVE_TOTAL = 50000;
 const REST_DAY_RATE = 42635;
 
+/** The month after the one after the current one, which the rail counts marks in
+ * and no month values (specs.md item 21). */
+const NOVEMBER = { year: 2026, month: 11 };
+
+/**
+ * The second worker's closing vacation balance for September 2026, worked out on
+ * paper: they open January 2026 with 9 days (`seed.ts`), their employment began
+ * on 2024-04-01 so 2026 is their third seniority year and accrues 14 days a year
+ * — 14/12 over January to September is 10.5 — and the only vacation they have
+ * taken is 16–19 February, four days. 9 + 10.5 − 4 = 15.5.
+ */
+const VACATION_SEPTEMBER = 15.5;
+
 /** The value drawn on one row, by the row's own key rather than by the Hebrew
  * beside it. */
 function row(page: Page, key: string) {
@@ -336,6 +349,95 @@ test.describe("a month after the current one", () => {
     await page.goto("/month/payslip?month=2026-09");
     await switchToTestWorker(page);
     await expect(row(page, "base")).toContainText(formatAgorot(IN_FORCE_2026));
+  });
+
+  test("is counted on the rail apart from the balance, which does not move", async ({
+    page,
+  }) => {
+    // The failure that led to this: three vacation days marked in November from
+    // September left the balance where it was — correctly, since no month after
+    // the current one is valued (item 21) — and nothing on the screen
+    // acknowledged them, so a day that *was* saved looked like a day that was
+    // not.
+    //
+    // **Both halves are asserted here, and the second is what makes the first
+    // mean anything**: a rail that had quietly stopped counting any day at all
+    // would pass the first half on its own.
+    await useHousehold(page, "demo", "marked-ahead");
+    await page.goto("/");
+    await switchToTestWorker(page);
+
+    // September's closing vacation balance, worked out on paper and not read off
+    // this screen: the second worker opens January 2026 with 9 days (`seed.ts`),
+    // their employment began on 2024-04-01, so 2026 is their third seniority year
+    // and accrues 14 days a year — 14/12 over the nine months January to
+    // September is 10.5 — and the only vacation they have taken is 16–19
+    // February, four days. 9 + 10.5 − 4 = 15.5.
+    await expect(row(page, "worker-2-vacation-balance")).toContainText(daysUsed(0));
+    await expect(row(page, "worker-2-vacation-balance")).toContainText(
+      formatDays(VACATION_SEPTEMBER),
+    );
+    // Nothing is marked ahead yet, so the line is not drawn at all: a nil figure
+    // would sit under the balance for the whole of a year.
+    await expect(row(page, "worker-2-vacation-ahead")).toHaveCount(0);
+
+    // Two steps forward to November, by the month's own name and not by trusting
+    // the count of clicks.
+    const forward = page.getByRole("button", { name: he.calendar.nextMonth });
+    await forward.click();
+    await forward.click();
+    await expect(band(page).getByText(monthLabel(NOVEMBER)).first()).toBeVisible();
+
+    // 2–4 November 2026 are Monday to Wednesday: no rest day falls inside, so
+    // three whole days take the mark (item 7). The days are read back on the
+    // calendar before the screen is left, which is what says the save landed —
+    // without it a navigation can overtake the server action and the rail would
+    // be asked about marks that were never written.
+    await sweep(page, "2026-11-02", "2026-11-04", "vacation");
+    const vacationMark = he.calendar.marks(SATURDAY).vacation;
+    for (const date of ["2026-11-02", "2026-11-03", "2026-11-04"]) {
+      await expect(page.locator(`[data-date="${date}"]`)).toHaveAccessibleName(
+        new RegExp(`, ${vacationMark}$`),
+      );
+    }
+
+    // And read back once more off a render of the server's own, because the
+    // three days above could be a mark the browser is holding and never saved —
+    // which is the state the rail would then be asked about.
+    await page.goto("/?month=2026-11");
+    for (const date of ["2026-11-02", "2026-11-03", "2026-11-04"]) {
+      await expect(page.locator(`[data-date="${date}"]`)).toHaveAccessibleName(
+        new RegExp(`, ${vacationMark}$`),
+      );
+    }
+
+    // Back on the current month, the balance is exactly where it was — the three
+    // days have taken nothing from it — and the new line says the three days are
+    // there.
+    await page.goto("/?month=2026-09");
+    await expect(
+      page.getByRole("group", { name: he.header.workerSwitcher.showing }),
+    ).toContainText(TEST_WORKER_NAME);
+    await expect(row(page, "worker-2-vacation-balance")).toContainText(daysUsed(0));
+    await expect(row(page, "worker-2-vacation-balance")).toContainText(
+      formatDays(VACATION_SEPTEMBER),
+    );
+    await expect(row(page, "worker-2-vacation-ahead")).toContainText(
+      `${he.home.rail.markedAhead}: ${formatDays(3)}`,
+    );
+
+    // The other half: a mark in the *current* month still moves the balance.
+    // 21–23 September 2026 are Monday to Wednesday — neither the rest day nor
+    // the rest-eve — so three days come off, 15.5 − 3 = 12.5, and the figure
+    // ahead is untouched by it.
+    await sweep(page, "2026-09-21", "2026-09-23", "vacation");
+    await expect(row(page, "worker-2-vacation-balance")).toContainText(daysUsed(3));
+    await expect(row(page, "worker-2-vacation-balance")).toContainText(
+      formatDays(VACATION_SEPTEMBER - 3),
+    );
+    await expect(row(page, "worker-2-vacation-ahead")).toContainText(
+      `${he.home.rail.markedAhead}: ${formatDays(3)}`,
+    );
   });
 });
 
