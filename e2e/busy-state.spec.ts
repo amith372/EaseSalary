@@ -171,3 +171,66 @@ test("the pressed month chip says it is working and its neighbours stay pressabl
   await release();
   await expect(page.locator("[data-busy]")).toHaveCount(0, { timeout: 15000 });
 });
+
+/**
+ * The same rule on the one screen that is reached signed out.
+ *
+ * **The failure this catches is the button drawn `disabled` while the sign-in
+ * is in flight**, which is how it stood until this test: `disabled` is the chip
+ * grey and means the control cannot be pressed, and a disabled button carries
+ * no `aria-busy`, so someone who cannot see the colour change was told nothing
+ * at all for the length of a round trip to the Auth server. Both halves were
+ * checked against the old code — `data-busy` was nowhere and the button
+ * measured 0.45 and `not-allowed`.
+ *
+ * It runs signed out, which every other spec in the suite is not: the project's
+ * `storageState` would send the listener in `SignInScreen` straight to `/`.
+ */
+test.describe("signed out", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("the sign-in button says it is working and is not drawn disabled", async ({
+    page,
+  }) => {
+    await page.goto("/sign-in");
+
+    // Held at the network rather than slowed by a real server: the defect is
+    // only visible while the request is in flight, and an unknown address
+    // answers in under half a second.
+    await page.route("**/auth/v1/token**", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, HELD_MS));
+      await route.continue();
+    });
+
+    await page.locator('[data-field="email"]').fill("nobody@example.com");
+    await page.locator('[data-field="password"]').fill("not-the-password");
+
+    // **Addressed as the form's submit and not by its word**, which is the one
+    // handle the busy state does not move: the button's accessible name is
+    // `he.signIn.working` while the request is in flight, so a `getByRole` on
+    // `he.signIn.submitSignIn` matches nothing until the wait is over — and
+    // then passes against the very state it was written to measure.
+    const submit = page.locator('form button[type="submit"]');
+    await expect(submit).toHaveText(he.signIn.submitSignIn);
+    await submit.click();
+
+    await expect(page.locator("[data-busy]")).toHaveCount(1);
+    await expect(submit).toHaveAttribute("data-busy", "");
+    expect(await opacityOf(submit)).toBe("0.6");
+
+    // **Read once and never with a retrying assertion**, for the reason the
+    // month chips above are: the hold lets go, and a retrying `expect` would
+    // find the button enabled afterwards and pass over the defect.
+    expect(await submit.isDisabled()).toBe(false);
+    expect(
+      await submit.evaluate((node) => getComputedStyle(node).cursor),
+    ).toBe("wait");
+
+    // And the wait ends in the sentence it is supposed to end in.
+    await expect(page.locator('[data-role="sign-in-error"]')).toHaveText(
+      he.signIn.errors.badCredentials,
+      { timeout: 15000 },
+    );
+    await expect(page.locator("[data-busy]")).toHaveCount(0);
+  });
+});
