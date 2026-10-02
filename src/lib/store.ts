@@ -190,23 +190,55 @@ export async function requireWorker(
  * switcher lists them all. The oldest household is only where something new is
  * put — a worker they create, a fetched rate — and each existing worker is
  * written back to their own household (`createPostgresRepository`).
+ *
+ * **Proving the session and finding the household are one round trip, not two.**
+ * `auth.getUser()` is a call to the Auth server and `householdIdOf` a call to
+ * Postgres, and neither reads the other's answer — row-level security is what
+ * decides which memberships exist, from the same token. Run one after the other
+ * they cost two round trips, and against a database in another region that is a
+ * quarter-second of a page's life spent waiting for a question that was already
+ * being asked.
  */
 async function householdRepository(): Promise<SalaryRepository> {
   const client = await supabaseOnServer();
-
-  const {
-    data: { user },
-  } = await client.auth.getUser();
-  if (user === null) throw new NotSignedInError();
 
   // **An invitation link opened while signed in is accepted here** (specs.md
   // item 11). The proxy sends a signed-in person past the sign-in screen, so the
   // first page after the link is where they join. Only the link's own token
   // accepts — signing in alone joins nothing, or any member could pull a
   // stranger's address into their household.
-  await acceptInvitationFromCookie(client);
+  //
+  // **It is the one case that stays sequential**, and that is the whole reason
+  // the token is read here rather than left to `acceptInvitationFromCookie`:
+  // accepting changes which households the person is in, so asking which one
+  // they are in first would answer from before the link was opened. A request
+  // carrying no token — every request but the first after a link — skips it.
+  const token = invitationToken((await cookies()).get(INVITATION_COOKIE)?.value);
+  if (token !== null) {
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+    if (user === null) throw new NotSignedInError();
 
-  return createPostgresRepository(client, await householdIdOf(client));
+    await acceptInvitationFromCookie(client);
+    return createPostgresRepository(client, await householdIdOf(client));
+  }
+
+  const [session, household] = await Promise.allSettled([
+    client.auth.getUser(),
+    householdIdOf(client),
+  ]);
+
+  // **The session is judged before the household, whatever order they answered
+  // in.** Asked without a session, `householdIdOf` reads no memberships and
+  // raises `NoHouseholdError` — a sentence about this family's data, told to
+  // someone whose session merely expired. Settling both and reading the session
+  // first keeps the refusal the sequential version gave.
+  if (session.status === "rejected") throw session.reason;
+  if (session.value.data.user === null) throw new NotSignedInError();
+  if (household.status === "rejected") throw household.reason;
+
+  return createPostgresRepository(client, household.value);
 }
 
 /**
