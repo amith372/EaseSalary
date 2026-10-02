@@ -824,6 +824,14 @@ export async function setDocuments(
  */
 export type CreateWorkerRefusal = NewWorkerRefusal | "householdFull";
 
+/** What the wizard's last button answers with: the new worker's id, a reason
+ * item 11 or item 3 gives for refusing the employment, or a fault. The id is on
+ * the success because the screen navigates to that worker. */
+export type CreateWorkerResult =
+  | { ok: true; workerId: string }
+  | { ok: false; reason: CreateWorkerRefusal }
+  | ActionFault;
+
 /**
  * Create the household's worker — the last step of `הוספת עובד`.
  *
@@ -867,30 +875,32 @@ export type CreateWorkerRefusal = NewWorkerRefusal | "householdFull";
  */
 export async function createWorker(
   draft: NewWorkerDraft,
-): Promise<
-  { ok: true; workerId: string } | { ok: false; reason: CreateWorkerRefusal }
-> {
-  const repository = await getRepository();
+): Promise<CreateWorkerResult> {
+  try {
+    const repository = await getRepository();
 
-  if (!(await repository.hasRoomForWorker())) {
-    return { ok: false, reason: "householdFull" };
+    if (!(await repository.hasRoomForWorker())) {
+      return { ok: false, reason: "householdFull" };
+    }
+
+    const minimum = await minimumWageNow(repository);
+    if (minimum === null) return { ok: false, reason: "belowMinimum" };
+
+    const today = await readToday();
+    const reviewed = reviewNewWorker(draft, minimum.value, today);
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+    const workerId = randomUUID();
+    await repository.saveWorker({ ...reviewed.profile, id: workerId });
+    await saveIdentifyingNumbers(repository, workerId, {
+      passport: draft.passportNumber,
+    });
+
+    revalidatePath("/", "layout");
+    return { ok: true, workerId };
+  } catch {
+    return ACTION_FAULT;
   }
-
-  const minimum = await minimumWageNow(repository);
-  if (minimum === null) return { ok: false, reason: "belowMinimum" };
-
-  const today = await readToday();
-  const reviewed = reviewNewWorker(draft, minimum.value, today);
-  if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
-
-  const workerId = randomUUID();
-  await repository.saveWorker({ ...reviewed.profile, id: workerId });
-  await saveIdentifyingNumbers(repository, workerId, {
-    passport: draft.passportNumber,
-  });
-
-  revalidatePath("/", "layout");
-  return { ok: true, workerId };
 }
 
 /**

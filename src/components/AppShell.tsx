@@ -10,11 +10,12 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { signOut } from "@/app/settings/actions";
 import { Bell } from "@/components/Bell";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { HelpLauncher } from "@/components/HelpLauncher";
-import { LogoMark, TwoToneIcon } from "@/components/icons";
+import { LogoMark, SignOutIcon, TwoToneIcon } from "@/components/icons";
 import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
 import type { BellView } from "@/lib/alertsView";
 import { NAV_SCREENS, screenName } from "@/lib/help/screens";
@@ -440,6 +441,39 @@ export function AppShell({
               className="size-8.5 flex-none rounded-full border border-shell-line bg-shell"
             />
           </Link>
+
+          {/*
+            The way out of the account, last in the cluster and so at the row's
+            logical end — the `ms-auto` above is what puts the cluster there, and
+            nothing here names a side (`CLAUDE.md`).
+
+            **It is in the bar and not on the empty-household card**, which is
+            what makes it reach the state item 11 names — any screen, a household
+            with no worker in it included: until the household
+            has a worker, `<main>` below draws `EmptyHousehold` in place of every
+            screen, `/settings` with it, so the one control that ended a session
+            was the one control a new account could not reach. The bar is drawn
+            in every state. No artboard draws it there (`DESIGN.md`).
+
+            The one on `/settings` stays, and reads this same string: two copies
+            of the word are how the two controls would come to disagree.
+
+            Below `lg` the word is read but not drawn, as the greeting beside it
+            is: at 390px the cluster already carries the switcher, the bell and
+            the avatar, and a fourth label there bought a third row of chrome.
+          */}
+          <form action={signOut}>
+            <button
+              type="submit"
+              data-role="sign-out"
+              className="flex min-h-11 min-w-11 items-center justify-center gap-2 text-ink hover:text-clay-deep"
+            >
+              <SignOutIcon />
+              <span className="sr-only text-[15px] font-medium whitespace-nowrap lg:not-sr-only">
+                {he.settings.account.signOut}
+              </span>
+            </button>
+          </form>
         </div>
       </header>
 

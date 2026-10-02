@@ -5,7 +5,13 @@ import {
   minimumWageIsStale,
   refreshMinimumWageIfStale,
 } from "@/lib/minimumWageRefresh";
-import { emptyBody, sourcePage } from "@/lib/scrape/minimum-wage-page.fixture";
+import { he } from "@/lib/i18n/he";
+import { refreshMinimumWage } from "@/lib/minimumWageRefresh";
+import {
+  challengePage,
+  emptyBody,
+  sourcePage,
+} from "@/lib/scrape/minimum-wage-page.fixture";
 import { MINIMUM_WAGE_SOURCE_URL } from "@/lib/scrape/minimumWage";
 
 /**
@@ -92,5 +98,67 @@ describe("the daily read", () => {
     const page = countedFetch(sourcePage);
     await refreshMinimumWageIfStale(repository, new Date(), page.impl);
     expect(page.calls).toHaveLength(1);
+  });
+});
+
+
+/**
+ * **The source behind a bot challenge, read end to end** (found 2026-10-01,
+ * when kolzchut.org.il began answering this application with Cloudflare's
+ * "Just a moment…" page under a 403).
+ *
+ * This is the degradation Part 3 designed for, held against the whole chain
+ * rather than against `fetchPage` alone: the refresh is what the pre-export
+ * screen calls, and its two answers — the table and the failure kind — are the
+ * screen's only inputs. `minimumWage.test.ts` proves the scrape calls the
+ * challenge `unreachable`; this proves what the family is left holding.
+ *
+ * **Where the expectations come from.** ₪6,247.65 is the wage in force in March
+ * 2026, read off `שכר_חודשי_להאנה2025.xlsx` -> `חודש  4.25` -> D6, and
+ * not off the table under test. The failure kind is `failure.ts`'s contract for
+ * an error status.
+ */
+describe("the pre-export read when the source is behind a bot challenge", () => {
+  const challenged = (async () =>
+    new Response(challengePage(), { status: 403 })) as typeof fetch;
+
+  it("hands the screen the table it already had, so a month can still be valued", async () => {
+    const repository = createInMemoryRepository({ rates: SEEDED_RATES });
+    const { rates, failure } = await refreshMinimumWage(repository, challenged);
+    expect(failure).toBe("unreachable");
+    // The figure the user is shown and asked to confirm. A refresh that handed
+    // back an empty table on a failed fetch would leave the screen with no wage
+    // at all, which is the one thing that stops a family filing.
+    expect(rateInForce(rates, "minimumWage", { year: 2026, month: 3 })?.value).toBe(
+      624765,
+    );
+  });
+
+  it("writes no rate, so a dead source cannot move a month's value", async () => {
+    const repository = createInMemoryRepository({ rates: SEEDED_RATES });
+    const before = await repository.listRates();
+    await refreshMinimumWage(repository, challenged);
+    expect(await repository.listRates()).toEqual(before);
+  });
+
+  it("keeps none of the challenge's text, which the help screen would otherwise quote", async () => {
+    // The refresh keeps a fetched page's text even when the figure could not be
+    // read, because a page that arrived is still the corpus the help screen
+    // answers out of. A challenge did not arrive, and the difference matters:
+    // kept, the help screen would answer a question about the minimum wage with
+    // Cloudflare's English.
+    const repository = createInMemoryRepository({ rates: SEEDED_RATES });
+    await refreshMinimumWage(repository, challenged);
+    expect(await repository.listCachedPages()).toEqual([]);
+  });
+
+  it("answers in a kind the screen has a Hebrew sentence for", () => {
+    // The agreement rule (CLAUDE.md rule 13): the refresh returns a kind and
+    // `MonthConfirmation` indexes `he.beforeExport.wage.failed` with it. Neither
+    // side's test would catch a kind added on one side only, and the user would
+    // meet `undefined` where the explanation belongs.
+    for (const kind of ["unreachable", "notFound", "implausible"] as const) {
+      expect(he.beforeExport.wage.failed[kind]).toBeTruthy();
+    }
   });
 });

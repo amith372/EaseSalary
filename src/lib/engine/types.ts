@@ -526,6 +526,24 @@ export interface Advance {
    * from `kind`, so a sign can never disagree with a label. */
   agorot: number;
   note?: string;
+  /**
+   * The day the money was handed over, which the family's own workbook already
+   * records by naming an advance after it (specs.md item 20).
+   *
+   * **A grant's alone, and inside the month the grant is recorded in** — a date
+   * outside it is a contradiction rather than a choice, and is refused where it
+   * is typed (`reviewAdvance`). A repayment has none: what dates a repayment is
+   * the month it is entered for.
+   *
+   * **Optional, and the two absences mean the same thing**: an advance carried
+   * in from the opening position was given before the application existed, and
+   * a grant recorded before this field was asked for has nobody to ask. Both
+   * show no date and neither is a defect.
+   *
+   * It reaches the sheet through `הערות` beside the reason (`notes.ts`) and
+   * never as a column of its own, so the month tab's structure is untouched.
+   */
+  givenOn?: IsoDate;
 }
 
 /**

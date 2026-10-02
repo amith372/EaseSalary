@@ -1,14 +1,16 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { ACTION_FAULT, type ActionFault } from "@/lib/actionFault";
+import { ACTION_FAULT, DONE, type ActionFault, type Done } from "@/lib/actionFault";
 import { revalidatePath } from "next/cache";
 import { getRepository, requireWorker } from "@/lib/store";
 import {
   advanceLedger,
   reviewAdvance,
   reviewAdvanceEdit,
+  reviewAdvanceSplit,
   whyRemovalIsRefused,
+  withAdvanceSplitMovements,
   withUpdatedAdvance,
   withoutAdvance,
 } from "@/lib/engine/advances";
@@ -16,6 +18,7 @@ import type {
   AdvanceDraft,
   AdvanceEditDraft,
   AdvanceRefusal,
+  AdvanceSplitDraft,
 } from "@/lib/engine/advances";
 import {
   reviewOverride,
@@ -80,52 +83,64 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  * rather than a figure the browser guessed while waiting.
  */
 
+/** What a sweep answers: the days inside it that could not take the mark, or
+ * a fault. The days are not a refusal — the sweep was saved and these are what
+ * it skipped (items 5, 8) — so they travel on the success and not beside a
+ * reason. */
+export type MarkRangeResult =
+  | { ok: true; skipped: SkippedDay[] }
+  | ActionFault;
+
 export async function markRange(
   workerId: string,
   intent: MarkIntent,
-): Promise<{ skipped: SkippedDay[] }> {
-  // **The part of a day, checked and not trusted.** Only one day of vacation
-  // may be taken in part (specs.md item 7), and the picker offers no other
-  // combination — so a half day of sickness can only arrive from a crafted
-  // request, and it is refused the way an unknown worker id is rather than
-  // stored as something the user never asked for.
-  if (!partIsAllowed(intent)) {
-    throw new Error(`A ${intent.kind} mark cannot be taken as part of a day`);
-  }
+): Promise<MarkRangeResult> {
+  try {
+    // **The part of a day, checked and not trusted.** Only one day of vacation
+    // may be taken in part (specs.md item 7), and the picker offers no other
+    // combination — so a half day of sickness can only arrive from a crafted
+    // request, and it is refused the way an unknown worker id is rather than
+    // stored as something the user never asked for.
+    if (!partIsAllowed(intent)) {
+      throw new Error(`A ${intent.kind} mark cannot be taken as part of a day`);
+    }
 
-  const repository = await getRepository();
-  const profile = await requireWorker(workerId);
-  // No calendar before the first month is drawn, so a mark there is a crafted
-  // request and is refused like one (specs.md item 6).
-  const range = orderDates(intent.from, intent.to);
-  if (isBeforeFirstMonth(profile, monthOf(range.from))) {
-    throw new Error(`A mark before the first month of ${workerId}`);
-  }
-  const existing = await repository.listSpans(workerId);
+    const repository = await getRepository();
+    const profile = await requireWorker(workerId);
+    // No calendar before the first month is drawn, so a mark there is a crafted
+    // request and is refused like one (specs.md item 6).
+    const range = orderDates(intent.from, intent.to);
+    if (isBeforeFirstMonth(profile, monthOf(range.from))) {
+      throw new Error(`A mark before the first month of ${workerId}`);
+    }
+    const existing = await repository.listSpans(workerId);
 
-  // Their own rest day, read from the profile because this is a new mark and not
-  // the recalculation of a month already confirmed — a month's stored terms are
-  // what its *figures* are read against (Part 3), and those are the engine's.
-  const { spans, skipped } = applyMark(intent, profile.restDay, existing);
-  for (const span of spans) {
-    await repository.saveSpan(workerId, span satisfies MonthSpan);
-  }
+    // Their own rest day, read from the profile because this is a new mark and not
+    // the recalculation of a month already confirmed — a month's stored terms are
+    // what its *figures* are read against (Part 3), and those are the engine's.
+    const { spans, skipped } = applyMark(intent, profile.restDay, existing);
+    for (const span of spans) {
+      await repository.saveSpan(workerId, span satisfies MonthSpan);
+    }
 
-  // **The month the user is looking at, and not the months the stored spans
-  // reach.** A sweep is made on one calendar, so the month it is a fact about
-  // is the one the range was swept in; a spell that merges with an existing one
-  // across a boundary reaches a month the user did not open and need not open
-  // it: the replay already values that month and hands it the spell (`series.ts`).
-  if (spans.length > 0) {
-    await openMonthIfMissing(repository, profile, monthOf(range.from));
-  }
+    // **The month the user is looking at, and not the months the stored spans
+    // reach.** A sweep is made on one calendar, so the month it is a fact about
+    // is the one the range was swept in; a spell that merges with an existing one
+    // across a boundary reaches a month the user did not open and need not open
+    // it: the replay already values that month and hands it the spell (`series.ts`).
+    if (spans.length > 0) {
+      await openMonthIfMissing(repository, profile, monthOf(range.from));
+    }
 
-  // Every screen reads the same workers and months, so the whole tree is
-  // revalidated: a list of routes kept by hand is a list that misses one.
-  revalidatePath("/", "layout");
-  // The days that could not take the mark and why, shown to the user rather
-  // than absorbed silently (items 5, 8).
-  return { skipped };
+    // Every screen reads the same workers and months, so the whole tree is
+    // revalidated: a list of routes kept by hand is a list that misses one.
+    revalidatePath("/", "layout");
+    // The days that could not take the mark and why, shown to the user rather
+    // than absorbed silently (items 5, 8).
+    return { ok: true, skipped };
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -143,19 +158,24 @@ export async function clearRange(
   workerId: string,
   from: IsoDate,
   to: IsoDate,
-): Promise<void> {
-  const repository = await getRepository();
-  await requireWorker(workerId);
-  const ordered = orderDates(from, to);
+): Promise<Done> {
+  try {
+    const repository = await getRepository();
+    await requireWorker(workerId);
+    const ordered = orderDates(from, to);
 
-  for (const span of await repository.listSpans(workerId)) {
-    if (span.kind === "holiday") continue;
-    if (touchesRange(span, ordered.from, ordered.to)) {
-      await repository.deleteSpan(workerId, span.id);
+    for (const span of await repository.listSpans(workerId)) {
+      if (span.kind === "holiday") continue;
+      if (touchesRange(span, ordered.from, ordered.to)) {
+        await repository.deleteSpan(workerId, span.id);
+      }
     }
-  }
 
-  revalidatePath("/", "layout");
+    revalidatePath("/", "layout");
+    return DONE;
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -169,19 +189,26 @@ export async function setHolidayWorked(
   workerId: string,
   spanId: string,
   worked: boolean,
-): Promise<void> {
-  const repository = await getRepository();
-  await requireWorker(workerId);
+): Promise<Done> {
+  try {
+    const repository = await getRepository();
+    await requireWorker(workerId);
 
-  const span = (await repository.listSpans(workerId)).find(
-    (candidate) => candidate.id === spanId,
-  );
-  // Not an error: a stale page can ask about a holiday the year no longer has,
-  // and the answer to "did they work a day that is not a holiday" is nothing.
-  if (span === undefined || span.kind !== "holiday") return;
+    const span = (await repository.listSpans(workerId)).find(
+      (candidate) => candidate.id === spanId,
+    );
+    // Not an error: a stale page can ask about a holiday the year no longer has,
+    // and the answer to "did they work a day that is not a holiday" is nothing.
+    // Done rather than a fault: the action answered, and what it answered is
+    // that there was nothing to change.
+    if (span === undefined || span.kind !== "holiday") return DONE;
 
-  await repository.saveSpan(workerId, { ...span, worked });
-  revalidatePath("/", "layout");
+    await repository.saveSpan(workerId, { ...span, worked });
+    revalidatePath("/", "layout");
+    return DONE;
+  } catch {
+    return ACTION_FAULT;
+  }
 }
 
 /**
@@ -487,6 +514,90 @@ export async function addAdvance(
       ...record,
       advances: [...record.advances, reviewed.advance],
     }));
+  } catch {
+    return ACTION_FAULT;
+  }
+}
+
+/**
+ * A grant and the repayments it is split into, written in one go (specs.md item
+ * 20).
+ *
+ * **What it writes is N ordinary repayments and no schedule.** Each instalment
+ * is thereafter a movement the user could have typed one at a time — editable,
+ * removable, overridable — and nothing remembers that they arrived together, so
+ * correcting one rebalances none of the others. That is the whole reason this is
+ * one action and not a new kind of record: the engine gains nothing, and no
+ * second source of truth sits beside the replayed months (item 13).
+ *
+ * **All of it or none of it.** The span is reviewed whole before anything is
+ * written, and the write is one `saveMonths` — one upsert, one transaction
+ * (`supabase/repository.ts`) — so a month in the middle of the span cannot end
+ * up holding a repayment of an advance that was never granted. A confirmed month
+ * anywhere in the span refuses the lot, for the reason a holiday move is refused
+ * the same way: a filed month is never rewritten by an action taken elsewhere.
+ *
+ * **The months of the span are opened first, including the ones ahead of
+ * today.** A future month is opened by a gesture that records something in it,
+ * exactly as marking a range ahead of time opens one (item 21) — and the
+ * repayments of an advance given this month fall in the months after it by
+ * definition.
+ */
+export async function splitAdvance(
+  workerId: string,
+  month: YearMonth,
+  draft: AdvanceSplitDraft,
+): Promise<MonthActionResult> {
+  try {
+    const repository = await getRepository();
+    const profile = await requireWorker(workerId);
+    if ((await monthToChange(workerId, profile, month)) === null) {
+      return { ok: false, reason: "noMonth" };
+    }
+    const months = await repository.listMonths(workerId);
+    const facts = months.find((candidate) => sameMonth(candidate.month, month));
+    if (facts === undefined) return { ok: false, reason: "noMonth" };
+
+    const reviewed = reviewAdvanceSplit(
+      draft,
+      {
+        ledger: advanceLedger(profile.openingPosition, months),
+        monthAdvances: facts.advances,
+        month,
+      },
+      months
+        .filter((candidate) => candidate.confirmedAt !== undefined)
+        .map((candidate) => candidate.month),
+    );
+    if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
+
+    // Every month of the span, read as it stands now. A month nobody had opened
+    // is opened here — it is after the month the grant is in, so it is after
+    // their first month and the wage carries into it, and the only way this
+    // answers `null` is a month the worker cannot have at all.
+    const records: MonthRecord[] = [];
+    for (const repayment of reviewed.repayments) {
+      await openMonthIfMissing(repository, profile, repayment.month);
+      const stored = await repository.getMonth(workerId, repayment.month);
+      if (stored === null) return { ok: false, reason: "noMonth" };
+      // The grant goes in its own month, which is the span's first, and a
+      // repayment in every month — written by the engine's own function, so the
+      // months this produces are the months rule 12's agreement test holds the
+      // sheet against.
+      records.push(
+        withAdvanceSplitMovements(
+          recordOf(stored),
+          month,
+          reviewed.advance,
+          repayment.agorot,
+        ),
+      );
+    }
+
+    await repository.saveMonths(workerId, records);
+
+    revalidatePath("/", "layout");
+    return { ok: true };
   } catch {
     return ACTION_FAULT;
   }

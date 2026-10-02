@@ -5,8 +5,9 @@ import { blockagesOf, householdAlerts } from "@/lib/alertsView";
 import { householdSeries, refusalShown } from "@/lib/householdSeries";
 import { refreshIncomeTaxIfStale } from "@/lib/incomeTaxRefresh";
 import { refreshMinimumWageIfStale } from "@/lib/minimumWageRefresh";
+import { vacationMarkedAhead } from "@/lib/engine/markedAhead";
 import { getRepository } from "@/lib/store";
-import { parseYearMonth } from "@/lib/dates";
+import { monthOf, parseYearMonth } from "@/lib/dates";
 import { readToday } from "@/lib/requestToday";
 
 /**
@@ -88,19 +89,32 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   // way, so the rail and the switcher hold every worker whether theirs stood or
   // not.
   const household: WorkerMonths[] = await Promise.all(
-    replayed.map(async (worker) => ({
-      worker: {
-        id: worker.profile.id,
-        name: worker.profile.name,
-        firstName: worker.profile.firstName,
-        gender: worker.profile.gender,
-      },
-      restDay: worker.profile.restDay,
-      firstMonth: worker.profile.firstMonth,
-      months: worker.months,
-      refused: refusalShown(worker),
-      spans: await repository.listSpans(worker.profile.id),
-    })),
+    replayed.map(async (worker) => {
+      const spans = await repository.listSpans(worker.profile.id);
+      return {
+        worker: {
+          id: worker.profile.id,
+          name: worker.profile.name,
+          firstName: worker.profile.firstName,
+          gender: worker.profile.gender,
+        },
+        restDay: worker.profile.restDay,
+        firstMonth: worker.profile.firstMonth,
+        months: worker.months,
+        refused: refusalShown(worker),
+        spans,
+        // **Counted here and never in the browser**, like every other figure on
+        // this screen: the months after the current one are not valued (item 21),
+        // so the balance cannot state what was marked in them and the rail says
+        // it apart. The profile's rest day is the one it counts by, because a
+        // month ahead has none of its own stored yet.
+        vacationMarkedAhead: vacationMarkedAhead(
+          spans,
+          monthOf(today),
+          worker.profile.restDay,
+        ),
+      };
+    }),
   );
 
   // The strip reads the view `/alerts` and the bell read, so it lists the

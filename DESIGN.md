@@ -36,6 +36,7 @@ superseded `v3 לוח במרכז` are not departures any more.
 | The money card carries **one** link, to the payslip. v4 draws two | See *The link* below |
 | The money card opens with `ימים בפועל / ימי תקן`, which v4 has no row for | The Wage Protection Act asks both counts of the payslip (items 2, 5). The payslip has them, but it opens on the last month that *ended* — so without this the running month's counts are readable nowhere, and a vacation day wrongly shrinking the standard count would show on no screen at all |
 | Each balance in the rail carries a `ימים שנוצלו החודש` hint. v4 draws the balance alone | Criterion 2: a balance with no days behind it cannot be checked, and this month's are what the user just changed by marking a day |
+| Under it, the vacation balance carries a second hint, `מסומן בחודשים הבאים`, drawn only where the figure is not nil. v4 draws neither | `specs.md` item 21: no month after the current one is valued, so vacation marked in one has taken nothing from the balance — and a day recorded with nothing on screen to acknowledge it is indistinguishable from a day that was not saved. A nil line would sit under every balance for the whole of a year, which is why it is drawn only when there is something to say |
 | Under the money card: the payslip link first, then a `כדאי לדעת` card that v4 does not draw | The warnings appear on no other screen. The link is read first; a running month raises no warning, since it is this screen's ordinary state |
 | Under the payslip link: a `הערה לחודש` card, a text field and a save button, which no artboard draws. The payslip's `להוסיף הערה לחודש` opens here on its own month | `specs.md` item 5 writes the month's note on the month screen, and the payslip only shows it |
 | The third-party and national-insurance rows sit **below** the total. v4 draws the third-party row among the others | Money paid to a third party never reaches the worker's total (item 16) and the national-insurance figure is an estimate still owed (item 19). Either drawn above `סך הכל תשלום לעובד/ת` reads as part of it — a sum the family would act on |
@@ -93,6 +94,22 @@ and that is the only thing the wording has to get right.
 | Every one of them carries a link home, and the pop-up closes instead | A failure with no way on is the one screen in the application that is a dead end |
 | Not one of them prints what went wrong | An error's message can carry a worker id, a Postgres message or ciphertext, and the screen it would be printed on is the one the family is looking at |
 | The two download addresses draw no failure screen of their own: every way they can fail is a 303 to a screen that can say it — an unconfirmed month to `/month/export` carrying its month, everything else to the opening screen | Both hand back a workbook, so anything they wrote instead is a bare page with no bar and no way on. This generalises the refusal row above, which was the first case of it |
+
+### Asking before a press (no artboard draws it)
+
+**The canvas draws no question and the application asked none until
+2026-10-01**, so `Confirm.tsx` is the one idiom and every confirmation after it
+takes the same shape: an inset `bg-ground` card under the control that was
+pressed, the question in one sentence, the affirmative naming what it does, and
+`ביטול` beside it. It is never a dialog, for the reason the rest-day question
+already gave below — the question belongs where the change is being made, and a
+user sent elsewhere to answer it has lost the thing they were doing.
+
+| Departure | Why |
+|---|---|
+| Only a press whose cost is **not on the screen** is asked about — today, removing an advance (the user, 2026-10-01) | A line the user can see and retype needs no question. A grant carries the debt every later repayment was measured against, and item 20 takes any amount typed over the row away with it, so what is lost is not what the row is showing. A question in front of every remove is a question nobody reads |
+| The affirmative is the ordinary filled forest button, not a destructive red | There is no filled destructive token, and inventing a colour here would be a second visual change riding along with a behavioural one. The question above it is what says the press destroys something |
+| A press the server would **refuse** is answered with the refusal and never with a question | Confirming something that is not going to happen teaches the user that the question means nothing. The caller asks the engine first (`whyRemovalIsRefused`), which is the rule every other control here follows |
 
 ### The calendar (on every screen that draws it)
 
@@ -153,6 +170,14 @@ inherited by every `band-*` utility inside it, so a scene is a list of tokens in
   artboard draws; the user asked for it on 2026-09-17 (item 27). Below `sm` the
   panel spans the screen under the top row, because hung from the pill it ran
   past the edge.
+- The bar carries the way out of the account, last in its cluster and so at the
+  row's logical end, past the greeting and the avatar (the user, 2026-10-01). No
+  artboard draws one there; `הגדרות` draws it in its own account section, and that
+  control stays. It is in the bar because until the household has a worker the
+  shell draws `EmptyHousehold` in place of every screen, `/settings` among them, so
+  the one state every account begins in was the one state with no way out of it.
+  It takes `הגדרות`'s own glyph and its `#A15738`, and below `lg` the word is read
+  but not drawn as the greeting is — a fourth label at 390px bought a third row.
 - Every control in the bar is at least 44px in each direction.
 
 ### The alerts page
@@ -248,6 +273,21 @@ folded sheet.
   it again — which mints a grant a new number. The panel is the group's own, opened
   under the movement it corrects and prefilled with what it holds, in the idiom the
   line they add already uses.
+
+- **The grant panel asks two things the canvas does not draw**: the day the money
+  was handed over, and how many months to split the repayment across (`specs.md`
+  item 20). The `תשלומים` artboard draws an advance as an amount and a reason,
+  which is what an advance was when it was drawn. The date sits under the amount
+  as an ordinary date field; the split sits below the reason behind a hairline,
+  because it is the one part of the panel a family may leave empty — a count, and
+  then one amount per month of the span, each proposed by the application and
+  overtypable. The month is drawn beside its field rather than inside its label: a
+  month name carries a year, so it is a mixed run needing its own isolate, which a
+  label passed as a string cannot give it.
+- **The split names the month that stops it and withholds the button**, rather
+  than letting the press come back with a refusal: a confirmed month anywhere in
+  the span refuses the whole split, and the span reaches months this screen is not
+  showing. The sentence stands where a refusal would, under the instalments.
 
 ### The forms on payments, settings, the holiday picker, before the export and sign-in
 
@@ -358,6 +398,26 @@ folded sheet.
   line with no lifetime says nothing — the plain case is the quiet one. The salary
   row's `YYYY-MM` text field in the same group is not the model here and is the
   thing that should move: a family should not have to know the idiom.
+- **The salary row's open form is one line that shrinks and never wraps**, and
+  the month's `בצורה שנה-חודש` hint is floated under its own field rather than
+  drawn in the flow. The canvas draws the four controls on one line and the code
+  drew them at four heights: a hint inside a `Field` makes that box taller at the
+  bottom, and the row's `items-end` lifted the month's input by exactly the
+  hint's height while the amount beside it stayed put, with the two buttons
+  4px apart on top of that. `Field`'s `hintFloats` is the idiom, the row reserves
+  the room under it, and the two buttons sit in a box of their own centred on the
+  line the inputs make — the quiet one's touch padding hangs below its own words,
+  so aligned on the row itself it reads 8px low. One line is held down to 390px
+  by shrinking the fields, which is what `basis` and `min-w-0` are doing there.
+- **The salary row says when the salary in force sits below the minimum wage in
+  force, and offers that figure in one press** (`specs.md` item 3, the user,
+  2026-10-01). The canvas draws the row with no such sentence, and the state is
+  the ordinary one: the seeded salary is 2025's and the minimum rose in April
+  2026. The sentence is in the clay of a deduction rather than a refusal's slot,
+  because nothing was refused — the salary is theirs to leave where it is — and
+  the control **fills the field and does not save**: item 3 leaves the decision
+  to the user, so the month the raise holds from is still typed and the server
+  still reviews it.
 - **A line whose last month has passed keeps a row, under a quieter heading**
   (`שורות שנגמרו`) rather than leaving the screen. Item 20 asks for it, and the
   reason is the gesture beside it: the edit that clears or extends the last month

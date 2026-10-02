@@ -9,6 +9,7 @@ import {
   parseMinimumWagePage,
 } from "@/lib/scrape/minimumWage";
 import {
+  challengePage,
   emptyBody,
   implausibleFigure,
   markupMoved,
@@ -201,6 +202,61 @@ describe("the fetch", () => {
     // No page arrived, so there is no text to keep — and `null` says that,
     // where a failed segmenting would say the page arrived and was unreadable.
     expect(fetched.text).toBeNull();
+  });
+});
+
+/**
+ * **The source behind a bot challenge**, which is what kolzchut.org.il serves
+ * this application as of 2026-10-01: a 403 carrying Cloudflare's "Just a
+ * moment…" page. The fixture is that page, saved.
+ *
+ * The case above sends a 403's *status* with an empty body. This one sends the
+ * status and the body together, because the two are not the same input and only
+ * one of them is real: a challenge is a well-formed document of ordinary size,
+ * so a scrape that read the body first would find a page it could not parse
+ * rather than a source it could not reach.
+ *
+ * **Where the expectations come from.** `unreachable` and the status in the
+ * detail are `failure.ts`'s own contract for an error status. ₪6,247.65 is the
+ * March 2026 wage from שכר_חודשי_להאנה2025.xlsx -> חודש  4.25 -> D6, read
+ * off the workbook and not off the table under test.
+ */
+describe("the source behind a bot challenge (2026-10-01)", () => {
+  const challenged = (async () =>
+    new Response(challengePage(), { status: 403 })) as unknown as typeof fetch;
+
+  it("is a source that could not be reached, not markup that moved", async () => {
+    const fetched = await fetchMinimumWage(SEEDED_RATES, challenged);
+    expect(failureOf(fetched.rate)).toBe("unreachable");
+    // Which of the two it is decides what the user is told: `unreachable` says
+    // retry, `notFound` says this application is broken. The challenge page is
+    // the one input that can be mistaken for the second.
+    expect(failureOf(fetched.rate)).not.toBe("notFound");
+  });
+
+  it("names the status, so a log says which wall was hit", async () => {
+    const fetched = await fetchMinimumWage(SEEDED_RATES, challenged);
+    const failure = fetched.rate.ok === false ? fetched.rate.failure : null;
+    expect(failure?.detail).toContain("403");
+  });
+
+  it("caches none of the challenge's text", async () => {
+    // The text of a fetched page is kept and shown (Part 3), so a challenge
+    // treated as a page that arrived would put Cloudflare's English into
+    // Postgres and onto the help screen as though it were the statute.
+    const fetched = await fetchMinimumWage(SEEDED_RATES, challenged);
+    expect(fetched.text).toBeNull();
+  });
+
+  it("leaves the seeded wage standing, which is what keeps an export possible", async () => {
+    // The degradation Part 3 designed for: a dead source costs the application
+    // the fetch and nothing else. March 2026 is valued at the 2025 wage before
+    // the failed fetch and after it, and the user confirms the figure by hand.
+    const march = { year: 2026, month: 3 } as const;
+    const before = rateInForce(SEEDED_RATES, "minimumWage", march)?.value;
+    await fetchMinimumWage(SEEDED_RATES, challenged);
+    expect(before).toBe(WAGE_2025);
+    expect(rateInForce(SEEDED_RATES, "minimumWage", march)?.value).toBe(WAGE_2025);
   });
 });
 

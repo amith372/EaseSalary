@@ -72,8 +72,17 @@ export const SCRAPE_TIMEOUT_MS = 5000;
  * thrown request, a request that ran out of time, and an error status are the
  * same answer to the caller, because they are the same thing to the user: the
  * source did not give us a page. So is an empty body — a 200 that carried
- * nothing, which is what a site behind a protection page or mid-deploy serves —
+ * nothing, which is what a site mid-deploy or behind a stripping proxy serves —
  * and it is refused here once rather than by every parse.
+ *
+ * **The status is judged before the body is read, and that order is a rule.**
+ * A site behind a bot challenge does not serve an empty 200: it serves an error
+ * status carrying a well-formed page of ordinary size, which is what
+ * kolzchut.org.il has served this application since 2026-10-01. Read the body
+ * first and that page becomes one the parse can find no wage in — reported as
+ * `notFound`, a defect in this application, when it is in fact a source to
+ * retry — and its text is kept and shown as though it were the statute.
+ * `minimumWage.test.ts` holds the challenge page and proves this order.
  *
  * **The timeout is asked of the signal and not of the error**, because what a
  * runtime throws on an abort differs between them and an injected `fetchImpl`

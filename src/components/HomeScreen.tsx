@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { clearRange, markRange, setHolidayWorked, setMonthNote } from "@/app/month/actions";
-import { inputClass, outlineButtonClass } from "@/components/Field";
+import type { Done } from "@/lib/actionFault";
+import { FaultLine, inputClass, outlineButtonClass } from "@/components/Field";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { BalancesRail, Blockers } from "@/components/HomeSections";
@@ -106,6 +107,13 @@ export interface WorkerMonths {
    * the replay does not value and so does not hand over (item 21), and whose
    * calendar still shows what was marked on it. */
   spans: MonthSpan[];
+  /** Vacation days they have marked in a month **after** the current one,
+   * counted off those same spans by the engine on the server (item 21). It is
+   * stated apart from the balance and is not in it: no month after the current
+   * one is valued, so nothing marked in one can have come off a balance. The
+   * figure is a fact about the worker and not about the month on screen, which
+   * is why it arrives beside their months rather than inside one. */
+  vacationMarkedAhead: number;
 }
 
 /** What the day panel says about one day, in the day's own colours. */
@@ -198,6 +206,31 @@ export function HomeScreen({
   // predicts what the engine will say — the figures beside the calendar are the
   // answer to what was actually saved.
   const [saving, startSaving] = useTransition();
+  // Whether the last gesture failed to answer at all (specs.md item 30). None of
+  // the three has a refusal of its own, so not-ok is a fault and nothing else.
+  //
+  // **A flag and a transition, and deliberately not `useAction`.** That hook
+  // drops a second press while the first is in flight, which is right for a
+  // control that writes one field twice and wrong here: these are three
+  // different marks, and a sweep dropped in silence is a day the user marked
+  // that the sheet never pays. It cost a third of the known case the first time
+  // this was written with it.
+  const [fault, setFault] = useState(false);
+
+  /** The two gestures whose whole answer is "done", or a fault. */
+  function sendMark(gesture: () => Promise<Done>) {
+    setFault(false);
+    startSaving(async () => {
+      try {
+        if (!(await gesture()).ok) setFault(true);
+      } catch {
+        // The action never reached the server — offline, an aborted POST — so
+        // there is no return to carry a fault and the control says it here
+        // rather than waiting for ever (`actionFault.ts`).
+        setFault(true);
+      }
+    });
+  }
 
   // Never a month before theirs: the arrows stop at their first month, and a month
   // chosen while another worker was on screen is shown from their first instead.
@@ -231,9 +264,20 @@ export function HomeScreen({
 
   function handleSelectRange(intent: MarkIntent) {
     const workerId = worker.id;
+    // The strip below describes the *previous* sweep, so it goes before this one
+    // is sent rather than being left to contradict whatever this one answers.
+    setSkipped(null);
+    setFault(false);
     startSaving(async () => {
-      const { skipped: refused } = await markRange(workerId, intent);
-      setSkipped({ workerId, days: refused });
+      try {
+        const answer = await markRange(workerId, intent);
+        // The days that could not take the mark travel on the success: the sweep
+        // was saved and these are what it skipped (items 5, 8).
+        if (answer.ok) setSkipped({ workerId, days: answer.skipped });
+        else setFault(true);
+      } catch {
+        setFault(true);
+      }
     });
   }
 
@@ -243,13 +287,13 @@ export function HomeScreen({
   function handleClearRange(from: IsoDate, to: IsoDate) {
     const workerId = worker.id;
     setSkipped(null);
-    startSaving(() => clearRange(workerId, from, to));
+    sendMark(() => clearRange(workerId, from, to));
   }
 
   function handleSetHolidayWorked(spanId: string, workedIt: boolean) {
     const workerId = worker.id;
     setSkipped(null);
-    startSaving(() => setHolidayWorked(workerId, spanId, workedIt));
+    sendMark(() => setHolidayWorked(workerId, spanId, workedIt));
   }
 
   /** Grouped by reason, so a week swept across five taken days reads as one
@@ -350,6 +394,14 @@ export function HomeScreen({
           />
 
           <SpanOverflowNotes spans={spans} month={month} restDay={shownRestDay} className="mt-2.5" />
+
+          {/* A sweep that could not be saved says so under the calendar it was
+              swept on, which is where the user is looking and where the skipped
+              days already appear (specs.md item 30). The grid above it is
+              untouched, so the gesture can be made again. Never drawn beside the
+              skipped strip: `run` clears the fault before it sends, and a sweep
+              that faulted saved nothing to skip days of. */}
+          {fault ? <div className="mt-2.5"><FaultLine /></div> : null}
 
           {refusals.length > 0 ? (
             <Card tone="inset" radius="panel" className="mt-2.5 flex flex-none flex-col gap-1.5 px-3.5 py-3">

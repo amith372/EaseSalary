@@ -302,6 +302,9 @@ test.describe("a movement removed from an advance (specs.md item 20)", () => {
       // "סכום אחר, אם חושב אחרת" and an accessible name matches by substring.
       .getByRole("textbox", { name: words.amount, exact: true })
       .fill(String(SECOND_ADVANCE / 100));
+    // The day it was given, inside the month on screen — September, the month
+    // still running (specs.md item 20).
+    await advances.getByLabel(words.givenOn).fill("2026-09-10");
     await advances
       .getByRole("button", { name: words.submitGrant, exact: true })
       .click();
@@ -314,6 +317,14 @@ test.describe("a movement removed from an advance (specs.md item 20)", () => {
     await advances
       .getByRole("button", { name: words.removeLabel(2, "granted") })
       .click();
+    // Asked before it acts (stage 11): the press opens the question and removes
+    // nothing, and the row is still there to be confirmed against.
+    const question = advances.locator('[data-confirm="advance:2:granted"]');
+    await expect(question).toContainText(words.confirmRemove.granted);
+    await expect(advances.locator('[data-advance="2"]')).toContainText(
+      formatAgorot(SECOND_ADVANCE),
+    );
+    await question.getByRole("button", { name: words.confirmRemove.yes }).click();
     await settled(page);
 
     // **The second debt is gone and the first is exactly as the seed left it.**
@@ -323,6 +334,104 @@ test.describe("a movement removed from an advance (specs.md item 20)", () => {
     const first = advances.locator('[data-advance="1"]');
     await expect(first).toContainText(formatAgorot(SEEDED_ADVANCE));
     await expect(first).toContainText(words.settled);
+  });
+});
+
+/**
+ * The question in front of a removal (stage 11, the user, 2026-10-01).
+ *
+ * **It is here and not beside the other four removals** because it is the only
+ * one asked: a line the user can see and retype costs nothing to remove, and an
+ * advance takes the debt every later repayment was measured against, plus any
+ * amount typed over the row (specs.md item 20).
+ */
+test.describe("a removal that asks first (specs.md item 20)", () => {
+  /**
+   * Scenario: a ₪500 advance is granted this month, the remove is pressed, and
+   * the question is answered with ביטול.
+   *
+   * Expected: nothing is removed. The advance still reads ₪500 and the question
+   * is gone, so a second press can ask again.
+   *
+   * **What it would catch**: a confirmation wired to remove on the press and
+   * ask afterwards — which is the gesture the family cannot undo, since an
+   * advance removed takes its number and its overrides with it — and a cancel
+   * that closes the question while the action is already on its way.
+   */
+  test("removes nothing when the question is answered with ביטול", async ({
+    page,
+  }) => {
+    await useHousehold(page, "advance-removal-cancelled");
+    const words = he.month.actions.advances;
+
+    await openPayments(page);
+    const advances = page.locator('[data-group="advances"]');
+
+    await advances
+      .getByRole("button", { name: words.grant, exact: true })
+      .click();
+    await advances
+      .getByRole("textbox", { name: words.amount, exact: true })
+      .fill(String(SECOND_ADVANCE / 100));
+    await advances.getByLabel(words.givenOn).fill("2026-09-10");
+    await advances
+      .getByRole("button", { name: words.submitGrant, exact: true })
+      .click();
+    await settled(page);
+
+    await advances
+      .getByRole("button", { name: words.removeLabel(2, "granted") })
+      .click();
+    const question = advances.locator('[data-confirm="advance:2:granted"]');
+    await question.getByRole("button", { name: he.confirm.cancel }).click();
+
+    await expect(question).toHaveCount(0);
+    await expect(advances.locator('[data-advance="2"]')).toContainText(
+      formatAgorot(SECOND_ADVANCE),
+    );
+  });
+
+  /**
+   * Scenario: the seeded ₪3,000 advance of February 2026 — granted and then
+   * repaid at ₪1,000 in each of March, April and May (`seed.ts`) — is opened on
+   * its own month and its grant is pressed for removal.
+   *
+   * Expected: the refusal that has always answered it is what answers it, and
+   * no question is asked at all. Removing the grant would leave three
+   * repayments of a debt that never existed, so there is nothing to confirm.
+   *
+   * **What it would catch**: a confirmation drawn in front of every removal,
+   * which would teach the family that the question means nothing — they would
+   * answer it and meet the refusal behind it — and a question drawn *instead*
+   * of the refusal, which would let the press through.
+   */
+  test("asks nothing where the removal is refused, and refuses as before", async ({
+    page,
+  }) => {
+    await useHousehold(page, "advance-removal-refused");
+    const words = he.month.actions.advances;
+
+    await openPayments(page);
+    // February 2026, the month the seeded advance was granted in — seven months
+    // back from the September the demo opens on.
+    await stepBack(page, 7);
+    const advances = page.locator('[data-group="advances"]');
+    await expect(advances.locator('[data-advance="1"]')).toContainText(
+      formatAgorot(SEEDED_ADVANCE),
+    );
+
+    await advances
+      .getByRole("button", { name: words.removeLabel(1, "granted") })
+      .click();
+    await settled(page);
+
+    await expect(
+      page.getByText(he.month.actions.refused.advanceRepaidAlready),
+    ).toBeVisible();
+    await expect(advances.locator("[data-confirm]")).toHaveCount(0);
+    await expect(advances.locator('[data-advance="1"]')).toContainText(
+      formatAgorot(SEEDED_ADVANCE),
+    );
   });
 });
 

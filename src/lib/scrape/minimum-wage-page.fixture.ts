@@ -67,6 +67,33 @@ export function emptyBody(): string {
 }
 
 /**
+ * **The source behind a bot challenge, which is what it actually serves today.**
+ * Saved from the live site on 2026-10-01, when kolzchut.org.il began answering
+ * every request from this application with Cloudflare's "Just a moment…" page.
+ *
+ * It is a saved copy and not a transform, because it is not this page spoiled —
+ * it is a different page entirely, served under the same address. There is
+ * nothing of the source in it to spoil.
+ *
+ * **It is paired with a 403 and never with a 200**, which is the status the
+ * challenge really carries. A challenge served as a 200 would be a different
+ * test, and inventing one would be inventing a behaviour nobody has seen.
+ *
+ * What it is here to catch: a scrape that reads the body before it judges the
+ * status. This page is well-formed HTML of the right size with no wage in it, so
+ * such a scrape would call it `notFound` — markup that moved, a defect in this
+ * application — instead of `unreachable`, which is a source to retry. Worse, the
+ * caller caches the text of a page that arrived, so Cloudflare's English would
+ * land in Postgres and reach the help screen as the statute.
+ */
+export function challengePage(): string {
+  return readFileSync(
+    join(process.cwd(), "src/lib/scrape/fixtures/kolzchut-cloudflare-challenge.html"),
+    "utf8",
+  );
+}
+
+/**
  * A figure outside the plausible range, and a realistic one: the **hourly**
  * rate published in the same sentence has taken the monthly rate's place, which
  * is what a column swapped at the source looks like. ₪35.40 is a real figure

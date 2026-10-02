@@ -284,6 +284,16 @@ export const he = {
   fault: "משהו השתבש, כדאי לנסות שוב או לחזור לדף הבית",
 
   /**
+   * The way back out of a question asked before a press that destroys
+   * something (`Confirm.tsx`).
+   *
+   * **The word is here and not beside each question**, so every confirmation in
+   * the application is cancelled in the same word; the affirmative is each
+   * question's own, because only the question knows what it is agreeing to.
+   */
+  confirm: { cancel: "ביטול" },
+
+  /**
    * The screen behind an address the application does not have (`not-found.tsx`).
    *
    * **It is deliberately generic, and never worded about a worker.** A worker id
@@ -1358,6 +1368,12 @@ export const he = {
       balances: "יתרות חופשה ומחלה",
       balancesNote: "נכון לסוף החודש הזה",
       exportNote: "גיליון השכר של החודש",
+      /** Vacation marked in a month after the current one, said apart from the
+       * balance (specs.md item 21): a month that is not valued has taken
+       * nothing from a balance, and a day recorded with nothing on screen to
+       * acknowledge it reads as a day that was not saved. The user's own
+       * wording (2026-10-02). */
+      markedAhead: "מסומן בחודשים הבאים",
     },
     /** The panel beside the calendar, which reads back the day last pressed. */
     day: {
@@ -1698,6 +1714,11 @@ export const he = {
          * (item 20). */
         name: (advanceNumber: number) => `מקדמה ${advanceNumber}`,
         given: "ניתנה",
+        /** The day the money was handed over, read from any month of the
+         * employment (item 20). The preposition is on the label and the date is
+         * isolated beside it, because a date is a mixed run and a sentence
+         * holding one cannot give it its own isolate (`CLAUDE.md`). */
+        givenOnShown: "ניתנה ב-",
         repaid: "נפרעו",
         outstanding: "נותרו",
         settled: "נפרעה במלואה",
@@ -1718,6 +1739,54 @@ export const he = {
         amount: "סכום",
         note: "למה",
         noteHint: "לא חובה, אבל זה מה שיסביר את השורה בעוד שנה",
+        /** The day the money was handed over, which the family's own workbook
+         * records by naming the advance after it (item 20). The hint says the
+         * month it has to fall in, because that is the only thing refused about
+         * it — so the refusal is read before the press and not after it. */
+        givenOn: "מתי ניתנה",
+        givenOnHint: (month: string) => `יום מתוך ${month} — החודש שהמקדמה נרשמת בו.`,
+        /**
+         * Splitting a grant into repayments as it is given (specs.md item 20).
+         *
+         * **It is offered and never demanded.** An empty count is a grant on its
+         * own, exactly as before; a family that agreed the repayment at the
+         * moment they handed the money over types how many months, and the
+         * application proposes the amounts rather than asking them to divide
+         * ₪5,000 by three.
+         *
+         * **What it writes is ordinary repayments and the wording says so**, in
+         * the closing sentence: nothing here is a schedule the application will
+         * remember, so each month's figure can be corrected on its own month
+         * afterwards and none of the others move with it.
+         */
+        split: {
+          title: "פריסה לפירעונות",
+          months: "על פני כמה חודשים",
+          monthsHint:
+            "לא חובה. מהחודש שבו ניתנה המקדמה והלאה. אפשר לשנות אחר כך כל סכום בחודש שלו.",
+          /** A count that is not a span the application writes. It is said in
+           * the form rather than left to the press, because a number outside the
+           * range would otherwise save a grant with no split at all — which is
+           * not what the user asked for and not what they would see. */
+          monthsRefused: (limit: number) =>
+            `אפשר לפרוס על פני חודש אחד עד ${limit} חודשים.`,
+          /** Beside each month's own field. The month is a mixed run and is
+           * isolated where it is drawn, so it is passed in rather than written
+           * into a sentence here. */
+          perMonth: (month: string) => `פירעון ב${month}`,
+          /** Under the fields: what the instalments come to against what was
+           * given. Both figures are drawn isolated beside this sentence. */
+          sum: "סך הפירעונות",
+          of: "מתוך",
+          /** The whole split is refused while a month inside the span is
+           * confirmed, and the month is named here rather than in a refusal the
+           * press would answer with (item 20). */
+          confirmedMonth: (month: string) =>
+            `${month} כבר אושר, וחודש שאושר אינו משתנה בדיעבד. אפשר לקצר את הפריסה או לרשום את הפירעונות ידנית בחודשים הפתוחים.`,
+          submit: "לתת ולפרוס",
+          /** Said once under the button: the split leaves no plan behind it. */
+          note: "הפריסה נרשמת כפירעונות רגילים, אחד בכל חודש. אין לוח תשלומים שנשמר מעליהם.",
+        },
         submitGrant: "לתת",
         submitRepay: "לפרוע",
         /** The same panel, reopened over a movement the month already records
@@ -1736,6 +1805,26 @@ export const he = {
           kind === "granted"
             ? `להסיר את מקדמה ${advanceNumber} שניתנה החודש`
             : `להסיר את הפירעון של מקדמה ${advanceNumber} החודש`,
+        /**
+         * What is asked before a movement is removed (the user, 2026-10-01).
+         *
+         * **A grant and a repayment are two questions and not one**, because
+         * they do not cost the same thing: a repayment retyped is the same
+         * repayment, while a grant carries the debt every later repayment was
+         * measured against. Both say what goes with it — item 20 takes any
+         * amount the user typed over the row away with the row.
+         *
+         * A grant that still has repayments against it is refused and is never
+         * asked about, so the grant's sentence is written for the only grant
+         * that reaches it: one nothing has been repaid against.
+         */
+        confirmRemove: {
+          granted:
+            "להסיר את המקדמה? היא תיעלם מכל החודשים, ואם הוקלד סכום ידני על השורה שלה — הוא יימחק איתה.",
+          repaid:
+            "להסיר את הפירעון? הסכום יחזור להיות חוב, ואם הוקלד סכום ידני על השורה שלו — הוא יימחק איתו.",
+          yes: "כן, להסיר",
+        },
       },
       /**
        * The payments that go to a third party rather than to the worker
@@ -1931,6 +2020,22 @@ export const he = {
          * small for, and not that an advance cannot be removed. */
         advanceBelowRepaid:
           "הסכום קטן ממה שכבר נפרע מהמקדמה, ולכן היו נשארים החזרים של חוב שאינו קיים. צריך לתקן או להסיר קודם את הפירעונות, ואז את סכום המקדמה.",
+        /** The date is refused for being missing, for not being a date and for
+         * falling outside the month — one sentence, because what the user does
+         * about all three is the same (`advances.ts`). The month is not named:
+         * the field's own hint says it. */
+        advanceDate:
+          "צריך לציין באיזה יום ניתנה המקדמה, מתוך החודש שהיא נרשמת בו.",
+        /** Unreachable from the form, which offers a count inside the limit. */
+        splitMonths:
+          "מספר החודשים לפריסה לא נקלט. אפשר לבחור מספר חודשים קטן יותר ולנסות שוב.",
+        splitExceedsPrincipal:
+          "סך הפירעונות גדול מהמקדמה עצמה. פירעון מעבר לחוב אינו מקדמה — אפשר לפרוס סכום קטן יותר, ואת היתר לרשום כהורדה בשורה משלך.",
+        /** Reached only from a stale page or a crafted request: the form asks
+         * the same rule before it offers the button and names the month there
+         * (item 20). */
+        confirmedMonthInSpan:
+          "אחד החודשים בפריסה אושר בינתיים, ולכן שום דבר לא נשמר. כדאי לרענן את הדף ולקצר את הפריסה.",
         /**
          * **It says "the kind you chose" rather than naming it, and that is a
          * decision.** Every other sentence in this record is a plain string, and
@@ -2046,6 +2151,9 @@ export const he = {
     account: {
       title: "החשבון",
       yearlySummary: "להוריד סיכום שנתי לעובד/ת",
+      /** Read from two places — this screen's account section and the top bar's
+       * own control (`AppShell`) — and kept as one string on purpose: two copies
+       * of the word are how the two controls would come to disagree. */
       signOut: "להתנתק",
       /** Item 11: a second person joins by an invitation they accept, and
        * becomes a member who sees the same workers, months and balances. */
@@ -2253,6 +2361,22 @@ export const he = {
           cancel: "ביטול",
           /** A change already recorded, listed under the figure. */
           changedFrom: "מ־",
+          /**
+           * Said when the salary in force sits below the minimum wage in force
+           * (specs.md item 3), with the figure between the two halves so it can
+           * be isolated where it is drawn.
+           *
+           * **It says so and decides nothing.** Item 3 leaves the decision to
+           * the user, so the sentence names the minimum — the salary it is
+           * measured against is the figure drawn above it — and the control
+           * beside it fills the field with that minimum. The month the change
+           * holds from, and the saving, stay theirs.
+           */
+          below: {
+            before: "השכר שבתוקף נמוך משכר המינימום, שהוא ",
+            after: " לחודש.",
+          },
+          takeMinimum: "למלא את שכר המינימום",
         },
         restDay: {
           label: "יום המנוחה השבועי",
@@ -3146,6 +3270,17 @@ export const he = {
      * number item 22 says is written into it. The account number beside it
      * needs no words: `C3` already says "מס' חשבון:". */
     passportLine: (number: string) => `מספר דרכון: ${number}`,
+
+    /**
+     * The day an advance was handed over, in `הערות` beside the reason the
+     * family gave for it (specs.md item 20).
+     *
+     * **It goes in the note column and never in a column of its own**, so the
+     * 2026 workbook's month tab keeps its structure (`CLAUDE.md`). The date is
+     * written with the month's name rather than as digits, because the cell is
+     * read by a person and `21.4` is read differently in two countries.
+     */
+    advanceGivenOn: (date: string) => `ניתנה ב-${date}`,
 
     /**
      * The rest day as the month template's own labels name it — the five

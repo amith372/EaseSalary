@@ -580,9 +580,10 @@ a question about one of them is the expensive mistake.
    about whether they were still ill (Part 5).
 11. A worker belongs to a household, never to a person. An account is a person who signs
     in; a household is the group of people who look after the same workers, and it holds
-    no more than two workers. Every member of a household sees the same workers, the same
-    months and the same balances, and reaches nothing outside the households it belongs
-    to. A second person joins by an invitation they accept, which makes them a member
+    no more than two workers. A signed-in person can leave their account from any screen,
+    including a household with no worker in it. Every member of a household sees the same
+    workers, the same months and the same balances, and reaches nothing outside the
+    households it belongs to. A second person joins by an invitation they accept, which makes them a member
     rather than handing them a copy of a worker. The member who sent an invitation may later remove the person who accepted it, and nobody else may remove a member; what that person recorded stays with the household, and a person left with no household is given an empty one of their own. The invitation is a link the member passes
     on; nothing creates the invited person's account, which they open themselves with the
     invited address, or sign in with if they already have one. Membership rather than a copy
@@ -1084,6 +1085,10 @@ a question about one of them is the expensive mistake.
     (item 17), and one left behind is an amount waiting to reattach itself to a row that
     never asked for it.
 
+    **Removing an advance or a repayment is confirmed before it happens**, with a question
+    that names which of the two is going and what goes with it; a removal the application
+    would refuse is refused rather than asked about.
+
     **Hospital overtime is an amount the user types, never a figure the application works
     out.** A live-in caregiver is not entitled by law to pay for overtime, so no rule prices
     the hours they spent with the patient in hospital; what the family pays for them is its
@@ -1098,6 +1103,13 @@ a question about one of them is the expensive mistake.
     days still ahead of it are counted as ordinary working days; a later event in those
     days is recorded as a correction and the month is exported again. A month after the
     current one cannot be exported, because it is not valued until it begins.
+
+    **Vacation marked in a month after the current one is counted and shown apart from the
+    balance**, under its own name on the opening screen, because a month that is not valued
+    cannot have taken anything from a balance — and a day recorded with nothing on screen to
+    acknowledge it is indistinguishable from a day that was not saved. It is counted by the rule
+    a valued month counts by, so the two figures can never disagree; it is derived and never
+    stored; and it reaches no export, since a month that is not valued has nothing to file.
 22. Reading the identifying columns straight out of the database shows unreadable values;
     the real numbers appear only on the worker's own screen and in the export. The
     columns are the passport number, the bank account number, the employment permit

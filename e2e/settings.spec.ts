@@ -226,6 +226,175 @@ test.describe("a change of salary (specs.md item 3)", () => {
 });
 
 /**
+ * Item 3's other half: the salary on the profile sits below the minimum wage in
+ * force, so the application says so and leaves the decision to the user (stage
+ * 11, asked for by the user on 2026-10-01).
+ *
+ * **Both figures come from outside the code under test.** ₪6,247.65 is the base
+ * `seed.ts` opens both workers at — 2025's minimum wage, from the family's own
+ * `חודש  4.25` tab — and ₪6,443.85 is the rate seeded into the dated table from
+ * `חודש  4.26`, in force from 1.4.2026. The seeded worker is therefore below the
+ * floor on the day this suite runs, which is the state the user screenshotted.
+ */
+test.describe("a salary below the minimum wage in force (specs.md item 3)", () => {
+  /**
+   * Scenario: the settings screen is opened on the ordinary worker, whose
+   * salary in force is 2025's ₪6,247.65 against April 2026's ₪6,443.85.
+   *
+   * Expected: the row says so, naming the minimum; one press puts ₪6,443.85 in
+   * the amount field without saving anything; and the ordinary save — the month
+   * typed by hand — records it, so the figure in force becomes ₪6,443.85.
+   *
+   * **What it would catch**: a row that enforces the floor only at the save and
+   * never says the salary is under it, which is the screen the user met; an
+   * offer that fills a rounded or a stale figure rather than the rate in force;
+   * and an offer that saves on the press, which would name the month for the
+   * family — item 3 leaves that decision to them.
+   */
+  test("says so, and fills the field with the minimum in one press", async ({
+    page,
+  }) => {
+    await useHousehold(page, "settings", "offer-minimum");
+    await openSettingsForTestWorker(page);
+
+    const salary = page.locator('[data-terms="salary"]');
+    const words = he.workers.profile.terms.salary;
+
+    // In force: the seeded 2025 figure, under the floor.
+    await expect(salary).toContainText(formatAgorot(624765));
+    const said = salary.locator("[data-salary-below-minimum]");
+    await expect(said).toContainText(formatAgorot(MINIMUM_WAGE_2026));
+
+    await said.getByRole("button", { name: words.takeMinimum }).click();
+
+    // Filled and not saved: the figure is in the field and the salary in force
+    // is still the old one.
+    const amount = salary.getByRole("textbox", { name: words.amount });
+    await expect(amount).toHaveValue("6443.85");
+    await expect(salary).toContainText(formatAgorot(624765));
+
+    await salary
+      .getByRole("textbox", { name: words.from })
+      .fill(yearMonthText(monthOf(TODAY)));
+    await salary.getByRole("button", { name: words.save }).click();
+
+    // **The change itself and not the row's text**: the sentence above already
+    // names ₪6,443.85, so a row-wide match would pass without anything having
+    // been saved. The generous wait is the server's re-render, which on a dev
+    // server that has been up a while is seconds rather than milliseconds.
+    await expect(
+      salary.locator('[data-salary-change="2026-09"]'),
+    ).toContainText(formatAgorot(MINIMUM_WAGE_2026), { timeout: 20000 });
+    // In force, so the old figure is gone and the sentence with it.
+    await expect(salary).not.toContainText(formatAgorot(624765));
+    await expect(salary.locator("[data-salary-below-minimum]")).toHaveCount(0);
+  });
+
+  /**
+   * Scenario: a salary under the floor is typed and refused, and then the field
+   * is corrected to a figure above it.
+   *
+   * Expected: the refusal goes with the figure it was about. Nothing is saved —
+   * the correction is a keystroke, not a press.
+   *
+   * **What it would catch**: the refusal standing under a field it no longer
+   * describes, which is what the screen did until stage 11 — the user reads a
+   * sentence about ₪5,000 while ₪7,000 is in the box.
+   */
+  test("drops the refusal when the field it was about is corrected", async ({
+    page,
+  }) => {
+    await useHousehold(page, "settings", "refusal-cleared");
+    await openSettingsForTestWorker(page);
+
+    const salary = page.locator('[data-terms="salary"]');
+    const words = he.workers.profile.terms.salary;
+    await salary.getByRole("button", { name: words.change }).click();
+
+    const amount = salary.getByRole("textbox", { name: words.amount });
+    await amount.fill("5000");
+    await salary.getByRole("textbox", { name: words.from }).fill("2026-05");
+    await salary.getByRole("button", { name: words.save }).click();
+
+    const refused = page.getByText(
+      he.workers.profile.terms.refused.belowMinimum,
+    );
+    await expect(refused).toBeVisible();
+
+    await amount.fill(String(RAISED_TO / 100));
+    await expect(refused).toHaveCount(0);
+  });
+
+  /**
+   * The four controls of the open form on one line, at the widest the screen is
+   * drawn and at the narrowest it is supported (the user, 2026-10-01).
+   *
+   * Scenario: the form is opened and the two inputs and the two buttons are
+   * measured, at 1280px and at 390px.
+   *
+   * Expected: the inputs share a top edge, the buttons' words share a top edge,
+   * and the page does not scroll sideways.
+   *
+   * **What it would catch**: the state the user screenshotted — a hint inside
+   * one `Field` making its box taller at the bottom, which `items-end` pays for
+   * by lifting that field's input 22px above the one beside it, and a quiet
+   * button whose touch padding drops its words 8px below the save. Neither is
+   * visible to any assertion about text, which is why this one measures boxes.
+   */
+  test("draws the two inputs and the two buttons on one line", async ({
+    page,
+  }) => {
+    await useHousehold(page, "settings", "salary-line");
+    await openSettingsForTestWorker(page);
+
+    const salary = page.locator('[data-terms="salary"]');
+    const words = he.workers.profile.terms.salary;
+    await salary.getByRole("button", { name: words.change }).click();
+
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+
+      const amount = await salary
+        .getByRole("textbox", { name: words.amount })
+        .boundingBox();
+      const from = await salary
+        .getByRole("textbox", { name: words.from })
+        .boundingBox();
+      // The *words* of each button and not its box: the quiet button's hit area
+      // is deliberately taller than its text (`touchTargetClass`), so the thing
+      // a reader sees out of line is the label.
+      const save = await salary
+        .getByRole("button", { name: words.save })
+        .locator("span")
+        .boundingBox();
+      const cancel = await salary
+        .getByRole("button", { name: words.cancel })
+        .locator("span")
+        .boundingBox();
+
+      expect(amount, `amount at ${width}`).not.toBeNull();
+      expect(from?.y, `the two inputs at ${width}`).toBe(amount?.y);
+      expect(cancel?.y, `the two buttons at ${width}`).toBe(save?.y);
+      // One line: every one of the four is drawn across the inputs' own band.
+      expect(save?.y, `the save beside the inputs at ${width}`).toBeGreaterThan(
+        amount?.y ?? 0,
+      );
+      expect(
+        (save?.y ?? 0) + (save?.height ?? 0),
+        `the save inside the inputs' line at ${width}`,
+      ).toBeLessThan((amount?.y ?? 0) + (amount?.height ?? 0));
+
+      const overflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth -
+          document.documentElement.clientWidth,
+      );
+      expect(overflow, `sideways scroll at ${width}`).toBeLessThanOrEqual(0);
+    }
+  });
+});
+
+/**
  * The rest-eve supplement is an agreed term the family changes whenever the
  * agreement does (specs.md item 14), and it is paid for every rest-eve of the
  * month.

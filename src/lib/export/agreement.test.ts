@@ -13,10 +13,18 @@ import {
 } from "@/lib/engine/august-2025.fixture";
 import {
   NATIONAL_INSURANCE_ROW,
+  NOTE_COLUMN,
   TAX_ROW,
   TEMPLATE_ROWS,
   layoutOf,
 } from "@/lib/export/layout";
+import {
+  advanceKey,
+  advanceLedger,
+  reviewAdvanceSplit,
+  splitSpan,
+  withAdvanceSplitMovements,
+} from "@/lib/engine/advances";
 import { monthSheetInputOf } from "@/lib/export/monthExport";
 import { fillMonthSheet } from "@/lib/export/monthSheet";
 import { MONTH_TEMPLATE, readTemplate } from "@/lib/export/template";
@@ -651,5 +659,168 @@ describe("a month nobody opened keeps its figures when it is opened", () => {
       await openMonthIfMissing(repository, worker, { year: 2025, month: 7 }),
     ).toBe(false);
     expect(await repository.getMonth("w", { year: 2025, month: 7 })).toBeNull();
+  });
+});
+
+
+/**
+ * **A grant split across three months, previewed and exported** (specs.md item
+ * 20, `CLAUDE.md` rule 12).
+ *
+ * ₪5,000 over three months is 1,666.66 / 1,666.66 / 1,666.68 — the user's own
+ * decision, written out here and in the engine's suite, and nowhere read back
+ * from what the split produced. The three sum to ₪5,000 exactly, so the advance
+ * closes.
+ *
+ * **Every month the split touched is asserted and not only the first.** That is
+ * the whole hazard of an action that writes several months at once: the month
+ * the user was looking at is the month anyone would check, and the two after it
+ * are the ones a sheet filled from a stale record would get wrong — a repayment
+ * on the screen and an empty block row in the file, or the same figure in both
+ * but against another advance's number.
+ *
+ * **The date is asserted in column I**, which is where an advance's own date
+ * reaches the sheet (item 20): no column was added, so the only way it can be in
+ * the file at all is beside the reason in the note column.
+ */
+describe("a grant split across months, previewed and exported", () => {
+  const PRINCIPAL = "5000";
+  const EVEN_THIRD = 166666;
+  const LAST_THIRD = 166668;
+  const GIVEN_ON = "2025-08-21";
+
+  it("says every month's repayment the same way in the file as on the screen", async () => {
+    const terms = plainWorker();
+    const worker = {
+      ...terms,
+      id: "w",
+      name: "חנה",
+      firstName: "חנה",
+      insurer: "סוכנות ביטוח לדוגמה",
+      documents: {
+        employmentPermitExpiry: null,
+        workVisaExpiry: null,
+        passportExpiry: null,
+      },
+    };
+    // The fixture's month and the two after it, each an ordinary month: what the
+    // split adds is the only thing that differs between them.
+    const span = splitSpan(AUGUST_2025, 3);
+    const stored: MonthFacts[] = span.map((month) => ({
+      ...plainAugustFacts(terms),
+      month,
+      terms: snapshotTerms(terms, month),
+    }));
+
+    const reviewed = reviewAdvanceSplit(
+      {
+        amount: PRINCIPAL,
+        note: "לכרטיס טיסה",
+        givenOn: GIVEN_ON,
+        instalments: ["1666.66", "1666.66", "1666.68"],
+      },
+      {
+        ledger: advanceLedger(terms.openingPosition, stored),
+        monthAdvances: [],
+        month: AUGUST_2025,
+      },
+      [],
+    );
+    expect(reviewed.ok).toBe(true);
+    if (!reviewed.ok) return;
+    expect(reviewed.repayments.map((one) => one.agorot)).toEqual([
+      EVEN_THIRD,
+      EVEN_THIRD,
+      LAST_THIRD,
+    ]);
+
+    // Written exactly as the action writes it — the same engine function — so
+    // what is exported below is the shape a press actually leaves behind.
+    const written = stored.map((facts, at) =>
+      withAdvanceSplitMovements(
+        facts,
+        AUGUST_2025,
+        reviewed.advance,
+        reviewed.repayments[at]!.agorot,
+      ),
+    );
+    const series = calculateSeries(written, terms);
+    expect(series).toHaveLength(3);
+
+    for (const [at, month] of series.entries()) {
+      const input = monthSheetInputOf({
+        worker: {
+          id: worker.id,
+          name: worker.name,
+          firstName: worker.firstName,
+          gender: worker.gender,
+        },
+        insurer: worker.insurer,
+        employment: { employedSince: terms.employedSince },
+        gender: terms.gender,
+        month,
+        showNotes: true,
+      });
+      const bytes = await fillMonthSheet(await readTemplate(MONTH_TEMPLATE), input);
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(
+        bytes.buffer.slice(
+          bytes.byteOffset,
+          bytes.byteOffset + bytes.byteLength,
+        ) as ArrayBuffer,
+      );
+      const sheet = workbook.worksheets[0];
+      if (sheet === undefined) throw new Error("no sheet");
+
+      const result = month.result;
+      const block = result.closing.filter((row) => row.block === "transfer");
+      const layout = layoutOf(
+        result.lines.filter(isUserLine).length,
+        block.length,
+      );
+
+      // Every row of the block, in both. The repayment is one of them, and the
+      // grant is another in the first month.
+      block.forEach((row, index) => {
+        expect(
+          said(sheet, `E${layout.blockFirstRow + index}`),
+          `${row.key} in month ${at + 1}`,
+        ).toBe(formatAgorot(row.amount ?? 0));
+      });
+
+      // The repayment itself, against the figure the split was agreed at rather
+      // than against whatever the row says: it is withheld, so it is negative on
+      // the line.
+      const repaid = block.find(
+        (row) => row.key === advanceKey(reviewed.advance.number, "repaid"),
+      );
+      expect(repaid?.amount, `month ${at + 1} repays`).toBe(
+        -(at === 2 ? LAST_THIRD : EVEN_THIRD),
+      );
+
+      const grantedAt = block.findIndex(
+        (row) => row.key === advanceKey(reviewed.advance.number, "granted"),
+      );
+      if (at === 0) {
+        // The grant is in its own month, and its date and reason are in column I
+        // beside it — no column was added for either.
+        expect(grantedAt).toBeGreaterThanOrEqual(0);
+        expect(
+          sheet.getCell(`${NOTE_COLUMN}${layout.blockFirstRow + grantedAt}`).value,
+        ).toBe("ניתנה ב-21 באוגוסט 2025 · לכרטיס טיסה");
+      } else {
+        // And in no other month of the span: a grant written into each would
+        // treble the debt while every repayment row still looked right.
+        expect(grantedAt).toBe(-1);
+      }
+    }
+
+    // The three instalments close the advance: ₪5,000 less 1,666.66 twice and
+    // 1,666.68 once leaves nothing owed.
+    const ledger = advanceLedger(terms.openingPosition, written);
+    expect(
+      ledger.find((standing) => standing.number === reviewed.advance.number)
+        ?.outstandingAgorot,
+    ).toBe(0);
   });
 });
