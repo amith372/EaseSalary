@@ -317,8 +317,13 @@ test("an invitation is withdrawn before it is opened, and the member signs out",
   await inviteeContext.close();
 
   // --- And the way out ------------------------------------------------------
+  // The screen's own control, not the bar's: both read the one string, so the
+  // role alone matches twice and `<main>` is what separates them.
   await page.goto("/settings");
-  await page.getByRole("button", { name: he.settings.account.signOut }).click();
+  await page
+    .locator("main")
+    .getByRole("button", { name: he.settings.account.signOut })
+    .click();
   await page.waitForURL(/\/sign-in/);
 
   // Signed out for real: the session is gone, so the screens behind it are the

@@ -13,6 +13,10 @@ import { useHousehold } from "./household";
  * stack in it. English either way, and the second of those prints whatever the
  * throw was carrying onto the family's screen.
  *
+ * **This file is about a render that threw, and only that.** An action that
+ * cannot answer says so at the control it was pressed from and leaves the screen
+ * standing, which is `fault.spec.ts`'s subject and not a boundary at all.
+ *
  * **Two boundaries, two causes, and they are not interchangeable.** `error.tsx`
  * catches a *page* and leaves the shell standing; `global-error.tsx` catches
  * the *root layout* and replaces the whole document, `<html>` included. A
@@ -23,7 +27,7 @@ import { useHousehold } from "./household";
  * **The wording is written out rather than read off `he.fault`**: a test that
  * imports the string it checks passes whatever that string later silently
  * becomes. It is compared to `he.fault` as well, and that comparison is the
- * whole point of the third test.
+ * whole point of the test named "says exactly what he.fault says".
  */
 const FAULT = "משהו השתבש, כדאי לנסות שוב או לחזור לדף הבית";
 const WAY_HOME = "לדף הבית";
@@ -82,63 +86,6 @@ test.describe("a page whose render threw", () => {
     await expect(page).toHaveURL(/\/$/);
     await expect(page.locator("[data-date]").first()).toBeVisible();
     await expect(message(page)).toHaveCount(0);
-  });
-});
-
-/**
- * A server action that throws, which is the eight the fault surface did not
- * cover (`src/lib/actionFault.ts` and the step that added it).
- *
- * **This is the clause that made step 1 safe to stop where it did.** Six of
- * those actions answer `void` and one has a result type of its own, so none has
- * a slot to carry a fault back to its control; the note left behind said they
- * "stay page-level failures", and that sentence is only true if a page-level
- * failure is now a Hebrew screen. React rethrows a server action's error from
- * its own dispatch and no `catch` around the awaited call sees it, so whether
- * `error.tsx` catches *that* — rather than only a render that threw — is wiring
- * nothing else in this repository proves.
- *
- * The cause is the one the PRD names as reachable and the fault spec already
- * uses: the worker goes from under the screen, and `markRange` — the calendar's
- * main gesture, and the first of the eight worth paying — lands on
- * `requireWorker`.
- */
-test.describe("a server action that threw", () => {
-  test("reaches the Hebrew screen instead of the framework's own", async ({
-    page,
-  }) => {
-    await useHousehold(page, "error-boundary", "action-threw");
-    await page.goto("/");
-    await expect(page.locator("[data-date]").first()).toBeVisible();
-
-    // The household is swapped under the page already drawn, exactly as
-    // `fault.spec.ts` does it: `empty` is the seed a new account is in, so the
-    // worker the calendar was drawn for is not in it.
-    await page.context().clearCookies({ name: "household" });
-    await page.context().addCookies([
-      {
-        name: "household",
-        value: `empty-lost-${Date.now()}`,
-        url: "http://localhost:3000",
-      },
-    ]);
-
-    // One day swept onto itself, then the kind chip that commits it.
-    await page.locator('[data-date="2026-09-07"]').click();
-    await page.locator('[data-date="2026-09-07"]').click();
-    await page
-      .getByRole("button", { name: he.calendar.marks(6).vacation, exact: true })
-      .click();
-
-    await expect(message(page)).toHaveText(FAULT);
-
-    // Hebrew, and nothing of the throw: `UnknownWorkerError` carries the id it
-    // was given.
-    const card = page.locator('[data-role="fault-screen"]');
-    expect(await card.innerText()).not.toMatch(/[A-Za-z]/);
-
-    // The shell stands, so this is the page boundary and there is a way on.
-    await expect(nav(page)).toBeVisible();
   });
 });
 
