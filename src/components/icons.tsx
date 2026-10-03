@@ -1,3 +1,7 @@
+import type { ReactNode } from "react";
+
+import type { PartOfDay } from "@/lib/partOfDay";
+
 /**
  * Icons are inline SVG and never text.
  *
@@ -191,6 +195,109 @@ export function TwoToneIcon({
     >
       <path d={icon.shape} className={icon.shapeClass} />
       <path d={icon.detail} className={icon.detailClass} />
+    </svg>
+  );
+}
+
+/**
+ * The hour's scene in the top bar's badge: hills at dawn, the sun overhead, the
+ * sun resting on a horizon, a crescent and two stars. It says in a picture what
+ * the greeting beside it says in words, so it is `aria-hidden` and none of its
+ * colours is held to the 3:1 the nav icons carry — nothing here is the only way
+ * to learn anything, and the badge presses nowhere.
+ *
+ * It is drawn *to* the badge and not inset in it: morning's hills and evening's
+ * horizon run to the edge of the box, and the badge's own round side is what
+ * cuts them off. So the box is the circle, and the scenes are placed in it
+ * exactly where the drawings place them.
+ *
+ * The rays and rules are strokes rather than filled wedges, and their weight,
+ * cap and `fill="none"` sit on the root rather than on each path — one weight
+ * for the family, as `RailIcon` keeps one for its six. A `fill-*` class still
+ * beats the inherited `none`, so the filled shapes need say nothing.
+ */
+const PART_OF_DAY: Record<PartOfDay, ReactNode> = {
+  morning: (
+    <>
+      <path
+        d="M11.4 7.6L13 7.6M10.4 5.2L11.54 4.06M8 4.2L8 2.6M5.6 5.2L4.46 4.06M4.6 7.6L3 7.6"
+        className="stroke-icon-sun-2"
+      />
+      <circle cx="8" cy="7.6" r="2.8" className="fill-icon-sun-2" />
+      {/* The far hill first and the near one over it, so the sun rises from
+          behind the ridge rather than sitting on top of both. */}
+      <ellipse cx="11" cy="14" rx="5.41" ry="4.5" className="fill-icon-hill" />
+      <ellipse cx="4.3" cy="14.2" rx="6.3" ry="5.3" className="fill-icon-hill-deep" />
+    </>
+  ),
+  noon: (
+    <>
+      <path
+        d="M11.5 8L13.3 8M10.47 5.53L11.75 4.25M8 4.5L8 2.7M5.53 5.53L4.25 4.25M4.5 8L2.7 8M5.53 10.47L4.25 11.75M8 11.5L8 13.3M10.47 10.47L11.75 11.75"
+        className="stroke-icon-sun-2"
+      />
+      <circle cx="8" cy="8" r="2.85" className="fill-icon-sun-2" />
+    </>
+  ),
+  evening: (
+    <>
+      {/* Five rays over a half turn rather than eight over a whole one: below
+          the horizon there is nothing for a ray to come out of. */}
+      <path
+        d="M11.94 7.24L13.42 6.62M10.34 5.28L11.23 3.95M7.92 4.55L7.92 2.95M5.5 5.28L4.61 3.95M3.9 7.24L2.42 6.62"
+        className="stroke-icon-sun-2"
+      />
+      <path d="M4.47 8.9A3.45 3.45 0 0 1 11.37 8.9Z" className="fill-icon-sun-2" />
+      {/* The rule the sun rests on, then the same rule twice more and fainter,
+          which is the drawing's way of putting water under it. Opacity rather
+          than two more tokens: a paler horizon is the horizon further off. */}
+      <path d="M1.35 8.9H13.75" className="stroke-icon-horizon" />
+      <path d="M2.69 10.29H12.41" className="stroke-icon-horizon" strokeOpacity={0.6} />
+      <path d="M4.93 11.82H10.01" className="stroke-icon-horizon" strokeOpacity={0.35} />
+    </>
+  ),
+  night: (
+    <>
+      {/* One circle with a second taken out of it, which is what makes the
+          inner curve a true arc: a crescent drawn as one freehand path has a
+          belly that reads as a banana at this size. */}
+      <path
+        d="M8 3.35A4.8 4.8 0 1 0 12.02 10.28A4 4 0 1 1 8 3.35Z"
+        className="fill-icon-moon"
+      />
+      <path
+        d="M9.78 4.46Q10.1 5.14 10.78 5.46Q10.1 5.78 9.78 6.46Q9.46 5.78 8.78 5.46Q9.46 5.14 9.78 4.46Z"
+        className="fill-icon-sun-2"
+      />
+      <path
+        d="M11.35 7.35Q11.72 8.14 12.51 8.51Q11.72 8.88 11.35 9.67Q10.98 8.88 10.19 8.51Q10.98 8.14 11.35 7.35Z"
+        className="fill-icon-moon-deep"
+      />
+    </>
+  ),
+};
+
+/**
+ * The scene for one part of day. `Record<PartOfDay, …>` above is what makes a
+ * part added to `partOfDay` a typecheck failure rather than an empty badge.
+ *
+ * **It takes no `className`**, unlike the icons above it. The scenes are drawn
+ * past the edges of the box on purpose, so the only size that is ever right is
+ * the badge's own; a caller free to shrink it would get a square scene with its
+ * hills cut off straight, and nothing would fail.
+ */
+export function PartOfDayIcon({ part }: { part: PartOfDay }) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 16 16"
+      fill="none"
+      strokeWidth={0.75}
+      strokeLinecap="round"
+      className="size-full"
+    >
+      {PART_OF_DAY[part]}
     </svg>
   );
 }

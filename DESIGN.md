@@ -163,6 +163,22 @@ inherited by every `band-*` utility inside it, so a scene is a list of tokens in
 - The greeting follows the user's clock — בוקר טוב, צהריים טובים, ערב טוב, לילה טוב
   from 05, 12, 17 and 21 — and names nobody, since no name is stored; the
   artboard's `[השם שלך]` read as a broken screen.
+- The disc beside the greeting carries that same hour as a small scene: the sun
+  rising behind hills, the sun overhead, the sun resting on a horizon, a crescent
+  and two stars (the user's drawings, 2026-10-02). It is drawn from the one value
+  the words are drawn from, so the picture and the greeting cannot come to
+  disagree. It is **bare until the browser's hour is known**, which is the state
+  the server and the first paint render: the disc is its own placeholder, so
+  nothing in the cluster moves when the scene arrives. The scenes run to the edge
+  of their box and the disc's own round side is what cuts them.
+- **Neither the greeting nor the badge leads anywhere** (the user, 2026-10-03):
+  `הגדרות` is a tab in the strip, and a second way into it dressed as a greeting is
+  a press the bar does not owe. So the pair takes neither the 44px floor nor a
+  hover, both of which belong to the controls. The scene is **decoration, and is
+  not held to the 3:1 the nav icons carry**: a nav icon names the screen it sits
+  beside, while this one tells the user the hour, which their own device already
+  tells them. Nobody has to make it out to use the application, which is why it
+  is `aria-hidden` as well.
 - The alerts pill counts warnings only, and its dot shows only while the count
   is above zero: item 27 puts blockages on the opening screen, not in the bell.
 - With four warnings or fewer the pill opens a panel under it — a heading, the
@@ -171,14 +187,16 @@ inherited by every `band-*` utility inside it, so a scene is a list of tokens in
   panel spans the screen under the top row, because hung from the pill it ran
   past the edge.
 - The bar carries the way out of the account, last in its cluster and so at the
-  row's logical end, past the greeting and the avatar (the user, 2026-10-01). No
+  row's logical end, past the greeting and its badge (the user, 2026-10-01). No
   artboard draws one there; `הגדרות` draws it in its own account section, and that
   control stays. It is in the bar because until the household has a worker the
   shell draws `EmptyHousehold` in place of every screen, `/settings` among them, so
   the one state every account begins in was the one state with no way out of it.
   It takes `הגדרות`'s own glyph and its `#A15738`, and below `lg` the word is read
   but not drawn as the greeting is — a fourth label at 390px bought a third row.
-- Every control in the bar is at least 44px in each direction.
+- Every control in the bar is at least 44px in each direction. The greeting and
+  its badge are not controls and are the one thing in the bar this does not
+  reach.
 
 ### The alerts page
 

@@ -155,6 +155,19 @@
   --color-advance-dot: #c9a06e; /* an advance: its balance dot and repaid bar */
   --color-advance-track: #efe2cf; /* the part of an advance still owed */
 
+  /* The greeting badge in the top bar, which carries the hour as a small scene:
+     hills at dawn, the sun overhead, the sun on a horizon, a moon. The three
+     suns and the amber star take `icon-sun-2` above, so the badge's daylight is
+     the same amber the rest of the application already uses; only the four
+     below had no match in the palette. They are sampled from the drawings the
+     user gave on 2026-10-02 and they are decoration — the greeting word beside
+     them says the same thing in text, so none of them is held to 3:1. */
+  --color-icon-moon: #7b919c; /* the crescent */
+  --color-icon-moon-deep: #68828f; /* the star below it, a step deeper so the two read apart */
+  --color-icon-hill: #c2bd80; /* the far hill of the morning scene */
+  --color-icon-hill-deep: #b1b072; /* the near one, which the sun sets behind */
+  --color-icon-horizon: #e98649; /* the evening rule the sun rests on, and the two strokes under it at lower opacity */
+
   /* Radii, named for what they belong to rather than by size: the artboard
      uses eight, and a scale of xs/sm/md/lg would say nothing about which. */
   --radius-mark: 7px; /* the square beside the wordmark */

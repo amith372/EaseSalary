@@ -15,7 +15,7 @@ import { Bell } from "@/components/Bell";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { HelpLauncher } from "@/components/HelpLauncher";
-import { LogoMark, SignOutIcon, TwoToneIcon } from "@/components/icons";
+import { LogoMark, PartOfDayIcon, SignOutIcon, TwoToneIcon } from "@/components/icons";
 import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
 import type { BellView } from "@/lib/alertsView";
 import { NAV_SCREENS, screenName } from "@/lib/help/screens";
@@ -417,16 +417,18 @@ export function AppShell({
 
           {bell !== null ? <Bell bell={bell} /> : null}
 
-          <Link
-            href="/settings"
-            className="flex min-h-11 min-w-11 items-center justify-center gap-2.5 text-ink hover:text-forest"
-          >
+          {/*
+            The greeting and its badge lead nowhere: `הגדרות` has a tab of its
+            own in the strip below, and a second way in dressed as a greeting
+            was one the user did not want (2026-10-03). So this is text beside
+            a picture — no `min-h-11`, which is the floor for a *control*, and
+            no hover, which would promise a press that does nothing.
+          */}
+          <div className="flex items-center justify-center gap-2.5 text-ink">
             {/*
               Below `lg` the greeting is read but not drawn, rather than not
-              rendered: hiding it outright left the link with an aria-hidden
-              circle for its only child and so with no name at all for a screen
-              reader, which is what a critique found. What is announced is the
-              same words that are visible where there is room for them.
+              rendered: what a screen reader announces then does not depend on
+              how wide the window is.
             */}
             <span className="sr-only text-[15px] font-medium whitespace-nowrap lg:not-sr-only">
               {part !== null ? (
@@ -436,11 +438,30 @@ export function AppShell({
               ) : null}
               {userName ? <Bidi>{userName}</Bidi> : null}
             </span>
+            {/*
+              The badge carries the hour as a small scene, and `part` is the
+              same value the words above it are read from, so the picture and
+              the greeting cannot come to disagree. Until the browser's hour is
+              known it is drawn bare — the disc is its own placeholder, so
+              nothing in the cluster moves when the scene arrives. The attribute
+              is then *absent* rather than set to a word meaning "no hour": its
+              values are exactly `PartOfDay`'s, which is what `data-season`
+              does with a band that has no season on it. It is spelt out in
+              full because `data-part` already belongs to the holiday picker's
+              half-days, and this bar is drawn over that screen too.
+
+              `overflow-hidden` is what the scenes are drawn against: morning's
+              hills and evening's horizon run to the edge of the box and the
+              round side cuts them, as they are cut in the drawings.
+            */}
             <span
               aria-hidden="true"
-              className="size-8.5 flex-none rounded-full border border-shell-line bg-shell"
-            />
-          </Link>
+              data-part-of-day={part ?? undefined}
+              className="size-8.5 flex-none overflow-hidden rounded-full border border-shell-line bg-shell"
+            >
+              {part !== null ? <PartOfDayIcon part={part} /> : null}
+            </span>
+          </div>
 
           {/*
             The way out of the account, last in the cluster and so at the row's

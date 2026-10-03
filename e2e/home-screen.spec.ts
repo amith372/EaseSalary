@@ -875,3 +875,45 @@ test("Back returns to the place the screen was left at", async ({ page }) => {
     .poll(async () => main.evaluate((el) => el.scrollTop), { timeout: 5000 })
     .toBeGreaterThan(left - 40);
 });
+
+/**
+ * The badge arrives, and the words arrive with it.
+ *
+ * `part` is null on the server and on the first paint by design, so everything
+ * the badge is depends on a hydration that has to actually happen. What this
+ * catches is that it does not: a bare disc is a legitimate state of this badge,
+ * so one that never fills reads as a design and not as a fault, and an external
+ * store that stops feeding it leaves exactly that.
+ *
+ * It also holds the words and the picture in one element, which is what keeps
+ * the greeting the badge's own label rather than a stray run of text in the bar.
+ *
+ * **It cannot catch a scene wired to the wrong part.** The attribute and the
+ * words are read from the same value, so they agree whichever drawing the map
+ * returns; `src/components/partOfDayIcon.test.ts` is what tells the four scenes
+ * apart. Asserted as agreement rather than against a fixed hour so it passes
+ * whenever the suite runs — an hour stubbed into the browser would prove the
+ * stub.
+ */
+test("the badge draws the hour the greeting names", async ({ page }) => {
+  await useHousehold(page, "demo", "greeting-badge");
+  await page.goto("/");
+
+  // The attribute is absent on the server and on the first paint by design, so
+  // the badge existing at all *is* the hydration having happened — this waits
+  // for the browser's own hour rather than racing it.
+  const badge = page.locator("[data-part-of-day]");
+  await expect(badge).toHaveCount(1);
+  const part = (await badge.getAttribute(
+    "data-part-of-day",
+  )) as keyof typeof he.header.greeting;
+
+  // A scene was actually drawn, not just an attribute set.
+  await expect(badge.locator("svg path").first()).toBeAttached();
+
+  // The greeting sits in the badge's own parent, and neither leads anywhere:
+  // `הגדרות` is reached from the tab strip, so an anchor around either of them
+  // is a second way in that nobody asked for.
+  await expect(badge.locator("xpath=..")).toHaveText(he.header.greeting[part]);
+  await expect(badge.locator("xpath=ancestor-or-self::a")).toHaveCount(0);
+});

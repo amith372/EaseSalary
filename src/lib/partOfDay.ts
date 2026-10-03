@@ -1,4 +1,4 @@
-type PartOfDay = "morning" | "noon" | "evening" | "night";
+export type PartOfDay = "morning" | "noon" | "evening" | "night";
 
 /** Which greeting an hour gets: morning from 05:00, noon from 12:00, evening
  * from 17:00, night from 21:00. */
