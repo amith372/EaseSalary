@@ -146,6 +146,7 @@ function EmptyHousehold() {
       </p>
       <Link
         href={ADD_WORKER}
+        prefetch={false}
         className="mt-5 inline-flex rounded-card-sm bg-forest px-6 py-3 text-[16px] font-semibold text-white transition-colors hover:bg-forest-deep hover:text-white"
       >
         <span dir="auto">{he.emptyHousehold.add}</span>
@@ -326,6 +327,7 @@ export function AppShell({
       <header className="flex flex-none flex-wrap items-center gap-x-4 border-b border-line bg-surface px-4 pb-2 md:px-7 xl:h-15.5 xl:flex-nowrap xl:gap-x-5 xl:pb-0">
         <Link
           href="/"
+          prefetch={false}
           className="order-1 flex h-15.5 min-w-11 flex-none items-center justify-center gap-2.25 text-ink hover:text-ink"
         >
           {/* First in the row, so the mark stands in the top right corner. */}
@@ -362,10 +364,19 @@ export function AppShell({
             {NAV_SCREENS.map((item) => {
               const active =
                 item.route === "/" ? pathname === "/" : pathname.startsWith(item.route);
+              // **No prefetch, here or on the other links in the bar.** Every
+              // route is server-rendered on demand, so a prefetch is a full
+              // render of a page nobody asked for -- and the bar is drawn on
+              // every screen, so landing anywhere put nine of them on the
+              // server at once and the click that followed queued behind them.
+              // It bought nothing it was meant to buy either: a prefetched
+              // navigation was no faster, because the router re-fetches a
+              // dynamic route on the click regardless.
               return (
                 <Link
                   key={item.route}
                   href={item.route}
+                  prefetch={false}
                   ref={active ? activeTabRef : undefined}
                   aria-current={active ? "page" : undefined}
                   className={[

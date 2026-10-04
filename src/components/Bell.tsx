@@ -103,6 +103,7 @@ export function Bell({ bell }: { bell: BellView }) {
                 <li key={card.id} className="border-b border-line-soft last:border-b-0">
                   <Link
                     href={returningTo(card.action.href, pathname)}
+                    prefetch={false}
                     data-role="bell-entry"
                     className="flex items-start gap-3 px-4 py-3 text-ink transition-colors hover:bg-hover hover:text-ink"
                   >
@@ -136,6 +137,7 @@ export function Bell({ bell }: { bell: BellView }) {
             ) : null}
             <Link
               href="/alerts"
+              prefetch={false}
               className="flex min-h-11 items-center text-[14px] font-medium text-forest hover:underline hover:underline-offset-4"
             >
               <span dir="auto">{he.header.bell.showAll}</span>

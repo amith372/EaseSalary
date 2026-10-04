@@ -957,7 +957,7 @@ function UserLinesControl({
             or from concluding the application cannot do it at all. */}
         <p dir="auto" className="text-[13px] leading-[1.5] font-light text-ink-quiet text-pretty">
           <span>{`${words.oneOffOnly} `}</span>
-          <Link href="/settings" className="font-medium">
+          <Link href="/settings" prefetch={false} className="font-medium">
             <span dir="auto">{words.standing(gender)}</span>
           </Link>
         </p>

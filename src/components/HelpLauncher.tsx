@@ -41,6 +41,7 @@ export function HelpLauncher() {
   return (
     <Link
       href={HELP}
+      prefetch={false}
       data-role="help-launcher"
       className="fixed bottom-5 start-5 z-30 flex min-h-11 items-center gap-2 rounded-full bg-help-launcher px-4 py-3 text-[15px] font-semibold text-help-ink shadow-[0_8px_24px_rgba(51,41,31,0.18)] transition-colors hover:bg-help-launcher-hover hover:text-help-ink md:bottom-6 md:start-6"
     >

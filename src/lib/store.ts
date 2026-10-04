@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import {
   UnknownWorkerError,
   createInMemoryRepository,
@@ -150,7 +151,15 @@ function seedOf(name: string): { seed: (typeof seeds)[SeedName]; key: string } {
  * that belongs to nobody and outlives no restart. There, the cookie is ignored
  * and the household is the one the session says it is.
  */
-export async function getRepository(): Promise<SalaryRepository> {
+/**
+ * **Memoised for the request**, because proving the session is a round trip and
+ * finding the household is another. Sixty-odd places ask for the store, and a
+ * page that asked twice -- the screen and the bell above it, say -- paid both
+ * trips twice for an answer that cannot differ inside one request. It memoises
+ * the *store*, not what is read through it, so a write followed by a read in
+ * one action still reaches Postgres.
+ */
+export const getRepository = cache(async (): Promise<SalaryRepository> => {
   const name = (await cookies()).get(HOUSEHOLD_COOKIE)?.value;
 
   if (name === undefined || process.env.NODE_ENV === "production") {
@@ -167,7 +176,7 @@ export async function getRepository(): Promise<SalaryRepository> {
   const created = createInMemoryRepository(seed);
   holder[STORES].set(key, created);
   return created;
-}
+});
 
 /** The worker an action names, or a throw. Actions are reachable by a crafted
  * request, so the id is checked against the household's own store rather than

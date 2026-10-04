@@ -562,6 +562,7 @@ export function HomeScreen({
           */}
           <Link
             href="/month/payslip"
+            prefetch={false}
             className={`${railLink} flex-none rounded-card border border-line bg-surface px-3 py-2.75`}
           >
             <span className="flex size-8.5 flex-none items-center justify-center rounded-tab bg-tile-sage text-icon-sage">

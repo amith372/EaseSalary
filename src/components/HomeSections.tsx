@@ -63,6 +63,7 @@ export function Blockers({
                   </span>
                   <Link
                     href={returningTo(card.action.href, "/")}
+                    prefetch={false}
                     className={`${touchTargetClass} flex-none text-[14px] font-medium whitespace-nowrap hover:underline hover:underline-offset-4`}
                   >
                     <span dir="auto">{card.action.label}</span>
@@ -86,6 +87,7 @@ export function Blockers({
             </span>
             <Link
               href="/alerts"
+              prefetch={false}
               className={`${touchTargetClass} font-medium text-forest hover:underline hover:underline-offset-4`}
             >
               <span dir="auto">{he.header.bell.showAll}</span>
@@ -267,7 +269,7 @@ export function BalancesRail({
       {/* Exporting is a screen rather than a bare download: the minimum wage
           is confirmed before every export (item 4), and that is where. One
           entry to it on this screen, not two. */}
-      <Link href="/month/export" className={`${railLink} rounded-card border border-line bg-surface px-3 py-2.75`}>
+      <Link href="/month/export" prefetch={false} className={`${railLink} rounded-card border border-line bg-surface px-3 py-2.75`}>
         <span className="flex size-8.5 flex-none items-center justify-center rounded-tab bg-tile-sage text-icon-sage">
           <RailIcon name="sheet" className="size-4" />
         </span>

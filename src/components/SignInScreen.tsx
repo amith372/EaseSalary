@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { acceptInvitation } from "@/app/sign-in/actions";
 import { Card } from "@/components/Card";
 import { busyAttrs, inputClass } from "@/components/Field";
@@ -35,7 +34,6 @@ export function SignInScreen({
    * sign-up with the address filled in. */
   invitedEmail?: string;
 }) {
-  const router = useRouter();
   const supabase = useMemo(() => supabaseInBrowser(), []);
 
   const [mode, setMode] = useState<"signIn" | "signUp">(
@@ -85,14 +83,36 @@ export function SignInScreen({
       if (event !== "SIGNED_IN" && event !== "INITIAL_SESSION") return;
       if (!session) return;
 
-      void (async () => {
+      // **The whole of it runs inside one transition**, not just the redirect.
+      // Two things here update the router, and React refuses a *synchronous*
+      // update that suspends -- error #441, which the boundary above catches
+      // and draws as "something went wrong". `acceptInvitation` is a server
+      // action, so returning from it refreshes this route, and by then the
+      // session exists and the proxy sends that refresh to `/`; the redirect
+      // below goes to the same place. Either one suspends, because `/` renders
+      // against the database and has never been prefetched on a first sign-in.
+      // Marking both as a transition is what lets them suspend: the account was
+      // made and the household was made, and the screen reported a fault
+      // anyway, which a reload then cleared.
+      startTransition(async () => {
         await ensureHousehold();
-        router.replace("/");
-      })();
+        // **A document request, not a client-side navigation.** The session
+        // cookie was written a moment ago and `/` renders entirely from it, so
+        // the server has to be asked again in any case. Routing there in the
+        // client asks React to replace the tree with one that suspends on the
+        // database -- error #441 on a first sign-in, where `/` has never been
+        // prefetched -- and the boundary above drew that as "something went
+        // wrong" over an account that had in fact been created. A transition
+        // does not cover this, because the router schedules its own update.
+        // The rule below advises `useRouter().push()`, which is what this
+        // replaced: a client-side route change here is the bug, not the fix.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.assign("/");
+      });
     });
 
     return () => data.subscription.unsubscribe();
-  }, [router, supabase]);
+  }, [supabase]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
