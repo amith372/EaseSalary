@@ -85,3 +85,63 @@ describe("the rates derived from the salary", () => {
     ]);
   });
 });
+
+/**
+ * The rate held against the two authorities that publish it worked out, rather
+ * than against `specs.md`.
+ *
+ * These are the only figures in this suite that come from outside the project
+ * entirely: both documents state a finished shekel amount for a named monthly
+ * salary, so neither can have been derived from this code. They are six years
+ * and two minimum wages apart, which is what makes them worth asserting
+ * together — a formula that happens to fit one wage cannot fit both by
+ * accident.
+ *
+ * Read 2026-10-07. The sources are kept in `.sources/README.txt`, which also
+ * holds their URLs.
+ */
+describe("the rest-day rate against the published figures", () => {
+  /** ₪5,300 — the minimum wage the 2020 document works its example at. */
+  const WAGE_2020 = 530000;
+  /** ₪6,443.85 — the minimum wage in force when Kol Zchut was read. */
+  const WAGE_2026 = 644385;
+
+  // The Commissioner for Foreign Workers' Rights, תשלום בגין עבודה בימי חג,
+  // September 2020, publishes the whole derivation and not only its total:
+  // "ערך יום עבודה רגיל של העובד (השכר החודשי חלקי 25) עומד על 212 ₪ ליום",
+  // the 150% day is "318 ₪", the twenty-fifth hour adds "43.68 ₪", and the
+  // worker is owed "361.68 ₪". Asserting the three parts and not just the sum
+  // is what catches a formula that reaches the right total by a wrong route.
+  it("matches all three published components at ₪5,300 (gov.il, 09/2020)", () => {
+    expect(Math.round(dailyRate(WAGE_2020))).toBe(21200);
+    expect(Math.round(dailyRate(WAGE_2020) * 1.5)).toBe(31800);
+    expect(Math.round(hourlyRate(WAGE_2020) * 1.5)).toBe(4368);
+    expect(Math.round(restDayRate(WAGE_2020))).toBe(36168);
+  });
+
+  // Kol Zchut, תנאי העסקה של עובד זר בסיעוד המועסק בבית המטופל: "עובד
+  // המשתכר שכר מינימום (6,443.85 ₪ לחודש) זכאי לתוספת בסך 439.73 ₪ עבור יום
+  // עבודה במנוחה השבועית."
+  //
+  // **The published figure is truncated, not rounded, and the agora of
+  // difference is theirs.** The rate works out to ₪439.7397: Kol Zchut prints
+  // 439.73, this application rounds to the nearest agora (439.74) because
+  // every money figure here does. Asserting the published 43973 outright would
+  // encode their truncation as this engine's rule, so the assertion is that
+  // the two agree to within one agora — which is the strongest claim the
+  // source actually supports.
+  it("matches the published ₪439.73 at ₪6,443.85 to the agora (Kol Zchut)", () => {
+    const published = 43973;
+    expect(Math.abs(Math.round(restDayRate(WAGE_2026)) - published)).toBeLessThanOrEqual(1);
+  });
+
+  // The same two documents, used the other way round: whatever the wage, the
+  // naive reading underpays. 2020's own sentence is the evidence — a plain
+  // 150% of 212 is 318, and the worker is owed 361.68.
+  it("is never a plain 150% of the daily rate, at either wage", () => {
+    for (const wage of [WAGE_2020, WAGE_2026]) {
+      expect(restDayRate(wage)).toBeGreaterThan(dailyRate(wage) * 1.5);
+    }
+    expect(Math.round(restDayRate(WAGE_2020) - dailyRate(WAGE_2020) * 1.5)).toBe(4368);
+  });
+});
