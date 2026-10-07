@@ -222,3 +222,41 @@ test("the calendar asks about the holiday in the worker's gender", async ({
     fullPage: true,
   });
 });
+
+/**
+ * **The pre-export question about the holidays** (items 18 and 31).
+ *
+ * Scenario: the same household and the same worker, on the month `/month/export`
+ * opens by itself. The seven questions item 18 asks are drawn there, and one of
+ * them asks whether the worker worked the holidays that fell in the month — so
+ * the verb is hers, and the question read it as a passive naming nobody until
+ * the user asked for it to name her.
+ *
+ * Expected — Hebrew grammar, not the screen: `היו חגים שעבדה בהם?` for a woman
+ * and `היו חגים שעבד בהם?` for a man.
+ *
+ * What it would catch: the confirmation screen drawing this question from a
+ * fixed gender, which is what every other question on it can afford to do and
+ * this one cannot. The masculine read also asserts no feminine form survives,
+ * because `שעבד` is a prefix of `שעבדה` and would otherwise match it.
+ */
+test("the pre-export question names the worker in their own gender", async ({
+  page,
+}) => {
+  await useHousehold(page, `gender-${RUN}`, "before-export");
+
+  const question = page.locator('[data-question="holidaysWorked"]');
+
+  await page.goto("/month/export");
+  await switchToTestWorker(page);
+  await settled(page);
+  await expect(question).toContainText("היו חגים שעבדה בהם?");
+
+  await chooseGender(page, "male");
+
+  await page.goto("/month/export");
+  await switchToTestWorker(page);
+  await settled(page);
+  await expect(question).toContainText("היו חגים שעבד בהם?");
+  await expect(question).not.toContainText("שעבדה");
+});

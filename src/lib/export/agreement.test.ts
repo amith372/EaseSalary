@@ -823,4 +823,59 @@ describe("a grant split across months, previewed and exported", () => {
         ?.outstandingAgorot,
     ).toBe(0);
   });
+
+  /**
+   * **A note on an action the month did not price still reaches the column.**
+   *
+   * Item 5 lets every action carry a free-text note and item 2 says the notes on
+   * the month's actions are written into the helper column — and neither makes
+   * that conditional on the action having moved money. Three of them routinely
+   * have not: a holiday they did not work is a paid day that changes nothing at
+   * all (item 5), a rest day they took free is not an entitlement and is priced
+   * nowhere, and a sick day the balance covered can leave no deduction. The
+   * month below is the ordinary shape of that — every rest day taken free and
+   * one holiday not worked — and it is the shape a family adopting the
+   * application is most likely to write a note on.
+   *
+   * **Expected from the two criteria and not from the filler**: the note exists,
+   * so the cell beside its row holds it. The rows are the template's own, named
+   * in `TEMPLATE_ROWS`.
+   *
+   * **What it would catch**: a note written only as an argument to the line that
+   * prices the action, which is what the filler did — the note was gathered
+   * correctly, addressed correctly, and then dropped on the floor because the
+   * month drew no line to carry it. The column was present and empty, so the
+   * loss was silent in both versions of the file.
+   */
+  it("writes a note whose row the month priced no line for", async () => {
+    const { sheet } = await filled(true, {
+      spans: [
+        // Every Saturday of August 2025 taken free, so the month prices no rest
+        // day at all; the note is on the first of them.
+        { id: "f1", kind: "freeRestDay", from: "2025-08-02", to: "2025-08-02", note: "בקשה מראש" },
+        { id: "f2", kind: "freeRestDay", from: "2025-08-09", to: "2025-08-09" },
+        { id: "f3", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
+        { id: "f4", kind: "freeRestDay", from: "2025-08-23", to: "2025-08-23" },
+        { id: "f5", kind: "freeRestDay", from: "2025-08-30", to: "2025-08-30" },
+        // A holiday she did not work — so no worked-holiday line is drawn.
+        {
+          id: "hol",
+          kind: "holiday",
+          from: "2025-08-20",
+          to: "2025-08-20",
+          worked: false,
+          note: "ביקרה אצל חברה",
+        },
+      ],
+    });
+
+    expect(
+      sheet.getCell(`${NOTE_COLUMN}${TEMPLATE_ROWS[lineKeys.restDays]}`).value,
+    ).toBe("בקשה מראש");
+    expect(
+      sheet.getCell(
+        `${NOTE_COLUMN}${TEMPLATE_ROWS[lineKeys.holidaysWorked]}`,
+      ).value,
+    ).toBe("ביקרה אצל חברה");
+  });
 });

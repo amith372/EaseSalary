@@ -134,6 +134,51 @@ test.describe("the help screen", () => {
     await expect(page.locator('[data-row^="screen-"]')).toHaveCount(HELP_SCREENS.length);
   });
 
+  /**
+   * **The answer is drawn above the list that asks for it**, so pressing a topic
+   * low on the page used to put the card off the top of the viewport: the user
+   * pressed and nothing moved. The screen now scrolls them to the answer.
+   *
+   * Scenario: `/help`, the last topic in the closed list — the one furthest down
+   * the page, and so the one whose card lands furthest out of sight — pressed
+   * with the window at its default size.
+   *
+   * **The result is asserted and not the gesture**: the answer card is in the
+   * viewport afterwards, measured off its own box against the window. The press
+   * itself already has a test above; a scroll that is only called cannot be seen
+   * from here, and a card that is on screen is the whole of what was asked for.
+   *
+   * What it would catch: the card rendered above the fold it was asked from —
+   * the defect as reported — and equally a scroll that overshoots and leaves it
+   * above the top edge.
+   */
+  test("scrolls to the answer when a topic far down the list is pressed", async ({
+    page,
+  }) => {
+    await page.goto("/help");
+
+    const last = HELP_TOPICS[HELP_TOPICS.length - 1];
+    if (last === undefined) throw new Error("no topics");
+    await page.locator(`[data-row="topic-${last.id}"]`).click();
+
+    const answer = page.locator('[data-role="help-answer"]');
+    await expect(answer).toHaveAttribute("data-topic", last.id);
+
+    // Settled, so the smooth scroll is read after it has finished rather than
+    // while it is running.
+    await expect
+      .poll(
+        async () => {
+          const box = await answer.boundingBox();
+          const height = page.viewportSize()?.height ?? 0;
+          if (box === null || height === 0) return false;
+          return box.y >= 0 && box.y < height;
+        },
+        { timeout: 10_000 },
+      )
+      .toBe(true);
+  });
+
   test("names no worker and draws no figure", async ({ page }) => {
     // Account-blind (item 24). This spec never stepped onto a worker, and the
     // screen has to be complete anyway — which is also what keeps it correct for

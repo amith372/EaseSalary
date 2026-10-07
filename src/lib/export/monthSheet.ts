@@ -371,7 +371,25 @@ function writeLines(
         `The month template has no row for the line "${line.key}"`,
       );
     }
-    writeLineRow(sheet, row, line, notes[line.key]);
+    writeLineRow(sheet, row, line);
+  }
+
+  /**
+   * **A note goes to the row it was addressed to, whether or not the month drew
+   * a line there** (specs.md items 2 and 5: every action can carry a note, and
+   * the notes on the month's actions are written into this column).
+   *
+   * The row a note is addressed to is the row that *prices* the action, and a
+   * month need not price one at all: a month in which every rest day was taken
+   * free draws no rest-day line, a holiday they did not work is a paid day that
+   * moves no money, and a sick day the balance covered may leave no deduction.
+   * A note written only as part of a line is therefore a note the file loses in
+   * exactly the months whose notes matter most — silently, since the column is
+   * there and merely empty. The vacation row below has always been written this
+   * way, having no line to hang off at all.
+   */
+  for (const [key, row] of Object.entries(TEMPLATE_ROWS)) {
+    putNote(sheet, row, notes[key]);
   }
 
   // The vacation row carries its units and no money at all (item 7). Written
@@ -416,11 +434,14 @@ function writeLines(
   });
 }
 
+/** `note` is passed only for a row the template does not hold in advance. The
+ * notes on the rows it does hold are written from the map above, because such a
+ * note must reach its row in a month that drew no line for it. */
 function writeLineRow(
   sheet: ExcelJS.Worksheet,
   row: number,
   line: MonthLine,
-  note: string | undefined,
+  note?: string,
 ): void {
   put(sheet, `C${row}`, line.units ?? null);
   put(sheet, `D${row}`, toShekels(line.rate));

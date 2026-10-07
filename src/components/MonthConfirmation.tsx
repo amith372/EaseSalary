@@ -383,6 +383,7 @@ export function MonthConfirmation({
             key={question.key}
             question={question}
             restDay={restDay}
+            gender={gender}
             answer={answers[question.key]}
             first={index === 0}
             onAnswer={(value) =>
@@ -660,12 +661,14 @@ function OpenSpellBlock({
 function QuestionRow({
   question,
   restDay,
+  gender,
   answer,
   first,
   onAnswer,
 }: {
   question: ExportQuestion;
   restDay: RestDay;
+  gender: Gender;
   answer: boolean | undefined;
   first: boolean;
   onAnswer: (value: boolean) => void;
@@ -684,7 +687,7 @@ function QuestionRow({
     >
       <span className="flex min-w-0 flex-1 basis-[260px] flex-col gap-0.75">
         <span dir="auto" className="text-[17px] font-medium">
-          {askOf(question.key, restDay)}
+          {askOf(question.key, restDay, gender)}
         </span>
         <span dir="auto" className="text-[14px] font-light text-ink-quiet text-pretty">
           {knownOf(question, restDay)}
@@ -718,11 +721,18 @@ function QuestionRow({
   );
 }
 
-/** The question itself. Only one of the seven names a day of the week, and it
- * names *their* day (specs.md item 5). */
-function askOf(key: ExportQuestionKey, restDay: RestDay): string {
+/** The question itself. Two of the seven are worded about the employment rather
+ * than in general: one names *their* day of the week (specs.md item 5) and one
+ * asks about the worker in their own gender (item 31). */
+function askOf(
+  key: ExportQuestionKey,
+  restDay: RestDay,
+  gender: Gender,
+): string {
   const words = he.beforeExport.questions;
-  return key === "freeRestDays" ? words.freeRestDays.ask(restDay) : words[key].ask;
+  if (key === "freeRestDays") return words.freeRestDays.ask(restDay);
+  if (key === "holidaysWorked") return words.holidaysWorked.ask(gender);
+  return words[key].ask;
 }
 
 /** What the month already holds, in the words each question needs — the half of

@@ -1857,7 +1857,11 @@ export const he = {
         allRecorded:
           "כל סוגי התשלום כבר נרשמו החודש. דף המשכורת מחזיק שורה אחת מכל סוג.",
         amount: "כמה שולם",
-        note: "למה",
+        /** The label asks for the note rather than for a reason: "למה" alone
+         * read as a question the user could not place. The field is the same
+         * one, among the four item 16 records, and the hint still says what it
+         * is worth writing. */
+        note: "הוסף הערה",
         noteHint: "לא חובה, אבל זה מה שיסביר את התשלום בעוד שנה",
         /**
          * The months the payment covers (specs.md items 16, 19).
@@ -3135,8 +3139,13 @@ export const he = {
       holidaysWorked: {
         /** A question the chips can answer. *Which* holiday they worked are
          * marked on the holiday itself, on the month's calendar, which is where
-         * the `mismatch` sentence sends them. */
-        ask: "היו חגים שנעבדו?",
+         * the `mismatch` sentence sends them.
+         *
+         * **Asked about the worker and not about the holidays** (item 31): the
+         * passive שנעבדו names nobody, and the question is whether *she*
+         * worked them. So the verb is hers and is inflected. */
+        ask: (gender: Gender) =>
+          `היו חגים ${workerWords(gender).thatWorked} בהם?`,
         from: (falling: number, worked: number) => {
           if (falling === 0) return "לא נופלים חגים בחודש הזה";
           if (falling === 1) {

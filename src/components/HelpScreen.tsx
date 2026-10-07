@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Ref } from "react";
 import { Card } from "@/components/Card";
 import { Chevron } from "@/components/icons";
 import { bestTopic, narrowTopics, saysNothing } from "@/lib/help/match";
@@ -55,12 +56,35 @@ export function HelpScreen({ pages }: { pages: CachedPage[] }) {
 
   const missed = asked !== null && chosen === null && answer === null;
 
+  /**
+   * **The answer is drawn above the list that asks for it**, so a topic pressed
+   * low on a long page draws its card off the top of the viewport and the press
+   * looks like nothing happened at all.
+   *
+   * So they are scrolled to the answer, and the card is not moved: `nearest` is
+   * the smallest scroll that brings it into sight, which leaves an answer
+   * already in sight — the one the field at the top produces — exactly where
+   * it is rather than jumping the page under a reader.
+   *
+   * It is counted rather than keyed on the answer itself, because asking the
+   * same question twice is the same press: the topic object does not change, so
+   * a reader who scrolled away and pressed the row again would see the same
+   * nothing.
+   */
+  const [asks, setAsks] = useState(0);
+  const answerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (asks === 0) return;
+    answerRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [asks]);
+
   // A field holding nothing, or nothing but question words, has not asked
   // anything — so pressing the button clears the answer rather than reporting
   // that nothing matched (`saysNothing`).
   function search(query: string) {
     setChosen(null);
     setAsked(saysNothing(query) ? null : query);
+    setAsks((before) => before + 1);
   }
 
   return (
@@ -125,7 +149,7 @@ export function HelpScreen({ pages }: { pages: CachedPage[] }) {
         </p>
       </section>
 
-      {answer !== null ? <Answer topic={answer} /> : null}
+      {answer !== null ? <Answer ref={answerRef} topic={answer} /> : null}
       {missed ? <NoMatch /> : null}
 
       <section aria-labelledby="help-topics" className="flex flex-col gap-4">
@@ -146,6 +170,7 @@ export function HelpScreen({ pages }: { pages: CachedPage[] }) {
                     onClick={() => {
                       setChosen(topic);
                       setAsked(he.help.topics[topic.id].ask);
+                      setAsks((before) => before + 1);
                     }}
                     data-row={`topic-${topic.id}`}
                     className={[
@@ -215,12 +240,19 @@ export function HelpScreen({ pages }: { pages: CachedPage[] }) {
 }
 
 /** Where the answer sends them, what to press there, and the rule beside it. */
-function Answer({ topic }: { topic: HelpTopic }) {
+function Answer({
+  topic,
+  ref,
+}: {
+  topic: HelpTopic;
+  /** What the screen scrolls to when an answer is asked for. */
+  ref: Ref<HTMLElement>;
+}) {
   const words = he.help.answer;
   const said = he.help.topics[topic.id];
 
   return (
-    <section aria-labelledby="help-answer" className="flex flex-col gap-4">
+    <section ref={ref} aria-labelledby="help-answer" className="flex flex-col gap-4">
       <h2 id="help-answer" dir="auto" className="text-[20px] font-semibold sm:text-[22px]">
         {words.title}
       </h2>

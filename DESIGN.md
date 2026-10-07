@@ -532,6 +532,7 @@ bar's: the v4 mark beside the name.
 | An answer links to a screen and never to a fold inside it; which fold to open is said in words | Tried as `/settings#rates` and removed: the settings folds carry `data-group` and no `id`, so the address resolved, scrolled nowhere and left every fold shut — a dead anchor that looks right in the code and in the markup |
 | `איך בוחרים את תשעת החגים?` names its path in words where the artboard writes `מהגדרות ← חגים` | An arrow inside a Hebrew string is untranslatable and a bidi hazard |
 | The balances row is `בקטע היתרות שליד הלוח`, not the artboard's `בסרגל שמימין` | A position that moves with the layout is a sentence that goes stale without anything looking wrong |
+| **The answer card keeps its place above the closed list, and the page scrolls to it when a topic is pressed** | The card is drawn above the list that asks for it, so a topic pressed low on the page put its answer off the top of the viewport and the press looked like nothing happened. The user's decision, 2026-10-07: scroll to the answer and show it no other way. The scroll is the smallest one that brings the card into sight, so an answer the field at the top produces is already visible and the page does not jump under a reader |
 | The radii come from the token scale — 20px for the lists, 24px for the answer card — where the artboard draws 18 and 22 | The scale exists so a screen does not invent one; neither difference is visible beside the other cards on the page |
 
 The bar keeps its five tabs and carries no help entry at all, which is recorded
