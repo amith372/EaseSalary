@@ -19,6 +19,7 @@ import { he } from "@/lib/i18n/he";
 import type { MonthIncomeTax } from "@/lib/engine/types";
 import type { UpcomingEntry } from "@/lib/engine/upcoming";
 import { formatAgorot, formatDays } from "@/lib/money";
+import type { RecordRequest } from "@/lib/recordRequest";
 import type { RefusedMonth } from "@/lib/refusalView";
 import type { IsoDate, OverrideCandidate, Worker, YearMonth } from "@/lib/types";
 
@@ -42,6 +43,14 @@ import type { IsoDate, OverrideCandidate, Worker, YearMonth } from "@/lib/types"
  * `calculateSeries` and hands this screen the month's lines to list. What the
  * month came to is still the month screen's answer, from that same calculation
  * path, and nothing on this screen adds anything up.
+ *
+ * **An alert may send the user straight to one of its groups** (specs.md item
+ * 27). The address carries the worker and the quarter a national-insurance
+ * entry named, so the screen opens with the third-party group unfolded and that
+ * quarter in the fields, leaving the amount and the day it was paid to type.
+ * **The month on screen does not change**: a payment is filed under the month it
+ * was paid in, and the address carries only the months it covers (item 16 keeps
+ * the three dates apart).
  *
  * **It is scoped to one worker and one month.** The worker comes from the
  * shell's switcher, as everywhere; the month is this screen's own state and
@@ -102,10 +111,26 @@ interface PaymentsScreenProps {
   /** Today, read once on the server and handed down, so nothing here reads a
    * clock during a render (`CLAUDE.md`). */
   today: IsoDate;
+  /** What an alert's own button asked for, validated by the route against this
+   * household, or `null` on an ordinary arrival (specs.md item 27). */
+  record: RecordRequest | null;
 }
 
-export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
+export function PaymentsScreen({ household, today, record }: PaymentsScreenProps) {
   const { worker } = useWorkerScope();
+  // **The arrival, spent once.** The group and the panel take it as *initial*
+  // state and `MonthActions` is keyed on the worker and the month, so a request
+  // still standing after the user has moved would re-open the panel wherever
+  // they went — over a quarter they had already left, in a month that never
+  // asked for it, and the screen could not be got out of. It is therefore let
+  // go of at the first gesture that leaves the arrival: stepping the month
+  // below, or the switcher moving to the other worker. The second is read off
+  // the scope during render, as `WorkerScope` reads the address, because no
+  // handler on this screen is told about it.
+  const [arrival, setArrival] = useState<RecordRequest | null>(record);
+  if (arrival !== null && arrival.workerId !== worker.id) setArrival(null);
+  const arriving =
+    arrival !== null && arrival.workerId === worker.id ? arrival : null;
   const [chosenMonth, setMonth] = useState<YearMonth>(() =>
     openingMonthOf(
       household.flatMap((entry) =>
@@ -150,9 +175,11 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
   const { saving, send: handleAction } = useOneAtATime<MonthActionRefusal>();
 
   // Every section starts folded, and what they unfold
-  // stays unfolded while they step between months.
+  // stays unfolded while they step between months. An alert that sent the user
+  // to one of them unfolds that one, so what they pressed for is the thing in
+  // front of them (specs.md item 27).
   const [openSections, setOpenSections] = useState<ReadonlySet<MonthSection>>(
-    () => new Set(),
+    () => new Set(arriving === null ? [] : (["thirdParty"] as MonthSection[])),
   );
   function toggleSection(section: MonthSection) {
     setOpenSections((current) => {
@@ -209,7 +236,12 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
             month={month}
             today={today}
             earliest={entry.firstMonth}
-            onMonthChange={setMonth}
+            onMonthChange={(next) => {
+              // Stepping away is leaving the arrival, and stepping back must
+              // not bring it with them.
+              setArrival(null);
+              setMonth(next);
+            }}
           />
         </div>
       </div>
@@ -239,6 +271,8 @@ export function PaymentsScreen({ household, today }: PaymentsScreenProps) {
             monthAdvances={shown.record.advances}
             confirmedMonths={confirmedMonths}
             thirdPartyPayments={shown.record.thirdPartyPayments}
+            /* The alert's own ask, on the first paint alone (item 27). */
+            arriving={arriving}
             lines={shown.lines}
             orphanedOverrides={shown.orphanedOverrides}
             onSubmit={handleAction}

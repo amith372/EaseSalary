@@ -1,5 +1,12 @@
-﻿import { expect, test, type Page } from "@playwright/test";
-import { openPaymentSections, switchToTestWorker, useHousehold, useToday, TODAY } from "./household";
+﻿import { expect, test, type Locator, type Page } from "@playwright/test";
+import {
+  openPaymentSections,
+  switchToTestWorker,
+  useHousehold,
+  useToday,
+  TEST_WORKER_NAME,
+  TODAY,
+} from "./household";
 import type { ExpiringDocument } from "../src/lib/engine/actionList";
 import { he, type Said } from "../src/lib/i18n/he";
 
@@ -531,11 +538,16 @@ test.describe("the opening screen's blocker strip (specs.md item 27)", () => {
     );
     await page.screenshot({ path: "test-results/home-blocker-strip.png" });
 
-    // A card leads where its entry on the page does.
+    // A card leads where its entry on the page does — address and query alike,
+    // since an action now carries what the entry is about (item 27). Compared as
+    // text and not as a pattern: `?` and `&` are regex characters, and a href
+    // read off the page and fed to `RegExp` matches a URL it does not equal.
     const first = strip.first().getByRole("link").first();
     const href = await first.getAttribute("href");
     await first.click();
-    await expect(page).toHaveURL(new RegExp(`${href}$`));
+    await expect(page).toHaveURL(
+      (url) => `${url.pathname}${url.search}` === href,
+    );
 
     // "Show all" leads to the page, where the rest are.
     await page.goto("/");
@@ -775,5 +787,334 @@ test.describe("the December that closes a year (specs.md item 7)", () => {
     await expect(
       page.locator('[data-role="alert"][data-list="blockage"]').filter({ hasText: title }),
     ).toHaveCount(0);
+  });
+});
+
+test.describe("an alert's action lands on the control that settles it (specs.md item 27)", () => {
+  /**
+   * The quarter an alert's own note names, as the two month selects spell it.
+   *
+   * **Read off the card and never worked out here** (`CLAUDE.md` rule 11): the
+   * expectation for the form is the sentence the user just read, so a hand-off
+   * that carries some other quarter fails rather than agreeing with itself. The
+   * note is the only line on a card that names two months with a dash between
+   * them (`coveredMonthsLabel`).
+   */
+  async function quarterOnCard(card: Locator): Promise<{ from: string; to: string }> {
+    const names = he.calendar.monthNames.join("|");
+    const said = new RegExp(`(${names}) ([0-9]{4}) – (${names}) ([0-9]{4})`).exec(
+      await card.innerText(),
+    );
+    expect(said, "the card names a quarter").not.toBeNull();
+    const [, fromMonth, fromYear, toMonth, toYear] = said as RegExpExecArray;
+    const option = (month: string, year: string) =>
+      `${year}-${String(
+        he.calendar.monthNames.findIndex((name) => name === month) + 1,
+      ).padStart(2, "0")}`;
+    return {
+      from: option(fromMonth, fromYear),
+      to: option(toMonth, toYear),
+    };
+  }
+
+  /**
+   * **The user's own complaint, written as a test.** Pressing `לרשום תשלום` on a
+   * quarter in arrears used to reach a bare `/payments`: every group folded,
+   * whichever worker the switcher was on, and the form offering the quarter that
+   * had just ended rather than the unpaid one — so marking a quarter paid was
+   * eight steps, and the alert read as one that could not be cleared.
+   *
+   * It fails the day the hand-off carries the wrong worker, the wrong kind or
+   * the wrong quarter, and the payment lands against months nobody owed.
+   */
+  test("a national-insurance quarter arrives at its worker, its group and its own months", async ({
+    page,
+  }) => {
+    await useHousehold(page, SPEC, "hand-off");
+    await page.goto("/alerts");
+
+    // The test worker's, named, and not whichever card is first: both workers
+    // owe the same quarter in this seed.
+    const owed = page
+      .locator('[data-role="alert"][data-list="blockage"]')
+      .filter({ hasText: he.alerts.entry.nationalInsurance("").title.join("") })
+      .filter({ hasText: he.placeholder.name });
+    await expect(owed).toHaveCount(1);
+    const quarter = await quarterOnCard(owed);
+
+    // The screen opens on the first worker, and nothing below steps the
+    // switcher: that the bar comes to say the test worker's name is the first
+    // half of what is being proved.
+    const action = owed.getByRole("link", {
+      name: he.alerts.entry.nationalInsurance("").action,
+    });
+    const carried = await action.getAttribute("href");
+    await action.click();
+    await expect(page).toHaveURL(/\/payments\?/);
+    await expect(
+      page.getByRole("group", { name: he.header.workerSwitcher.showing }),
+    ).toContainText(TEST_WORKER_NAME);
+
+    // The one group they pressed for, and the five others left as they were —
+    // an arrival that unfolds the card entire is the screen it replaced.
+    const open = page.locator('[data-group] h2 button[aria-expanded="true"]');
+    await expect(open).toHaveCount(1);
+    const group = page.locator('[data-group="thirdParty"]');
+    await expect(group.locator("h2 button[aria-expanded]")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    const words = he.month.actions.thirdParty;
+    const kind = he.sheet.thirdParty.nationalInsurance;
+    await expect(
+      group.getByRole("button", { name: kind, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    // The quarter the card named, and not the one this month would be offered:
+    // the family is more than a quarter behind, which is why the entry exists.
+    await expect(group.getByLabel(words.periodFrom)).toHaveValue(quarter.from);
+    await expect(group.getByLabel(words.periodTo)).toHaveValue(quarter.to);
+    await page.screenshot({ path: "test-results/payments-quarter-carried.png" });
+
+    // Which leaves the amount and the day it was paid to type.
+    await group.getByLabel(words.amount).fill("1200");
+    await group.getByLabel(words.paidOn).fill(TODAY);
+    await group.getByRole("button", { name: words.submit, exact: true }).click();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect(group.getByText(kind, { exact: true }).first()).toBeVisible();
+
+    // And the entry is gone from the list the user came from — the assertion
+    // that says the payment landed against the months the alert was about.
+    await page.goto("/alerts");
+    await expect(owed).toHaveCount(0);
+
+    // **The same link again reaches the payment itself** (specs.md items 16, 27):
+    // the month records that kind now, so the panel opens over that row rather
+    // than offering a second one the sheet has no line for — and since the
+    // quarter is already inside the period it covers, the period is unchanged.
+    // One row, still.
+    await page.goto(carried as string);
+    await expect(group.locator("h2 button[aria-expanded]")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(group.getByLabel(words.periodFrom)).toHaveValue(quarter.from);
+    await expect(group.getByLabel(words.periodTo)).toHaveValue(quarter.to);
+    await expect(
+      group.getByRole("button", { name: kind, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    // לשמור and not לרשום: a correction to the row that is there, which is
+    // what says the press reached the payment and not a second one.
+    await expect(
+      group.getByRole("button", { name: words.save, exact: true }),
+    ).toBeVisible();
+  });
+
+  /** Stepping the month must let go of the arrival, or the panel reopens over a
+   * quarter the user has already left and the screen cannot be got out of. */
+  test("the carried request is spent on arrival and does not follow a month step", async ({
+    page,
+  }) => {
+    await useHousehold(page, SPEC, "hand-off-spent");
+    await page.goto("/alerts");
+    await page
+      .locator('[data-role="alert"][data-list="blockage"]')
+      .filter({ hasText: he.alerts.entry.nationalInsurance("").title.join("") })
+      .filter({ hasText: he.placeholder.name })
+      .getByRole("link", { name: he.alerts.entry.nationalInsurance("").action })
+      .click();
+
+    const words = he.month.actions.thirdParty;
+    const group = page.locator('[data-group="thirdParty"]');
+    await expect(group.getByLabel(words.periodFrom)).toBeVisible();
+
+    // Back a month and the panel is shut: the group stays unfolded, as every
+    // unfolded group does across a month step, and offers to record rather than
+    // pre-filling anything.
+    await page.getByRole("button", { name: he.calendar.previousMonth }).click();
+    await expect(group.getByLabel(words.periodFrom)).toHaveCount(0);
+    await expect(
+      group.getByRole("button", { name: words.add, exact: true }),
+    ).toBeVisible();
+  });
+});
+
+/**
+ * **A family several quarters behind, which is the only reason the entry
+ * exists** (specs.md items 16, 27).
+ *
+ * The known case is a household of **one** worker whose months begin in May
+ * 2025 and which has settled no quarter since — so on the suite's September 2026
+ * day the list carries several, which is the shape the demo household never
+ * reaches. The sheet holds one row per kind per month, so every press after the
+ * first widens the row the first one made rather than asking for a row the sheet
+ * has no line for.
+ */
+test.describe("several national-insurance quarters, caught up in one month (specs.md items 16, 27)", () => {
+  const SPEC_KNOWN = "known";
+  const action = he.alerts.entry.nationalInsurance("").action;
+
+  /** Every unpaid quarter on the page, oldest first — the order item 27 draws
+   * them in. */
+  function quarters(page: Page) {
+    return page
+      .locator('[data-role="alert"]')
+      .filter({ hasText: he.alerts.entry.nationalInsurance("").title.join("") });
+  }
+
+  /** The quarter one card names, as the month selects spell it. Read off the
+   * card and never worked out here (`CLAUDE.md` rule 11). */
+  async function namedOn(card: Locator): Promise<{ from: string; to: string }> {
+    const names = he.calendar.monthNames.join("|");
+    const said = new RegExp(`(${names}) ([0-9]{4}) – (${names}) ([0-9]{4})`).exec(
+      await card.innerText(),
+    );
+    expect(said, "the card names a quarter").not.toBeNull();
+    const [, fromMonth, fromYear, toMonth, toYear] = said as RegExpExecArray;
+    const option = (month: string, year: string) =>
+      `${year}-${String(
+        he.calendar.monthNames.findIndex((name) => name === month) + 1,
+      ).padStart(2, "0")}`;
+    return { from: option(fromMonth, fromYear), to: option(toMonth, toYear) };
+  }
+
+  const words = he.month.actions.thirdParty;
+
+  test("the second press widens the one row the sheet holds, and both cards leave", async ({
+    page,
+  }) => {
+    await useHousehold(page, SPEC_KNOWN, "catch-up");
+    await page.goto("/alerts");
+
+    const owed = quarters(page);
+    const count = await owed.count();
+    // The fixture is only interesting while it is behind; a seed that has caught
+    // up would pass this test having tested nothing.
+    expect(count).toBeGreaterThan(1);
+    const oldest = await namedOn(owed.nth(0));
+    const next = await namedOn(owed.nth(1));
+
+    // The first press is the one that already worked.
+    await owed.nth(0).getByRole("link", { name: action }).click();
+    const group = page.locator('[data-group="thirdParty"]');
+    await expect(group.getByLabel(words.periodFrom)).toHaveValue(oldest.from);
+    await expect(group.getByLabel(words.periodTo)).toHaveValue(oldest.to);
+    await group.getByLabel(words.amount).fill("900");
+    await group.getByLabel(words.paidOn).fill(TODAY);
+    await group.getByRole("button", { name: words.submit, exact: true }).click();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+
+    // **And the second press is the whole of this test.** It used to reach a
+    // screen with no panel and no ביטוח לאומי chip anywhere — four cards, four
+    // dead ends, which read as an alert that cannot be cleared. It now opens
+    // over the row just recorded, with that row's period widened to take in the
+    // quarter pressed and its amount in the field to be summed.
+    await page.goto("/alerts");
+    await expect(quarters(page)).toHaveCount(count - 1);
+    await quarters(page).nth(0).getByRole("link", { name: action }).click();
+    await expect(group.getByLabel(words.periodFrom)).toHaveValue(oldest.from);
+    await expect(group.getByLabel(words.periodTo)).toHaveValue(next.to);
+    // The 900 typed a moment ago, as `לתקן` has always shown a stored amount —
+    // formatted, so this asks that the figure is there and not how it is
+    // written.
+    expect(await group.getByLabel(words.amount).inputValue()).toContain("900");
+    await expect(group.getByLabel(words.paidOn)).toHaveValue(TODAY);
+    await page.screenshot({ path: "test-results/payments-quarter-widened.png" });
+
+    // Saved as a correction to that row, and the sheet still holds one of them.
+    await group.getByLabel(words.amount).fill("1800");
+    await group.getByRole("button", { name: words.save, exact: true }).click();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    // One row and not two: the second quarter widened this one (item 16).
+    // `exact` keeps the group's own lead sentence, which names the kind among
+    // others, out of the count.
+    await expect(
+      group.getByText(he.sheet.thirdParty.nationalInsurance, { exact: true }),
+    ).toHaveCount(1);
+
+    // Both quarters gone, and only those two.
+    await page.goto("/alerts");
+    await expect(quarters(page)).toHaveCount(count - 2);
+  });
+
+  test("a quarter that does not adjoin the row says where the payment belongs", async ({
+    page,
+  }) => {
+    await useHousehold(page, SPEC_KNOWN, "catch-up-gap");
+    await page.goto("/alerts");
+    const owed = quarters(page);
+    // Three or the gap cannot be left: the press skips the quarter between.
+    expect(await owed.count()).toBeGreaterThan(2);
+
+    await owed.nth(0).getByRole("link", { name: action }).click();
+    const group = page.locator('[data-group="thirdParty"]');
+    await group.getByLabel(words.amount).fill("900");
+    await group.getByLabel(words.paidOn).fill(TODAY);
+    await group.getByRole("button", { name: words.submit, exact: true }).click();
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+
+    // Skipping one leaves a gap, and a widened period would claim the quarter in
+    // it — which another month's row claims. So no panel, and a sentence saying
+    // the payment is filed under the month it was paid in.
+    await page.goto("/alerts");
+    await quarters(page).nth(1).getByRole("link", { name: action }).click();
+    await expect(group.getByText(words.elsewhere)).toBeVisible();
+    await expect(group.getByLabel(words.periodFrom)).toHaveCount(0);
+    await page.screenshot({ path: "test-results/payments-quarter-elsewhere.png" });
+  });
+});
+
+/**
+ * **A quarter the family paid before they had the application** (specs.md item
+ * 27). The known case is one worker whose months begin in May 2025 and which has
+ * settled no quarter since, so the list carries several — every one but the one
+ * that ended last offering to be marked as handled.
+ */
+test.describe("an old national-insurance quarter is closed without a payment (specs.md item 27)", () => {
+  test("every quarter but the one that ended last offers it, and pressing it closes that one for good", async ({
+    page,
+  }) => {
+    await useHousehold(page, "known", "closed");
+    await page.goto("/alerts");
+
+    const owed = page
+      .locator('[data-role="alert"]')
+      .filter({ hasText: he.alerts.entry.nationalInsurance("").title.join("") });
+    const count = await owed.count();
+    expect(count).toBeGreaterThan(1);
+
+    // **The last of them is the one that ended last**, since the page draws them
+    // oldest first (item 27's order) — so it is the one with no such button, and
+    // every one above it has one. Read off the page rather than worked out here.
+    const marks = owed.getByRole("button", { name: he.alerts.markHandled, exact: true });
+    await expect(marks).toHaveCount(count - 1);
+    await expect(
+      owed.nth(count - 1).getByRole("button", { name: he.alerts.markHandled, exact: true }),
+    ).toHaveCount(0);
+    await page.screenshot({ path: "test-results/alerts-quarter-mark-handled.png" });
+
+    // The oldest card's own address names the quarter it is about, so this says
+    // the quarter pressed is the one that left — not merely that the list is a
+    // card shorter.
+    const addressOfOldest = () =>
+      owed
+        .nth(0)
+        .getByRole("link", { name: he.alerts.entry.nationalInsurance("").action })
+        .getAttribute("href");
+    const closing = await addressOfOldest();
+    await marks.first().click();
+    await expect(owed).toHaveCount(count - 1);
+    expect(await addressOfOldest()).not.toBe(closing);
+
+    // **Remembered and not a state of the page**, and it records no payment: the
+    // whole point is that the family has no figure for it.
+    await page.reload();
+    await expect(owed).toHaveCount(count - 1);
+    await expect(page.locator('[data-role="handled"]')).toHaveCount(0);
+
+    await page.goto("/payments");
+    const group = page.locator('[data-group="thirdParty"]');
+    await group.locator("h2 button[aria-expanded]").click();
+    await expect(group.getByText(he.month.actions.thirdParty.empty)).toBeVisible();
   });
 });

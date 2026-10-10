@@ -21,6 +21,7 @@ import type { SalaryRepository } from "@/lib/engine/repository";
 import { householdSeries } from "@/lib/householdSeries";
 import { he, type Said } from "@/lib/i18n/he";
 import { legalLink, type LegalLinkKey } from "@/lib/links";
+import { recordRequestHref } from "@/lib/recordRequest";
 import { getRepository } from "@/lib/store";
 import { readToday } from "@/lib/requestToday";
 import { formatAgorot, formatDays } from "@/lib/money";
@@ -65,8 +66,9 @@ export interface AlertCard {
   action: { label: string; href: string };
   law: { label: string; url: string } | null;
   /**
-   * What the dismissal sends back, and which button it is; absent on a
-   * blockage, which cannot be put off.
+   * What the dismissal sends back, and which button it is; absent on every
+   * blockage but the one national-insurance quarter item 27 lets be marked as
+   * handled, since a blockage cannot be put off.
    *
    * **One per month the card stands for** (the user, 2026-09-25): "mark as
    * handled" cannot be undone from the screen, so a card naming four months
@@ -123,7 +125,19 @@ function phrase(
     case "nationalInsurance":
       return {
         said: words.nationalInsurance(coveredMonthsLabel([entry.quarter.from, entry.quarter.to])),
-        href: "/payments",
+        // **The control that settles it, and not merely the screen that holds
+        // it** (specs.md item 27). The entry already knows the two things the
+        // user would otherwise re-enter — whose quarter it is and which quarter
+        // — so the address carries both and the screen arrives with the group
+        // unfolded, the kind chosen and the period set. Built here because this
+        // is the one function `/alerts`, `/` and the bell all take the button's
+        // address from.
+        href: recordRequestHref({
+          kind: "nationalInsurance",
+          workerId,
+          from: entry.quarter.from,
+          to: entry.quarter.to,
+        }),
         law: "nationalInsurance",
       };
     case "documentExpired":
@@ -319,7 +333,7 @@ async function alertsView(
           // nothing was gathered.
           const months = behind.flatMap((one) => ("month" in one ? [one.month] : []));
           const { said, href, law } = phrase(lead, months, profile.id);
-          const how = dismissalOf(lead);
+          const how = dismissalOf(lead, today);
           return {
             id: `${profile.id}:${fingerprintOf(lead)}`,
             workerId: profile.id,

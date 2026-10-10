@@ -10,6 +10,7 @@ import { orphanedOverrides } from "@/lib/engine/overrides";
 import { recordOf } from "@/lib/engine/repository";
 import { upcoming } from "@/lib/engine/upcoming";
 import type { IncomeTaxSetting, MonthIncomeTax } from "@/lib/engine/types";
+import { recordRequestOf } from "@/lib/recordRequest";
 import { readToday } from "@/lib/requestToday";
 import { formatPercent } from "@/lib/money";
 import type { MonthResult } from "@/lib/types";
@@ -38,6 +39,14 @@ import type { MonthResult } from "@/lib/types";
  * control can list the rows and their figures, and every amount on this screen
  * that the user did not type came out of the same `calculateSeries` the month
  * screen and the export run (Part 3).
+ *
+ * **It also answers an alert's own button** (specs.md item 27): a
+ * national-insurance entry links here naming its worker and the quarter it is
+ * about, so the screen opens with the third-party group unfolded and that
+ * quarter already in the fields. The address is read by `recordRequestOf`,
+ * which validates all of it against this household, because the application
+ * wrote none of what arrives (Part 3). What is carried is an offer and every
+ * part of it may be changed.
  *
  * `connection()` keeps it out of the prerender: the store is a live value and
  * `today` is read from a clock.
@@ -74,7 +83,9 @@ function incomeTaxOf(
   };
 }
 
-export default async function PaymentsPage() {
+export default async function PaymentsPage({
+  searchParams,
+}: PageProps<"/payments">) {
   await connection();
 
   const repository = await getRepository();
@@ -133,5 +144,13 @@ export default async function PaymentsPage() {
     }),
   );
 
-  return <PaymentsScreen household={household} today={today} />;
+  // Read against the household above and not against the account: a link that
+  // names a worker this request cannot see names nobody, and the screen opens
+  // as it opens without one.
+  const record = recordRequestOf(
+    await searchParams,
+    household.map((entry) => entry.worker),
+  );
+
+  return <PaymentsScreen household={household} today={today} record={record} />;
 }

@@ -60,7 +60,8 @@ import {
 import type { TaxCorrectionUnit } from "@/lib/engine/incomeTax";
 import type { MonthIncomeTax } from "@/lib/engine/types";
 import type { Gender } from "@/lib/engine/types";
-import { offeredPeriodFor } from "@/lib/engine/thirdParty";
+import { offeredPeriodFor, widenedPeriod } from "@/lib/engine/thirdParty";
+import type { RecordRequest } from "@/lib/recordRequest";
 import {
   placementOf,
   thirdPartyKinds,
@@ -179,6 +180,16 @@ interface MonthActionsProps {
    * One row per kind, which is what makes a payment addressable by its kind
    * alone. */
   thirdPartyPayments: ThirdPartyPayment[];
+  /**
+   * What an alert's button asked this screen to record, on the first paint
+   * alone (specs.md item 27), or `null` on an ordinary arrival.
+   *
+   * **It seeds the third-party panel and is never read again.** The screen above
+   * lets go of it at the first gesture that leaves the arrival, for the reason
+   * given there: this card is keyed on the month, so a request that outlived the
+   * arrival would re-open the panel in every month the user stepped to.
+   */
+  arriving: RecordRequest | null;
   /**
    * The month's own lines, as the engine drew them. **The only derived thing on
    * this screen**, and here for one reason: an override may replace a figure the
@@ -336,6 +347,7 @@ export function MonthActions({
   monthAdvances,
   confirmedMonths,
   thirdPartyPayments,
+  arriving,
   lines,
   orphanedOverrides,
   onSubmit,
@@ -395,6 +407,7 @@ export function MonthActions({
         workerId={workerId}
         month={month}
         thirdPartyPayments={thirdPartyPayments}
+        arriving={arriving}
         onSubmit={onSubmit}
       />
 
@@ -1729,36 +1742,105 @@ function AdvancesControl({
  * override to replace.
 
  */
+/**
+ * What an alert's action opens the third-party section with (specs.md items 16,
+ * 27), and `null` on an ordinary arrival.
+ *
+ * **Three outcomes, because the sheet holds one row per kind per month.** Where
+ * the month records nothing of that kind, the quarter opens a new payment. Where
+ * it already records one, the entry reaches *that payment*: the panel opens over
+ * it with its period widened to take in the quarter, which is how a family
+ * several quarters behind clears them one press at a time against a single row
+ * — item 16's own rule that two payments of one kind are entered as one summed
+ * payment. Where the quarter does not adjoin what that row covers there is no
+ * honest panel to open, so `period` is `null` and the screen says where the
+ * payment belongs instead.
+ */
+type ThirdPartyArrival = {
+  kind: ThirdPartyKind;
+  /** The payment being widened, or `null` for a payment being recorded fresh. */
+  onto: ThirdPartyPayment | null;
+  /** What the two month selects open with, or `null` where nothing may open. */
+  period: { from: string; to: string } | null;
+};
+
+function arrivalOf(
+  arriving: RecordRequest | null,
+  payments: ThirdPartyPayment[],
+  month: YearMonth,
+): ThirdPartyArrival | null {
+  if (arriving === null) return null;
+  const asText = (period: { from: YearMonth; to: YearMonth }) => ({
+    from: yearMonthText(period.from),
+    to: yearMonthText(period.to),
+  });
+  const recorded = payments.find((payment) => payment.kind === arriving.kind);
+  if (recorded === undefined) {
+    return { kind: arriving.kind, onto: null, period: asText(arriving) };
+  }
+  // The rule is the engine's, so what this screen offers and what the period
+  // means cannot disagree about which quarters belong on one row.
+  const widened = widenedPeriod(recorded.coversMonths, month, arriving);
+  return {
+    kind: arriving.kind,
+    onto: recorded,
+    period: widened === null ? null : asText(widened),
+  };
+}
+
 function ThirdPartyControl({
   fold,
   workerId,
   month,
   thirdPartyPayments,
+  arriving,
   onSubmit,
 }: FoldProps &
   Pick<
   MonthActionsProps,
-  "workerId" | "month" | "thirdPartyPayments" | "onSubmit"
+  "workerId" | "month" | "thirdPartyPayments" | "arriving" | "onSubmit"
 >) {
   const words = he.month.actions.thirdParty;
+  /** What the alert's own action opens this section with. */
+  const arrival = arrivalOf(arriving, thirdPartyPayments, month);
+  /** The arrival that has a panel to open — every one but the arrival
+   * `elsewhere` answers. */
+  const opening = arrival !== null && arrival.period !== null ? arrival : null;
+  /** The payment the arrival widens, where it widens one rather than asking for
+   * a row the sheet has no line for (specs.md item 16). */
+  const onto = opening?.onto ?? null;
   /** `null` when nothing is open, `"new"` for a payment being recorded, and the
    * kind of the payment being corrected — one panel at a time, which is the
    * shape the other sections of this card use. */
-  const [open, setOpen] = useState<"new" | ThirdPartyKind | null>(null);
-  const [kind, setKind] = useState<ThirdPartyKind | null>(null);
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-  const [paidOn, setPaidOn] = useState("");
+  const [open, setOpen] = useState<"new" | ThirdPartyKind | null>(
+    opening === null ? null : onto === null ? "new" : opening.kind,
+  );
+  const [kind, setKind] = useState<ThirdPartyKind | null>(opening?.kind ?? null);
+  // Widening opens over a row that already holds three of the four things a
+  // payment records (item 16), so they stand in the fields as `openEdit` puts
+  // them there: what is being asked for is the summed amount and nothing else.
+  const [amount, setAmount] = useState(
+    onto === null ? "" : formatAgorot(onto.agorot),
+  );
+  const [note, setNote] = useState(onto?.note ?? "");
+  const [paidOn, setPaidOn] = useState(onto?.paidOn ?? "");
   // Empty takes the default `coverExpiryOf` gives the kind — a year for the
   // medical insurance and nothing for anything else. The family types over it
   // only where their own policy ran to some other day.
-  const [expiresOn, setExpiresOn] = useState("");
+  const [expiresOn, setExpiresOn] = useState(onto?.expiresOn ?? "");
   /** `null` until they choose, which is what lets the period follow the kind and
-   * then stop following it. */
+   * then stop following it.
+   *
+   * **A carried period is set rather than left to the offer**, and for the
+   * reason `openEdit` sets a stored one: the offer is the quarter that ended
+   * before the month being recorded in, while the entry names the quarter still
+   * unpaid — an older one whenever the family is more than a quarter behind.
+   * Changing the kind still clears it, so it is an offer like any other
+   * (specs.md item 16). */
   const [chosenPeriod, setChosenPeriod] = useState<{
     from: string;
     to: string;
-  } | null>(null);
+  } | null>(opening?.period ?? null);
   const { refusal, fault, run, clear, busyAt } = useAction(onSubmit);
 
   const recorded = new Set(thirdPartyPayments.map((payment) => payment.kind));
@@ -2053,6 +2135,15 @@ function ThirdPartyControl({
       )}
 
       {open === "new" ? panel : null}
+      {/* **Where the alert's quarter cannot be recorded in this month**: the row
+          here covers a period it does not adjoin, so widening would claim months
+          another payment's row claims (item 27). It stands while nothing is
+          open, and goes the moment they start an entry of their own. */}
+      {open === null && arrival !== null && arrival.period === null ? (
+        <p dir="auto" className="text-[14px] leading-[1.5] font-light text-ink-warm text-pretty">
+          {words.elsewhere}
+        </p>
+      ) : null}
       {open === null && available.length === 0 ? (
         /* Not a refusal — nothing was refused, there is simply nothing left to
            record — so it stands where the button was rather than under it. */

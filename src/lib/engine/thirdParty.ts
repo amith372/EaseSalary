@@ -1,6 +1,7 @@
 import type { DatedRate } from "@/lib/datedRates";
 import { rateInForce } from "@/lib/datedRates";
 import {
+  addMonths,
   addYears,
   compareIsoDate,
   compareMonth,
@@ -228,6 +229,50 @@ export function offeredPeriodFor(
   month: YearMonth,
 ): { from: YearMonth; to: YearMonth } | null {
   return kind === "nationalInsurance" ? previousQuarter(month) : null;
+}
+
+/**
+ * The period a payment's row would cover once it also covered `carried`, or
+ * `null` where the two do not belong on one row (specs.md items 16, 27).
+ *
+ * **It exists because the sheet holds one row per kind per month.** A family
+ * several quarters behind pays them all in one month, and item 16 says two
+ * payments of one kind are entered as one summed payment — so the second
+ * quarter widens the row the first one made rather than asking for a row the
+ * sheet has no line for. The alert's own action is what reaches it (item 27).
+ *
+ * **Only quarters that touch are widened**, and that is the whole of why this
+ * returns `null`: the span is contiguous by construction, so widening across a
+ * gap would claim every month in the gap — including a quarter paid in some
+ * other month, whose own row already claims it. A period on the sheet's row
+ * reads as a fact somebody checked, and two rows claiming one quarter is two
+ * payments for it. Where they do not touch, the payment belongs to the month it
+ * was paid in and the screen says so.
+ *
+ * `paidIn` is the month the row is filed under, which is what a stored payment
+ * with no period covers: item 16's ordinary case, said once where the rule is
+ * rather than at each caller.
+ */
+export function widenedPeriod(
+  stored: readonly YearMonth[] | undefined,
+  paidIn: YearMonth,
+  carried: { from: YearMonth; to: YearMonth },
+): { from: YearMonth; to: YearMonth } | null {
+  const from = stored === undefined || stored.length === 0 ? paidIn : stored[0];
+  const to =
+    stored === undefined || stored.length === 0
+      ? paidIn
+      : stored[stored.length - 1];
+  // Touching counts, so a quarter that starts the month after the row ends
+  // widens it; one month of daylight between them does not.
+  const adjoins =
+    compareMonth(carried.from, addMonths(to, 1)) <= 0 &&
+    compareMonth(carried.to, addMonths(from, -1)) >= 0;
+  if (!adjoins) return null;
+  return {
+    from: compareMonth(carried.from, from) < 0 ? carried.from : from,
+    to: compareMonth(carried.to, to) > 0 ? carried.to : to,
+  };
 }
 
 /**

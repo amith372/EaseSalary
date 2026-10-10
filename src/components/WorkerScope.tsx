@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   createContext,
   useContext,
@@ -34,6 +34,15 @@ import type { Worker } from "@/lib/types";
  * takes its worker from it. The switcher there goes to the other worker's
  * page rather than renaming the bar over a profile it no longer matches, and
  * arriving on their page makes them the choice for the screens that follow.
+ *
+ * **A link may also name a worker in `?worker=`, and that is an arrival rather
+ * than a decision** (specs.md item 27): an alert's action carries the worker it
+ * is about, so the screen it opens is already scoped to them. It is applied
+ * once, when it arrives, and the switcher wins from then on — carried in is
+ * offered and never imposed, so a user who steps to the other worker must not
+ * be stepped back by the address they came in on. An id the household does not
+ * hold is ignored rather than resolved to somebody: the link may have outlived
+ * the worker it named.
  */
 
 
@@ -70,6 +79,7 @@ export function WorkerScopeProvider({
   const pathname = usePathname();
   const router = useRouter();
   const addressed = workerOfAddress(pathname, workers);
+  const asked = useSearchParams().get("worker");
 
   const [chosenId, setChosenId] = useState<string | undefined>(() =>
     workers.some((one) => one.id === initialWorkerId) ? initialWorkerId : undefined,
@@ -79,6 +89,17 @@ export function WorkerScopeProvider({
   // rather than in an effect, which is React's own pattern for state derived
   // from a prop: an effect would paint the old worker for a frame first.
   if (addressed !== null && addressed !== chosenId) setChosenId(addressed);
+
+  // **`?worker=` is consumed, not obeyed.** The value it was last applied from
+  // is remembered, so an arrival scopes the bar to the worker the link named and
+  // every switch after it stands — the alternative reads the address on every
+  // render and quietly undoes the arrows. Adjusted during render for the same
+  // reason as the line above it.
+  const [appliedWorker, setAppliedWorker] = useState<string | null>(null);
+  if (asked !== appliedWorker) {
+    setAppliedWorker(asked);
+    if (asked !== null && workers.some((one) => one.id === asked)) setChosenId(asked);
+  }
 
   // The cookie follows the state and never leads it. Written in an effect
   // because a render must not write anything.

@@ -214,6 +214,7 @@ inherited by every `band-*` utility inside it, so a scene is a list of tokens in
 | `להגדיר אילו תזכורות לקבל` opens a pop-up of the four warning kinds, one checkbox each, rather than leading to `הגדרות` | The user, 2026-09-17: the settings rows did not say clearly what is on and what is off (item 27) |
 | The artboard's `[חודש] מוכן לחישוב` card is not drawn | No entry of item 27 says a month is ready; a finished month not yet exported is the one that exists |
 | `כבר טופל` lists exports, third-party payments and confirmed recuperation months of the last ninety days | Those are the handled events the months record (item 27) |
+| A national-insurance quarter older than the one that ended last carries `לסמן כטופל` beside its action, which no other blockage does | The family paid it before they had the application and has no figure left; the same words as a month never exported, because the same thing is true — it was dealt with and the application recorded nothing (item 27) |
 | Entries of one kind that differ only in the month they are about are one card, its title counting them, and it carries one action. The artboard draws a card per entry | The user, 2026-09-24 (F58): a dozen cards saying one sentence about a different month read as a screen of separate problems — `/alerts` was 7,135px tall at 390 wide. `specs.md` item 27 carries the rule, and the count the bell and the strip give is the number of cards drawn |
 | A card for months not yet confirmed leads to that worker's list of months, not to one month's export screen | Its title names every unconfirmed month at once, and the list is where several are confirmed in one gesture (`specs.md` item 18). The export screen is still where a single month is confirmed *and* filed, which is what `/reports` links to month by month |
 | Where such a card offers `סמן כטופל`, it draws one button per month — a row of month chips under the note, each named `סמן את <חודש> כטופל` — and the note then lists no months. A card standing for one month keeps the single plain button | The user, 2026-09-25: the gesture removes a month's warning for good and cannot be undone from the screen, so no press may answer four months at once. Item 27's "one action on it" is the way in (`לייצא`), not the putting-off |
@@ -359,6 +360,25 @@ folded sheet.
   than letting the press come back with a refusal: a confirmed month anywhere in
   the span refuses the whole split, and the span reaches months this screen is not
   showing. The sentence stands where a refusal would, under the instalments.
+- **An alert that sends the user here arrives with its own group unfolded and its
+  panel filled in**, which no artboard draws: the screen is drawn as it opens by
+  itself, with every section folded. A national-insurance entry carries the worker
+  and the quarter it names (`specs.md` item 27), so `ביטוח לאומי` is chosen and
+  both month selects already read that quarter, leaving the amount and the day it
+  was paid. **Only that one group opens** — unfolding the card entire is the
+  screen the arrival was meant to spare them — and **the cursor is not moved into
+  the amount**: the user chose a page that does not take their cursor without
+  being asked. **The month on screen does not change**, because a payment is filed
+  under the month it was paid in and the quarter carried is only what it covers.
+  Where that month has already recorded a payment of that kind, the panel opens
+  **over that row** with its period widened to take in the quarter pressed, and
+  its stored amount in the field to be summed — the sheet holds one row per kind
+  per month, so a family several quarters behind clears them one press at a time
+  against that row rather than against rows the sheet has no lines for. The
+  button reads `לשמור`, because it is a correction. Where the quarter does not
+  adjoin what the row covers, nothing opens and a sentence stands where a refusal
+  would, saying the payment belongs to the month it was paid in: a widened period
+  that jumped a gap would claim months another payment's own row claims.
 
 ### The forms on payments, settings, the holiday picker, before the export and sign-in
 

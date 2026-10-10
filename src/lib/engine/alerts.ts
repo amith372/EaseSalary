@@ -1,4 +1,10 @@
-import { addDays, compareIsoDate } from "@/lib/dates";
+import {
+  addDays,
+  compareIsoDate,
+  compareMonth,
+  monthOf,
+  previousQuarter,
+} from "@/lib/dates";
 import { todayInIsrael } from "@/lib/today";
 import type { IsoDate, YearMonth } from "@/lib/types";
 import type { ActionEntry } from "./actionList";
@@ -62,10 +68,33 @@ export function markedHandledOf(workerId: string, entry: ActionEntry): Deferral 
   return { workerId, fingerprint: fingerprintOf(entry), until: FOREVER };
 }
 
-/** Which of the two a warning offers: a month not yet exported is marked as
- * handled, and every other warning is put off. */
-export function dismissalOf(entry: ActionEntry): "markHandled" | "notNow" | null {
-  if (entry.list !== "warning") return null;
+/**
+ * Which dismissal an entry offers, if any: a month not yet exported and an old
+ * national-insurance quarter are marked as handled, every other warning is put
+ * off, and every other blockage offers nothing (specs.md item 27).
+ *
+ * **The one blockage that may be marked as handled is a quarter older than the
+ * one that ended last.** A family that took the worker on years before they
+ * took the application on cannot produce a figure for quarters they paid at the
+ * time, and the only other thing the screen offers them is to type an amount
+ * that was never paid — a made-up figure on the sheet is worse than a quarter
+ * the application stops asking about. Marking it records no payment, which is
+ * why this is not putting it off: there is nothing to come back to.
+ *
+ * **The quarter that ended last is not offered it**, because that is the one
+ * whose receipt the family still has. `today` is therefore a parameter rather
+ * than a clock read here: nothing in the engine reads one (`CLAUDE.md`).
+ */
+export function dismissalOf(
+  entry: ActionEntry,
+  today: IsoDate,
+): "markHandled" | "notNow" | null {
+  if (entry.list !== "warning") {
+    if (entry.key !== "nationalInsurance") return null;
+    return compareMonth(entry.quarter.to, previousQuarter(monthOf(today)).to) < 0
+      ? "markHandled"
+      : null;
+  }
   return entry.key === "monthNotExported" ? "markHandled" : "notNow";
 }
 
@@ -80,15 +109,25 @@ export function shownEntries(
     today,
   }: { workerId: string; switchedOff: WarningKind[]; deferrals: Deferral[]; today: IsoDate },
 ): ActionEntry[] {
+  const mine = deferrals.filter((one) => one.workerId === workerId);
   const deferred = new Set(
-    deferrals
-      .filter((one) => one.workerId === workerId && compareIsoDate(today, one.until) < 0)
+    mine
+      .filter((one) => compareIsoDate(today, one.until) < 0)
       .map((one) => one.fingerprint),
   );
-  return entries.filter(
-    (entry) =>
-      entry.list === "blockage" ||
-      (!(switchedOff as string[]).includes(entry.key) && !deferred.has(fingerprintOf(entry))),
+  // **A blockage is closed for good or not at all** (item 27). It still cannot
+  // be put off — a seven-day 'not now' on one hides nothing, which is what the
+  // date test here is for — but the one quarter `dismissalOf` offers 'mark as
+  // handled' writes the same forever record a month never exported does, and
+  // that does hide it.
+  const closed = new Set(
+    mine.filter((one) => one.until === FOREVER).map((one) => one.fingerprint),
+  );
+  return entries.filter((entry) =>
+    entry.list === "blockage"
+      ? !closed.has(fingerprintOf(entry))
+      : !(switchedOff as string[]).includes(entry.key) &&
+        !deferred.has(fingerprintOf(entry)),
   );
 }
 

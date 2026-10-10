@@ -1960,6 +1960,13 @@ export const he = {
          * simply nothing left to add — so it stands where the button was. */
         allRecorded:
           "כל סוגי התשלום כבר נרשמו החודש. דף המשכורת מחזיק שורה אחת מכל סוג.",
+        /** An alert sent them here for a quarter that does not adjoin the
+         * period this month's row already covers (item 27). Widening across the
+         * gap would claim months another payment's own row claims, so the
+         * screen says where the payment belongs instead of opening a panel that
+         * could only record it wrongly. */
+        elsewhere:
+          "החודש שעל המסך כבר רושם תשלום מהסוג הזה, לתקופה שאינה צמודה לרבעון שנבחר. תשלום נרשם בחודש שבו הוא שולם — אפשר לבחור אותו בראש המסך.",
         amount: "כמה שולם",
         /** The label asks for the note rather than for a reason: "למה" alone
          * read as a question the user could not place. The field is the same

@@ -1271,7 +1271,22 @@ a question about one of them is the expensive mistake.
     by push in this version.
     Both lists are read in full on a page of their own: one list, the
     blockages above the warnings, each entry naming its worker and carrying item 26's link
-    where it rests on a legal rule. **The bell opens a small panel**, whatever it counts: the
+    where it rests on a legal rule.
+    **An entry's action lands on the control that settles it and not merely on the screen that
+    holds it**: it carries the worker it is about and what the entry names, so the user arrives
+    with that worker shown, the group unfolded and what the application already knows filled in
+    — a national-insurance quarter arrives at the third-party payment with its kind chosen and
+    its covered months set to the quarter the entry named, leaving the amount and the date it
+    was paid to type. What is carried is an offer like any other (item 16) and all of it may be
+    changed; where the address names a worker the household does not hold, or months that are
+    not a period, the screen opens as it would have without it. **Where the month has already
+    recorded a payment of that kind, the entry reaches the payment itself**: the panel opens on
+    that row with its covered period widened to take in the quarter the entry named, so a
+    family several quarters behind clears them one press at a time against the single row the
+    sheet holds (item 16). Where the quarter does not adjoin what that row already covers, the
+    screen says the payment belongs to the month it was paid in rather than widening a period
+    across months another payment covers.
+    **The bell opens a small panel**, whatever it counts: the
     panel lists the first four warnings in the page's order, each with its title and note and
     linking where its entry on the page does; when there are more it says how many more, and
     below them come a link to the page and the link that opens the reminder switches. With no warning it says
@@ -1279,7 +1294,17 @@ a question about one of them is the expensive mistake.
     page. **A warning can be put off** — 'not now' hides it for
     seven days, or until a date or figure it carries changes, whichever comes first. A
     blockage cannot be put off, because the salary cannot be produced correctly while it
-    stands. A finished month not yet exported offers 'mark as handled' in place of 'not now':
+    stands.
+    **One blockage may be marked as handled, and that is not the same as putting it off**: a
+    national-insurance quarter older than the one that ended last offers 'mark as handled',
+    which closes it for good and records no payment. A family that took the worker on years
+    before they took the application on cannot produce a figure for quarters they paid at the
+    time, and the only other thing the screen offers them is to type an amount that was never
+    paid — a made-up figure on the sheet is worse than a quarter the application stops asking
+    about. The quarter that ended last is not offered it, because that is the one whose receipt
+    the family still has. Nothing is recorded, so the quarter appears among neither what was
+    paid nor what was handled below, and item 19's estimate for each of its months stands as it
+    did. A finished month not yet exported offers 'mark as handled' in place of 'not now':
     it removes that month's warning for good, for a family that produced the sheet some other
     way, and records no export — so the month does not appear among what was already handled,
     and the minimum wage is still measured against the last month actually exported.

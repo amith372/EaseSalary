@@ -7,6 +7,7 @@ import { calculateMonth } from "@/lib/engine/month";
 import {
   nationalInsuranceEstimateOf,
   thirdPartyLineKey,
+  widenedPeriod,
 } from "@/lib/engine/thirdParty";
 import { snapshotTerms, thirdPartyKinds} from "@/lib/engine/types";
 import type {
@@ -499,5 +500,85 @@ describe("an H line can be overridden like any other (specs.md item 17)", () => 
     // total (item 16).
     expect(result.gross).toBe(GROSS);
     expect(result.net).toBe(NET);
+  });
+});
+
+/**
+ * Widening the one row the sheet holds, so a family several quarters behind
+ * clears them one press at a time (specs.md items 16, 27).
+ *
+ * **Every expectation is the rule as item 16 states it** — one row per kind per
+ * month, two payments of one kind entered as one summed payment, and a period
+ * that claims only months this payment covered. No figure is involved
+ * (`CLAUDE.md` rule 11).
+ */
+describe("widenedPeriod (specs.md items 16, 27)", () => {
+  const month = (year: number, m: number): YearMonth => ({ year, month: m });
+  /** Months as `coversMonths` stores them: one entry per month, contiguous. */
+  const span = (from: YearMonth, to: YearMonth): YearMonth[] => {
+    const months: YearMonth[] = [];
+    for (let m = from; m.year * 12 + m.month <= to.year * 12 + to.month; ) {
+      months.push(m);
+      m = m.month === 12 ? month(m.year + 1, 1) : month(m.year, m.month + 1);
+    }
+    return months;
+  };
+  const JUL_SEP_2025 = span(month(2025, 7), month(2025, 9));
+  const PAID_IN = month(2026, 10);
+
+  it("takes in the quarter that starts the month after the row ends", () => {
+    expect(
+      widenedPeriod(JUL_SEP_2025, PAID_IN, {
+        from: month(2025, 10),
+        to: month(2025, 12),
+      }),
+    ).toEqual({ from: month(2025, 7), to: month(2025, 12) });
+  });
+
+  it("takes in the quarter that ends the month before the row begins", () => {
+    expect(
+      widenedPeriod(JUL_SEP_2025, PAID_IN, {
+        from: month(2025, 4),
+        to: month(2025, 6),
+      }),
+    ).toEqual({ from: month(2025, 4), to: month(2025, 9) });
+  });
+
+  it("leaves a period that already covers the quarter where it is", () => {
+    expect(
+      widenedPeriod(span(month(2025, 7), month(2026, 9)), PAID_IN, {
+        from: month(2026, 1),
+        to: month(2026, 3),
+      }),
+    ).toEqual({ from: month(2025, 7), to: month(2026, 9) });
+  });
+
+  it("refuses to widen across a gap, because the months between are another payment's", () => {
+    // October–December 2025 was paid in some other month and its own row claims
+    // those three. A span from July 2025 to March 2026 would claim them again,
+    // which is two rows saying one quarter was paid.
+    expect(
+      widenedPeriod(JUL_SEP_2025, PAID_IN, {
+        from: month(2026, 1),
+        to: month(2026, 3),
+      }),
+    ).toBeNull();
+  });
+
+  it("widens from the month it was filed under where the row names no period", () => {
+    // Item 16's ordinary case: a payment with no period covers the month it was
+    // paid in, so that month is what the quarter has to adjoin.
+    expect(
+      widenedPeriod(undefined, month(2026, 1), {
+        from: month(2025, 10),
+        to: month(2025, 12),
+      }),
+    ).toEqual({ from: month(2025, 10), to: month(2026, 1) });
+    expect(
+      widenedPeriod([], month(2026, 1), {
+        from: month(2025, 7),
+        to: month(2025, 9),
+      }),
+    ).toBeNull();
   });
 });

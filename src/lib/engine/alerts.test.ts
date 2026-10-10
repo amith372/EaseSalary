@@ -14,7 +14,7 @@ import {
 import { openMonthRecord, type WorkerProfile } from "@/lib/engine/repository";
 import { calculateSeries } from "@/lib/engine/series";
 import { DEFAULT_INCOME_TAX, type MonthFacts } from "@/lib/engine/types";
-import type { YearMonth } from "@/lib/types";
+import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
  * The alerts page's own rules (specs.md item 27): a warning put off for seven
@@ -41,6 +41,10 @@ const UNEXPORTED: ActionEntry = {
 };
 
 const ALL = [BLOCKAGE, VISA, UNEXPORTED];
+
+/** The day these are read on. `BLOCKAGE` is the quarter that ended before it,
+ * which is what makes it the quarter item 27 does not offer to close. */
+const TODAY: IsoDate = "2026-09-18";
 
 function shown(deferrals: Deferral[], today: string, switchedOff = [] as never[]) {
   return shownEntries(ALL, { workerId: "w", switchedOff, deferrals, today });
@@ -84,9 +88,11 @@ describe("'not now'", () => {
 
 describe("'mark as handled' on a month not yet exported", () => {
   it("is what that month offers, and 'not now' is what other warnings offer", () => {
-    expect(dismissalOf(UNEXPORTED)).toBe("markHandled");
-    expect(dismissalOf(VISA)).toBe("notNow");
-    expect(dismissalOf(BLOCKAGE)).toBeNull();
+    expect(dismissalOf(UNEXPORTED, TODAY)).toBe("markHandled");
+    expect(dismissalOf(VISA, TODAY)).toBe("notNow");
+    // The quarter that ended last, which is the one a family can still
+    // document — so it is not offered (item 27).
+    expect(dismissalOf(BLOCKAGE, TODAY)).toBeNull();
   });
 
   it("hides the month for good and leaves the others", () => {
@@ -223,7 +229,7 @@ describe("an advance still being repaid", () => {
       shownEntries(entries, { workerId: "w", switchedOff, deferrals, today: "2026-09-18" });
 
   it("is put off with 'not now', and shows again once an instalment is recorded", () => {
-    expect(dismissalOf(owed)).toBe("notNow");
+    expect(dismissalOf(owed, TODAY)).toBe("notNow");
     const putOff = deferralOf("w", owed, "2026-09-17");
     expect(on([putOff])([owed])).toEqual([]);
     // ₪1,000 owed, ₪200 repaid: ₪800 is a different entry.
@@ -233,6 +239,88 @@ describe("an advance still being repaid", () => {
 
   it("is switched off by its kind", () => {
     expect(on([], ["advanceOutstanding"])([BLOCKAGE, owed])).toEqual([BLOCKAGE]);
+  });
+});
+
+/**
+ * The one blockage item 27 lets be closed without a payment: a
+ * national-insurance quarter older than the one that ended last.
+ *
+ * Every expectation is item 27's own rule, counted by hand from the day below
+ * (`CLAUDE.md` rule 11). On 18 September 2026 the quarter that ended last is
+ * April–June 2026, which is `BLOCKAGE`.
+ */
+describe("an old national-insurance quarter, marked as handled (specs.md item 27)", () => {
+  /** January–March 2026 — a quarter older than the one that ended last. */
+  const OLDER: ActionEntry = {
+    list: "blockage",
+    key: "nationalInsurance",
+    quarter: { from: { year: 2026, month: 1 }, to: { year: 2026, month: 3 } },
+  };
+
+  it("is offered on a quarter older than the one that ended last, and on no other blockage", () => {
+    expect(dismissalOf(OLDER, TODAY)).toBe("markHandled");
+    expect(dismissalOf(BLOCKAGE, TODAY)).toBeNull();
+    // Not a quarter at all: a month whose facts are incomplete is a blockage the
+    // family cannot close, because the salary genuinely cannot be produced.
+    const unconfirmed: ActionEntry = {
+      list: "blockage",
+      key: "monthUnconfirmed",
+      month: { year: 2026, month: 8 },
+    };
+    expect(dismissalOf(unconfirmed, TODAY)).toBeNull();
+  });
+
+  it("stops being offered once that quarter becomes the one that ended last", () => {
+    // Read on 10 May 2026, January–March is the quarter that ended last — the
+    // one whose receipt the family still has.
+    expect(dismissalOf(OLDER, "2026-05-10")).toBeNull();
+  });
+
+  it("hides that quarter for good and leaves every other blockage", () => {
+    const marked = markedHandledOf("w", OLDER);
+    expect(
+      shownEntries([OLDER, BLOCKAGE, VISA], {
+        workerId: "w",
+        switchedOff: [],
+        deferrals: [marked],
+        today: TODAY,
+      }),
+    ).toEqual([BLOCKAGE, VISA]);
+    // Years later it is still gone: nothing was recorded, so nothing brings it
+    // back.
+    expect(
+      shownEntries([OLDER], {
+        workerId: "w",
+        switchedOff: [],
+        deferrals: [marked],
+        today: "2031-01-01",
+      }),
+    ).toEqual([]);
+  });
+
+  it("hides nothing when it is a seven-day 'not now' rather than the forever record", () => {
+    // A blockage still cannot be put off (item 27). Only the forever record
+    // closes one, which is what keeps the two gestures apart.
+    expect(
+      shownEntries([OLDER], {
+        workerId: "w",
+        switchedOff: [],
+        deferrals: [deferralOf("w", OLDER, "2026-09-17")],
+        today: TODAY,
+      }),
+    ).toEqual([OLDER]);
+  });
+
+  it("hides nothing of another worker's", () => {
+    expect(
+      shownEntries([OLDER], {
+        workerId: "w",
+        switchedOff: [],
+        deferrals: [markedHandledOf("other", OLDER)],
+        today: TODAY,
+      }),
+    ).toEqual([OLDER]);
   });
 });
 

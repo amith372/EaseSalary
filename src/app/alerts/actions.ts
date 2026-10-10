@@ -30,14 +30,18 @@ export async function dismiss(workerId: string, fingerprint: string): Promise<vo
   } catch {
     return;
   }
-  const how = entry === null || typeof entry !== "object" ? null : dismissalOf(entry);
+  const today = await readToday();
+  const how =
+    entry === null || typeof entry !== "object"
+      ? null
+      : dismissalOf(entry, today);
   if (how === null) return;
   const repository = await getRepository();
   if ((await repository.getWorker(workerId)) === null) return;
   await repository.deferWarning(
     how === "markHandled"
       ? markedHandledOf(workerId, entry)
-      : deferralOf(workerId, entry, await readToday()),
+      : deferralOf(workerId, entry, today),
   );
   revalidatePath("/alerts");
 }
