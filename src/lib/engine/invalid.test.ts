@@ -93,15 +93,16 @@ describe("a holiday on a free rest day (specs.md item 9, Part 4)", () => {
    * **And it is the same month as the free rest day alone**, which is the whole
    * of what "not a holiday at all" means: the holiday adds no pay, and the
    * figure is the one Part 4 already held for that month without it —
-   * ₪6,747.65 of salary items and ₪1,705.40 for four worked Saturdays.
+   * ₪6,748 of salary items and ₪1,706 for four worked Saturdays, each line up
+   * to the whole shekel (item 3).
    */
   it("comes to exactly the month the free rest day makes on its own", () => {
     const justTheFreeRestDay = facts([
       { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
     ]);
     expect(validateMonth(justTheFreeRestDay, terms)).toEqual([]);
-    expect(calculateMonth(justTheFreeRestDay, terms).gross).toBe(674765 + 170540);
-    expect(calculateMonth(onTheRestDay, terms).gross).toBe(674765 + 170540);
+    expect(calculateMonth(justTheFreeRestDay, terms).gross).toBe(674800 + 170600);
+    expect(calculateMonth(onTheRestDay, terms).gross).toBe(674800 + 170600);
   });
 });
 

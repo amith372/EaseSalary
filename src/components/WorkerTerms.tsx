@@ -71,7 +71,7 @@ import { he } from "@/lib/i18n/he";
 import type { IdentifyingNumbers } from "@/lib/identifyingNumbers";
 import {
   amountFieldValue,
-  formatAgorot,
+  formatRate,
   formatDays,
   formatPercent,
 } from "@/lib/money";
@@ -790,7 +790,7 @@ export function SalaryControl({
             {words.now}
           </span>
           <Bidi noTranslate className="font-semibold">
-            {formatAgorot(inForce)}
+            {formatRate(inForce)}
           </Bidi>
         </span>
 
@@ -806,7 +806,7 @@ export function SalaryControl({
               className="text-[13px] leading-[1.5] font-light text-clay-deep text-pretty"
             >
               <span>{words.below.before}</span>
-              <Bidi noTranslate>{formatAgorot(minimumWageAgorot)}</Bidi>
+              <Bidi noTranslate>{formatRate(minimumWageAgorot)}</Bidi>
               <span>{words.below.after}</span>
             </p>
             <button
@@ -839,7 +839,7 @@ export function SalaryControl({
                 <span dir="auto">{words.changedFrom}</span>
                 <Bidi>{monthLabel(change.from)}</Bidi>
                 <Bidi noTranslate className="font-medium">
-                  {formatAgorot(change.agorot)}
+                  {formatRate(change.agorot)}
                 </Bidi>
               </li>
             ))}
@@ -1241,7 +1241,7 @@ export function RestEveSupplementControl({
             className={`${inputClass} max-w-40 text-start`}
           />
           <Bidi noTranslate className="text-[13px] font-light text-ink-quiet">
-            {formatAgorot(agorot)}
+            {formatRate(agorot)}
           </Bidi>
           <button
             type="button"

@@ -315,8 +315,8 @@ export type ClosingBlock = "withholding" | "transfer";
  * A column's own total, as the month tab prints it.
  *
  * The sheet carries four total lines, not two: the monthly salary items come to
- * ₪6,747.65 and the rest days and holidays to ₪2,558.10 before the month's
- * total and the figure actually paid (specs.md criterion 1, Part 4). A subtotal
+ * ₪6,748 and the rest days and holidays to ₪2,559 before the month's total and
+ * the figure actually paid (specs.md criterion 1, Part 4). A subtotal
  * is emitted for every column the month has lines in, so a column with nothing
  * in it prints nothing rather than a zero.
  */
@@ -390,12 +390,12 @@ export interface MonthResult {
   closing: ClosingLine[];
   /**
    * Columns E, F and G alone — "the month's total" of specs.md Part 5, and
-   * ₪9,305.75 in the August 2025 case. Adding H would overpay the worker
+   * ₪9,307 in the August 2025 case. Adding H would overpay the worker
    * (item 16).
    */
   gross: number | null;
   /**
-   * What is actually paid: the gross after the closing block, and ₪7,305.75 in
+   * What is actually paid: the gross after the closing block, and ₪7,307 in
    * the August 2025 case. Part 4 names both figures without naming either, so
    * the two are given names here and the export and the preview use them both
    * (Part 5).

@@ -10,8 +10,8 @@ import type { MonthSpan } from "@/lib/engine/types";
  * **It is the one household in the application that means something.** The demo
  * seed beside it is nine months of 2026 to click at and proves nothing; this is
  * August 2025 as the family's own sheet records it, and its four totals —
- * ₪6,747.65, ₪2,558.10, ₪9,305.75 and ₪7,305.75 — are the figures criterion 1
- * is agreement with. `august-2025.test.ts` already checks that the engine
+ * ₪6,748, ₪2,559, ₪9,307 and ₪7,307 — are the figures criterion 1 is agreement
+ * with. `august-2025.test.ts` already checks that the engine
  * produces them from facts handed to it directly. What this household adds is
  * the half a unit test cannot reach (`CLAUDE.md` rule 9): the same four figures
  * arrived at through the calendar, the holiday controls and the payments screen,
@@ -31,9 +31,9 @@ import type { MonthSpan } from "@/lib/engine/types";
  *   exists to put to them.
  * - **The ₪2,000 instalment** is recorded on `/payments` (item 20).
  *
- * So the household opens on a month worth ₪8,879.40 — the plain August of
- * `august-2025.fixture.ts` — and three gestures move it to ₪9,305.75, with the
- * instalment taking the transfer to ₪7,305.75. A seed that arrived at the four
+ * So the household opens on a month worth ₪8,880 — the plain August of
+ * `august-2025.fixture.ts` — and three gestures move it to ₪9,307, with the
+ * instalment taking the transfer to ₪7,307. A seed that arrived at the four
  * figures on its own would be a demonstration and not a check.
  */
 

@@ -3,9 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ACTION_FAULT, type ActionFault } from "@/lib/actionFault";
 import { getRepository, requireWorker } from "@/lib/store";
-import { salaryFor } from "@/lib/engine/salary";
 import {
-  baseForMonth,
   blocksExport,
   recuperationToConfirm,
   reviewRecuperationRate,
@@ -13,9 +11,7 @@ import {
   reviewWageConfirmation,
   spellEndFromReturn,
 } from "@/lib/engine/beforeExport";
-import { recordOf } from "@/lib/engine/repository";
-import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
-import { taxToConfirm } from "@/lib/engine/taxConfirmation";
+import { confirmMonthRecord } from "@/lib/monthConfirmation";
 import {
   compareMonth,
   isIsoDate,
@@ -122,35 +118,6 @@ export async function closeSickSpell(
   }
 }
 
-/**
- * The income tax the month is confirmed with (specs.md item 17): what the
- * engine works out for it now, from the same replay the screen showed them.
- *
- * **The calculation is `taxConfirmation.ts`'s and not this action's**, because
- * the before-export screen puts the very same figure to the user before this
- * runs: two copies of it would agree today and drift the first time either was
- * corrected, and the family would confirm one number and file another
- * (`CLAUDE.md` rule 12).
- */
-async function taxConfirmedFor(
-  repository: SalaryRepository,
-  profile: WorkerProfile,
-  month: YearMonth,
-): Promise<number> {
-  const confirmed = taxToConfirm(
-    await repository.listMonths(profile.id),
-    profile,
-    await readToday(),
-    await repository.listRates(),
-    await repository.listTaxBrackets(),
-    month,
-  );
-  // A month outside the series cannot be reached from this action — the
-  // confirmation reads it first — and a tax of nothing is the safe reading of
-  // a month the engine will not value.
-  return confirmed?.agorot ?? 0;
-}
-
 /** The figures the confirmation carries. Text, because they are what was typed
  * into fields; `parseShekels` is what turns them into agorot, and it is the
  * same reader every other amount in the application goes through. */
@@ -252,25 +219,23 @@ export async function confirmMonth(
       });
     }
 
-    await repository.saveMonth(workerId, {
-      ...recordOf(facts),
-      incomeTaxAgorot: await taxConfirmedFor(repository, profile, month),
-      // Part 5's *confirmed* event, which `דף המשכורת` prints. Read from the
-      // clock here, in the action, and never in the engine or a render.
-      confirmedAt: await readNow(),
-      confirmedWage: {
-        // Item 3: a salary may never sit below the minimum wage, so a profile
-        // still holding last year's figure is raised to the wage in force rather
-        // than writing a month that pays under its own confirmed minimum. The
-        // screen says so before the user presses.
-        baseAgorot: baseForMonth(salaryFor(profile, facts.month), minimumAgorot),
+    // **The write itself is `monthConfirmation.ts`'s and not this action's.**
+    // The tick on the worker's list of months confirms by the same path, and a
+    // second copy of the snapshot would agree today and drift the first time
+    // either was corrected (`CLAUDE.md` rule 12).
+    await confirmMonthRecord(
+      repository,
+      profile,
+      facts,
+      {
         minimumAgorot,
         effectiveFrom,
+        ...(recuperationDayRateAgorot === undefined
+          ? {}
+          : { recuperationDayRateAgorot }),
       },
-      ...(recuperationDayRateAgorot === undefined
-        ? {}
-        : { recuperationDayRateAgorot }),
-    });
+      { today: await readToday(), now: await readNow() },
+    );
 
     revalidatePath("/", "layout");
     return { ok: true };

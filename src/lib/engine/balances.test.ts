@@ -131,23 +131,41 @@ function balance(
 }
 
 describe("the seniority ladder (specs.md item 7)", () => {
-  it("gives fourteen days through year four, then sixteen, eighteen, twenty-one", () => {
-    // Item 7, read straight off: fourteen a year through year four, sixteen in
-    // year five, eighteen in year six, twenty-one in year seven.
-    expect([1, 2, 3, 4].map(vacationDaysPerYear)).toEqual([14, 14, 14, 14]);
-    expect(vacationDaysPerYear(5)).toBe(16);
-    expect(vacationDaysPerYear(6)).toBe(18);
-    expect(vacationDaysPerYear(7)).toBe(21);
+  // **Where every figure below comes from, and it is not this engine.** The
+  // Annual Leave Act's section 3(a) gives the entitlement in calendar days — 16
+  // for each of the first five years, 18 in the sixth, 21 in the seventh, one
+  // more each year to 28 — and its closing sentence allows no more than one
+  // weekly rest inside every seven of them. A worker resting one day a week
+  // therefore keeps the calendar figure less one day per whole seven, which is
+  // the arithmetic done on paper beside each case. Section 3(b) is satisfied
+  // here with room to spare: a live-in caregiver works far more than the 200
+  // days a year it asks for before the figure is prorated.
+  it("gives fourteen days through year five, then sixteen and eighteen", () => {
+    // 16 − 2 = 14, because 16 calendar days hold two whole sevens.
+    expect([1, 2, 3, 4, 5].map(vacationDaysPerYear)).toEqual([
+      14, 14, 14, 14, 14,
+    ]);
+    // 18 − 2 = 16: 18 still holds only two whole sevens, so the step up is two
+    // days and not three.
+    expect(vacationDaysPerYear(6)).toBe(16);
+    // 21 − 3 = 18, three sevens exactly.
+    expect(vacationDaysPerYear(7)).toBe(18);
   });
 
-  it("adds one a year after the seventh and stops at twenty-eight", () => {
-    // "one more each year to a ceiling of twenty-eight" (item 7): 21 in year
-    // seven, so 22 in the eighth and 28 in the fourteenth — 21 + 7.
-    expect(vacationDaysPerYear(8)).toBe(22);
-    expect(vacationDaysPerYear(14)).toBe(28);
-    // And it stops there rather than continuing to 29 and 30.
-    expect(vacationDaysPerYear(15)).toBe(28);
-    expect(vacationDaysPerYear(40)).toBe(28);
+  it("adds one a year after the seventh and stops at twenty-four", () => {
+    // 22 − 3 = 19, and so on by one a year while the calendar figure stays
+    // inside three sevens: 23 − 3 = 20, 24 − 3 = 21.
+    expect(vacationDaysPerYear(8)).toBe(19);
+    expect(vacationDaysPerYear(9)).toBe(20);
+    expect(vacationDaysPerYear(10)).toBe(21);
+    // Year 13 is the Act's 27 calendar days, 27 − 3 = 24.
+    expect(vacationDaysPerYear(13)).toBe(24);
+    // **Year 14 is where the two ceilings meet and the ladder goes flat.** The
+    // Act stops at 28 calendar days, and 28 is four whole sevens rather than
+    // three, so 28 − 4 = 24 — the same figure as year 13, not one more.
+    expect(vacationDaysPerYear(14)).toBe(24);
+    expect(vacationDaysPerYear(15)).toBe(24);
+    expect(vacationDaysPerYear(40)).toBe(24);
   });
 
   it("counts the year as a calendar year, not from the employment anniversary", () => {
@@ -173,14 +191,15 @@ describe("the seniority ladder (specs.md item 7)", () => {
 
   it("steps on the 1st of January and nowhere inside a year", () => {
     // The check that catches an anniversary-based ladder. Employed 1.4.2024,
-    // the step to sixteen days is 1.1.2028 (item 7). So April 2028 must not be
-    // the boundary: every month of 2027 accrues at fourteen and every month of
-    // 2028 at sixteen, the anniversary month included.
+    // 2028 is their fifth year and 2029 their sixth, so the step to sixteen days
+    // is 1.1.2029 (item 7). April 2029 must not be the boundary: every month of
+    // 2028 accrues at fourteen and every month of 2029 at sixteen, the
+    // anniversary month included.
     const since = "2024-04-01";
     const months = Array.from({ length: 12 }, (_, index) => index + 1);
     for (const month of months) {
-      expect(monthlyVacationAccrual(since, { year: 2027, month })).toBe(14 / 12);
-      expect(monthlyVacationAccrual(since, { year: 2028, month })).toBe(16 / 12);
+      expect(monthlyVacationAccrual(since, { year: 2028, month })).toBe(14 / 12);
+      expect(monthlyVacationAccrual(since, { year: 2029, month })).toBe(16 / 12);
     }
   });
 });

@@ -10,7 +10,7 @@ import {
 } from "./household";
 import { he } from "../src/lib/i18n/he";
 import { fullDayLabel } from "../src/lib/dateLabels";
-import { formatAgorot, formatDays } from "../src/lib/money";
+import { formatAgorot, formatDays, formatRate } from "../src/lib/money";
 import { addMonths, monthOf, yearMonthText } from "../src/lib/dates";
 import type { YearMonth } from "../src/lib/types";
 
@@ -127,7 +127,7 @@ test.describe("the settings screen", () => {
     );
 
     const wage = page.locator('[data-setting="minimum-wage"]');
-    await expect(wage).toContainText(formatAgorot(MINIMUM_WAGE_2026));
+    await expect(wage).toContainText(formatRate(MINIMUM_WAGE_2026));
     await expect(wage).toContainText(fullDayLabel("2026-04-01"));
     await expect(wage).toContainText(he.settings.derived);
 
@@ -186,7 +186,7 @@ test.describe("a change of salary (specs.md item 3)", () => {
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
 
     // Recorded, and in force this month.
-    await expect(salary).toContainText(formatAgorot(RAISED_TO));
+    await expect(salary).toContainText(formatRate(RAISED_TO));
     await page.screenshot({
       path: "test-results/settings-raise.png",
       fullPage: true,
@@ -261,9 +261,9 @@ test.describe("a salary below the minimum wage in force (specs.md item 3)", () =
     const words = he.workers.profile.terms.salary;
 
     // In force: the seeded 2025 figure, under the floor.
-    await expect(salary).toContainText(formatAgorot(624765));
+    await expect(salary).toContainText(formatRate(624765));
     const said = salary.locator("[data-salary-below-minimum]");
-    await expect(said).toContainText(formatAgorot(MINIMUM_WAGE_2026));
+    await expect(said).toContainText(formatRate(MINIMUM_WAGE_2026));
 
     await said.getByRole("button", { name: words.takeMinimum }).click();
 
@@ -271,7 +271,7 @@ test.describe("a salary below the minimum wage in force (specs.md item 3)", () =
     // is still the old one.
     const amount = salary.getByRole("textbox", { name: words.amount });
     await expect(amount).toHaveValue("6443.85");
-    await expect(salary).toContainText(formatAgorot(624765));
+    await expect(salary).toContainText(formatRate(624765));
 
     await salary
       .getByRole("textbox", { name: words.from })
@@ -284,9 +284,9 @@ test.describe("a salary below the minimum wage in force (specs.md item 3)", () =
     // server that has been up a while is seconds rather than milliseconds.
     await expect(
       salary.locator('[data-salary-change="2026-09"]'),
-    ).toContainText(formatAgorot(MINIMUM_WAGE_2026), { timeout: 20000 });
+    ).toContainText(formatRate(MINIMUM_WAGE_2026), { timeout: 20000 });
     // In force, so the old figure is gone and the sentence with it.
-    await expect(salary).not.toContainText(formatAgorot(624765));
+    await expect(salary).not.toContainText(formatRate(624765));
     await expect(salary.locator("[data-salary-below-minimum]")).toHaveCount(0);
   });
 
@@ -425,7 +425,7 @@ test.describe("the rest-eve supplement (specs.md item 14)", () => {
       .getByRole("button", { name: he.workers.profile.terms.restEveSupplement.save })
       .click();
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
-    await expect(supplement).toContainText(formatAgorot(15000));
+    await expect(supplement).toContainText(formatRate(15000));
 
     await openPayslip(page, month);
     await expect(page.locator('[data-row="restEveSupplement"]')).toContainText(
@@ -626,10 +626,15 @@ test.describe("the switcher on a worker's page", () => {
  * העסקה"). Seniority is counted from it and nothing counted from it is stored,
  * so the rows that read it move at once.
  *
- * The figure is item 7's ladder: moved from 1.4.2024 to 1.1.2020, 2026 becomes
- * them seventh calendar year, and year seven is twenty-one days — up from the
- * fourteen of their third. That holds while the real clock is in 2026, which is
- * true of every spec here that reads "this year".
+ * The figure is item 7's ladder, **in working days**: moved from 1.4.2024 to
+ * 1.1.2020, 2026 becomes them seventh calendar year, and year seven is eighteen
+ * days — up from the fourteen of their third, which the ladder pays through
+ * year five. Eighteen and not the Annual Leave Act's printed twenty-one,
+ * because the Act counts in calendar days and allows one weekly rest inside
+ * every seven of them; item 7 states the ladder net of those rest days, since a
+ * day drawn from this balance is always a day they would otherwise have
+ * attended. That holds while the real clock is in 2026, which is true of every
+ * spec here that reads "this year".
  *
  * What it catches: a date saved on the profile while the vacation figure keeps
  * reading the old one, and a nonexistent date rolled into the next month
@@ -654,7 +659,7 @@ test.describe("the start of the employment", () => {
       .getByRole("button", { name: he.workers.profile.terms.employedSince.save })
       .click();
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
-    await expect(vacation).toContainText(formatDays(21));
+    await expect(vacation).toContainText(formatDays(18));
   });
 
   /**

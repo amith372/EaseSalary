@@ -361,14 +361,21 @@ a question about one of them is the expensive mistake.
    it looks like — there the figure in the unit-price column **is** the thing being
    reported, and here the thing being reported is the number of days. A vacation day, like a holiday, may be
    taken as part of a day and is drawn from the balance in that proportion. Vacation
-   accrues by seniority — fourteen days a year through year four, sixteen in year five,
-   eighteen in year six, twenty-one in year seven, and one more each year to a ceiling of
-   twenty-eight. The year that counts here is the **calendar** year, because that is how
+   accrues by seniority — fourteen days a year through year five, sixteen in year six,
+   eighteen in year seven, and one more each year to a ceiling of twenty-four. **Those are
+   working days, and that is why they are not the numbers the Annual Leave Act prints.** The
+   Act's section 3(a) counts in calendar days — sixteen for each of the first five years,
+   eighteen in the sixth, twenty-one in the seventh, one more each year to twenty-eight — and
+   lets no more than one weekly rest fall inside every seven of them, so a worker resting one
+   day a week gives up one day fewer per seven than the Act names. The ladder is stated net
+   because a day drawn from this balance is always a day the worker would otherwise have
+   attended and never a rest day. The year that counts here is the **calendar** year, because that is how
    the Annual Leave Act measures one: it turns over on the 1st of January, and a worker
    who started in the middle of a year completes their first working year on the 31st of
    December of that same year even though they did not work twelve months of it. So a
    worker employed from 1.4.2024 is in their first year through 2024, their second through
-   2025, their fifth through 2028, and steps to sixteen days on 1.1.2028. A partial
+   2025, their fifth through 2028, and steps to sixteen days on 1.1.2029, when their sixth
+   year begins. A partial
    calendar year counts as a whole year on that ladder; what it reduces is the
    entitlement earned inside it, and that reduction happens on its own, because a year
    they were employed for nine months of accrues nine monthly twelfths — 10.5 days at the
@@ -899,6 +906,28 @@ a question about one of them is the expensive mistake.
     dates arrive on the calendar from the year's chosen list rather than from anything the
     family did in that month, so an unanswered holiday is the one thing on the month
     nobody has necessarily looked at.
+    **A month can also be confirmed without being exported, and several at once.** A
+    family adopting the application for a worker already employed has months behind them
+    that are filed and settled, and walking the questions above for a sheet they already
+    hold asks them to agree a dozen times to something nobody disputes. So the worker's
+    own list of months offers a tick to each month not yet confirmed, and one gesture
+    confirms every month ticked. **It claims less than an export does.** It confirms the
+    figures the month is valued at and nothing more, which is exactly what Part 5's
+    *confirmed* is — the moment the base salary is copied onto the month and its figures
+    stop moving with the profile — while the questions above are a confirmation of what
+    happened inside the month and are answered only by somebody walking it. **So no figure
+    is typed here**: each ticked month is confirmed at the figures the dated rates table
+    already holds for it, the minimum wage in force during that month and the recuperation
+    day rate where the month owes recuperation, shown with the months each covers, so a
+    run crossing a rate change is valued correctly month by month. A month needing a
+    figure the table does not hold is not confirmed this way and is left to the export
+    screen, which is where a figure is entered by hand. **It refuses what an export
+    refuses, and for the same reason**: a month carrying an unanswered holiday or a spell
+    of sickness still open is a month whose total the application knows is wrong, and a
+    wrong balance is the thing confirming in bulk exists to avoid. A month that has not
+    ended is likewise not confirmed this way. A month confirmed this way is *confirmed*
+    and not *exported*: no file was produced from it, so it stays among the months
+    awaiting one until a sheet is made or the reminder is marked as handled.
 19. The national-insurance contribution is 3.6% of the month's full cost, taken before
     anything to do with advances. Kol Zchut settles what that cost is, so it is no
     longer inferred from the workbook: the base is the gross wage including sick pay,

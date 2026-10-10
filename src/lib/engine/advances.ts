@@ -1,6 +1,6 @@
 import { addMonths, compareMonth, isIsoDate, monthOf, sameMonth } from "@/lib/dates";
 import { advanceKinds } from "@/lib/engine/types";
-import { parseShekels } from "@/lib/money";
+import { parseShekels, shekelsUp } from "@/lib/money";
 import type {
   Advance,
   AdvanceKind,
@@ -388,7 +388,11 @@ export function reviewAdvance(
     if (refused !== null) return { ok: false, reason: refused };
   }
 
-  const agorot = parseShekels(draft.amount);
+  // Rounded where it crosses into storage, so the ledger counts the shekels
+  // that were actually moved: the month pays the rounded figure (item 3), and a
+  // debt tracked in agorot would never settle against it.
+  const typed = parseShekels(draft.amount);
+  const agorot = typed === null ? null : shekelsUp(typed);
   // Zero is refused with the rest: an advance of nothing is not one, and it
   // would print in the export as a payment of nothing (item 2). `parseShekels`
   // has already refused a minus.
@@ -550,7 +554,10 @@ export function reviewAdvanceEdit(
   movement: Advance,
   standing: AdvanceStanding,
 ): ReviewedAdvance {
-  const agorot = parseShekels(draft.amount);
+  const typed = parseShekels(draft.amount);
+  // Rounded on the way in for `reviewAdvance`'s reason: the ledger counts the
+  // shekels that were actually moved (item 3).
+  const agorot = typed === null ? null : shekelsUp(typed);
   // Zero is refused as it is on a new movement: a movement of nothing is not
   // one, and removing it is the gesture that means what zero would mean.
   if (agorot === null || agorot === 0) return { ok: false, reason: "amount" };
@@ -669,23 +676,29 @@ export function splitSpan(grantMonth: YearMonth, count: number): YearMonth[] {
 }
 
 /**
- * The principal divided into `count` instalments, **the last absorbing the
- * remainder** (specs.md item 20).
+ * The principal divided into `count` instalments, **each a whole shekel and the
+ * last absorbing the remainder** (specs.md items 3 and 20).
  *
- * ₪5,000 over three is 1,666.66 / 1,666.66 / 1,666.68: the even floor for as
- * long as possible, the odd figure once, at the end. The instalments sum to the
- * principal exactly, because money is integer agorot and a split that lost one
- * would leave a debt nothing could close — a worker owing a single agora that no
- * repayment can be entered for, since zero is refused as an amount.
+ * ₪5,000 over three is ₪1,666 / ₪1,666 / ₪1,668: the even floor for as long as
+ * possible, the odd figure once, at the end. The instalments sum to the
+ * principal exactly, because a split that lost a shekel would leave a debt
+ * nothing could close — a worker owing a shekel that no repayment can be
+ * entered for, since zero is refused as an amount.
  *
- * Pure arithmetic over agorot, so nothing here rounds and nothing here can
- * accumulate a floating-point remainder (`CLAUDE.md`).
+ * **Rounding each third up instead would come to ₪5,001**, which is a shekel
+ * more than was lent, so the remainder is given to the last month rather than
+ * taken away from zero on every line. The figures are divided and never
+ * rounded: the floor is taken in shekels, so each instalment is already whole
+ * and `shekelsUp` has nothing left to do to it.
+ *
+ * Pure arithmetic over agorot, so nothing here can accumulate a floating-point
+ * remainder (`CLAUDE.md`).
  */
 export function splitInstalments(
   principalAgorot: number,
   count: number,
 ): number[] {
-  const even = Math.floor(principalAgorot / count);
+  const even = Math.floor(principalAgorot / (count * 100)) * 100;
   return Array.from({ length: count }, (_, at) =>
     at === count - 1 ? principalAgorot - even * (count - 1) : even,
   );
@@ -796,7 +809,12 @@ export function reviewAdvanceSplit(
 
   const amounts: number[] = [];
   for (const instalment of draft.instalments) {
-    const agorot = parseShekels(instalment);
+    const typed = parseShekels(instalment);
+    // Each instalment is an amount and is a whole shekel, so three thirds of
+    // ₪5,000 are ₪1,667, ₪1,667 and ₪1,666 — typed that way by the user, since
+    // three rounded-up thirds would come to ₪5,001 and the refusal below says
+    // so rather than quietly over-repaying the advance (item 3).
+    const agorot = typed === null ? null : shekelsUp(typed);
     // Zero is refused as it is on a movement of its own: a repayment of nothing
     // is not one, and a month that repays nothing is a shorter span.
     if (agorot === null || agorot === 0) return { ok: false, reason: "amount" };

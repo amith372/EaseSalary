@@ -45,10 +45,11 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  *   hourly     624765 / 182  = 3,432.774725274…
  *   rest day   (24990.6 + 3432.774725274…) × 1.5 = 42,635.062087912… agorot
  *
- * That last figure is the arithmetic's own check: six of them — Part 4's four
- * Saturdays worked plus two holidays — come to 255,810.37…, which rounds to the
- * ₪2,558.10 Part 4 states outright. The method that reproduces the known case
- * to the agora is the method used below on the two that have no known case.
+ * That last figure is the arithmetic's own check: Part 4's four Saturdays
+ * worked come to 170,540.24… and its two holidays to 85,270.12…, which as two
+ * lines each up to the whole shekel are ₪1,706 and ₪853 — the ₪2,559 Part 4
+ * states outright. The method that reproduces the known case to the shekel is
+ * the method used below on the two that have no known case.
  *
  * **The Friday-resting worker, August 2025, nothing marked.** Their rest days are
  * the five Fridays, so the standard count is 31 − 5 = 26 — the same 26 as
@@ -56,24 +57,24 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  * immediately before their rest day (item 14), which is Thursday, and August
  * holds only four of those:
  *
- *   column E   624,765 + 4 × 10,000                 = 664,765   ₪6,647.65
- *   column F   5 × 42,635.062087912… = 213,175.31…  = 213,175   ₪2,131.75
- *   gross                                            = 877,940   ₪8,779.40
+ *   column E   624,800 + 4 × 10,000                 = 664,800   ₪6,648
+ *   column F   5 × 42,635.062087912… = 213,175.31… -> 213,200   ₪2,132
+ *   gross                                            = 878,000   ₪8,780
  *
- * Hanna's own August is ₪6,747.65 and ₪9,305.75, so no figure above can be
- * reached by a run that never left their calendar.
+ * Hanna's own August is ₪6,748 and ₪9,307, so no figure above can be reached by
+ * a run that never left their calendar.
  *
  * **The Sunday-resting worker, March 2026, nothing marked.** Their rest days are
  * the five Sundays — 1, 8, 15, 22, 29 — so the standard count is 31 − 5 = 26,
  * where a Saturday-resting worker's March is 31 − 4 = 27. Their rest-eve is
  * Saturday, and March holds four:
  *
- *   column E   624,765 + 4 × 10,000                 = 664,765   ₪6,647.65
- *   column F   5 × 42,635.062087912… = 213,175.31…  = 213,175   ₪2,131.75
- *   gross                                            = 877,940   ₪8,779.40
+ *   column E   624,800 + 4 × 10,000                 = 664,800   ₪6,648
+ *   column F   5 × 42,635.062087912… = 213,175.31… -> 213,200   ₪2,132
+ *   gross                                            = 878,000   ₪8,780
  *
  * A Saturday-resting worker's March pays four rest days — 4 × 42,635.062087912…
- * = 170,540.24…, so ₪1,705.40 — over 27 standard days, and the last case below
+ * = 170,540.24…, so a line of ₪1,706 — over 27 standard days, and the last case below
  * asserts that half too, so the two are held apart rather than assumed apart.
  */
 
@@ -144,21 +145,21 @@ describe("a Friday-resting worker, August 2025 (specs.md items 5, 14)", () => {
     expect(counts.restEvesWorked).toBe(4);
   });
 
-  it("pays ₪6,647.65 in column E — the base plus four rest-eves", () => {
-    // 624,765 + 4 × 10,000. Four and not five, because the supplement follows
-    // the rest-eve and not the Friday (item 14). Hanna's column E is ₪6,747.65,
-    // so that figure appearing here is the supplement being paid on days that
-    // earn it for somebody else.
-    expect(columnTotal(result, "E")).toBe(664765);
+  it("pays ₪6,648 in column E — the base plus four rest-eves", () => {
+    // 624,800 + 4 × 10,000. Four and not five, because the supplement follows
+    // the rest-eve and not the Friday (item 14). Hanna's column E is ₪6,748, so
+    // that figure appearing here is the supplement being paid on days that earn
+    // it for somebody else.
+    expect(columnTotal(result, "E")).toBe(664800);
   });
 
-  it("pays ₪2,131.75 in column F — her five Fridays worked", () => {
+  it("pays ₪2,132 in column F — her five Fridays worked", () => {
     // 5 × 42,635.062087912… = 213,175.31…, rounded once at the end.
-    expect(columnTotal(result, "F")).toBe(213175);
+    expect(columnTotal(result, "F")).toBe(213200);
   });
 
-  it("gives a gross of ₪8,779.40", () => {
-    expect(result.gross).toBe(877940);
+  it("gives a gross of ₪8,780", () => {
+    expect(result.gross).toBe(878000);
   });
 });
 
@@ -177,31 +178,31 @@ describe("a Sunday-resting worker, March 2026 (specs.md items 5, 14)", () => {
     expect(counts.restEves).toBe(4);
   });
 
-  it("pays ₪6,647.65 in column E — the base plus four rest-eves", () => {
+  it("pays ₪6,648 in column E — the base plus four rest-eves", () => {
     // 624,765 + 4 × 10,000; March holds four Saturdays, which are them
     // rest-eves.
-    expect(columnTotal(result, "E")).toBe(664765);
+    expect(columnTotal(result, "E")).toBe(664800);
   });
 
-  it("pays ₪2,131.75 in column F — her five Sundays worked", () => {
+  it("pays ₪2,132 in column F — her five Sundays worked", () => {
     // 5 × 42,635.062087912… = 213,175.31….
-    expect(columnTotal(result, "F")).toBe(213175);
+    expect(columnTotal(result, "F")).toBe(213200);
   });
 
-  it("gives a gross of ₪8,779.40", () => {
-    expect(result.gross).toBe(877940);
+  it("gives a gross of ₪8,780", () => {
+    expect(result.gross).toBe(878000);
   });
 
   it("leaves a Saturday-resting worker's own March at four rest days and 27", () => {
     // The other half of the pair, so the two are held apart rather than assumed
-    // apart: 4 × 42,635.062087912… = 170,540.24…, over 31 − 4 = 27 standard
+    // apart: 4 × 42,635.062087912… = 170,540.24… -> ₪1,706, over 31 − 4 = 27 standard
     // days. If this case and the ones above ever agree, the rest day has
     // stopped being read.
     const hanna = terms({ restDay: SATURDAY });
     const march = calculateMonth(facts(hanna, MARCH_2026), hanna);
     expect(march.standardDays).toBe(27);
-    expect(columnTotal(march, "F")).toBe(170540);
-    expect(march.gross).toBe(835305);
+    expect(columnTotal(march, "F")).toBe(170600);
+    expect(march.gross).toBe(835400);
   });
 });
 
@@ -251,14 +252,16 @@ describe("a rest day inside a spell is not deducted for (specs.md item 8)", () =
 
   it("deducts 1.5 days from a Friday-resting worker, whose rest day is day three", () => {
     const worker = terms({ restDay: FRIDAY, openingPosition: opening });
-    expect(deduction(worker)).toEqual({ units: -1.5, amount: -37486 });
+    // 1.5 × 24,990.6 = 37,485.9, withheld as ₪375 — away from zero, like any
+    // other amount (item 3).
+    expect(deduction(worker)).toEqual({ units: -1.5, amount: -37500 });
   });
 
   it("deducts 2 days from a Saturday-resting worker, whose rest day is day four", () => {
     // Their rest day falls where the tiers already pay in full, so it takes
     // nothing off — the same spell costs them half a day more.
     const worker = terms({ restDay: SATURDAY, openingPosition: opening });
-    expect(deduction(worker)).toEqual({ units: -2, amount: -49981 });
+    expect(deduction(worker)).toEqual({ units: -2, amount: -50000 });
   });
 });
 
@@ -277,14 +280,14 @@ describe("a free rest day is refused per worker (specs.md item 5)", () => {
 
   it("accepts a Friday-resting worker's free Friday and pays four rest days", () => {
     // Friday the 15th is theirs. Four of their five Fridays are then worked:
-    // 4 × 42,635.062087912… = 170,540.24…, over an unchanged column E.
+    // 4 × 42,635.062087912… = 170,540.24… -> ₪1,706, over an unchanged column E.
     const worker = terms({ restDay: FRIDAY });
     const result = calculateMonth(
       facts(worker, AUGUST_2025, [free("2025-08-15")]),
       worker,
     );
-    expect(columnTotal(result, "F")).toBe(170540);
-    expect(result.gross).toBe(835305);
+    expect(columnTotal(result, "F")).toBe(170600);
+    expect(result.gross).toBe(835400);
   });
 
   it("refuses her free Saturday, which is not her rest day", () => {

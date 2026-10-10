@@ -16,9 +16,9 @@ import { formatAgorot } from "../src/lib/money";
  * (`specs.md` item 20, `build_plan.md` stage 10).
  *
  * **Every figure here is the user's own decision written out by hand.** ₪5,000
- * over three months is 1,666.66 / 1,666.66 / 1,666.68 — the even floor for as
- * long as possible and the odd figure once, at the end — and the three sum to
- * ₪5,000 exactly, which is why the advance closes. Nothing below is read back
+ * over three months is ₪1,666 / ₪1,666 / ₪1,668 — whole shekels (item 3), the
+ * even floor for as long as possible and the remainder once, at the end — and
+ * the three sum to ₪5,000 exactly, which is why the advance closes. Nothing below is read back
  * from what the screen printed and then asserted against itself.
  *
  * **It reads the three months' figures and never the three presses.** One
@@ -42,8 +42,8 @@ import { formatAgorot } from "../src/lib/money";
  * here is numbered by the application as 2. */
 const ADVANCE = 2;
 const PRINCIPAL = 500000;
-const EVEN_THIRD = 166666;
-const LAST_THIRD = 166668;
+const EVEN_THIRD = 166600;
+const LAST_THIRD = 166800;
 
 /** The grant is recorded in July 2026 — two months back from the month the demo
  * runs in, and a month nothing in the demo has confirmed, so the span July,
@@ -99,13 +99,13 @@ test.describe("an advance repaid over several months (item 20)", () => {
     // fields open holding the even floor twice and the remainder once, which is
     // the figure a family would otherwise have to work out from ₪5,000 ÷ 3.
     await expect(group.locator('[data-instalment="2026-07"]')).toHaveValue(
-      "1666.66",
+      "1666",
     );
     await expect(group.locator('[data-instalment="2026-08"]')).toHaveValue(
-      "1666.66",
+      "1666",
     );
     await expect(group.locator('[data-instalment="2026-09"]')).toHaveValue(
-      "1666.68",
+      "1668",
     );
 
     await group.getByRole("button", { name: words.split.submit }).click();
@@ -113,7 +113,7 @@ test.describe("an advance repaid over several months (item 20)", () => {
 
     // **The debt closes.** ₪5,000 given and ₪5,000 repaid across the three
     // months, so nothing is left owed — which the row says in words rather than
-    // printing a zero. An agora lost in the division would leave it open here.
+    // printing a zero. A shekel lost in the division would leave it open here.
     const advance = group.locator(`[data-advance="${ADVANCE}"]`);
     await expect(advance).toContainText(formatAgorot(PRINCIPAL));
     await expect(advance).toContainText(words.settled);

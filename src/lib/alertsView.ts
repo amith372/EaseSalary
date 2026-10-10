@@ -39,9 +39,29 @@ export interface AlertCard {
   /** Named only when the household has two workers. */
   workerName: string | null;
   blockage: boolean;
-  tag: Said;
+  /**
+   * What this card says beyond the group it is drawn under, and `null` on most
+   * of them.
+   *
+   * **Which group a card is in is said once, by the heading above it** — so a
+   * tag repeating "a blockage" over every blocking card says eight times what
+   * one heading says once. What a heading cannot say is how long a document
+   * still has, and that is the one thing left here.
+   */
+  tag: Said | null;
   title: Said;
   note: Said;
+  /**
+   * One sentence saying what it costs if nobody acts, and `null` on all but the
+   * three documents whose lapse costs something (`he.ts`'s
+   * `DOCUMENT_LAPSE_COST`).
+   *
+   * **It is a sourced legal claim and not a phrasing of the card's own state**,
+   * which is why it is carried separately rather than folded into the note: the
+   * note says what expires and when, and a correction to one must never move
+   * the other.
+   */
+  consequence: string | null;
   action: { label: string; href: string };
   law: { label: string; url: string } | null;
   /**
@@ -85,7 +105,13 @@ export interface AlertsView {
  */
 /** The three sentences an entry is drawn as: its heading, the line under it,
  * and the words on the button beside them. */
-type AlertSaid = { title: Said; note: Said; action: string };
+type AlertSaid = {
+  title: Said;
+  note: Said;
+  /** Only `documentExpiring` carries one; every other kind leaves it out. */
+  consequence?: string;
+  action: string;
+};
 
 function phrase(
   entry: ActionEntry,
@@ -162,7 +188,14 @@ function phrase(
     case "monthUnconfirmed":
       return {
         said: gathered(entry.month, months, words.monthUnconfirmed, words.monthsUnconfirmed),
-        href: "/month/export",
+        // **Their list of months and not the export screen.** The entry names
+        // every unconfirmed month at once (item 27's grouping), and the list is
+        // where several are confirmed in one gesture (item 18); `/month/export`
+        // would open one of them and ask the questions again for each, which is
+        // the walk the bulk confirmation exists to spare them. The export screen
+        // is still where a single month is confirmed *and filed*, which is what
+        // `/reports` links to month by month.
+        href: `/workers/${workerId}#months`,
         law: "wageProtection",
       };
     case "minimumWageChanged":
@@ -227,12 +260,12 @@ function gathered(
     : one(monthLabel(month));
 }
 
-function tagOf(entry: ActionEntry, today: IsoDate): Said {
-  if (entry.list === "blockage") return [he.alerts.tag.blockage];
+function tagOf(entry: ActionEntry, today: IsoDate): Said | null {
+  if (entry.list === "blockage") return null;
   if (entry.key === "documentExpiring") {
     return he.alerts.tag.inDays(daysBetween(today, entry.expiresOn));
   }
-  return [he.alerts.tag.warning];
+  return null;
 }
 
 function handledTitle(entry: HandledEntry): Said {
@@ -295,6 +328,7 @@ async function alertsView(
             tag: tagOf(lead, today),
             title: said.title,
             note: said.note,
+            consequence: said.consequence ?? null,
             action: { label: said.action, href },
             law: legalLink(law),
             dismiss: dismissal(how, lead, behind),

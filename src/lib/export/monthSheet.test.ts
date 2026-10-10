@@ -25,7 +25,9 @@ import type { MonthResult } from "@/lib/types";
  * **Every expected figure below comes from Part 4, from the template, or from
  * arithmetic worked in the open here — never from what the filler produced.**
  * Part 4 gives August 2025 as ₪6,247.65 base, ₪500 across five rest-eves,
- * ₪426.35 a rest day, and totals of 6,747.65 / 2,558.10 / 9,305.75 / 7,305.75.
+ * ₪426.35 a rest day, and totals of 6,748 / 2,559 / 9,307 / 7,307 — the rates
+ * carrying their agorot and each line of the sheet being a whole shekel
+ * (item 3).
  * The cell each of those belongs in comes from the template, read cell by cell
  * on 2026-09-10 and recorded in `layout.ts`.
  *
@@ -206,10 +208,13 @@ describe("the August 2025 month tab, filled (specs.md Part 4, criterion 1)", () 
     const sheet = await sheetOf(inputFor(result));
     // B6 `משכורת בסיסית`, B7 the rest-eve supplement, B8 the holidays, B9 the
     // rest days — the template's own numbered rows 1 to 4.
-    expect(numberAt(sheet, "E6")).toBeCloseTo(6247.65, 2); // Part 4
-    expect(numberAt(sheet, "E7")).toBeCloseTo(500, 2); // Part 4
-    expect(numberAt(sheet, "F8")).toBeCloseTo(852.7, 2); // 2 × ₪426.35
-    expect(numberAt(sheet, "F9")).toBeCloseTo(1705.4, 2); // 4 × ₪426.35
+    // Whole shekels and asserted exactly, because an amount on the sheet is a
+    // whole number of shekels (specs.md item 3) — a cell carrying agorot is a
+    // figure that escaped the rule, which `toBeCloseTo` would let through.
+    expect(numberAt(sheet, "E6")).toBe(6248); // Part 4: ₪6,247.65 paid as ₪6,248
+    expect(numberAt(sheet, "E7")).toBe(500); // Part 4
+    expect(numberAt(sheet, "F8")).toBe(853); // 2 × ₪426.35 = ₪852.70
+    expect(numberAt(sheet, "F9")).toBe(1706); // 4 × ₪426.35 = ₪1,705.40
   });
 
   it("writes the units and the unit price beside each amount (item 2)", async () => {
@@ -253,11 +258,12 @@ describe("the August 2025 month tab, filled (specs.md Part 4, criterion 1)", () 
 
   it("evaluates its own formulas to Part 4's four totals", async () => {
     const sheet = await sheetOf(inputFor(result));
-    // 6,747.65 / 2,558.10 / 9,305.75 / 7,305.75 — Part 4, and criterion 1.
-    expect(evaluate(sheet, formulaAt(sheet, "E23") ?? "")).toBeCloseTo(6747.65, 2);
-    expect(evaluate(sheet, formulaAt(sheet, "F24") ?? "")).toBeCloseTo(2558.1, 2);
-    expect(evaluate(sheet, formulaAt(sheet, "E26") ?? "")).toBeCloseTo(9305.75, 2);
-    expect(evaluate(sheet, formulaAt(sheet, "E29") ?? "")).toBeCloseTo(7305.75, 2);
+    // 6,748 / 2,559 / 9,307 / 7,307 — Part 4, and criterion 1. The sheet's own
+    // formulas add the rounded lines, so the totals are whole too.
+    expect(evaluate(sheet, formulaAt(sheet, "E23") ?? "")).toBe(6748);
+    expect(evaluate(sheet, formulaAt(sheet, "F24") ?? "")).toBe(2559);
+    expect(evaluate(sheet, formulaAt(sheet, "E26") ?? "")).toBe(9307);
+    expect(evaluate(sheet, formulaAt(sheet, "E29") ?? "")).toBe(7307);
   });
 
   it("keeps the tax row out of א, so a withheld figure never reduces the ברוטו", async () => {
@@ -399,8 +405,8 @@ describe("the two versions, which differ in one thing only (item 2)", () => {
 
 describe("hospital overtime on the template's own row 22 (item 20)", () => {
   // Part 4's August plus ₪350 typed for hours in hospital. By hand: G holds
-  // only that amount, so G25 is 350; ד is 9,305.75 + 350 = 9,655.75; the נטו
-  // is 7,305.75 + 350 = 7,655.75.
+  // only that amount, so G25 is 350; ד is 9,307 + 350 = 9,657; the נטו is
+  // 7,307 + 350 = 7,657.
   const worker = knownWorker();
   const facts: MonthFacts = {
     ...knownFacts(worker),
@@ -425,8 +431,8 @@ describe("hospital overtime on the template's own row 22 (item 20)", () => {
   it("adds it to the one-off total, the ד and the נטו", async () => {
     const sheet = await sheetOf(inputFor(result));
     expect(evaluate(sheet, formulaAt(sheet, "G25") ?? "")).toBeCloseTo(350, 2);
-    expect(evaluate(sheet, formulaAt(sheet, "E26") ?? "")).toBeCloseTo(9655.75, 2);
-    expect(evaluate(sheet, formulaAt(sheet, "E29") ?? "")).toBeCloseTo(7655.75, 2);
+    expect(evaluate(sheet, formulaAt(sheet, "E26") ?? "")).toBe(9657);
+    expect(evaluate(sheet, formulaAt(sheet, "E29") ?? "")).toBe(7657);
   });
 
   it("stays on row 22 when a line the user added is inserted below it", async () => {
@@ -435,8 +441,8 @@ describe("hospital overtime on the template's own row 22 (item 20)", () => {
     expect(numberAt(sheet, "G22")).toBeCloseTo(350, 2);
     expect(sheet.getCell("B23").value).toBe("בונוס חג");
     expect(numberAt(sheet, "G23")).toBeCloseTo(200, 2);
-    // 350 + 200 in G, so ד is 9,305.75 + 550.
-    expect(evaluate(sheet, formulaAt(sheet, "E27") ?? "")).toBeCloseTo(9855.75, 2);
+    // 350 + 200 in G, so ד is 9,307 + 550.
+    expect(evaluate(sheet, formulaAt(sheet, "E27") ?? "")).toBe(9857);
   });
 
   it("leaves row 22 empty in a month without it", async () => {
@@ -534,9 +540,9 @@ describe("a month whose block below ד is empty", () => {
 
   it("still reaches the month's own ברוטו as its נטו", async () => {
     const sheet = await sheetOf(inputFor(result));
-    // ₪8,879.40 — the fixture's own docblock derives it, and nothing was
-    // withheld or transferred, so the two figures are the same.
-    expect(evaluate(sheet, formulaAt(sheet, "E29") ?? "")).toBeCloseTo(8879.4, 2);
+    // ₪8,880 — the fixture's own docblock derives it, and nothing was withheld
+    // or transferred, so the two figures are the same.
+    expect(evaluate(sheet, formulaAt(sheet, "E29") ?? "")).toBe(8880);
     expect(numberAt(sheet, "C36")).not.toBeNull();
     expect(AUGUST_2025.month).toBe(8);
     expect(SALARY).toBe(624765);

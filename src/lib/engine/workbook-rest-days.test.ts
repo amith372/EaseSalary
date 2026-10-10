@@ -1,3 +1,4 @@
+import { shekelsUp } from "@/lib/money";
 import { describe, expect, it } from "vitest";
 import { calculateMonth } from "@/lib/engine/month";
 import {
@@ -85,7 +86,9 @@ describe("the supplement is ₪100 a rest-eve, and the pay is the rest-day rate"
     );
     expect(supplement?.rate).toBe(REST_EVE_SUPPLEMENT);
     expect(supplement?.amount).toBe(50000);
-    expect(m.subtotalE).toBe(m.salaryAgorot + 50000);
+    // The salary is a rate and keeps its agorot; the line it prices is a whole
+    // shekel, and column E is that line plus the supplement (item 3).
+    expect(m.subtotalE).toBe(shekelsUp(m.salaryAgorot) + 50000);
   });
 
   it("leaves the supplement out of the rest-day column", () => {
@@ -123,6 +126,6 @@ describe("the supplement is ₪100 a rest-eve, and the pay is the rest-day rate"
     expect(result.lines.some((line) => line.key === "restDays")).toBe(false);
     // The salary is untouched by it: a free rest day stands outside the
     // standard count, so it costs them nothing (item 5).
-    expect(result.gross).toBe(m.salaryAgorot + 40000);
+    expect(result.gross).toBe(shekelsUp(m.salaryAgorot) + 40000);
   });
 });

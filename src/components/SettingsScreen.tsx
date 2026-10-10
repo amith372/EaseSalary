@@ -44,7 +44,7 @@ import type { WorkerProfile } from "@/lib/engine/repository";
 import type { Country } from "@/lib/holidaySources";
 import { he } from "@/lib/i18n/he";
 import type { IdentifyingNumbers } from "@/lib/identifyingNumbers";
-import { formatAgorot, formatDays } from "@/lib/money";
+import { formatDays, formatRate } from "@/lib/money";
 import type { YearMonth } from "@/lib/types";
 
 /**
@@ -186,7 +186,7 @@ export function SettingsScreen({
           <ValueRow
             label={words.rates.minimumWage.label}
             hint={words.rates.minimumWage.hint}
-            value={minimumWage === null ? null : formatAgorot(minimumWage.value)}
+            value={minimumWage === null ? null : formatRate(minimumWage.value)}
             since={minimumWage?.effectiveFrom}
             source={minimumWage?.source}
             rowKey="minimum-wage"

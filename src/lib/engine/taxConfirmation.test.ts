@@ -19,10 +19,11 @@ import type { YearMonth } from "@/lib/types";
  * wage is).
  *
  * **The month underneath is Part 4's own August 2025**, so the gross every
- * expectation below is taken of is the workbook's ₪9,305.75 and not a figure
- * this module produced: ₪6,247.65 base + ₪500 of rest-eve supplement in column
- * E, and two worked holidays and four rest days at ₪426.35 in column F. A flat
- * 2.5% of it is ₪232.64375, which is ₪232.64 at the nearest agora — the
+ * expectation below is taken of is Part 4's ₪9,307 and not a figure this module
+ * produced: ₪6,247.65 of base paid as ₪6,248, ₪500 of rest-eve supplement, and
+ * two worked holidays and four rest days at ₪426.35 as ₪853 and ₪1,706 in
+ * column F — each line up to the whole shekel (item 3). A flat 2.5% of ₪9,307
+ * is ₪232.675, and the tax is an amount, so it is withheld as ₪233 — the
  * arithmetic is written out here so a reader can check it without running
  * anything.
  *
@@ -34,7 +35,7 @@ import type { YearMonth } from "@/lib/types";
 const AUGUST: YearMonth = { year: 2025, month: 8 };
 const SALARY = 624765;
 const FLAT = { mode: "percentage", percentage: 0.025 } as const;
-const FLAT_TAX = 23264; // 2.5% of ₪9,305.75 = ₪232.64375 → ₪232.64
+const FLAT_TAX = 23300; // 2.5% of ₪9,307 = ₪232.675 -> ₪233
 
 const worker = (incomeTax: IncomeTaxSetting): WorkerTerms & Employment => ({
   // Part 4's worker, but starting the application in the month itself, so the
@@ -81,7 +82,7 @@ const august = (over: Partial<MonthFacts> = {}): MonthFacts => ({
     effectiveFrom: "2025-04-01",
   },
   // Part 4: one free Saturday on the 16th, two worked holidays on the 19th and
-  // the 21st. They are what makes column F ₪2,558.10.
+  // the 21st. They are what makes column F ₪2,559.
   spans: [
     { id: "free-16", kind: "freeRestDay", from: "2025-08-16", to: "2025-08-16" },
     { id: "hol-19", kind: "holiday", from: "2025-08-19", to: "2025-08-19", worked: true },

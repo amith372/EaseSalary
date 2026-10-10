@@ -31,9 +31,17 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  *
  *   `F2`  rest-eves worked            `G2`  rest days worked
  *   `G3`  the free rest day's date    `H3`  the holiday dates
- *   `D6`  the base monthly salary     `E23` column E's subtotal
- *   `F24` column F's subtotal         `E26` the ברוטו
- *   `E29` the figure actually paid    the closing block, for the advances
+ *   `D6`  the base monthly salary     `E6:G22` the tab's own line amounts
+ *   the closing block, for the advances
+ *
+ * **The four money figures are the tab's line cells each taken up to the whole
+ * shekel, not the tab's own subtotals** (specs.md item 3). The family's sheet
+ * carries agorot: `E23` of `חודש  8.25` reads 6,747.65 where `E6` 6,247.65 and
+ * `E7` 500 round to 6,748. So each line in `E6:E22`, `F6:F22` and `G6:G22` is
+ * rounded first and the subtotals here are sums of those — which is the
+ * arithmetic the application does, done on the family's own amounts rather than
+ * on anything the engine returned (`CLAUDE.md` rule 11). An advance movement is
+ * already whole on every tab, so the transfer follows the ברוטו.
  *
  * **Every month here was checked to be a month the workbook gets right.** Three
  * kinds of tab are deliberately absent, and their absence is the point:
@@ -87,11 +95,15 @@ export interface WorkbookMonth {
   /** `H3`. Every holiday in these months was worked, which is why each one
    * reaches column F: a holiday they take off earns nothing extra (item 9). */
   holidaysWorked: IsoDate[];
-  /** `E23` — the base plus the rest-eve supplement. */
+  /** `E6:E22` rounded up and summed — the base plus the rest-eve supplement,
+   * where the tab prints the unrounded sum at `E23`. */
   subtotalE: number;
-  /** `F24` — the rest days and the holidays, both at the rest-day rate. */
+  /** `F6:F22` rounded up and summed — the rest days and the holidays, both at
+   * the rest-day rate, where the tab prints the unrounded sum at `F24`. */
   subtotalF: number;
-  /** `E26` — the ברוטו, and `E29` — what the family actually transferred. */
+  /** The ברוטו and the figure actually transferred: the subtotals above added
+   * up, and the advance movement of the closing block applied to them. The tab
+   * prints its own unrounded pair at `E26` and `E29`. */
   gross: number;
   net: number;
   /**
@@ -151,10 +163,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2025,
     freeRestDays: ["2025-04-19"],
     holidaysWorked: ["2025-04-09"],
-    subtotalE: 664765,
-    subtotalF: 170540,
-    gross: 835305,
-    net: 635305,
+    subtotalE: 664800,
+    subtotalF: 170700,
+    gross: 835500,
+    net: 635500,
     advances: [{ number: 1, kind: "repaid", agorot: 200000 }],
     restEvesWorked: 4,
     restDaysWorked: 3,
@@ -169,10 +181,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     // than silently corrected.
     freeRestDays: ["2025-05-10"],
     holidaysWorked: ["2025-05-01"],
-    subtotalE: 674765,
-    subtotalF: 213175,
-    gross: 887940,
-    net: 687940,
+    subtotalE: 674800,
+    subtotalF: 213300,
+    gross: 888100,
+    net: 688100,
     advances: [{ number: 1, kind: "repaid", agorot: 200000 }],
     restEvesWorked: 5,
     restDaysWorked: 4,
@@ -206,10 +218,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
         expiresOn: "2026-06-15",
       },
     ],
-    subtotalE: 664765,
-    subtotalF: 213175,
-    gross: 877940,
-    net: 677940,
+    subtotalE: 664800,
+    subtotalF: 213300,
+    gross: 878100,
+    net: 678100,
     advances: [{ number: 1, kind: "repaid", agorot: 200000 }],
     restEvesWorked: 4,
     restDaysWorked: 4,
@@ -232,10 +244,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2025,
     freeRestDays: ["2025-07-19"],
     holidaysWorked: ["2025-07-27"],
-    subtotalE: 664765,
-    subtotalF: 170540,
-    gross: 835305,
-    net: 635305,
+    subtotalE: 664800,
+    subtotalF: 170700,
+    gross: 835500,
+    net: 635500,
     advances: [{ number: 1, kind: "repaid", agorot: 200000 }],
     restEvesWorked: 4,
     restDaysWorked: 3,
@@ -248,10 +260,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2025,
     freeRestDays: ["2025-08-16"],
     holidaysWorked: ["2025-08-19", "2025-08-21"],
-    subtotalE: 674765,
-    subtotalF: 255810,
-    gross: 930575,
-    net: 730575,
+    subtotalE: 674800,
+    subtotalF: 255900,
+    gross: 930700,
+    net: 730700,
     advances: [{ number: 1, kind: "repaid", agorot: 200000 }],
     restEvesWorked: 5,
     restDaysWorked: 4,
@@ -262,10 +274,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2025,
     freeRestDays: ["2025-09-13"],
     holidaysWorked: ["2025-09-09"],
-    subtotalE: 664765,
-    subtotalF: 170540,
-    gross: 835305,
-    net: 685305,
+    subtotalE: 664800,
+    subtotalF: 170700,
+    gross: 835500,
+    net: 685500,
     advances: [{ number: 2, kind: "repaid", agorot: 150000 }],
     restEvesWorked: 4,
     restDaysWorked: 3,
@@ -288,10 +300,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2025,
     freeRestDays: ["2025-10-11"],
     holidaysWorked: [],
-    subtotalE: 674765,
-    subtotalF: 127905,
-    gross: 802670,
-    net: 652670,
+    subtotalE: 674800,
+    subtotalF: 128000,
+    gross: 802800,
+    net: 652800,
     advances: [{ number: 2, kind: "repaid", agorot: 150000 }],
     restEvesWorked: 5,
     restDaysWorked: 3,
@@ -306,10 +318,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2025,
     freeRestDays: ["2025-11-08"],
     holidaysWorked: ["2025-11-30"],
-    subtotalE: 664765,
-    subtotalF: 213175,
-    gross: 877940,
-    net: 1277940,
+    subtotalE: 664800,
+    subtotalF: 213300,
+    gross: 878100,
+    net: 1278100,
     advances: [{ number: 3, kind: "granted", agorot: 400000 }],
     restEvesWorked: 4,
     restDaysWorked: 4,
@@ -320,10 +332,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2025,
     freeRestDays: [], // `G3`: "לא ניצלה אף שבת"
     holidaysWorked: ["2025-12-24", "2025-12-25"],
-    subtotalE: 664765,
-    subtotalF: 255810,
-    gross: 920575,
-    net: 820575,
+    subtotalE: 664800,
+    subtotalF: 255900,
+    gross: 920700,
+    net: 820700,
     advances: [{ number: 3, kind: "repaid", agorot: 100000 }],
     restEvesWorked: 4,
     restDaysWorked: 4,
@@ -357,10 +369,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2025,
     freeRestDays: ["2026-01-10"],
     holidaysWorked: ["2026-01-01"],
-    subtotalE: 674765,
-    subtotalF: 213175,
-    gross: 887940,
-    net: 787940,
+    subtotalE: 674800,
+    subtotalF: 213300,
+    gross: 888100,
+    net: 788100,
     advances: [{ number: 3, kind: "repaid", agorot: 100000 }],
     restEvesWorked: 5,
     restDaysWorked: 4,
@@ -385,10 +397,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2025,
     freeRestDays: ["2026-02-07"],
     holidaysWorked: ["2026-02-17", "2026-02-25"],
-    subtotalE: 664765,
-    subtotalF: 213175,
-    gross: 877940,
-    net: 1277940,
+    subtotalE: 664800,
+    subtotalF: 213300,
+    gross: 878100,
+    net: 1278100,
     advances: [
       { number: 4, kind: "granted", agorot: 500000 },
       { number: 3, kind: "repaid", agorot: 100000 },
@@ -414,10 +426,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2026,
     freeRestDays: [],
     holidaysWorked: ["2026-04-09"],
-    subtotalE: 684385,
-    subtotalF: 219870,
-    gross: 904255,
-    net: 704255,
+    subtotalE: 684400,
+    subtotalF: 219900,
+    gross: 904300,
+    net: 704300,
     advances: [{ number: 4, kind: "repaid", agorot: 200000 }],
     restEvesWorked: 4,
     restDaysWorked: 4,
@@ -430,10 +442,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2026,
     freeRestDays: [],
     holidaysWorked: ["2026-05-27"],
-    subtotalE: 694385,
-    subtotalF: 263844,
-    gross: 958229,
-    net: 858229,
+    subtotalE: 694400,
+    subtotalF: 263900,
+    gross: 958300,
+    net: 858300,
     advances: [{ number: 4, kind: "repaid", agorot: 100000 }],
     restEvesWorked: 5,
     restDaysWorked: 5,
@@ -467,10 +479,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
         expiresOn: "2027-05-28",
       },
     ],
-    subtotalE: 684385,
-    subtotalF: 219870,
-    gross: 904255,
-    net: 804255,
+    subtotalE: 684400,
+    subtotalF: 219900,
+    gross: 904300,
+    net: 804300,
     advances: [{ number: 4, kind: "repaid", agorot: 100000 }],
     restEvesWorked: 4,
     restDaysWorked: 4,
@@ -488,10 +500,10 @@ export const WORKBOOK_MONTHS: WorkbookMonth[] = [
     salaryAgorot: WAGE_2026,
     freeRestDays: ["2026-07-11"],
     holidaysWorked: [],
-    subtotalE: 694385,
-    subtotalF: 131922,
-    gross: 826307,
-    net: 1826307,
+    subtotalE: 694400,
+    subtotalF: 132000,
+    gross: 826400,
+    net: 1826400,
     advances: [{ number: 5, kind: "granted", agorot: 1000000 }],
     restEvesWorked: 5,
     restDaysWorked: 3,

@@ -48,15 +48,49 @@ const SICK_DAYS_PER_MONTH = 1.5;
 const SICK_DAY_CEILING = 90;
 
 /**
- * Vacation days a year, by the seniority year: fourteen through year four,
- * sixteen in year five, eighteen in year six, twenty-one in year seven, and one
- * more each year to a ceiling of twenty-eight (specs.md item 7).
+ * Vacation days a year as the Annual Leave Act's section 3(a) gives them, which
+ * is in **calendar** days: sixteen for each of the first five years, eighteen in
+ * the sixth, twenty-one in the seventh, one more each year to twenty-eight.
+ *
+ * Private to this file. Nothing outside it wants this figure, because nothing
+ * outside it spends a calendar day — see `vacationDaysPerYear` below.
  */
-export function vacationDaysPerYear(seniorityYear: number): number {
-  if (seniorityYear <= 4) return 14;
-  if (seniorityYear === 5) return 16;
+function calendarVacationDaysPerYear(seniorityYear: number): number {
+  if (seniorityYear <= 5) return 16;
   if (seniorityYear === 6) return 18;
   return Math.min(21 + (seniorityYear - 7), 28);
+}
+
+/**
+ * Vacation **working** days a year, by the seniority year: fourteen through year
+ * five, sixteen in year six, eighteen in year seven, and one more each year to a
+ * ceiling of twenty-four (specs.md item 7).
+ *
+ * **The Act's own figure is converted here rather than used as it stands**, and
+ * that conversion is the whole reason this function is not the table above.
+ * Section 3(a) counts in calendar days and then allows no more than one weekly
+ * rest inside every seven of them; a day drawn from this balance is always a day
+ * the worker would otherwise have attended, never a rest day (`counts.ts` filters
+ * rest days out of the days vacation is spent from). So a worker resting one day
+ * a week gives up one day fewer per seven than the Act names, and crediting the
+ * Act's calendar figure to a balance spent in working days would pay for those
+ * rest days twice.
+ */
+export function vacationDaysPerYear(seniorityYear: number): number {
+  const calendarDays = calendarVacationDaysPerYear(seniorityYear);
+  return calendarDays - Math.floor(calendarDays / 7);
+}
+
+/**
+ * The vacation balance's own explanation, built here rather than at the two
+ * screens that show it: the year and the days are one pair, and a caller
+ * passing the year alone could pair it with whatever figure it had to hand.
+ */
+export function vacationBalanceExplanation(seniorityYear: number): string {
+  return he.sheet.why.vacationBalance(
+    seniorityYear,
+    vacationDaysPerYear(seniorityYear),
+  );
 }
 
 /**
@@ -230,7 +264,7 @@ export function buildBalances(
       used: vacationUsed,
       closing: start.vacationDays + vacationAccrued - vacationUsed,
       explanation: {
-        text: he.sheet.why.vacationBalance(
+        text: vacationBalanceExplanation(
           seniorityYearOfCalendarYear(employment.employedSince, facts.month.year),
         ),
         link: "annualLeave",

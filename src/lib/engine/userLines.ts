@@ -1,7 +1,7 @@
 import { compareMonth, parseYearMonth } from "@/lib/dates";
 import { userLineKey } from "@/lib/engine/month";
 import { userLineDirections, userLinePlacements } from "@/lib/engine/types";
-import { parseShekels } from "@/lib/money";
+import { parseShekels, shekelsUp } from "@/lib/money";
 import type {
   MonthFacts,
   UserLine,
@@ -74,7 +74,10 @@ export function reviewUserLine(
     return { ok: false, reason: "shape" };
   }
 
-  const agorot = parseShekels(draft.amount);
+  // A whole shekel from here on, because that is what the month will pay
+  // (specs.md item 3).
+  const typed = parseShekels(draft.amount);
+  const agorot = typed === null ? null : shekelsUp(typed);
   // Zero is refused with the rest: a line that moves no money is not a line the
   // user meant, and it would print in the export as a payment of nothing
   // (item 2). `parseShekels` has already refused a minus.

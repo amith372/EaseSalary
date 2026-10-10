@@ -43,11 +43,14 @@ function taxSave(page: Page) {
  * 26th — so twenty-six are standard days, and four Fridays fall before those
  * Saturdays. Nothing is marked in September, so all four Saturdays are worked:
  *
- *    base                             ₪6,443.85
- *    4 rest-eves × ₪100.00        =     ₪400.00
- *    4 Saturdays × ₪439.74        =   ₪1,758.96
- *                                    ----------
- *    ברוטו                           ₪8,602.81
+ *    base          ₪6,443.85                   ->   ₪6,444
+ *    4 rest-eves × ₪100.00        =     ₪400.00 ->     ₪400
+ *    4 Saturdays × ₪439.74        =   ₪1,758.96 ->   ₪1,759
+ *                                                 ---------
+ *    ברוטו                                          ₪8,603
+ *
+ * Each line is taken up to the whole shekel where it becomes an amount
+ * (item 3); the rates beside them keep their agorot.
  *
  * ₪439.74 is the rest-day rate item 3 derives from that wage —
  * (6,443.85 ÷ 25 + 6,443.85 ÷ 182) × 1.5 — and it is **also printed in the
@@ -56,26 +59,27 @@ function taxSave(page: Page) {
  *
  * ## The tax on it
  *
- * ₪8,602.81 a month is ₪103,233.72 a year — 10,323,372 agorot. Against the 2026
+ * ₪8,603 a month is ₪103,236 a year — 10,323,600 agorot. Against the 2026
  * table:
  *
  *    8,412,000 × 10%              =    841,200
- *    1,911,372 × 14%              =    267,592.08
+ *    1,911,600 × 14%              =    267,624
  *                                    ------------
- *                                    1,108,792.08 a year, = 92,399.34 a month
+ *                                    1,108,824 a year, = 92,402 a month
  *
  * A woman's 2.75 credit points are worth 2.75 × ₪2,904 ÷ 12 = ₪665.50 a month,
- * so they are taxed 92,399.34 − 66,550 = 25,849.34, which rounds to **₪258.49**.
- * A man's 2.25 points are worth ₪544.50, so he is taxed 92,399.34 − 54,450 =
- * 37,949.34, which rounds to **₪379.49**. The two differ by ₪121.00, which is
- * half a credit point a month and is the check that the pair is consistent.
+ * so they are taxed 92,402 − 66,550 = 25,852, which is withheld as **₪259** —
+ * the tax is an amount and goes up to the whole shekel like any other (item 3).
+ * A man's 2.25 points are worth ₪544.50, so he is taxed 92,402 − 54,450 =
+ * 37,952, which is **₪380**. The two differ by ₪121.00, which is half a credit
+ * point a month and is the check that the pair is consistent.
  */
 
 const RUN = Date.now();
 
-const GROSS = 860281;
-const TAX_FEMALE = 25849;
-const TAX_MALE = 37949;
+const GROSS = 860300;
+const TAX_FEMALE = 25900;
+const TAX_MALE = 38000;
 
 /** A household of this run's own, so nothing here meets marks another spec
  * left behind: the dev repository is a module singleton keyed by the
@@ -403,12 +407,19 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
 
   /**
    * **A flat share of the ‏ברוטו‎**, which is what an accountant hands a family as
-   * one number. 2.5% of ₪8,602.81 is ₪215.07, worked by hand: 860,281 × 0.025 =
-   * 21,507.025 agorot, which rounds to 21,507.
+   * one number. 2.5% of ₪8,603 is ₪215.075, worked by hand: 860,300 × 0.025 =
+   * 21,507.5 agorot, withheld as ₪216 because the tax is an amount like any
+   * other (specs.md item 3).
+   *
+   * **So the card's own share is 2.51% and not the 2.50% that was set**: ₪216
+   * of ₪8,603 is 2.5107…%, and that figure is what was actually withheld rather
+   * than what the profile says — which is what `sharePercent` is defined to
+   * report. A rounding of a quarter of an agora moves it by a hundredth of a
+   * percent, and the honest figure is the one taken of the money.
    *
    * What it catches: a percentage silently falling back to the calculation.
-   * ₪215.07 and ₪258.49 are close enough that a screenshot would not tell them
-   * apart, and only the figure does.
+   * ₪216 and ₪259 are close enough that a screenshot would not tell them apart,
+   * and only the figure does.
    */
   test("takes a flat percentage of the gross when one is set", async ({
     page,
@@ -428,18 +439,19 @@ test.describe("the three ways a tax is arrived at (specs.md item 17)", () => {
     await page.goto("/");
     await switchToTestWorker(page);
     await settled(page);
-    await expect(row(page, "incomeTax")).toContainText(formatAgorot(-21507));
-    await expect(row(page, "net")).toContainText(formatAgorot(GROSS - 21507));
+    // 2.5% of ₪8,603 is ₪215.075, withheld as ₪216 (item 3).
+    await expect(row(page, "incomeTax")).toContainText(formatAgorot(-21600));
+    await expect(row(page, "net")).toContainText(formatAgorot(GROSS - 21600));
 
     await page.goto("/payments");
     await switchToTestWorker(page);
 
     await openPaymentSections(page);
     await settled(page);
-    // The share the card reports is the rate itself, to the hundredth, because
-    // a flat rate is the one mode whose percentage does not move.
+    // The share the card reports is what was withheld over the ברוטו, to the
+    // hundredth: 21,600 / 860,300 = 2.5107…%.
     await expect(
-      page.getByText(he.month.actions.incomeTax.share("2.50")),
+      page.getByText(he.month.actions.incomeTax.share("2.51")),
     ).toBeVisible();
 
     await page.screenshot({

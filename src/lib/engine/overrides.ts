@@ -1,4 +1,4 @@
-import { parseShekels } from "@/lib/money";
+import { parseShekels, shekelsUp } from "@/lib/money";
 import type { LineOverride, MonthFacts } from "@/lib/engine/types";
 import type { MonthLine, MonthResult } from "@/lib/types";
 
@@ -29,7 +29,9 @@ import type { MonthLine, MonthResult } from "@/lib/types";
 export interface OverrideDraft {
   key: string;
   /** As typed — "180", "1,234.50". A minus is refused: an override is a
-   * magnitude and the row it replaces gives it its sign (item 17). */
+   * magnitude and the row it replaces gives it its sign (item 17). Agorot are
+   * accepted and taken up to the whole shekel the month stores, so the user is
+   * never told their figure is too precise (item 3). */
   amount: string;
   note: string;
 }
@@ -94,8 +96,13 @@ export function reviewOverride(
     return { ok: false, reason: "notOverridable" };
   }
 
-  const agorot = parseShekels(draft.amount);
-  if (agorot === null) return { ok: false, reason: "amount" };
+  const typed = parseShekels(draft.amount);
+  if (typed === null) return { ok: false, reason: "amount" };
+  // Every amount is a whole shekel, so the figure is rounded here, where it
+  // crosses into storage, rather than only where it is drawn: a month holding
+  // 1,700.03 would redisplay as 1,701 and reopen the field at the figure it
+  // had refused to keep (item 3).
+  const agorot = shekelsUp(typed);
 
   const note = draft.note.trim();
   return {

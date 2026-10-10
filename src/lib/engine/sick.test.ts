@@ -24,12 +24,13 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  *   S = ₪6,247.65 = 624,765 agorot     the August 2025 wage (specs.md Part 4)
  *   a sick day = S / 25 = 24,990.6     item 8, "the monthly salary over 25"
  *
- *   one day deducted    1   × 24,990.6 = 24,990.6  -> 24,991 agorot
- *   two days deducted   2   × 24,990.6 = 49,981.2  -> 49,981 agorot
- *   one and a half      1.5 × 24,990.6 = 37,485.9  -> 37,486 agorot
+ *   one day deducted    1   × 24,990.6 = 24,990.6  -> ₪250
+ *   two days deducted   2   × 24,990.6 = 49,981.2  -> ₪500
+ *   one and a half      1.5 × 24,990.6 = 37,485.9  -> ₪375
  *
- * The rounding is `Math.round` once at the end and never between steps
- * (item 3), which is why the two-day figure is 49,981 and not twice 24,991.
+ * The rounding is once at the end and never between steps, and it goes away
+ * from zero to the whole shekel (item 3) — a deduction included, which is why
+ * one day costs ₪250 and not ₪249.91.
  */
 
 const SALARY = 624765;
@@ -129,19 +130,19 @@ describe("the tiers, counted from the spell's own first day (specs.md item 8)", 
 
   it("deducts a whole day for a one-day spell and pays it nothing", () => {
     // Sunday 3 August, one day. Tier day 1, so the whole day is unfunded:
-    // 1 × 24,990.6 = 24,990.6 -> 24,991 agorot, and it subtracts.
+    // 1 × 24,990.6 = 24,990.6 -> ₪250, and it subtracts.
     const line = deduct(AUGUST_2025, [sick("2025-08-03", "2025-08-03")]);
-    expect(line?.amount).toBe(-24991);
+    expect(line?.amount).toBe(-25000);
     expect(line?.units).toBe(-1);
     expect(line?.rate).toBe(SALARY / 25); // item 8: the monthly salary over 25
   });
 
   it("deducts two days' worth for a three-day spell", () => {
     // Sunday 3 to Tuesday 5 August: tier days 1, 2, 3 -> 1 + 0.5 + 0.5 = 2 days.
-    // 2 × 24,990.6 = 49,981.2 -> 49,981 agorot.
+    // 2 × 24,990.6 = 49,981.2 -> ₪500.
     const line = deduct(AUGUST_2025, [sick("2025-08-03", "2025-08-05")]);
     expect(line?.units).toBe(-2);
-    expect(line?.amount).toBe(-49981);
+    expect(line?.amount).toBe(-50000);
   });
 
   it("deducts the same two and no more for a four-day spell", () => {
@@ -150,7 +151,7 @@ describe("the tiers, counted from the spell's own first day (specs.md item 8)", 
     // off by one.
     const three = deduct(AUGUST_2025, [sick("2025-08-03", "2025-08-05")]);
     const four = deduct(AUGUST_2025, [sick("2025-08-03", "2025-08-06")]);
-    expect(four?.amount).toBe(-49981);
+    expect(four?.amount).toBe(-50000);
     expect(four?.amount).toBe(three?.amount);
   });
 
@@ -160,7 +161,7 @@ describe("the tiers, counted from the spell's own first day (specs.md item 8)", 
     // does: the tiers are a fixed price at the start of an illness and not a
     // rate that runs with it.
     const line = deduct(AUGUST_2025, [sick("2025-08-03", "2025-08-16")]);
-    expect(line?.amount).toBe(-49981);
+    expect(line?.amount).toBe(-50000);
   });
 });
 
@@ -182,10 +183,10 @@ describe("a spell across a month boundary is one spell (specs.md item 8)", () =>
     // Friday 29 is tier day 1   -> a whole day unfunded                 = 1
     // Saturday 30 is tier day 2 -> not paid, so nothing to take back    = 0
     // Sunday 31 is tier day 3   -> half a day unfunded                  = 0.5
-    // 1.5 × 24,990.6 = 37,485.9 -> 37,486 agorot.
+    // 1.5 × 24,990.6 = 37,485.9 -> ₪375.
     const line = deduct(AUGUST_2025, spans);
     expect(line?.units).toBe(-1.5);
-    expect(line?.amount).toBe(-37486);
+    expect(line?.amount).toBe(-37500);
   });
 
   it("deducts nothing at all in September", () => {
@@ -235,9 +236,9 @@ describe("the four things a Saturday inside a spell does (specs.md item 8)", () 
     //   the Sunday the third day and not the second.
     // Sunday 10 is tier day 3  -> 0.5
     // Monday 11 is tier day 4  -> 0
-    // 1.5 × 24,990.6 = 37,485.9 -> 37,486 agorot.
+    // 1.5 × 24,990.6 = 37,485.9 -> ₪375.
     expect(sickDeductionDays(spans, AUGUST_2025, SATURDAY)).toBe(1.5);
-    expect(deduct(AUGUST_2025, spans)?.amount).toBe(-37486);
+    expect(deduct(AUGUST_2025, spans)?.amount).toBe(-37500);
   });
 
   it("does not let a Saturday inside a spell be paid as a Saturday worked", () => {
@@ -250,7 +251,7 @@ describe("the four things a Saturday inside a spell does (specs.md item 8)", () 
       (line) => line.key === lineKeys.restDays,
     );
     expect(restDays?.units).toBe(4);
-    expect(restDays?.amount).toBe(170540);
+    expect(restDays?.amount).toBe(170600);
 
     const ordinary = calculateMonth(facts(AUGUST_2025, []), terms());
     expect(
@@ -267,10 +268,11 @@ describe("where the deduction sits on the sheet (specs.md item 8, Part 5)", () =
     // and never among the one-off payments: a deduction is not a payment."
     const result = calculateMonth(facts(AUGUST_2025, spans), terms());
     expect(deductionLine(result)?.column).toBe("E");
-    // The base ₪6,247.65, plus five Fridays at ₪100 = ₪500, less two days at
-    // ₪249.906 = ₪499.81: 624,765 + 50,000 - 49,981 agorot.
+    // The base ₪6,247.65 paid as ₪6,248, plus five Fridays at ₪100 = ₪500,
+    // less two days at ₪249.906 = ₪499.812 withheld as ₪500 (item 3):
+    // 624,800 + 50,000 - 50,000 agorot.
     const e = result.subtotals.find((subtotal) => subtotal.column === "E");
-    expect(e?.amount).toBe(624765 + 50000 - 49981);
+    expect(e?.amount).toBe(624800 + 50000 - 50000);
     expect(result.subtotals.some((subtotal) => subtotal.column === "G")).toBe(
       false,
     );
@@ -282,7 +284,7 @@ describe("where the deduction sits on the sheet (specs.md item 8, Part 5)", () =
     // leaves 23.
     const result = calculateMonth(facts(AUGUST_2025, spans), terms());
     expect(result.lines.find((line) => line.key === lineKeys.base)?.amount).toBe(
-      624765,
+      624800,
     );
     expect(result.standardDays).toBe(26);
     expect(result.actualDays).toBe(23);
@@ -290,10 +292,11 @@ describe("where the deduction sits on the sheet (specs.md item 8, Part 5)", () =
 
   it("reaches the month's total, because column E does", () => {
     // Gross is E + F + G. Nothing was marked on a Saturday, so all five of
-    // August's are worked and column F is 5 × ₪426.35 = 213,175 agorot — Part
-    // 4's own rate. The deduction is in E and therefore in the gross.
+    // August's are worked and column F is one line of 5 × ₪426.35 = ₪2,131.75,
+    // paid as ₪2,132 — Part 4's own rate. The deduction is in E and therefore
+    // in the gross.
     const result = calculateMonth(facts(AUGUST_2025, spans), terms());
-    expect(result.gross).toBe(624765 + 50000 - 49981 + 213175);
+    expect(result.gross).toBe(624800 + 50000 - 50000 + 213200);
     expect(result.net).toBe(result.gross);
   });
 });
@@ -317,7 +320,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
     expect(spellsOf(spans, SATURDAY)).toEqual([{ from: "2025-08-03", to: "2025-08-07" }]);
     // Tier days 1 to 5 -> 1 + 0.5 + 0.5 = 2 days, the three-day figure again.
     expect(sickDeductionDays(spans, AUGUST_2025, SATURDAY)).toBe(2);
-    expect(deduct(AUGUST_2025, spans)?.amount).toBe(-49981);
+    expect(deduct(AUGUST_2025, spans)?.amount).toBe(-50000);
   });
 
   it("ends a spell on the first working day no sickness was reported", () => {
@@ -326,7 +329,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
     // first spell and the tiers restart on the 7th. Two spells:
     //   Sun 3, Mon 4, Tue 5  -> 1 + 0.5 + 0.5           = 2
     //   Thu 7, Fri 8, Sat 9  -> 1 + 0.5 + 0 (Saturday)  = 1.5
-    // 3.5 × 24,990.6 = 87,467.1 -> 87,467 agorot, against 49,981 had the six
+    // 3.5 × 24,990.6 = 87,467.1 -> ₪875, against ₪500 had the six
     // days been one spell. Item 8 is explicit that the break changes the money,
     // which is why the skipped day and its reason are shown to the user rather
     // than absorbed silently.
@@ -336,7 +339,7 @@ describe("what counts as one spell (specs.md item 8)", () => {
     ];
     expect(spellsOf(spans, SATURDAY)).toHaveLength(2);
     expect(sickDeductionDays(spans, AUGUST_2025, SATURDAY)).toBe(3.5);
-    expect(deduct(AUGUST_2025, spans)?.amount).toBe(-87467);
+    expect(deduct(AUGUST_2025, spans)?.amount).toBe(-87500);
   });
 
   it("orders a span by date before reading it, never by how it was entered", () => {
@@ -359,8 +362,9 @@ describe("a month with no sickness in it", () => {
   it("carries no such row rather than a row reading zero", () => {
     const result = calculateMonth(facts(AUGUST_2025, []), terms());
     expect(deductionLine(result)).toBeUndefined();
-    // The base, five Fridays at ₪100, and five Saturdays at Part 4's ₪426.35.
-    expect(result.gross).toBe(624765 + 50000 + 213175);
+    // The base, five Fridays at ₪100, and five Saturdays at Part 4's ₪426.35,
+    // each line up to the shekel: ₪6,248 + ₪500 + ₪2,132.
+    expect(result.gross).toBe(624800 + 50000 + 213200);
   });
 });
 
@@ -390,10 +394,10 @@ describe("an override on a deduction stays a deduction (specs.md item 17)", () =
     expect(line?.amount).toBe(-30000);
     expect(line?.manual).toBe(true);
     // Still says what it would otherwise have been: two days deducted at
-    // S / 25, which is 2 × 24,990.6 = 49,981.2 -> 49,981 agorot.
-    expect(line?.calculatedAmount).toBe(-49981);
+    // S / 25, which is 2 × 24,990.6 = 49,981.2 -> ₪500.
+    expect(line?.calculatedAmount).toBe(-50000);
     // The base, five Fridays at ₪100, five Saturdays at ₪426.35, less the ₪300.
-    expect(result.gross).toBe(624765 + 50000 + 213175 - 30000);
+    expect(result.gross).toBe(624800 + 50000 + 213200 - 30000);
   });
 
   it("is offered on a figure the application worked out", () => {

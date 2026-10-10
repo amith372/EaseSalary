@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
 import { switchToTestWorker, useToday, TODAY } from "./household";
-import { he } from "../src/lib/i18n/he";
+import { he, type Said } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
 /**
@@ -58,6 +58,12 @@ async function useHousehold(
       url: "http://localhost:3000",
     },
   ]);
+}
+
+/** A sentence from `he.ts` as the screen reads it, each figure in its own
+ * isolate on the page and all of it one run of text here. */
+function text(said: Said): string {
+  return said.map((part) => (typeof part === "string" ? part : part.value)).join("");
 }
 
 async function openDownload(download: Download): Promise<ExcelJS.Worksheet> {
@@ -170,6 +176,81 @@ test.describe("the reports screen (item 23, item 29)", () => {
     });
     expect(placed).toEqual({ below: true, sameEdge: true });
     await page.screenshot({ path: "test-results/reports-years.png" });
+  });
+
+  /**
+   * **A year has a denominator where a month does not**, and the heading says
+   * it: how many of that year's months have been filed, out of the months the
+   * worker was employed in it and which have ended. Seventeen rows and one more
+   * every month, with nothing saying whether a year is finished, is the gap.
+   *
+   * Scenario: the `confirmed` household's first worker, read on the pinned
+   * today of 18.9.2026. Three facts of that fixture decide every figure below,
+   * and all three are `seed.ts`'s rather than the screen's:
+   *
+   * - They are employed from **May 2025**, so 2025 lists eight months and not
+   *   twelve.
+   * - The workbooks run to **July 2026** and have **no tab for March**
+   *   (`WORKBOOK_SEED_MONTHS`, and both gaps are deliberate), so March, August
+   *   and September are listed with no record behind them.
+   * - `confirmedSeed` writes a `confirmedAt` onto the **2026 records only**,
+   *   which is the six that exist.
+   *
+   * Expected, counted off those three and never read back from the screen
+   * (`CLAUDE.md` rule 11):
+   *
+   * - **2025 reads `0 מתוך 8`.** Eight because they began in May, which is the
+   *   case that proves the denominator is not twelve; zero because 2025 carries
+   *   no confirmation.
+   * - **2026 reads `6 מתוך 8`.** Nine months are listed; September has not
+   *   ended, so it is in neither figure and the denominator is eight; March and
+   *   August have no record to confirm, so the numerator is six.
+   *
+   * **What it would catch.** A denominator of twelve on a year the worker was
+   * not employed through, which tells a family they are four sheets short. The
+   * running month counted — this step's one open question, settled the other
+   * way on the artboard — which would make 2026 read `6 מתוך 9`. A numerator
+   * counting rows rather than confirmations, which would make both years read
+   * `8 מתוך 8` having filed nothing in one of them. And the heading disagreeing
+   * with the rows beneath it, which is asserted directly rather than inferred.
+   *
+   * **A complete year is the same code path**, not a second one: the count is
+   * drawn whenever the year has a month that ended, and nothing branches on the
+   * two figures being equal — so there is no "goes silent when complete" for a
+   * fixture to catch.
+   */
+  test("says how many of a year's months have been filed, out of the months employed", async ({
+    page,
+  }) => {
+    await useHousehold(page, "yearcount");
+    await useToday(page, TODAY);
+    await page.goto("/reports");
+
+    await expect(
+      page.locator('[data-report-year="2025"] [data-year-count]'),
+    ).toHaveText(text(he.reports.previousMonths.madeOf(0, 8)));
+    await expect(
+      page.locator('[data-report-year="2026"] [data-year-count]'),
+    ).toHaveText(text(he.reports.previousMonths.madeOf(6, 8)));
+
+    // The heading and the rows under it say the same thing: a month with no
+    // confirmation is the one offering the confirmation screen. Newest first,
+    // as the list is drawn, those are September — which no count includes
+    // because it has not ended — then the two of 2026 the count leaves unfiled,
+    // then the whole of 2025, which is why that year reads zero.
+    const awaiting = await page
+      .locator("[data-report-month]:has([data-confirm-month])")
+      .evaluateAll((nodes) =>
+        nodes.map((node) => node.getAttribute("data-report-month")),
+      );
+    expect(awaiting).toEqual([
+      "2026-9",
+      "2026-8",
+      "2026-3",
+      ...[12, 11, 10, 9, 8, 7, 6, 5].map((month) => `2025-${month}`),
+    ]);
+
+    await page.screenshot({ path: "test-results/reports-year-count.png" });
   });
 
   /**

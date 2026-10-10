@@ -1,3 +1,4 @@
+import { shekelsUp } from "@/lib/money";
 import type { LineOverride } from "@/lib/engine/types";
 import type {
   ClosingBlock,
@@ -48,10 +49,12 @@ export const lineKeys = {
  * the modules that build lines, of which there are several.
  *
  * **The precision rule.** A rate carries its fraction and is never rounded; a
- * line amount is integer agorot, rounded exactly once with `Math.round` at the
- * moment it becomes a `MonthLine.amount`. Nothing rounds between the two
- * (specs.md item 3). The totals are then sums of already-rounded line amounts,
- * which is what makes the sheet add up by eye.
+ * line amount is a whole number of shekels, rounded away from zero exactly once
+ * with `shekelsUp` at the moment it becomes a `MonthLine.amount`. Nothing
+ * rounds between the two (specs.md item 3). The totals are then sums of
+ * already-rounded line amounts, which is what makes the sheet add up by eye —
+ * and why a month's total is a shekel or so above the rounding of its exact
+ * total, each line having gained on the way up.
  */
 export interface LineDraft {
   key: string;
@@ -112,8 +115,8 @@ export function toLine(
 ): MonthLine {
   const override = overrides[draft.key];
   // The one rounding in the whole calculation: a rate carries its fraction up
-  // to here and the amount is integer agorot from here on (item 3).
-  const calculated = Math.round(draft.units * draft.rate);
+  // to here and the amount is a whole shekel from here on (item 3).
+  const calculated = shekelsUp(draft.units * draft.rate);
   const sign = draft.units < 0 ? -1 : 1;
   return {
     key: draft.key,
@@ -125,7 +128,7 @@ export function toLine(
     ...(draft.coversMonths ? { coversMonths: draft.coversMonths } : {}),
     // `|| 0` is not decoration: `-1 * 0` is -0, which `Object.is` — and so
     // `toBe` — reports as different from 0.
-    amount: override ? sign * Math.abs(override.agorot) || 0 : calculated,
+    amount: override ? sign * shekelsUp(Math.abs(override.agorot)) || 0 : calculated,
     manual: override !== undefined,
     ...(override ? { calculatedAmount: calculated } : {}),
     overridable: draft.overridable === true,
@@ -164,7 +167,7 @@ export function toClosingLine(
   const override = overrides[draft.key];
   // `|| 0` for the reason `toLine` gives: a negated zero is -0.
   const signed = (agorot: number) =>
-    draft.sign * Math.round(Math.abs(agorot)) || 0;
+    draft.sign * shekelsUp(Math.abs(agorot)) || 0;
   const calculated = signed(draft.agorot);
   return {
     key: draft.key,

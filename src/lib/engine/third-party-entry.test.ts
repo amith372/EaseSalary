@@ -68,16 +68,18 @@ describe("a draft becomes a payment, or says why not (specs.md item 16)", () => 
   });
 
   it("reads the amount as digits and never through a float", () => {
-    // The nearest agora to 1.005 shekels is 101. `Math.round(Number("1.005") *
-    // 100)` is 100, because 1.005 is not representable — so this is the test
-    // that catches the whole path being routed back through a float, and the
-    // decimal is the only place it shows.
+    // The nearest agora to 1.005 shekels is 101, which is paid as ₪2.
+    // `Math.round(Number("1.005") * 100)` is 100, because 1.005 is not
+    // representable, and ₪1 is what the float path would pay — so this is the
+    // test that catches the whole path being routed back through a float, and
+    // the decimal is the only place it shows. The shekel rounding does not hide
+    // it: an agora over a whole shekel is a whole shekel more (item 3).
     const reviewed = reviewThirdPartyPayment(draft({ amount: "1.005" }), []);
     expect(reviewed).toEqual({
       ok: true,
       payment: {
         kind: "medicalInsurance",
-        agorot: 101,
+        agorot: 200,
         paidOn: "2026-08-15",
         expiresOn: "2027-08-15",
       },

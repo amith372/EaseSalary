@@ -5,6 +5,7 @@ import {
   hourlyRate,
   restDayRate,
 } from "@/lib/engine/rates";
+import { shekelsUp } from "@/lib/money";
 
 /**
  * Every expected figure below comes from `specs.md` — Part 4 for a stated
@@ -25,10 +26,13 @@ describe("the rest day and holiday rate", () => {
     expect(Math.round(deriveRates(AUGUST_2025_SALARY).restDay)).toBe(42635);
   });
 
-  it("pays two holidays and four Saturdays ₪2,558.10 (specs.md Part 4)", () => {
-    // Part 4's second total, and the one the precision rule is for: six units
-    // of a fractional rate, rounded once at the end and not six times.
-    expect(Math.round(deriveRates(AUGUST_2025_SALARY).restDay * 6)).toBe(255810);
+  it("pays two holidays and four Saturdays ₪2,559 (specs.md Part 4)", () => {
+    // Part 4's second total, and the one the precision rule is for: the rate
+    // carries its fraction into each line and each line is rounded once, at the
+    // end — four Saturdays are 170,540.24… -> ₪1,706 and two holidays are
+    // 85,270.12… -> ₪853, which is the ₪2,559 of column F (item 3).
+    const rate = deriveRates(AUGUST_2025_SALARY).restDay;
+    expect(shekelsUp(rate * 4) + shekelsUp(rate * 2)).toBe(255900);
   });
 
   it("is a day plus an hour at 150%, not 150% of a day (specs.md Part 5)", () => {

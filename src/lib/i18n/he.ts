@@ -3,7 +3,7 @@ import type { RestDay } from "@/lib/dates";
 import type { ExpiringDocument } from "@/lib/engine/actionList";
 import type { WarningKind } from "@/lib/engine/alerts";
 import type { AdvanceKind, Gender } from "@/lib/engine/types";
-import { formatAgorot, formatDays } from "@/lib/money";
+import { formatAgorot, formatDays, formatRate } from "@/lib/money";
 
 /**
  * **The weekly rest day is a term of the employment, so the words for it are
@@ -87,6 +87,38 @@ const DOCUMENT_NAMES: Record<ExpiringDocument, string> = {
   workVisa: "אשרת העבודה",
   passport: "הדרכון",
   medicalInsurance: "הביטוח הרפואי",
+};
+
+/**
+ * What a lapse costs, on the three documents where it costs something.
+ *
+ * **Each sentence states the rule and not this document's moment**, so it reads
+ * the same whether the date is still ahead or already past. It is drawn on the
+ * warning only: that is where something can still be done about it.
+ *
+ * **Every one of them is a legal claim read off a source, never drafted from
+ * what sounds right.** The permit and the visa are the Population and
+ * Immigration Authority's procedure 5.3.0002, clause ד.15 — a worker may work
+ * only while their own licence is valid and only with a patient whose permit
+ * is, and work against that breaches the licence they were given. The
+ * insurance is the caregiver-terms page `links.ts` already opens for it: the
+ * cover is owed for the whole period of employment, and an employer who does
+ * not provide it faces an administrative fine.
+ *
+ * **The passport carries none, and that is the point of the distinction** — its
+ * warning fires with eighteen months still on it, where nothing has gone wrong
+ * yet. A sentence there would say that a document in order is a problem.
+ *
+ * None of these is addressed to the user by gender: the application has never
+ * asked who is using it, and none of them needs to name the worker.
+ */
+const DOCUMENT_LAPSE_COST: Partial<Record<ExpiringDocument, string>> = {
+  employmentPermit:
+    "עבודה אצל מטופל שאין לו היתר בתוקף היא הפרה של תנאי הרישיון שניתן לעבודה בישראל.",
+  workVisa:
+    "העבודה בסיעוד מותרת רק כל זמן שהרישיון בתוקף, ועבודה לאחר שפג תוקפו אינה עבודה כדין.",
+  medicalInsurance:
+    "הביטוח הרפואי הוא חובת המעסיק לכל תקופת ההעסקה, ומעסיק שאינו מקיים אותה צפוי לקנס מינהלי.",
 };
 
 /**
@@ -275,13 +307,16 @@ export const he = {
    * the database, a throw on the server — so it has nothing to name. The
    * wording is the user's own (2026-09-27), and it invites a second try because
    * trying again is what actually helps here, which is exactly what a refusal's
-   * wording must never say.
+   * wording must never say. **The way out is a refresh and not the home
+   * page**, because this sentence is read signed out as well, and signed out
+   * `/` bounces to `/sign-in` — an exit that loops is an exit that was never
+   * offered.
    *
    * **It carries no detail of what went wrong**, and nothing may be added to it
    * from an error: a message can hold a worker id, a Postgres message or
    * ciphertext.
    */
-  fault: "משהו השתבש, כדאי לנסות שוב או לחזור לדף הבית",
+  fault: "משהו השתבש, כדאי לנסות שוב או לרענן את הדף",
 
   /**
    * The way back out of a question asked before a press that destroys
@@ -846,6 +881,27 @@ export const he = {
        * failed to load. */
       none: "עוד לא נשמר כאן אף חודש.",
       /**
+       * Beside a year, how many of its months have been filed.
+       *
+       * **A year has a denominator where a month does not.** An untouched day
+       * on the calendar is a correct day, so a fraction there would invent work
+       * that does not exist; a year that has ended owes a sheet for each of its
+       * months, and the list is one row longer every month with nothing saying
+       * whether the year is finished.
+       *
+       * **`of` is the months the worker was employed in that year and is not
+       * always twelve**, and neither figure counts a month that has not ended:
+       * the question is whether what finished has been filed.
+       *
+       * Each figure is its own isolate (`docs/agents/rtl.md`).
+       */
+      madeOf: (made: number, of: number): Said => [
+        "הופקו ",
+        { value: String(made) },
+        " מתוך ",
+        { value: String(of) },
+      ],
+      /**
        * Why a month offers no file — the same two blocks `/month/export`
        * refuses on, worded in the same words.
        *
@@ -920,6 +976,17 @@ export const he = {
     forWorker: "עבור",
     /** "אושר ב־…", the artboard's own words; the date is its own element. */
     confirmedOn: "אושר ב־",
+    /**
+     * The wage the month was **stored** as confirmed at, beside the day it was
+     * confirmed on.
+     *
+     * **It is the figure written onto the month and never the one the rates
+     * table offers for it today.** Those two part the moment a rate is
+     * corrected after a month was filed, and until this line existed the
+     * difference was readable on no screen — so a month confirmed at the wrong
+     * wage looked exactly like one confirmed at the right one.
+     */
+    confirmedWage: "לפי שכר מינימום של",
     /** The tint block, and the bottom row of the composition card. It is the
      * money that actually reaches them — the code's `net` (Part 5). */
     total: "סך הכל תשלום לעובד/ת",
@@ -1104,7 +1171,14 @@ export const he = {
      * means. The kind is chosen after the days rather than before them. */
     picker: {
       title: "איך לסמן?",
-      clear: "לנקות סימון",
+      /**
+       * **The one control here that reaches the store**, beside three chips
+       * that mark and a `ביטול` that closes. So it names its object: what it
+       * deletes is the mark already on those days, never the range just drawn.
+       * `למחוק` and not `לנקות`, the verb an override's own reset already
+       * turned down for reading as either.
+       */
+      clear: "למחוק סימון קיים",
       cancel: "ביטול",
       cancelLabel: "לבטל בחירה",
       /**
@@ -1207,9 +1281,25 @@ export const he = {
     whatTheLawSays: "מה אומר החוק",
     /** The chip beside a title. A blockage stops a correct salary; a warning
      * still has time in it. */
-    tag: {
+    /**
+     * The boundary inside `דורש טיפול`: which of item 27's two lists the
+     * cards under it belong to.
+     *
+     * **These were the per-card tags and are now said once each.** A tag on
+     * every card repeats over eight cards exactly what two headings say twice,
+     * and the difference between "this stops the calculation" and "a fee falls
+     * due in eighty days" was carried by a dot shade.
+     *
+     * Drawn only where both groups have a card: a heading over an empty group,
+     * or one heading alone, is a boundary that divides nothing.
+     */
+    seam: {
       blockage: "לטיפול עכשיו",
       warning: "תזכורת",
+    },
+    tag: {
+      /** The one thing left on a card that its heading cannot say: how long a
+       * document still has. Every other card carries no tag at all. */
       inDays: (days: number): Said => ["בעוד ", { value: String(days) }, " ימים"],
     },
     entry: {
@@ -1228,6 +1318,9 @@ export const he = {
         note: (document === "passport"
           ? ["בתוקף עד ", { value: on }, ", ונשארו פחות משמונה־עשר חודשים."]
           : ["בתוקף עד ", { value: on }, ". כדאי לחדש לפני כן."]) as Said,
+        // What it costs if nobody acts, on the three documents where it costs
+        // something; `DOCUMENT_LAPSE_COST` says why the passport has none.
+        consequence: DOCUMENT_LAPSE_COST[document],
         action: document === "medicalInsurance" ? "לרשום חידוש" : "לעדכן תאריך",
       }),
       /** The line's own words are the user's and are isolated rather than
@@ -1401,6 +1494,17 @@ export const he = {
       hint: "מופיעה בדף המשכורת, ולא בגיליון שמיוצא.",
       save: "לשמור",
       saved: "נשמר",
+      /**
+       * The one refusal a note can meet (`changeMonth`'s `noMonth`).
+       *
+       * **It says the condition and not the missing row.** A month at or before
+       * today is opened by the action before it writes, so the only month with
+       * no record to carry a note is one that has not started — and "there is
+       * no record for this month" would describe to the family an internal
+       * thing they cannot see or act on, where the date they are looking at
+       * says the whole of it.
+       */
+      noMonth: "אפשר לכתוב הערה רק לחודש שכבר התחיל.",
     },
     paid: {
       title: "מה שולם החודש",
@@ -1515,9 +1619,9 @@ export const he = {
        * user's own words for the first** (specs.md Part 5).
        *
        * `gross` is the month's own total before anything is withheld —
-       * ₪9,305.75 in the August 2025 case, the third of criterion 1's four
+       * ₪9,307 in the August 2025 case, the third of criterion 1's four
        * figures, labelled at `A26` of the month template with the figure beside
-       * it in `E26`. What is actually transferred is ₪7,305.75 there, the
+       * it in `E26`. What is actually transferred is ₪7,307 there, the
        * fourth figure, labelled at `B29` with the figure in `E29` — and that
        * row moves down as the closing block grows, so the export derives it
        * (`layoutOf`) and nothing looks it up by number. It is named by
@@ -2267,6 +2371,58 @@ export const he = {
        * a card that reports calm is a card the eye learns to skip.
        */
       needsYou: "צריך לטפל",
+      /**
+       * The three documents the employment rests on, with their expiry dates
+       * (item 28).
+       *
+       * **Two of the three reached the user only as a fee** — the visa
+       * extension and the licence — so the date behind each was readable as a
+       * month and an amount and nowhere as a date; the passport triggers no fee
+       * and reached no list at all until its warning fired. The three sat
+       * together in a fold that is shut by default.
+       *
+       * The names are `DOCUMENT_NAMES`, which the alert sentences already use:
+       * one list, so a document cannot be called two things on two screens.
+       */
+      documents: {
+        title: "המסמכים",
+        /** The dates are deliberately *not* the sealed numbers beside them
+         * (item 28: the numbers are encrypted, "their expiry dates are not"),
+         * and the row says where the numbers are corrected. */
+        note: "המספרים עצמם שמורים מוצפנים בהגדרות, ושם גם מתקנים את התאריכים.",
+        columns: {
+          document: "המסמך",
+          until: "תוקף עד",
+          near: "מה קרוב",
+        },
+        names: DOCUMENT_NAMES,
+        /** Nobody entered a date — the same words `/settings` uses for a number
+         * nobody entered, because it is the same absence. */
+        none: "לא הוזן",
+        /** The date has passed. Said rather than counted, so no row ever draws
+         * a day count running backwards. */
+        expired: "פג",
+        /**
+         * A passport with more than its eighteen months still ahead.
+         *
+         * **It says months because its rule is in months**, and because the
+         * count would otherwise be the better part of a thousand days — a
+         * number that answers nothing. The figure is passed in rather than
+         * written here, so the threshold is stated once
+         * (`PASSPORT_MONTHS_REQUIRED`).
+         */
+        above: (months: number): Said => [
+          "מעל ",
+          { value: String(months) },
+          " חודשים",
+        ],
+        /** The same threshold crossed — the state its warning fires in. */
+        below: (months: number): Said => [
+          "פחות מ-",
+          { value: String(months) },
+          " חודשים",
+        ],
+      },
       /** The months they have, listed, each with the state it is in. */
       months: {
         title: "החודשים",
@@ -2313,6 +2469,70 @@ export const he = {
          * never silently stands for months it did not count. */
         soFarPartial: (counted: number, listed: number) =>
           `מתוך ${counted} מ־${listed} חודשים שנסגרו`,
+        /**
+         * Confirming months from the list, without an export (specs.md item
+         * 18's last paragraph).
+         *
+         * **It says what it confirms and what it does not.** A tick that read
+         * only "לאשר" would claim the agreement the export questions ask for,
+         * which is the one thing this gesture does not collect — so the lead
+         * names the figures and the file in the same breath.
+         */
+        confirm: {
+          title: "לאשר חודשים שכבר הוגשו",
+          lead: (gender: Gender) =>
+            `חודשים שהוגשו וסודרו כבר אפשר לאשר כאן בלי להפיק גיליון — האישור קובע את השכר ${workerWords(gender).hers} לפי השכר שהיה בתוקף בכל חודש, ואינו מחליף את השאלות שלפני הייצוא.`,
+          /** On the tick itself. Said once above the rows and not on each of
+           * them: nine identical labels beside nine months is noise. */
+          pick: "לאישור",
+          /**
+           * The button. The count is drawn into it, so the user never presses a
+           * number they did not see.
+           *
+           * **With nothing ticked it names what it acts on, not a count**:
+           * a disabled button claiming one month is wrong, and a bare
+           * "לאשר חודשים" is a hair from the opening screen's own
+           * "לאישור החודשים" (`alertsView`), which sends the user somewhere
+           * else entirely. Naming the ticking is what tells the two apart.
+           */
+          action: (count: number) =>
+            count === 0
+              ? "לאשר את החודשים המסומנים"
+              : count === 1
+                ? "לאשר חודש אחד"
+                : `לאשר ${count} חודשים`,
+          /** Before anything is ticked. */
+          none: "אין חודש מסומן.",
+          /** Nothing in the list can be confirmed this way at all, so the
+           * block says so rather than drawing a button nothing can press. */
+          nothing: "אין כאן חודש שאפשר לאשר כך.",
+          /** Which figures the run will confirm against, listed above the
+           * button so the wage is seen before it is agreed to (item 4). */
+          rates: {
+            title: "השכר שהחודשים יאושרו לפיו",
+            /** "₪6,247.65 — מאפריל 2025". The months each rate covers. */
+            from: "מ־",
+          },
+          /** After the press. */
+          done: (count: number) =>
+            count === 1 ? "חודש אחד אושר." : `${count} חודשים אושרו.`,
+          /**
+           * Why a month has no tick, for the reasons a *finished draft* can
+           * carry. A month that is simply already confirmed has no sentence:
+           * its badge two columns over says so, and repeating it under every
+           * exported row is a line to read past.
+           */
+          cannot: {
+            notEnded: "החודש עוד לא נגמר.",
+            openSickSpell: (gender: Gender) =>
+              `יש מחלה שלא נרשם לה סיום — צריך לדעת מתי ${workerWords(gender).returned}.`,
+            unansweredHoliday: "יש חג שלא נענה אם הוא נעבד.",
+            noWageForMonth:
+              "אין שכר מינימום בתוקף לחודש הזה בטבלה, ולכן צריך להקליד אותו בדף הייצוא.",
+            noRecuperationRate:
+              "אין דמי הבראה בתוקף לחודש הזה בטבלה, ולכן צריך להקליד אותם בדף הייצוא.",
+          },
+        },
       },
       /** Holiday moves agreed once the year's list was in force (specs.md
        * item 10), so the list as first agreed can be read back. */
@@ -2570,7 +2790,7 @@ export const he = {
         },
         standing: {
           title: "שורות קבועות",
-          hint: "שורה שנקבעת פעם אחת ומופיעה בכל חודש שבטווח שלה, באותו סכום. אפשר לקבוע מאיזה חודש היא מתחילה ובאיזה חודש היא נגמרת, ואם שניהם ריקים היא חלה על כל החודשים. סכום שונה בחודש מסוים מחליפים במסך התשלומים.",
+          hint: "שורה של קיזוז/תוספת קבועה או לטווח חודשים מסוים. ניתן גם אף לחלק למספר חודשים את התשלומים הללו (את הסכום ניתן להחליף במסך התשלומים על מנת לשנות)",
           empty: "לא נקבעה שורה קבועה.",
           add: "להוסיף שורה קבועה",
           edit: "לתקן",
@@ -2891,7 +3111,12 @@ export const he = {
      * parts are separate elements, so nothing here is a sentence with a name
      * inside it (`CLAUDE.md`). */
     of: "של",
-    lead: "כמה שאלות קצרות על מה שמשנה את החודש, כדי ששום דבר לא יישכח בשתיקה.",
+    /** **It says what the questions are for and what closes them**, because the
+     * two export buttons below are the gesture that writes the month as
+     * confirmed (item 18) — answering only releases them. A lead promising the
+     * month is approved on the last answer would tell a family a month is filed
+     * while nothing has been written. */
+    lead: "כמה שאלות קצרות כדי לוודא שמה שסימנת באפליקציה נכון. אחרי המענה אפשר לאשר את החודש ולייצא את הגיליון.",
 
     /**
      * The minimum-wage confirmation (specs.md item 4). It carries all four
@@ -2952,7 +3177,7 @@ export const he = {
        * about.
        */
       raised: (salary: number, minimum: number, gender: Gender) =>
-        `המשכורת הרשומה ל${workerWords(gender).role} היא ${formatAgorot(salary)}, ושכר המינימום שבתוקף בחודש הזה גבוה ממנה. החודש יאושר לפי ${formatAgorot(minimum)}, כי משכורת אינה יכולה להיות נמוכה משכר המינימום. אפשר לקבוע משכורת גבוהה יותר בדף ${workerWords(gender).roleDefinite}.`,
+        `המשכורת הרשומה ל${workerWords(gender).role} היא ${formatRate(salary)}, ושכר המינימום שבתוקף בחודש הזה גבוה ממנה. החודש יאושר לפי ${formatRate(minimum)}, כי משכורת אינה יכולה להיות נמוכה משכר המינימום. אפשר לקבוע משכורת גבוהה יותר בדף ${workerWords(gender).roleDefinite}.`,
       refused: {
         amount: "צריך להקליד סכום גדול מאפס.",
       },
@@ -3229,7 +3454,32 @@ export const he = {
       /** Why the buttons are not pressable, in the order the screen resolves
        * them: the blocks first, because no answer makes them go away. */
       blocked: "כדי לייצא צריך קודם לטפל במה שמסומן למעלה.",
-      unanswered: "אפשר לייצא אחרי שכל השאלות נענו.",
+      /**
+       * How far through item 18's seven questions the user is, said instead of
+       * a sentence with no number in it.
+       *
+       * **It names a figure because the rows do not.** Seven questions are
+       * near-identical to look at, so six answered and one not leaves no way to
+       * find the seventh except to read all seven again.
+       *
+       * The two figures are each their own isolate, so a digit never reorders
+       * inside the Hebrew around it (`docs/agents/rtl.md`).
+       */
+      counted: (answered: number, of: number): Said => [
+        "נענו ",
+        { value: String(answered) },
+        " מתוך ",
+        { value: String(of) },
+      ],
+      /**
+       * The control beside the count. It carries no figure of its own — the
+       * count beside it already says the number — but it agrees with how many
+       * questions are left, because Hebrew inflects the noun and its verb
+       * together: `לשאלה שנותרה` beside `נענו 1 מתוך 7` says one question
+       * remains where six do.
+       */
+      toFirstUnanswered: (remaining: number) =>
+        remaining === 1 ? "לשאלה שנותרה" : "לשאלות שנותרו",
       /** Said after the month was confirmed and the file was asked for, which
        * are one gesture: confirming is what stops the month moving with the
        * profile, and the file is what the user came for. */
@@ -3480,8 +3730,19 @@ export const he = {
         G: "סכום התשלומים החד־פעמיים של החודש.",
         H: "סכום מה ששולם לגורמים שלישיים. אינו נכנס לסכום שמשולם לעובד/ת.",
       }),
-      vacationBalance: (seniorityYear: number) =>
-        `ימי החופשה נצברים לפי הוותק. בשנה ה־${seniorityYear} להעסקה הצבירה היא החלק החודשי של המכסה השנתית, והיתרה שלא נוצלה עוברת לחודשים ולשנים הבאות ואינה נמחקת.`,
+      /**
+       * **It says the number, which is what the family came to find out.** The
+       * sentence it replaced described the arithmetic instead — "the monthly
+       * part of the yearly quota" — and named no figure at all, so the one
+       * question the panel is opened to answer was the one it did not answer.
+       *
+       * The closing line is here because the quota is stated in **working**
+       * days (item 7): a family reading 14 against the Annual Leave Act's 16
+       * has no way to tell that the difference is the weekly rest, and the
+       * link beside this sentence leads to the Act.
+       */
+      vacationBalance: (seniorityYear: number, daysPerYear: number) =>
+        `בשנה ה־${seniorityYear} להעסקה מגיעים ${daysPerYear} ימי חופשה — חלק מהם נצבר בכל חודש. מה שלא נוצל נשמר לחודשים ולשנים הבאות ואינו נמחק. יום המנוחה השבועי אינו נספר כיום חופשה.`,
       sickBalance:
         "ימי המחלה נצברים יום וחצי בכל חודש עבודה עד תקרה של תשעים ימים, ומה שלא נוצל נשמר לחודשים הבאים ואינו מתאפס בסוף השנה.",
       nationalInsuranceEstimate:

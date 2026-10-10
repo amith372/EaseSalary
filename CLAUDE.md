@@ -44,7 +44,7 @@ These bear on any change, so they hold in a session that never opens `specs.md`.
 
 - No rate is ever hardcoded. Derive from the worker's base monthly salary, which defaults to the confirmed minimum wage and may not be set below it. (items 3 and 4)
 - The user never enters a rate or a formula — only facts about the month, and the confirmations the workflow puts to them, such as the minimum wage and the recuperation rate. (Part 1; items 5 and 15)
-- Money is integer agorot in code, two decimals on display, rounded to the nearest agora. (item 3)
+- Money is integer agorot in code, and **every amount is a whole number of shekels**: a line is rounded away from zero to the next shekel once, where its units and its rate become money, and a total is the sum of its already-rounded lines. A **rate** is never rounded — it keeps its agorot in the calculation and on screen, or `5 × 440` stops matching the line beside it. `shekelsUp` is the rule, `formatAgorot` writes an amount and `formatRate` a rate. (item 3)
 - Any computed amount can be overridden; an override is marked manual and is never silently recalculated away. (item 17)
 - Balances are never stored. They are derived by replaying the worker's months from the opening position, which is what makes a correction to a past month move every later month for free. (items 7 and 13)
 

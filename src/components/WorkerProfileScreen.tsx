@@ -4,19 +4,21 @@ import { Sentence } from "@/components/AlertsScreen";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { MoneyValue } from "@/components/MoneyValue";
+import { MonthsSection } from "@/components/MonthsSection";
+import type { ProfileMonth } from "@/components/MonthsSection";
 import { WorkerAvatar } from "@/components/WorkerAvatar";
 import { WorkerBalances } from "@/components/WorkerBalances";
+import { WorkerDocuments } from "@/components/WorkerDocuments";
 import type { ProfileBalance } from "@/components/WorkerBalances";
 import { WorkerSettingsLink } from "@/components/WorkerSettingsLink";
 import type { AlertCard } from "@/lib/alertsView";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import type { AdvanceStanding } from "@/lib/engine/advances";
 import type { HolidayAmendment } from "@/lib/engine/holidayAmendments";
-import type { MonthState } from "@/lib/engine/monthState";
 import type { WorkerProfile } from "@/lib/engine/repository";
 import { he } from "@/lib/i18n/he";
-import { formatAgorot, formatDays } from "@/lib/money";
-import type { YearMonth } from "@/lib/types";
+import { formatAgorot } from "@/lib/money";
+import type { IsoDate } from "@/lib/types";
 
 /**
  * The worker's own page — `EaseSalary - דף העובד`.
@@ -36,33 +38,14 @@ import type { YearMonth } from "@/lib/types";
  * and the closing links row are all drawn.
  */
 
-/** One month as this screen lists it: which month it was, what it came to, what
- * state it is in and what it held. */
-export interface ProfileMonth {
-  month: YearMonth;
-  netAgorot: number | null;
-  grossAgorot: number | null;
-  /** Part 5's four states, derived from the store's own instants. */
-  state: MonthState;
-  /**
-   * The days behind the figure — the days actually worked, and each kind drawn
-   * from a balance. They are the pre-export questions' own counts, which is
-   * what the payslip lists a month's days from, so no month is counted twice
-   * two ways.
-   */
-  days: {
-    worked: number | null;
-    vacation: number;
-    sick: number;
-    holidays: number;
-  };
-}
-
 interface WorkerProfileScreenProps {
   profile: WorkerProfile;
   months: ProfileMonth[];
   /** Whole years since the employment began, for the subtitle. */
   seniorityYears: number;
+  /** Passed in and never read from a clock here, or the server and the browser
+   * disagree about how far off a date is (`CLAUDE.md`). */
+  today: IsoDate;
   /** Their three balances with the sentence behind each (`WorkerBalances`). */
   balances: ProfileBalance[];
   /** What is still owed on each advance, walked from the opening position
@@ -82,6 +65,7 @@ export function WorkerProfileScreen({
   profile,
   months,
   seniorityYears,
+  today,
   balances,
   ledger,
   countryName,
@@ -91,15 +75,6 @@ export function WorkerProfileScreen({
   const words = he.workers;
   const page = words.profile;
 
-  // What they have actually been paid, added up from the same `net` each row
-  // shows — one figure reached one way (Part 3). **Only the months that have a
-  // figure are counted**: a month still open has no net, and counting it as
-  // zero would report a total that quietly grows the day it closes without
-  // anything about the worker having changed. Where some month was skipped the
-  // sentence under the sum says how many it stands for, rather than the sum
-  // standing for a count nobody stated.
-  const paid = months.filter((one) => one.netAgorot !== null);
-  const paidSoFar = paid.reduce((total, one) => total + (one.netAgorot ?? 0), 0);
   const open = ledger.filter((standing) => standing.outstandingAgorot > 0);
 
   return (
@@ -161,86 +136,17 @@ export function WorkerProfileScreen({
 
       <WorkerBalances balances={balances} />
 
-      <section
-        id="months"
-        aria-labelledby="months-title"
-        className="flex min-w-0 scroll-mt-24 flex-col gap-3.5"
-      >
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
-          <h2 id="months-title" dir="auto" className="text-[20px] font-semibold sm:text-[22px]">
-            {page.months.title}
-          </h2>
-          {/* Said once above the column rather than on every row. */}
-          <span dir="auto" className="text-[14px] font-light text-ink-quiet">
-            {page.months.total}
-          </span>
-        </div>
-        <Card radius="sm" className="flex min-w-0 flex-col overflow-hidden">
-          {months.length === 0 ? (
-            <div className="px-4.5 py-4 sm:px-6">
-              <Empty>{page.months.empty}</Empty>
-            </div>
-          ) : (
-            <ul className="flex flex-col">
-              {months.map((one) => (
-                <li
-                  key={`${one.month.year}-${one.month.month}`}
-                  data-month={monthParam(one.month)}
-                  className="border-t border-line-soft first:border-t-0"
-                >
-                  {/* The whole row is the link, as the artboard draws it: the
-                      payslip is this month seen in full, and it takes the month
-                      off the address exactly as `/reports` names one. */}
-                  <Link
-                    href={`/month/payslip?month=${monthParam(one.month)}`}
-                    className="flex flex-wrap items-center gap-x-4.5 gap-y-2 px-4.5 py-3 transition-colors hover:bg-tint sm:px-6 sm:py-3.5"
-                  >
-                    <span className="flex-none text-[16px] font-semibold sm:w-[8.5rem] sm:text-[18px]">
-                      <Bidi>{monthLabel(one.month)}</Bidi>
-                    </span>
-                    <span
-                      dir="auto"
-                      className="min-w-0 flex-[1_1_9rem] text-[14px] font-light text-ink-mute sm:text-[16px]"
-                    >
-                      {detailOf(one)}
-                    </span>
-                    <span className="flex flex-col items-end">
-                      <MoneyValue agorot={one.netAgorot} size="fact" />
-                      <span className="text-[13px] font-light text-ink-soft">
-                        <span dir="auto">{he.month.preview.gross} </span>
-                        <Bidi noTranslate>
-                          {one.grossAgorot === null
-                            ? he.placeholder.amount
-                            : formatAgorot(one.grossAgorot)}
-                        </Bidi>
-                      </span>
-                    </span>
-                    <StateBadge state={one.state} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          {paid.length === 0 ? null : (
-            <div
-              data-row="paid-so-far"
-              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 border-t-2 border-line bg-tint px-4.5 py-3.5 sm:px-6"
-            >
-              <div className="flex min-w-0 flex-col">
-                <span dir="auto" className="text-[16px] font-semibold sm:text-[17px]">
-                  {page.months.soFar}
-                </span>
-                {paid.length === months.length ? null : (
-                  <span dir="auto" className="text-[13px] font-light text-ink-quiet">
-                    {page.months.soFarPartial(paid.length, months.length)}
-                  </span>
-                )}
-              </div>
-              <MoneyValue agorot={paidSoFar} size="lg" className="sm:text-[20px]" />
-            </div>
-          )}
-        </Card>
-      </section>
+      {/* **Beside the balances and above the months**, because the three dates
+          are standing facts about the employment as the balances are, and
+          because the complaint they answer is that they were hidden — which a
+          place at the foot of a long page would not fix. */}
+      <WorkerDocuments documents={profile.documents} today={today} />
+
+      <MonthsSection
+        workerId={profile.id}
+        gender={profile.gender}
+        months={months}
+      />
 
       <section aria-labelledby="advances-title" className="flex min-w-0 flex-col gap-3.5">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
@@ -366,50 +272,6 @@ export function WorkerProfileScreen({
   );
 }
 
-/** The month as the payslip's address names one — zero-padded, so the string
- * sorts as the date does and `/reports` and this page cannot spell it two
- * ways. */
-function monthParam(month: YearMonth): string {
-  return `${month.year}-${String(month.month).padStart(2, "0")}`;
-}
-
-/**
- * What the month held, in one line: the days actually worked, then each kind of
- * day drawn from a balance that the month in fact has.
- *
- * A kind with no days is left out rather than drawn as a zero — nine rows each
- * ending "0 ימי מחלה" is a column of noise to read past, and the absence says
- * the same thing. A month with no figures yet says it is waiting instead.
- */
-function detailOf(one: ProfileMonth): string {
-  if (one.days.worked === null) return he.workers.profile.months.awaiting;
-  const words = he.workers.profile.months.days;
-  return [
-    words.worked(formatDays(one.days.worked)),
-    ...(one.days.vacation > 0 ? [words.vacation(formatDays(one.days.vacation))] : []),
-    ...(one.days.sick > 0 ? [words.sick(formatDays(one.days.sick))] : []),
-    ...(one.days.holidays > 0 ? [words.holidays(formatDays(one.days.holidays))] : []),
-  ].join(" · ");
-}
-
-/** Which of Part 5's four states the month is in. The exported one is the calm
- * colour and the other three are the attention colour, because exported is the
- * only one of the four that asks nothing of the user. */
-function StateBadge({ state }: { state: MonthState }) {
-  return (
-    <span
-      dir="auto"
-      data-state={state}
-      className={[
-        "flex-none rounded-full px-3 py-1.5 text-[14px] font-semibold whitespace-nowrap",
-        state === "exported" ? "bg-chip text-ink-warm" : "bg-band-sun text-clay-ink",
-      ].join(" ")}
-    >
-      {he.workers.profile.months.state[state]}
-    </span>
-  );
-}
-
 /** How much of an advance is repaid, as a bar. The figures above it say the
  * same thing in words; the bar is for the eye and is hidden from a reader. */
 function Progress({ done, of }: { done: number; of: number }) {
@@ -431,3 +293,8 @@ function Empty({ children }: { children: ReactNode }) {
     </p>
   );
 }
+
+/** The list of months is `MonthsSection`'s, and so is the shape of a row on it.
+ * Re-exported here because this screen is what a page builds, so the page has
+ * one import for the screen and its data. */
+export type { ProfileMonth };

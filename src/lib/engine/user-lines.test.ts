@@ -4,6 +4,7 @@ import {
   plainWorker,
 } from "@/lib/engine/august-2025.fixture";
 import { calculateMonth } from "@/lib/engine/month";
+import { shekelsUp } from "@/lib/money";
 import { placementOf } from "@/lib/engine/types";
 import type { MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
@@ -13,7 +14,9 @@ import { he } from "@/lib/i18n/he";
  * item 20).
  *
  * **The figures are derived on paper**, in `august-2025.fixture.ts`: the month
- * with nothing marked comes to ₪8,879.40, and every case below moves it by
+ * with nothing marked comes to ₪8,880 — ₪6,248 of base and ₪500 of supplement
+ * in column E, five rest days at ₪426.35 as one line of ₪2,132 in column F,
+ * each line up to the whole shekel (item 3) — and every case below moves it by
  * exactly one thing. Nothing here is read back from the engine.
  *
  * **The four combinations, each moving one thing.** A standing addition of ₪500
@@ -22,10 +25,10 @@ import { he } from "@/lib/i18n/he";
  * for. Deductions of either lifetime land in the block below the columns, so
  * they move what is transferred and never what they earned:
  *
- *   standing addition   E 724,765   gross 937,940   net 937,940
- *   one-off addition    G  30,000   gross 917,940   net 917,940
- *   standing deduction  E 674,765   gross 887,940   net 867,940
- *   one-off deduction   E 674,765   gross 887,940   net 872,940
+ *   standing addition   E 724,800   gross 938,000   net 938,000
+ *   one-off addition    G  30,000   gross 918,000   net 918,000
+ *   standing deduction  E 674,800   gross 888,000   net 868,000
+ *   one-off deduction   E 674,800   gross 888,000   net 873,000
  */
 
 const worker = plainWorker;
@@ -73,12 +76,12 @@ function column(result: { lines: { column: string; amount: number | null }[] }, 
 }
 
 describe("the month with no lines of the user's own", () => {
-  it("comes to ₪8,879.40, which every case below moves from", () => {
+  it("comes to ₪8,880, which every case below moves from", () => {
     const result = calculateMonth(facts(worker()), worker());
-    expect(column(result, "E")).toBe(674765);
-    expect(column(result, "F")).toBe(213175);
-    expect(result.gross).toBe(887940);
-    expect(result.net).toBe(887940);
+    expect(column(result, "E")).toBe(674800);
+    expect(column(result, "F")).toBe(213200);
+    expect(result.gross).toBe(888000);
+    expect(result.net).toBe(888000);
   });
 });
 
@@ -87,11 +90,11 @@ describe("a standing addition — a payment agreed on top (specs.md item 20)", (
   const result = calculateMonth(facts(w), w);
 
   it("sits in column E, because she earns it every month", () => {
-    // 674,765 + 50,000. What a family uses instead of bending the rest-eve
+    // 674,800 + 50,000. What a family uses instead of bending the rest-eve
     // supplement into a second agreement about a different day.
-    expect(column(result, "E")).toBe(724765);
-    expect(result.gross).toBe(937940);
-    expect(result.net).toBe(937940);
+    expect(column(result, "E")).toBe(724800);
+    expect(result.gross).toBe(938000);
+    expect(result.net).toBe(938000);
   });
 
   it("keeps the user's own words as the label and its own key", () => {
@@ -104,7 +107,7 @@ describe("a standing addition — a payment agreed on top (specs.md item 20)", (
   it("counts inside column E's own subtotal", () => {
     // The subtotal is the sum of the lines in the column, so a standing line
     // that reached E but not its subtotal would make the sheet stop adding up.
-    expect(result.subtotals.find((s) => s.column === "E")?.amount).toBe(724765);
+    expect(result.subtotals.find((s) => s.column === "E")?.amount).toBe(724800);
   });
 });
 
@@ -113,9 +116,9 @@ describe("a one-off addition (specs.md item 20)", () => {
     // 887,940 + 30,000, and column E untouched.
     const w = worker();
     const result = calculateMonth(facts(w, [oneOffAddition]), w);
-    expect(column(result, "E")).toBe(674765);
+    expect(column(result, "E")).toBe(674800);
     expect(column(result, "G")).toBe(30000);
-    expect(result.gross).toBe(917940);
+    expect(result.gross).toBe(918000);
   });
 });
 
@@ -126,16 +129,16 @@ describe("a deduction is withheld, never un-earned (specs.md item 20)", () => {
     // different claim and the wrong one.
     const w = worker([standingDeduction]);
     const result = calculateMonth(facts(w), w);
-    expect(result.gross).toBe(887940);
-    expect(result.net).toBe(867940);
-    expect(column(result, "E")).toBe(674765);
+    expect(result.gross).toBe(888000);
+    expect(result.net).toBe(868000);
+    expect(column(result, "E")).toBe(674800);
   });
 
   it("moves the one-off case's net and leaves its gross alone", () => {
     const w = worker();
     const result = calculateMonth(facts(w, [oneOffDeduction]), w);
-    expect(result.gross).toBe(887940);
-    expect(result.net).toBe(872940);
+    expect(result.gross).toBe(888000);
+    expect(result.net).toBe(873000);
   });
 
   it("takes its sign from the direction, never from the amount", () => {
@@ -154,17 +157,17 @@ describe("a deduction is withheld, never un-earned (specs.md item 20)", () => {
 
 describe("all four at once", () => {
   it("adds and withholds each exactly once", () => {
-    // E 674,765 + 50,000 = 724,765; G 30,000; gross 967,940; then 20,000 and
-    // 15,000 withheld, so 932,940 transferred.
+    // E 674,800 + 50,000 = 724,800; G 30,000; gross 968,000; then 20,000 and
+    // 15,000 withheld, so 933,000 transferred.
     const w = worker([agreedExtra, standingDeduction]);
     const result = calculateMonth(
       facts(w, [oneOffAddition, oneOffDeduction]),
       w,
     );
-    expect(column(result, "E")).toBe(724765);
+    expect(column(result, "E")).toBe(724800);
     expect(column(result, "G")).toBe(30000);
-    expect(result.gross).toBe(967940);
-    expect(result.net).toBe(932940);
+    expect(result.gross).toBe(968000);
+    expect(result.net).toBe(933000);
   });
 });
 
@@ -182,8 +185,8 @@ describe("a standing line is a term, so stopping it does not restate the past", 
 
     // The same stored month, calculated after the profile changed.
     const result = calculateMonth(august, after);
-    expect(column(result, "E")).toBe(724765);
-    expect(result.gross).toBe(937940);
+    expect(column(result, "E")).toBe(724800);
+    expect(result.gross).toBe(938000);
   });
 
   it("does not pay a month confirmed before the line existed", () => {
@@ -191,7 +194,7 @@ describe("a standing line is a term, so stopping it does not restate the past", 
     // adding a standing line today must not reach back into a month that never
     // had it.
     const w = worker([]);
-    expect(calculateMonth(facts(w), worker([agreedExtra])).gross).toBe(887940);
+    expect(calculateMonth(facts(w), worker([agreedExtra])).gross).toBe(888000);
   });
 });
 
@@ -205,19 +208,20 @@ describe("an override reaches a user line by its own key (specs.md item 17)", ()
     const line = result.lines.find((l) => l.key === "standing.pocket");
     expect(line?.amount).toBe(60000);
     expect(line?.manual).toBe(true);
-    expect(result.gross).toBe(887940 + 60000);
+    expect(result.gross).toBe(888000 + 60000);
   });
 });
 
 /**
  * **Where a line sits is the user's choice and is not implied by its direction**
- * (specs.md item 20). Every figure below is derived from the same ₪8,879.40 the
+ * (specs.md item 20). Every figure below is derived from the same ₪8,880 the
  * first case in this file states, and from item 19's 3.6% of the month's full
- * cost:
+ * cost, the estimate itself taken up to the shekel like any other amount
+ * (item 3):
  *
- *   the month itself       gross 887,940   estimate 887,940 × 3.6% = 31,965.84
- *   ₪150 withheld before   gross 872,940   estimate 872,940 × 3.6% = 31,425.84
- *   ₪500 added before      gross 937,940   estimate 937,940 × 3.6% = 33,765.84
+ *   the month itself       gross 888,000   estimate 888,000 × 3.6% = 31,968 -> 32,000
+ *   ₪150 withheld before   gross 873,000   estimate 873,000 × 3.6% = 31,428 -> 31,500
+ *   ₪500 added before      gross 938,000   estimate 938,000 × 3.6% = 33,768 -> 33,800
  *
  * None of the three is read back from the engine: the gross is the base case
  * plus or minus the line, and the estimate is the rate applied to it by hand.
@@ -242,7 +246,7 @@ describe("a line placed before or after the month's total (specs.md item 20)", (
     expect(line?.amount).toBe(-15000);
     // The sheet must still add up by eye: units × rate rounds to the amount on
     // every line, including one that withholds.
-    expect(Math.round((line?.units ?? 0) * (line?.rate ?? 0))).toBe(-15000);
+    expect(shekelsUp((line?.units ?? 0) * (line?.rate ?? 0))).toBe(-15000);
     expect(result.subtotals.find((s) => s.column === "G")?.amount).toBe(-15000);
   });
 
@@ -285,27 +289,26 @@ describe("a line placed before or after the month's total (specs.md item 20)", (
   it("takes that deduction out of the month's total and its estimate", () => {
     const w = worker();
     const result = calculateMonth(facts(w, [withheldBefore]), w);
-    expect(result.gross).toBe(872940);
-    expect(result.net).toBe(872940);
+    expect(result.gross).toBe(873000);
+    expect(result.net).toBe(873000);
     // 3.6% of a month that cost ₪150 less. This is the whole reason the choice
     // exists: the same ₪150 placed after the total leaves the estimate alone.
-    expect(result.nationalInsuranceEstimate).toBe(31426);
+    expect(result.nationalInsuranceEstimate).toBe(31500);
   });
 
   it("keeps an addition placed after out of the total and the estimate", () => {
     const w = worker([addedAfter]);
     const result = calculateMonth(facts(w), w);
-    expect(column(result, "E")).toBe(674765);
-    expect(result.gross).toBe(887940);
-    expect(result.net).toBe(937940);
-    expect(result.nationalInsuranceEstimate).toBe(31966);
+    expect(column(result, "E")).toBe(674800);
+    expect(result.gross).toBe(888000);
+    expect(result.net).toBe(938000);
+    expect(result.nationalInsuranceEstimate).toBe(32000);
   });
 
   it("pays the worker the same either way, and estimates a different cost", () => {
     // The check that says what the choice is actually about. They are transferred
-    // ₪9,379.40 in both, and what differs is whether the ₪500 was part of the
-    // month's cost — so the two estimates are 3.6% of ₪9,379.40 and of
-    // ₪8,879.40.
+    // ₪9,380 in both, and what differs is whether the ₪500 was part of the
+    // month's cost — so the two estimates are 3.6% of ₪9,380 and of ₪8,880.
     const after = worker([addedAfter]);
     const before = worker([{ ...agreedExtra, placement: "beforeGross" }]);
 
@@ -313,11 +316,11 @@ describe("a line placed before or after the month's total (specs.md item 20)", (
     const beforeResult = calculateMonth(facts(before), before);
 
     expect(afterResult.net).toBe(beforeResult.net);
-    expect(afterResult.net).toBe(937940);
-    expect(beforeResult.gross).toBe(937940);
-    expect(afterResult.gross).toBe(887940);
-    expect(beforeResult.nationalInsuranceEstimate).toBe(33766);
-    expect(afterResult.nationalInsuranceEstimate).toBe(31966);
+    expect(afterResult.net).toBe(938000);
+    expect(beforeResult.gross).toBe(938000);
+    expect(afterResult.gross).toBe(888000);
+    expect(beforeResult.nationalInsuranceEstimate).toBe(33800);
+    expect(afterResult.nationalInsuranceEstimate).toBe(32000);
   });
 
   it("defaults to where every line sat before the choice existed", () => {

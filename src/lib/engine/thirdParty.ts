@@ -20,7 +20,7 @@ import type {
 } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import type { LegalLinkKey } from "@/lib/links";
-import { parseShekels } from "@/lib/money";
+import { parseShekels, shekelsUp } from "@/lib/money";
 import type { Explanation, MonthLine, SheetColumn, YearMonth } from "@/lib/types";
 
 /**
@@ -69,7 +69,7 @@ const THIRD_PARTY_COLUMN: SheetColumn = "H";
  * That base is columns E, F and G, which is the gross, so the gross is what
  * this takes. Applying it to the net would make the contribution depend on
  * whether the family happened to lend them money, which nothing in the rule
- * says: for August 2025 it is 3.6% of ₪9,305.75 and not of ₪7,305.75 (Part 4).
+ * says: for August 2025 it is 3.6% of ₪9,307 and not of ₪7,307 (Part 4).
  *
  * **The percentage is looked up by date and is not a constant here.** It
  * is set by the state and changes on a date, and a bare number in this file
@@ -100,7 +100,11 @@ export function nationalInsuranceEstimateOf(
   month: YearMonth,
 ): number | null {
   const rate = rateInForce(rates, "nationalInsurance", month);
-  return rate === null ? null : Math.round(grossAgorot * rate.value);
+  // A whole shekel like every other amount (specs.md item 3). It is not a line,
+  // so nothing else rounds it: the month screen and the exported sheet both
+  // read this figure, and an agora left on it would be a shekel of difference
+  // between the two (`CLAUDE.md` rule 12).
+  return rate === null ? null : shekelsUp(grossAgorot * rate.value);
 }
 
 /**
@@ -363,7 +367,9 @@ export function reviewThirdPartyPayment(
     return { ok: false, reason: "thirdPartyPaidTwice" };
   }
 
-  const agorot = parseShekels(draft.amount);
+  const typed = parseShekels(draft.amount);
+  // A whole shekel, like every other amount the month records (item 3).
+  const agorot = typed === null ? null : shekelsUp(typed);
   // Zero is refused, as it is for a line the user adds (item 20): a payment
   // that moved no money is not a payment, and it would print in the export as
   // a payment of nothing (item 2). `parseShekels` has already refused a minus.

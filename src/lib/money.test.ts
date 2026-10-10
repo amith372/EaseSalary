@@ -5,41 +5,45 @@ import {
   formatDays,
   formatPercent,
   parseShekels,
+  shekelsUp,
   toShekels,
 } from "@/lib/money";
 
 describe("formatAgorot", () => {
   it("writes the four totals of the August 2025 known case", () => {
-    // specs.md Part 4. The figures are what the export must read to the agora;
-    // this asserts only that the formatter writes them, not that the engine
-    // arrives at them.
-    expect(formatAgorot(674765)).toBe("6,747.65 ₪");
-    expect(formatAgorot(255810)).toBe("2,558.10 ₪");
-    expect(formatAgorot(930575)).toBe("9,305.75 ₪");
-    expect(formatAgorot(730575)).toBe("7,305.75 ₪");
+    // specs.md Part 4. The figures are what the export must read; this asserts
+    // only that the formatter writes them, not that the engine arrives at them.
+    expect(formatAgorot(674800)).toBe("6,748 ₪");
+    expect(formatAgorot(255900)).toBe("2,559 ₪");
+    expect(formatAgorot(930700)).toBe("9,307 ₪");
+    expect(formatAgorot(730700)).toBe("7,307 ₪");
   });
 
-  it("keeps two decimals, so a column of amounts lines up", () => {
-    expect(formatAgorot(0)).toBe("0.00 ₪");
-    expect(formatAgorot(5)).toBe("0.05 ₪");
-    expect(formatAgorot(50)).toBe("0.50 ₪");
-    expect(formatAgorot(100)).toBe("1.00 ₪");
+  it("writes no decimals, because every amount is a whole shekel", () => {
+    expect(formatAgorot(0)).toBe("0 ₪");
+    expect(formatAgorot(100)).toBe("1 ₪");
+    expect(formatAgorot(624800)).toBe("6,248 ₪");
   });
 
   it("groups thousands and millions", () => {
-    expect(formatAgorot(100000)).toBe("1,000.00 ₪");
-    expect(formatAgorot(100000000)).toBe("1,000,000.00 ₪");
-    expect(formatAgorot(99999)).toBe("999.99 ₪");
+    expect(formatAgorot(100000)).toBe("1,000 ₪");
+    expect(formatAgorot(100000000)).toBe("1,000,000 ₪");
+    expect(formatAgorot(99900)).toBe("999 ₪");
   });
 
   it("marks a deduction with a leading minus and keeps its magnitude", () => {
-    expect(formatAgorot(-200000)).toBe("-2,000.00 ₪");
-    expect(formatAgorot(-5)).toBe("-0.05 ₪");
+    expect(formatAgorot(-200000)).toBe("-2,000 ₪");
+    expect(formatAgorot(-100)).toBe("-1 ₪");
   });
 
-  it("rounds to the nearest agora rather than truncating", () => {
-    expect(formatAgorot(100.4)).toBe("1.00 ₪");
-    expect(formatAgorot(100.5)).toBe("1.01 ₪");
+  it("takes an amount that still carries agorot up, never down", () => {
+    // Nothing the engine produces carries one, so this is the figure that
+    // escaped the rule — and showing less than is owed is the one direction
+    // that would mislead the family. A deduction goes the same way, away from
+    // zero, which is the direction the rule chose.
+    expect(formatAgorot(5)).toBe("1 ₪");
+    expect(formatAgorot(99999)).toBe("1,000 ₪");
+    expect(formatAgorot(-5)).toBe("-1 ₪");
   });
 });
 
@@ -171,7 +175,10 @@ describe("what is not a figure", () => {
  */
 describe("what is shown and what is read back", () => {
   it("round-trips every amount the application prints", () => {
-    for (const agorot of [0, 1, 99, 100, 45000, 624765, 930575, 100000000]) {
+    // Whole shekels, because that is what an amount is (item 3). A figure
+    // carrying agorot does not round-trip and must not: the formatter takes it
+    // up to the shekel that is paid, which is the figure to read back.
+    for (const agorot of [0, 100, 45000, 624800, 930700, 100000000]) {
       expect(parseShekels(formatAgorot(agorot))).toBe(agorot);
     }
   });
@@ -195,12 +202,20 @@ describe("formatPercent", () => {
 });
 
 describe("amountFieldValue", () => {
-  it("opens a field with the shekels and agorot, no sign or grouping", () => {
-    expect(amountFieldValue(730575)).toBe("7305.75");
+  it("opens a field with the shekels, no sign or grouping", () => {
+    expect(amountFieldValue(730700)).toBe("7307");
+    expect(amountFieldValue(0)).toBe("0");
+    expect(amountFieldValue(-200000)).toBe("-2000");
+  });
+
+  it("keeps the agorot of a figure that has them, rather than dropping them", () => {
+    // A rate opens its own field — the base monthly salary, the minimum wage
+    // confirmed before an export — and a rate keeps its fraction (item 3). A
+    // field that silently dropped it would be the one place the user's own
+    // figure changed behind their back; what they type over an amount is
+    // rounded when it is saved (`reviewOverride`).
     expect(amountFieldValue(624765)).toBe("6247.65");
     expect(amountFieldValue(5)).toBe("0.05");
-    expect(amountFieldValue(0)).toBe("0.00");
-    expect(amountFieldValue(-200000)).toBe("-2000.00");
   });
 
   it("opens the field empty for an amount not yet known", () => {
@@ -221,5 +236,45 @@ describe("toShekels", () => {
     expect(toShekels(0)).toBe(0);
     expect(toShekels(null)).toBeNull();
     expect(toShekels(undefined)).toBeNull();
+  });
+});
+
+describe("shekelsUp", () => {
+  // Arithmetic, not a domain figure: every expectation below is the next whole
+  // shekel away from zero, worked out on paper from the agorot beside it.
+  it("takes an amount up to the next whole shekel", () => {
+    expect(shekelsUp(170003)).toBe(170100); // 1,700.03 -> 1,701
+    expect(shekelsUp(624765)).toBe(624800); // 6,247.65 -> 6,248
+    expect(shekelsUp(1)).toBe(100);
+    expect(shekelsUp(99)).toBe(100);
+  });
+
+  it("leaves a whole shekel where it is", () => {
+    expect(shekelsUp(170100)).toBe(170100);
+    expect(shekelsUp(50000)).toBe(50000);
+    expect(shekelsUp(-200000)).toBe(-200000);
+  });
+
+  it("rounds a deduction away from zero, not toward it", () => {
+    // The direction the user chose: a repayment of 1,700.03 deducts 1,701.
+    expect(shekelsUp(-170003)).toBe(-170100);
+    expect(shekelsUp(-1)).toBe(-100);
+    expect(shekelsUp(-99)).toBe(-100);
+  });
+
+  it("holds zero at zero, and never returns -0", () => {
+    expect(shekelsUp(0)).toBe(0);
+    expect(Object.is(shekelsUp(-0), 0)).toBe(true);
+    expect(Object.is(shekelsUp(-0.4), 0)).toBe(true);
+  });
+
+  it("drops a sub-agora before deciding the shekel", () => {
+    // 1,700.004 is 1,700 to the agora, so it is already whole and stays; the
+    // third decimal is what decides the second, and only then the shekel.
+    expect(shekelsUp(170000.4)).toBe(170000);
+    expect(shekelsUp(170000.6)).toBe(170100);
+    // What a double does to a product that is exact in decimal must not cost
+    // the family a shekel.
+    expect(shekelsUp(500000.00000000006)).toBe(500000);
   });
 });

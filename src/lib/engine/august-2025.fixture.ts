@@ -16,14 +16,17 @@ import type { MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
  * exactly one thing.
  *
  * **The figures are derived on paper and none is read back from the engine.**
- * Five Saturdays, all worked, and five Fridays:
+ * Five Saturdays, all worked, and five Fridays, each line taken up to the whole
+ * shekel where it becomes an amount (specs.md item 3):
  *
- *   column E   624,765 + 5 × 10,000                 = 674,765   ₪6,747.65
- *   column F   5 × 42,635.062087912… = 213,175.31…  = 213,175   ₪2,131.75
- *   the ברוטו                                        = 887,940   ₪8,879.40
+ *   base        624,765 -> 624,800                               ₪6,248
+ *   supplement  5 × 10,000                            =  50,000  ₪500
+ *   column E    624,800 + 50,000                      = 674,800  ₪6,748
+ *   column F    5 × 42,635.062087912… = 213,175.31… ->  213,200  ₪2,132
+ *   the ברוטו                                         = 888,000  ₪8,880
  *
- * Part 4 states the ₪6,747.65 outright, and the rest-day rate is the one its
- * ₪2,558.10 is built from — one day plus one hour at 150%, which is the salary
+ * Part 4 states the ₪6,748 outright, and the rest-day rate is the one its
+ * ₪2,559 is built from — one day plus one hour at 150%, which is the salary
  * over 25 plus the salary over 182, times 1.5 (Part 5).
  *
  * It carries no income tax and no advances, so a case that wants either adds it.
@@ -35,9 +38,9 @@ export const AUGUST_2025 = { year: 2025, month: 8 } as const;
  * from 1.4.2025 and therefore the rate August 2025 is valued at (Part 3). */
 export const SALARY = 624765;
 
-/** ₪8,879.40 — the ברוטו of the month above, and the figure every case moves
+/** ₪8,880 — the ברוטו of the month above, and the figure every case moves
  * from. Derived in the docblock, not read back. */
-export const PLAIN_GROSS = 887940;
+export const PLAIN_GROSS = 888000;
 
 /** The worker of Part 4: they rest on Saturday, so their rest-eve is Friday. */
 export function plainWorker(standingLines: UserLine[] = []): WorkerTerms {

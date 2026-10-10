@@ -1,8 +1,8 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
-import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections, openSettingsGroups, TODAY } from "./household";
+import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections, openSettingsGroups, useToday, TODAY } from "./household";
 import { FRIDAY, SATURDAY, addMonths, monthOf, yearMonthText } from "../src/lib/dates";
 import { fullDayLabel } from "../src/lib/dateLabels";
-import { he } from "../src/lib/i18n/he";
+import { he, type Said } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
 /**
@@ -55,6 +55,12 @@ async function useHousehold(
       url: "http://localhost:3000",
     },
   ]);
+}
+
+/** A sentence from `he.ts` as the screen reads it, each figure in its own
+ * isolate on the page and all of it one run of text here. */
+function said(parts: Said): string {
+  return parts.map((part) => (typeof part === "string" ? part : part.value)).join("");
 }
 
 function row(page: Page, key: string) {
@@ -587,6 +593,81 @@ test.describe("the opening position (specs.md item 6)", () => {
 });
 
 test.describe("the three documents and their expiry dates (specs.md item 28)", () => {
+  /**
+   * **The three dates in one place, in the order they will ask for something**
+   * (stage 17 step 3). Until now two of them reached the user only as the fee
+   * they trigger and the passport reached no list at all, and all three lived
+   * in a fold that is shut by default.
+   *
+   * Scenario: the demo's second worker, whose three dates `seed.ts` writes as
+   * permit 30.11.2026, visa 15.10.2026, passport 31.1.2027, read on the pinned
+   * today of 18.9.2026. The clock is pinned because every figure here is a
+   * distance from it.
+   *
+   * Expected, derived on paper from those four dates and the two thresholds
+   * `actionList.ts` holds — sixty days for the permit and the visa, eighteen
+   * months for the passport (`CLAUDE.md` rule 11, and `documentDates.test.ts`
+   * carries the arithmetic):
+   *
+   * - **passport first**, although it expires two months after the other two:
+   *   on 18.9.2026 it is already 411 days past its own eighteen-month
+   *   threshold, where the visa is 33 days past its sixty-day one and the
+   *   permit has 13 days of slack left.
+   * - the visa second, 27 days from expiring; the permit last, 73 days off and
+   *   not yet warned about at all.
+   *
+   * **What it would catch.** The list sorted by the date each expires, which
+   * is the obvious implementation and puts the passport last — telling a
+   * family the document they should start on first is the one they can leave.
+   * And the three dates not reaching this screen at all, which is the state
+   * before this step.
+   */
+  test("lists the three dates on the worker's own page, soonest to need attention first", async ({
+    page,
+  }) => {
+    await useHousehold(page, "demo", "documents-list");
+    await useToday(page, TODAY);
+    await page.goto("/workers/worker-2");
+
+    const words = he.workers.profile.documents;
+    const order = await page
+      .locator("[data-row^='document-']")
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-row")));
+    expect(order).toEqual([
+      "document-passport",
+      "document-workVisa",
+      "document-employmentPermit",
+    ]);
+
+    // Each row says its own expiry date, so the ordering hides nothing.
+    const passport = page.locator('[data-row="document-passport"]');
+    await expect(passport).toContainText(fullDayLabel("2027-01-31"));
+    await expect(page.locator('[data-row="document-workVisa"]')).toContainText(
+      fullDayLabel("2026-10-15"),
+    );
+    await expect(
+      page.locator('[data-row="document-employmentPermit"]'),
+    ).toContainText(fullDayLabel("2026-11-30"));
+
+    // **The passport says months and the other two say days.** A day count on
+    // the passport would read as a list that failed to sort: 135 days above
+    // 27 days is right by the rule and looks wrong on the page.
+    await expect(passport.locator('[data-cell="near"]')).toHaveText(
+      said(words.below(18)),
+    );
+    await expect(
+      page.locator('[data-row="document-workVisa"] [data-cell="near"]'),
+    ).toHaveText(said(he.alerts.tag.inDays(27)));
+    await expect(
+      page.locator('[data-row="document-employmentPermit"] [data-cell="near"]'),
+    ).toHaveText(said(he.alerts.tag.inDays(73)));
+
+    await page.screenshot({
+      path: "test-results/worker-documents.png",
+      fullPage: true,
+    });
+  });
+
   /** The dates alone, which is what this section holds: they are stored in the
    * clear because item 27's warnings have to query them. The passport *number*
    * is sealed and sits in its own row above, with its own check. */

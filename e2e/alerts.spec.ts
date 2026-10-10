@@ -1,5 +1,6 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
 import { openPaymentSections, switchToTestWorker, useHousehold, useToday, TODAY } from "./household";
+import type { ExpiringDocument } from "../src/lib/engine/actionList";
 import { he, type Said } from "../src/lib/i18n/he";
 
 /**
@@ -173,6 +174,92 @@ test.describe("the alerts page (specs.md item 27)", () => {
     ).not.toBeChecked();
   });
 
+  /**
+   * **The boundary item 27 is built on, drawn.** `דורש טיפול` is one list with
+   * the blockages sorted above the warnings, and until now nothing marked where
+   * one ended and the other began: "this stops the calculation" and "a fee
+   * falls due in eighty days" were told apart by the shade of a dot.
+   *
+   * Scenario: the `filed` household, which raises both kinds at once — its
+   * January to April 2026 are confirmed and never exported, so they are
+   * warnings, while every later finished month is still a draft and so a
+   * blockage. Then every one of the seven warning kinds is switched off through
+   * the pop-up, which is the only gesture that empties one group and leaves the
+   * other.
+   *
+   * Expected: two seams in item 27's own order, each over its own group alone;
+   * no blockage carrying a tag, which is what the heading now says once for all
+   * of them; and, with the warnings gone, no seam at all.
+   *
+   * **What it would catch.** The two groups drawn under one heading or in the
+   * wrong order. A card of one kind listed under the other's seam, which would
+   * make the boundary a lie — the one failure that is worse than no boundary. A
+   * lone heading left standing over the only group there is, which divides
+   * nothing. And the retired tag still drawn on a blockage, saying card by card
+   * what the seam above it already said.
+   *
+   * The counts are the fixture's own, measured before the switch and compared
+   * with themselves, as every count in this file is.
+   */
+  test("marks the boundary between what blocks and what reminds, and retires the tag", async ({
+    page,
+  }) => {
+    await useHousehold(page, SPEC, "seam");
+    await page.goto("/alerts");
+
+    const blockages = page.locator('[data-role="alert"][data-list="blockage"]');
+    const warnings = page.locator('[data-role="alert"][data-list="warning"]');
+    const blockagesBefore = await blockages.count();
+    expect(blockagesBefore).toBeGreaterThan(0);
+    expect(await warnings.count()).toBeGreaterThan(0);
+
+    // Two seams, in the order the list is already sorted in.
+    const seams = await page
+      .locator("[data-seam]")
+      .evaluateAll((nodes) =>
+        nodes.map((node) => [node.getAttribute("data-seam"), node.textContent]),
+      );
+    expect(seams).toEqual([
+      ["blockage", he.alerts.seam.blockage],
+      ["warning", he.alerts.seam.warning],
+    ]);
+
+    // Each seam stands over its own group and no card of the other kind.
+    await expect(
+      page.locator('[data-group="blockage"] [data-role="alert"]'),
+    ).toHaveCount(blockagesBefore);
+    await expect(
+      page.locator('[data-group="blockage"] [data-role="alert"][data-list="warning"]'),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('[data-group="warning"] [data-role="alert"][data-list="blockage"]'),
+    ).toHaveCount(0);
+
+    // The tag no longer repeats the group: a blockage carries none at all.
+    await expect(blockages.locator('[data-role="alert-tag"]')).toHaveCount(0);
+    for (const tag of await page
+      .locator('[data-role="alert-tag"]')
+      .allTextContents()) {
+      expect(tag).not.toBe(he.alerts.seam.blockage);
+      expect(tag).not.toBe(he.alerts.seam.warning);
+    }
+    await page.screenshot({ path: "test-results/alerts-seam.png", fullPage: true });
+
+    // **With one group empty there is no boundary to draw.** Switching off all
+    // seven warning kinds is the only gesture that reaches that state.
+    await page.getByRole("button", { name: he.alerts.settingsLink }).click();
+    const dialog = page.getByRole("dialog", { name: he.alerts.reminders.title });
+    const boxes = dialog.getByRole("checkbox");
+    const kinds = await boxes.count();
+    for (let i = 0; i < kinds; i += 1) await boxes.nth(i).uncheck();
+    await dialog.getByRole("button", { name: he.alerts.reminders.close }).click();
+    await expect(dialog).toBeHidden();
+
+    await expect(warnings).toHaveCount(0);
+    await expect(blockages).toHaveCount(blockagesBefore);
+    await expect(page.locator("[data-seam]")).toHaveCount(0);
+  });
+
   test("a month exported from the reports is listed as handled, and leaves the list", async ({
     page,
   }) => {
@@ -316,6 +403,95 @@ test.describe("the alerts page (specs.md item 27)", () => {
     await panel.getByRole("link", { name: he.header.bell.showAll }).click();
     await expect(page).toHaveURL(/\/alerts$/);
     await expect(panel).toHaveCount(0);
+  });
+});
+
+test.describe("what a lapsing document costs (specs.md items 26, 28)", () => {
+  /** The expiring card's own heading, which is how a card is told from its
+   * siblings here; the date it takes does not reach the title. */
+  function expiringTitle(document: ExpiringDocument): string {
+    return text(he.alerts.entry.documentExpiring(document, "").title);
+  }
+
+  /**
+   * **One sentence saying what the lapse costs, on the documents where it costs
+   * something** (stage 17 step 5). The note has always said what expires and
+   * when; a lapsed work visa and a passport with a year and a half on it read
+   * the same.
+   *
+   * Scenario: the demo household on the suite's pinned day of 18.9.2026, whose
+   * second worker `seed.ts` gives a visa expiring 15.10.2026, a passport
+   * 31.1.2027 and a permit 30.11.2026, and whose insurance was paid 8.1.2026
+   * for a year.
+   *
+   * Expected, derived on paper from those dates and the thresholds
+   * `actionList.ts` holds — sixty days for the permit, the visa and the
+   * insurance, eighteen months remaining for the passport:
+   *
+   * - the **visa** warns, 27 days out, and carries the sentence;
+   * - the **passport** warns, already inside its eighteen months, and carries
+   *   none — nothing has gone wrong yet;
+   * - the **permit** is 73 days out and the **insurance** 111, so neither
+   *   raises a card at all.
+   *
+   * So two document cards, one of which says what it costs.
+   *
+   * **What it would catch.** The sentence drawn on every document, which puts a
+   * legal consequence on a passport in order and is the one wording mistake
+   * this step could make; the sentence drawn on no card, which is the state
+   * before the step; and it reaching cards that are not about a document.
+   *
+   * **No assertion reads the sentence itself.** Its content is a legal claim
+   * sourced from the Authority's procedure and the caregiver-terms page, and a
+   * test that pinned the words would make a later correction to them look like
+   * a regression.
+   */
+  test("says it on the visa and not on the passport, and on nothing else", async ({
+    page,
+  }) => {
+    await useHousehold(page, "demo", "lapse-cost");
+    await page.goto("/alerts");
+    await expect(page.locator("h1")).toHaveText(he.alerts.title);
+
+    // Every card on the page, and whether it carries the line — read in one
+    // pass so the question is asked of the whole list and not only of the two
+    // cards the test expects to find.
+    const cards = await page
+      .locator('[data-role="alert"]')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => ({
+          title: node.querySelector('[data-role="alert-title"]')?.textContent ?? "",
+          says: node.querySelector('[data-role="alert-consequence"]') !== null,
+        })),
+      );
+
+    const visa = cards.filter((card) => card.title.includes(expiringTitle("workVisa")));
+    const passport = cards.filter((card) =>
+      card.title.includes(expiringTitle("passport")),
+    );
+    expect(visa).toHaveLength(1);
+    expect(passport).toHaveLength(1);
+    expect(visa[0]!.says).toBe(true);
+    expect(passport[0]!.says).toBe(false);
+
+    // And no third card anywhere on the page says it.
+    expect(cards.filter((card) => card.says)).toHaveLength(1);
+
+    // The permit and the insurance are 73 and 111 days out, so they are not
+    // here to be asked about — which is also what makes the count above exact.
+    for (const document of ["employmentPermit", "medicalInsurance"] as const) {
+      expect(
+        cards.filter((card) => card.title.includes(expiringTitle(document))),
+      ).toHaveLength(0);
+    }
+
+    // The card itself and not the page: the one thing this step changed is
+    // four lines tall, and a full page of a list it sits low in shows none of
+    // it.
+    await page
+      .locator('[data-role="alert"]')
+      .filter({ hasText: expiringTitle("workVisa") })
+      .screenshot({ path: "test-results/alerts-lapse-cost.png" });
   });
 });
 
@@ -467,7 +643,9 @@ test.describe("a finished month never confirmed (specs.md item 27)", () => {
     await expect(notExported(page)).toHaveCount(0);
     await expect(
       unconfirmed.getByRole("link", { name: he.alerts.entry.monthsUnconfirmed(0, "").action }),
-    ).toHaveAttribute("href", "/month/export");
+      // Their list of months, where several are confirmed at once (item 18),
+      // and not one month's export screen: the entry names them all.
+    ).toHaveAttribute("href", /^\/workers\/.+#months$/);
 
     await page.goto("/reports");
     await switchToTestWorker(page);

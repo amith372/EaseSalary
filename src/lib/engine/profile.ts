@@ -40,7 +40,7 @@ import type {
   OpeningPosition,
   WorkerTerms,
 } from "@/lib/engine/types";
-import { parseShekels } from "@/lib/money";
+import { parseShekels, shekelsUp } from "@/lib/money";
 import type { IsoDate, WorkerDocuments, YearMonth } from "@/lib/types";
 
 /**
@@ -339,7 +339,11 @@ export function reviewOpeningAdvance(
   draft: OpeningAdvanceDraft,
   advanceNumber: number,
 ): ReviewedOpeningAdvance {
-  const principalAgorot = parseShekels(draft.principal);
+  const typedPrincipal = parseShekels(draft.principal);
+  // A whole shekel, so the opening debt settles against the whole shekels the
+  // months repay (item 3).
+  const principalAgorot =
+    typedPrincipal === null ? null : shekelsUp(typedPrincipal);
   // Zero is refused with a minus: an advance of nothing is not an advance the
   // family gave, and it would stand on the payments screen for ever as a debt
   // that can never be repaid because nothing is owed.
@@ -350,8 +354,9 @@ export function reviewOpeningAdvance(
   // Zero *is* an ordinary answer here — an advance given and not yet repaid at
   // all is the case Part 4's own ₪10,000 is — so an empty field reads as none
   // repaid rather than as a refusal.
-  const repaidAgorot =
+  const typedRepaid =
     draft.repaid.trim() === "" ? 0 : parseShekels(draft.repaid);
+  const repaidAgorot = typedRepaid === null ? null : shekelsUp(typedRepaid);
   if (repaidAgorot === null) return { ok: false, reason: "repaid" };
   if (repaidAgorot > principalAgorot) {
     return { ok: false, reason: "overRepaid" };

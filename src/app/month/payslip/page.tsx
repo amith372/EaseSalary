@@ -90,6 +90,9 @@ export default async function PayslipPage() {
               month.facts.confirmedAt === undefined
                 ? null
                 : todayInIsrael(new Date(month.facts.confirmedAt)),
+            // Read off the month and not off the rates table, which is the
+            // whole of what this line is for (`he.payslip.confirmedWage`).
+            confirmedWageAgorot: month.facts.confirmedWage?.minimumAgorot ?? null,
             note: month.facts.note ?? null,
           };
         }),

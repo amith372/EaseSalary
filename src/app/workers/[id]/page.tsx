@@ -8,9 +8,13 @@ import type { ProfileBalance } from "@/components/WorkerBalances";
 import { householdAlerts } from "@/lib/alertsView";
 import { getRepository } from "@/lib/store";
 import { monthOf, yearsBetween } from "@/lib/dates";
-import { seniorityYearOfCalendarYear } from "@/lib/engine/balances";
+import {
+  seniorityYearOfCalendarYear,
+  vacationBalanceExplanation,
+} from "@/lib/engine/balances";
 import { advanceLedger } from "@/lib/engine/advances";
 import { exportQuestions } from "@/lib/engine/beforeExport";
+import { bulkConfirmFigures, bulkConfirmVerdict } from "@/lib/engine/bulkConfirm";
 import { monthState } from "@/lib/engine/monthState";
 import { refusalShown, workerInSeries } from "@/lib/householdSeries";
 import { he } from "@/lib/i18n/he";
@@ -74,6 +78,11 @@ export default async function WorkerPage({
   const today = await readToday();
   const months = await repository.listMonths(id);
   const closing = series[series.length - 1]?.result.balances;
+  // What each month would make of a tick (specs.md item 18's last paragraph).
+  // Worked out here and never in the browser: the action re-checks the same
+  // rule, and a row whose tick disagreed with it would offer a gesture the
+  // server refuses.
+  const rates = await repository.listRates();
 
   const listed: ProfileMonth[] = series.map(({ facts, result }) => {
     const questions = exportQuestions(facts, today);
@@ -87,6 +96,10 @@ export default async function WorkerPage({
       netAgorot: result.net,
       grossAgorot: result.gross,
       state: monthState(facts),
+      confirmable: bulkConfirmVerdict(facts, profile, rates, today),
+      // The figures a tick would write, so the wage shown above the button
+      // is the wage that is stored (item 4) and not a second reading.
+      confirmAt: bulkConfirmFigures(facts, profile, rates),
       days: {
         worked: result.actualDays,
         vacation: countOf("vacationDays").days ?? 0,
@@ -116,7 +129,7 @@ export default async function WorkerPage({
       // position, so the same sentence is built here from the seniority year
       // they are in — the figure the entitlement rests on (item 7).
       explanation: vacation?.explanation ?? {
-        text: he.sheet.why.vacationBalance(
+        text: vacationBalanceExplanation(
           seniorityYearOfCalendarYear(profile.employedSince, monthOf(today).year),
         ),
         link: "annualLeave",
@@ -158,6 +171,7 @@ export default async function WorkerPage({
       profile={profile}
       months={listed}
       seniorityYears={yearsBetween(profile.employedSince, today)}
+      today={today}
       balances={balances}
       ledger={ledger}
       countryName={countryNameHe(SEEDED_HOLIDAY_LISTS, profile.country)}

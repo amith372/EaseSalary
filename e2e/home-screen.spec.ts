@@ -3,7 +3,7 @@ import { TEST_WORKER_NAME, useHousehold, switchToTestWorker, openPaymentSections
 import { he } from "../src/lib/i18n/he";
 import { monthLabel } from "../src/lib/dateLabels";
 import { monthOf, SATURDAY } from "../src/lib/dates";
-import { formatAgorot, formatDays } from "../src/lib/money";
+import { formatAgorot, formatDays, shekelsUp } from "../src/lib/money";
 
 /**
  * The opening screen, through the browser: how it is laid out, the month that
@@ -29,7 +29,7 @@ import { formatAgorot, formatDays } from "../src/lib/money";
  * **Every expected figure comes from `specs.md` and none from the engine.** The
  * four totals below are quoted from Part 4 in agorot and rendered for comparison
  * by `formatAgorot`, which is the same function the screen uses — the *figure*
- * is the spec's and only its punctuation is shared. ₪8,879.40 is the opening
+ * is the spec's and only its punctuation is shared. ₪8,880 is the opening
  * figure derived on paper in `august-2025.fixture.ts`.
  *
  * **Hebrew comes from `he.ts` and is never typed here.** Every user-facing
@@ -46,20 +46,22 @@ import { formatAgorot, formatDays } from "../src/lib/money";
 
 /** Part 4's four totals, in agorot, quoted and not computed. */
 const PART_4 = {
-  columnE: 674765, // ₪6,747.65 — base plus the rest-eve supplement
-  columnF: 255810, // ₪2,558.10 — four rest days and two holidays
-  gross: 930575, // ₪9,305.75
-  net: 730575, // ₪7,305.75
+  columnE: 674800, // ₪6,748 — base plus the rest-eve supplement
+  columnF: 255900, // ₪2,559 — four rest days and two holidays
+  gross: 930700, // ₪9,307
+  net: 730700, // ₪7,307
   instalment: 200000, // ₪2,000 a month against a ₪10,000 advance
 };
 
-/** ₪8,879.40 — August 2025 with an empty calendar, derived on paper in
+/** ₪8,880 — August 2025 with an empty calendar, derived on paper in
  * `august-2025.fixture.ts` and therefore an independent figure here too. */
-const PLAIN_GROSS = 887940;
+const PLAIN_GROSS = 888000;
 
 /** The three figures Part 4 states that the rows above are built from: the
  * minimum wage August 2025 is valued at, the ₪500 across five rest-eves worked,
- * and the ₪426.35 a rest day and a worked holiday are each paid at. */
+ * and the ₪426.35 a rest day and a worked holiday are each paid at. **All three
+ * are rates and keep their agorot**; the lines they price are whole shekels, so
+ * a row's figure is `shekelsUp` of the product (specs.md item 3). */
 const BASE = 624765;
 
 /** The minimum wage in force from 1.4.2026, sourced to the family's own 2026
@@ -477,7 +479,7 @@ async function backToFirstMonth(page: Page): Promise<void> {
 }
 
 test.describe("the known case of Part 4, entered through the screen", () => {
-  test("reaches ₪9,305.75 and ₪7,305.75 from three gestures", async ({
+  test("reaches ₪9,307 and ₪7,307 from three gestures", async ({
     page,
   }) => {
     await useHousehold(page, "known", "part4");
@@ -485,7 +487,7 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     await backToFirstMonth(page);
 
     // **The starting figure, before anything is entered.** August 2025 with an
-    // empty calendar is ₪8,879.40 — five rest days all worked and five
+    // empty calendar is ₪8,880 — five rest days all worked and five
     // rest-eves. Asserting it first is what makes the three figures below moves
     // rather than coincidences.
     // **The bottom row, not a "gross" row.** A month that withholds nothing and
@@ -525,22 +527,23 @@ test.describe("the known case of Part 4, entered through the screen", () => {
 
     // **Part 4's figures, row by row, to the agora and with no tolerance** —
     // read off the payslip, because the opening screen summarises and the sheet
-    // itemises (item 5). Column E is the base plus the supplement: ₪6,247.65 +
-    // ₪500 = ₪6,747.65. Column F is Part 4's own "two holidays and four
-    // Saturdays at ₪426.35": four rest days at that rate and two holidays at it,
-    // ₪1,705.40 + ₪852.70 = ₪2,558.10. Every one of those numbers is quoted from
-    // Part 4 and the only arithmetic here is its own multiplication, written out
-    // so it can be checked by eye.
+    // itemises (item 5). Column E is the base plus the supplement: ₪6,247.65
+    // paid as ₪6,248, plus ₪500 = ₪6,748. Column F is Part 4's own "two
+    // holidays and four Saturdays at ₪426.35": four rest days at that rate are
+    // ₪1,705.40 paid as ₪1,706 and two holidays at it are ₪852.70 paid as ₪853,
+    // which is ₪2,559. Every one of those numbers is quoted from Part 4 and the
+    // only arithmetic here is its own multiplication and the rounding each line
+    // takes, written out so it can be checked by eye.
     //
     // **The two screens agreeing is itself the assertion** (`CLAUDE.md` rule
-    // 12): the ₪9,305.75 above and the lines below are one engine result shown
+    // 12): the ₪9,307 above and the lines below are one engine result shown
     // twice, and a summary that drifted from its own itemisation would fail here.
     await page.goto("/month/payslip?month=2025-08");
     await expect(row(page, "base")).toContainText(formatAgorot(BASE));
     await expect(row(page, "restEveSupplement")).toContainText(
       formatAgorot(REST_EVE_TOTAL),
     );
-    expect(BASE + REST_EVE_TOTAL).toBe(PART_4.columnE);
+    expect(shekelsUp(BASE) + REST_EVE_TOTAL).toBe(PART_4.columnE);
 
     await expect(row(page, "restDays")).toContainText(
       formatAgorot(4 * REST_DAY_RATE),
@@ -548,7 +551,9 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     await expect(row(page, "holidaysWorked")).toContainText(
       formatAgorot(2 * REST_DAY_RATE),
     );
-    expect(4 * REST_DAY_RATE + 2 * REST_DAY_RATE).toBe(PART_4.columnF);
+    expect(shekelsUp(4 * REST_DAY_RATE) + shekelsUp(2 * REST_DAY_RATE)).toBe(
+      PART_4.columnF,
+    );
 
     await expect(row(page, "net")).toContainText(formatAgorot(PART_4.gross));
 
@@ -582,7 +587,7 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     // **Now three levels are drawn and not one**, because the instalment changes
     // what is transferred: the month's total stands above the advance and the
     // transfer below it (Part 5). Both of Part 4's last two figures are on the
-    // screen at once, which is what makes ₪7,305.75 readable as ₪9,305.75 less
+    // screen at once, which is what makes ₪7,307 readable as ₪9,307 less
     // ₪2,000 rather than as a number the application produced.
     await page.goto("/");
     await backToFirstMonth(page);
@@ -605,13 +610,14 @@ test.describe("the known case of Part 4, entered through the screen", () => {
     await useHousehold(page, "known", "invalid");
     await page.goto("/");
     await backToFirstMonth(page);
-    // ₪8,453.05 — the plain August less one rest day at ₪426.35: ₪6,247.65 plus
-    // ₪500 in column E, and four rest days rather than five in column F. Every
-    // figure in that sentence is Part 4's, and it is written out so that the
-    // number the refusal has to leave untouched is one that can be checked by
-    // hand rather than one read off the screen a moment earlier.
-    const ONE_REST_DAY_OFF = BASE + REST_EVE_TOTAL + 4 * REST_DAY_RATE;
-    expect(ONE_REST_DAY_OFF).toBe(845305);
+    // ₪8,454 — the plain August less one rest day at ₪426.35: ₪6,248 plus ₪500
+    // in column E, and four rest days rather than five in column F, which is
+    // ₪1,706. Every figure in that sentence is Part 4's, and it is written out
+    // so that the number the refusal has to leave untouched is one that can be
+    // checked by hand rather than one read off the screen a moment earlier.
+    const ONE_REST_DAY_OFF =
+      shekelsUp(BASE) + REST_EVE_TOTAL + shekelsUp(4 * REST_DAY_RATE);
+    expect(ONE_REST_DAY_OFF).toBe(845400);
 
     await sweep(page, "2025-08-16", "2025-08-16", "freeRestDay");
     await expect(row(page, "net")).toContainText(formatAgorot(ONE_REST_DAY_OFF));

@@ -3,7 +3,7 @@ import { switchToTestWorker, openSettingsForTestWorker, TODAY } from "./househol
 import { addMonths, monthOf, SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { weekdayDayLabel } from "../src/lib/dateLabels";
-import { formatAgorot, formatDays } from "../src/lib/money";
+import { formatAgorot, formatDays, shekelsUp } from "../src/lib/money";
 
 /**
  * The year's holidays chosen in advance, through the browser — `בחירת חגים`
@@ -47,9 +47,14 @@ const FULL_YEAR = 9;
  * (6,443.85 ÷ 25 + 6,443.85 ÷ 182) × 1.5 — and **printed independently** at
  * `שכר_חודשי_להאנה2026.xlsx` → `חודש  8.26` → `D8`, so the figure has a source
  * outside this code. Half of 43,974 is 21,987 exactly.
+ *
+ * **The rate keeps its agorot and the line it prices does not**: a whole
+ * holiday is paid as ₪440 and half of one as ₪220, each up to the whole shekel
+ * (specs.md item 3).
  */
 const HOLIDAY_RATE = 43974;
-const HALF_HOLIDAY = 21987;
+const WHOLE_HOLIDAY = shekelsUp(HOLIDAY_RATE); // ₪440
+const HALF_HOLIDAY = shekelsUp(HOLIDAY_RATE / 2); // ₪219.87 -> ₪220
 
 /**
  * **Dates read off `data/holidays/IN-2026.json`**, because the worker the suite
@@ -390,15 +395,15 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
   }) => {
     await useHousehold(page, "half");
 
-    // Before: April's worked holiday is paid at the whole rest-day rate, which
-    // is Part 4's ₪426.35.
+    // Before: April's worked holiday is paid at the whole rest-day rate — in
+    // this worker's 2026 wage ₪439.74, so a line of ₪440.
     await page.goto("/");
     await switchToTestWorker(page);
     await backTo(page, 5);
     await expect(page.locator(`[data-date="${WORKED_HOLIDAY}"]`)).toBeVisible();
     await openPayslipMonthsBack(page, 5);
     await expect(row(page, "holidaysWorked")).toContainText(
-      formatAgorot(HOLIDAY_RATE),
+      formatAgorot(WHOLE_HOLIDAY),
     );
 
     await page.goto("/settings/holidays");
@@ -415,8 +420,9 @@ test.describe("the year's holidays, chosen in advance (specs.md item 10)", () =>
     );
 
     // **And the money follows.** Half a day of a worked holiday is half the
-    // rate, rounded at the end. That is the failure this catches: a part-day
-    // the picker records and the sheet still pays whole.
+    // rate, rounded at the end — ₪219.87, paid as ₪220. That is the failure
+    // this catches: a part-day the picker records and the sheet still pays for
+    // a whole one, which would be ₪440.
     await openPayslipMonthsBack(page, 5);
     await expect(row(page, "holidaysWorked")).toContainText(
       formatAgorot(HALF_HOLIDAY),

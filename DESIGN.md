@@ -204,12 +204,18 @@ inherited by every `band-*` utility inside it, so a scene is a list of tokens in
 |---|---|
 | The heading is 24px, as on every other screen, not the artboard's 34px | One heading size across the application |
 | Each card names its worker after the title when the household has two | `specs.md` item 27: the page lists the whole household |
-| The tag is `לטיפול עכשיו` on a blockage and `תזכורת` on a warning; a document running out says `בעוד N ימים` | The artboard's `החודש` / `לא דחוף` have no rule behind them; the list is what item 27 splits by |
+| `דורש טיפול` carries a sub-heading per group — `לטיפול עכשיו` over the blockages, `תזכורת` over the warnings — drawn only where both groups have a card | Item 27's two lists were one stack told apart by the shade of a dot. Same argument as the per-year heading on `דוחות`: a scan needs a boundary it can aim at. A heading over an empty group, or one standing alone, divides nothing |
+| The two headings keep the words that were the per-card tags, not the artboard's `עוצר את החישוב` / `אפשר לטפל בהמשך` | The user, 2026-10-09, choosing the vocabulary the page already had |
+| A seam is 13px/700 with a hairline rule running off its end, where the section's own `h2` is 14px/600 | At the `h2`'s size and weight it would read as a second section rather than as a division inside one; the rule is what makes it a seam rather than a title. The artboard's shape |
+| The blocking seam is `clay-deep`, which is the artboard's `#A15738` exactly; the reminding seam is `ink-soft` where the artboard draws `#8C7A67` | No token carries `#8C7A67`, and `ink-faint` is decoration-only — it holds 3.23:1 and this is text a reader has to read |
+| **The per-card tag is gone from every card but one kind.** A document running out still says `בעוד N ימים` | With a heading per group the tag repeated over eight cards what two headings say twice. The days a document still has is the one thing no heading can say, and it is said nowhere else on the card — the note gives the date, not the count |
+| **A document running out carries one sentence saying what the lapse costs**, under the note and above `מה אומר החוק` — on the employment permit, the work visa and the medical insurance, and on nothing else. The passport carries none, and nor does a document whose date has already passed | The note said what expires and when, so a lapsed visa and a passport with eighteen months on it read alike. The three sentences are legal claims read off the Authority's procedure 5.3.0002 ד.15 and the caregiver-terms page, approved by the user as wording on 2026-10-09 — who also chose the warning alone: on a passport inside its eighteen-month threshold nothing has gone wrong yet, and a lapsed document is already `לטיפול עכשיו`. It is drawn on `/alerts` and not in the bell, which lists four lines to look at and is no place for a legal sentence |
 | `לא עכשיו` appears on warnings only, and a month not yet exported offers `סמן כטופל` in its place | A blockage cannot be put off; the user, 2026-09-17, for a month whose sheet was produced some other way (item 27) |
 | `להגדיר אילו תזכורות לקבל` opens a pop-up of the four warning kinds, one checkbox each, rather than leading to `הגדרות` | The user, 2026-09-17: the settings rows did not say clearly what is on and what is off (item 27) |
 | The artboard's `[חודש] מוכן לחישוב` card is not drawn | No entry of item 27 says a month is ready; a finished month not yet exported is the one that exists |
 | `כבר טופל` lists exports, third-party payments and confirmed recuperation months of the last ninety days | Those are the handled events the months record (item 27) |
 | Entries of one kind that differ only in the month they are about are one card, its title counting them, and it carries one action. The artboard draws a card per entry | The user, 2026-09-24 (F58): a dozen cards saying one sentence about a different month read as a screen of separate problems — `/alerts` was 7,135px tall at 390 wide. `specs.md` item 27 carries the rule, and the count the bell and the strip give is the number of cards drawn |
+| A card for months not yet confirmed leads to that worker's list of months, not to one month's export screen | Its title names every unconfirmed month at once, and the list is where several are confirmed in one gesture (`specs.md` item 18). The export screen is still where a single month is confirmed *and* filed, which is what `/reports` links to month by month |
 | Where such a card offers `סמן כטופל`, it draws one button per month — a row of month chips under the note, each named `סמן את <חודש> כטופל` — and the note then lists no months. A card standing for one month keeps the single plain button | The user, 2026-09-25: the gesture removes a month's warning for good and cannot be undone from the screen, so no press may answer four months at once. Item 27's "one action on it" is the way in (`לייצא`), not the putting-off |
 
 ### The export badge (every screen that draws it)
@@ -242,6 +248,13 @@ folded sheet.
   it, which makes the total read as the lesser figure.
 - `הימים בחודש` is one column below `sm`: two columns at phone width broke
   `27 / 27` over two lines.
+- **`אושר ב־` carries the wage the month was confirmed at**, after a `·` on
+  the same line, which no artboard draws. The figure is the one **stored on the
+  month**, not the one the rates table offers for it today; the two part as soon
+  as a rate is corrected after a month was filed, and until this line existed
+  that difference appeared on no screen — so a month confirmed at a wage nobody
+  intended was indistinguishable from one confirmed correctly. It is drawn only
+  for a month that was confirmed, beside the date that was already there.
 
 ### The workers list and the worker's page
 
@@ -263,8 +276,48 @@ folded sheet.
   sent it — a joined member is shown the invitations addressed to them and
   never the address of the family that invited them, so a worker shared into
   their view carries no chip.
+- **A month row on `החודשים` splits in two**, where the artboard draws the whole
+  row as one link to the payslip: a month that may be confirmed without an
+  export (`specs.md` item 18) carries a tick at the row's start, and a checkbox
+  nested inside an anchor is not a control the browser lets anyone press. The
+  link keeps everything else, so the row still opens the payslip wherever it is
+  pressed. A row with no tick draws a spacer of the same width, so the month
+  names stay in one column.
+- **The reason a month has no tick is drawn under that row**, indented to the
+  month it is about, and only for a finished draft. A month that is simply
+  already confirmed says nothing: its state badge two columns over says it, and
+  the same sentence under every exported row is a line to read past.
+- **The block that confirms them is absent while nothing can be confirmed**,
+  which is the ordinary state of a family exporting as it goes. No artboard
+  draws it; a panel whose button can never be pressed is a panel in the way of
+  the list.
 - What the artboards draw and nothing yet supplies is listed in
   `build_plan.md` (local and untracked — `CLAUDE.md` rule 9), not drawn as placeholders.
+
+### The worker's own page — the three documents
+
+- **`המסמכים` lists the permit, the visa and the passport with their expiry dates**, between
+  the balances and the months. The canvas draws no such section: the three dates lived in a
+  fold on `/settings` that is shut by default, which is the complaint this answers. The user
+  chose this page over the fold, 2026-10-09. The artboard
+  `דף העובד v2 שלושת תאריכי התפוגה` was drawn afterwards to match what was built, not the
+  other way round, because where it lives was the question the step opened with.
+- **The order is how soon each needs attention, not when each expires**, and the two differ.
+  The permit and the visa are warned about sixty days out and the passport while fewer than
+  eighteen months remain (`actionList.ts`, whose threshold this reads rather than restates),
+  so a passport can be long past its own threshold while expiring a year after the other two.
+  Sorted by raw date it would sit last — ordered by something nobody can act on. Every row
+  still prints its own expiry date, so the ordering ranks and never hides.
+- **The passport says months and the other two say days.** `פחות מ-18 חודשים` or
+  `מעל 18 חודשים`, never a count: beside the others a passport reading `בעוד 135 ימים` above a
+  visa reading `בעוד 27 ימים` is correct by the rule and reads as a list that failed to sort.
+- **Rows and not a `<table>`.** Three facts per document wrap under one another at phone
+  width, which columns cannot do; the column names are drawn once above and hidden below `sm`.
+- A date nobody entered says `לא הוזן` — `/settings`'s own words for the same absence — and a
+  date that has passed says `פג` rather than counting days backwards.
+- **The sealed numbers are not drawn beside the dates** (`specs.md` item 28: the numbers are
+  encrypted, their expiry dates are not), and a note sends corrections to `/settings` rather
+  than growing a second way to write the same field here.
 
 ### The payments screen
 
@@ -482,6 +535,34 @@ folded sheet.
   is *which* figure that is and where it came from, because this screen shows
   only the month being exported. The link is the way to that, and the rates group
   is where it lands.
+- **The gate's reason sits above the two buttons and carries a count** —
+  `נענו n מתוך 7` with a control beside it that takes the user to the first
+  question with no answer and marks the row it lands on. Drawn on
+  `לפני הייצוא v2 מונה השאלות`. Four things about it depart from that artboard:
+
+  - **The count and the blockage never show together.** The artboard offers them
+    as two independent states; the screen resolves the blockage first, because a
+    count is about questions and no answer makes a blockage go away — a fraction
+    reading `7 מתוך 7` beside a button that still refuses teaches the user the
+    fraction lies.
+  - **The control is a button, not the artboard's `#first-unanswered` anchor.**
+    The question rows carry `data-question` and no `id`, so the address would
+    resolve and scroll nowhere — the same dead anchor the help screen's own row
+    above records. It scrolls and puts the cursor on the row's first chip
+    instead, and honours `prefers-reduced-motion`.
+  - **The marked row takes `--color-hover` as its ground**, a token, where the
+    artboard draws `#FDF6EE`. Its inset rule is `--color-clay-soft`, as drawn.
+    Nothing on this screen states a hex of its own.
+  - **The control agrees with how many questions are left** —
+    `לשאלות שנותרו` above one remaining and `לשאלה שנותרה` on the last. The
+    artboard draws the singular at every count, which beside `נענו 1 מתוך 7`
+    reads as one question outstanding where six are.
+
+  **The sentence about the two versions still follows the reason, not the
+  buttons.** Reading in order, two disabled buttons before the reason for them
+  is the screen withholding what would release it; an explanation of a choice
+  the user cannot yet make is in the way of the answer. Moving the reason up
+  keeps both: reason, then buttons, then versions.
 
 ### The reports screen
 
@@ -498,6 +579,21 @@ folded sheet.
 - `חודשים קודמים` carries a heading per year, newest first, where the artboard draws one
   unbroken list. The user, 2026-09-24 (F59): the list is seventeen rows and one longer every
   month, and the year is the only boundary in it a reader can aim at.
+- **The year heading carries `הופקו N מתוך M` beside the year**, drawn on
+  `דוחות v2 ספירת השנה`. `M` is the months of that year the worker was employed
+  and which have ended — never twelve by default, and never the month still running,
+  because the question the heading answers is whether what *finished* has been filed.
+  Three things about it depart from that artboard:
+
+  - **The heading stays the band inside the card**, where the artboard moves it above
+    the card and pairs it with a lighter panel. The band is the shape the row above
+    records (F59) and this step adds a count to it rather than redrawing the list.
+  - **The two greys are tokens** — `text-ink-soft` for the words, `text-ink-warm` for
+    the figures — where the artboard draws `#8C7A67` and `#6E5D4D`. Nothing on this
+    screen states a hex of its own.
+  - **A year with no month that has ended carries no count.** The artboard draws no
+    such year; `0 מתוך 0` states nothing, so it is left off rather than drawn empty.
+
 - On a month that has not ended, `החודש עדיין לא הסתיים` is drawn under `לאשר ולייצא`
   as that link's own note and not beside it. `specs.md` item 21 makes it the condition the
   month is filed under, so the row says one thing rather than two.

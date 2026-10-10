@@ -86,7 +86,7 @@ const EXPIRY_WARNING_DAYS = 60;
 
 /** The passport warns while fewer than this many months are left on it, not
  * when it lapses: the employer must see it stays valid that long (item 28). */
-const PASSPORT_MONTHS_REQUIRED = 18;
+export const PASSPORT_MONTHS_REQUIRED = 18;
 
 interface ActionListInput {
   profile: WorkerProfile;
@@ -152,20 +152,40 @@ function nationalInsurance({ profile, series, today }: ActionListInput): ActionE
  * is valid through its expiry date itself, which is how `coverExpiryOf` reads a
  * policy. A date nobody entered says nothing either way.
  */
-function documents({ profile, series, today }: ActionListInput): ActionEntry[] {
-  const soon = addDays(today, EXPIRY_WARNING_DAYS);
+/**
+ * The latest a document may expire and still be warned about today — so a
+ * document expiring after it is one nothing has to be done about yet.
+ *
+ * **Exported because the warning and the worker's own list of dates have to
+ * agree.** `/workers/[id]` orders the three documents by how close each is to
+ * needing attention, which is this day and not the expiry: the passport's
+ * threshold is eighteen months *remaining* while the other two are the expiry
+ * itself, so a list ordered by raw date would rank the passport wrongly against
+ * them. Two definitions of "soon" would let the list say one thing and the bell
+ * another about the same document.
+ */
+export function warnsIfExpiringBy(
+  document: ExpiringDocument,
+  today: IsoDate,
+): IsoDate {
   // The day before eighteen months are up: exactly eighteen left is not fewer.
-  const passportSoon = addDays(addMonthsToDate(today, PASSPORT_MONTHS_REQUIRED), -1);
+  return document === "passport"
+    ? addDays(addMonthsToDate(today, PASSPORT_MONTHS_REQUIRED), -1)
+    : addDays(today, EXPIRY_WARNING_DAYS);
+}
+
+function documents({ profile, series, today }: ActionListInput): ActionEntry[] {
   const { employmentPermitExpiry, workVisaExpiry, passportExpiry } = profile.documents;
-  const checks: [ExpiringDocument, IsoDate | null, IsoDate][] = [
-    ["employmentPermit", employmentPermitExpiry, soon],
-    ["workVisa", workVisaExpiry, soon],
-    ["passport", passportExpiry, passportSoon],
-    ["medicalInsurance", medicalCoverEnds(series), soon],
+  const checks: [ExpiringDocument, IsoDate | null][] = [
+    ["employmentPermit", employmentPermitExpiry],
+    ["workVisa", workVisaExpiry],
+    ["passport", passportExpiry],
+    ["medicalInsurance", medicalCoverEnds(series)],
   ];
   const entries: ActionEntry[] = [];
-  for (const [document, expiresOn, warnUntil] of checks) {
+  for (const [document, expiresOn] of checks) {
     if (expiresOn === null) continue;
+    const warnUntil = warnsIfExpiringBy(document, today);
     if (compareIsoDate(expiresOn, today) < 0) {
       entries.push({ list: "blockage", key: "documentExpired", document, expiresOn });
     } else if (compareIsoDate(expiresOn, warnUntil) <= 0) {

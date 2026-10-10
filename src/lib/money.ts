@@ -17,23 +17,49 @@ function groupThousands(digits: string): string {
 }
 
 /**
- * "7,305.75 ₪", and "-2,000.00 ₪" for a deduction. Two decimals always, so a
- * column of amounts lines up. Callers wrap the result in `<bdi>`: an amount is
- * a mixed run of digits and a Hebrew-context sign, and a browser will reorder
- * its pieces if it is left to the surrounding paragraph (specs.md Part 5).
+ * "9,307 ₪", and "-2,000 ₪" for a deduction. No decimals: every amount is a
+ * whole number of shekels (specs.md item 3), so an agora on a screen could only
+ * be dust, so it is taken up to the shekel that is paid rather than truncated
+ * away — what is shown is never less than what is owed. Callers wrap the result in `<bdi>`: an
+ * amount is a mixed run of digits and a Hebrew-context sign, and a browser will
+ * reorder its pieces if it is left to the surrounding paragraph (Part 5).
+ *
+ * **A rate is not an amount and is not written with this.** `5 × 439.74` under
+ * a payslip row keeps its fraction, or the line stops being the product of the
+ * two figures printed above it.
  */
 export function formatAgorot(agorot: number): string {
+  const { sign, shekels } = partsOf(shekelsUp(agorot));
+  return `${sign}${groupThousands(shekels)} ${SHEKEL_SIGN}`;
+}
+
+/**
+ * A unit price — column D, the base monthly salary, the minimum wage in force —
+ * written with its fraction: "439.74 ₪", "6,247.65 ₪".
+ *
+ * **A rate is not an amount and is not rounded** (specs.md item 3). Round
+ * 439.74 to 440 and the payslip's `5 × 440` stops matching the 2,199 beside it:
+ * the sheet stops adding up by eye, which is the one thing the precision rule
+ * protects. The state publishes the minimum wage to the agora, and the
+ * application must not restate what it read from a source.
+ *
+ * Wrapped in `<bdi>` by its callers for the reason `formatAgorot` gives.
+ */
+export function formatRate(agorot: number): string {
   const { sign, shekels, fraction } = partsOf(agorot);
   return `${sign}${groupThousands(shekels)}.${fraction} ${SHEKEL_SIGN}`;
 }
 
 /** The figure a field opens with — the amount without its sign or grouping, so
- * what is shown is what `parseShekels` reads back: 730575 is "7305.75". An
- * amount not yet known opens the field empty. */
+ * what is shown is what `parseShekels` reads back: 730700 is "7307". An amount
+ * not yet known opens the field empty. Agorot are kept when an amount somehow
+ * carries them, since a field that silently dropped them would be the one place
+ * the user's own figure changed behind their back; what they type is rounded
+ * when it is saved (`reviewOverride`). */
 export function amountFieldValue(agorot: number | null | undefined): string {
   if (agorot === null || agorot === undefined) return "";
   const { sign, shekels, fraction } = partsOf(agorot);
-  return `${sign}${shekels}.${fraction}`;
+  return fraction === "00" ? `${sign}${shekels}` : `${sign}${shekels}.${fraction}`;
 }
 
 /** Split in integers rather than by dividing, so no float reaches the digits. */
@@ -134,4 +160,33 @@ export function parseShekels(text: string): number | null {
   const carry = Number(fraction.charAt(2) || "0") >= 5 ? 1 : 0;
   const total = shekels * 100 + agorot + carry;
   return Number.isSafeInteger(total) ? total : null;
+}
+
+/**
+ * An amount rounded away from zero to the next whole shekel: 170003 is 170100,
+ * and -170003 is -170100. Every amount the application shows, pays or exports
+ * is a multiple of a shekel (specs.md item 3), so money stays integer agorot
+ * and only its granularity is a shekel.
+ *
+ * **Away from zero, not up**, so a deduction rounds to the worker's cost the
+ * same way a payment rounds to hers: a repayment of 1,700.03 deducts 1,701. It
+ * is a decision about deducting from a wage rather than a rounding convention,
+ * which is why it is stated in `specs.md` and not only here.
+ *
+ * **A sub-agora is dust and is dropped before the shekel is decided.** Half an
+ * agora above a whole shekel is not a shekel owed — it is what a rate's
+ * fraction left behind, or what a double does to a product that is exact in
+ * decimal — and rounding it up would move a whole line by a shekel. So the
+ * figure is taken to the nearest agora first, which is the unit money is held
+ * in, and then up to the shekel.
+ */
+export function shekelsUp(agorot: number): number {
+  const exact = Math.round(agorot);
+  const absolute = Math.abs(exact);
+  const remainder = absolute % AGOROT_PER_SHEKEL;
+  const up =
+    remainder === 0 ? absolute : absolute - remainder + AGOROT_PER_SHEKEL;
+  // `|| 0` as elsewhere: a negated zero is -0, which `Object.is` reports as
+  // different from 0.
+  return (exact < 0 ? -up : up) || 0;
 }

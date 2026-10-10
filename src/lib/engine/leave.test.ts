@@ -1,6 +1,7 @@
 import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY, monthOf } from "@/lib/dates";
+import { shekelsUp } from "@/lib/money";
 import {
   HOLIDAYS_PER_YEAR,
   holidayAllowanceFor,
@@ -38,6 +39,19 @@ import type { MonthResult, YearMonth } from "@/lib/types";
 const SALARY = 624765;
 const REST_DAY_RATE = 42635; // ₪426.35, Part 4
 const REST_EVE_SUPPLEMENT = 10000;
+
+/**
+ * A column F line of `units` days at the rest-day rate, as the sheet pays it:
+ * one line, one rounding, up to the whole shekel (specs.md item 3).
+ *
+ * **Column F is two lines and not one sum**, which is why this is a function
+ * and the totals below are added rather than multiplied: the rest days are one
+ * line and the holidays another, each gaining its own fraction on the way up.
+ * Five days and a holiday come to ₪2,559 — 213,200 + 42,700 — which is also
+ * what one line of six days would come to at this particular rate, so the
+ * assertions below name the two lines rather than the six days.
+ */
+const restDayLine = (units: number) => shekelsUp(units * REST_DAY_RATE);
 
 const AUGUST_2025: YearMonth = { year: 2025, month: 8 };
 
@@ -116,12 +130,12 @@ describe("a holiday changes the money and never the count (items 5, 9)", () => {
   const bare = calculateMonth(facts([]), terms());
 
   it("adds one rest-day rate for a holiday she worked", () => {
-    // Wednesday 13 August, worked. Column F gains one day at ₪426.35 over the
-    // five Saturdays already there: 6 × 42,635 = 255,810 agorot.
+    // Wednesday 13 August, worked. Column F gains a line of one day at ₪426.35
+    // over the five Saturdays already there: ₪2,132 + ₪427 = ₪2,559.
     const result = calculateMonth(facts([holiday("2025-08-13", true)]), terms());
     expect(unitsOf(result, lineKeys.holidaysWorked)).toBe(1);
-    expect(columnTotal(result, "F")).toBe(columnTotal(bare, "F") + REST_DAY_RATE);
-    expect(columnTotal(result, "F")).toBe(6 * REST_DAY_RATE);
+    expect(columnTotal(result, "F")).toBe(columnTotal(bare, "F") + restDayLine(1));
+    expect(columnTotal(result, "F")).toBe(restDayLine(5) + restDayLine(1));
   });
 
   it("adds nothing at all for a holiday she did not work", () => {
@@ -152,10 +166,10 @@ describe("a holiday on her weekly rest day is not a holiday (specs.md item 9)", 
 
   it("pays column F for five days and not six", () => {
     // August has five Saturdays, all worked, one of which carries the holiday.
-    // 5 × 42,635 = 213,175 agorot. Six would pay the same day twice, which is
-    // what the money rule has always said and what has not changed.
-    expect(columnTotal(result, "F")).toBe(5 * REST_DAY_RATE);
-    expect(columnTotal(result, "F")).not.toBe(6 * REST_DAY_RATE);
+    // One line of five days: ₪2,132. A sixth day would pay the same day twice,
+    // which is what the money rule has always said and what has not changed.
+    expect(columnTotal(result, "F")).toBe(restDayLine(5));
+    expect(columnTotal(result, "F")).not.toBe(restDayLine(5) + restDayLine(1));
   });
 
   /**
@@ -191,21 +205,22 @@ describe("a holiday on her weekly rest day is not a holiday (specs.md item 9)", 
     // The contrast that makes the rule visible: on a Wednesday the holiday adds
     // a sixth day, on a Saturday it does not add a day at all.
     const weekday = calculateMonth(facts([holiday("2025-08-13", true)]), terms());
-    expect(columnTotal(weekday, "F")).toBe(6 * REST_DAY_RATE);
-    expect(columnTotal(result, "F")).toBe(5 * REST_DAY_RATE);
+    expect(columnTotal(weekday, "F")).toBe(restDayLine(5) + restDayLine(1));
+    expect(columnTotal(result, "F")).toBe(restDayLine(5));
   });
 });
 
 describe("part days are paid and drawn in their own proportion (items 7, 10)", () => {
   it("pays half a rest-day rate for half a holiday worked", () => {
-    // Half of ₪426.35 is ₪213.175, and the rounding happens once at the end:
-    // 5.5 × 42,635.062… = 234,492.84… -> 234,493 agorot.
+    // Half of ₪426.35 is ₪213.175, and the rounding happens once per line and
+    // away from zero: the five Saturdays are ₪2,132 and the half holiday ₪214,
+    // which is ₪2,346 in column F (item 3).
     const result = calculateMonth(
       facts([holiday("2025-08-13", true, 0.5)]),
       terms(),
     );
     expect(unitsOf(result, lineKeys.holidaysWorked)).toBe(0.5);
-    expect(columnTotal(result, "F")).toBe(234493);
+    expect(columnTotal(result, "F")).toBe(restDayLine(5) + restDayLine(0.5));
   });
 
   it("draws half a day from the entitlement for half a holiday", () => {
@@ -385,7 +400,7 @@ describe("vacation costs nothing, structurally (specs.md item 7)", () => {
     // for a span that reached it whole from storage.
     expect(week.balances.find((b) => b.kind === "vacation")?.used).toBe(6);
     expect(week.lines.find((line) => line.key === lineKeys.base)?.amount).toBe(
-      624765,
+      shekelsUp(SALARY),
     );
     expect(
       week.lines.some((line) => line.key.toLowerCase().includes("vacation")),
@@ -400,6 +415,12 @@ describe("vacation costs nothing, structurally (specs.md item 7)", () => {
     // they worked it or not (item 14) — it is an agreed term and attendance is
     // not a condition on it. Neither figure is a price on the vacation, and the
     // base is untouched above.
-    expect((without.net ?? 0) - (week.net ?? 0)).toBe(REST_DAY_RATE);
+    //
+    // The gap is what the rest-day line loses by dropping a day, which is the
+    // rate taken to the shekel in place rather than the rate on its own: five
+    // days are ₪2,132 and four are ₪1,706 (item 3).
+    expect((without.net ?? 0) - (week.net ?? 0)).toBe(
+      restDayLine(5) - restDayLine(4),
+    );
   });
 });

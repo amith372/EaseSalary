@@ -202,13 +202,15 @@ describe("giving an advance", () => {
   };
 
   it("mints the number and holds the amount positive", () => {
+    // ₪2,500.50 is handed over as ₪2,501: an advance is an amount and is a
+    // whole shekel from the moment it is recorded (specs.md item 3).
     const reviewed = reviewAdvance(draft({ amount: "2,500.50" }), context);
     expect(reviewed.ok).toBe(true);
     if (!reviewed.ok) return;
     expect(reviewed.advance).toEqual({
       number: 2,
       kind: "granted",
-      agorot: 250050,
+      agorot: 250100,
       givenOn: GIVEN_ON_IN_MARCH,
     });
   });
@@ -530,9 +532,12 @@ describe("correcting a movement", () => {
 
   /** ₪2,000 has been repaid, so the grant may come down to ₪2,000 and no
    * further — below it the advance owes a negative balance, which is the state
-   * item 20 refuses whichever gesture reaches it. */
+   * item 20 refuses whichever gesture reaches it. The figure below is ₪1,999 and
+   * not ₪1,999.99, which is the same shekel: a correction is an amount and is
+   * rounded away from zero, so ₪1,999.99 *is* ₪2,000 and would be accepted
+   * (item 3). */
   it("refuses a grant corrected below what has already been repaid", () => {
-    expect(reviewAdvanceEdit(edit("1999.99"), granted(1, 300000), standing)).toEqual({
+    expect(reviewAdvanceEdit(edit("1999"), granted(1, 300000), standing)).toEqual({
       ok: false,
       reason: "advanceBelowRepaid",
     });
@@ -717,8 +722,8 @@ describe("the day an advance was given", () => {
  */
 describe("splitting a grant across months", () => {
   const PRINCIPAL = 500000;
-  const EVEN_THIRD = 166666;
-  const LAST_THIRD = 166668;
+  const EVEN_THIRD = 166600;
+  const LAST_THIRD = 166800;
 
   const context = {
     ledger: advanceLedger(opening(), [monthOf(february, [granted(1, 100000)])]),
@@ -740,14 +745,14 @@ describe("splitting a grant across months", () => {
       LAST_THIRD,
     ]);
     expect(splitInstalments(PRINCIPAL, 1)).toEqual([PRINCIPAL]);
-    // ₪1,000.01 over three: 333.33 twice and 333.35 once, which sums to the
-    // principal where three equal thirds would lose two agorot.
-    expect(splitInstalments(100001, 3)).toEqual([33333, 33333, 33335]);
+    // ₪1,001 over three: ₪333 twice and ₪335 once, which sums to the principal
+    // where three equal thirds would lose two shekels.
+    expect(splitInstalments(100100, 3)).toEqual([33300, 33300, 33500]);
     for (const [principal, count] of [
       [PRINCIPAL, 3],
       [PRINCIPAL, 7],
-      [100001, 3],
-      [1, 1],
+      [100100, 3],
+      [100, 1],
     ] as const) {
       expect(
         splitInstalments(principal, count).reduce((sum, part) => sum + part, 0),
@@ -764,7 +769,7 @@ describe("splitting a grant across months", () => {
 
   it("writes one ordinary repayment per month, summing to the grant exactly", () => {
     const reviewed = reviewAdvanceSplit(
-      splitDraft(["1666.66", "1666.66", "1666.68"]),
+      splitDraft(["1666", "1666", "1668"]),
       context,
       [],
     );
@@ -785,7 +790,7 @@ describe("splitting a grant across months", () => {
     ]);
 
     // **What the exact-sum rule is for**: replayed, the three close the debt and
-    // leave nothing owed. 500,000 − 166,666 − 166,666 − 166,668 = 0.
+    // leave nothing owed. 500,000 − 166,600 − 166,600 − 166,800 = 0.
     const ledger = advanceLedger(opening(), [
       monthOf(march, [
         reviewed.advance,

@@ -10,7 +10,7 @@ import type {
   MonthContext,
   Employment,
 } from "@/lib/engine/types";
-import { formatAgorot } from "@/lib/money";
+import { formatRate } from "@/lib/money";
 import { he } from "@/lib/i18n/he";
 import { bracketsForYear } from "@/lib/taxBrackets";
 import type { TaxYearBrackets } from "@/lib/taxBrackets";
@@ -160,8 +160,8 @@ export function belowMinimumWageWarning(
   return {
     key: "belowMinimumWage",
     message: he.sheet.warnings.belowMinimumWage(
-      formatAgorot(facts.confirmedWage.baseAgorot),
-      formatAgorot(inForce.value),
+      formatRate(facts.confirmedWage.baseAgorot),
+      formatRate(inForce.value),
     ),
     link: "minimumWage",
   };

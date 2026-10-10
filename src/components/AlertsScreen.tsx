@@ -18,6 +18,17 @@ import { useAction } from "@/components/useAction";
  */
 export function AlertsScreen({ view }: { view: AlertsView }) {
   const words = he.alerts;
+
+  // Item 27's two lists, which `alertsView` already sorts one above the other
+  // and marks on every card. Partitioned here rather than there: the order is
+  // the view's and the boundary is the screen's.
+  const blocking = view.open.filter((card) => card.blockage);
+  const reminding = view.open.filter((card) => !card.blockage);
+  // **Only where both groups have a card.** A heading over an empty group, or
+  // one heading standing alone, is a boundary that divides nothing — so a page
+  // of blockages alone is the one plain list it has always been.
+  const seamed = blocking.length > 0 && reminding.length > 0;
+
   return (
     <div className="mx-auto flex w-full max-w-[780px] min-w-0 flex-col gap-7">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
@@ -40,6 +51,19 @@ export function AlertsScreen({ view }: { view: AlertsView }) {
           <p dir="auto" data-role="nothing-open" className="text-[15px] text-ink-mute">
             {words.nothingOpen}
           </p>
+        ) : seamed ? (
+          <>
+            <OpenGroup
+              seam="blockage"
+              heading={words.seam.blockage}
+              cards={blocking}
+            />
+            <OpenGroup
+              seam="warning"
+              heading={words.seam.warning}
+              cards={reminding}
+            />
+          </>
         ) : (
           <ul className="flex flex-col gap-3">
             {view.open.map((card) => (
@@ -136,18 +160,38 @@ function OpenCard({ card }: { card: AlertCard }) {
           <span data-role="alert-title" className="text-[18px] font-semibold tracking-[-0.01em]">
             <AlertTitle card={card} />
           </span>
-          <span
-            className={[
-              "rounded-full px-3 py-1 text-[13px] font-semibold",
-              card.blockage ? "bg-band-sun text-clay-ink" : "bg-chip text-ink-warm",
-            ].join(" ")}
-          >
-            <Sentence said={card.tag} />
-          </span>
+          {/* **Only where the tag says something the heading does not.** Which
+              list a card is in is said once by the seam above it; how long a
+              document still has is said nowhere else. */}
+          {card.tag === null ? null : (
+            <span
+              data-role="alert-tag"
+              className="rounded-full bg-chip px-3 py-1 text-[13px] font-semibold text-ink-warm"
+            >
+              <Sentence said={card.tag} />
+            </span>
+          )}
         </div>
         <span className="text-[15px] font-light text-ink-mute text-pretty">
           <Sentence said={card.note} />
         </span>
+        {/* **What it costs if nobody acts, under the note and above the law**
+            (`DESIGN.md`): the note says what expires and when, and this says
+            why that matters. Only the three documents whose lapse costs
+            something carry one, which is what keeps a passport with eighteen
+            months left from reading like a problem.
+
+            **Drawn here and not in the bell**, which lists what to look at in
+            four lines and is not where a legal sentence belongs. */}
+        {card.consequence === null ? null : (
+          <span
+            dir="auto"
+            data-role="alert-consequence"
+            className="text-[15px] font-light text-ink-warm text-pretty"
+          >
+            {card.consequence}
+          </span>
+        )}
         {card.law ? (
           <LawLink law={card.law} className="pt-0.5 text-[14px]" />
         ) : null}
@@ -300,15 +344,67 @@ export function RemindersDialog({
   );
 }
 
+/**
+ * One of item 27's two lists, under a heading that names it.
+ *
+ * **The heading is drawn a step smaller and heavier than the `h2` above it**,
+ * with a rule running off its end: at the `h2`'s own 14px/600 it would read as
+ * a second section rather than as a division inside one, and the rule is what
+ * makes it a seam rather than a title.
+ */
+function OpenGroup({
+  seam,
+  heading,
+  cards,
+}: {
+  seam: "blockage" | "warning";
+  heading: string;
+  cards: AlertCard[];
+}) {
+  return (
+    <div data-group={seam} className="flex flex-col gap-3">
+      <div className="flex items-center gap-2.5">
+        <h3
+          data-seam={seam}
+          dir="auto"
+          className={[
+            "text-[13px] font-bold whitespace-nowrap",
+            seam === "blockage" ? "text-clay-deep" : "text-ink-soft",
+          ].join(" ")}
+        >
+          {heading}
+        </h3>
+        <span aria-hidden="true" className="h-px flex-1 bg-line" />
+      </div>
+      <ul className="flex flex-col gap-3">
+        {cards.map((card) => (
+          <li key={card.id}>
+            <OpenCard card={card} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** A sentence from `he.ts`, each value in its own isolate (`CLAUDE.md`). */
-export function Sentence({ said }: { said: Said }) {
+export function Sentence({
+  said,
+  valueClass,
+}: {
+  said: Said;
+  /** For a sentence whose artboard draws its figures heavier than the words
+   * around them, as the export gate's count does. Every other caller leaves it
+   * off and the figures read at the weight of the sentence. */
+  valueClass?: string;
+}) {
   return (
     <span dir="auto">
       {said.map((part, index) =>
         typeof part === "string" ? (
           <span key={index}>{part}</span>
         ) : (
-          <bdi key={index} translate="no">
+          <bdi key={index} translate="no" className={valueClass}>
             {part.value}
           </bdi>
         ),

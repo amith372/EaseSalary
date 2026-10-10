@@ -1,3 +1,4 @@
+import { shekelsUp } from "@/lib/money";
 import { describe, expect, it } from "vitest";
 import { calculateMonth } from "@/lib/engine/month";
 import { restDayRate } from "@/lib/engine/rates";
@@ -52,7 +53,7 @@ describe("a holiday she works is paid at the rest-day rate", () => {
       const holidays = resultOf(tab).lines.find(
         (line) => line.key === "holidaysWorked",
       );
-      expect(holidays?.amount).toBe(85270);
+      expect(holidays?.amount).toBe(85300);
     }
   });
 
@@ -77,8 +78,8 @@ describe("a holiday she works is paid at the rest-day rate", () => {
     const restDays = result.lines.find((line) => line.key === "restDays");
     expect(holidays?.column).toBe("F");
     expect(restDays?.column).toBe("F");
-    expect(holidays?.amount).toBe(85270); // 2 × ₪426.35
-    expect(restDays?.amount).toBe(127905); // 3 × ₪426.35
+    expect(holidays?.amount).toBe(85300); // 2 × ₪426.35 = ₪852.70 -> ₪853
+    expect(restDays?.amount).toBe(128000); // 3 × ₪426.35 = ₪1,279.05 -> ₪1,280
     expect(holidays!.amount! + restDays!.amount!).toBe(byTab("חודש  2.26").subtotalF);
   });
 });
@@ -105,8 +106,13 @@ describe("a holiday she does not work changes nothing (item 9)", () => {
     const worked = calculateMonth(facts, worker);
     const notWorked = calculateMonth(withOneOff, worker);
 
-    expect(worked.gross! - notWorked.gross!).toBe(Math.round(restDayRate(WAGE_2025)));
-    expect(notWorked.gross).toBe(m.gross - 42635);
+    // Each line is a whole shekel of its own, so what the month loses is not
+    // the rate but the difference between a two-day holiday line and a one-day
+    // one: ₪853 becomes ₪427, which is ₪426 (item 3).
+    const rate = restDayRate(WAGE_2025);
+    const lost = shekelsUp(2 * rate) - shekelsUp(rate);
+    expect(worked.gross! - notWorked.gross!).toBe(lost);
+    expect(notWorked.gross).toBe(m.gross - lost);
   });
 
   it("leaves both counts alone", () => {

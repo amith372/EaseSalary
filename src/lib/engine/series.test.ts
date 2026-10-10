@@ -466,12 +466,15 @@ describe("a spell crossing a month boundary, stored once and replayed", () => {
  *   Mon 31 Aug  day 4  paid in full      -> nothing taken back
  *   Tue 1 – Thu 3 Sep  days 5 to 7       -> nothing taken back
  *
- *   August    1 + 0 + 0.5 = 1.5 days -> 1.5 × 25,775.4 = 38,663.1 -> 38,663
+ *   August    1 + 0 + 0.5 = 1.5 days -> 1.5 × 25,775.4 = 38,663.1 -> ₪387
  *   September 0 days                 -> no deduction line at all
+ *
+ * The deduction is an amount, so it goes away from zero to the whole shekel
+ * (item 3): ₪386.63 is withheld as ₪387.
  *
  * **What it catches.** Handing September only the spans that overlap it: its
  * three days are then read as a spell of their own and priced 1 + 0.5 + 0.5 =
- * 2 days -> 2 × 25,775.4 = 51,550.8 -> ₪515.51 taken off a month that owes
+ * 2 days -> 2 × 25,775.4 = 51,550.8 -> ₪516 taken off a month that owes
  * nothing, for no reason but where the family put the second mark.
  */
 /**
@@ -586,7 +589,7 @@ describe("a spell entered as two spans is one spell across the boundary", () => 
   }
 
   it("prices the September days as days five to seven and takes nothing back", () => {
-    expect(deductions(split)).toEqual([-38663, null]);
+    expect(deductions(split)).toEqual([-38700, null]);
   });
 
   it("costs exactly what the same seven days swept in one gesture cost", () => {
@@ -607,13 +610,13 @@ describe("a spell entered as two spans is one spell across the boundary", () => 
   it("still restarts the tiers over a working day nobody reported", () => {
     // Friday 4 September is a day they owed attendance on, so it ends the spell
     // and Monday the 7th begins a new one: day 1, a whole day taken back.
-    // 1 × 25,775.4 = 25,775.4 -> 25,775. Without this the fix would be reading
+    // 1 × 25,775.4 = 25,775.4 -> ₪258. Without this the fix would be reading
     // any two spans as one, which is the mistake in the other direction.
     const separate = [
       facts(AUGUST, [sick("aug", "2026-08-28", "2026-08-31")]),
       facts(SEPTEMBER, [sick("sep", "2026-09-07", "2026-09-07")]),
     ];
-    expect(deductions(separate)).toEqual([-38663, -25775]);
+    expect(deductions(separate)).toEqual([-38700, -25800]);
   });
 });
 

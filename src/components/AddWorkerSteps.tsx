@@ -42,7 +42,7 @@ import { genders, incomeTaxModes } from "@/lib/engine/types";
 import type { Gender } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
 import type { LegalLinkKey } from "@/lib/links";
-import { formatAgorot } from "@/lib/money";
+import { formatRate } from "@/lib/money";
 
 /**
  * `EaseSalary - הוספת עובד` — the flow that gives a household its first worker.
@@ -744,7 +744,7 @@ export function PayStep({
           hint={
             <>
               <span>{words.salaryHint.before}</span>
-              <Bidi noTranslate>{formatAgorot(minimumWageAgorot)}</Bidi>
+              <Bidi noTranslate>{formatRate(minimumWageAgorot)}</Bidi>
               <span>{words.salaryHint.after}</span>
             </>
           }

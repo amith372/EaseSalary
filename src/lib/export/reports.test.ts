@@ -17,9 +17,10 @@ import {
  * from what the report returned.** Hanna was employed on 1.4.2024 and them
  * recuperation month is July, so by 31.7.2025 they have completed exactly one
  * employment year: item 15's ladder pays five days for a first completed year,
- * and six for the second and third. At ₪451.50 a day that is ₪2,257.50 in 2025
- * and ₪2,709.00 in 2026 — the second of which the build plan already records
- * from the family's own confirmation screen.
+ * and six for the second and third. At ₪451.50 a day that is ₪2,257.50 in 2025,
+ * paid as ₪2,258 because a line is a whole shekel (item 3), and ₪2,709 in 2026
+ * — the second of which was confirmed on the family's own screen and needs no
+ * rounding.
  */
 
 /** ₪451.50 — the recuperation day rate the user confirms and the month stores
@@ -110,7 +111,7 @@ describe("the recuperation report (item 15)", () => {
     // June is left out because it paid none. The ladder is item 15's: five days
     // for the first completed year, six for the second.
     expect(report.rows).toEqual([
-      ["יולי 2025", 1, 5, 2257.5],
+      ["יולי 2025", 1, 5, 2258],
       ["יולי 2026", 2, 6, 2709],
     ]);
   });

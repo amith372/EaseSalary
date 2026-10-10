@@ -178,8 +178,9 @@ test.describe("the country of origin is correctable", () => {
     await expect(card).toBeVisible();
     // The amount alone, and not the row's whole text: the row carries its
     // label and its "why" button beside the figure, and it is the figure that
-    // must not move.
-    const before = (await card.innerText()).match(/[\d,]+\.\d\d/)?.[0];
+    // must not move. Whole shekels, so there are no decimals to match on
+    // (specs.md item 3).
+    const before = (await card.innerText()).match(/[\d,]+/)?.[0];
     expect(before).toBeDefined();
 
     await openSettings(page);

@@ -223,6 +223,99 @@ describe("the preview and the file, from one engine result", () => {
   });
 
   /**
+   * **Whole shekels, asserted at the cell and not through the formatter**
+   * (specs.md item 3, `CLAUDE.md` rule 12).
+   *
+   * Every case in this file compares through `formatAgorot`, which is what the
+   * user reads — and which now writes no decimals. On its own it would call a
+   * cell holding 6,247.65 equal to a screen showing ₪6,248, so the agora a
+   * conversion loses has stopped showing in the rendered figure. This case reads
+   * the cells as numbers instead.
+   *
+   * The month is `busyMonth`, which carries agorot in several lines — the base
+   * at ₪6,247.65, a rest day and a holiday at ₪426.35, five days of sickness
+   * priced at ₪249.906 a day — and deductions in both places a deduction can
+   * sit: the sickness line inside column E, and the tax, the instalment and the
+   * private loan in the block below the total.
+   *
+   * **What it would catch**: the filler writing the unrounded figure into the
+   * cell while the screen shows the rounded one, which is the exact shape of the
+   * disagreement this rule introduces; a line or a total that escaped the
+   * rounding on either side; and a deduction rounded toward zero in one of the
+   * two, which the magnitudes being equal would otherwise hide.
+   */
+  it("writes whole shekels into every cell, the same ones the screen shows", async () => {
+    const { sheet, result } = await filled(false);
+    const layout = layoutOf(
+      result.lines.filter(isUserLine).length,
+      result.closing.filter((row) => row.block === "transfer").length,
+    );
+    /** A cell as agorot, whether it holds a figure or a formula with its figure
+     * cached beside it — the cached one being what anything that does not
+     * recalculate shows the family. */
+    const agorotAt = (address: string): number | null => {
+      const value = sheet.getCell(address).value;
+      if (typeof value === "number") return Math.round(value * 100);
+      const cached = (value as { result?: number } | null)?.result;
+      return typeof cached === "number" ? Math.round(cached * 100) : null;
+    };
+
+    const cells: { what: string; address: string; amount: number }[] = [];
+    addressesOf(result).forEach(({ key, address }, index) => {
+      cells.push({ what: key, address, amount: result.lines[index]?.amount ?? 0 });
+    });
+    result.closing
+      .filter((row) => row.block === "transfer")
+      .forEach((row, index) => {
+        cells.push({
+          what: row.key,
+          address: `E${layout.blockFirstRow + index}`,
+          amount: row.amount ?? 0,
+        });
+      });
+    for (const row of result.closing.filter(
+      (one) => one.block === "withholding",
+    )) {
+      cells.push({ what: row.key, address: `E${TAX_ROW}`, amount: row.amount ?? 0 });
+    }
+    for (const column of ["E", "F", "G"] as const) {
+      const subtotal = result.subtotals.find((one) => one.column === column);
+      if (subtotal === undefined) continue;
+      const row =
+        column === "E"
+          ? layout.subtotalERow
+          : column === "F"
+            ? layout.subtotalFRow
+            : layout.subtotalGRow;
+      cells.push({
+        what: `subtotal ${column}`,
+        address: `${column}${row}`,
+        amount: subtotal.amount ?? 0,
+      });
+    }
+    cells.push({
+      what: "the ברוטו",
+      address: `E${layout.grossRow}`,
+      amount: result.gross ?? 0,
+    });
+    cells.push({
+      what: "the transfer",
+      address: `E${layout.netRow}`,
+      amount: result.net ?? 0,
+    });
+
+    // Enough of the sheet to be worth asserting: the lines, the block, the tax
+    // row, the subtotals and the two totals.
+    expect(cells.length).toBeGreaterThan(12);
+    for (const { what, address, amount } of cells) {
+      expect(agorotAt(address), `${what} in ${address}`).toBe(amount);
+      // The magnitude, because `-37,500 % 100` is -0 and `toBe` reads that as
+      // different from 0.
+      expect(Math.abs(amount) % 100, `${what} is a whole shekel`).toBe(0);
+    }
+  });
+
+  /**
    * **A standing line's lifetime reaches the sheet and the screen together**
    * (specs.md item 20, rule 12).
    *
@@ -667,10 +760,11 @@ describe("a month nobody opened keeps its figures when it is opened", () => {
  * **A grant split across three months, previewed and exported** (specs.md item
  * 20, `CLAUDE.md` rule 12).
  *
- * ₪5,000 over three months is 1,666.66 / 1,666.66 / 1,666.68 — the user's own
+ * ₪5,000 over three months is ₪1,666 / ₪1,666 / ₪1,668 — the user's own
  * decision, written out here and in the engine's suite, and nowhere read back
- * from what the split produced. The three sum to ₪5,000 exactly, so the advance
- * closes.
+ * from what the split produced. Each instalment is a whole shekel (item 3) and
+ * the three sum to ₪5,000 exactly, so the advance closes; three rounded-up
+ * thirds would come to ₪5,001 and be refused for exceeding the principal.
  *
  * **Every month the split touched is asserted and not only the first.** That is
  * the whole hazard of an action that writes several months at once: the month
@@ -685,8 +779,8 @@ describe("a month nobody opened keeps its figures when it is opened", () => {
  */
 describe("a grant split across months, previewed and exported", () => {
   const PRINCIPAL = "5000";
-  const EVEN_THIRD = 166666;
-  const LAST_THIRD = 166668;
+  const EVEN_THIRD = 166600;
+  const LAST_THIRD = 166800;
   const GIVEN_ON = "2025-08-21";
 
   it("says every month's repayment the same way in the file as on the screen", async () => {
@@ -717,7 +811,7 @@ describe("a grant split across months, previewed and exported", () => {
         amount: PRINCIPAL,
         note: "לכרטיס טיסה",
         givenOn: GIVEN_ON,
-        instalments: ["1666.66", "1666.66", "1666.68"],
+        instalments: ["1666", "1666", "1668"],
       },
       {
         ledger: advanceLedger(terms.openingPosition, stored),

@@ -30,14 +30,16 @@ const resultOf = (tab: string) => {
 };
 
 describe("an advance granted raises the transfer above the ברוטו", () => {
-  it("`חודש  11.25`: ₪4,000 given, ₪8,779.40 becomes ₪12,779.40", () => {
-    // `E27` = ₪4,000 above `E26` = ₪8,779.40, giving `E29` = ₪12,779.40. The
-    // sign comes from the kind and never from the amount: a granted advance
-    // entered as a positive number and subtracted anyway would give ₪4,779.40,
-    // which is an entirely plausible-looking figure.
+  it("`חודש  11.25`: ₪4,000 given, ₪8,781 becomes ₪12,781", () => {
+    // `E27` = ₪4,000 above `E26` = ₪8,779.40, which the application pays as
+    // ₪8,781 — each of the tab's lines up to the whole shekel (item 3) — giving
+    // ₪12,781 where `E29` reads ₪12,779.40. The sign comes from the kind and
+    // never from the amount: a granted advance entered as a positive number and
+    // subtracted anyway would give ₪4,781, which is an entirely
+    // plausible-looking figure.
     const result = resultOf("חודש  11.25");
-    expect(result.gross).toBe(877940);
-    expect(result.net).toBe(1277940);
+    expect(result.gross).toBe(878100);
+    expect(result.net).toBe(1278100);
     expect(result.net! - result.gross!).toBe(400000);
   });
 
@@ -47,18 +49,19 @@ describe("an advance granted raises the transfer above the ברוטו", () => {
     // the ברוטו would enlarge that base by ₪10,000.
     const m = byTab("חודש  7.26");
     const result = resultOf("חודש  7.26");
-    expect(result.gross).toBe(826307);
-    expect(result.net).toBe(1826307);
+    expect(result.gross).toBe(826400);
+    expect(result.net).toBe(1826400);
     // The ברוטו is columns E, F and G alone, and the advance is in none of them.
     expect(result.gross).toBe(m.subtotalE + m.subtotalF);
   });
 });
 
 describe("an advance repaid lowers the transfer below the ברוטו", () => {
-  it("`חודש  12.25`: ₪1,000 taken off ₪9,205.75", () => {
+  it("`חודש  12.25`: ₪1,000 taken off ₪9,207", () => {
+    // `E26` reads ₪9,205.75 and the month is paid at ₪9,207 (item 3).
     const result = resultOf("חודש  12.25");
-    expect(result.gross).toBe(920575);
-    expect(result.net).toBe(820575);
+    expect(result.gross).toBe(920700);
+    expect(result.net).toBe(820700);
   });
 
   it("takes the instalment off the transfer and never off the ברוטו", () => {
@@ -86,9 +89,9 @@ describe("a month may both grant one advance and repay another (item 20)", () =>
 
   it("`חודש  2.26`: ₪5,000 granted and ₪1,000 repaid over one ברוטו", () => {
     // `E27` adds ₪5,000 for advance 2 and `E30` takes ₪1,000 off for advance 1,
-    // so ₪8,779.40 becomes ₪12,779.40.
-    expect(result.gross).toBe(877940);
-    expect(result.net).toBe(1277940);
+    // so ₪8,781 becomes ₪12,781.
+    expect(result.gross).toBe(878100);
+    expect(result.net).toBe(1278100);
     expect(result.net! - result.gross!).toBe(400000);
   });
 

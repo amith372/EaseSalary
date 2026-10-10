@@ -11,17 +11,18 @@ import { formatAgorot } from "../src/lib/money";
  * worker the suite works on is paid the ₪6,443.85 minimum wage in force from
  * 1.4.2026 with a ₪100 rest-eve supplement and rests on Saturday, which in a
  * September of twenty-six standard days and four Saturdays comes to a ‏ברוטו‎
- * of ₪8,602.81 — the same month `income-tax.spec.ts` works out in full. 2.5% of
- * that is 21,507.025 agorot, which rounds to ₪215.07.
+ * of ₪8,603 — the same month `income-tax.spec.ts` works out in full. 2.5% of
+ * that is 21,507.5 agorot, withheld as ₪216: the tax is an amount and goes up to
+ * the whole shekel (item 3).
  */
 
 const RUN = Date.now();
 
 /** The seeded September 2026 ‏ברוטו‎, in agorot. */
-const GROSS = 860281;
+const GROSS = 860300;
 
-/** 2.5% of it, rounded once: 860,281 × 0.025 = 21,507.025 → 21,507. */
-const TWO_AND_A_HALF_PERCENT = 21507;
+/** 2.5% of it, rounded once: 860,300 × 0.025 = 21,507.5 → ₪216. */
+const TWO_AND_A_HALF_PERCENT = 21600;
 
 async function useHousehold(page: Page, label: string): Promise<void> {
   await page.context().addCookies([
@@ -184,7 +185,7 @@ test.describe("the payments screen", () => {
     await expect(page.locator('[data-row="incomeTax"]')).toContainText(
       formatAgorot(-TWO_AND_A_HALF_PERCENT),
     );
-    // ₪8,353.05 − ₪208.83 = ₪8,144.22.
+    // ₪8,603 − ₪216 = ₪8,387.
     await expect(page.locator('[data-row="net"]')).toContainText(
       formatAgorot(GROSS - TWO_AND_A_HALF_PERCENT),
     );

@@ -9,16 +9,17 @@ import { formatAgorot } from "../src/lib/money";
  * Hospital overtime, typed on the payments screen (specs.md item 20).
  *
  * **Every expected figure is worked by hand.** September 2026 for the second
- * demo worker is `income-tax.spec.ts`'s month: a ברוטו of ₪8,602.81. With ₪350
- * typed it is ₪8,952.81, which is ₪107,433.72 a year:
+ * demo worker is `income-tax.spec.ts`'s month: a ברוטו of ₪8,603. With ₪350
+ * typed it is ₪8,953, which is ₪107,436 a year:
  *
  *    8,412,000 × 10%              =    841,200
- *    2,331,372 × 14%              =    326,392.08
+ *    2,331,600 × 14%              =    326,424
  *                                    ------------
- *                                    1,167,592.08 a year, = 97,299.34 a month
+ *                                    1,167,624 a year, = 97,302 a month
  *
- * less a woman's 2.75 credit points, ₪665.50 a month: 30,749.34, so a tax of
- * **₪307.49**, and a נטו of 8,952.81 − 307.49 = **₪8,645.32**.
+ * less a woman's 2.75 credit points, ₪665.50 a month: 30,752, so a tax of
+ * **₪308** — up to the whole shekel like any other amount (item 3) — and a נטו
+ * of 8,953 − 308 = **₪8,645**.
  *
  * **What it would catch**: the field saving nothing, or saving to a month other
  * than the one on screen; the amount reaching the ברוטו but not the sheet, or
@@ -27,8 +28,8 @@ import { formatAgorot } from "../src/lib/money";
 
 const RUN = Date.now().toString(36);
 const TYPED = 35000;
-const GROSS = 895281;
-const TAX = 30749;
+const GROSS = 895300;
+const TAX = 30800;
 const ENDED_MONTH = 8;
 /** The template's row for it, repeated rather than imported from `layout.ts`,
  * so a browser test cannot follow the map if the map moves. */

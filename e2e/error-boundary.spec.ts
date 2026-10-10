@@ -29,7 +29,7 @@ import { useHousehold } from "./household";
  * becomes. It is compared to `he.fault` as well, and that comparison is the
  * whole point of the test named "says exactly what he.fault says".
  */
-const FAULT = "משהו השתבש, כדאי לנסות שוב או לחזור לדף הבית";
+const FAULT = "משהו השתבש, כדאי לנסות שוב או לרענן את הדף";
 const WAY_HOME = "לדף הבית";
 
 const message = (page: Page) =>

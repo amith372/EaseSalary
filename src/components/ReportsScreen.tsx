@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Fragment } from "react";
+import { Sentence } from "@/components/AlertsScreen";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { SheetBadge, TwoToneIcon } from "@/components/icons";
@@ -203,6 +204,20 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
     [],
   );
 
+  // What each year's heading counts. **A month that has not ended is not owed
+  // yet**, so neither figure counts one: the question the heading answers is
+  // whether what finished has been filed. `of` is therefore the months of that
+  // year the worker was employed *and* which have ended — not twelve, which a
+  // worker who started in July never had.
+  const counted = years.map((group) => {
+    const ended = group.months.filter((entry) => !entry.stillRunning);
+    return {
+      ...group,
+      made: ended.filter((entry) => entry.confirmed).length,
+      of: ended.length,
+    };
+  });
+
   return (
     /* A `div` and not a `main`: the shell already provides the page's one main
        landmark, and a second one nested inside it leaves a screen reader with
@@ -281,13 +296,31 @@ export function ReportsScreen({ household }: ReportsScreenProps) {
                 <Bidi>{words.previousMonths.none}</Bidi>
               </p>
             ) : (
-              years.map((group) => (
+              counted.map((group) => (
                 <Fragment key={group.year}>
                   <h3
                     data-report-year={group.year}
-                    className="border-t border-line-soft bg-ground px-5 py-2 text-[14px] font-semibold text-ink-quiet first:border-t-0 sm:px-6"
+                    className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-t border-line-soft bg-ground px-5 py-2 text-[14px] font-semibold text-ink-quiet first:border-t-0 sm:px-6"
                   >
                     <Bidi>{String(group.year)}</Bidi>
+                    {/* The count is drawn from the same `confirmed` flag that
+                        decides each row's link below it, so the heading and the
+                        rows cannot come to disagree about the same month.
+
+                        A year whose only month is still running has nothing
+                        finished to have filed, and `0 מתוך 0` states nothing —
+                        so it carries no count rather than an empty one. */}
+                    {group.of > 0 ? (
+                      <span
+                        data-year-count=""
+                        className="text-[14px] font-light text-ink-soft"
+                      >
+                        <Sentence
+                          said={words.previousMonths.madeOf(group.made, group.of)}
+                          valueClass="font-semibold text-ink-warm"
+                        />
+                      </span>
+                    ) : null}
                   </h3>
                   {group.months.map((entry) => (
                     <div

@@ -82,3 +82,9 @@ next-env.d.ts
 # They are someone else's copyrighted pages, they are large, and they are read once —
 # so they are kept beside the work and never committed.
 .sources/
+
+# Stage 17 PRDs — approved briefs the steps are built from. Temporary by
+# intent: each is deleted when its step lands, and what it settled survives in
+# the code, `DESIGN.md` and the commit. Kept out of the repository for the same
+# reason `build_plan.md` is — they describe work not yet done.
+/prd/

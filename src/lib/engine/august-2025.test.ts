@@ -4,17 +4,22 @@ import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
 import type { ClosedMonthFacts, ClosedSpan, WorkerTerms } from "@/lib/engine/types";
 import { he } from "@/lib/i18n/he";
-import { formatAgorot, formatDays } from "@/lib/money";
+import { formatAgorot, formatDays, shekelsUp } from "@/lib/money";
 import type { MonthResult } from "@/lib/types";
 
 /**
  * The known case (specs.md Part 4). Every expected figure below is quoted from
  * Part 4 and none is read back from the engine:
  *
- *   base ₪6,247.65 + rest-eve supplement ₪500      = ₪6,747.65   column E
- *   two holidays and four rest days at ₪426.35     = ₪2,558.10   column F
- *   the month's total                              = ₪9,305.75   E + F + G
- *   after the ₪2,000 instalment                    = ₪7,305.75   net
+ *   base ₪6,247.65 paid as ₪6,248, + supplement ₪500 = ₪6,748   column E
+ *   four rest days ₪1,706 + two holidays ₪853       = ₪2,559   column F
+ *   the month's total                               = ₪9,307   E + F + G
+ *   after the ₪2,000 instalment                     = ₪7,307   net
+ *
+ * Each line is taken up to the whole shekel where it becomes an amount
+ * (item 3), which is why the two subtotals add to a shekel more than the
+ * ₪9,305.75 the family's own sheet prints: the lines gain 0.35, 0.60 and 0.30
+ * on the way up.
  *
  * The rest-eve supplement is ₪100 per rest-eve. That is not a constant taken
  * from anywhere: Part 4 gives ₪500 across five Fridays worked and item 14 calls
@@ -102,23 +107,23 @@ function columnTotal(result: MonthResult, column: string): number {
     .reduce((total, line) => total + (line.amount ?? 0), 0);
 }
 
-describe("August 2025, to the agora and with no tolerance (specs.md Part 4)", () => {
+describe("August 2025, to the shekel and with no tolerance (specs.md Part 4)", () => {
   const result = calculateMonth(facts, terms);
 
-  it("pays ₪6,747.65 in column E — the base plus the rest-eve supplement", () => {
-    expect(columnTotal(result, "E")).toBe(674765); // Part 4: ₪6,747.65
+  it("pays ₪6,748 in column E — the base plus the rest-eve supplement", () => {
+    expect(columnTotal(result, "E")).toBe(674800); // Part 4: ₪6,748
   });
 
-  it("pays ₪2,558.10 in column F — four rest days and two holidays", () => {
-    expect(columnTotal(result, "F")).toBe(255810); // Part 4: ₪2,558.10
+  it("pays ₪2,559 in column F — four rest days and two holidays", () => {
+    expect(columnTotal(result, "F")).toBe(255900); // Part 4: ₪2,559
   });
 
-  it("gives a gross of ₪9,305.75", () => {
-    expect(result.gross).toBe(930575); // Part 4: ₪9,305.75
+  it("gives a gross of ₪9,307", () => {
+    expect(result.gross).toBe(930700); // Part 4: ₪9,307
   });
 
-  it("gives ₪7,305.75 after the ₪2,000 instalment", () => {
-    expect(result.net).toBe(730575); // Part 4: ₪7,305.75
+  it("gives ₪7,307 after the ₪2,000 instalment", () => {
+    expect(result.net).toBe(730700); // Part 4: ₪7,307
   });
 
   it("prints all four of the sheet's total lines, not two", () => {
@@ -126,10 +131,10 @@ describe("August 2025, to the agora and with no tolerance (specs.md Part 4)", ()
     // the month's own totals, and all four are Part 4's.
     const e = result.subtotals.find((s) => s.column === "E");
     const f = result.subtotals.find((s) => s.column === "F");
-    expect(e?.amount).toBe(674765); // Part 4: ₪6,747.65
-    expect(f?.amount).toBe(255810); // Part 4: ₪2,558.10
-    expect(result.gross).toBe(930575); // Part 4: ₪9,305.75
-    expect(result.net).toBe(730575); // Part 4: ₪7,305.75
+    expect(e?.amount).toBe(674800); // Part 4: ₪6,748
+    expect(f?.amount).toBe(255900); // Part 4: ₪2,559
+    expect(result.gross).toBe(930700); // Part 4: ₪9,307
+    expect(result.net).toBe(730700); // Part 4: ₪7,307
   });
 
   it("prints no subtotal for a column the month has nothing in", () => {
@@ -144,19 +149,21 @@ describe("August 2025, to the agora and with no tolerance (specs.md Part 4)", ()
     for (const line of result.lines) {
       expect(line.units).not.toBeNull();
       expect(line.rate).not.toBeNull();
-      expect(Math.round((line.units ?? 0) * (line.rate ?? 0))).toBe(line.amount);
+      expect(shekelsUp((line.units ?? 0) * (line.rate ?? 0))).toBe(line.amount);
     }
     const base = result.lines.find((line) => line.key === "base");
     expect(base?.units).toBe(1);
     expect(base?.rate).toBe(624765);
   });
 
-  it("puts the base at ₪6,247.65 and the supplement at ₪500", () => {
+  it("pays the ₪6,247.65 wage as ₪6,248, and the supplement as ₪500", () => {
     // The two halves of Part 4's own sentence, asserted separately so a failure
-    // says which one moved.
+    // says which one moved. The wage is a rate and keeps its agorot; the line
+    // it prices is a whole shekel (item 3).
     const base = result.lines.find((line) => line.key === "base");
     const supplement = result.lines.find((line) => line.key === "restEveSupplement");
-    expect(base?.amount).toBe(624765);
+    expect(base?.rate).toBe(624765);
+    expect(base?.amount).toBe(624800);
     expect(supplement?.amount).toBe(50000);
     expect(supplement?.units).toBe(5); // Part 4: five Fridays worked
     expect(supplement?.rate).toBe(10000); // ₪500 over five Fridays (item 14)
@@ -214,16 +221,16 @@ describe("what the payslip requires beyond the payments (specs.md item 2)", () =
 
   it("estimates the national insurance on the gross, not the net (item 19)", () => {
     // 3.6% of the month's full cost, taken before anything to do with advances:
-    // 3.6% of Part 4's ₪9,305.75, and not of the ₪7,305.75 that follows the
+    // 3.6% of Part 4's ₪9,307, and not of the ₪7,307 that follows the
     // instalment.
-    expect(result.nationalInsuranceEstimate).toBe(Math.round(930575 * 0.036));
-    expect(result.nationalInsuranceEstimate).not.toBe(Math.round(730575 * 0.036));
+    expect(result.nationalInsuranceEstimate).toBe(shekelsUp(930700 * 0.036));
+    expect(result.nationalInsuranceEstimate).not.toBe(shekelsUp(730700 * 0.036));
   });
 
   it("keeps the estimate out of the money paid to the worker", () => {
     // An estimate is not a payment: it must move neither total.
-    expect(result.gross).toBe(930575);
-    expect(result.net).toBe(730575);
+    expect(result.gross).toBe(930700);
+    expect(result.net).toBe(730700);
   });
 });
 
@@ -238,8 +245,8 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
       },
       terms,
     );
-    expect(withPremium.gross).toBe(930575);
-    expect(withPremium.net).toBe(730575);
+    expect(withPremium.gross).toBe(930700);
+    expect(withPremium.net).toBe(730700);
     expect(columnTotal(withPremium, "H")).toBe(50000);
   });
 });
@@ -254,7 +261,7 @@ describe("an override replaces the amount and keeps the key (specs.md item 17)",
     expect(base?.amount).toBe(700000);
     expect(base?.manual).toBe(true);
     // Still addressable, and the rest of the sheet followed it.
-    expect(overridden.gross).toBe(700000 + 50000 + 255810);
+    expect(overridden.gross).toBe(700000 + 50000 + 255900);
   });
 });
 

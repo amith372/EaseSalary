@@ -18,6 +18,7 @@ import type {
 } from "@/lib/engine/types";
 import { InvalidMonthError, validateMonth } from "@/lib/engine/validate";
 import { he } from "@/lib/i18n/he";
+import { shekelsUp } from "@/lib/money";
 import type { MonthResult, YearMonth } from "@/lib/types";
 
 /**
@@ -27,12 +28,13 @@ import type { MonthResult, YearMonth } from "@/lib/types";
  * **Where each expected figure comes from.** Not one is read back from what the
  * engine returned.
  *
- *   the gross of August 2025      ₪9,305.75   specs.md Part 4
- *   after the ₪2,000 instalment   ₪7,305.75   specs.md Part 4
+ *   the gross of August 2025      ₪9,307      specs.md Part 4
+ *   after the ₪2,000 instalment   ₪7,307      specs.md Part 4
  *   the national-insurance rate   3.6%        specs.md item 19
- *   this month's estimate         ₪335.01     those two multiplied, in the
- *                                             open: 930,575 × 0.036 =
- *                                             33,500.7 agorot, rounded once
+ *   this month's estimate         ₪336        those two multiplied, in the
+ *                                             open: 930,700 × 0.036 =
+ *                                             33,505.2 agorot, up to the
+ *                                             whole shekel (item 3)
  *   the workbook's own line       ₪117.60     שכר_חודשי_להאנה2025.xlsx ->
  *                                             חודש  8.25 -> D21. Stale, and
  *                                             therefore the figure the engine
@@ -60,11 +62,11 @@ const SALARY = 624765; // Part 4: ₪6,247.65
 const REST_EVE_SUPPLEMENT = 10000; // Part 4: ₪500 across five Fridays (item 14)
 const INSTALMENT = 200000; // Part 4: ₪2,000 a month
 
-const GROSS = 930575; // Part 4: ₪9,305.75
-const NET = 730575; // Part 4: ₪7,305.75
+const GROSS = 930700; // Part 4: ₪9,307
+const NET = 730700; // Part 4: ₪7,307
 
-/** 930,575 × 0.036 = 33,500.7, rounded once (item 3). */
-const ESTIMATE = 33501;
+/** 930,700 × 0.036 = 33,505.2, up to the whole shekel: ₪336 (item 3). */
+const ESTIMATE = 33600;
 
 /** ₪117.60 — D21, and 2% of the ₪5,880.02 of 2024. Never a figure to produce. */
 const STALE_WORKBOOK_LINE = 11760;
@@ -149,8 +151,8 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
       facts([{ kind: "medicalInsurance", agorot: 50000, paidOn: "2025-08-15" }]),
       terms,
     );
-    expect(withPremium.gross).toBe(GROSS); // Part 4: ₪9,305.75
-    expect(withPremium.net).toBe(NET); // Part 4: ₪7,305.75
+    expect(withPremium.gross).toBe(GROSS); // Part 4: ₪9,307
+    expect(withPremium.net).toBe(NET); // Part 4: ₪7,307
     expect(columnTotal(withPremium, "H")).toBe(50000);
   });
 
@@ -211,8 +213,8 @@ describe("column H never reaches the worker (specs.md item 16, Part 5)", () => {
 
 describe("the national-insurance estimate (specs.md item 19)", () => {
   it("is 3.6% of the month's full cost, taken before the advances", () => {
-    // 3.6% of Part 4's ₪9,305.75 — the salary, the rest-eve supplement and the
-    // Saturday and holiday pay — and not of the ₪7,305.75 that follows the
+    // 3.6% of Part 4's ₪9,307 — the salary, the rest-eve supplement and the
+    // Saturday and holiday pay — and not of the ₪7,307 that follows the
     // instalment: the contribution cannot depend on whether the family happened
     // to lend them money.
     const result = calculateMonth(facts(), terms);
@@ -222,7 +224,7 @@ describe("the national-insurance estimate (specs.md item 19)", () => {
     expect(rateInForce(SEEDED_RATES, "nationalInsurance", AUGUST_2025)?.value).toBe(
       0.036,
     );
-    expect(result.nationalInsuranceEstimate).toBe(ESTIMATE); // ₪335.01
+    expect(result.nationalInsuranceEstimate).toBe(ESTIMATE); // ₪336
     expect(nationalInsuranceEstimateOf(GROSS, SEEDED_RATES, AUGUST_2025)).toBe(
       ESTIMATE,
     );
@@ -254,9 +256,9 @@ describe("the national-insurance estimate (specs.md item 19)", () => {
 
   it("follows the table it is handed rather than a constant", () => {
     // 2% is what the workbook's own line was left at (Part 5). Handed a table
-    // that says so, the engine must produce 2% of Part 4's ₪9,305.75 —
-    // 930,575 × 0.02 = 18,611.5 agorot, rounded once to 18,612 — which proves
-    // the percentage travels from the table and is not baked into the engine.
+    // that says so, the engine must produce 2% of Part 4's ₪9,307 —
+    // 930,700 × 0.02 = 18,614 agorot, up to ₪187 — which proves the percentage
+    // travels from the table and is not baked into the engine.
     const result = calculateMonth(facts(), terms, {
       ...AS_SHIPPED,
       rates: [
@@ -270,7 +272,7 @@ describe("the national-insurance estimate (specs.md item 19)", () => {
         },
       ],
     });
-    expect(result.nationalInsuranceEstimate).toBe(18612);
+    expect(result.nationalInsuranceEstimate).toBe(18700);
     expect(result.nationalInsuranceEstimate).not.toBe(ESTIMATE);
   });
 
@@ -323,7 +325,7 @@ describe("the estimate and the payment are two figures, never one (item 19)", ()
       (l) => l.key === thirdPartyLineKey("nationalInsurance"),
     );
     expect(paid?.amount).toBe(QUARTER_PAID); // ₪936
-    expect(result.nationalInsuranceEstimate).toBe(ESTIMATE); // ₪335.01
+    expect(result.nationalInsuranceEstimate).toBe(ESTIMATE); // ₪336
     expect(paid?.amount).not.toBe(result.nationalInsuranceEstimate);
   });
 
@@ -452,7 +454,9 @@ describe("one row per kind, and a month with two is refused (item 16)", () => {
       ]),
       terms,
     );
-    expect(columnTotal(result, "H")).toBe(QUARTER_PAID + 32559);
+    // Each H line is a whole shekel of its own, so the column is the two
+    // rounded figures and not the rounding of their sum (item 3).
+    expect(columnTotal(result, "H")).toBe(QUARTER_PAID + shekelsUp(32559));
     expect(result.gross).toBe(GROSS);
   });
 
@@ -487,7 +491,9 @@ describe("an H line can be overridden like any other (specs.md item 17)", () => 
     const line = result.lines.find(
       (l) => l.key === thirdPartyLineKey("medicalInsurance"),
     );
-    expect(line?.amount).toBe(34816);
+    // An override is an amount and is rounded like one: ₪348.16 is paid as
+    // ₪349 (item 3).
+    expect(line?.amount).toBe(shekelsUp(34816));
     expect(line?.manual).toBe(true);
     // Still addressable under the same key, and column H still reaches neither
     // total (item 16).

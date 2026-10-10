@@ -144,7 +144,7 @@ describe("the weekly rest day sits inside the period, not across its break", () 
     //        position, which is what makes the Sunday the third day.
     // Sun 10 is day 3 and pays half, so half a day is taken back.
     // 1 + 0 + 0.5 = 1.5 days -> 1.5 × 24,990.6 = 37,485.9 -> 37,486.
-    expect(deduction(marked)).toBe(-37486);
+    expect(deduction(marked)).toBe(-37500);
   });
 
   it("draws the unmarked Saturday from the balance too", () => {
@@ -165,13 +165,13 @@ describe("the weekly rest day sits inside the period, not across its break", () 
    * balance: paid for and spent from the quota at once.
    */
   it("does not pay the bridged Saturday at the rest-day rate", () => {
-    // 4 × 42,635.0620... = 170,540.2483... -> 170,540.
-    expect(restDayPay(marked)).toBe(170540);
+    // One line of 4 × 42,635.0620... = 170,540.2483... -> ₪1,706 (item 3).
+    expect(restDayPay(marked)).toBe(170600);
 
     // Five where no spell covers a Saturday, so the assertion above is not
     // passing against a month that pays four either way.
-    // 5 × 42,635.0620... = 213,175.3104... -> 213,175.
-    expect(restDayPay([])).toBe(213175);
+    // 5 × 42,635.0620... = 213,175.3104... -> ₪2,132.
+    expect(restDayPay([])).toBe(213200);
   });
 
   it("costs exactly what the same three days swept in one gesture cost", () => {
@@ -193,7 +193,7 @@ describe("the weekly rest day sits inside the period, not across its break", () 
     // 1 + 1 = 2 days -> 2 × 24,990.6 = 49,981.2 -> 49,981.
     const broken = [sick("2025-08-05"), sick("2025-08-07")];
     expect(spellsOf(broken, SATURDAY)).toHaveLength(2);
-    expect(deduction(broken)).toBe(-49981);
+    expect(deduction(broken)).toBe(-50000);
     expect(sickDrawn(broken)).toBe(2);
   });
 });
@@ -300,7 +300,7 @@ describe("the bridge does not swallow an interval of any length", () => {
     ]);
     // Day 1 Fri -> 1, day 2 Sat -> 0, day 3 Sun -> 0.5, day 4 Mon -> 0.
     // 1.5 days -> 37,486, and four days drawn from the balance.
-    expect(deduction(spans)).toBe(-37486);
+    expect(deduction(spans)).toBe(-37500);
     expect(sickDrawn(spans)).toBe(4);
   });
 });

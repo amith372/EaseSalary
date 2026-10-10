@@ -9,12 +9,12 @@ import type { MonthResult } from "@/lib/types";
 
 /**
  * The four figures of criterion 1, checked against fifteen months instead of
- * one.
+ * one, each line of each month up to the whole shekel (item 3).
  *
  * Part 4 states August 2025 outright, and `august-2025.test.ts` holds it. What
  * this file adds is the rest of the family's own arithmetic: every month below
- * has its column E, its column F, its ברוטו and its transfer taken from the
- * tab's own cells, so a change that happened to keep August right and broke
+ * has its column E, its column F, its ברוטו and its transfer derived from the
+ * tab's own line cells, so a change that happened to keep August right and broke
  * everything else fails here.
  *
  * **What would pass August and fail this file.** A rest-day count fixed at four
@@ -33,7 +33,7 @@ function columnTotal(result: MonthResult, column: string): number {
     .reduce((total, line) => total + (line.amount ?? 0), 0);
 }
 
-describe("the family's own months, to the agora", () => {
+describe("the family's own months, to the shekel", () => {
   for (const m of WORKBOOK_MONTHS) {
     describe(m.tab, () => {
       const result = calculateMonth(workbookFacts(m), workbookWorker(m.salaryAgorot));

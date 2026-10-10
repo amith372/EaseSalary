@@ -30,7 +30,7 @@ import { formatDays } from "../src/lib/money";
  * rather than read off `he.fault`: a test that imports the string it checks
  * passes whatever that string later silently becomes.
  */
-const FAULT = "משהו השתבש, כדאי לנסות שוב או לחזור לדף הבית";
+const FAULT = "משהו השתבש, כדאי לנסות שוב או לרענן את הדף";
 
 const words = he.workers.profile.terms.restDay;
 
@@ -131,7 +131,7 @@ test.describe("a control whose action cannot answer", () => {
  * **The defect a weaker version of this would miss.** Routing the three gestures
  * through one `useAction` draws the sentence correctly and *drops* a second
  * sweep made while the first is in flight — `home-screen.spec.ts`'s known case
- * caught that, one third of ₪9,305.75 short, and this file could not have. So
+ * caught that, one third of ₪9,307 short, and this file could not have. So
  * the two tests are both needed and neither is the other's duplicate.
  */
 

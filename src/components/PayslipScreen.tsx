@@ -17,7 +17,7 @@ import type { RestDay } from "@/lib/dates";
 import { monthLevels } from "@/lib/engine/month";
 import type { ClosingLine } from "@/lib/types";
 import { bottomFigure, he } from "@/lib/i18n/he";
-import { formatAgorot, formatDays } from "@/lib/money";
+import { formatDays, formatRate } from "@/lib/money";
 import type { RefusedMonth } from "@/lib/refusalView";
 import type {
   IsoDate,
@@ -74,6 +74,9 @@ interface PayslipMonth {
   /** The day the month was last confirmed before an export, in Israel, or
    * `null` for a month never confirmed. */
   confirmedOn: IsoDate | null;
+  /** The minimum wage stored on the month when it was confirmed, or `null`
+   * for a month never confirmed. */
+  confirmedWageAgorot: number | null;
   /** The month's own note, or `null` (specs.md item 5). */
   note: string | null;
 }
@@ -101,7 +104,7 @@ function unitsHint(line: MonthLine) {
   if (units === undefined || units === null || rate === undefined || rate === null) {
     return undefined;
   }
-  return <Bidi noTranslate>{`${formatDays(units)} × ${formatAgorot(rate)}`}</Bidi>;
+  return <Bidi noTranslate>{`${formatDays(units)} × ${formatRate(rate)}`}</Bidi>;
 }
 
 function coversHint(line: MonthLine) {
@@ -211,6 +214,18 @@ export function PayslipScreen({ household }: PayslipScreenProps) {
               <p data-confirmed-on className="text-[15px] font-light text-ink-quiet">
                 <span dir="auto">{he.payslip.confirmedOn}</span>
                 <Bidi>{fullDayLabel(shown.confirmedOn)}</Bidi>
+                {shown.confirmedWageAgorot === null ? null : (
+                  <>
+                    <span aria-hidden="true"> · </span>
+                    <span dir="auto">{he.payslip.confirmedWage}</span>{" "}
+                    {/* The suite's handle on the *stored* wage, by what it is
+                        rather than by the Hebrew beside it (`CLAUDE.md`
+                        rule 10). */}
+                    <span data-confirmed-wage={shown.confirmedWageAgorot}>
+                      <Bidi noTranslate>{formatRate(shown.confirmedWageAgorot)}</Bidi>
+                    </span>
+                  </>
+                )}
               </p>
             )}
             {shown.canExport && shown.stillRunning ? (

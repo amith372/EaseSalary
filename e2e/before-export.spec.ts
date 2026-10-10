@@ -6,8 +6,8 @@ import {
   switchToTestWorker,
   TODAY,
 } from "./household";
-import { he } from "../src/lib/i18n/he";
-import { formatAgorot } from "../src/lib/money";
+import { he, type Said } from "../src/lib/i18n/he";
+import { formatAgorot, formatRate } from "../src/lib/money";
 import { monthOf, SATURDAY } from "../src/lib/dates";
 import { dayLabel, fullDayLabel, rangeLabel } from "../src/lib/dateLabels";
 
@@ -72,6 +72,25 @@ async function settled(page: Page): Promise<void> {
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
 }
 
+/** The `openSpell` seed, which is the one household here that arrives with the
+ * export blocked (`src/lib/dev/seed.ts`, and `close-spell.spec.ts` says why a
+ * seed is the only way into that state). */
+async function useBlockedHousehold(page: Page, label: string): Promise<void> {
+  await page.context().addCookies([
+    {
+      name: "household",
+      value: `openSpell-e2e-${RUN}-${label}`,
+      url: "http://localhost:3000",
+    },
+  ]);
+}
+
+/** A sentence from `he.ts` as the screen reads it, each figure in its own
+ * isolate on the page and all of it one run of text here. */
+function text(said: Said): string {
+  return said.map((part) => (typeof part === "string" ? part : part.value)).join("");
+}
+
 /** Step the screen back from the month it opens on, which is August. */
 async function backTo(page: Page, month: number): Promise<void> {
   for (let step = 0; step < ENDED_MONTH - month; step += 1) {
@@ -79,13 +98,20 @@ async function backTo(page: Page, month: number): Promise<void> {
   }
 }
 
-/** Answer every one of item 18's questions, so the export is reachable. */
-async function answerEverything(page: Page, yes: string[] = []): Promise<void> {
+/** Answer every one of item 18's questions, so the export is reachable.
+ * `except` leaves one of them alone, which is how the gate is brought to one
+ * answer short of opening. */
+async function answerEverything(
+  page: Page,
+  yes: string[] = [],
+  except?: string,
+): Promise<void> {
   const questions = page.locator("[data-question]");
   const count = await questions.count();
   for (let index = 0; index < count; index += 1) {
     const row = questions.nth(index);
     const key = await row.getAttribute("data-question");
+    if (key === except) continue;
     const answer =
       key !== null && yes.includes(key)
         ? he.beforeExport.questions.yes
@@ -119,7 +145,9 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
 
     const exportButton = page.locator("[data-finish]");
     await expect(exportButton).toBeDisabled();
-    await expect(page.getByText(he.beforeExport.finish.unanswered)).toBeVisible();
+    await expect(page.locator("[data-answered-count]")).toContainText(
+      text(he.beforeExport.finish.counted(0, 7)),
+    );
 
     // Seven questions, each arriving with what the month already knows.
     await expect(page.locator("[data-question]")).toHaveCount(7);
@@ -134,6 +162,85 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
       path: "test-results/before-export-answered.png",
       fullPage: true,
     });
+  });
+
+  /**
+   * The gate states its own precondition: how many of the seven are answered,
+   * and where the one that is not is (`specs.md` item 18).
+   *
+   * Scenario: August 2026 is opened, six of its seven questions are answered,
+   * the control beside the count is pressed, the seventh is answered.
+   *
+   * **Seven near-identical rows are what makes this worth a test.** With six
+   * answered the screen used to say only that every question had to be
+   * answered, so the only way to find the seventh was to read all seven again.
+   *
+   * Expected: `נענו 0 מתוך 7` on arrival, `נענו 6 מתוך 7` after six, the
+   * remaining row marked with its first chip holding the cursor, and then no
+   * count at all and both buttons pressable.
+   *
+   * **What it would catch.** A count that agrees with itself rather than with
+   * the answers — six answers reading five or seven. A control that scrolls
+   * nowhere, or lands on the row instead of on the answer, which leaves the
+   * user where they already were. A count surviving the last answer, which says
+   * the export is still waiting on something when it is not. And the mark
+   * outliving the question it was pointing at.
+   *
+   * Seven is item 18's own list of questions and six is what this test answers;
+   * neither figure is read back from the screen (`CLAUDE.md` rule 11).
+   */
+  test("counts the questions answered and takes the user to the one that is not", async ({
+    page,
+  }) => {
+    await useHousehold(page, "count");
+    await page.goto("/month/export");
+    await switchToTestWorker(page);
+
+    const count = page.locator("[data-answered-count]");
+    await expect(count).toContainText(text(he.beforeExport.finish.counted(0, 7)));
+
+    // **The control agrees with how many are left, and the two shapes are
+    // asserted against each other rather than against the string that built
+    // them** — a control frozen at one wording satisfies `toFirstUnanswered(n)`
+    // at every n, because both branches would return the same thing. With seven
+    // outstanding the singular is the defect, and it is the shape the screen
+    // shipped with until the user met it on 2026-10-10.
+    const toUnanswered = page.locator("[data-to-unanswered]");
+    const whenOneLeft = he.beforeExport.finish.toFirstUnanswered(1);
+    await expect(toUnanswered).not.toHaveText(whenOneLeft);
+
+    // Six of the seven. `thirdParty` is the one left, and August records
+    // nothing for it, so the answer it is finally given agrees with the month.
+    await answerEverything(page, AUGUST_AGREES, "thirdParty");
+    await expect(count).toContainText(text(he.beforeExport.finish.counted(6, 7)));
+    await expect(page.locator("[data-finish]")).toBeDisabled();
+
+    // One left, so now it does read the singular.
+    await expect(toUnanswered).toHaveText(whenOneLeft);
+
+    // The control takes the user to the row, and the cursor to the answer.
+    const remaining = page.locator('[data-question="thirdParty"]');
+    await expect(remaining).not.toHaveAttribute("data-marked", "");
+    await page.locator("[data-to-unanswered]").click();
+    await expect(remaining).toHaveAttribute("data-marked", "");
+    await expect(
+      remaining.getByRole("button", {
+        name: he.beforeExport.questions.yes,
+        exact: true,
+      }),
+    ).toBeFocused();
+    await page.screenshot({
+      path: "test-results/before-export-count-and-mark.png",
+      fullPage: true,
+    });
+
+    // Answered, the count has nothing left to say and the mark goes with it.
+    await remaining
+      .getByRole("button", { name: he.beforeExport.questions.no, exact: true })
+      .click();
+    await expect(count).toHaveCount(0);
+    await expect(remaining).not.toHaveAttribute("data-marked", "");
+    await expect(page.locator("[data-finish]")).toBeEnabled();
   });
 
   /**
@@ -347,6 +454,45 @@ test.describe("the questions that open an export (specs.md item 18)", () => {
   });
 
   /**
+   * **The two gates stay two.** A blockage is not an unanswered question and no
+   * answer makes it go away, so a blocked month says what is in the way and
+   * says nothing about a count.
+   *
+   * Scenario: the `openSpell` household's September 2026, where a spell of
+   * sickness begun on the 14th was never closed — the state
+   * `close-spell.spec.ts` covers, read here only for what the gate says.
+   *
+   * Expected: the blockage's own sentence, no count anywhere, and the export
+   * refused.
+   *
+   * **What it would catch:** a count drawn beside a button that still refuses.
+   * Answer all seven over a blockage and it would read seven of seven while the
+   * export stayed disabled, which teaches the user that the count lies — and
+   * `0 מתוך 7` beside a block the user cannot answer their way out of is the
+   * same error at the other end.
+   */
+  test("says what blocks a month, and draws no count beside it", async ({
+    page,
+  }) => {
+    await useBlockedHousehold(page, "blocked");
+    await page.goto("/month/export");
+    await switchToTestWorker(page);
+    // Forward to the month the spell is open in: the screen opens on the last
+    // month that ended, and an open spell overlaps the month it began in onward.
+    await page.getByRole("button", { name: he.calendar.nextMonth }).click();
+    await expect(page.locator('[data-block="openSickSpell"]')).toBeVisible();
+
+    await expect(page.getByText(he.beforeExport.finish.blocked)).toBeVisible();
+    await expect(page.locator("[data-answered-count]")).toHaveCount(0);
+    await expect(page.locator("[data-finish]")).toBeDisabled();
+
+    // And answering every question does not conjure one.
+    await answerEverything(page);
+    await expect(page.locator("[data-answered-count]")).toHaveCount(0);
+    await expect(page.locator("[data-finish]")).toBeDisabled();
+  });
+
+  /**
    * An answer that disagrees with what the month recorded is a warning and
    * never a refusal (settled with the user on 2026-09-09). What it must not do
    * is pass in silence: the sentence says where the missing fact is recorded.
@@ -386,7 +532,8 @@ test.describe("the confirmations that go with them (items 4 and 15)", () => {
     await switchToTestWorker(page);
 
     const wage = page.locator("[data-wage]");
-    await expect(wage).toContainText(formatAgorot(WAGE_IN_FORCE));
+    // The minimum wage is a rate and keeps its agorot (specs.md item 3).
+    await expect(wage).toContainText(formatRate(WAGE_IN_FORCE));
     await expect(wage).toContainText(he.beforeExport.wage.inForceFrom);
 
     await wage.getByRole("button", { name: he.beforeExport.wage.correct }).click();

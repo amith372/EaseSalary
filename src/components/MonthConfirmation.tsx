@@ -18,6 +18,7 @@ import {
   type BeforeExportRefusal,
   type BeforeExportResult,
 } from "@/app/month/export/actions";
+import { Sentence } from "@/components/AlertsScreen";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { Chip } from "@/components/Chip";
@@ -42,6 +43,7 @@ import { he } from "@/lib/i18n/he";
 import {
   amountFieldValue,
   formatAgorot,
+  formatRate,
   formatDays,
   formatPercent,
   parseShekels,
@@ -117,10 +119,48 @@ export function MonthConfirmation({
     [answers, shown.questions],
   );
 
-  const answered = exportQuestionKeys.every(
+  const answeredCount = exportQuestionKeys.filter(
     (key) => answers[key] !== undefined,
-  );
+  ).length;
+  const answered = answeredCount === exportQuestionKeys.length;
   const blocked = shown.blocks.length > 0;
+
+  /** The first question with no answer, which is where the count's control
+   * jumps to. `undefined` once every one of them has been answered. */
+  const firstUnanswered = exportQuestionKeys.find(
+    (key) => answers[key] === undefined,
+  );
+
+  // Which row the jump last landed on. Held rather than derived, because the
+  // mark says "this is the one you were sent to" and not "this one is
+  // unanswered" — the other six are unanswered too and none of them is marked.
+  const [jumpedTo, setJumpedTo] = useState<ExportQuestionKey | null>(null);
+
+  // The mark goes the moment the row is answered, so it never outlives the
+  // thing it was pointing at. Derived rather than cleared in the handler: an
+  // answer given to a marked row by any route clears it.
+  const marked =
+    jumpedTo !== null && answers[jumpedTo] === undefined ? jumpedTo : null;
+
+  /** Scroll the first unanswered question into view and put the cursor on its
+   * first chip — a handler and not an `href`, because `DESIGN.md` records a
+   * fragment link on this application scrolling nowhere. */
+  const jumpToFirstUnanswered = (): void => {
+    if (firstUnanswered === undefined) return;
+    setJumpedTo(firstUnanswered);
+    // Found in the document and not through a ref, because `Card` carries
+    // `data-*` attributes and nothing else by design — and `data-question` is
+    // already the handle the browser suite addresses a row by.
+    const row = document.querySelector<HTMLElement>(
+      `[data-question="${firstUnanswered}"]`,
+    );
+    if (row === null) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    row.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "center" });
+    // The row is where the eye goes and the chip is where the answer is given,
+    // so the cursor lands on the chip rather than on the row around it.
+    row.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
+  };
 
   return (
     <div
@@ -160,7 +200,7 @@ export function MonthConfirmation({
             <Bidi noTranslate className="text-[26px] font-bold tracking-[-0.02em]">
               {typedWage === null
                 ? he.placeholder.amount
-                : formatAgorot(typedWage)}
+                : formatRate(typedWage)}
             </Bidi>
             <button
               type="button"
@@ -386,6 +426,7 @@ export function MonthConfirmation({
             gender={gender}
             answer={answers[question.key]}
             first={index === 0}
+            marked={marked === question.key}
             onAnswer={(value) =>
               setAnswers((current) => ({ ...current, [question.key]: value }))
             }
@@ -414,6 +455,46 @@ export function MonthConfirmation({
       ) : null}
 
       <div className="flex flex-col gap-2.5 border-t border-line pt-5.5">
+        {/* Why the buttons are withheld, above them and not after them: read in
+            order, two disabled buttons before the reason for them is the
+            screen refusing to say what would release it.
+
+            **The two gates stay two.** A block is not an unanswered question
+            and no answer makes it go away, so the count is not shown beside
+            one — a count reading seven of seven next to a button that still
+            refuses teaches the user that the count lies. */}
+        {blocked ? (
+          <p dir="auto" className="text-[14px] font-light text-ink-quiet">
+            {words.finish.blocked}
+          </p>
+        ) : !answered ? (
+          <div
+            data-answered-count=""
+            aria-live="polite"
+            className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[15px] text-ink-warm"
+          >
+            <Sentence
+              said={words.finish.counted(answeredCount, exportQuestionKeys.length)}
+              valueClass="font-semibold text-ink"
+            />
+            <span aria-hidden="true" className="text-ink-faint">
+              ·
+            </span>
+            <button
+              type="button"
+              data-to-unanswered=""
+              onClick={jumpToFirstUnanswered}
+              className="border-b-[1.5px] border-forest pb-px text-[15px] font-semibold text-forest-deep transition-colors hover:border-forest-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+            >
+              <span dir="auto">
+                {words.finish.toFirstUnanswered(
+                  exportQuestionKeys.length - answeredCount,
+                )}
+              </span>
+            </button>
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap items-center gap-x-4.5 gap-y-3">
           {/* Item 2's two versions, as two buttons of equal weight: neither
               artboard draws a chooser, and the difference between the files is
@@ -463,16 +544,6 @@ export function MonthConfirmation({
             <span dir="auto">{words.finish.back}</span>
           </Link>
         </div>
-
-        {blocked ? (
-          <p dir="auto" className="text-[14px] font-light text-ink-quiet">
-            {words.finish.blocked}
-          </p>
-        ) : !answered ? (
-          <p dir="auto" className="text-[14px] font-light text-ink-quiet">
-            {words.finish.unanswered}
-          </p>
-        ) : null}
 
         {/* After the reason the buttons cannot be pressed, never before it: a
             user who is blocked wants to know why, and an explanation of a
@@ -664,6 +735,7 @@ function QuestionRow({
   gender,
   answer,
   first,
+  marked,
   onAnswer,
 }: {
   question: ExportQuestion;
@@ -671,6 +743,10 @@ function QuestionRow({
   gender: Gender;
   answer: boolean | undefined;
   first: boolean;
+  /** The row the count's control sent the user to, held until it is answered.
+   * Seven rows look alike, so arriving at one of them has to be visible: a
+   * scroll that lands silently leaves the user looking for what moved. */
+  marked: boolean;
   onAnswer: (value: boolean) => void;
 }) {
   const words = he.beforeExport.questions;
@@ -678,9 +754,11 @@ function QuestionRow({
   return (
     <div
       data-question={question.key}
+      {...(marked ? { "data-marked": "" } : {})}
       className={[
         "flex flex-wrap items-center gap-x-4.5 gap-y-3 px-5 py-4.25 sm:px-6",
         first ? "" : "border-t border-line-soft",
+        marked ? "bg-hover inset-ring-1 inset-ring-clay-soft" : "",
       ]
         .filter(Boolean)
         .join(" ")}

@@ -75,7 +75,7 @@ export default function GlobalError() {
               fontWeight: 600,
             }}
           >
-            משהו השתבש, כדאי לנסות שוב או לחזור לדף הבית
+            משהו השתבש, כדאי לנסות שוב או לרענן את הדף
           </h1>
           {/* A plain anchor and not `next/link`: the router lives in the tree
               this screen has replaced, so `<Link>` here raises "expected app

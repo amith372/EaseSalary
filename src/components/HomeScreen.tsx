@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { clearRange, markRange, setHolidayWorked, setMonthNote } from "@/app/month/actions";
 import type { Done } from "@/lib/actionFault";
-import { FaultLine, inputClass, outlineButtonClass } from "@/components/Field";
+import { FaultLine, RefusalLine, inputClass, outlineButtonClass } from "@/components/Field";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
 import { BalancesRail, Blockers } from "@/components/HomeSections";
@@ -694,14 +694,35 @@ function MonthNote({
   const words = he.home.note;
   const [text, setText] = useState(note);
   const [saving, startSaving] = useTransition();
+  // **The answer the action already gives is read.** A note refused or faulted
+  // and reported as nothing is a note the family believes they saved: the field
+  // keeps their text either way, so there is no second signal that it did not
+  // land (specs.md item 5).
+  const [refused, setRefused] = useState(false);
+  const [fault, setFault] = useState(false);
   const changed = text.trim() !== note;
   return (
     <Card id="month-note" className="flex flex-none scroll-mt-4 flex-col gap-2 px-3.75 py-3.25">
       <form
         onSubmit={(event) => {
           event.preventDefault();
+          setRefused(false);
+          setFault(false);
           startSaving(async () => {
-            await setMonthNote(workerId, month, text);
+            try {
+              const result = await setMonthNote(workerId, month, text);
+              // `noMonth` is the only reason this action can refuse with, so a
+              // refusal that is not it has no sentence and is a fault — which
+              // is the honest reading of an answer the screen cannot name.
+              if (!result.ok) {
+                if ("reason" in result && result.reason === "noMonth") setRefused(true);
+                else setFault(true);
+              }
+            } catch {
+              // The action never reached the server, so nothing came back to
+              // carry a fault and the control says it here (`actionFault.ts`).
+              setFault(true);
+            }
           });
         }}
         className="flex flex-col gap-2"
@@ -731,6 +752,8 @@ function MonthNote({
             <span dir="auto">{words.save}</span>
           </button>
         </div>
+        {refused ? <RefusalLine role="refusal">{words.noMonth}</RefusalLine> : null}
+        {fault ? <FaultLine /> : null}
       </form>
     </Card>
   );

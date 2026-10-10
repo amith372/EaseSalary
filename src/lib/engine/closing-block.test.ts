@@ -15,13 +15,13 @@ import type { ClosingBlock, MonthResult } from "@/lib/types";
  * (specs.md Part 5, items 17 and 20).
  *
  * **The figures are derived on paper**, in `august-2025.fixture.ts`: the month
- * with nothing marked comes to ₪8,879.40, and each case below withholds or
+ * with nothing marked comes to ₪8,880, and each case below withholds or
  * transfers exactly one thing from it.
  *
- *   income tax ₪200          נטו 867,940   סך הכל 867,940
- *   tax ₪200 + instalment ₪2,000            סך הכל 667,940
+ *   income tax ₪200          נטו 868,000   סך הכל 868,000
+ *   tax ₪200 + instalment ₪2,000            סך הכל 668,000
  *   a ₪150 deduction after the total, no tax
- *                            נטו 887,940   סך הכל 872,940
+ *                            נטו 888,000   סך הכל 873,000
  *
  * The third is the one that carries the answer settled on 2026-09-03: a line the
  * user placed after the total moves the transfer and must leave the ‏נטו‎ exactly
@@ -56,11 +56,11 @@ describe("the income tax is withheld from the ברוטו (specs.md item 17)", ()
 
   it("leaves the ברוטו alone and lowers the נטו by the tax", () => {
     expect(result.gross).toBe(PLAIN_GROSS);
-    expect(result.afterWithholding).toBe(867940); // 887,940 − 20,000
+    expect(result.afterWithholding).toBe(868000); // 888,000 − 20,000
   });
 
   it("carries the tax to the transfer, there being nothing else below it", () => {
-    expect(result.net).toBe(867940);
+    expect(result.net).toBe(868000);
   });
 
   it("marks the tax row as withheld rather than transferred", () => {
@@ -88,46 +88,46 @@ describe("the income tax is withheld from the ברוטו (specs.md item 17)", ()
  * 2026-09-10).
  *
  * **The figures are derived on paper from the 2025 table**, which is the year
- * the plain August fixture falls in. Its ‏ברוטו‎ is ₪8,879.40, so a year of it is
- * ₪106,552.80 — 10,655,280 agorot:
+ * the plain August fixture falls in. Its ‏ברוטו‎ is ₪8,880, so a year of it is
+ * ₪106,560 — 10,656,000 agorot:
  *
  *    8,412,000 × 10%           =   841,200
- *    2,243,280 × 14%           =   314,059.20
+ *    2,244,000 × 14%           =   314,160
  *                                -----------
- *                                1,155,259.20 a year, = 96,271.60 a month
+ *                                1,155,360 a year, = 96,280 a month
  *
  * A woman's 2.75 credit points are worth ₪665.50 a month, so they are taxed
- * 96,271.60 − 66,550 = 29,721.60, which rounds to **29,722 agorot (₪297.22)**.
- * A man's 2.25 points are worth ₪544.50, so he is taxed 96,271.60 − 54,450 =
- * 41,821.60, which rounds to **41,822 agorot (₪418.22)**.
+ * 96,280 − 66,550 = 29,730, which is **₪298** — the tax is an amount and goes
+ * up to the whole shekel like any other (item 3). A man's 2.25 points are worth
+ * ₪544.50, so he is taxed 96,280 − 54,450 = 41,830, which is **₪419**.
  */
 describe("the tax the engine works out (specs.md item 17)", () => {
   /** The fixture carries a confirmed zero, because the family's own August
    * sheet withheld nothing. Clearing it is what asks the engine. */
   const unconfirmed = { incomeTaxAgorot: undefined };
 
-  it("withholds ₪297.22 from a woman and lowers the נטו by it", () => {
+  it("withholds ₪298 from a woman and lowers the נטו by it", () => {
     const w = plainWorker();
     const result = calculateMonth(facts(w, unconfirmed), w);
     const tax = result.closing.find((row) => row.key === lineKeys.incomeTax);
 
-    expect(tax?.amount).toBe(-29722);
+    expect(tax?.amount).toBe(-29800);
     expect(result.gross).toBe(PLAIN_GROSS);
-    expect(result.afterWithholding).toBe(PLAIN_GROSS - 29722);
-    expect(result.net).toBe(PLAIN_GROSS - 29722);
+    expect(result.afterWithholding).toBe(PLAIN_GROSS - 29800);
+    expect(result.net).toBe(PLAIN_GROSS - 29800);
   });
 
   /**
    * The same month for a man. It is what proves the gender on the profile
    * actually reaches the sheet: a calculation that hardcoded a woman's points
-   * would answer ₪297.22 here too, and nothing on the sheet would say so.
+   * would answer ₪298 here too, and nothing on the sheet would say so.
    */
-  it("withholds ₪418.22 from a man in the same month", () => {
+  it("withholds ₪419 from a man in the same month", () => {
     const w = { ...plainWorker(), gender: "male" as const };
     const result = calculateMonth(facts(w, unconfirmed), w);
     const tax = result.closing.find((row) => row.key === lineKeys.incomeTax);
 
-    expect(tax?.amount).toBe(-41822);
+    expect(tax?.amount).toBe(-41900);
   });
 
   /**
@@ -202,11 +202,11 @@ describe("an advance instalment sits below the נטו (specs.md item 17)", () =>
   );
 
   it("does not reach the נטו, which the tax alone decides", () => {
-    expect(result.afterWithholding).toBe(867940); // 887,940 − 20,000
+    expect(result.afterWithholding).toBe(868000); // 887,940 − 20,000
   });
 
   it("comes off the transfer", () => {
-    expect(result.net).toBe(667940); // 867,940 − 200,000
+    expect(result.net).toBe(668000); // 867,940 − 200,000
   });
 
   it("is a transfer row", () => {
@@ -229,7 +229,7 @@ describe("a line placed after the total is not a withholding (specs.md item 20)"
   });
 
   it("comes off the transfer alone", () => {
-    expect(result.net).toBe(872940); // 887,940 − 15,000
+    expect(result.net).toBe(873000); // 887,940 − 15,000
   });
 
   it("is a transfer row and not a withholding one", () => {
@@ -251,7 +251,7 @@ describe("with no income tax the נטו is the ברוטו (specs.md item 17)", (
   });
 
   it("still transfers the instalment", () => {
-    expect(result.net).toBe(687940); // 887,940 − 200,000
+    expect(result.net).toBe(688000); // 887,940 − 200,000
   });
 });
 
@@ -284,11 +284,11 @@ describe("the split loses no row (specs.md Part 5)", () => {
     );
   });
 
-  it("comes to ₪7,029.40 by hand", () => {
-    // 887,940 − 20,000 (tax) − 200,000 (instalment) + 50,000 (advance given)
-    //   − 15,000 (the line placed after the total) = 702,940
-    expect(result.afterWithholding).toBe(867940);
-    expect(result.net).toBe(702940);
+  it("comes to ₪7,030 by hand", () => {
+    // 888,000 − 20,000 (tax) − 200,000 (instalment) + 50,000 (advance given)
+    //   − 15,000 (the line placed after the total) = 703,000
+    expect(result.afterWithholding).toBe(868000);
+    expect(result.net).toBe(703000);
   });
 });
 

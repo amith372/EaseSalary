@@ -52,7 +52,7 @@ import type {
 import { reviewUserLine, withoutOneOffUserLine } from "@/lib/engine/userLines";
 import type { UserLineDraft, UserLineRefusal } from "@/lib/engine/userLines";
 import { he } from "@/lib/i18n/he";
-import { parseShekels } from "@/lib/money";
+import { parseShekels, shekelsUp } from "@/lib/money";
 import {
   applyMark,
   partIsAllowed,
@@ -320,12 +320,16 @@ export async function setIncomeTax(
       return clearOverride(workerId, month, lineKeys.incomeTax);
     }
 
-    const agorot =
+    const typed =
       unit === "percentage"
         ? await taxFromPercentageTyped(workerId, month, amount)
         : parseShekels(amount);
-    if (agorot === null) return { ok: false, reason: "amount" };
-    if (agorot === "noGross") return { ok: false, reason: "noGross" };
+    if (typed === null) return { ok: false, reason: "amount" };
+    if (typed === "noGross") return { ok: false, reason: "noGross" };
+    // The tax is an amount and is withheld in whole shekels, the line remitted
+    // to the state included (specs.md item 3) — so the month stores the figure
+    // it will actually withhold, whether the user typed a sum or a percentage.
+    const agorot = shekelsUp(typed);
 
     return changeMonth(workerId, month, (record) =>
       withOverride(record, lineKeys.incomeTax, {
@@ -354,8 +358,9 @@ export async function setHospitalOvertime(
         hospitalOvertime: undefined,
       }));
     }
-    const agorot = parseShekels(amount);
-    if (agorot === null || agorot <= 0) return { ok: false, reason: "amount" };
+    const typed = parseShekels(amount);
+    if (typed === null || typed <= 0) return { ok: false, reason: "amount" };
+    const agorot = shekelsUp(typed);
     const trimmed = note.trim();
     return changeMonth(workerId, month, (record) => ({
       ...record,
