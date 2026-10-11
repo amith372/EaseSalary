@@ -104,6 +104,9 @@ describe("what is still owed on an advance", () => {
         repaidAgorot: OPENING_REPAID,
         outstandingAgorot: OPENING_OUTSTANDING,
         grantedIn: null,
+        // Repaid before the application existed, so the one instalment has no
+        // month to name it by (item 6).
+        instalments: [{ month: null, agorot: OPENING_REPAID }],
       },
     ]);
   });
@@ -127,6 +130,10 @@ describe("what is still owed on an advance", () => {
         repaidAgorot: 200000,
         outstandingAgorot: 100000,
         grantedIn: february,
+        instalments: [
+          { month: march, agorot: 100000 },
+          { month: april, agorot: 100000 },
+        ],
       },
     ]);
   });
@@ -170,6 +177,105 @@ describe("what is still owed on an advance", () => {
   });
 });
 
+/**
+ * The months an advance was repaid in (specs.md item 20).
+ *
+ * Every figure here is stated by hand, as above: ₪3,000 given in February and
+ * ₪1,000 taken in each of three months is the arrangement item 20 describes,
+ * and the instalments are those three months with those amounts. Nothing is
+ * read back from the module.
+ */
+describe("the months an advance was repaid in", () => {
+  it("names each month and what it took, oldest first", () => {
+    const [standing] = advanceLedger(opening(), [
+      monthOf(february, [granted(1, 300000)]),
+      monthOf(march, [repaid(1, 100000)]),
+      monthOf(april, [repaid(1, 100000)]),
+    ]);
+
+    expect(standing.instalments).toEqual([
+      { month: march, agorot: 100000 },
+      { month: april, agorot: 100000 },
+    ]);
+  });
+
+  /**
+   * Oldest first is the sort's doing and not a second ordering beside it, so
+   * the months arrive out of order here — the same defence the grant month
+   * gets above.
+   */
+  it("reads oldest first however the months arrive", () => {
+    const [standing] = advanceLedger(opening(), [
+      monthOf(april, [repaid(1, 20000)]),
+      monthOf(february, [granted(1, 300000)]),
+      monthOf(march, [repaid(1, 100000)]),
+    ]);
+
+    expect(standing.instalments).toEqual([
+      { month: march, agorot: 100000 },
+      { month: april, agorot: 20000 },
+    ]);
+  });
+
+  /**
+   * **The invariant a reader checks by eye**: the list adds up to the figure
+   * printed beside it. The opening position's lump is in the list for exactly
+   * this reason — left out, ₪500 of what was repaid would have nothing on
+   * screen to account for it.
+   */
+  it("adds up to what was repaid, the opening position's own lump included", () => {
+    const [standing] = advanceLedger(
+      opening([
+        {
+          number: 1,
+          principalAgorot: OPENING_PRINCIPAL,
+          repaidAgorot: OPENING_REPAID,
+        },
+      ]),
+      [monthOf(march, [repaid(1, 100000)])],
+    );
+
+    expect(standing.instalments).toEqual([
+      { month: null, agorot: OPENING_REPAID },
+      { month: march, agorot: 100000 },
+    ]);
+    expect(
+      standing.instalments.reduce((sum, one) => sum + one.agorot, 0),
+    ).toBe(OPENING_REPAID + 100000);
+    expect(standing.repaidAgorot).toBe(OPENING_REPAID + 100000);
+  });
+
+  it("is empty for an advance nothing has repaid", () => {
+    const [standing] = advanceLedger(opening(), [
+      monthOf(february, [granted(1, 300000)]),
+    ]);
+
+    expect(standing.instalments).toEqual([]);
+  });
+
+  /**
+   * A split writes its repayments into the months to come as it is entered, and
+   * `calculateSeries` values no month after today's (item 21) — so this list is
+   * the only place those instalments can be seen before those months arrive.
+   */
+  it("holds a month ahead of the one the grant was made in", () => {
+    const may: YearMonth = { year: 2026, month: 5 };
+    const [standing] = advanceLedger(opening(), [
+      monthOf(february, [granted(1, 300000)]),
+      monthOf(march, [repaid(1, 100000)]),
+      monthOf(april, [repaid(1, 100000)]),
+      monthOf(may, [repaid(1, 100000)]),
+    ]);
+
+    expect(standing.instalments).toEqual([
+      { month: march, agorot: 100000 },
+      { month: april, agorot: 100000 },
+      { month: may, agorot: 100000 },
+    ]);
+    expect(standing.outstandingAgorot).toBe(0);
+  });
+});
+
 describe("the number an advance gets", () => {
   it("is 1 for a worker who has none", () => {
     expect(nextAdvanceNumber([])).toBe(1);
@@ -188,6 +294,7 @@ describe("the number an advance gets", () => {
       repaidAgorot: 0,
       outstandingAgorot: 100000,
       grantedIn: null,
+      instalments: [],
     }));
 
     expect(nextAdvanceNumber(ledger)).toBe(5);
@@ -700,6 +807,7 @@ describe("the day an advance was given", () => {
       repaidAgorot: 0,
       outstandingAgorot: 300000,
       grantedIn: february,
+      instalments: [],
     });
     expect(reviewed.ok && reviewed.advance).toEqual({
       number: 1,

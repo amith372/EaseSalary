@@ -292,6 +292,24 @@ folded sheet.
   which is the ordinary state of a family exporting as it goes. No artboard
   draws it; a panel whose button can never be pressed is a panel in the way of
   the list.
+- **An advance card carries the months that repaid it**, under a hairline inside
+  the card, each month with the amount it took; the artboard draws the card
+  closing on the outstanding figure. They add up to the נפרע figure above them,
+  and the lump carried in from the opening position leads the list under
+  נפרע לפני תחילת השימוש ביישום, because a list that did not add up to the figure
+  beside it would read as a mistake in the figure. It says נפרע where the line
+  above says ניתנה, or the same sentence stands twice on one card — an advance
+  given before the application existed is usually one repaid before it too.
+- **The card says which handover the advance was**: the day the money was given
+  where one was recorded, the month it was granted in where none was, and
+  מלפני תחילת השימוש ביישום for an advance from the opening position, which
+  has neither. The artboard draws the month alone, and the ordinary case on a
+  seeded or a pre-2026-10 household is the one it cannot draw.
+- **מקדמות שנפרעו is a second, quieter list below the open ones** (the user,
+  2026-10-11), where the artboard draws מקדמות פתוחות and nothing else: an
+  advance leaves the list above the moment the debt closes, and the months that
+  closed it are exactly what is asked about an advance once it is over. The rows
+  are the same rows — two copies would come to say two things.
 - What the artboards draw and nothing yet supplies is listed in
   `build_plan.md` (local and untracked — `CLAUDE.md` rule 9), not drawn as placeholders.
 

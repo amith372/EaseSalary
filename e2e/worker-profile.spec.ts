@@ -1,7 +1,7 @@
 ﻿import { expect, test, type Page } from "@playwright/test";
 import { switchToTestWorker, openSettingsForTestWorker, openPaymentSections, openSettingsGroups, useToday, TODAY } from "./household";
 import { FRIDAY, SATURDAY, addMonths, monthOf, yearMonthText } from "../src/lib/dates";
-import { fullDayLabel } from "../src/lib/dateLabels";
+import { fullDayLabel, monthLabel } from "../src/lib/dateLabels";
 import { he, type Said } from "../src/lib/i18n/he";
 import { formatAgorot } from "../src/lib/money";
 
@@ -736,5 +736,128 @@ test.describe("the three documents and their expiry dates (specs.md item 28)", (
     await expect(
       page.getByText(he.workers.profile.terms.refused.date),
     ).toBeVisible();
+  });
+});
+
+test.describe("the months an advance was repaid in (specs.md item 20)", () => {
+  /**
+   * **An advance says which months paid for it, and the list adds up to the
+   * figure beside it.** Until now the profile said what was given and what was
+   * owed, and the instalments were one `repaid` movement per month that
+   * nothing gathered — so the one question asked about an advance after the
+   * fact, which months closed it, had no answer anywhere.
+   *
+   * Scenario: the demo's **second** worker, the ordinary one, whose single
+   * advance `seed.ts` writes as ₪3,000 granted in February 2026 and ₪1,000
+   * repaid in each of March, April and May 2026.
+   *
+   * Expected, from those seeded facts and nothing the engine returned
+   * (`CLAUDE.md` rule 11): three instalments, March then April then May, each
+   * ₪1,000; ₪3,000 repaid of ₪3,000, so 3 × ₪1,000 is the figure printed above
+   * them; and the advance drawn at all, under מקדמות שנפרעו, although
+   * nothing is owed on it.
+   *
+   * **What it would catch.** The instalments summed into one row, which is the
+   * shape the card had before this; a month dropped or the list ordered newest
+   * first, which the `data-instalment` handles name by month and not by
+   * position; and the whole advance vanishing from the page the moment its debt
+   * closed, which is what the open-only list did and what takes the months with
+   * it.
+   */
+  test("names each month and what it took, on an advance already repaid", async ({
+    page,
+  }) => {
+    await useHousehold(page, "demo", "advance-instalments");
+    await page.goto("/workers/worker-2");
+
+    const words = he.workers.profile.advances;
+    const shared = he.month.actions.advances;
+    const advance = page.locator('[data-advance="1"]');
+
+    // Repaid in full, so it is on the page under the quieter heading rather
+    // than gone from it.
+    await expect(page.getByText(words.settledTitle)).toBeVisible();
+    await expect(advance).toContainText(shared.settled);
+
+    // March, April, May — in that order, named by the month each is for.
+    const months = await advance
+      .locator("[data-instalment]")
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-instalment")));
+    expect(months).toEqual(["2026-03", "2026-04", "2026-05"]);
+
+    // Each took ₪1,000, and each says which month took it.
+    for (const [key, month] of [
+      ["2026-03", { year: 2026, month: 3 }],
+      ["2026-04", { year: 2026, month: 4 }],
+      ["2026-05", { year: 2026, month: 5 }],
+    ] as const) {
+      const instalment = advance.locator(`[data-instalment="${key}"]`);
+      await expect(instalment).toContainText(monthLabel(month));
+      await expect(instalment).toContainText(formatAgorot(100000));
+    }
+
+    // **The invariant a family checks by eye**: 3 × ₪1,000 is the נפרע figure
+    // above the list, and ₪3,000 of ₪3,000 is what the seed gave.
+    await expect(advance).toContainText(formatAgorot(300000));
+    // The grant carries no day — `seed.ts` writes none, which is the ordinary
+    // case for every advance granted before the field was asked for — so the
+    // card falls back to the month it was granted in.
+    await expect(advance).toContainText(
+      `${words.granted}${monthLabel({ year: 2026, month: 2 })}`,
+    );
+  });
+
+  /**
+   * **What was repaid before the application existed leads the list with no
+   * month**, which is the ordinary case and not an edge one: every employment
+   * already running joins through an opening position (item 6).
+   *
+   * Scenario: the demo's first worker, seeded from the family's own workbook.
+   * Their advance 1 is ₪10,000 given on 21.4.25 with ₪2,000 already repaid when
+   * the seeded months begin, and the tabs of May, June, July and August 2025
+   * each repay ₪2,000 more (`workbook.fixture.ts`, which carries those tabs).
+   *
+   * Expected, from those five figures: five instalments, the opening lump first
+   * with no month and then the four months in order, ₪2,000 each; they add up to
+   * ₪10,000, which is the principal, so the advance reads as repaid in full.
+   *
+   * **What it would catch.** The lump left out of the list, which would leave
+   * ₪2,000 of the ₪10,000 repaid with nothing on screen to account for it — a
+   * list that does not add up to the figure beside it reads as an error in the
+   * figure. And the lump drawn with a month it does not have.
+   */
+  test("leads with the lump repaid before the application existed", async ({ page }) => {
+    await useHousehold(page, "demo", "advance-opening-lump");
+    await page.goto("/workers/worker-1");
+
+    const words = he.workers.profile.advances;
+    const shared = he.month.actions.advances;
+    const advance = page.locator('[data-advance="1"]');
+
+    const months = await advance
+      .locator("[data-instalment]")
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-instalment")));
+    expect(months).toEqual([
+      "opening",
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+    ]);
+
+    const lump = advance.locator('[data-instalment="opening"]');
+    await expect(lump).toContainText(words.repaidBeforeStart);
+    await expect(lump).toContainText(formatAgorot(200000));
+
+    // ₪2,000 five times over is the ₪10,000 the advance was, so it is settled
+    // — and the card says which handover it was without a date it never had.
+    await expect(advance).toContainText(formatAgorot(1000000));
+    await expect(advance).toContainText(shared.settled);
+    await expect(advance).not.toContainText(words.granted);
+
+    await page.screenshot({
+      path: "test-results/advance-instalments.png",
+      fullPage: true,
+    });
   });
 });

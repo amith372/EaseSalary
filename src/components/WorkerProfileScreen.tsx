@@ -12,6 +12,7 @@ import { WorkerDocuments } from "@/components/WorkerDocuments";
 import type { ProfileBalance } from "@/components/WorkerBalances";
 import { WorkerSettingsLink } from "@/components/WorkerSettingsLink";
 import type { AlertCard } from "@/lib/alertsView";
+import { yearMonthText } from "@/lib/dates";
 import { fullDayLabel, monthLabel } from "@/lib/dateLabels";
 import type { AdvanceStanding } from "@/lib/engine/advances";
 import type { HolidayAmendment } from "@/lib/engine/holidayAmendments";
@@ -76,6 +77,11 @@ export function WorkerProfileScreen({
   const page = words.profile;
 
   const open = ledger.filter((standing) => standing.outstandingAgorot > 0);
+  // Everything the list above does not hold, so an advance can never fall
+  // between the two — a negative standing is arithmetically reachable and every
+  // path to it is refused (item 20), and it belongs on screen rather than
+  // nowhere.
+  const settled = ledger.filter((standing) => standing.outstandingAgorot <= 0);
 
   return (
     <div className="mx-auto flex w-full max-w-[860px] min-w-0 flex-col gap-6 sm:gap-7">
@@ -172,43 +178,33 @@ export function WorkerProfileScreen({
           <ul className="flex flex-col gap-2.5">
             {open.map((standing) => (
               <li key={standing.number} data-advance={standing.number}>
-                <Card
-                  tone="inset"
-                  radius="sm"
-                  className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-3 px-4.5 py-4 sm:px-6.5 sm:py-5"
-                >
-                  <div className="flex min-w-0 flex-[1_1_10rem] flex-col gap-1">
-                    <span className="text-[17px] font-semibold sm:text-[18px]">
-                      <Bidi>{he.month.actions.advances.name(standing.number)}</Bidi>
-                    </span>
-                    {standing.grantedIn === null ? null : (
-                      <span className="text-[15px] font-light text-ink-soft">
-                        <span dir="auto">{page.advances.granted}</span>
-                        <Bidi>{monthLabel(standing.grantedIn)}</Bidi>
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex min-w-[min(12rem,100%)] flex-[1_1_14rem] flex-col gap-2">
-                    <div className="flex flex-wrap justify-between gap-x-3 text-[14px] text-ink-mute sm:text-[15px]">
-                      <span>
-                        <span dir="auto">{page.advances.repaid} </span>
-                        <Bidi noTranslate>{formatAgorot(standing.repaidAgorot)}</Bidi>
-                      </span>
-                      <span>
-                        <span dir="auto">{page.advances.of} </span>
-                        <Bidi noTranslate>{formatAgorot(standing.principalAgorot)}</Bidi>
-                      </span>
-                    </div>
-                    <Progress
-                      done={standing.repaidAgorot}
-                      of={standing.principalAgorot}
-                    />
-                  </div>
-                  <MoneyValue agorot={standing.outstandingAgorot} size="lg" />
-                </Card>
+                <AdvanceCard standing={standing} />
               </li>
             ))}
           </ul>
+        )}
+
+        {/* **An advance repaid in full stays readable, under its own quieter
+            heading.** It leaves the list above the moment the debt closes, and
+            the months that closed it would have gone with it — which is the one
+            question asked about an advance long after it is over. The rows are
+            the same rows: two copies would come to say two things. */}
+        {settled.length === 0 ? null : (
+          <div className="flex flex-col gap-2">
+            <h3
+              dir="auto"
+              className="mt-1 text-[15px] font-semibold text-ink-mute sm:text-[16px]"
+            >
+              {page.advances.settledTitle}
+            </h3>
+            <ul className="flex flex-col gap-2.5 text-ink-mute">
+              {settled.map((standing) => (
+                <li key={standing.number} data-advance={standing.number}>
+                  <AdvanceCard standing={standing} />
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 
@@ -269,6 +265,105 @@ export function WorkerProfileScreen({
         </Link>
       </section>
     </div>
+  );
+}
+
+/**
+ * One advance, as the whole employment leaves it (specs.md item 20).
+ *
+ * **It says which handover it was and which months paid for it**, which are the
+ * two things a reader coming to it months later does not have. The day the
+ * money was given, the month it was granted in and "from before the application"
+ * are three answers to one question and exactly one is drawn: a grant recorded
+ * before the date was asked for has no day, and an advance carried in from the
+ * opening position has neither (item 6).
+ */
+function AdvanceCard({ standing }: { standing: AdvanceStanding }) {
+  const page = he.workers.profile;
+  const shared = he.month.actions.advances;
+  return (
+    <Card
+      tone="inset"
+      radius="sm"
+      className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-3 px-4.5 py-4 sm:px-6.5 sm:py-5"
+    >
+      <div className="flex min-w-0 flex-[1_1_10rem] flex-col gap-1">
+        <span className="text-[17px] font-semibold sm:text-[18px]">
+          <Bidi>{shared.name(standing.number)}</Bidi>
+        </span>
+        <span className="text-[15px] font-light text-ink-soft">
+          {standing.givenOn !== undefined ? (
+            <>
+              <span dir="auto">{shared.givenOnShown}</span>
+              <Bidi noTranslate>{fullDayLabel(standing.givenOn)}</Bidi>
+            </>
+          ) : standing.grantedIn !== null ? (
+            <>
+              <span dir="auto">{page.advances.granted}</span>
+              <Bidi>{monthLabel(standing.grantedIn)}</Bidi>
+            </>
+          ) : (
+            <span dir="auto">{shared.fromOpening}</span>
+          )}
+        </span>
+      </div>
+      <div className="flex min-w-[min(12rem,100%)] flex-[1_1_14rem] flex-col gap-2">
+        <div className="flex flex-wrap justify-between gap-x-3 text-[14px] text-ink-mute sm:text-[15px]">
+          <span>
+            <span dir="auto">{page.advances.repaid} </span>
+            <Bidi noTranslate>{formatAgorot(standing.repaidAgorot)}</Bidi>
+          </span>
+          <span>
+            <span dir="auto">{page.advances.of} </span>
+            <Bidi noTranslate>{formatAgorot(standing.principalAgorot)}</Bidi>
+          </span>
+        </div>
+        <Progress done={standing.repaidAgorot} of={standing.principalAgorot} />
+      </div>
+      {/* Nought left is said in words and not as ₪0, exactly as the payments
+          screen says it: the figure and "repaid in full" answer two different
+          questions, and a negative standing must not read as the second. */}
+      {standing.outstandingAgorot === 0 ? (
+        <span dir="auto" className="text-[15px] font-light text-ink-quiet">
+          {shared.settled}
+        </span>
+      ) : (
+        <MoneyValue agorot={standing.outstandingAgorot} size="lg" />
+      )}
+
+      {/* **The months that paid for it, which no month of its own holds**: a
+          repayment entered in June repays an advance granted in February, so
+          only the walk across the employment can gather them (item 20). They
+          add up to the נפרע figure above, the opening position's own lump
+          included — and the months a split wrote ahead of today are here
+          before those months are valued at all (item 21). */}
+      {standing.instalments.length === 0 ? null : (
+        <ul className="flex w-full flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-line pt-3 text-[14px] font-light text-ink-mute sm:text-[15px]">
+          {standing.instalments.map((instalment, at) => (
+            <li
+              key={instalment.month === null ? "opening" : yearMonthText(instalment.month)}
+              /* The suite's handle on one instalment, by the month it is for
+                 rather than by the Hebrew beside it (`CLAUDE.md` rule 10). */
+              data-instalment={
+                instalment.month === null ? "opening" : yearMonthText(instalment.month)
+              }
+              className="flex items-baseline gap-x-2"
+            >
+              {at === 0 ? null : <span aria-hidden="true">·</span>}
+              <span>
+                {instalment.month === null ? (
+                  <span dir="auto">{page.advances.repaidBeforeStart}</span>
+                ) : (
+                  <Bidi>{monthLabel(instalment.month)}</Bidi>
+                )}
+                <span> </span>
+                <Bidi noTranslate>{formatAgorot(instalment.agorot)}</Bidi>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 

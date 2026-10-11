@@ -2556,6 +2556,17 @@ export const he = {
         repaid: "נפרע",
         /** Joined to the month with no space: "ניתנה באוגוסט 2025". */
         granted: "ניתנה ב",
+        /** An advance repaid in full leaves the list above, and the months that
+         * closed it would leave with it — which is the one thing asked about an
+         * advance once it is over. The heading is quieter because what is still
+         * owed is what the screen is for. */
+        settledTitle: "מקדמות שנפרעו",
+        /** The lump an employment already running brings with it (item 6),
+         * leading the instalments. It says **נפרע** where the card's own line
+         * says ניתנה: an advance given before the application existed is
+         * usually one repaid before it too, and the two read as the same
+         * sentence twice unless one of them names what it is. */
+        repaidBeforeStart: "נפרע לפני תחילת השימוש ביישום",
         /** The artboard's own link out of this section: an advance is *given*
          * and *repaid* on the payments screen, because that is where everything
          * that records a payment lives (item 5). */

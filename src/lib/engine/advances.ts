@@ -45,6 +45,22 @@ export function advanceKey(advanceNumber: number, kind: AdvanceKind): string {
 }
 
 /**
+ * One repayment of one advance, and the month that recorded it.
+ *
+ * **The month is `null` for the lump carried in from the opening position**
+ * (item 6): it was repaid before the application existed, so there is no month
+ * to name it by. That absence is the ordinary case rather than an edge one —
+ * every employment already running joins the application with one — and it is
+ * why this is a nullable month rather than a list keyed by month. Keeping it in
+ * the list is what makes the instalments add up to `repaidAgorot`, which is the
+ * one invariant a reader can check by eye against the figure beside them.
+ */
+export interface AdvanceInstalment {
+  month: YearMonth | null;
+  agorot: number;
+}
+
+/**
  * One numbered advance as the whole employment leaves it.
  *
  * `grantedIn` is `null` for an advance carried in from the opening position:
@@ -91,6 +107,22 @@ export interface AdvanceStanding {
    * this comes with it.
    */
   note?: string;
+  /**
+   * Every repayment recorded against it, oldest first, with the month each was
+   * recorded for (specs.md item 20).
+   *
+   * **It is gathered here and nowhere else**, for the reason `repaidAgorot`
+   * is: a repayment entered in June repays an advance granted in February, so
+   * no month holds the instalments and only the walk can collect them. One
+   * movement of a kind per advance per month is what the criterion allows, so
+   * there is at most one entry per month and the amounts need no summing.
+   *
+   * **Months ahead of today are in it.** A grant split as it is given writes
+   * its repayments straight into the months to come, and `calculateSeries`
+   * values none of those (item 21) — so this is the only place the family can
+   * see the schedule they agreed before those months arrive.
+   */
+  instalments: AdvanceInstalment[];
 }
 
 /** The months a ledger is built from, written structurally so the walk can be
@@ -127,6 +159,7 @@ export function advanceLedger(
       repaidAgorot: 0,
       outstandingAgorot: 0,
       grantedIn: null,
+      instalments: [],
     };
     byNumber.set(advanceNumber, fresh);
     return fresh;
@@ -136,6 +169,11 @@ export function advanceLedger(
     const standing = standingFor(opening.number);
     standing.principalAgorot += opening.principalAgorot;
     standing.repaidAgorot += opening.repaidAgorot;
+    // Repaid before the application existed, so it leads the list with no month
+    // of its own — and the list still adds up to what was repaid.
+    if (opening.repaidAgorot !== 0) {
+      standing.instalments.push({ month: null, agorot: opening.repaidAgorot });
+    }
     // No month granted it: it was given before the application existed, so
     // there is no month it is too early to repay it in (item 6).
     if (opening.note !== undefined) standing.note = opening.note;
@@ -152,6 +190,10 @@ export function advanceLedger(
         if (advance.givenOn !== undefined) standing.givenOn ??= advance.givenOn;
       } else {
         standing.repaidAgorot += advance.agorot;
+        // Oldest first comes from the sort above and is not imposed again here:
+        // a second ordering would agree today and drift the first time either
+        // was corrected.
+        standing.instalments.push({ month: month.month, agorot: advance.agorot });
       }
     }
   }
