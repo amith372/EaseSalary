@@ -99,7 +99,7 @@ a question about one of them is the expensive mistake.
 | 31 | the worker's gender inflects every sentence naming them; the user's is never asked for, so nothing addressed to them is in one gender |
 
 1. Entering the facts of August 2025 into a worker profile and exporting produces a
-   sheet whose four total lines read 6,747.65 / 2,558.10 / 9,305.75 / 7,305.75.
+   sheet whose four total lines read 6,748 / 2,559 / 9,307 / 7,307.
 2. The exported file is an .xlsx sheet for one month, with the same rows, the same
    Hebrew labels, and the same column layout as a month tab in the family's workbook. It
    also carries what the Wage Protection Act requires of the payslip made from it: both
@@ -129,9 +129,16 @@ a question about one of them is the expensive mistake.
    the family's own sheet uses is the second reading applied to their week, which is worth
    writing down: it was chosen because the workbook uses it, and it turns out also to be
    defensible from the source rather than only from precedent. There is no
-   vacation-day rate, because there is no vacation payment at all; see item 7. Rates and totals are
-   carried at full precision through the calculation and rounded to two decimals only at
-   the end, never between steps.
+   vacation-day rate, because there is no vacation payment at all; see item 7. A rate is never rounded: it keeps
+   its agorot in the calculation and wherever it is shown, or `5 × 440` stops matching the
+   line beside it. **Every amount is a whole number of shekels**, taken away from zero to the
+   next shekel once, at the moment a line's units and its rate become money — so a total is
+   the sum of its already-rounded lines and the sheet adds up by eye. The rounded figure is
+   what is paid; there is no display over a different number. **A deduction rounds away from
+   zero too** — a repayment of ₪1,700.03 withholds ₪1,701 — which is a deliberate decision
+   about deducting from a wage and not a property of the arithmetic: the other direction would
+   favour the worker by part of a shekel, and one rule for every line is what lets the sheet
+   be checked.
    The base monthly salary defaults to the confirmed minimum wage. It does not follow a
    rise on its own: when a fetch finds the minimum wage has changed, or when the salary
    on the profile sits below it, the application says so and leaves the decision to the
@@ -1626,10 +1633,13 @@ free Saturday on the 16th, and two paid holidays on the 19th and the 21st, while
 ₪10,000 advance from an earlier month is repaid at ₪2,000 a month. The advance and the
 balances it starts from are entered once as the worker's opening position, since neither
 originates inside the application. Entering only those
-facts must produce a base of ₪6,247.65 plus a Friday supplement of ₪500, giving
-₪6,747.65; two holidays and four Saturdays at ₪426.35, giving ₪2,558.10; a gross of
-₪9,305.75; and ₪7,305.75 after the advance instalment. Every figure must match to the
-agora, with no tolerance.
+facts must produce a base of ₪6,247.65 paid as ₪6,248 plus a Friday supplement of ₪500,
+giving ₪6,748; four Saturdays and two holidays at ₪426.35 paid as ₪1,706 and ₪853, giving
+₪2,559; a gross of ₪9,307; and ₪7,307 after the advance instalment. The rates keep their
+agorot and every amount is a whole shekel (item 3), so each line gains on the way up and the
+gains land in the total: the family's own tab prints 6,747.65 / 2,558.10 / 9,305.75 /
+7,305.75, which is 1.25 below the gross here. Every figure must match exactly, with no
+tolerance.
 
 The deliberately invalid case is a date carrying more than one entry: the user records a
 day as one the worker was absent ill, and the same day as a holiday they worked. The
@@ -1760,7 +1770,7 @@ worker. Column E carries the monthly salary items, F the pay for rest days and h
 and G the one-off payments such as recuperation and hospital overtime — not vacation,
 which is never paid as a line at all (item 7); the month's total is the sum of those three
 alone. **That total is named the `gross`, and what is left after the closing block is the
-`net`** — the two figures Part 4 gives for August 2025 as ₪9,305.75 and ₪7,305.75 without
+`net`** — the two figures Part 4 gives for August 2025 as ₪9,307 and ₪7,307 without
 naming either. They are written down here because the export and the on-screen preview are
 two views of one calculation and must call the same figure by the same word; two names for
 one number is how the sheet and the screen begin to disagree while both are right. The
@@ -1781,7 +1791,7 @@ Between them stands the נטו — the ברוטו less what was **withheld from 
 income-tax line and nothing else — which the sheet has no cell for and the code therefore
 names `afterWithholding` rather than `net`. That the English `net` and the Hebrew נטו name
 different figures is a trap and is written here so that nobody resolves it by renaming one
-of them: `net` is criterion 1's fourth total and Part 4's ₪7,305.75, and it keeps that
+of them: `net` is criterion 1's fourth total and Part 4's ₪7,307, and it keeps that
 meaning everywhere.
 
 **The block below the columns therefore has two halves.** A row is *withheld* if it comes
@@ -1811,8 +1821,10 @@ Do not copy numbers out of the source workbooks. Several are stale: the vacation
 rate stayed at the 2024 figure through 2025 and 2026 — and is not carried forward at all,
 since the sheet has no vacation line (item 7) — and the national-insurance line stayed at
 2% of the 2024 wage after the rate rose to 3.6%. Derive every rate instead.
-For the same reason, an exported figure may differ by an agora from the historical
-sheet; reproduce history as history and never silently rewrite a past month.
+For the same reason, an exported figure may differ from the historical sheet — by up to a
+shekel on each line, since every amount is taken up to the whole shekel (item 3) while the
+family's own tabs carry agorot; reproduce history as history and never silently rewrite a
+past month.
 
 The bottom of the month sheet is not a fixed layout. A month in which an advance is
 given carries a row that adds it to the total, a month in which one is repaid carries a
