@@ -10,6 +10,7 @@
 
 import Link from "next/link";
 import type { ReactNode, RefObject } from "react";
+import { Sentence } from "@/components/AlertsScreen";
 import { Bidi } from "@/components/Bidi";
 import { Chip } from "@/components/Chip";
 import type { Country } from "@/lib/holidaySources";
@@ -30,6 +31,7 @@ import {
   asksOpeningPosition,
   asksRecuperationPaid,
   firstMonthChoices,
+  monthsBeforeToday,
   isAllowedGender,
   restDayChoices,
   reviewEmployedSince,
@@ -342,6 +344,16 @@ export function WhoStep({
 interface WizardPlan {
   choices: YearMonth[];
   firstMonth: YearMonth;
+  /** The months the chosen first month would have created and confirmed, which
+   * is none for the two choices item 6 has always offered (`monthsBeforeToday`).
+   * Counted here so the sentence under the control can say it before the press
+   * rather than after it. */
+  creates: YearMonth[];
+  /** Which of the choices is the one that catches the year up, or `null` where
+   * none is. Decided here because nothing in a render may read a clock
+   * (`CLAUDE.md`), and whether a month is "before today" is a question about
+   * one. */
+  catchUp: YearMonth | null;
   asksOpening: boolean;
   asksUsed: boolean;
   asksRecuperation: boolean;
@@ -371,6 +383,9 @@ export function wizardPlan(draft: NewWorkerDraft, today: IsoDate): WizardPlan | 
   return {
     choices,
     firstMonth,
+    creates: monthsBeforeToday(firstMonth, today),
+    catchUp:
+      choices.find((choice) => monthsBeforeToday(choice, today).length > 0) ?? null,
     asksOpening,
     asksUsed: asksOpening && firstMonth.month > 1,
     asksRecuperation,
@@ -497,10 +512,29 @@ export function WhenStep({
                 selected={sameMonth(choice, plan.firstMonth)}
                 onClick={() => change({ firstMonth: yearMonthText(choice) })}
               >
-                <Bidi>{monthLabel(choice)}</Bidi>
+                {/* A choice that catches a run of months up says so in the
+                    chip: three month names read as three months to start in,
+                    and nothing would say which of them does the catching up. */}
+                {plan.catchUp !== null && sameMonth(choice, plan.catchUp) ? (
+                  <>
+                    <span dir="auto">{words.firstMonthSince}</span>
+                    <Bidi>{monthLabel(choice)}</Bidi>
+                  </>
+                ) : (
+                  <Bidi>{monthLabel(choice)}</Bidi>
+                )}
               </Chip>
             ))}
           </ChoiceGroup>
+        ) : null}
+
+        {plan && plan.creates.length > 0 ? (
+          <p
+            data-role="first-month-creates"
+            className="-mt-3 text-[15px] font-light text-pretty text-ink-soft"
+          >
+            <Sentence said={words.firstMonthCreates(plan.creates.length)} />
+          </p>
         ) : null}
       </section>
 

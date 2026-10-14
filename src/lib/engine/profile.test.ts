@@ -17,7 +17,9 @@ import {
   firstNameOf,
   type NewWorkerDraft,
   firstMonthFor,
+  earliestMonthFor,
   firstMonthChoices,
+  monthsBeforeToday,
   reviewEmployedSince,
   type OpeningDraft,
 } from "@/lib/engine/profile";
@@ -791,13 +793,110 @@ describe("the first month of a worker added today (specs.md item 6)", () => {
   it("may be the month before, unless the employment began after it", () => {
     const september = { year: 2026, month: 9 };
     const august = { year: 2026, month: 8 };
-    expect(firstMonthChoices("2024-04-01", "2026-09-17")).toEqual([september, august]);
-    // Began during August: August is still a month of the employment.
+    const january = { year: 2026, month: 1 };
+    // Employed since 2024, so the year she is added in reaches back to January.
+    expect(firstMonthChoices("2024-04-01", "2026-09-17")).toEqual([
+      september,
+      august,
+      january,
+    ]);
+    // Began during August: August is still a month of the employment, and it is
+    // also as far back as the year goes for her.
     expect(firstMonthChoices("2026-08-20", "2026-09-17")).toEqual([september, august]);
     // Began this month: last month was before the employment.
     expect(firstMonthChoices("2026-09-03", "2026-09-17")).toEqual([september]);
     // Begins later: that month, and nothing to choose.
     expect(firstMonthChoices("2026-11-15", "2026-09-17")).toEqual([{ year: 2026, month: 11 }]);
+  });
+});
+
+/**
+ * How far back a worker entered late may be started from (specs.md item 6).
+ *
+ * **Every figure is the rule applied to a calendar by hand.** The rule the user
+ * settled on 2026-10-11 is January of the year they are added in and never
+ * earlier, and never before the employment began either — so each case below is
+ * the later of those two months, written out rather than computed here.
+ */
+describe("the earliest month a worker added today may be started from", () => {
+  it("is January of the year she is added in", () => {
+    expect(earliestMonthFor("2019-06-01", "2026-12-04")).toEqual({ year: 2026, month: 1 });
+    expect(earliestMonthFor("2025-10-07", "2026-10-11")).toEqual({ year: 2026, month: 1 });
+  });
+
+  it("is the month the employment began, where that falls inside the year", () => {
+    expect(earliestMonthFor("2026-03-15", "2026-10-11")).toEqual({ year: 2026, month: 3 });
+  });
+
+  it("is the month she is added in when the employment began in it", () => {
+    expect(earliestMonthFor("2026-10-02", "2026-10-11")).toEqual({ year: 2026, month: 10 });
+  });
+
+  /**
+   * **Not offered when it is one of the two the step already draws**, or a
+   * worker added in February would be shown January twice — once as the month
+   * before and once as the year's start.
+   */
+  it("is not offered twice to a worker added early in the year", () => {
+    expect(firstMonthChoices("2024-04-01", "2026-02-10")).toEqual([
+      { year: 2026, month: 2 },
+      { year: 2026, month: 1 },
+    ]);
+    // Added in January: the month before is December of last year, which is
+    // item 6's own choice and is not what the year rule reaches back to. The
+    // year's start is January itself, so there is no third chip and no month of
+    // last year is created.
+    expect(firstMonthChoices("2024-04-01", "2026-01-20")).toEqual([
+      { year: 2026, month: 1 },
+      { year: 2025, month: 12 },
+    ]);
+  });
+});
+
+/**
+ * The months created for a worker started earlier in the year (item 6).
+ *
+ * Added 11.10.2026 from a first month of January: January through September,
+ * nine months. September is in and October is out — a month that has not ended
+ * is not one the application can have confirmed.
+ */
+describe("the months before the one a worker is added in", () => {
+  it("runs from the first month to the month before today's", () => {
+    expect(monthsBeforeToday({ year: 2026, month: 1 }, "2026-10-11")).toEqual([
+      { year: 2026, month: 1 },
+      { year: 2026, month: 2 },
+      { year: 2026, month: 3 },
+      { year: 2026, month: 4 },
+      { year: 2026, month: 5 },
+      { year: 2026, month: 6 },
+      { year: 2026, month: 7 },
+      { year: 2026, month: 8 },
+      { year: 2026, month: 9 },
+    ]);
+  });
+
+  it("crosses a year where the first month is in one", () => {
+    expect(monthsBeforeToday({ year: 2025, month: 11 }, "2026-02-03")).toEqual([
+      { year: 2025, month: 11 },
+      { year: 2025, month: 12 },
+      { year: 2026, month: 1 },
+    ]);
+  });
+
+  it("is empty for a first month that is this month, the one before, or later", () => {
+    expect(monthsBeforeToday({ year: 2026, month: 10 }, "2026-10-11")).toEqual([]);
+    expect(monthsBeforeToday({ year: 2026, month: 11 }, "2026-10-11")).toEqual([]);
+    // **The month before is the choice item 6 has always offered**, and a
+    // family picking it means to work on that month rather than to be handed
+    // it already filed.
+    expect(monthsBeforeToday({ year: 2026, month: 9 }, "2026-10-11")).toEqual([]);
+  });
+
+  it("reaches the month before once the first month is earlier than it", () => {
+    expect(monthsBeforeToday({ year: 2026, month: 8 }, "2026-10-11")).toEqual([
+      { year: 2026, month: 8 },
+      { year: 2026, month: 9 },
+    ]);
   });
 });
 

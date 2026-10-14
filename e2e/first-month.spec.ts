@@ -1,8 +1,8 @@
 import ExcelJS from "exceljs";
 import { expect, test, type Download, type Page } from "@playwright/test";
 import { useHousehold, TODAY } from "./household";
-import { he } from "../src/lib/i18n/he";
-import { addMonths, monthOf, yearMonthText } from "../src/lib/dates";
+import { he, type Said } from "../src/lib/i18n/he";
+import { addMonths, monthOf, SATURDAY, yearMonthText } from "../src/lib/dates";
 import { monthLabel } from "../src/lib/dateLabels";
 import { formatAgorot } from "../src/lib/money";
 import type { YearMonth } from "../src/lib/types";
@@ -182,3 +182,170 @@ test("a recuperation not yet paid is paid in her first month, in the file and on
   expect(said(sheet, `G${RECUPERATION_ROW}`)).toBe(formatAgorot(RECUPERATION));
   await page.screenshot({ path: "test-results/first-month-after-export.png", fullPage: true });
 });
+
+/**
+ * **A worker entered in the middle of a year they were already employed**
+ * (item 6, the user's decision of 2026-10-11).
+ *
+ * **The scenario.** A family signs up on 18.9.2026 with a caregiver they have
+ * employed since 1.6.2025, and takes the third choice on the wizard's "from
+ * which month" step: מאז ינואר 2026. The two choices beside it are the ones
+ * item 6 has always offered and create nothing.
+ *
+ * **Every expected figure is the rule applied to a calendar** (rule 11). The
+ * rule settled on 2026-10-11 is January of the year they are added in, so the
+ * months created run January through August 2026 — eight of them, the month
+ * they are added in excluded because it has not ended. Three days marked in
+ * one of them take three days off the vacation balance, which is item 7: a day
+ * drawn from the balance is a day the worker would otherwise have attended.
+ * 10–12 March 2026 are a Tuesday, a Wednesday and a Thursday (1.3.2026 is a
+ * Sunday), so none of them is the weekly rest day and all three are drawn.
+ *
+ * **What it would catch.** The months not created at all, which is the state
+ * before this; created as drafts, which would be eight blockages on a family's
+ * first screen rather than a year caught up; created and then *not* editable,
+ * which would make the whole choice a decoration — the three days are marked
+ * through the ordinary calendar and the balance is read off the ordinary card.
+ */
+test("a worker employed since last year arrives with this year's months behind her", async ({
+  page,
+}) => {
+  await page.goto("/workers/new");
+  await page.locator('[data-field="name"]').fill("אנה ריאס");
+  await page.locator('[data-field="country"]').selectOption("PH");
+  await page.locator('[data-role="add-worker-next"]').click();
+  await expect(page.getByRole("heading", { name: he.addWorker.when.title })).toBeVisible();
+
+  await page.locator('[data-field="employedSince"]').fill("2025-06-01");
+  await page.locator('[data-field="recuperationMonth"]').selectOption("6");
+
+  // The third chip, which says what it does rather than naming a month like
+  // the two beside it.
+  const january: YearMonth = { year: 2026, month: 1 };
+  await page
+    .locator('[data-choice="firstMonth"]')
+    .getByRole("button", {
+      name: `${he.addWorker.when.firstMonthSince}${monthLabel(january)}`,
+    })
+    .click();
+
+  // **The consequence is said at the control, before the press**: eight months,
+  // what they will be confirmed at, and that they are empty.
+  await expect(page.locator('[data-role="first-month-creates"]')).toContainText("8");
+
+  // The opening position is still asked, because the employment began before
+  // January — but nothing of this year came before it, so the days-used
+  // question is not there (item 6).
+  await page.locator('[data-field="openingVacationDays"]').fill("0");
+  await page.locator('[data-field="openingSickDays"]').fill("0");
+  await page.locator('[data-role="add-worker-next"]').click();
+
+  await expect(page.getByRole("heading", { name: he.addWorker.pay.title })).toBeVisible();
+  await page.locator('[data-field="baseMonthlySalary"]').fill("6443.85");
+  await page
+    .locator('[data-choice="incomeTax"]')
+    .getByRole("button", { name: he.workers.profile.terms.incomeTax.none })
+    .click();
+  await page.locator('[data-role="add-worker-next"]').click();
+  await expect(page.locator('[data-role="add-worker-done"]')).toBeVisible();
+  await page.locator('[data-role="add-worker-finish"]').click();
+  await expect(page).toHaveURL(/\/workers\/[0-9a-f-]+$/);
+  const workerPage = page.url();
+
+  // January through August created, and September drawn with them because the
+  // list runs to the current month whether or not anything is recorded in it.
+  const created = [
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07",
+    "2026-08",
+  ];
+  const months = await page
+    .locator("[data-month]")
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-month")));
+  expect(months).toEqual([...created, "2026-09"]);
+
+  // **The eight are confirmed and not drafts**, which is the whole of why they
+  // are created this way: a draft whose month has ended is a blockage (item
+  // 27), so eight drafts would be eight things wrong on a family's first
+  // screen.
+  for (const month of created) {
+    await expect(
+      page.locator(`[data-month="${month}"] [data-state]`),
+    ).toHaveAttribute("data-state", "confirmed");
+  }
+  // September is the month they are in and is left alone: it has not ended,
+  // and it is the one the family will actually fill in.
+  await expect(
+    page.locator('[data-month="2026-09"] [data-state]'),
+  ).not.toHaveAttribute("data-state", "confirmed");
+
+  // **And nothing is outstanding**: not the eight months unconfirmed, and not
+  // the eight files never produced from them. Read as two counts rather than
+  // as an empty page, because a brand-new worker has warnings of their own —
+  // no document dates, for one — and this is about the months.
+  await page.goto("/alerts");
+  // Asserted by what the two entries say rather than by an empty page: a
+  // brand-new worker raises warnings of their own, and this is about the eight.
+  await expect(
+    page.getByText(sentence(he.alerts.entry.monthsUnconfirmed(8, "").title)),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText(sentence(he.alerts.entry.monthsNotExported(8).title)),
+  ).toHaveCount(0);
+  for (const month of created) {
+    const label = monthLabel({
+      year: Number(month.slice(0, 4)),
+      month: Number(month.slice(5)),
+    });
+    await expect(
+      page.getByText(sentence(he.alerts.entry.monthUnconfirmed(label).title)),
+    ).toHaveCount(0);
+    await expect(
+      page.getByText(sentence(he.alerts.entry.monthNotExported(label).title)),
+    ).toHaveCount(0);
+  }
+
+  await page.goto(workerPage);
+  const vacation = page.locator('[data-balance="vacation"]');
+  const before = await vacation.textContent();
+
+  // **A created month is an ordinary month.** Three days of March marked
+  // through the calendar the family would use, and the balance moves by three.
+  await page.goto("/?month=2026-03");
+  await page.locator('[data-date="2026-03-10"]').click();
+  await page.locator('[data-date="2026-03-12"]').click();
+  await page
+    .getByRole("button", { name: he.calendar.marks(SATURDAY).vacation, exact: true })
+    .click();
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+
+  await page.goto(workerPage);
+  await expect(page.locator('[data-month="2026-03"] [data-state]')).toHaveAttribute(
+    "data-state",
+    "corrected",
+  );
+  const after = await vacation.textContent();
+  expect(daysIn(after)).toBeCloseTo(daysIn(before) - 3, 2);
+
+  await page.screenshot({ path: "test-results/first-month-caught-up.png", fullPage: true });
+});
+
+/** The number on a balance card, as a number: the card draws days and the
+ * assertion is arithmetic on them. */
+function daysIn(text: string | null): number {
+  const digits = (text ?? "").match(/[\d.]+/);
+  if (digits === null) throw new Error(`no figure in ${JSON.stringify(text)}`);
+  return Number(digits[0]);
+}
+
+/** A sentence from `he.ts` as the screen reads it, each figure in its own
+ * isolate on the page and all of it one run of text here. `said` above is this
+ * file first use of the word, for a cell of the exported sheet. */
+function sentence(parts: Said): string {
+  return parts.map((part) => (typeof part === "string" ? part : part.value)).join("");
+}

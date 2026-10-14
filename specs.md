@@ -310,12 +310,27 @@ a question about one of them is the expensive mistake.
     derived from their rest day rather than fixed in the wording. No action asks the
     user for a rate or a formula.
 6. **Each worker has a first month: the month the application starts calculating them from.**
-   It is chosen once when the worker is added — the month they are added in, or the month
+   It is chosen once when the worker is added — the month they are added in; the month
    before it, so a family registering early in a month can still pay the month that just
-   ended — and no month before it can be opened or viewed. The first month is never
-   earlier than the month the employment began: when the employment begins after the
-   month they are added in, their first month is the month it begins, and the choice is not
-   offered. A later correction that would put the date the employment began after the
+   ended; or the first month of the calendar year they are added in, where the employment
+   reaches back that far — and no month before it can be opened or viewed.
+
+   **Choosing that third creates the months from it up to the month before the one they are
+   added in, each already confirmed at the minimum wage in force during it**, because a
+   family taking the application on mid-year must not have to mark every month back to the
+   day the employment began. The year and not the employment's own start, so a worker
+   employed for seven years and one employed since the autumn reach back to the same month.
+   They are ordinary months once made: each can be opened and corrected, and a correction
+   moves every later month's balances. They are created **empty** — no vacation, no sickness
+   and no holiday — so the balances replay as though none was taken, and the step says so
+   before the choice is made rather than after it. A month the rates table cannot value is
+   not created at all, since a finished month left as a draft is a blockage (item 27). The
+   two nearer choices create nothing: a family choosing the month they are adding in, or the
+   one before it, is choosing the month they mean to work on.
+
+   The first month is never earlier than the month the employment began: when the
+   employment begins after the month they are added in, their first month is the month it
+   begins, and the choice is not offered. A later correction that would put the date the employment began after the
    first month is refused, because the months from the first month on would then fall
    before the employment. The date the employment began
    is on or after 1 January 2020 and no later than one year after the current

@@ -642,6 +642,8 @@ folded sheet.
 | Departure | Why |
 |---|---|
 | `מדינת מקור` is required where the artboard marks it optional, and its select **opens on `לבחור מדינה` rather than on the first country** | It is what their holiday list is drawn from (item 12), so the first of six offered as an answer is a country nobody chose — and a step whose fields all look answered is one a family presses past without reading. `reviewNewWorker` refuses an empty one, in the browser and again in the action |
+| **Step 2's first-month choice carries a third chip, `מאז <month>`**, where the artboard draws two and both name a month plainly. It is the one choice that is a *run* of months rather than one, and three bare month names would have read as three months to start in with nothing to say which of them catches the year up | The user's decision of 2026-10-11 (item 6): a worker employed since earlier in the year arrives with that year's months already created and confirmed |
+| **A sentence under that group**, drawn only while the third chip is chosen, saying how many months will be created, that they are confirmed at the minimum wage in force in each, that they are empty, and that each can be opened and corrected | It is the consequence of the choice and belongs at the control rather than behind a "?" or on the step after it — the same argument `recuperationMonthAdvice` already makes two fields above. Empty months replay as months in which nothing was taken (items 7 and 13), which inflates a balance the family eventually pays out, so the one thing it must not do is go unsaid |
 
 Its other two departures are about what a step *asks* rather than how it looks —
 step 2's first month and step 3's insurer — and are in `AddWorkerScreen.tsx`'s

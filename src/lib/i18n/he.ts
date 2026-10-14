@@ -499,7 +499,27 @@ export const he = {
       /** Item 6's choice, offered only when the start date leaves two. */
       firstMonth: "מאיזה חודש מתחילים לחשב",
       firstMonthHint:
-        "אפשר להתחיל מהחודש הקודם, כדי לחשב גם את המשכורת של החודש שהסתיים. חודשים מוקדמים יותר לא יופיעו באפליקציה.",
+        "אפשר להתחיל מהחודש הקודם, כדי לחשב גם את המשכורת של החודש שהסתיים, או מתחילת השנה אם ההעסקה נמשכת מאז. חודשים מוקדמים יותר לא יופיעו באפליקציה.",
+      /** The chip for the earliest choice, which is a run of months and not one
+       * month: "מאז ינואר 2026" rather than "ינואר 2026", or three chips
+       * read as three months to start in and the family cannot tell which one
+       * catches the year up. */
+      firstMonthSince: "מאז ",
+      /**
+       * What choosing it does, said at the control and not after the press
+       * (item 6).
+       *
+       * **The empty months are the part to say out loud.** Balances are
+       * replayed and never stored (items 7 and 13), so months with nothing
+       * marked in them replay as months in which nothing was taken — which
+       * inflates a balance the family eventually pays out. The sentence names
+       * that and names the way out of it in the same breath, because the
+       * months are ordinary months and marking one corrects every later one.
+       */
+      firstMonthCreates: (count: number): Said => [
+        { value: String(count) },
+        " החודשים שחלפו ייווצרו ויאושרו, לפי שכר המינימום שהיה בתוקף בכל אחד מהם. הם ריקים — בלי חופשה, מחלה או חגים — אז המאזנים ייספרו כאילו לא נוצלו ימים. אפשר לפתוח כל חודש ולתקן.",
+      ],
 
       /**
        * The opening position (item 6), asked only when the employment began

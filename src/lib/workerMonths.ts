@@ -1,10 +1,16 @@
 import { compareMonth } from "@/lib/dates";
+import { markedHandledOf } from "@/lib/engine/alerts";
+import type { ActionEntry } from "@/lib/engine/actionList";
+import { bulkConfirmFigures, bulkConfirmVerdict } from "@/lib/engine/bulkConfirm";
 import {
+  monthsBeforeToday,
   monthsFollowingProfile,
   monthsReachedBySalaryChange,
 } from "@/lib/engine/profile";
-import { openMonthRecord, wageToCarry } from "@/lib/engine/repository";
+import { openMonthRecord, recordOf, wageToCarry } from "@/lib/engine/repository";
 import type { SalaryRepository, WorkerProfile } from "@/lib/engine/repository";
+import type { MonthFacts } from "@/lib/engine/types";
+import { confirmMonthRecord } from "@/lib/monthConfirmation";
 import type { IsoDate, YearMonth } from "@/lib/types";
 
 /**
@@ -66,6 +72,82 @@ export async function openMonthIfMissing(
 
   await repository.saveMonth(profile.id, openMonthRecord(profile, month, wage));
   return true;
+}
+
+/**
+ * The months a worker entered after the fact is given, each created and
+ * confirmed (specs.md item 6).
+ *
+ * **A family taking the application on mid-year must not have to mark every
+ * month back to the day they started**, so the months from their first to the
+ * one before today's are created and confirmed at the figures the rates table
+ * already holds for each — the same figures, read by the same two functions,
+ * that the tick on the worker's list confirms a filed month at. They are
+ * ordinary months afterwards: a correction to one moves every later month's
+ * balances, because the replay is the only thing that produces them (item 13).
+ *
+ * **A month that cannot be confirmed is not created either.** The verdict is
+ * asked of the record *before* it is saved — `openMonthRecord` builds one
+ * without writing it — because a draft whose month has ended is a blockage
+ * (item 27), and a family would otherwise be handed a list of warnings in
+ * exchange for a convenience. In practice this is a month the rates table
+ * begins after.
+ *
+ * **Each is marked as handled for "not yet exported"**, which is the existing
+ * answer to a month nobody will ever produce a file from: the same record
+ * `/alerts` writes when the family presses it, and the same argument
+ * `dismissalOf` already makes for a national-insurance quarter paid before the
+ * application existed. Nothing is stamped as exported, because nothing was.
+ *
+ * It returns the months it created, so the caller can say how many.
+ */
+export async function createMonthsBeforeToday(
+  repository: SalaryRepository,
+  profile: WorkerProfile,
+  when: { today: IsoDate; now: string },
+): Promise<YearMonth[]> {
+  const rates = await repository.listRates();
+  const created: YearMonth[] = [];
+
+  for (const month of monthsBeforeToday(profile.firstMonth, when.today)) {
+    // Read inside the loop: a month with no row of its own carries the wage of
+    // the nearest month before it, and the months created a moment ago are
+    // exactly those (`wageToCarry`).
+    const wage = wageToCarry(
+      await repository.listMonths(profile.id),
+      month,
+      profile,
+      rates,
+    );
+    if (wage === null) continue;
+
+    const facts: MonthFacts = { ...openMonthRecord(profile, month, wage), spans: [] };
+    if (bulkConfirmVerdict(facts, profile, rates, when.today) !== "ok") continue;
+    const figures = bulkConfirmFigures(facts, profile, rates);
+    if (figures === null) continue;
+
+    await repository.saveMonth(profile.id, recordOf(facts));
+    await confirmMonthRecord(repository, profile, facts, figures, when);
+    await repository.deferWarning(
+      markedHandledOf(profile.id, monthNotExportedOf(month)),
+    );
+    created.push(month);
+  }
+
+  return created;
+}
+
+/**
+ * The warning a created month would raise, written here exactly as the action
+ * list writes it.
+ *
+ * **A fingerprint is the entry's JSON** (`fingerprintOf`), so the field order
+ * is part of it and a second spelling would mark as handled a warning nobody
+ * raises. `workerMonths.test.ts` holds this against what `actionList` itself
+ * produces, which is the only thing that keeps the two spellings one.
+ */
+function monthNotExportedOf(month: YearMonth): ActionEntry {
+  return { list: "warning", key: "monthNotExported", month };
 }
 
 /**

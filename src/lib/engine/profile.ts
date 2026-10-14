@@ -196,10 +196,34 @@ export function firstMonthFor(employedSince: IsoDate, today: IsoDate): YearMonth
 }
 
 /**
+ * The earliest month a worker added today may be started from: January of the
+ * year they are added in, and never before the employment began (specs.md item
+ * 6).
+ *
+ * **The year and not the employment's own start**, which is the user's choice
+ * of 2026-10-11 against their own earlier example: a family taking the
+ * application on in December does not want eleven months of last year as well,
+ * and a calendar year is the unit a family already thinks in. A worker employed
+ * for seven years and one employed since October therefore reach back to the
+ * same month, which is the whole simplification.
+ */
+export function earliestMonthFor(employedSince: IsoDate, today: IsoDate): YearMonth {
+  const hired = monthOf(employedSince);
+  const yearStart: YearMonth = { year: monthOf(today).year, month: 1 };
+  return compareMonth(hired, yearStart) > 0 ? hired : yearStart;
+}
+
+/**
  * The first months a worker added today may be given (specs.md item 6): the
- * month they are added in, and the month before it so a family registering early
- * in a month can still pay the month that just ended — but never a month
+ * month they are added in, the month before it so a family registering early
+ * in a month can still pay the month that just ended, and the earliest month of
+ * the year where the employment reaches back that far — but never a month
  * before the employment began. One choice means none is offered.
+ *
+ * **Ordered earliest last**, which is how the step draws them, and the third is
+ * absent rather than repeated when it is one of the first two: a worker added
+ * in February has January as both the year's start and the month before, and
+ * two chips for one month is a choice that is not one.
  */
 export function firstMonthChoices(
   employedSince: IsoDate,
@@ -207,9 +231,50 @@ export function firstMonthChoices(
 ): YearMonth[] {
   const first = firstMonthFor(employedSince, today);
   const previous = addMonths(first, -1);
-  return compareMonth(monthOf(employedSince), previous) <= 0
-    ? [first, previous]
-    : [first];
+  const near =
+    compareMonth(monthOf(employedSince), previous) <= 0 ? [first, previous] : [first];
+  const earliest = earliestMonthFor(employedSince, today);
+  return near.some((choice) => sameMonth(choice, earliest)) ||
+    compareMonth(earliest, previous) > 0
+    ? near
+    : [...near, earliest];
+}
+
+/**
+ * The months created and confirmed for a worker started earlier in the year
+ * (specs.md item 6).
+ *
+ * **Every month from their first to the one before they were added**, which is
+ * the whole of what the application can know about a year it did not watch: the
+ * month they are added in is left out because it has not ended, and nothing is
+ * created beyond what `firstMonth` already admits.
+ *
+ * **Nothing at all for the two months item 6 has always offered.** A family
+ * choosing the month they are adding in, or the one before it, is choosing the
+ * month they mean to *work on*; confirming it for them, empty, would hand them
+ * a filed month where they wanted a calendar to mark. So the months are created
+ * only where the choice reaches further back than that, which is the choice
+ * this exists for.
+ *
+ * **A month the rates table cannot value is not created at all.** It could only
+ * be created as a draft, and a draft whose month has ended is a blockage (item
+ * 27) — so a family would be handed a list of warnings in exchange for a
+ * convenience. The caller confirms each of these through the same verdict the
+ * tick on the worker's list uses, and that verdict is what refuses a month the
+ * table is silent about; this list is only the months it is asked about.
+ */
+export function monthsBeforeToday(firstMonth: YearMonth, today: IsoDate): YearMonth[] {
+  const added = monthOf(today);
+  if (compareMonth(firstMonth, addMonths(added, -1)) >= 0) return [];
+  const months: YearMonth[] = [];
+  for (
+    let month = firstMonth;
+    compareMonth(month, added) < 0;
+    month = addMonths(month, 1)
+  ) {
+    months.push(month);
+  }
+  return months;
 }
 
 /**

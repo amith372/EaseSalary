@@ -8,7 +8,7 @@ import { advanceLedger, nextAdvanceNumber } from "@/lib/engine/advances";
 import { rateInForce } from "@/lib/datedRates";
 import { countriesWithLists } from "@/lib/holidaySources";
 import type { DatedRate } from "@/lib/datedRates";
-import { readToday } from "@/lib/requestToday";
+import { readNow, readToday } from "@/lib/requestToday";
 import {
   saveIdentifyingNumbers,
   type IdentifyingNumbers,
@@ -44,6 +44,7 @@ import { isMonthNumber, monthOf, parseYearMonth, yearMonthText } from "@/lib/dat
 import { balanceOf } from "@/lib/engine/balances";
 import { workerInSeries } from "@/lib/householdSeries";
 import {
+  createMonthsBeforeToday,
   saveMonthsFollowingProfile,
   saveMonthsReachedBySalaryChange,
 } from "@/lib/workerMonths";
@@ -859,9 +860,21 @@ export async function createWorker(
     if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
     const workerId = randomUUID();
-    await repository.saveWorker({ ...reviewed.profile, id: workerId });
+    const profile = { ...reviewed.profile, id: workerId };
+    await repository.saveWorker(profile);
     await saveIdentifyingNumbers(repository, workerId, {
       passport: draft.passportNumber,
+    });
+
+    // **The months the family chose to start from, where that is earlier than
+    // this one** (item 6): created and confirmed at the figures the rates table
+    // holds for each, so a worker taken on mid-year arrives with the year
+    // already behind them rather than with a list of blockages. A first month
+    // of this month or the last one creates nothing, which is the ordinary
+    // case and the whole of what this used to do.
+    await createMonthsBeforeToday(repository, profile, {
+      today,
+      now: await readNow(),
     });
 
     revalidatePath("/", "layout");
