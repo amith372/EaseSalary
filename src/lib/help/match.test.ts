@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  bestReach,
   bestTopic,
   matchTopics,
   narrowTopics,
   normalise,
   saysNothing,
   sectionBehind,
+  workersNamed,
 } from "@/lib/help/match";
+import type { AnswerId } from "@/lib/help/answers";
 import { HELP_TOPICS, type TopicId } from "@/lib/help/topics";
 import { he } from "@/lib/i18n/he";
 import { termsPage } from "@/lib/scrape/caregiver-terms-page.fixture";
@@ -66,6 +69,15 @@ const ASKED: { query: string; topic: TopicId; why: string }[] = [
     query: "העובדת לקחה מקדמה על חשבון המשכורת, איפה רושמים את זה",
     topic: "addAdvance",
     why: "an advance, named once inside a sentence of words no topic holds",
+  },
+  {
+    // The word is the family's and not the application's: their own sheet
+    // writes `קיזוז 1/4` and `קיזוז מקדמה 1` for an instalment
+    // (`שכר_חודשי_להאנה2026.xlsx`), while every screen says `פירעון`. It
+    // reached nothing at all until it was put in the question.
+    query: "איפה רושמים קיזוז",
+    topic: "addAdvance",
+    why: "the sheet's word for an instalment, which no screen of the application uses",
   },
   {
     query: "באיזה חודש ההבראה",
@@ -252,5 +264,117 @@ describe("the two lists that have to stay in step", () => {
       expect(said.ask.trim(), topic.id).not.toBe("");
       expect(said.where.trim(), topic.id).not.toBe("");
     }
+  });
+});
+
+/**
+ * The questions the panel answers rather than points at (item 24).
+ *
+ * **These four are the user's own words, written down on 2026-10-07 before any
+ * of this existed** — "what payments am i required to pay", "what payments to
+ * 3rd things do i need to pay?", "when is the next time ill need to pay ביטוח
+ * לאומי", "when is the next time ill need to pay אגרת ויזה" — asked here in the
+ * Hebrew a family would type them in. Which entry each must reach is decided by
+ * what the question is about and not by what the matcher returned.
+ */
+const ANSWERED: { query: string; id: AnswerId; why: string }[] = [
+  {
+    query: "כמה ביטוח לאומי לשלם החודש",
+    id: "nationalInsuranceDue",
+    why: "the user's own question, and the one a quarter in arrears is about",
+  },
+  {
+    query: "מתי התשלום הבא למוסד לביטוח לאומי",
+    id: "nationalInsuranceDue",
+    why: "the same question asked about the date rather than the amount",
+  },
+  {
+    query: "מתי אני משלם את האגרה על הויזה",
+    id: "visaFeeDue",
+    why: "the fee is dated off the visa's own expiry",
+  },
+  {
+    query: "כמה המשכורת של החודש הזה",
+    id: "owedThisMonth",
+    why: "what the month comes to is the month's own lines",
+  },
+  {
+    query: "אילו תשלומים לגורמים שלישיים אני חייב",
+    id: "thirdPartyDue",
+    why: "the user's fourth question, and the one about what is owed elsewhere",
+  },
+  {
+    query: "מה נשאר לי לשלם לצד שלישי",
+    id: "thirdPartyDue",
+    why: "the same question asked as what is left rather than as what applies",
+  },
+];
+
+describe("a question the account can answer", () => {
+  for (const { query, id, why } of ANSWERED) {
+    it(`${query} → ${id} (${why})`, () => {
+      expect(bestReach(query, SCRAPED), "scraped").toEqual({ kind: "answer", id });
+      expect(bestReach(query, FRESH_CLONE), "fresh clone").toEqual({
+        kind: "answer",
+        id,
+      });
+    });
+  }
+
+  /**
+   * **A question about where to press still reaches the screen that settles
+   * it.** The two kinds are ranked in one list, so the risk the moment answers
+   * were added is that they swallow the navigation the screen was built for.
+   */
+  it("leaves the navigation questions where they were", () => {
+    for (const { query, topic } of ASKED) {
+      expect(bestReach(query, SCRAPED), query).toEqual({
+        kind: "topic",
+        topic: HELP_TOPICS.find((one) => one.id === topic),
+      });
+    }
+  });
+
+  it("reaches nothing where nothing was asked about", () => {
+    expect(bestReach("גידול עגבניות בחממה", SCRAPED)).toBeNull();
+  });
+
+  /** A name on its own says the question is about the account and nothing about
+   * which question it is, so it may not outrank the words that do. */
+  it("does not let a worker's name decide which question was asked", () => {
+    expect(bestReach("מתי משלמים אגרת ויזה להאנה", SCRAPED, ["האנה"])).toEqual({
+      kind: "answer",
+      id: "visaFeeDue",
+    });
+  });
+});
+
+describe("which worker a question is about", () => {
+  const workers = [
+    { firstName: "האנה", name: "האנה מונטנה" },
+    { firstName: "מריה", name: "מריה סנטוס" },
+  ];
+
+  /** Both, unless one of them was named — the user's decision of 2026-10-10,
+   * and item 24's "where that is unclear it answers for both". */
+  it("answers for both where the question names neither", () => {
+    expect(workersNamed("מתי משלמים ביטוח לאומי", workers)).toEqual(workers);
+  });
+
+  it("answers for the one the question named", () => {
+    expect(workersNamed("כמה ביטוח לאומי לשלם עבור מריה", workers)).toEqual([
+      workers[1],
+    ]);
+  });
+
+  /** A name with a prefix attached is the same name: Hebrew writes `להאנה` for
+   * "to Hanna", and a family asking about them writes it that way. */
+  it("finds a name a preposition is stuck to", () => {
+    expect(workersNamed("מה משולם להאנה החודש", workers)).toEqual([workers[0]]);
+  });
+
+  /** Both named is both answered, which is the same answer as neither. */
+  it("answers for both where both are named", () => {
+    expect(workersNamed("מה משולם להאנה ומריה", workers)).toEqual(workers);
   });
 });

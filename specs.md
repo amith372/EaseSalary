@@ -718,6 +718,10 @@ a question about one of them is the expensive mistake.
     figures their own sheet keeps apart. The extension fee is therefore named for what it
     is — the visa **extension** fee, which is the wording item 28 already uses for B14 —
     and the visa itself is a seventh kind beside it.
+    **`דמי השמה` (B12) is paid once for each worker and not again while that employment
+    lasts**, so it is owed until a payment of it is recorded against that worker and never
+    afterwards. A household employing two carries one for each of them, because the fee is
+    for placing a worker and not for being a household that employs one.
     **Each kind is named on screen in the template's own words and never in a paraphrase.**
     Item 2 requires the exported file to carry the same Hebrew labels a month tab carries,
     and a screen that taught the user a different name would send them looking for it on the
@@ -1208,23 +1212,52 @@ a question about one of them is the expensive mistake.
     them, and it holds no explanation of its own: it points at the explanation, the
     reference link, or the screen that settles the question, so a given answer is
     written in exactly one place and a page that moves is fixed there.
-    **That screen is `עוזר דיגיטלי`, and what it does is navigate.** For a question the
-    user types in their own words it names the screen that settles it, says where to
-    press once there, and puts the rule's reference link beside it — and it writes no
-    explanation of its own, so an answer still lives in exactly one place. **It is
-    account-blind:** it never names a worker, never draws a figure and never replays a
-    month, which is what makes one screen correct for an account whose months are
-    refused, whose workers are of either gender, or which has no worker in it yet.
+    **That screen is `עוזר דיגיטלי`, and it both navigates and answers.** For a question
+    the user types in their own words it names the screen that settles it and says where
+    to press once there, which is the whole answer where the question is where to go;
+    where the question asks what the family owes or when it falls due, it answers that —
+    from the figures the replay has already produced and the explanations and reference
+    links the lines already carry. It writes no explanation of its own, so an answer still
+    lives in exactly one place, and an answer listing what must be paid says which list it
+    is giving, pension and severance being out of scope with their row deliberately empty.
+    **An answer about what is owed lists what is left to pay, not what exists:** a payment
+    already recorded whose next date has not come is not on it, and a household with
+    nothing outstanding is told so rather than shown a list. A kind the application holds
+    no date for is named at the foot of the answer rather than left out, because an
+    omission in a list of what is owed reads as an exemption.
+    **It asks back only for what the application does not hold:** a question this
+    household's own months, workers or stored terms answer is answered from them and never
+    put to the user.
+    **It answers for the account, and it answers without one.** An answer about what falls
+    due names the worker it belongs to and draws the figure it was asked for; where the
+    account holds two it answers for both, unless the user named one of them, and where
+    that is unclear it answers for both rather than choosing. The closed list, the opening
+    line and the screen list carry no worker and no figure, so an account with no worker in
+    it yet, or one whose months are refused, still reaches every screen the application
+    has — and a question whose figure the replay cannot produce says so and names the month
+    that stopped it rather than drawing a figure it does not have.
     **What the user types is matched by hand and never by a model** — over the screen
-    list, the reference links of criterion 26, and the cached page sections of Part 3 —
-    so it answers in full in an installation that has never fetched anything. A closed
-    list of the questions families ask sits above the box and narrows as they type; a
+    list, the reference links of criterion 26, the cached page sections of Part 3, and the
+    names of the household's own workers — so it answers in full in an installation that
+    has never fetched anything. A closed list of the questions families ask sits above the
+    box and narrows as they type; a
     question that reaches nothing still leaves them the list of screens, because a help
-    screen that says only "not found" has returned them to where they started. **It
-    opens by saying what it is for** — navigation and where to press, not the law itself
-    — rather than by saying how to operate it. The one topic with no screen of its own,
-    whether the medical insurance may be deducted, is answered beside the insurer field
-    rather than here, for the same reason.
+    screen that says only "not found" has returned them to where they started.
+    **It can also propose a marking, and it performs none.** Where what the
+    user types is not a question but an instruction to mark days — a kind a
+    calendar day can carry, over a range of dates — the screen works out which
+    of those days would take the mark and which would not and why, by the same
+    entitlement rule the calendar itself applies, and shows that as a proposal
+    for the user to accept. Nothing is written until they accept it: a sentence
+    that was misread changes nothing, and what the acceptance then does is what
+    the calendar's own gesture does and nothing more. Where the account holds
+    two workers and the sentence names neither, it asks which, because a
+    marking is a fact about one calendar and cannot be made for both.
+    **The exchange lasts the session and is stored nowhere:** it is a way of reaching an
+    answer, not a record of one. **It opens by saying what it is for** — where to press,
+    and what this household owes and when — rather than by saying how to operate it. The
+    one topic with no screen of its own, whether the medical insurance may be deducted, is
+    answered beside the insurer field rather than here, for the same reason.
 25. A refusal carries the same link as the action it refused. A user who has been
     stopped is exactly the user who wants to know why, and a refusal is the moment the
     application can least afford to be taken on its word: it has just told them they may

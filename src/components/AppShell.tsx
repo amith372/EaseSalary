@@ -14,7 +14,7 @@ import { signOut } from "@/app/settings/actions";
 import { Bell } from "@/components/Bell";
 import { Bidi } from "@/components/Bidi";
 import { Card } from "@/components/Card";
-import { HelpLauncher } from "@/components/HelpLauncher";
+import { HelpPanel } from "@/components/HelpPanel";
 import { LogoMark, PartOfDayIcon, SignOutIcon, TwoToneIcon } from "@/components/icons";
 import { WorkerScopeProvider, WorkerSwitcher } from "@/components/WorkerScope";
 import type { BellView } from "@/lib/alertsView";
@@ -37,9 +37,10 @@ import type { Worker } from "@/lib/types";
  *
  * **The bar carries no help entry**, and that is a decision rather than an
  * omission. v3 draws a circular "?" here and the `עזרה` artboard replaces it
- * with a labelled pill; the user chose on 2026-10-01 to put the way in to
- * `/help` in the bottom corner instead, as a floating control
- * (`HelpLauncher`), so the bar keeps the five tabs and nothing else.
+ * with a labelled pill; the user chose on 2026-10-01 to put the way in to the
+ * assistant in the bottom corner instead, as a floating control that opens a
+ * card over the screen (`HelpPanel`), so the bar keeps the five tabs and
+ * nothing else.
  * `DESIGN.md` records the departure.
  *
  * The greeting and the worker switcher sit here too, where v3 draws them as a
@@ -276,7 +277,7 @@ export function AppShell({
     return (
       <>
         {children}
-        <HelpLauncher />
+        <HelpPanel names={workers.map((worker) => worker.firstName)} />
       </>
     );
   }
@@ -524,7 +525,7 @@ export function AppShell({
           {noWorkerYet ? <EmptyHousehold /> : children}
         </div>
       </main>
-      <HelpLauncher />
+      <HelpPanel names={workers.map((worker) => worker.firstName)} />
     </div>
     </WorkerScopeProvider>
   );

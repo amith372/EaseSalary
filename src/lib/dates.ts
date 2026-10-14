@@ -211,6 +211,16 @@ export function eachMonth(from: YearMonth, to: YearMonth): YearMonth[] {
   return months;
 }
 
+/** The calendar quarter a month falls in — the three months it is billed
+ * with, which is what `previousQuarter` steps back through. */
+export function quarterOf(month: YearMonth): { from: YearMonth; to: YearMonth } {
+  const first = Math.floor((month.month - 1) / 3) * 3 + 1;
+  return {
+    from: { year: month.year, month: first },
+    to: { year: month.year, month: first + 2 },
+  };
+}
+
 /**
  * The last calendar quarter that had ended before `month` began.
  *
@@ -230,13 +240,7 @@ export function previousQuarter(month: YearMonth): {
   from: YearMonth;
   to: YearMonth;
 } {
-  const quarter = Math.floor((month.month - 1) / 3);
-  const previous = quarter === 0 ? 3 : quarter - 1;
-  const year = quarter === 0 ? month.year - 1 : month.year;
-  return {
-    from: { year, month: previous * 3 + 1 },
-    to: { year, month: previous * 3 + 3 },
-  };
+  return quarterOf(addMonths(quarterOf(month).from, -1));
 }
 
 /** Negative when `a` falls before `b`. ISO dates sort lexicographically, which

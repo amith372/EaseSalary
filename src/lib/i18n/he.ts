@@ -721,17 +721,31 @@ export const he = {
        * text: a glyph alone cannot be translated (`CLAUDE.md`). */
       launcher: SCREEN_NAMES.help,
       label: "מה רוצים לעשות?",
-      placeholder: "לכתוב כאן, או לבחור מהרשימה שלמטה",
+      placeholder: "לכתוב כאן שאלה על החשבון או על האתר",
       submit: "לחפש",
       /** Under the field, as the artboard draws it. The two examples are
        * topics' own questions, shortened. */
       examples: 'אפשר לכתוב בשפה חופשית — "כמה ימי חופשה נשארו", "איך מזינים מקדמה".',
       /** Empties the field and puts the whole list back. */
       clear: "לנקות",
+      /**
+       * The way out of the panel, under the card and where the launcher stood
+       * (`HelpPanel`).
+       *
+       * It is `he.alerts.reminders.close`'s word and not a second one: two
+       * overlays closed by two different words in one application read as two
+       * different gestures.
+       */
+      close: "סגירה",
     },
-    /** The answer card: where to go, what to press, and the rule beside it. */
+    /**
+     * The answer card: where to go, what to press, and the rule beside it.
+     *
+     * **It carries no heading of its own.** In the thread each answer is headed
+     * by the question it answers (`HelpConversation`), which names it where a
+     * worded heading repeated above every turn would name none of them.
+     */
     answer: {
-      title: "התשובה",
       /** Above the screen's name, saying what the name is. */
       eyebrow: "המסך שמטפל בזה",
       /**
@@ -747,6 +761,244 @@ export const he = {
       rule: "הכלל עצמו:",
     },
     /**
+     * The questions the panel answers out of the household's own months, and
+     * the frame around each answer (item 24, `help/answers.ts`).
+     *
+     * **`ask` is what the question is recognised by and never a heading.** It
+     * is this entry's corpus in the matcher, exactly as a topic's own question
+     * is its, so it is written the way a family would type it rather than the
+     * way a screen would title it.
+     *
+     * **Nothing here states a figure or a rule.** The amounts, the months and
+     * the dates come from the replay, each line's reasoning is the line's own
+     * `explanation`, and the law is on the page the link opens — these words are
+     * the sentence around them (item 24).
+     */
+    answers: {
+      owedThisMonth: {
+        ask: "מה צריך לשלם לעובד/ת החודש?",
+        about: "המשכורת של החודש הנוכחי, והסכום שמגיע לעובד/ת",
+        title: "התשלום לעובד/ת",
+        forMonth: (month: string): Said => ["לחודש ", { value: month }],
+        /** A worker whose first month has not begun: there is no month in the
+         * replay, so there is nothing to quote and nothing to work out. */
+        noMonth: "אין עדיין חודש מחושב לעובד/ת הזה/זו.",
+        /**
+         * What this list is and what it is not (item 24).
+         *
+         * **An answer that lists payments has to say which list it is giving.**
+         * What goes to a third party is not part of what reaches the worker
+         * (item 16) and is recorded on its own screen, and pension and
+         * severance are outside what this application works out at all
+         * (Part 1) — a family reading a salary list as the whole of what they
+         * owe would be reading an answer this one never gave.
+         */
+        excludes:
+          "זה מה שמגיע לעובד/ת. תשלומים לגורמים שלישיים — ביטוח לאומי, ביטוח רפואי ואגרות — נרשמים בנפרד ואינם חלק מהסכום הזה, ופנסיה ופיצויים אינם מחושבים באפליקציה.",
+        /** The month has not ended, so what is drawn is a preview and says so
+         * (item 21): a figure read as final in the middle of the month is a
+         * figure that will change without anyone having been told it could. */
+        running: "החודש עדיין נמשך, והסכום ישתנה ככל שיסומנו בו ימים.",
+      },
+      nationalInsuranceDue: {
+        ask: "מתי וכמה משלמים ביטוח לאומי?",
+        about: "התשלום הרבעוני לביטוח לאומי, והרבעונים שהסתיימו וטרם נרשמו",
+        title: "ביטוח לאומי",
+        /** Above the months of a quarter, each with what it put aside. */
+        accrued: "מה נצבר בחודשי הרבעון",
+        /**
+         * The three months added up, which is what a family asking "כמה" is
+         * asking for (the user, 2026-10-10).
+         *
+         * It is drawn under the months it is made of and named as an estimate
+         * beside them, so the figure is never read as the bill itself.
+         */
+        accruedTotal: "סך הכל ברבעון",
+        /**
+         * **The estimate is named as an estimate every time it is shown.** The
+         * sum actually billed has differed from it (item 19), and a figure a
+         * family takes for the bill is a figure they will pay without checking.
+         */
+        estimateNote: "הערכה לפי האחוז שבתוקף — הסכום שייגבה בפועל עשוי להיות שונה.",
+        /** The quarter running now, which is paid once it has closed. */
+        next: (quarter: string, from: string): Said => [
+          "הרבעון שרץ עכשיו, ",
+          { value: quarter },
+          ", משולם בדיעבד — ניתן לרשום אותו מ",
+          { value: from },
+          ".",
+        ],
+        /** Nothing is owed: every quarter that has ended was recorded. */
+        allPaid: "כל הרבעונים שהסתיימו כבר נרשמו.",
+      },
+      visaFeeDue: {
+        ask: "מתי משלמים אגרה להארכת ויזה?",
+        about: "האגרה להארכת אשרת העבודה, לפי התאריך שבו האשרה פגה",
+        title: "אגרה להארכת ויזה",
+        due: (month: string, expires: string): Said => [
+          "האגרה צפויה ב",
+          { value: month },
+          ", כי אשרת העבודה בתוקף עד ",
+          { value: expires },
+          ".",
+        ],
+        lastPaid: (amount: string): Said => [
+          "בפעם הקודמת נרשמו ",
+          { value: amount },
+          ".",
+        ],
+        /**
+         * The date the fee is worked out from is not stored, so there is no
+         * month to name. **It points at the field instead of answering** — an
+         * answer here would be a date the application invented (item 28).
+         */
+        noDate: "לא נשמר תאריך תפוגה לאשרת העבודה, ואין ממה לגזור את מועד האגרה.",
+        noDateWhere: "בדף האישי של העובד/ת, בקטע המסמכים",
+      },
+      /**
+       * What is owed to somebody other than the worker — the user's own
+       * question of 2026-10-07, "what payments to 3rd things do i need to pay?"
+       *
+       * **The sentences for *why* a payment is owed are not here**, and
+       * deliberately: a quarter that has ended is said in `alerts.entry`'s
+       * words and a fee still ahead in `payments.upcoming`'s, so one payment
+       * cannot read one way on the panel and another on the screen it is acted
+       * on (`CLAUDE.md` rule 12). What is here is the frame and the one reason
+       * no other screen has ever had to say.
+       */
+      thirdPartyDue: {
+        ask: "מה צריך לשלם לגורמים שלישיים?",
+        about: "ביטוח לאומי, ביטוח רפואי והאגרות — ומה מהם נותר לשלם",
+        title: "תשלומים לגורמים שלישיים",
+        /** Above the list, naming what the list is: what is left, and not the
+         * catalogue of everything that exists (the user, 2026-10-11). */
+        lead: "מה שנותר לשלם, או שחל עכשיו:",
+        /**
+         * Nothing is owed today. **It says what was checked and not only
+         * "nothing"**, because a family reading a bare "אין" cannot tell a
+         * household in order from a question the application failed to
+         * understand.
+         */
+        nothing: "כל התשלומים לגורמים שלישיים שהגיע מועדם כבר נרשמו.",
+        /**
+         * A payment made once for this worker and never recorded.
+         *
+         * **Once per worker, not once per household** — the bureau charges it
+         * for placing this worker and not again while that employment lasts, so
+         * a second worker carries one of their own (`answers.ts`).
+         */
+        neverRecorded: "לא נרשם תשלום עדיין, והוא משולם פעם אחת לכל עובד/ת.",
+        /**
+         * Which list this is (item 24). **An answer that lists payments has to
+         * say what it left out**, or the omission is read as an exemption:
+         * pension and severance are outside what this application works out at
+         * all (Part 1) and their row on the sheet stays empty on purpose.
+         */
+        excludes:
+          "זו הרשימה שהאפליקציה עוקבת אחריה. פנסיה ופיצויים אינם מחושבים בה, והשורה שלהם בגיליון נשארת ריקה בכוונה.",
+        /**
+         * The kinds the application holds no date for, named so that an answer
+         * is not read as the whole of what exists. It points at where they are
+         * recorded instead of naming a month it was never given.
+         */
+        undated: (kinds: string): Said => [
+          "ל",
+          { value: kinds },
+          " אין באפליקציה מועד, ולכן התשלום נרשם במסך תשלומים כשהוא נעשה.",
+        ],
+      },
+      /**
+       * A worker whose replay the engine refused (items 13 and 25): the answer
+       * names the month that stopped it and does not draw a figure it does not
+       * have. One refused month stops every month after it, so the month named
+       * is the one at fault and not the one that was asked about.
+       */
+      refused: (month: string): Said => [
+        "החישוב נעצר בחודש ",
+        { value: month },
+        ", ולכן אין מה להציג כאן עד שהחודש הזה יתוקן.",
+      ],
+      refusedWhere: "בדף הבית, בכרטיס שמעל הלוח",
+      /** No worker in the account at all, which is every account until the
+       * first profile is made. */
+      noWorker: "אין עדיין עובד/ת בחשבון, ולכן אין על מי לענות.",
+      /** While the server is reading the account. It is impersonal, like every
+       * other sentence this screen says. */
+      asking: "רגע, אוספים את הנתונים מהחשבון.",
+      /** The read did not come back. It says what is missing and leaves the
+       * screens below, as a question that reached nothing does. */
+      failed: "לא ניתן לקרוא את נתוני החשבון כרגע.",
+    },
+    /**
+     * A sentence read as an instruction: what would be marked, and the press
+     * that marks it (item 24, `help/gesture.ts`).
+     *
+     * **Every sentence here is about a proposal and not about a marking.** The
+     * card is drawn before anything is written and the words have to say so,
+     * or a family reads the days as already marked and does not press.
+     *
+     * **It states no entitlement rule.** Why a day was refused is
+     * `he.calendar.skipped`'s own sentence, said in the calendar's words
+     * because it is the calendar's rule — one wording, wherever a sweep is
+     * refused.
+     */
+    stage: {
+      /** Above the card, saying what the list under it is. */
+      eyebrow: "מה יסומן",
+      /** "חופשה להאנה" — the mark and whose calendar it goes on. The kind is
+       * `he.calendar.marks`' own word, so the card and the calendar cannot come
+       * to call one mark two things. */
+      forWorker: (mark: string, name: string): Said => [`${mark} ל`, { value: name }],
+      /** The days themselves, headed by the range as the calendar words it. */
+      range: (range: string): Said => [{ value: range }],
+      /** How many days the press would change, under the list. */
+      dayCount: (days: number) => (days === 1 ? "יום אחד" : `${days} ימים`),
+      /** A holiday changes an answer and not a day, so what the press does is
+       * said in those words (item 9). */
+      holidayNote: "הסימון אומר שהעובד/ת עבד/ה בחג.",
+      /** The press. It is the proposal's own verb, so the button says what the
+       * card above it offered. */
+      mark: "לסמן",
+      /** The way out: the proposal goes and the thread stands. */
+      dismiss: "לא לסמן",
+      /** While the account is being read, and after the press while it is
+       * being written. Impersonal, like every other sentence here. */
+      working: "רגע, בודקים מול היומן.",
+      /** The read or the write did not come back. */
+      failed: "לא ניתן לעדכן את היומן כרגע.",
+      /** The press landed. It names the days rather than repeating the range,
+       * because a day inside it may have been refused. */
+      done: (days: number) =>
+        days === 1 ? "סומן יום אחד ביומן." : `סומנו ${days} ימים ביומן.`,
+      /** Nothing in the range could take the mark, which is not a fault: the
+       * reasons are listed under it. */
+      none: "אין בטווח הזה יום שאפשר לסמן.",
+      /** A holiday instruction over a range the year holds no holiday in. */
+      noHoliday: "אין חג בטווח הזה.",
+      /** The days the mark cannot take, above `he.calendar.skipped`'s reasons. */
+      refused: "ימים שלא יסומנו",
+      /** The way to the calendar itself, for everything the sentence cannot
+       * say: a part of a day, a note, a correction. */
+      toCalendar: "ליומן",
+      /**
+       * Whose calendar it is, asked where the household holds two and the
+       * sentence named neither (item 24).
+       *
+       * **It is asked and never guessed**, which is where a marking parts
+       * company with an answer: an answer about the wrong worker is read and
+       * dismissed, a marking on the wrong worker's calendar is a day the family
+       * has to find again.
+       */
+      whose: "ליומן של מי?",
+      /** The range begins before the worker's first month, which the calendar
+       * refuses too (item 6). */
+      tooEarly: (month: string): Said => [
+        "החודש הראשון של העובד/ת הוא ",
+        { value: month },
+        ", ואי אפשר לסמן לפניו.",
+      ],
+    },
+    /**
      * Nothing matched.
      *
      * **It is not a fault and it does not invite a second try at the same
@@ -756,7 +1008,26 @@ export const he = {
      */
     noMatch: {
       title: "לא נמצאה שאלה מתאימה",
-      body: "אפשר לנסח אחרת, או לבחור מתוך רשימת המסכים שלמטה.",
+      body: "אפשר לנסח אחרת, או לעבור לשאלות הנפוצות ולבחור מתוך רשימת המסכים.",
+      /** The press that takes them there, because the list is on the panel's
+       * other side: a question that reached nothing still has to leave them the
+       * whole application to choose from (item 24). */
+      toScreens: "לשאלות הנפוצות",
+    },
+    /**
+     * The two sides of the panel, named on the toggle at its head (the user,
+     * 2026-10-10).
+     *
+     * `שאלות נפוצות` is the user's own wording for the pair of lists — the
+     * questions families ask and what each screen settles — and `לשאול` is the
+     * conversation itself.
+     */
+    sides: {
+      /** What the toggle is, for a reader who meets the two buttons without
+       * seeing which is pressed. */
+      label: "מה מוצג בעוזר",
+      ask: "לשאול",
+      faq: "שאלות נפוצות",
     },
     topicsTitle: "מה שואלים הכי הרבה",
     screensTitle: "כל המסכים",
@@ -811,8 +1082,23 @@ export const he = {
           "בקטע תוספות והורדות שהוספת, בכפתור להוסיף שורה חד־פעמית. שורה שחוזרת בכל חודש נקבעת בדף האישי",
       },
       addAdvance: {
-        ask: "איך מזינים מקדמה?",
-        where: "בקטע מקדמות, בכפתור שמוסיף מקדמה חדשה",
+        /**
+         * **`קיזוז` is in the question because it is the family's own word for
+         * an instalment** — their sheet writes `קיזוז 1/4` and `קיזוז מקדמה 1`
+         * where the application says `פירעון` — and the matcher scores the
+         * question most heavily, so a word put here is a word that reaches this
+         * topic from anywhere in a sentence. The two words are given as
+         * alternatives rather than one being replaced: the application's own
+         * screens say `מקדמה`, and a question naming only the sheet's word
+         * would teach a name no button carries (item 16's rule, read the other
+         * way round).
+         */
+        ask: "איך מזינים מקדמה או קיזוז?",
+        /** Both gestures, because they are two: the advance is granted on one
+         * button and an instalment recorded on another, and a family typing
+         * `קיזוז` wants the second. */
+        where:
+          "בקטע מקדמות — בכפתור שמוסיף מקדמה חדשה, או בכפתור לפרוע שרושם קיזוז על מקדמה קיימת",
       },
       recuperationWhen: {
         ask: "מתי משלמים דמי הבראה?",

@@ -2,6 +2,7 @@ import { legalLink, type LegalLinkKey } from "@/lib/links";
 import type { CachedPage } from "@/lib/scrape/pageSections";
 import { he } from "@/lib/i18n/he";
 import { HELP_TOPICS, type HelpTopic } from "@/lib/help/topics";
+import { ANSWER_IDS, ANSWER_RULES, type AnswerId } from "@/lib/help/answers";
 
 /**
  * Matching what the user typed to the entry that settles it — by hand, with no
@@ -94,8 +95,10 @@ export function normalise(text: string): string {
   return folded.trim().replace(/\s+/g, " ");
 }
 
-/** A word and the forms of it a prefix may be hiding. */
-function stemsOf(word: string): string[] {
+/** A word and the forms of it a prefix may be hiding. Exported for the grammar
+ * beside this (`gesture.ts`), which has to fold a typed word the same way or
+ * `בחופשה` would name a kind here and nothing there. */
+export function stemsOf(word: string): string[] {
   const forms = [word];
   const first = word[0];
   if (first !== undefined && PREFIXES.has(first) && word.length - 1 >= MIN_STEM) {
@@ -206,6 +209,15 @@ const WEIGHTS = {
   ruleLabel: 2,
   sectionHeading: 2,
   sectionText: 1,
+  /**
+   * A worker of this household, named in the question (item 24).
+   *
+   * **It is the lightest weight in the table on purpose.** A name says the
+   * question is about the account rather than about the application, which is
+   * evidence for an answer over a topic — but it says nothing about *which*
+   * question, so a name alone must never outweigh the words that do.
+   */
+  workerName: 1,
 } as const;
 
 /** The page address and the section inside it that a legal link names. A link
@@ -306,15 +318,7 @@ export function matchTopics(query: string, pages: readonly CachedPage[]): HelpHi
   if (typed.length === 0) return [];
   const hits: HelpHit[] = [];
   for (const topic of HELP_TOPICS) {
-    const haystack = haystackOf(topic, pages);
-    let score = 0;
-    for (const word of typed) {
-      let best = 0;
-      for (const field of haystack) {
-        if (field.weight > best && reaches(word, field.words)) best = field.weight;
-      }
-      score += best;
-    }
+    const score = scoreOf(typed, haystackOf(topic, pages));
     if (score > 0) hits.push({ topic, score });
   }
   return hits.sort((one, other) => other.score - one.score);
@@ -344,4 +348,112 @@ export function bestTopic(
   pages: readonly CachedPage[],
 ): HelpTopic | null {
   return matchTopics(query, pages)[0]?.topic ?? null;
+}
+
+/**
+ * Everything one answer can be matched on, each with its weight.
+ *
+ * It is the topic's haystack with the screen taken out and the household's own
+ * worker names put in: an answer leads to no screen, and it is the one kind of
+ * entry a name bears on (item 24).
+ */
+function answerHaystackOf(
+  id: AnswerId,
+  pages: readonly CachedPage[],
+  names: readonly string[],
+): { weight: number; words: string[][] }[] {
+  const said = he.help.answers[id];
+  const rule = ANSWER_RULES[id];
+  const fields: { weight: number; text: string }[] = [
+    { weight: WEIGHTS.ask, text: said.ask },
+    { weight: WEIGHTS.where, text: said.about },
+    { weight: WEIGHTS.ruleLabel, text: legalLink(rule).label },
+    { weight: WEIGHTS.workerName, text: names.join(" ") },
+  ];
+  const section = sectionBehind(rule, pages);
+  if (section !== null) {
+    fields.push({ weight: WEIGHTS.sectionHeading, text: section.heading });
+    fields.push({ weight: WEIGHTS.sectionText, text: section.text });
+  }
+  return fields.map((field) => ({
+    weight: field.weight,
+    words: wordsOf(field.text),
+  }));
+}
+
+/** What one entry scored against the typed words, by the same rule for a topic
+ * and for an answer: each word takes the heaviest field it reaches, once. */
+function scoreOf(typed: string[][], haystack: { weight: number; words: string[][] }[]): number {
+  let score = 0;
+  for (const word of typed) {
+    let best = 0;
+    for (const field of haystack) {
+      if (field.weight > best && reaches(word, field.words)) best = field.weight;
+    }
+    score += best;
+  }
+  return score;
+}
+
+/** Where a question landed: a screen to go to, or an answer to give. */
+export type Reach =
+  | { kind: "topic"; topic: HelpTopic }
+  | { kind: "answer"; id: AnswerId };
+
+/**
+ * The one thing a typed question reaches, or null when it reaches nothing.
+ *
+ * **Answers and topics are scored by one rule and ranked in one list**, because
+ * they are two kinds of answer to one question and not two searches: "where do
+ * I enter an advance" wants a screen and "when is the insurance due" wants a
+ * figure, and nothing but the words tells them apart.
+ *
+ * **A topic wins a tie, so an answer has to be reached on its own words.** The
+ * two kinds share much of their vocabulary — a question about what is owed and
+ * one about where to record it are about the same payment — and a tie means the
+ * words pointed at both equally. The screen is then the safer of the two: it
+ * tells them where the figure is instead of asserting one, and a navigation
+ * question answered with a figure is a question the panel decided it knew
+ * better than the person asking it.
+ */
+export function bestReach(
+  query: string,
+  pages: readonly CachedPage[],
+  names: readonly string[] = [],
+): Reach | null {
+  const typed = typedWordsOf(query);
+  if (typed.length === 0) return null;
+  const scored: { reach: Reach; score: number }[] = matchTopics(query, pages).map(
+    (hit) => ({ reach: { kind: "topic", topic: hit.topic }, score: hit.score }),
+  );
+  for (const id of ANSWER_IDS) {
+    const score = scoreOf(typed, answerHaystackOf(id, pages, names));
+    if (score > 0) scored.push({ reach: { kind: "answer", id }, score });
+  }
+  // A stable sort, so the topics keep the registry's order among themselves and
+  // an answer passes one only by scoring higher than it.
+  return scored.sort((one, other) => other.score - one.score)[0]?.reach ?? null;
+}
+
+/**
+ * Which of the household's workers a question is about (item 24).
+ *
+ * **Both, unless the user named one of them**, and where that is unclear both
+ * rather than a choice (the user, 2026-10-10): an answer about the worker they
+ * did not mean is worse than two answers, one of which they did not ask for.
+ *
+ * The name is matched the way every other field is — folded, prefix-stripped
+ * and reachable by its opening letters — so `להאנה` and a name half typed both
+ * find them.
+ */
+export function workersNamed<T extends { firstName: string; name: string }>(
+  query: string,
+  workers: readonly T[],
+): readonly T[] {
+  const typed = typedWordsOf(query);
+  const named = workers.filter((worker) => {
+    const words = wordsOf(`${worker.firstName} ${worker.name}`);
+    return typed.some((word) => reaches(word, words));
+  });
+  return named.length === 0 ? workers : named;
 }
