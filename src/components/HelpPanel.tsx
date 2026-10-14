@@ -2,14 +2,29 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { loadHelpPages } from "@/app/help/actions";
+import { dismissTutorial, loadHelpPages } from "@/app/help/actions";
 import { HelpConversation } from "@/components/HelpConversation";
+import { TutorialCard } from "@/components/TutorialCard";
 import { he } from "@/lib/i18n/he";
 import type { CachedPage } from "@/lib/scrape/pageSections";
 
 /** The one address the panel's own screen lives at, named once so the link and
  * the route the launcher hides itself on cannot stop agreeing. */
 export const HELP = "/help";
+
+/**
+ * Whether the card of item 32 has already opened itself in this document.
+ *
+ * **Module state and not component state, because the panel is remounted.**
+ * The shell draws a different tree on the wizard's route — the step gets the
+ * screen to itself — so walking into the wizard unmounts this component and
+ * mounts another, and the layout that read the record is not re-rendered by a
+ * client navigation. The new instance would therefore be handed a `true` that
+ * is already out of date and open the card over the very step it had just sent
+ * the family to. This says "this document has shown it", which no remount can
+ * contradict and a reload resets, by which time the record is what answers.
+ */
+let shownInThisDocument = false;
 
 /**
  * The way in to `עוזר דיגיטלי`: a control that floats in the bottom corner, and
@@ -56,6 +71,7 @@ export const HELP = "/help";
  */
 export function HelpPanel({
   names = [],
+  tutorialPending = false,
 }: {
   /**
    * The household's own worker names, which join the matcher's corpus (item
@@ -67,6 +83,12 @@ export function HelpPanel({
    * matcher that reaches every entry and names nobody.
    */
   names?: readonly string[];
+  /**
+   * Whether this person's first sign-in still owes them the one card item 32
+   * describes. The layout reads it with the workers, so it costs the panel
+   * nothing; `false` is what every screen after the first one hands over.
+   */
+  tutorialPending?: boolean;
 } = {}) {
   const pathname = usePathname();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -94,6 +116,53 @@ export function HelpPanel({
    * shut to look at the screen behind it has not ended the conversation.
    */
   const [opened, setOpened] = useState(false);
+  /**
+   * Which card the dialog is drawing, and whether leaving it is to be recorded
+   * (specs.md item 32).
+   *
+   * **Three states and not a boolean**, because the card has two ways of being
+   * up and only one of them is the once: `pending` is the card that opened
+   * itself on a first sign-in, and leaving *that* is what is remembered;
+   * `again` is the same card re-opened on purpose from the questions side, and
+   * leaving it records nothing, since there is nothing left to record.
+   */
+  const [tutorial, setTutorial] = useState<"pending" | "again" | "left">(
+    tutorialPending && !shownInThisDocument ? "pending" : "left",
+  );
+  const showingTutorial = tutorial !== "left";
+  /** Whether the leaving has already been sent, held in a ref and not in state
+   * because the ways out reach each other: the press closes the dialog, which
+   * fires `close`, which is itself a way out. A state flag would still read as
+   * unsent inside the same tick. */
+  const recorded = useRef(false);
+
+  /**
+   * Leaving the card, by whichever of its ways out (specs.md item 32).
+   *
+   * **It is one function and not a handler per control**, because there are
+   * five ways out — Esc, the backdrop, the control below the card, the two
+   * presses on the card itself — and a tab in the bar is a sixth, since the
+   * pathname effect closes the dialog and that fires `close`. Four of the six
+   * would be the ones to forget.
+   *
+   * **It is awaited by the press that leads into the wizard**, which is the one
+   * caller that then leaves the screen: the record has to be made before the
+   * next render reads it, or the card opens itself again over the very step it
+   * sent the family to. The other callers do not wait, because nothing they
+   * draw depends on it.
+   *
+   * Only the card that opened itself is recorded. Re-opened on purpose from the
+   * questions side, there is nothing left to record.
+   */
+  async function leaveTutorial() {
+    const record = tutorial === "pending" && !recorded.current;
+    // Set before the close, which may dispatch `close` and come straight back
+    // in here.
+    recorded.current = true;
+    setTutorial("left");
+    dialog.current?.close();
+    if (record) await dismissTutorial();
+  }
 
   useEffect(() => {
     if (!open || pages !== null) return;
@@ -112,12 +181,55 @@ export function HelpPanel({
     };
   }, [open, pages]);
 
-  // The panel does not follow the user to the next screen: an answer's button
-  // is a link, and a card left standing over the screen it just sent them to
-  // would hide the thing they were sent to press.
+  /** The address the panel was last drawn at, so the effect below can tell a
+   * navigation from a mount. */
+  const drawnAt = useRef(pathname);
+
+  /**
+   * The panel does not follow the user to the next screen: an answer's button
+   * is a link, and a card left standing over the screen it just sent them to
+   * would hide the thing they were sent to press.
+   *
+   * **It closes on a change of address and not on a mount**, which is what the
+   * sentence above always meant and what the dependency alone did not say.
+   * Mount effects run twice in development, so this ran a second time after
+   * the card below had opened — shutting it, and being read as the family
+   * leaving it, which recorded the one card they had not seen yet. The last
+   * address is held in a ref and compared, rather than a "first run" flag: a
+   * flag is flipped by the first of the two runs and the second one then acts.
+   */
   useEffect(() => {
+    if (drawnAt.current === pathname) return;
+    drawnAt.current = pathname;
     dialog.current?.close();
   }, [pathname]);
+
+  /**
+   * A first sign-in opens the card by itself (specs.md item 32).
+   *
+   * **What keeps it open is the effect above closing on a navigation only.**
+   * Both run on mount, twice each in development, and an unconditional close
+   * there shut this card a moment after it opened — which the dialog reports
+   * as a close like any other, so the leaving was recorded for a card nobody
+   * had read.
+   *
+   * It runs once per state it reads, and that state only ever moves away from
+   * `pending`.
+   *
+   * **It opens the dialog and sets no state.** What `open` is for is the
+   * launcher's own transparency and the one fetch of the corpus, and the card
+   * needs neither — it draws no conversation, so there is nothing to match
+   * against. The launcher reads `showingTutorial` beside `open` instead, which
+   * also keeps this effect free of a state write a render would have to chase.
+   */
+  useEffect(() => {
+    if (tutorial !== "pending") return;
+    // Already up: the effect runs twice on a development mount, and asking a
+    // modal dialog to open again is at best nothing.
+    if (dialog.current === null || dialog.current.open) return;
+    shownInThisDocument = true;
+    dialog.current.showModal();
+  }, [tutorial]);
 
   // Not on the screen it is the panel for: a control that opens what you are
   // already reading is a control that looks broken when pressed.
@@ -140,7 +252,7 @@ export function HelpPanel({
            before, which would then be nothing. */
         className={[
           "fixed bottom-5 start-5 z-30 flex min-h-11 items-center gap-2 rounded-full bg-help-launcher px-4 py-3 text-[15px] font-semibold text-help-ink shadow-[0_8px_24px_rgba(51,41,31,0.18)] transition-colors hover:bg-help-launcher-hover hover:text-help-ink md:bottom-6 md:start-6",
-          open ? "opacity-0" : "",
+          open || showingTutorial ? "opacity-0" : "",
         ].join(" ")}
       >
         <HelpGlyph />
@@ -154,7 +266,13 @@ export function HelpPanel({
         // Esc and the backdrop close it without passing through the button
         // below, so what the panel knows about being open is read from the
         // element's own close event and never from the press alone.
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          // Esc, the backdrop and the pathname effect all arrive here, and so
+          // does the press that already called it — which is why the leaving
+          // is guarded rather than counted.
+          if (showingTutorial) void leaveTutorial();
+        }}
         // Pressing the backdrop closes it, as Esc already does. The target is
         // the dialog itself only where the press missed the card inside it.
         onClick={(event) => {
@@ -183,8 +301,15 @@ export function HelpPanel({
                 box is pinned at its foot: a scroller around the whole of it
                 would take the box with it. */}
             <div className="flex min-h-0 flex-1 flex-col px-4 py-4">
-              {opened ? (
-                <HelpConversation pages={pages ?? []} names={names} compact />
+              {showingTutorial ? (
+                <TutorialCard onLeave={leaveTutorial} />
+              ) : opened ? (
+                <HelpConversation
+                  pages={pages ?? []}
+                  names={names}
+                  compact
+                  onTutorial={() => setTutorial("again")}
+                />
               ) : null}
             </div>
           </div>

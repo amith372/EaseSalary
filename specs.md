@@ -97,6 +97,7 @@ a question about one of them is the expensive mistake.
 | 29 | the yearly salary summary for one worker |
 | 30 | every failure in Hebrew — the fault at a control, the failure that takes the screen, an address that does not exist, and a download with no file |
 | 31 | the worker's gender inflects every sentence naming them; the user's is never asked for, so nothing addressed to them is in one gender |
+| 32 | the first sign-in's one card — what it leads to, what it may not say, and the once it is shown |
 
 1. Entering the facts of August 2025 into a worker profile and exporting produces a
    sheet whose four total lines read 6,748 / 2,559 / 9,307 / 7,307.
@@ -1463,6 +1464,29 @@ a question about one of them is the expensive mistake.
     So a sentence is held against the words a man and a woman should each read, whole and
     never by a substring: a check for one feminine form passes a paragraph that says it once
     and its opposite twice.
+
+32. **A family's first sign-in opens one card, and what it leads to is their first worker.**
+    A household registered a moment ago holds no worker, so the opening screen is a
+    calendar about nobody and five tabs with nothing under them. The card says what the
+    application is for and what the rhythm of a month is — mark what departed from an
+    ordinary month, confirm the wage, export one sheet — and then hands them to the step
+    that adds a worker. **It teaches no rule, no rate and no entitlement**, because an
+    explanation lives in exactly one place (item 24) and a tutorial that taught them would
+    be the second place, drifting from the first without anything looking wrong. **It tours
+    no screen either**: four of the five hold nothing until a worker exists, and the step
+    that adds one already asks for everything it needs.
+    **It is shown to the person whose sign-in created the household, and to nobody else.**
+    Somebody who joined an existing household through an invitation (item 11) signs in for
+    the first time to workers and months already recorded, so a card about adding a first
+    worker would describe a screen they are not looking at.
+    **It is drawn in the same panel that holds the assistant** (item 24) rather than on a
+    surface of its own, because two cards over one screen are two things to dismiss, and
+    the way back to one of them would have to be a second way back. **It is shown once and
+    can be left at any point:** leaving it is remembered for that person and not for the
+    browser they left it in, or a family that signs in on a phone as well is taught twice —
+    and it is reachable on purpose afterwards from the panel's own list of questions, since
+    a tutorial that cannot be re-opened is one a family loses by pressing the wrong thing on
+    their first day.
 
 ## Part 3 — Architectural guidance
 

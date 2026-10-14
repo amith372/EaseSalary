@@ -1,7 +1,7 @@
 "use server";
 
 import { markRange, setHolidayWorked, type MarkRangeResult } from "@/app/month/actions";
-import { answering } from "@/lib/actionFault";
+import { answering, type Done } from "@/lib/actionFault";
 import { monthOf } from "@/lib/dates";
 import type { RestDay } from "@/lib/dates";
 import { actionList } from "@/lib/engine/actionList";
@@ -34,6 +34,27 @@ import type { CachedPage } from "@/lib/scrape/pageSections";
 export async function loadHelpPages(): Promise<CachedPage[]> {
   const repository = await getRepository();
   return repository.listCachedPages();
+}
+
+/**
+ * Records that the card a first sign-in opens was left (specs.md item 32).
+ *
+ * **It takes nothing and says nothing about the account**, which is what makes
+ * it safe to reach from a public address: it marks the caller and can mark
+ * nobody else, because the store answers for whoever this request is and the
+ * Postgres function behind it reads `auth.uid()` in its own body.
+ *
+ * **A fault is reported rather than raised**, as every action here does. The
+ * consequence of one is that the card opens itself once more, which is the
+ * mildest failure in the application — so nothing waits on this and the panel
+ * closes whether or not it came back.
+ */
+export async function dismissTutorial(): Promise<Done> {
+  return answering(async () => {
+    const repository = await getRepository();
+    await repository.dismissTutorial();
+    return { ok: true } as const;
+  });
 }
 
 /** One worker's share of an answer. */

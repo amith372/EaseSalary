@@ -429,6 +429,46 @@ export const he = {
   },
 
   /**
+   * The one card a family's first sign-in opens (specs.md item 32).
+   *
+   * **Nothing here states a rule, a rate or an entitlement.** An explanation
+   * lives in exactly one place — the `?` beside the figure, and the reference
+   * link beside the action (item 24) — so a sentence here that taught the
+   * vacation ladder would be a second statement of it, drifting from the first
+   * without anything looking wrong. What these say is what the application is
+   * for and what a month looks like from the family's side.
+   *
+   * **Written to fit either reader** (item 31): the user's gender is never
+   * asked for, so these are infinitives and nouns and never an imperative, and
+   * the worker is `עובד/ת` because nobody has been described yet.
+   */
+  tutorial: {
+    title: "נעים להכיר",
+    lead: "כל המסכים כאן מדברים על עובד/ת אחד שגר/ה בבית. מה שצריך לעשות בכל חודש הוא שלושה דברים:",
+    /** The rhythm of a month, in the order a month goes. Each is one line, and
+     * each is a thing the family does rather than a thing the application
+     * knows: the first is the only one that takes them time. */
+    steps: [
+      "לסמן בלוח מה שיצא דופן — חופשה, מחלה, חג או יום שנעבד בו.",
+      "לאשר את שכר המינימום שבתוקף, פעם בחודש.",
+      "לייצא גיליון אחד. היתרות נספרות לבד ועוברות לחודש הבא.",
+    ],
+    /** What the card is for: it ends at the step that adds a worker, because
+     * until there is one there is nothing for any screen to be about. */
+    lead2: "נתחיל מהוספת העובד/ת — אחרי זה הכול נפתח.",
+    /** Same words as the empty household's own control and the list's, so one
+     * flow carries one name wherever a family meets it. */
+    add: "הוספת עובד/ת",
+    /** The way out, which records the same thing the way in does: the card was
+     * shown. A noun and not an imperative, like every control here. */
+    skip: "דילוג",
+    /** The row that re-opens it, on the panel's questions side. It names what
+     * it opens rather than asking a question, because it is the one row there
+     * that is not one. */
+    again: "להציג שוב את ההסבר הקצר",
+  },
+
+  /**
    * The wizard that adds a worker — `EaseSalary - הוספת עובד`.
    *
    * **Four steps, and the fourth reports rather than asks.** Three collect and

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { he } from "../src/lib/i18n/he";
-import { TODAY, useToday } from "./household";
+import { leaveTheIntroduction, TODAY, useToday } from "./household";
 
 /**
  * The way out of the account, from the state that had none (specs.md item 11: a
@@ -133,6 +133,11 @@ test("a household with no worker in it can still leave the account, from the bar
   await page.locator('[data-field="password"]').fill(password);
   await page.getByRole("button", { name: he.signIn.submitSignIn }).click();
   await page.waitForURL("/");
+
+  // This account was made a moment ago, so its first screen is the one card of
+  // item 32 — over the bar this test is here to press. Pressed past, as a
+  // family presses past it.
+  await leaveTheIntroduction(page);
 
   // The state the control was added for: the add-a-worker card in place of the
   // screen, with the bar still around it.

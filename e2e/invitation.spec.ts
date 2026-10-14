@@ -1,6 +1,7 @@
 ﻿import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { he } from "../src/lib/i18n/he";
+import { leaveTheIntroduction } from "./household";
 
 /**
  * Sharing a household by invitation (specs.md item 11), through the real
@@ -111,6 +112,10 @@ async function signIn(page: Page, email: string): Promise<void> {
   await page.locator('[data-field="password"]').fill(password);
   await page.getByRole("button", { name: he.signIn.submitSignIn }).click();
   await page.waitForURL("/");
+  // The accounts here are made per run, so the first sign-in of each meets the
+  // card of item 32 over the screen. It answers nothing this file is about,
+  // and it is modal, so it is left on the way through.
+  await leaveTheIntroduction(page);
 }
 
 test.beforeAll(async () => {

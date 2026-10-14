@@ -90,6 +90,18 @@ const seeds = {
    * spec that created a worker there would leave it behind on every run.
    */
   empty: {},
+  /**
+   * An account registered a moment ago: nothing in it, and the one card of
+   * item 32 still to be shown.
+   *
+   * **It is a second empty household and not a flag on the first**, because
+   * `empty` is the store every add-worker spec drives — the wizard, the first
+   * month, the gender inflections — and a card that opened itself over all of
+   * them would be a card in the way of the specs that prove the flow it leads
+   * to. Every other seed is a household that has been running, which is why
+   * the flag defaults to shown-already (`createInMemoryRepository`).
+   */
+  fresh: { tutorialPending: true },
 } as const;
 
 type SeedName = keyof typeof seeds;

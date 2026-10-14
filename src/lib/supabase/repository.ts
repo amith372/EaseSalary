@@ -1011,6 +1011,29 @@ export function createPostgresRepository(
       raise(error, "could not put the warning off");
     },
 
+    /**
+     * **Both go through a function and not through the table** (specs.md item
+     * 32). `household_members` holds the membership itself, so a member who
+     * could update their own row could rewrite which household it names — the
+     * migration says why at length. The function reads the caller from
+     * `auth.uid()`, so neither call can act for anybody else.
+     */
+    async tutorialPending() {
+      const { data, error } = await client.rpc("tutorial_pending", {
+        household: householdId,
+      });
+      raise(error, "could not read whether the introduction is still to be shown");
+      // A `false` from a household the caller is not in and a `false` from one
+      // whose card has been left are one answer, which is the function's own
+      // design: the card is not shown either way.
+      return data === true;
+    },
+
+    async dismissTutorial() {
+      const { error } = await client.rpc("dismiss_tutorial");
+      raise(error, "could not record that the introduction was left");
+    },
+
     async listHolidayAmendments(workerId) {
       await requireWorker(workerId);
       const { data, error } = await client

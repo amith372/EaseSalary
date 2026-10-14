@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
 import { bellOf, householdAlerts, type BellView } from "@/lib/alertsView";
 import { WORKER_COOKIE } from "@/lib/workerCookie";
+import type { SalaryRepository } from "@/lib/engine/repository";
 import { getRepository, NotSignedInError } from "@/lib/store";
 import type { Worker } from "@/lib/types";
 import { he } from "@/lib/i18n/he";
@@ -62,12 +63,20 @@ export const metadata: Metadata = {
  * a screen the proxy has already refused an unauthenticated request to, so one
  * arriving there is a fault and should be seen as one.
  */
-async function whatTheBarShows(): Promise<{ workers: Worker[]; bell: BellView | null }> {
+async function whatTheBarShows(): Promise<{
+  workers: Worker[];
+  bell: BellView | null;
+  /** Whether the card a first sign-in opens is still owed (item 32). It is
+   * read here with the workers because the panel that draws it is in the
+   * shell: one shell, one read. */
+  tutorialPending: boolean;
+}> {
   try {
     const repository = await getRepository();
-    const [profiles, bell] = await Promise.all([
+    const [profiles, bell, tutorialPending] = await Promise.all([
       repository.listWorkers(),
       theBell(),
+      stillOwedTheCard(repository),
     ]);
     return {
       workers: profiles.map(({ id, name, firstName, gender }) => ({
@@ -77,10 +86,39 @@ async function whatTheBarShows(): Promise<{ workers: Worker[]; bell: BellView | 
         gender,
       })),
       bell,
+      tutorialPending,
     };
   } catch (error) {
-    if (error instanceof NotSignedInError) return { workers: [], bell: null };
+    // Nobody signed in: `/sign-in` is wrapped by this layout too, and there is
+    // no person to owe a card to.
+    if (error instanceof NotSignedInError) {
+      return { workers: [], bell: null, tutorialPending: false };
+    }
     throw error;
+  }
+}
+
+/**
+ * Whether this person is still owed the card of item 32, and `false` for every
+ * way of not being able to tell.
+ *
+ * **A failure here must not reach the screen.** This read is in the root
+ * layout, which wraps every route including `/sign-in`, and what it decides is
+ * the mildest thing the application draws — so a read that raised would trade
+ * one card for every screen the household has. It is the argument the panel
+ * already makes about its own corpus: a card that cannot be asked for is a
+ * card nobody sees, and not a broken application (`help/actions.ts`).
+ *
+ * **In practice this catches a schema older than the code**, which is a
+ * deployment caught in the middle: the migration that adds the column is
+ * applied before this is deployed, and in the one order where it is not, the
+ * application runs without the card rather than not at all.
+ */
+async function stillOwedTheCard(repository: SalaryRepository): Promise<boolean> {
+  try {
+    return await repository.tutorialPending();
+  } catch {
+    return false;
   }
 }
 
@@ -101,7 +139,7 @@ async function theBell(): Promise<BellView | null> {
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const { workers, bell } = await whatTheBarShows();
+  const { workers, bell, tutorialPending } = await whatTheBarShows();
   // The switcher's choice, read here so the first render is already the
   // chosen worker (`WorkerScope`).
   const initialWorkerId = (await cookies()).get(WORKER_COOKIE)?.value;
@@ -113,7 +151,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     // left-to-right without the layout moving.
     <html lang="he" dir="rtl" className={`${assistant.variable} ${gveretLevin.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <AppShell workers={workers} initialWorkerId={initialWorkerId} bell={bell}>{children}</AppShell>
+        <AppShell
+          workers={workers}
+          initialWorkerId={initialWorkerId}
+          bell={bell}
+          tutorialPending={tutorialPending}
+        >{children}</AppShell>
       </body>
     </html>
   );

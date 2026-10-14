@@ -126,6 +126,7 @@ export function HelpConversation({
   pages,
   names = [],
   compact = false,
+  onTutorial,
 }: {
   pages: CachedPage[];
   /**
@@ -147,6 +148,16 @@ export function HelpConversation({
    * in step.
    */
   compact?: boolean;
+  /**
+   * Re-opens the card a first sign-in was shown (specs.md item 32), where
+   * there is somewhere to draw it.
+   *
+   * **The row exists only when this is given**, which is the honest way round:
+   * the card belongs to the panel, and `/help` draws this conversation without
+   * one — a row there would be a control with nothing behind it. `DESIGN.md`
+   * records that the two places differ in this one row.
+   */
+  onTutorial?: () => void;
 }) {
   const words = he.help;
   const [side, setSide] = useState<Side>("ask");
@@ -357,6 +368,32 @@ export function HelpConversation({
           )
         ) : (
           <>
+            {onTutorial === undefined ? null : (
+              /* **At the head of the questions and not among them**, because it
+                 is the one row here that is not a question: it re-opens what the
+                 first sign-in showed. A family who pressed past it on their
+                 first day has one place to look for it. */
+              /* **`shrink-0`, which is not decoration.** This card is a flex
+                 item in the panel's scroller, so without it the row is
+                 squeezed to a sliver while the button inside keeps its own
+                 height and is clipped — leaving a control that reads as
+                 visible, sits under the section below it and cannot be
+                 pressed. */
+              <Card radius="md" className="shrink-0 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={onTutorial}
+                  data-row="tutorial-again"
+                  className={[
+                    "flex w-full items-center text-start font-medium transition-colors hover:bg-row-hover",
+                    compact ? "px-3.5 py-3 text-[14px]" : "px-5 py-4 text-[17px] sm:px-6",
+                  ].join(" ")}
+                >
+                  <span dir="auto">{he.tutorial.again}</span>
+                </button>
+              </Card>
+            )}
+
             <section aria-labelledby="help-topics" className="flex flex-col gap-4">
               <h2
                 id="help-topics"

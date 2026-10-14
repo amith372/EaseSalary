@@ -158,6 +158,32 @@ export async function openSettingsGroups(page: Page): Promise<void> {
 }
 
 /**
+ * Leaves the card a first sign-in opens (specs.md item 32), where there is one.
+ *
+ * **Every spec that makes its own household in Postgres meets it**, because
+ * that is exactly the account it describes: `create_household` leaves the
+ * member owed the card, and it is drawn over whatever screen the spec was
+ * about to drive. It is a modal `<dialog>`, so a press meant for the bar
+ * behind it is a press the card takes — which is right for a family and is
+ * what a spec has to walk through rather than around.
+ *
+ * **Whether there is one is read from the markup and not from a timer.** The
+ * card is server-rendered when the person is owed it and absent from the
+ * document when they are not, so its *presence* answers at once; only the
+ * opening waits on hydration, and the press below waits for that by itself. An
+ * account that has already left it therefore costs this nothing.
+ *
+ * The seeded in-memory households are not owed it (`store.ts`), so no spec
+ * that opens one needs this.
+ */
+export async function leaveTheIntroduction(page: Page): Promise<void> {
+  const card = page.locator('[data-role="tutorial"]');
+  if ((await card.count()) === 0) return;
+  await page.locator('[data-role="tutorial-skip"]').click();
+  await expect(card).toBeHidden();
+}
+
+/**
  * Waits until a change has reached the store and come back.
  *
  * The pressed control says it is working with `aria-busy`, and an assertion made

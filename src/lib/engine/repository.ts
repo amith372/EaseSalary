@@ -293,6 +293,19 @@ export interface SalaryRepository {
   /** Records the deferral, replacing one held for the same worker and entry. */
   deferWarning(deferral: Deferral): Promise<void>;
 
+  /**
+   * Whether the card a family's first sign-in opens is still to be shown
+   * (specs.md item 32).
+   *
+   * **It is the person's state and not the household's**, which is why nothing
+   * here takes a worker or a month: the store answers for whoever this request
+   * is, and a second member of the same household answers differently.
+   */
+  tutorialPending(): Promise<boolean>;
+  /** Records that the card was left, by whichever of its ways out. Leaving it
+   * again never moves the first instant. */
+  dismissTutorial(): Promise<void>;
+
   /** The holiday moves recorded as amendments (specs.md item 10), oldest
    * agreement first. */
   listHolidayAmendments(workerId: string): Promise<HolidayAmendment[]>;
@@ -550,6 +563,17 @@ export function createInMemoryRepository(
     rates?: DatedRate[];
     /** Defaults to `SEEDED_TAX_BRACKETS`, for the same reason (item 17). */
     taxBrackets?: TaxYearBrackets[];
+    /**
+     * Whether the first sign-in's card is still to be shown (item 32).
+     *
+     * **It defaults to shown-already, which is the opposite of a real new
+     * account**, and deliberately: a seeded household is one that has been
+     * running — it has workers, months and marks in it — so the introduction
+     * belongs to the one seed that stands for an account registered a moment
+     * ago. Defaulting the other way would open a card over every screen the
+     * browser suite drives.
+     */
+    tutorialPending?: boolean;
   } = {},
 ): SalaryRepository {
   const workers = new Map<string, WorkerRow>();
@@ -570,6 +594,7 @@ export function createInMemoryRepository(
   const cachedPages = new Map<string, CachedPage>();
   let switchedOff: WarningKind[] = [];
   let deferrals: Deferral[] = [];
+  let tutorialPending = seed.tutorialPending ?? false;
 
   function rowOf(workerId: string): WorkerRow {
     const row = workers.get(workerId);
@@ -755,6 +780,14 @@ export function createInMemoryRepository(
         ),
         structuredClone(deferral),
       ];
+    },
+
+    async tutorialPending() {
+      return tutorialPending;
+    },
+
+    async dismissTutorial() {
+      tutorialPending = false;
     },
 
     async listHolidayAmendments(workerId) {

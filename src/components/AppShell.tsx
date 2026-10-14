@@ -175,6 +175,10 @@ interface AppShellProps {
   userName?: string;
   /** What the bell shows, or null when nobody is signed in. */
   bell: BellView | null;
+  /** Whether this person's first sign-in still owes them the card item 32
+   * describes. Read by the layout with the workers, because the panel that
+   * draws it is in the shell and there is one shell. */
+  tutorialPending?: boolean;
 }
 
 // The hour is the browser's, never the server's, so the greeting is read through
@@ -193,6 +197,7 @@ export function AppShell({
   initialWorkerId,
   userName,
   bell,
+  tutorialPending = false,
 }: AppShellProps) {
   const pathname = usePathname();
   const part = useSyncExternalStore(subscribeToMinutes, currentPartOfDay, noPartOfDay);
@@ -277,7 +282,10 @@ export function AppShell({
     return (
       <>
         {children}
-        <HelpPanel names={workers.map((worker) => worker.firstName)} />
+        <HelpPanel
+          names={workers.map((worker) => worker.firstName)}
+          tutorialPending={tutorialPending}
+        />
       </>
     );
   }
@@ -525,7 +533,10 @@ export function AppShell({
           {noWorkerYet ? <EmptyHousehold /> : children}
         </div>
       </main>
-      <HelpPanel names={workers.map((worker) => worker.firstName)} />
+      <HelpPanel
+        names={workers.map((worker) => worker.firstName)}
+        tutorialPending={tutorialPending}
+      />
     </div>
     </WorkerScopeProvider>
   );
