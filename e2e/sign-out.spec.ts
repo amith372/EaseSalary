@@ -27,12 +27,9 @@ import { leaveTheIntroduction, TODAY, useToday } from "./household";
  *
  * **The household is made here and not by signing in**, the way
  * `invitation.spec.ts` makes its own. `SignInScreen` does create one on a first
- * sign-in, but reaching the state that way raced, measured 2026-10-01:
- * `acceptInvitation()` writes a cookie, which refreshes the route the browser is
- * still on, which the proxy sends to `/` — and `/` renders before
- * `create_household` has returned, so the first screen a brand-new account ever
- * saw was the error boundary. That is a defect of its own and not this test's
- * subject, so the state is reached without it.
+ * sign-in, and that path is driven by `e2e/first-sign-in.spec.ts`, whose
+ * subject it is; reached through the screen here it would be a second test of
+ * it, in a test whose subject is the bar over a household with no worker.
  *
  * Scenario: a confirmed account whose household holds no worker signs in, finds
  * the add-a-worker card on the home screen and on `/settings`, and leaves from
