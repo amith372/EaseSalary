@@ -18,8 +18,8 @@ import { instructionIn } from "@/lib/help/gesture";
 import { bestReach, narrowTopics, saysNothing, type Reach } from "@/lib/help/match";
 import type { AnswerId } from "@/lib/help/answers";
 import { HELP_SCREENS, routeOf, screenName } from "@/lib/help/screens";
-import type { HelpTopic } from "@/lib/help/topics";
-import { he } from "@/lib/i18n/he";
+import { stepsOf, type HelpTopic } from "@/lib/help/topics";
+import { he, type Said } from "@/lib/i18n/he";
 import { RuleLink } from "@/components/WhyDisclosure";
 import type { CachedPage } from "@/lib/scrape/pageSections";
 
@@ -660,6 +660,7 @@ function Exchange({
 function Answer({ topic, compact }: { topic: HelpTopic; compact: boolean }) {
   const words = he.help.answer;
   const said = he.help.topics[topic.id];
+  const steps = stepsOf(topic.id);
 
   return (
     <div
@@ -704,6 +705,7 @@ function Answer({ topic, compact }: { topic: HelpTopic; compact: boolean }) {
           >
             {said.where}
           </span>
+          {steps.length === 0 ? null : <Steps steps={steps} compact={compact} />}
         </div>
         <Link
           href={routeOf(topic.screen)}
@@ -738,6 +740,65 @@ function Answer({ topic, compact }: { topic: HelpTopic; compact: boolean }) {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The presses a gesture takes, in order, under the one line that summarises it
+ * (specs.md item 24).
+ *
+ * **Nothing here is written by this file.** Every word is `he.help.topics`', and
+ * every control name inside a step is that control's own string, so a renamed
+ * button cannot leave a stale instruction behind (`he.ts`'s `CONTROLS`).
+ *
+ * **A control name is isolated and still translated.** It is a mixed run and
+ * wants its own `<bdi>` (`docs/agents/rtl.md`), but it is not an identifier:
+ * under Chrome's translator the button on the screen is translated too, so a
+ * step pinned to the Hebrew name would send the family looking for a word that
+ * is no longer drawn anywhere.
+ */
+function Steps({ steps, compact }: { steps: readonly Said[]; compact: boolean }) {
+  return (
+    <ol className={["mt-1 flex flex-col", compact ? "gap-2" : "gap-2.5"].join(" ")}>
+      {steps.map((step, index) => (
+        <li key={index} data-step={index + 1} className="flex items-start gap-2.5">
+          {/* The number is drawn and not read: the list element already carries
+              the order for anyone listening to it. */}
+          <span
+            aria-hidden="true"
+            className={[
+              "mt-0.5 flex flex-none items-center justify-center rounded-full bg-sage font-bold text-sage-ink",
+              compact ? "size-[21px] text-[11px]" : "size-[24px] text-[12px]",
+            ].join(" ")}
+          >
+            {index + 1}
+          </span>
+          <span
+            dir="auto"
+            className={[
+              "font-light text-ink-warm text-pretty",
+              compact ? "text-[13.5px]" : "text-[15px]",
+            ].join(" ")}
+          >
+            {step.map((part, at) =>
+              typeof part === "string" ? (
+                <span key={at}>{part}</span>
+              ) : (
+                <bdi
+                  key={at}
+                  // `box-decoration-clone`: a long label wraps, and without it the
+                  // border is drawn once around both fragments and closes on
+                  // neither.
+                  className="box-decoration-clone rounded-tint border border-line-strong bg-day px-1.5 font-semibold text-ink"
+                >
+                  {part.value}
+                </bdi>
+              ),
+            )}
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
 

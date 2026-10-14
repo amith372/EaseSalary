@@ -1,6 +1,6 @@
 import type { LegalLinkKey } from "@/lib/links";
 import type { ScreenId } from "@/lib/help/screens";
-import { he } from "@/lib/i18n/he";
+import { he, type Said } from "@/lib/i18n/he";
 
 /**
  * The questions the help screen offers as a closed list, each naming the screen
@@ -22,7 +22,7 @@ import { he } from "@/lib/i18n/he";
  * 4). What covers everything else is the screen list the panel falls back to,
  * which is the whole registry.
  *
- * The Hebrew is in `he.help.topics`, keyed by the same id, and `topics.test.ts`
+ * The Hebrew is in `he.help.topics`, keyed by the same id, and `match.test.ts`
  * holds the two lists to each other so neither can grow alone.
  */
 export interface HelpTopic {
@@ -49,15 +49,35 @@ export interface HelpTopic {
 
 export type TopicId = keyof typeof he.help.topics;
 
+/**
+ * The presses a topic's gesture takes, in order, or nothing where it takes one
+ * (specs.md item 24).
+ *
+ * **Four topics have steps and the rest have none**, which is the rule and not
+ * an omission: a gesture of a single press is already whole in `where`, and a
+ * numbered list of one is a list drawn for its own sake. The read goes through
+ * here so that the six without them still compile — `he.help.topics` is a union
+ * of two shapes, and only this function has to know it.
+ */
+export function stepsOf(id: TopicId): readonly Said[] {
+  const said = he.help.topics[id];
+  return "steps" in said ? said.steps : [];
+}
+
 export const HELP_TOPICS: readonly HelpTopic[] = [
   { id: "markSick", screen: "home", rule: "sickPay" },
   { id: "markVacation", screen: "home", rule: "annualLeave" },
+  // After the whole day, whose question it shares every word with but one:
+  // a tie is broken by this order, and the whole day is asked for more
+  // often (`match.ts`).
+  { id: "markHalfVacation", screen: "home", rule: "annualLeave" },
   { id: "vacationLeft", screen: "home", rule: "annualLeave" },
   // The payslip rule: every payment appears on it as its own line, with its
   // type and its amount. It is what item 2's structure rests on, and it is the
   // nearest thing in law to a rule about adding one.
   { id: "addPayment", screen: "payments", rule: "wageProtection" },
   { id: "addAdvance", screen: "payments", rule: "wageDeductions" },
+  { id: "recordNationalInsurance", screen: "payments", rule: "nationalInsurance" },
   { id: "recuperationWhen", screen: "payments", rule: "recuperation" },
   { id: "chooseHolidays", screen: "holidays", rule: "holidayWork" },
   { id: "deductMedicalInsurance", screen: "settings", rule: "medicalInsurance" },

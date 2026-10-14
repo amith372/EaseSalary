@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { FIRST_WORKER_NAME, switchToTestWorker, useHousehold } from "./household";
+import {
+  FIRST_WORKER_NAME,
+  openPaymentSections,
+  switchToTestWorker,
+  useHousehold,
+} from "./household";
 import { SATURDAY } from "../src/lib/dates";
 import { he } from "../src/lib/i18n/he";
 import { HELP_SCREENS } from "../src/lib/help/screens";
@@ -941,5 +946,194 @@ test.describe("a sentence that marks the calendar", () => {
 
     await expect(page.locator('[data-role="help-staged"]')).toHaveCount(0);
     await expect(page.locator('[data-role="help-answer"]')).toBeVisible();
+  });
+});
+
+/**
+ * The third shape of answer: how something is done, said as the presses it
+ * takes (specs.md item 24).
+ *
+ * **Two halves, and the second is the one that cannot go stale quietly.** The
+ * first is that the steps are drawn, in order, for a question typed in a
+ * family's own words. The second is that every control a step names is a
+ * control on the screen the steps name — so a button renamed on `/payments`
+ * fails here instead of leaving help telling a family to press a word that is
+ * no longer on any screen. `steps.test.ts` holds the other end of that join: a
+ * step may quote a control's own string and may never retype it.
+ */
+test.describe("the presses an answer lists", () => {
+  /** A question in a family's words, the topic it must reach, and the labels
+   * its steps must name in that order. Every label is read off the control's
+   * own key (`CLAUDE.md` rule 11). */
+  const HOW = [
+    {
+      query: "היא לקחה חצי יום חופש ביום רביעי, איך רושמים את זה",
+      topic: "markHalfVacation",
+      labels: [
+        he.calendar.picker.more.withPart,
+        he.calendar.picker.part.half,
+        he.calendar.marks(SATURDAY).vacation,
+      ],
+    },
+    {
+      query: "שילמנו את הביטוח הלאומי של הרבעון, איך רושמים את זה",
+      topic: "recordNationalInsurance",
+      labels: [
+        he.sheet.thirdParty.nationalInsurance,
+        he.month.actions.thirdParty.amount,
+        he.month.actions.thirdParty.submit,
+      ],
+    },
+  ] as const;
+
+  test.beforeEach(async ({ page }) => {
+    await useHousehold(page, "help", "steps");
+  });
+
+  /**
+   * Scenario: each question above, typed into `עוזר דיגיטלי` on `/help`.
+   *
+   * Expected: the turn's answer carries numbered steps, counted from one, and
+   * the labels appear in the order the gesture takes them — the half before the
+   * kind, because the kind chip is what commits the mark.
+   *
+   * What it would catch: steps drawn out of order, which is a gesture that
+   * fails at its last press; a card that drew the one-line answer and dropped
+   * the steps; and a question of this kind reaching the topic beside it.
+   */
+  test("draws the presses in order, under the line that summarises them", async ({
+    page,
+  }) => {
+    await page.goto("/help");
+
+    for (const [index, asked] of HOW.entries()) {
+      await ask(page, asked.query);
+      const answer = page.locator(
+        `[data-row="turn-${index + 1}"] [data-role="help-answer"]`,
+      );
+      await expect(answer).toHaveAttribute("data-topic", asked.topic);
+
+      const steps = answer.locator("[data-step]");
+      const drawn = await steps.count();
+      expect(drawn, asked.topic).toBeGreaterThan(1);
+      // Numbered from one, in the order they are drawn: handles that did not
+      // follow the order on the screen would make every assertion below true
+      // of the wrong row.
+      for (let at = 0; at < drawn; at += 1) {
+        await expect(steps.nth(at)).toHaveAttribute("data-step", String(at + 1));
+      }
+
+      // **The quoted labels and not the prose around them.** Each control a
+      // step names is drawn in its own isolate, so this reads exactly what the
+      // steps quote, in the order they quote it — searching the sentences
+      // instead would find the words of a control inside the step above it.
+      const quoted = await answer.locator("[data-step] bdi").allInnerTexts();
+      let reached = -1;
+      for (const label of asked.labels) {
+        const at = quoted.indexOf(label, reached + 1);
+        expect(at, `${asked.topic}: ${label}`).toBeGreaterThan(reached);
+        reached = at;
+      }
+    }
+  });
+
+  /**
+   * Scenario: the month screen, one day pressed open, and the fold the half day
+   * sits behind.
+   *
+   * Expected: every label the half-day steps name is a control on that screen,
+   * under that accessible name.
+   *
+   * What it would catch: a control renamed while the step kept the old word —
+   * the one failure a step list makes silently, because nothing about the help
+   * looks wrong afterwards.
+   */
+  test("names, for the half day, controls the month screen really has", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await switchToTestWorker(page);
+    // Two presses on one day: a selection of a single day, which is the only
+    // shape the half is offered on.
+    await page.locator('[data-date="2026-09-10"]').click();
+    await page.locator('[data-date="2026-09-10"]').click();
+
+    await expect(page.getByText(he.calendar.picker.title)).toBeVisible();
+    await page
+      .getByRole("button", { name: he.calendar.picker.more.withPart, exact: true })
+      .click();
+    await expect(page.getByText(he.calendar.picker.part.label)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: he.calendar.picker.part.half, exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: he.calendar.marks(SATURDAY).vacation,
+        exact: true,
+      }),
+    ).toBeVisible();
+  });
+
+  /**
+   * Scenario: `/payments`, every section open, with the three panels the step
+   * lists name opened in turn.
+   *
+   * Expected: each label quoted by `recordNationalInsurance`, `addAdvance` and
+   * `addPayment` is a control there.
+   *
+   * What it would catch: the same rename as above, on the screen carrying three
+   * of the four step lists.
+   */
+  test("names, on the payments screen, controls that screen really has", async ({
+    page,
+  }) => {
+    await page.goto("/payments");
+    await switchToTestWorker(page);
+    await openPaymentSections(page);
+
+    // The national insurance: the section's own way in, and the panel's fields.
+    // The alert's button carries the same wording by design (`he.ts`).
+    const words = he.month.actions.thirdParty;
+    const thirdParty = page.locator('[data-group="thirdParty"]');
+    await thirdParty.getByRole("button", { name: words.add, exact: true }).click();
+    await expect(thirdParty.getByText(words.kind)).toBeVisible();
+    await expect(
+      thirdParty.getByRole("button", {
+        name: he.sheet.thirdParty.nationalInsurance,
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(thirdParty.getByLabel(words.amount)).toBeVisible();
+    await expect(thirdParty.getByText(words.period)).toBeVisible();
+    await expect(thirdParty.getByLabel(words.paidOn)).toBeVisible();
+    await expect(
+      thirdParty.getByRole("button", { name: words.submit, exact: true }),
+    ).toBeVisible();
+
+    // The advance, given and repaid: two gestures and so two buttons.
+    const advance = he.month.actions.advances;
+    const advances = page.locator('[data-group="advances"]');
+    await advances.getByRole("button", { name: advance.grant, exact: true }).click();
+    await expect(advances.getByLabel(advance.amount)).toBeVisible();
+    await expect(advances.getByLabel(advance.givenOn)).toBeVisible();
+    await expect(
+      advances.getByRole("button", { name: advance.submitGrant, exact: true }),
+    ).toBeVisible();
+
+    // The one-off line.
+    const line = he.month.actions.lines;
+    const lines = page.locator('[data-group="userLines"]');
+    await lines.getByRole("button", { name: line.add, exact: true }).click();
+    await expect(lines.getByLabel(line.label)).toBeVisible();
+    await expect(lines.getByLabel(line.amount)).toBeVisible();
+    await expect(
+      lines.getByRole("button", { name: line.direction.addition, exact: true }),
+    ).toBeVisible();
+    await expect(
+      lines.getByRole("button", { name: line.direction.deduction, exact: true }),
+    ).toBeVisible();
+    await expect(
+      lines.getByRole("button", { name: line.submit, exact: true }),
+    ).toBeVisible();
   });
 });

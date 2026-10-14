@@ -56,6 +56,13 @@ const ASKED: { query: string; topic: TopicId; why: string }[] = [
     why: "marking vacation, said as a plan rather than as a gesture",
   },
   {
+    // The gesture the whole-day question cannot carry: it is three presses
+    // behind a fold, and a family asking for it gets the whole day otherwise.
+    query: "היא לקחה חצי יום חופש ביום רביעי, איך רושמים את זה",
+    topic: "markHalfVacation",
+    why: "half a day, said as what happened rather than as the part the panel asks for",
+  },
+  {
     query: "נשארו לה ימי חופש?",
     topic: "vacationLeft",
     why: "the balance, with the noun in a shorter form than the topic uses",
@@ -78,6 +85,15 @@ const ASKED: { query: string; topic: TopicId; why: string }[] = [
     query: "איפה רושמים קיזוז",
     topic: "addAdvance",
     why: "the sheet's word for an instalment, which no screen of the application uses",
+  },
+  {
+    // The payment is already made and is being recorded. The account's own
+    // `nationalInsuranceDue` answers when it falls due and how much, which is
+    // the same subject asked the other way round — so this pair is where the
+    // asking word earns its weight (`match.ts`).
+    query: "שילמנו את הביטוח הלאומי של הרבעון, איך רושמים את זה",
+    topic: "recordNationalInsurance",
+    why: "a payment already made, which is a gesture and not a figure",
   },
   {
     query: "באיזה חודש ההבראה",
@@ -191,6 +207,21 @@ describe("the closed list, as it narrows", () => {
     // Said something, even though nothing in the application answers it.
     expect(saysNothing("גידול עגבניות")).toBe(false);
     expect(saysNothing("חופשה")).toBe(false);
+  });
+
+  it("keeps the half day and the whole day apart on the one word between them", () => {
+    // They share every other word, so the registry's order decides a tie and
+    // the whole day is first. What must not happen is the half day being
+    // unreachable.
+    expect(bestTopic("איך מסמנים חצי יום חופשה", SCRAPED)?.id).toBe("markHalfVacation");
+    expect(bestTopic("איך מסמנים יום חופשה", SCRAPED)?.id).toBe("markVacation");
+  });
+
+  it("narrows to the half day while the word is still half-typed", () => {
+    expect(narrowTopics("חצי", SCRAPED).map((topic) => topic.id)).toContain(
+      "markHalfVacation",
+    );
+    expect(narrowTopics("חצי", SCRAPED).length).toBeLessThan(HELP_TOPICS.length);
   });
 
   it("narrows while a word is still half-typed", () => {

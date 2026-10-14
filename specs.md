@@ -1218,7 +1218,14 @@ a question about one of them is the expensive mistake.
     to press once there, which is the whole answer where the question is where to go;
     where the question asks what the family owes or when it falls due, it answers that —
     from the figures the replay has already produced and the explanations and reference
-    links the lines already carry. It writes no explanation of its own, so an answer still
+    links the lines already carry.
+    **Where the question is how something is done, the answer is the presses in order.** A
+    gesture that takes more than one press is answered as the steps it takes, each naming
+    its control in that control's own words rather than in a second wording of them, so a
+    control that is renamed cannot leave a stale instruction behind; a gesture of one press
+    is still answered in one line. The steps name no worker, no figure and no month, as the
+    rest of the list does not.
+    It writes no explanation of its own, so an answer still
     lives in exactly one place, and an answer listing what must be paid says which list it
     is giving, pension and severance being out of scope with their row deliberately empty.
     **An answer about what is owed lists what is left to pay, not what exists:** a payment

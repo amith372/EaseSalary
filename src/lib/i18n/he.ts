@@ -158,6 +158,59 @@ const SCREEN_NAMES = {
   help: "עוזר דיגיטלי",
 } as const;
 
+/**
+ * The controls a help step quotes, written once and read both by the control
+ * itself and by the step that names it (specs.md item 24).
+ *
+ * **A step may never retype a label.** Help telling a family to press one word
+ * while the button says another is worse than no help at all, and a button
+ * renamed leaves nothing behind in a step that spelled the old name out — so
+ * both read this one string and a rename moves the two together. It is the
+ * `SCREEN_NAMES` pattern above, for the same reason.
+ *
+ * **Only the labels a step quotes are here.** A control no step names stays
+ * where it is written; hoisting it would be a second place to look for it.
+ */
+const CONTROLS = {
+  /** The month's calendar: the panel a drawn selection opens, and the presses a
+   * half day of vacation takes inside it. */
+  howToMark: "איך לסמן?",
+  moreWithPart: "להוספת הערה / שינוי לחצי יום",
+  partTaken: "כמה מהיום נלקח",
+  halfDay: "חצי יום",
+  markVacation: "חופשה",
+  /**
+   * Two controls, one wording: the alert's ready-made button and the
+   * third-party section's own. They open the same panel on the same screen, so
+   * a family that met one has to recognise the other, and the two are renamed
+   * together.
+   */
+  recordThirdPartyPayment: "לרשום תשלום",
+  paidFor: "על מה שולם",
+  paidAmount: "כמה שולם",
+  paidPeriod: "בגין אילו חודשים",
+  paidOn: "מתי שולם",
+  recordPayment: "לרשום",
+  /** The advances section: giving one, and recording an instalment against one
+   * that already exists. The two amounts are two fields in two panels, so they
+   * are two keys that happen to share a word. */
+  grantAdvance: "לתת מקדמה",
+  advanceAmount: "סכום",
+  advanceGivenOn: "מתי ניתנה",
+  giveAdvance: "לתת",
+  repayAdvance: "לפרוע",
+  /** The one-off line: the button that opens the panel, and the fields in it. */
+  addOneOffLine: "להוסיף שורה חד־פעמית",
+  lineLabel: "על מה",
+  lineAmount: "סכום",
+  lineAddition: "תוספת",
+  lineDeduction: "הורדה",
+  addLine: "להוסיף",
+  /** The kind chosen in `על מה שולם`, which is also the sheet's own name
+   * for that row. */
+  nationalInsuranceKind: "ביטוח לאומי",
+} as const;
+
 /** The words that agree with the day rather than describing it. */
 const AGREEMENT = {
   feminine: {
@@ -1099,6 +1152,27 @@ export const he = {
         ask: "איך מסמנים יום חופשה?",
         where: "בלוח של החודש בוחרים חופשה — לוחצים על היום, או גוררים על כמה ימים",
       },
+      /**
+       * The half day, which `markVacation` cannot carry: it is three presses
+       * behind a fold, the part is chosen *before* the kind chip commits the
+       * mark, and it is refused on a range — none of which a one-line `where`
+       * can say (specs.md item 24).
+       *
+       * **It sits after the whole-day question and not before it.** The two
+       * score the same on every word they share, so the registry's order is
+       * what decides a tie, and the question a family asks most often is the
+       * whole day.
+       */
+      markHalfVacation: {
+        ask: "איך מסמנים חצי יום חופשה?",
+        where: "בלוח של החודש, על יום אחד — בוחרים חצי יום לפני שלוחצים על חופשה",
+        steps: [
+          ["בלוח של החודש לוחצים על יום אחד. לא גוררים על טווח — חצי יום נרשם על יום בודד בלבד"],
+          ["בחלון ", { value: CONTROLS.howToMark }, " לוחצים ", { value: CONTROLS.moreWithPart }],
+          ["תחת ", { value: CONTROLS.partTaken }, " בוחרים ", { value: CONTROLS.halfDay }],
+          ["לוחצים ", { value: CONTROLS.markVacation }, " — זו הלחיצה ששומרת את הסימון"],
+        ] as Said[],
+      },
       vacationLeft: {
         ask: "כמה ימי חופשה נשארו?",
         // Not "the rail on the right": a position that moves with the layout
@@ -1120,6 +1194,15 @@ export const he = {
         ask: "איך מוסיפים תוספת או הורדה לשכר?",
         where:
           "בקטע תוספות והורדות שהוספת, בכפתור להוסיף שורה חד־פעמית. שורה שחוזרת בכל חודש נקבעת בדף האישי",
+        /** The one-off line, press by press. The recurring one stays in `where`
+         * and gets no steps: it is set on another screen, and a step list that
+         * crossed screens would be two gestures in one list. */
+        steps: [
+          ["במסך התשלומים, בקטע תוספות והורדות שהוספת, לוחצים ", { value: CONTROLS.addOneOffLine }],
+          ["ממלאים ", { value: CONTROLS.lineLabel }, " וכן ", { value: CONTROLS.lineAmount }],
+          ["בוחרים ", { value: CONTROLS.lineAddition }, " או ", { value: CONTROLS.lineDeduction }],
+          ["לוחצים ", { value: CONTROLS.addLine }],
+        ] as Said[],
       },
       addAdvance: {
         /**
@@ -1139,6 +1222,36 @@ export const he = {
          * `קיזוז` wants the second. */
         where:
           "בקטע מקדמות — בכפתור שמוסיף מקדמה חדשה, או בכפתור לפרוע שרושם קיזוז על מקדמה קיימת",
+        /** Two gestures and so two halves: the first three steps give an
+         * advance, the last two record an instalment against one that already
+         * exists — which is what a family typing `קיזוז` came for. */
+        steps: [
+          ["במסך התשלומים, בקטע מקדמות, לוחצים ", { value: CONTROLS.grantAdvance }],
+          ["ממלאים ", { value: CONTROLS.advanceAmount }, " וכן ", { value: CONTROLS.advanceGivenOn }],
+          ["לוחצים ", { value: CONTROLS.giveAdvance }],
+          ["לרשום קיזוז על מקדמה שכבר קיימת: באותה מקדמה לוחצים ", { value: CONTROLS.repayAdvance }],
+          ["ממלאים ", { value: CONTROLS.advanceAmount }, " שנפרע ולוחצים ", { value: CONTROLS.repayAdvance }],
+        ] as Said[],
+      },
+      /**
+       * Recording a payment already made to the national insurance, which the
+       * user asked for by name (2026-10-14).
+       *
+       * **Two ways in and one list**, because they open the same panel: the
+       * alert's own ready-made button, which arrives with the kind and the
+       * quarter already chosen, and the section's own. A list per third-party
+       * kind would be six lists of the same five presses.
+       */
+      recordNationalInsurance: {
+        ask: "איך מוסיפים תשלום לביטוח לאומי?",
+        where: "בקטע תשלומים לגורמים שלישיים, או מההתראה על הרבעון שטרם נרשם",
+        steps: [
+          ["מההתראה על הרבעון לוחצים ", { value: CONTROLS.recordThirdPartyPayment }, " — ההתראה מגיעה עם הסוג והרבעון כבר מסומנים"],
+          ["או במסך התשלומים, בקטע תשלומים לגורמים שלישיים, לוחצים ", { value: CONTROLS.recordThirdPartyPayment }],
+          ["בשדה ", { value: CONTROLS.paidFor }, " בוחרים ", { value: CONTROLS.nationalInsuranceKind }],
+          ["ממלאים את השדות ", { value: CONTROLS.paidAmount }, ", ", { value: CONTROLS.paidPeriod }, " וכן ", { value: CONTROLS.paidOn }],
+          ["לוחצים ", { value: CONTROLS.recordPayment }],
+        ] as Said[],
       },
       recuperationWhen: {
         ask: "מתי משלמים דמי הבראה?",
@@ -1465,7 +1578,7 @@ export const he = {
      * Saturday-resting worker reads "שבת חופשית" and a Friday-resting one
      * "שישי חופשי" (specs.md item 5). */
     marks: (restDay: RestDay) => ({
-      vacation: "חופשה",
+      vacation: CONTROLS.markVacation,
       sick: "מחלה",
       /** What a holiday's own cell says, in either weight. The **weight** is
        * what tells the two apart on the calendar — an outline for one they did
@@ -1516,7 +1629,7 @@ export const he = {
     /** The panel that opens once a range has been drawn and asks what the range
      * means. The kind is chosen after the days rather than before them. */
     picker: {
-      title: "איך לסמן?",
+      title: CONTROLS.howToMark,
       /**
        * **The one control here that reaches the store**, beside three chips
        * that mark and a `ביטול` that closes. So it names its object: what it
@@ -1536,9 +1649,9 @@ export const he = {
        * two kinds that may not are not offered while חצי יום stands.
        */
       part: {
-        label: "כמה מהיום נלקח",
+        label: CONTROLS.partTaken,
         whole: "יום מלא",
-        half: "חצי יום",
+        half: CONTROLS.halfDay,
         rule: (restDay: RestDay) =>
           `חופשה אפשר לקחת גם כחצי יום, והיא נגרעת מהמכסה באותו יחס. מחלה ו${day(restDay).short} ${agrees(day(restDay)).free} הם ימים שלמים.`,
       },
@@ -1549,7 +1662,7 @@ export const he = {
        * carried a note; a range, which cannot be taken in
        * part, is offered only the note. */
       more: {
-        withPart: "להוספת הערה / שינוי לחצי יום",
+        withPart: CONTROLS.moreWithPart,
         noteOnly: "להוספת הערה",
       },
       note: {
@@ -1652,7 +1765,7 @@ export const he = {
       nationalInsurance: (quarter: string) => ({
         title: ["ביטוח לאומי לרבעון"] as Said,
         note: ["התשלום על ", { value: quarter }, " טרם נרשם."] as Said,
-        action: "לרשום תשלום",
+        action: CONTROLS.recordThirdPartyPayment,
       }),
       documentExpired: (document: ExpiringDocument, on: string) => ({
         title: ["פג התוקף של ", DOCUMENT_NAMES[document]] as Said,
@@ -2102,7 +2215,7 @@ export const he = {
          * a summarised row above and the lines it summarises below must not
          * read as two different things (specs.md Part 5). */
         empty: "לא הוספת שורות לחודש הזה.",
-        add: "להוסיף שורה חד־פעמית",
+        add: CONTROLS.addOneOffLine,
         /**
          * **Both kinds of line exist and only one of them is made here**, said
          * where the user is standing rather than left to be discovered: a
@@ -2115,12 +2228,12 @@ export const he = {
         oneOffOnly: "שורה שמופיעה בחודש הזה בלבד — תוספת או הורדה.",
         standing: (gender: Gender) =>
           `שורה שחוזרת בכל חודש נקבעת פעם אחת בדף ${workerWords(gender).roleDefinite}`,
-        label: "על מה",
+        label: CONTROLS.lineLabel,
         labelHint: "במילים שלך — כך זה יופיע בדף המשכורת",
-        amount: "סכום",
+        amount: CONTROLS.lineAmount,
         note: "למה",
         noteHint: "לא חובה, אבל זה מה שיסביר את השורה בעוד שנה",
-        submit: "להוסיף",
+        submit: CONTROLS.addLine,
         /** The same panel, reopened over a line that already exists (item 20).
          * The verb changes because the gesture does: adding makes a line and
          * this one corrects the line they are looking at. */
@@ -2134,8 +2247,8 @@ export const he = {
          * the button without the row around it. */
         removeLabel: (label: string) => `להסיר את השורה "${label}"`,
         direction: {
-          addition: "תוספת",
-          deduction: "הורדה",
+          addition: CONTROLS.lineAddition,
+          deduction: CONTROLS.lineDeduction,
         },
         /**
          * **Named for what the choice does and not for the row it lands under**
@@ -2180,8 +2293,8 @@ export const he = {
         /** Given before the application existed, so no month granted it
          * (item 6) — and so no month is too early to repay it in. */
         fromOpening: "מלפני תחילת השימוש ביישום",
-        grant: "לתת מקדמה",
-        repay: "לפרוע",
+        grant: CONTROLS.grantAdvance,
+        repay: CONTROLS.repayAdvance,
         repayLabel: (advanceNumber: number) =>
           `לרשום פירעון של מקדמה ${advanceNumber}`,
         /** This month's own movements, listed under the advances they belong to
@@ -2191,14 +2304,14 @@ export const he = {
           granted: "מקדמה שניתנה",
           repaid: "מקדמה שנפרעה",
         },
-        amount: "סכום",
+        amount: CONTROLS.advanceAmount,
         note: "למה",
         noteHint: "לא חובה, אבל זה מה שיסביר את השורה בעוד שנה",
         /** The day the money was handed over, which the family's own workbook
          * records by naming the advance after it (item 20). The hint says the
          * month it has to fall in, because that is the only thing refused about
          * it — so the refusal is read before the press and not after it. */
-        givenOn: "מתי ניתנה",
+        givenOn: CONTROLS.advanceGivenOn,
         givenOnHint: (month: string) => `יום מתוך ${month} — החודש שהמקדמה נרשמת בו.`,
         /**
          * Splitting a grant into repayments as it is given (specs.md item 20).
@@ -2242,8 +2355,8 @@ export const he = {
           /** Said once under the button: the split leaves no plan behind it. */
           note: "הפריסה נרשמת כפירעונות רגילים, אחד בכל חודש. אין לוח תשלומים שנשמר מעליהם.",
         },
-        submitGrant: "לתת",
-        submitRepay: "לפרוע",
+        submitGrant: CONTROLS.giveAdvance,
+        submitRepay: CONTROLS.repayAdvance,
         /** The same panel, reopened over a movement the month already records
          * (item 20). The amount of a movement is what they typed, so it is
          * corrected rather than overridden — and the verb changes because the
@@ -2301,11 +2414,11 @@ export const he = {
          * added to their salary nor taken out of it (item 16). */
         lead: "כסף ששולם החודש לגורם אחר — מבטח רפואי, ביטוח לאומי, אגרות ודמי חברה. הוא אינו מתווסף למשכורת העובד/ת וגם אינו מנוכה ממנה.",
         empty: "לא נרשם החודש תשלום לגורם שלישי.",
-        add: "לרשום תשלום",
+        add: CONTROLS.recordThirdPartyPayment,
         /** The kinds still open this month. One already recorded is not
          * offered, because the sheet holds one row per kind and the refusal is
          * what would answer the click (item 16). */
-        kind: "על מה שולם",
+        kind: CONTROLS.paidFor,
         /** Every kind taken. Not a refusal — nothing was refused, there is
          * simply nothing left to add — so it stands where the button was. */
         allRecorded:
@@ -2317,7 +2430,7 @@ export const he = {
          * could only record it wrongly. */
         elsewhere:
           "החודש שעל המסך כבר רושם תשלום מהסוג הזה, לתקופה שאינה צמודה לרבעון שנבחר. תשלום נרשם בחודש שבו הוא שולם — אפשר לבחור אותו בראש המסך.",
-        amount: "כמה שולם",
+        amount: CONTROLS.paidAmount,
         /** The label asks for the note rather than for a reason: "למה" alone
          * read as a question the user could not place. The field is the same
          * one, among the four item 16 records, and the hint still says what it
@@ -2334,7 +2447,7 @@ export const he = {
          * yearly fees run forward from an anniversary (item 15) and are left
          * empty rather than guessed.
          */
-        period: "בגין אילו חודשים",
+        period: CONTROLS.paidPeriod,
         periodHint:
           "לא חובה. אם התשלום מכסה רק את החודש שבו שולם, אפשר להשאיר ריק.",
         periodFrom: "מחודש",
@@ -2349,7 +2462,7 @@ export const he = {
          * national-insurance label ends "התשלום בוצע ב ______", a blank the
          * family used to fill by hand.
          */
-        paidOn: "מתי שולם",
+        paidOn: CONTROLS.paidOn,
         paidOnHint:
           "היום שבו הכסף יצא מהחשבון. הוא לא בהכרח החודש שבו התשלום נרשם — ביטוח לאומי משולם בדיעבד.",
         /** When the cover runs out (item 27's "עומד לפוג"). Shown only for the
@@ -2357,7 +2470,7 @@ export const he = {
         expiresOn: "עד מתי הביטוח בתוקף",
         expiresOnHint:
           "לא חובה. בלי למלא, נחשב שנה מיום התשלום — וכך קובעות רוב הפוליסות. אם הפוליסה שלכם לתקופה אחרת, כדאי לכתוב את התאריך שלה.",
-        submit: "לרשום",
+        submit: CONTROLS.recordPayment,
         /** Reopened with what it holds already in the fields, because
          * correcting a payment by removing it and recording it again is the
          * same two refusals read twice and loses the note in between
@@ -3990,7 +4103,7 @@ export const he = {
       visaExtensionFee: "אגרה להארכת ויזה",
       workerVisa: "ויזת עובד זר",
       licenceFee: "אגרה להארכת רשיון העסקה",
-      nationalInsurance: "ביטוח לאומי",
+      nationalInsurance: CONTROLS.nationalInsuranceKind,
     },
 
     /** The sheet prints a total per column before the month's own two totals:

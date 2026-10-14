@@ -127,9 +127,13 @@ export function stemsOf(word: string): string[] {
  * absent, because `לפני הייצוא` is a screen's name and a user typing it must
  * reach that screen.
  */
-const UNINFORMATIVE = new Set([
+const ASKING = [
   "מה", "מי", "מתי", "איך", "איפה", "למה", "כמה", "האם", "איזה", "היכן",
   "מדוע", "כיצד", "לאן",
+];
+
+const UNINFORMATIVE = new Set([
+  ...ASKING,
   "אני", "אתה", "את", "הוא", "היא", "אנחנו", "הם", "הן",
   "שלי", "שלו", "שלה", "שלהם", "שלנו",
   "של", "על", "עם", "זה", "זו", "זאת", "אלה", "אלו",
@@ -203,6 +207,22 @@ function reaches(typed: string[], field: string[][]): boolean {
  */
 const WEIGHTS = {
   ask: 6,
+  /**
+   * The question word the query and an entry's own question share.
+   *
+   * **It is scored beside something else and never on its own.** A question
+   * word says nothing about which screen is wanted — that is why it is in
+   * `UNINFORMATIVE`, and why a query of nothing but one still reaches nothing —
+   * but it does say what kind of answer is wanted, and two entries can hold the
+   * same nouns: `איך מוסיפים תשלום לביטוח לאומי` is after the presses, and
+   * `מתי התשלום הבא לביטוח לאומי` after a date. Without this the nouns alone
+   * decide, and the longer question wins both.
+   *
+   * It sits above the screen's name and below the question itself: sharing a
+   * question word is weaker evidence than sharing the noun that was asked
+   * about, and stronger than landing on the same screen.
+   */
+  asking: 5,
   screenName: 4,
   where: 3,
   settles: 2,
@@ -268,6 +288,26 @@ export function sectionBehind(
   return null;
 }
 
+/** The question words of a piece of text, as stems, so a prefixed `באיזה`
+ * counts as `איזה`. */
+function askingIn(text: string): Set<string> {
+  const found = new Set<string>();
+  for (const forms of wordsOf(text)) {
+    for (const form of forms) if (ASKING.includes(form)) found.add(form);
+  }
+  return found;
+}
+
+/** Whether the query and an entry's own question ask in the same word. */
+function asksAlike(query: string, ask: string): boolean {
+  const asked = askingIn(query);
+  if (asked.size === 0) return false;
+  for (const word of askingIn(ask)) {
+    if (asked.has(word)) return true;
+  }
+  return false;
+}
+
 /** A topic that matched, with what it scored. */
 export interface HelpHit {
   topic: HelpTopic;
@@ -319,7 +359,9 @@ export function matchTopics(query: string, pages: readonly CachedPage[]): HelpHi
   const hits: HelpHit[] = [];
   for (const topic of HELP_TOPICS) {
     const score = scoreOf(typed, haystackOf(topic, pages));
-    if (score > 0) hits.push({ topic, score });
+    if (score === 0) continue;
+    const alike = asksAlike(query, he.help.topics[topic.id].ask);
+    hits.push({ topic, score: score + (alike ? WEIGHTS.asking : 0) });
   }
   return hits.sort((one, other) => other.score - one.score);
 }
@@ -428,7 +470,12 @@ export function bestReach(
   );
   for (const id of ANSWER_IDS) {
     const score = scoreOf(typed, answerHaystackOf(id, pages, names));
-    if (score > 0) scored.push({ reach: { kind: "answer", id }, score });
+    if (score === 0) continue;
+    const alike = asksAlike(query, he.help.answers[id].ask);
+    scored.push({
+      reach: { kind: "answer", id },
+      score: score + (alike ? WEIGHTS.asking : 0),
+    });
   }
   // A stable sort, so the topics keep the registry's order among themselves and
   // an answer passes one only by scoring higher than it.

@@ -277,6 +277,11 @@ test.describe("an advance given and repaid, walked across months (item 20)", () 
  * to ₪2,000 would leave ₪1,000 of repayments against a debt that never existed,
  * which is refused.
  *
+ * **The day is part of this gesture.** The seeded grant was given before the
+ * field existed, so the panel opens with it empty and asks for it before it
+ * takes the amount — the correction completes a dateless grant rather than
+ * carrying its datelessness forward (`reviewAdvanceEdit`).
+ *
  * **What it would catch**: the correction minting a second advance rather than
  * editing the first, which is what removing and re-recording it does — the row
  * would be `advance 2` and the ₪3,000 debt would still be there; the amount
@@ -307,6 +312,11 @@ test.describe("an advance corrected in place (item 20)", () => {
     await advances
       .getByRole("textbox", { name: words.amount, exact: true })
       .fill("3500");
+    // **The day is asked for here and the seeded grant has none** — it was given
+    // before the field existed, and a correction completes it rather than
+    // leaving it dateless (`reviewAdvanceEdit`). Without it the save is refused
+    // and the amount never lands.
+    await advances.getByLabel(words.givenOn).fill("2026-02-11");
     await advances
       .getByRole("textbox", { name: words.note, exact: true })
       .fill("תוקן: ניתנו 3,500");
@@ -320,6 +330,8 @@ test.describe("an advance corrected in place (item 20)", () => {
     await expect(advance).toContainText(formatAgorot(50000));
     await expect(advance).toContainText("תוקן: ניתנו 3,500");
     await expect(advance).not.toContainText(words.settled);
+    // And the day the correction completed, which the row had none of before.
+    await expect(advance).toContainText("11 בפברואר 2026");
 
     // ₪2,000 is less than the ₪3,000 already repaid, so it would leave
     // repayments of a debt that never existed. Refused, and said on the screen.
