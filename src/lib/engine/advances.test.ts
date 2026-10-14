@@ -598,7 +598,14 @@ describe("correcting a movement", () => {
     monthOf(april, [repaid(1, 100000)]),
   ]);
   const standing = ledger[0];
-  const edit = (amount: string, note = "") => ({ amount, note });
+  /** The grant is February's, so its day is judged against February (item 20).
+   * The ninth is the day each correction below keeps unless it is the subject. */
+  const GIVEN_ON_IN_FEBRUARY = "2026-02-09";
+  const edit = (amount: string, note = "", givenOn = GIVEN_ON_IN_FEBRUARY) => ({
+    amount,
+    note,
+    givenOn,
+  });
 
   /** The number is the application's and the kind is the gesture: neither is in
    * the draft, so a correction cannot turn a grant into a repayment or mint a
@@ -608,6 +615,7 @@ describe("correcting a movement", () => {
       edit("2500", "  תוקן: ₪2,500 ולא ₪3,000  "),
       granted(1, 300000),
       standing,
+      february,
     );
     expect(reviewed).toEqual({
       ok: true,
@@ -616,21 +624,27 @@ describe("correcting a movement", () => {
         kind: "granted",
         agorot: 250000,
         note: "תוקן: ₪2,500 ולא ₪3,000",
+        givenOn: GIVEN_ON_IN_FEBRUARY,
       },
     });
   });
 
   it("drops a reason emptied out, rather than storing an empty one", () => {
-    const reviewed = reviewAdvanceEdit(edit("2500"), granted(1, 300000, "ישן"), standing);
+    const reviewed = reviewAdvanceEdit(edit("2500"), granted(1, 300000, "ישן"), standing, february);
     expect(reviewed).toEqual({
       ok: true,
-      advance: { number: 1, kind: "granted", agorot: 250000 },
+      advance: {
+        number: 1,
+        kind: "granted",
+        agorot: 250000,
+        givenOn: GIVEN_ON_IN_FEBRUARY,
+      },
     });
   });
 
   it("refuses an amount that is not one, a minus, and zero", () => {
     for (const amount of ["", "כן", "-100", "0"]) {
-      expect(reviewAdvanceEdit(edit(amount), granted(1, 300000), standing)).toEqual({
+      expect(reviewAdvanceEdit(edit(amount), granted(1, 300000), standing, february)).toEqual({
         ok: false,
         reason: "amount",
       });
@@ -644,13 +658,18 @@ describe("correcting a movement", () => {
    * rounded away from zero, so ₪1,999.99 *is* ₪2,000 and would be accepted
    * (item 3). */
   it("refuses a grant corrected below what has already been repaid", () => {
-    expect(reviewAdvanceEdit(edit("1999"), granted(1, 300000), standing)).toEqual({
+    expect(reviewAdvanceEdit(edit("1999"), granted(1, 300000), standing, february)).toEqual({
       ok: false,
       reason: "advanceBelowRepaid",
     });
-    expect(reviewAdvanceEdit(edit("2000"), granted(1, 300000), standing)).toEqual({
+    expect(reviewAdvanceEdit(edit("2000"), granted(1, 300000), standing, february)).toEqual({
       ok: true,
-      advance: { number: 1, kind: "granted", agorot: 200000 },
+      advance: {
+        number: 1,
+        kind: "granted",
+        agorot: 200000,
+        givenOn: GIVEN_ON_IN_FEBRUARY,
+      },
     });
   });
 
@@ -660,21 +679,112 @@ describe("correcting a movement", () => {
    * corrected is already inside the figures the ledger counted — an edit judged
    * against the ₪1,000 outstanding alone would refuse raising it by an agora. */
   it("refuses a repayment corrected past the debt, and takes what exactly clears it", () => {
-    expect(reviewAdvanceEdit(edit("2000.01"), repaid(1, 100000), standing)).toEqual({
+    expect(reviewAdvanceEdit(edit("2000.01"), repaid(1, 100000), standing, february)).toEqual({
       ok: false,
       reason: "advanceOverRepaid",
     });
-    expect(reviewAdvanceEdit(edit("2000"), repaid(1, 100000), standing)).toEqual({
+    expect(reviewAdvanceEdit(edit("2000"), repaid(1, 100000), standing, february)).toEqual({
       ok: true,
       advance: { number: 1, kind: "repaid", agorot: 200000 },
     });
   });
 
+  /**
+   * **The day a grant was given is corrected like its amount** (item 17: the
+   * entry is corrected in everything it records; item 20: a grant records the
+   * day). It is the one field a wrong value could otherwise never be put right
+   * in: a grant with repayments standing against it cannot be removed and
+   * entered again (`whyRemovalIsRefused`), so a date typed wrong would stay
+   * wrong for the life of the employment.
+   *
+   * The amount is unchanged here on purpose — ₪3,000 corrected to ₪3,000 — so
+   * what the assertion measures is the date alone.
+   */
+  it("moves a grant's day to another day of the same month", () => {
+    const movement: Advance = { ...granted(1, 300000), givenOn: "2026-02-09" };
+    expect(
+      reviewAdvanceEdit(edit("3000", "", "2026-02-20"), movement, standing, february),
+    ).toEqual({
+      ok: true,
+      advance: {
+        number: 1,
+        kind: "granted",
+        agorot: 300000,
+        givenOn: "2026-02-20",
+      },
+    });
+  });
+
+  /**
+   * **The month it is recorded in and not the day it used to hold.** A grant
+   * recorded as February's and dated March is the contradiction item 20 refuses
+   * where the date is entered, and a correction is the other way to reach it;
+   * nothing typed and something that is not a date are the same refusal, for
+   * the reason `AdvanceRefusal` gives.
+   *
+   * **The old date is not kept as a fallback**, which is what the last case
+   * says: a correction that silently restored February's ninth would store a
+   * date the user had just cleared, and the screen would show a day they had
+   * not typed.
+   */
+  it("refuses a grant's day outside the month it is recorded in, and refuses none", () => {
+    const movement: Advance = { ...granted(1, 300000), givenOn: "2026-02-09" };
+    for (const typed of ["2026-03-01", "2026-01-31", "", "ה-9 בפברואר", "2026-02-30"]) {
+      expect(
+        reviewAdvanceEdit(edit("3000", "", typed), movement, standing, february),
+      ).toEqual({ ok: false, reason: "advanceDate" });
+    }
+  });
+
+  /**
+   * **A grant stored with no day is completed by the correction**, not kept
+   * dateless: item 20 says a grant recorded in a month carries the day it was
+   * given, and `seed.ts` writes one without — the ordinary case for every
+   * advance granted before the field was asked for. So the same refusal stands
+   * here as on a grant being given, and the field asks for the day rather than
+   * accepting the amount alone.
+   */
+  it("gives a dateless grant the day typed, and refuses the correction with none", () => {
+    expect(
+      reviewAdvanceEdit(edit("3000", "", "2026-02-18"), granted(1, 300000), standing, february),
+    ).toEqual({
+      ok: true,
+      advance: {
+        number: 1,
+        kind: "granted",
+        agorot: 300000,
+        givenOn: "2026-02-18",
+      },
+    });
+    expect(
+      reviewAdvanceEdit(edit("3000", "", ""), granted(1, 300000), standing, february),
+    ).toEqual({ ok: false, reason: "advanceDate" });
+  });
+
+  /**
+   * **A repayment is dated by the month it is entered for** (item 20), so the
+   * panel does not ask and a date that arrives all the same is ignored rather
+   * than refused — a refusal would be about a field the screen never showed.
+   */
+  it("ignores a date sent with a repayment's correction", () => {
+    expect(
+      reviewAdvanceEdit(edit("500", "", "2026-02-20"), repaid(1, 100000), standing, february),
+    ).toEqual({
+      ok: true,
+      advance: { number: 1, kind: "repaid", agorot: 50000 },
+    });
+  });
+
   /** A grant raised is never refused: it only ever makes the debt larger. */
   it("takes a grant corrected upwards", () => {
-    expect(reviewAdvanceEdit(edit("4000"), granted(1, 300000), standing)).toEqual({
+    expect(reviewAdvanceEdit(edit("4000"), granted(1, 300000), standing, february)).toEqual({
       ok: true,
-      advance: { number: 1, kind: "granted", agorot: 400000 },
+      advance: {
+        number: 1,
+        kind: "granted",
+        agorot: 400000,
+        givenOn: GIVEN_ON_IN_FEBRUARY,
+      },
     });
   });
 });
@@ -789,10 +899,10 @@ describe("the day an advance was given", () => {
   });
 
   /**
-   * A correction changes the amount and the reason, and the panel does not ask
-   * for the date again — so the movement has to carry it through. Without this
-   * the first correction of a figure would drop the date in silence, with
-   * nothing on the screen to say there had been one.
+   * A correction of the amount leaves the day alone — the panel opens holding
+   * it, so what comes back is what was there. Without the field the first
+   * correction of a figure would drop the date in silence, with nothing on the
+   * screen to say there had been one.
    */
   it("survives a correction of the amount", () => {
     const movement: Advance = {
@@ -801,14 +911,19 @@ describe("the day an advance was given", () => {
       agorot: 300000,
       givenOn: "2026-02-14",
     };
-    const reviewed = reviewAdvanceEdit({ amount: "2500", note: "" }, movement, {
-      number: 1,
-      principalAgorot: 300000,
-      repaidAgorot: 0,
-      outstandingAgorot: 300000,
-      grantedIn: february,
-      instalments: [],
-    });
+    const reviewed = reviewAdvanceEdit(
+      { amount: "2500", note: "", givenOn: "2026-02-14" },
+      movement,
+      {
+        number: 1,
+        principalAgorot: 300000,
+        repaidAgorot: 0,
+        outstandingAgorot: 300000,
+        grantedIn: february,
+        instalments: [],
+      },
+      february,
+    );
     expect(reviewed.ok && reviewed.advance).toEqual({
       number: 1,
       kind: "granted",

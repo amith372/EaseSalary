@@ -1190,6 +1190,10 @@ function AdvancesControl({
     setOpen({ gesture: "edit", number: advance.number, kind: advance.kind });
     setAmount(amountFieldValue(advance.agorot));
     setNote(advance.note ?? "");
+    // A grant's own day, already in the field (item 17: the entry is corrected
+    // in everything it records). Empty for a grant stored before the field
+    // existed, which the correction then asks for rather than keeping dateless.
+    setGivenOn(advance.givenOn ?? "");
     // The split is the grant panel's and a correction is not a grant: left
     // standing, a count typed and abandoned would ride along with the next
     // thing saved from the same panel.
@@ -1242,6 +1246,7 @@ function AdvancesControl({
           ? updateAdvance(workerId, month, open.number, open.kind, {
               amount,
               note,
+              givenOn,
             })
           : open.gesture === "grant" && splitCount !== null
             ? splitAdvance(workerId, month, {
@@ -1291,6 +1296,9 @@ function AdvancesControl({
   }
 
   const granting = open?.gesture === "grant";
+  /** Whether the open panel is a grant's, by either gesture — which is which
+   * of them asks for the day the money was handed over. */
+  const grantDated = granting || (open?.gesture === "edit" && open.kind === "granted");
   /** A count typed that is not a span: said here, and the button withheld while
    * it stands (`splitCountOf`). */
   const splitRefused = splitMonths.trim() !== "" && splitCount === null;
@@ -1403,10 +1411,12 @@ function AdvancesControl({
         onChange={(event) => setAmount(event.target.value)}
       />
       {/* The day the money was handed over — a grant's alone, and a repayment is
-          dated by the month it is entered for (item 20). A correction does not
-          ask for it again: the movement carries it through
-          (`reviewAdvanceEdit`). */}
-      {granting ? (
+          dated by the month it is entered for (item 20). A grant **being
+          corrected** asks for it too: the entry is corrected in everything it
+          records (item 17), and a date typed wrong is otherwise a date that
+          stays wrong, since a grant with repayments against it cannot be
+          removed and entered again either. */}
+      {grantDated ? (
         <Field
           label={words.givenOn}
           hint={words.givenOnHint(monthLabel(month))}

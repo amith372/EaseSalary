@@ -453,18 +453,11 @@ export function reviewAdvance(
     return { ok: false, reason: "advanceOverRepaid" };
   }
 
-  // **The day the money was handed over, and it has to fall inside the month
-  // the grant is recorded in** (item 20): a grant dated outside its own month is
-  // a contradiction, and it is refused here rather than corrected to something
-  // the user did not type. A repayment carries no date — the month it is entered
-  // for is what dates it.
+  // A repayment carries no date — the month it is entered for is what dates it.
   let givenOn: IsoDate | null = null;
   if (draft.kind === "granted") {
-    if (!isIsoDate(draft.givenOn)) return { ok: false, reason: "advanceDate" };
-    if (!sameMonth(monthOf(draft.givenOn), context.month)) {
-      return { ok: false, reason: "advanceDate" };
-    }
-    givenOn = draft.givenOn;
+    givenOn = grantDate(draft.givenOn, context.month);
+    if (givenOn === null) return { ok: false, reason: "advanceDate" };
   }
 
   const note = draft.note.trim();
@@ -478,6 +471,22 @@ export function reviewAdvance(
       ...(givenOn === null ? {} : { givenOn }),
     },
   };
+}
+
+/**
+ * **The day the money was handed over, which has to fall inside the month the
+ * grant is recorded in** (specs.md item 20), or `null` for every way of not
+ * being one — nothing typed, something that is not a date, or a day in another
+ * month. A grant dated outside its own month is a contradiction and is refused
+ * rather than corrected to something the user did not type.
+ *
+ * **One rule with two readers**: the grant as it is given and the grant as it
+ * is corrected ask the same question, and a correction judged by a second copy
+ * of it is a correction that can store what a grant could not.
+ */
+function grantDate(typed: string, month: YearMonth): IsoDate | null {
+  if (!isIsoDate(typed)) return null;
+  return sameMonth(monthOf(typed), month) ? typed : null;
 }
 
 /**
@@ -573,6 +582,17 @@ export function duplicateAdvanceMovements(
 export interface AdvanceEditDraft {
   amount: string;
   note: string;
+  /**
+   * The day a **grant's** money was handed over, as typed (item 20). It travels
+   * as a string for `AdvanceDraft`'s own reason: an `<input type="date">` hands
+   * over whatever is in it, including nothing at all.
+   *
+   * **A repayment's correction carries none and none is read**, because the
+   * month it is entered for is what dates it — the panel does not ask, and a
+   * crafted request that sends one is answered by ignoring it rather than by a
+   * refusal about a field the screen has never shown.
+   */
+  givenOn: string;
 }
 
 /**
@@ -590,11 +610,21 @@ export interface AdvanceEditDraft {
  * February's ₪3,000 to ₪1,500 while March has repaid ₪2,000 leaves the negative
  * balance item 20 refuses. A repayment corrected upwards is the over-repayment
  * refused when it is first entered, arriving by the other gesture.
+ *
+ * **A grant's date is corrected here like its amount** — item 17: what the month
+ * itself recorded is edited, "its amount, and everything else it records", and
+ * item 20 says a grant records the day the money was handed over. So the month
+ * is passed in: the date is judged against the month the grant is recorded in
+ * and not against the day it previously held, which is the same question
+ * `reviewAdvance` asks of a grant being given. A grant that reaches this with no
+ * date — one stored before the field existed — is completed by the correction
+ * rather than silently kept dateless.
  */
 export function reviewAdvanceEdit(
   draft: AdvanceEditDraft,
   movement: Advance,
   standing: AdvanceStanding,
+  month: YearMonth,
 ): ReviewedAdvance {
   const typed = parseShekels(draft.amount);
   // Rounded on the way in for `reviewAdvance`'s reason: the ledger counts the
@@ -615,6 +645,12 @@ export function reviewAdvanceEdit(
     return { ok: false, reason: "advanceOverRepaid" };
   }
 
+  let givenOn: IsoDate | null = null;
+  if (movement.kind === "granted") {
+    givenOn = grantDate(draft.givenOn, month);
+    if (givenOn === null) return { ok: false, reason: "advanceDate" };
+  }
+
   const note = draft.note.trim();
   return {
     ok: true,
@@ -623,12 +659,7 @@ export function reviewAdvanceEdit(
       kind: movement.kind,
       agorot,
       ...(note === "" ? {} : { note }),
-      // **Carried and not asked for again.** A correction changes the amount and
-      // the reason; the day the money was handed over is not on this panel, and
-      // rebuilding the movement without it would drop the date on the first
-      // correction of a figure — silently, since nothing on the screen would
-      // then say there had ever been one.
-      ...(movement.givenOn === undefined ? {} : { givenOn: movement.givenOn }),
+      ...(givenOn === null ? {} : { givenOn }),
     },
   };
 }

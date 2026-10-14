@@ -179,6 +179,65 @@ test.describe("an advance repaid over several months (item 20)", () => {
   });
 
   /**
+   * **The day a grant was given is corrected like its amount** (item 17: the
+   * entry is corrected in everything it records). It is the one field a wrong
+   * value could otherwise never be put right in: a grant with repayments
+   * standing against it cannot be removed and entered again, so a date typed
+   * wrong would stay wrong for the life of the employment.
+   *
+   * The amount is left alone throughout, so what the row says afterwards is
+   * about the date and nothing else.
+   *
+   * **What it would catch**: a correction panel that does not ask for the date,
+   * which is what it did until this; one that opens with the field empty and so
+   * clears the day it was holding; a corrected date that reaches the store and
+   * not the screen; and a date outside the grant's own month accepted, which is
+   * the contradiction item 20 refuses where a grant is entered.
+   */
+  test("corrects the day a grant was given, and refuses a day outside its month", async ({
+    page,
+  }) => {
+    const words = he.month.actions.advances;
+    await useHousehold(page, "demo", "splitdatefix");
+    await openJuly(page);
+
+    // An ordinary grant, not a split: the day is the subject here.
+    const group = advances(page);
+    await group.getByRole("button", { name: words.grant }).click();
+    await group.getByLabel(words.amount, { exact: true }).fill("5000");
+    await group.getByLabel(words.givenOn).fill(GIVEN_ON);
+    await group.getByRole("button", { name: words.submitGrant }).click();
+    await settled(page);
+
+    const advance = group.locator(`[data-advance="${ADVANCE}"]`);
+    await expect(advance).toContainText("10 ביולי 2026");
+
+    // The correction panel, opened on the grant this month recorded.
+    await group
+      .getByRole("button", { name: words.editLabel(ADVANCE, "granted") })
+      .click();
+    // It opens **holding** the day, so a correction of the amount alone leaves
+    // it where it was.
+    await expect(group.getByLabel(words.givenOn)).toHaveValue(GIVEN_ON);
+
+    // A day in another month: refused, with the grant's own day untouched.
+    await group.getByLabel(words.givenOn).fill("2026-08-03");
+    await group.getByRole("button", { name: words.save }).click();
+    await expect(group.getByText(he.month.actions.refused.advanceDate)).toBeVisible();
+    await expect(advance).toContainText("10 ביולי 2026");
+
+    // And the correction itself: the 24th of the same month.
+    await group.getByLabel(words.givenOn).fill("2026-07-24");
+    await group.getByRole("button", { name: words.save }).click();
+    await settled(page);
+    await expect(advance).toContainText("24 ביולי 2026");
+    await expect(advance).not.toContainText("10 ביולי 2026");
+    // The amount was never typed over, and the row still says what was given.
+    await expect(advance).toContainText(formatAgorot(PRINCIPAL));
+    await page.screenshot({ path: "test-results/advance-date-corrected.png" });
+  });
+
+  /**
    * **A confirmed month anywhere in the span refuses the whole split, and the
    * month is named** (item 20) — the rule a holiday move already follows: a
    * filed month is never rewritten by an action taken elsewhere.

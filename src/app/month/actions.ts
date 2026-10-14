@@ -643,6 +643,10 @@ export async function removeAdvance(
  * still owed is a fact about the employment and not about the month on screen,
  * and a correction can break the ledger from either side — a grant made smaller
  * than what has been repaid, or a repayment made larger than the debt.
+ *
+ * **The month is handed to the review as well as read from it**, because a
+ * grant's date is corrected here too and the rule is that it falls inside the
+ * month the grant is recorded in (item 20).
  */
 export async function updateAdvance(
   workerId: string,
@@ -671,7 +675,7 @@ export async function updateAdvance(
       return { ok: false, reason: "entryUnknown" };
     }
 
-    const reviewed = reviewAdvanceEdit(draft, movement, standing);
+    const reviewed = reviewAdvanceEdit(draft, movement, standing, month);
     if (!reviewed.ok) return { ok: false, reason: reviewed.reason };
 
     return changeMonth(workerId, month, (record) =>

@@ -362,7 +362,9 @@ folded sheet.
   and without the action the only correction was to remove the movement and record
   it again — which mints a grant a new number. The panel is the group's own, opened
   under the movement it corrects and prefilled with what it holds, in the idiom the
-  line they add already uses.
+  line they add already uses. **What it holds includes a grant's own day**, so the
+  date field stands in the correction panel exactly as it does in the grant's, and
+  a repayment's panel draws none: the month it is entered for is what dates it.
 
 - **The grant panel asks two things the canvas does not draw**: the day the money
   was handed over, and how many months to split the repayment across (`specs.md`
