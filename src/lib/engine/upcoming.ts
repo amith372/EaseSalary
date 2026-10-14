@@ -11,8 +11,11 @@ import type { ThirdPartyKind, ThirdPartyPayment } from "./types";
  * reminder: it records nothing, and it carries data and never words.
  */
 
-/** The three yearly fees item 15 names, in its order. */
-type UpcomingFee = Extract<ThirdPartyKind, "visaExtensionFee" | "licenceFee" | "agencyFee">;
+/** The four fees item 15 names, in its order. */
+type UpcomingFee = Extract<
+  ThirdPartyKind,
+  "visaExtensionFee" | "workerVisa" | "licenceFee" | "agencyFee"
+>;
 
 export type UpcomingEntry =
   | {
@@ -49,9 +52,17 @@ export function upcoming({ profile, series, today }: UpcomingInput): UpcomingEnt
 
   // Each fee's due date: the visa's and the permit's are the documents' own
   // (item 28); the agency's is a year after it was last paid.
+  //
+  // **The permit carries two fees and they fall on one date** — `workerVisa` is
+  // its request fee and `licenceFee` its licence fee (item 16), so both read
+  // the permit's own expiry and neither has a clock of its own. They stay two
+  // rows rather than one summed row, which item 15 says and gives the reason
+  // for. The array order is item 15's order and the sort below is stable, so
+  // the request fee draws above the licence fee within that month.
   const { workVisaExpiry, employmentPermitExpiry } = profile.documents;
   const dueOn: [UpcomingFee, IsoDate | null][] = [
     ["visaExtensionFee", workVisaExpiry],
+    ["workerVisa", employmentPermitExpiry],
     ["licenceFee", employmentPermitExpiry],
     ["agencyFee", agencyDueOn(latest("agencyFee"))],
   ];

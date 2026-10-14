@@ -16,8 +16,9 @@ import type { IsoDate, YearMonth } from "@/lib/types";
  *
  * **Where every expected entry comes from.** No workbook holds a reminder, so
  * each is worked out by hand from the rule the user approved on 2026-09-17: the
- * visa extension fee in the month the work visa expires, the licence fee in the
- * month the permit expires, the agency fee a year after the last one recorded,
+ * visa extension fee in the month the work visa expires, the permit's two fees —
+ * its request fee and its licence fee — in the month the permit expires, the
+ * agency fee a year after the last one recorded,
  * recuperation in its month once owed with item 15's ladder for the days, all
  * within twelve months counted from this one, and the last amount paid per kind.
  */
@@ -106,8 +107,8 @@ describe("what falls in the next twelve months", () => {
     // 5 August 2026: the window is August 2026–July 2027. The agency was paid
     // twice, and the later payment (May 2026, ₪600) sets both the month (May
     // 2027) and the amount. The visa extension fee was paid once (₪200); the
-    // licence fee never was. Same-month entries keep item 15's order: visa,
-    // then licence.
+    // licence fee never was. Same-month entries keep item 15's order: the
+    // visa extension, then the permit's request fee, then its licence fee.
     const entries = listFor({
       today: "2026-08-05",
       changes: {
@@ -119,6 +120,7 @@ describe("what falls in the next twelve months", () => {
     expect(entries).toEqual([
       { key: "fee", kind: "agencyFee", month: ym(2027, 5), lastPaidAgorot: 60000 },
       { key: "fee", kind: "visaExtensionFee", month: ym(2027, 6), lastPaidAgorot: 20000 },
+      { key: "fee", kind: "workerVisa", month: ym(2027, 6), lastPaidAgorot: null },
       { key: "fee", kind: "licenceFee", month: ym(2027, 6), lastPaidAgorot: null },
       { key: "recuperation", month: ym(2027, 7), days: 6 },
     ]);
@@ -128,7 +130,7 @@ describe("what falls in the next twelve months", () => {
     // 10 July 2026 reaches June 2027, the permit's and the visa's month;
     // 10 June 2026 stops at May 2027 and misses both.
     const july = listFor({ today: "2026-07-10" }).map((entry) => entry.key);
-    expect(july).toEqual(["recuperation", "fee", "fee"]);
+    expect(july).toEqual(["recuperation", "fee", "fee", "fee"]);
     expect(listFor({ today: "2026-06-10" })).toEqual([
       { key: "recuperation", month: ym(2026, 7), days: 5 },
     ]);
@@ -156,6 +158,51 @@ describe("recuperation", () => {
 });
 
 describe("the documents", () => {
+  it("falls due twice in the permit's month, each fee with its own last amount", () => {
+    // The permit carries two fees and both fall in its own month (item 15).
+    // **The permit is moved to March 2027 and the visa left in June**, so the
+    // two documents no longer share a month: with `PROFILE`'s own dates the
+    // request fee would read June either way and a fee dated off the visa would
+    // pass unnoticed. The figures are the family's own —
+    // `שכר_חודשי_להאנה2026.xlsx` -> `תלוש משכורת חודשי` -> D15 is ₪340 for the
+    // request fee and D16 is ₪210 for the licence fee — and they are unequal so
+    // that an amount reaching the wrong row of the two is visible.
+    const marchPermit = {
+      ...PROFILE,
+      documents: { ...PROFILE.documents, employmentPermitExpiry: "2027-03-01" as IsoDate },
+    };
+    const entries = listFor({
+      today: "2026-08-05",
+      profile: marchPermit,
+      changes: {
+        3: { thirdPartyPayments: [payment("workerVisa", 34000, "2026-03-11")] },
+        4: { thirdPartyPayments: [payment("licenceFee", 21000, "2026-04-09")] },
+      },
+    }).filter(
+      (entry) =>
+        entry.key === "fee" && (entry.kind === "workerVisa" || entry.kind === "licenceFee"),
+    );
+    expect(entries).toEqual([
+      { key: "fee", kind: "workerVisa", month: ym(2027, 3), lastPaidAgorot: 34000 },
+      { key: "fee", kind: "licenceFee", month: ym(2027, 3), lastPaidAgorot: 21000 },
+    ]);
+  });
+
+  it("drops both permit fees when the permit alone has no expiry date", () => {
+    // The visa's date stands and the permit's does not, so the visa extension
+    // fee is listed and neither permit fee is — the two read one date and it is
+    // the permit's own, never the visa's.
+    const noPermit = {
+      ...PROFILE,
+      documents: { ...PROFILE.documents, employmentPermitExpiry: null },
+    };
+    expect(
+      listFor({ today: "2026-08-05", profile: noPermit }).filter((entry) => entry.key === "fee"),
+    ).toEqual([
+      { key: "fee", kind: "visaExtensionFee", month: ym(2027, 6), lastPaidAgorot: null },
+    ]);
+  });
+
   it("say nothing when no expiry date was entered", () => {
     const blank = {
       ...PROFILE,

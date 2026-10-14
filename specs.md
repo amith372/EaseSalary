@@ -641,9 +641,11 @@ a question about one of them is the expensive mistake.
     item 20, with its own name and its own note, instead of bending this line into
     something it is not. The line may carry a note, which is where a family that thinks of
     it as pocket money writes that down — as the remark it is.
-15. Recurring yearly items — the visa fee, the licence renewal, the agency fee, and the
-    recuperation payment — are shown as due in the month they fall, without the user
-    tracking the dates. The recuperation entitlement is worked out from the worker's
+15. Recurring items — the visa fee, the two employment-permit fees, the agency fee, and
+    the recuperation payment — are shown as due in the month they fall, without the user
+    tracking the dates. Not all of them fall yearly: the permit is granted for up to four
+    years at a time and its two fees fall with it, while the visa and the agency fee fall
+    every year. The recuperation entitlement is worked out from the worker's
     seniority and offered as a suggestion the user can change before approving, and the
     month it is paid in is set on the worker's profile when the worker is created.
     Nothing is due until a full working year has been completed, and each payment covers
@@ -662,9 +664,12 @@ a question about one of them is the expensive mistake.
     employment year.
     The payments screen lists what falls due in the next twelve months, this month included
     and the soonest first, under 'לקראת החודשים הבאים': the visa extension fee in the month
-    the work visa expires and the licence fee in the month the employment permit expires
-    (item 28), the agency fee a year after the last one recorded, and the recuperation
-    payment in the worker's recuperation month once it is owed. Each fee shows the amount
+    the work visa expires, then both permit fees — the request fee and the licence fee — in
+    the month the employment permit expires (item 28), the agency fee a year after the last
+    one recorded, and the recuperation payment in the worker's recuperation month once it is
+    owed. The two permit fees are two rows in one month and not one summed row, because each
+    was last paid at its own time and for its own amount, and a total neither of them ever
+    carried would be a figure the family could not find on their sheet. Each fee shows the amount
     paid for its kind the last time, said to be that, and no amount where none was paid
     before; the recuperation payment shows the days it is owed instead, because its day rate
     is confirmed only in its own month. The list is a reminder and records nothing.
@@ -686,8 +691,12 @@ a question about one of them is the expensive mistake.
     which is what the workbook itself writes.
     **The kinds are the sheet's own rows, and there are seven of them because the sheet
     has two visa rows.** `template_month_standard.xlsx` cell **B14** is the fee for
-    extending the work visa and **B15** is `ויזת עובד זר`, the visa itself, which item 28 says
-    is issued through the private agency against a charge of its own. They are two
+    extending the work visa and **B15** is `ויזת עובד זר`, which is the fee for the
+    *employer's permit* and not for a visa at all: the family's own note beside that row
+    calls it `אגרה בעבור חידוש היתר העסקה` and records it as paid to the Interior Ministry,
+    and its rate is the Authority's permit-request fee rather than the agency's visa fee.
+    The row's name is kept because the rule below keeps the template's own words, but what
+    the money is, is read off the note and not off the name. They are two
     payments and a month may make both. One name covering both would not merely be a
     missing kind: the rule immediately above refuses two payments of one kind, so a month
     that paid both would be refused outright, with a message telling the family to sum two
@@ -1339,11 +1348,12 @@ a question about one of them is the expensive mistake.
     agency against a fee. The third is the **passport**, which the employer is obliged to
     check stays valid, and for which the threshold is not expiry but **eighteen months
     remaining** — so the application warns when fewer than eighteen months are left on it,
-    not when it lapses. Each of the two renewal fees is recorded as an ordinary payment to
-    a third party (item 16), and they are two fees and not one: the family's workbook has
+    not when it lapses. Each renewal fee is recorded as an ordinary payment to a third
+    party (item 16), and there are three of them and not two: the family's workbook has
     carried them as separate lines all along — `template_month` cell **B14** is the visa
-    extension fee, belonging to the worker's visa, and cell **B16** is the licence fee,
-    belonging to the employer's permit. The sheet always knew the distinction; it simply
+    extension fee, belonging to the worker's visa, while cells **B15** and **B16** both
+    belong to the employer's permit, the first its request fee and the second its licence
+    fee. The sheet always knew the distinction; it simply
     never wrote it down. Because the permit belongs to the employer and the visa to the
     worker, a household with two workers holds one permit position and two visas. Of
     the three **numbers**, the permit's and the visa's are encrypted at rest beside the

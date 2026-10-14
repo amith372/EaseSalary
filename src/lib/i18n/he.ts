@@ -1551,6 +1551,10 @@ export const he = {
       recuperationNote: "לפי הותק. התעריף ליום מאושר בחודש עצמו, לפני הייצוא.",
       notes: {
         visaExtensionFee: "בחודש שבו אשרת העבודה פגה",
+        /** The permit's two fees fall on one date, so this note names the other
+         * one: two rows reading the same sentence would look like a duplicate
+         * of one row rather than the two fees item 15 says they are. */
+        workerVisa: "בחודש שבו היתר ההעסקה פג, יחד עם אגרת ההארכה",
         licenceFee: "בחודש שבו היתר ההעסקה פג",
         agencyFee: "שנה אחרי התשלום הקודם",
       },
