@@ -1,4 +1,4 @@
-import { DEFAULT_INCOME_TAX } from "@/lib/engine/types";
+import { AS_SHIPPED, DEFAULT_INCOME_TAX } from "@/lib/engine/types";
 import { describe, expect, it } from "vitest";
 import { SATURDAY } from "@/lib/dates";
 import { calculateMonth } from "@/lib/engine/month";
@@ -227,6 +227,24 @@ describe("what the payslip requires beyond the payments (specs.md item 2)", () =
     expect(result.nationalInsuranceEstimate).not.toBe(shekelsUp(730700 * 0.036));
   });
 
+  it("takes it on what was handed over, where the household files that way (item 19)", () => {
+    // The same month for a household that has said the estimate follows what it
+    // actually paid: Part 4's ₪9,307 less the ₪2,000 instalment is ₪7,307, and
+    // 3.6% of that is ₪263.052 — ₪264 taken up to the shekel (item 3). Written
+    // out rather than computed here, because a figure this suite worked out with
+    // the engine's own arithmetic would agree with the engine whatever it did.
+    const filesOnWhatWasPaid = calculateMonth(facts, terms, {
+      ...AS_SHIPPED,
+      nationalInsuranceOnWhatWasPaid: true,
+    });
+    expect(filesOnWhatWasPaid.nationalInsuranceEstimate).toBe(26400);
+    // And the month's own four totals are untouched by the setting: it moves
+    // what the contribution is reckoned on and nothing the family was paid
+    // (Part 4).
+    expect(filesOnWhatWasPaid.gross).toBe(930700);
+    expect(filesOnWhatWasPaid.net).toBe(730700);
+  });
+
   it("keeps the estimate out of the money paid to the worker", () => {
     // An estimate is not a payment: it must move neither total.
     expect(result.gross).toBe(930700);
@@ -338,7 +356,9 @@ function render(result: MonthResult): string {
       result.nationalInsuranceEstimate ?? 0,
     )}`,
   );
-  out.push(`- למה: ${he.sheet.why.nationalInsuranceEstimate}`);
+  out.push(
+    `- למה: ${he.sheet.why.nationalInsuranceEstimate(result.nationalInsuranceBase)}`,
+  );
   out.push("");
   return out.join("\n");
 }

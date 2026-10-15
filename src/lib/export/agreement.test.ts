@@ -4,7 +4,12 @@ import { calculateSeries } from "@/lib/engine/series";
 import { lineKeys } from "@/lib/engine/lines";
 import { isUserLine } from "@/lib/engine/month";
 import { snapshotTerms } from "@/lib/engine/types";
-import type { MonthFacts, UserLine, WorkerTerms } from "@/lib/engine/types";
+import type {
+  MonthContext,
+  MonthFacts,
+  UserLine,
+  WorkerTerms,
+} from "@/lib/engine/types";
 import type { MonthResult } from "@/lib/types";
 import {
   AUGUST_2025,
@@ -132,6 +137,9 @@ async function filled(
    * (specs.md item 20). Left out, the line has none and reaches every month,
    * which is what every standing line meant before a lifetime could be set. */
   lifetime?: Pick<UserLine, "from" | "until">,
+  /** The household's own settings, where the case is about one (specs.md item
+   * 19). Left out, the month is valued the way the application ships. */
+  household: Pick<MonthContext, "nationalInsuranceOnWhatWasPaid"> = {},
 ) {
   const { worker: plain, facts: base } = busyMonth();
   const worker =
@@ -152,7 +160,7 @@ async function filled(
   };
   // The replay, exactly as every screen and the route both take it: a month
   // calculated on its own would open from the wrong balances (item 13).
-  const series = calculateSeries([facts], worker);
+  const series = calculateSeries([facts], worker, undefined, undefined, undefined, household);
   const month = series[0];
   if (month === undefined) throw new Error("no month");
 
@@ -552,6 +560,38 @@ describe("the preview and the file, from one engine result", () => {
     // And the quarter's money, in its own column, undisturbed.
     expect(said(sheet, `H${NATIONAL_INSURANCE_ROW}`)).toBe(formatAgorot(paid));
     expect(result.nationalInsuranceEstimate).not.toBe(paid);
+  });
+
+  /**
+   * **One base, said the same way in both** (`CLAUDE.md` rule 12, specs.md item
+   * 19). A household that has the estimate follow what the month actually paid
+   * is the case where the preview and the file could most easily part company:
+   * the screen reads the figure off the engine result while the filler writes
+   * `D21` from the same result, and a route that passed the setting to one and
+   * not the other would show a family one figure and file another.
+   *
+   * `busyMonth` repays ₪2,000 and hands over ₪1,500, so its paid base is ₪500
+   * short of the wage. The exact figures are proven on paper in
+   * `national-insurance-base.test.ts`; what is asserted here is that the two
+   * places say whatever it is identically, **and that the setting moved it at
+   * all** — without that second assertion this test would pass on a setting
+   * that did nothing.
+   */
+  it("says the estimate the same way in both when the household files on what it paid", async () => {
+    const { sheet, result } = await filled(false, {}, undefined, {
+      nationalInsuranceOnWhatWasPaid: true,
+    });
+    expect(said(sheet, `D${NATIONAL_INSURANCE_ROW}`)).toBe(
+      formatAgorot(result.nationalInsuranceEstimate ?? 0),
+    );
+
+    const onTheWage = await filled(false);
+    expect(said(onTheWage.sheet, `D${NATIONAL_INSURANCE_ROW}`)).toBe(
+      formatAgorot(onTheWage.result.nationalInsuranceEstimate ?? 0),
+    );
+    expect(result.nationalInsuranceEstimate).not.toBe(
+      onTheWage.result.nationalInsuranceEstimate,
+    );
   });
 
   /**

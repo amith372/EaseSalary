@@ -931,7 +931,9 @@ function MoneyCard({
           value={<MoneyValue agorot={result.nationalInsuranceEstimate} chip="warm" />}
           whyKey="nationalInsuranceEstimate"
           explanation={{
-            text: he.sheet.why.nationalInsuranceEstimate,
+            text: he.sheet.why.nationalInsuranceEstimate(
+              result.nationalInsuranceBase,
+            ),
             link: "nationalInsurance",
           }}
         />

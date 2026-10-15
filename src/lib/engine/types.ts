@@ -1016,6 +1016,26 @@ export interface MonthContext {
    * so the figure is handed in (item 7).
    */
   vacationDaysEarlierInYear?: number;
+  /**
+   * Whether the household has item 19's national-insurance estimate follow what
+   * the month actually paid the worker — the month's cost, plus an advance
+   * handed over during it, less an instalment repaid out of it — rather than
+   * the wage the contribution is taken on.
+   *
+   * **Absent is the law's base**, and that is what every month is valued on
+   * unless the household turns this on: the rule speaks of the wage, while a
+   * family that files on what they handed over says so once for the whole
+   * household (specs.md item 19). It is one setting and not a term of one
+   * employment, and no month stores it — so it moves every month at once,
+   * exported or not, which is what makes a household's own past months move
+   * with it.
+   *
+   * **The advances and nothing else move it.** Income tax is taken off neither
+   * base, because a deduction to the state does not reduce the wage the
+   * contribution is taken on, and a line the user placed after the month's
+   * total reaches neither base either (item 20).
+   */
+  nationalInsuranceOnWhatWasPaid?: boolean;
 }
 
 /**

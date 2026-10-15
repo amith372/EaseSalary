@@ -63,14 +63,27 @@ const THIRD_PARTY_COLUMN: SheetColumn = "H";
 
 /**
  * This month's estimate: the national-insurance percentage in force during the
- * month, taken on the month's full cost — the salary, the rest-eve supplement,
- * the rest-day and holiday pay, and the one-off payments such as recuperation —
- * **before anything to do with advances** (specs.md item 19).
+ * month, taken on the base it is handed (specs.md item 19).
  *
- * That base is columns E, F and G, which is the gross, so the gross is what
- * this takes. Applying it to the net would make the contribution depend on
- * whether the family happened to lend them money, which nothing in the rule
- * says: for August 2025 it is 3.6% of ₪9,307 and not of ₪7,307 (Part 4).
+ * **The base is the caller's and not this function's, because item 19 has
+ * two.** The wage the contribution is taken on is the month's full cost — the
+ * salary, the rest-eve supplement, the rest-day and holiday pay, and the
+ * one-off payments such as recuperation, which is columns E, F and G together —
+ * and that is what a household is valued on unless it says otherwise. A
+ * household may instead have the estimate follow what the month actually paid
+ * the worker: the same cost, plus an advance handed over during the month, less
+ * an instalment repaid out of it. `month.ts` picks between the two from the
+ * household's own setting and both arrive here, so they can never become two
+ * percentages or two roundings.
+ *
+ * **Neither base is the net, and August 2025 is the trap.** Income tax is
+ * withheld from that wage rather than out of it, and a line the user placed
+ * after the month's total reaches neither base (item 20) — so the paid base and
+ * the net part company in any month that withholds tax or carries such a line.
+ * August 2025 has neither, which is why its ₪7,307 is both, and a test that
+ * reached for `net` there would pass while measuring the wrong figure: the law's
+ * base for that month is 3.6% of ₪9,307 and the paid base 3.6% of ₪9,307 less
+ * the ₪2,000 instalment (Part 4).
  *
  * **The percentage is looked up by date and is not a constant here.** It
  * is set by the state and changes on a date, and a bare number in this file
@@ -96,7 +109,7 @@ const THIRD_PARTY_COLUMN: SheetColumn = "H";
  * one.
  */
 export function nationalInsuranceEstimateOf(
-  grossAgorot: number,
+  baseAgorot: number,
   rates: DatedRate[],
   month: YearMonth,
 ): number | null {
@@ -105,7 +118,7 @@ export function nationalInsuranceEstimateOf(
   // so nothing else rounds it: the month screen and the exported sheet both
   // read this figure, and an agora left on it would be a shekel of difference
   // between the two (`CLAUDE.md` rule 12).
-  return rate === null ? null : shekelsUp(grossAgorot * rate.value);
+  return rate === null ? null : shekelsUp(baseAgorot * rate.value);
 }
 
 /**

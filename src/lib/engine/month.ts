@@ -616,6 +616,28 @@ export function calculateMonth(
   const afterWithholding = gross + sumOfBlock("withholding");
   const net = afterWithholding + sumOfBlock("transfer");
 
+  // **Item 19's base.** The wage the contribution is taken on, which is the
+  // gross — or, where the household has said the estimate follows what the
+  // month actually paid, that wage with this month's advance movements on it. A
+  // grant handed over raises it and an instalment repaid lowers it, and the
+  // rows already carry their own sign, so a month with both nets them.
+  //
+  // **The two advance sources are read by name rather than by summing the
+  // transfer block**, which would be the shorter line and the wrong one: that
+  // block also holds a line the user placed after the month's total, and item
+  // 20 says such a line reaches neither the month's cost nor this estimate. The
+  // income tax is out for its own reason — it is withheld *from* this wage and
+  // does not reduce it (item 19) — and it sits in the other block anyway.
+  const nationalInsuranceBase = context.nationalInsuranceOnWhatWasPaid
+    ? gross +
+      closing
+        .filter(
+          (row) =>
+            row.source === "advanceGranted" || row.source === "advanceRepaid",
+        )
+        .reduce((total, row) => total + (row.amount ?? 0), 0)
+    : gross;
+
   return {
     month: facts.month,
     standardDays: counts.standardDays,
@@ -632,9 +654,14 @@ export function calculateMonth(
     // that actually left the account — that appears once, in the month it was
     // paid, as a column H line of its own. `thirdParty.ts` holds both.
     nationalInsuranceEstimate: nationalInsuranceEstimateOf(
-      gross,
+      nationalInsuranceBase,
       rates,
       facts.month,
     ),
+    // Said rather than inferred: the figure above is 3.6% of one of two wages,
+    // and item 19 requires whatever shows it to say which.
+    nationalInsuranceBase: context.nationalInsuranceOnWhatWasPaid
+      ? "paid"
+      : "wage",
   };
 }

@@ -964,37 +964,45 @@ a question about one of them is the expensive mistake.
     ended is likewise not confirmed this way. A month confirmed this way is *confirmed*
     and not *exported*: no file was produced from it, so it stays among the months
     awaiting one until a sheet is made or the reminder is marked as handled.
-19. The national-insurance contribution is 3.6% of the month's full cost, taken before
-    anything to do with advances. Kol Zchut settles what that cost is, so it is no
-    longer inferred from the workbook: the base is the gross wage including sick pay,
-    vacation pay, holiday pay, recuperation, travel reimbursement and the premium for
-    work in the weekly rest. In this application that is columns E, F and G together
-    and nothing else. Three of those six are already inside the monthly salary rather
-    than beside it — the base is computed from the standard count and never shrinks, so
-    a day of vacation, of sickness or of holiday not worked is paid within it (items 5,
-    7, 8) — which is why the sheet carries no vacation *payment* line and still bases the
-    contribution correctly. Its vacation row reports a count and no money (item 7), so it
-    reaches neither column E nor this base; a figure written there would enlarge the
-    contribution by a day the salary has already paid for. What is missing from the base is what the worker was not
-    paid: the third-party column, which is money to somebody else (item 16), and the
-    advances, which are the same money moved in time. It is shown as an
-    estimate to be confirmed rather than as a fact, because the sum actually billed has
-    differed from it. Every month carries its own estimate, and the money actually paid
-    appears only in the month it was paid, together with the months it covers. These are
-    two different figures in two different columns and not one figure written twice: the
-    first is what the month accrued, the second is what left the account. The family's
-    workbook keeps them in two cells and the export follows it: the national-insurance row
-    carries the monthly estimate in the unit-price column in every month, and the amount
-    actually paid in the third-party column only in the month a quarter was settled, with
-    the months it covers named beside it. So the estimate is a reported figure and never a
-    payment line — nothing in the sheet sums column D — and only what left the account
-    is added into the third-party total.
-    It is paid once a quarter and in arrears: the reminder
-    appears on the opening screen in the month after the last covered month has ended,
-    and stays there until the user ticks the payment as made. The export carries the
-    amount that was due, that tick, and the months the payment covers. The licence
-    renewal that falls once every four years is recorded the same way, and the
-    application warns before either runs out.
+19. The national-insurance contribution is 3.6% of the month's full cost, which is the
+    wage the contribution is taken on. **A household may instead have it follow what the
+    month actually paid the worker** — the same cost, plus an advance handed over during
+    it, less an instalment repaid out of it — because the rule speaks of the wage while a
+    family files on what they handed over. That is one setting for the whole household and
+    not a term of one employment; it is off unless the household turns it on, and because
+    no month stores the figure it moves every month at once, exported or not. Income tax
+    is taken off neither base, because a deduction to the state does not reduce the wage
+    the contribution is taken on. Kol Zchut settles what that cost is, so it is no longer
+    inferred from the workbook: the base is the gross wage including sick pay, vacation
+    pay, holiday pay, recuperation, travel reimbursement and the premium for work in the
+    weekly rest. In this application that is columns E, F and G together and nothing else.
+    Three of those six are already inside the monthly salary rather than beside it — the
+    base is computed from the standard count and never shrinks, so a day of vacation, of
+    sickness or of holiday not worked is paid within it (items 5, 7, 8) — which is why the
+    sheet carries no vacation *payment* line and still bases the contribution correctly.
+    Its vacation row reports a count and no money (item 7), so it reaches neither column E
+    nor this base; a figure written there would enlarge the contribution by a day the
+    salary has already paid for. What is missing from the base is what the worker was not
+    paid: the third-party column, which is money to somebody else (item 16), and — unless
+    the household has said otherwise — the advances, which are the same money moved in
+    time. The screen says which of the two bases produced the figure beside it, so a
+    household that changed it is never left reading a figure whose rule it cannot see. It
+    is shown as an estimate to be confirmed rather than as a fact, because the sum
+    actually billed has differed from it. Every month carries its own estimate, and the
+    money actually paid appears only in the month it was paid, together with the months it
+    covers. These are two different figures in two different columns and not one figure
+    written twice: the first is what the month accrued, the second is what left the
+    account. The family's workbook keeps them in two cells and the export follows it: the
+    national-insurance row carries the monthly estimate in the unit-price column in every
+    month, and the amount actually paid in the third-party column only in the month a
+    quarter was settled, with the months it covers named beside it. So the estimate is a
+    reported figure and never a payment line — nothing in the sheet sums column D — and
+    only what left the account is added into the third-party total. It is paid once a
+    quarter and in arrears: the reminder appears on the opening screen in the month after
+    the last covered month has ended, and stays there until the user ticks the payment as
+    made. The export carries the amount that was due, that tick, and the months the
+    payment covers. The licence renewal that falls once every four years is recorded the
+    same way, and the application warns before either runs out.
 20. The user can add lines of their own to a month, with a reason of their own, and each
     appears as its own line in the export — which is how a shortfall from an earlier
     month is settled later. A line the user adds has **three independent choices** and

@@ -158,6 +158,14 @@ function closingBalances(result: MonthResult) {
  * same for the income tax. Left out, the seeded tables are read — which is what
  * the application ships knowing before any fetch has run.
  *
+ * `household` carries the settings that belong to the household rather than to
+ * one employment, and it reaches every month of the walk because that is what
+ * being the household's means: today it holds item 19's national-insurance
+ * base, which no month stores, so a household that changes it sees its own past
+ * months move. It is an object rather than a sixth positional argument so that
+ * a call site says which setting it is passing, and left out every month is
+ * valued the way the application ships.
+ *
  * A refused month stops the walk, and the `InvalidMonthError` says which month
  * it was. That is not a limitation to work around: a month that cannot be
  * calculated has no closing balance, so the months after it have nothing to open
@@ -169,6 +177,7 @@ export function calculateSeries(
   today?: IsoDate,
   rates: DatedRate[] = AS_SHIPPED.rates,
   taxBrackets: TaxYearBrackets[] = AS_SHIPPED.taxBrackets,
+  household: Pick<MonthContext, "nationalInsuranceOnWhatWasPaid"> = {},
 ): MonthInSeries[] {
   const ordered = [...months].sort((a, b) => compareMonth(a.month, b.month));
   for (let i = 1; i < ordered.length; i += 1) {
@@ -239,6 +248,9 @@ export function calculateSeries(
       openingBalances,
       vacationDaysEarlierInYear,
       holidayDaysEarlierInYear,
+      // The household's own, spread so a setting added to it reaches every
+      // month without this call being edited again (specs.md item 19).
+      ...household,
     });
 
     openingBalances = closingBalances(result);

@@ -431,14 +431,35 @@ export interface MonthResult {
    */
   warnings: Warning[];
   /**
-   * This month's national-insurance estimate: 3.6% of the month's full cost,
-   * taken before anything to do with advances (specs.md item 19). It is an
-   * estimate to be confirmed and never a fact, because the sum actually billed
-   * has differed from it — and it is not the money that left the account, which
-   * appears only in the month it was paid, as a column H line of its own.
+   * This month's national-insurance estimate: 3.6% of the base below (specs.md
+   * item 19). It is an estimate to be confirmed and never a fact, because the
+   * sum actually billed has differed from it — and it is not the money that left
+   * the account, which appears only in the month it was paid, as a column H line
+   * of its own.
    */
   nationalInsuranceEstimate: number | null;
+  /**
+   * Which of item 19's two bases the figure above was taken on.
+   *
+   * **It travels on the result because the engine is the only thing that knows,
+   * and item 19 requires the screen to say.** The base follows a household
+   * setting no month stores, so a screen handed that setting separately would be
+   * a second path to one answer — and the payslip, the help panel and the
+   * exported sheet would each have to be handed it. Here every reader of the
+   * figure reads its rule beside it.
+   */
+  nationalInsuranceBase: NationalInsuranceBase;
 }
+
+/**
+ * The wage the contribution is reckoned on (specs.md item 19).
+ *
+ * `wage` is what a household is valued on unless it says otherwise: the month's
+ * full cost, which is the wage the rule speaks of. `paid` is what the month
+ * actually paid the worker — that cost with the month's own advance movements on
+ * it — which a household that files that way turns on for itself.
+ */
+export type NationalInsuranceBase = "wage" | "paid";
 
 export interface Worker {
   id: string;

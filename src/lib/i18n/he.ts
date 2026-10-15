@@ -4,6 +4,7 @@ import type { ExpiringDocument } from "@/lib/engine/actionList";
 import type { WarningKind } from "@/lib/engine/alerts";
 import type { AdvanceKind, Gender } from "@/lib/engine/types";
 import { formatAgorot, formatDays, formatRate } from "@/lib/money";
+import type { NationalInsuranceBase } from "@/lib/types";
 
 /**
  * **The weekly rest day is a term of the employment, so the words for it are
@@ -4226,8 +4227,20 @@ export const he = {
         `בשנה ה־${seniorityYear} להעסקה מגיעים ${daysPerYear} ימי חופשה — חלק מהם נצבר בכל חודש. מה שלא נוצל נשמר לחודשים ולשנים הבאות ואינו נמחק. יום המנוחה השבועי אינו נספר כיום חופשה.`,
       sickBalance:
         "ימי המחלה נצברים יום וחצי בכל חודש עבודה עד תקרה של תשעים ימים, ומה שלא נוצל נשמר לחודשים הבאים ואינו מתאפס בסוף השנה.",
-      nationalInsuranceEstimate:
-        "אומדן בלבד, לאישור ולא כעובדה: 3.6% מעלות החודש המלאה — השכר, התוספות, השבתות והחגים והתשלומים החד־פעמיים — לפני כל מה שקשור למקדמות. הסכום שנדרש בפועל שונה לעיתים מהאומדן, והתשלום עצמו מופיע רק בחודש שבו שולם.",
+      /**
+       * One sentence per base, because item 19 has two and requires the screen
+       * to say which produced the figure beside it. The base travels on the
+       * month's own result (`MonthResult.nationalInsuranceBase`), so no screen
+       * is handed the household's setting to decide this for itself.
+       *
+       * Neither sentence states a rate the user could be asked to enter: the
+       * 3.6% is the application's own figure, read from the dated table and
+       * shown beside the link to the page it came from.
+       */
+      nationalInsuranceEstimate: (base: NationalInsuranceBase) =>
+        base === "paid"
+          ? "אומדן בלבד, לאישור ולא כעובדה: 3.6% ממה ששולם בפועל בחודש הזה — עלות החודש המלאה, בתוספת מקדמה שניתנה במהלכו ובהפחתת קיזוז שנפרע ממנו — לפי מה שנבחר בהגדרות. מס הכנסה אינו מופחת מהבסיס. הסכום שנדרש בפועל שונה לעיתים מהאומדן, והתשלום עצמו מופיע רק בחודש שבו שולם."
+          : "אומדן בלבד, לאישור ולא כעובדה: 3.6% מעלות החודש המלאה — השכר, התוספות, השבתות והחגים והתשלומים החד־פעמיים — שהיא השכר שעליו משולמים דמי הביטוח, ולכן מקדמות וקיזוזים אינם משנים אותה. הסכום שנדרש בפועל שונה לעיתים מהאומדן, והתשלום עצמו מופיע רק בחודש שבו שולם.",
     },
 
     /** A refusal says why, not only what. The dates it concerns travel beside
