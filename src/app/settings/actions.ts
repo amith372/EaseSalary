@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { answering, DONE, type ActionFault, type Done } from "@/lib/actionFault";
 import { redirect } from "next/navigation";
-import { householdIdOf } from "@/lib/store";
+import { getRepository, householdIdOf } from "@/lib/store";
+import type { ProfileActionResult } from "@/app/workers/actions";
 import { supabaseOnServer } from "@/lib/supabase/server";
 
 /**
@@ -18,6 +19,35 @@ export async function signOut(): Promise<void> {
   const supabase = await supabaseOnServer();
   await supabase.auth.signOut();
   redirect("/sign-in");
+}
+
+/**
+ * Which wage the national-insurance estimate is reckoned on, for the whole
+ * household (specs.md item 19).
+ *
+ * **It takes no worker and could not take one.** The base is the household's,
+ * not a term of one employment: one family files one return, and a setting per
+ * worker would leave two workers of a household reckoned two different ways
+ * with no answer to which the return followed.
+ *
+ * **Nothing is recalculated and nothing is written to a month.** No month
+ * stores the estimate — balances and this figure alike are replayed from the
+ * facts (item 13) — so the whole of the change is this one flag, and the months
+ * already exported move with the months ahead. That is why the revalidation is
+ * the layout's: the figure is drawn on the payslip, in the panel's own answer,
+ * on the pre-export screen and in the exported sheet, and every one of them
+ * reads the replay.
+ */
+export async function setNationalInsuranceBase(
+  onWhatWasPaid: boolean,
+): Promise<ProfileActionResult> {
+  return answering(async () => {
+    await (await getRepository()).saveNationalInsuranceOnWhatWasPaid(
+      onWhatWasPaid,
+    );
+    revalidatePath("/", "layout");
+    return DONE;
+  });
 }
 
 export type InvitationResult =

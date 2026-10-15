@@ -59,22 +59,27 @@ interface WorkerInSeries {
  */
 export const householdSeries = cache(async (): Promise<WorkerInSeries[]> => {
   const repository = await getRepository();
-  // One rates read for the household and not one per worker: the table is the
-  // household's (item 4), so a second read could only return the same rows.
-  // The bracket tables are the household's for the same reason (item 17).
-  const [workers, rates, taxBrackets, today] = await Promise.all([
-    repository.listWorkers(),
-    repository.listRates(),
-    repository.listTaxBrackets(),
-    readToday(),
-  ]);
+  // One read of each for the household and not one per worker: the table is the
+  // household's (item 4), so a second read could only return the same rows. The
+  // bracket tables are the household's for the same reason (item 17), and so is
+  // which wage the contribution is reckoned on (item 19).
+  const [workers, rates, taxBrackets, nationalInsuranceOnWhatWasPaid, today] =
+    await Promise.all([
+      repository.listWorkers(),
+      repository.listRates(),
+      repository.listTaxBrackets(),
+      repository.nationalInsuranceOnWhatWasPaid(),
+      readToday(),
+    ]);
   return Promise.all(
     workers.map(async (profile) => {
       const months = await repository.listMonths(profile.id);
       try {
         return {
           profile,
-          months: calculateSeries(months, profile, today, rates, taxBrackets),
+          months: calculateSeries(months, profile, today, rates, taxBrackets, {
+            nationalInsuranceOnWhatWasPaid,
+          }),
           refusal: null,
         };
       } catch (error) {

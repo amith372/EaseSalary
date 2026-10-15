@@ -124,6 +124,9 @@ export default async function SettingsPage() {
       countries={countries}
       minimumWage={minimumWage}
       nationalInsurance={nationalInsurance}
+      nationalInsuranceOnWhatWasPaid={
+        await repository.nationalInsuranceOnWhatWasPaid()
+      }
     />
   );
 }

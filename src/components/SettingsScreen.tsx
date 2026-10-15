@@ -5,6 +5,7 @@ import { useState, useTransition, type ReactNode } from "react";
 import {
   inviteToHousehold,
   removeShare,
+  setNationalInsuranceBase,
   signOut,
   withdrawInvitation,
   type InvitationResult,
@@ -29,9 +30,12 @@ import {
   RecuperationControl,
   RestDayControl,
   RestEveSupplementControl,
+  Refusal,
   SalaryControl,
   TermRow,
+  type Submit,
 } from "@/components/WorkerTerms";
+import { useAction } from "@/components/useAction";
 import {
   OpeningPositionControl,
   StandingLinesControl,
@@ -88,6 +92,10 @@ interface SettingsScreenProps {
   countries: Country[];
   minimumWage: DatedRate | null;
   nationalInsurance: DatedRate | null;
+  /** Which of item 19's two wages the household reckons the contribution on.
+   * One value for the household, so it is the same on whichever worker the
+   * switcher is showing. */
+  nationalInsuranceOnWhatWasPaid: boolean;
   /** The household's invitations, pending and accepted (item 11). */
   invitations: Invitation[];
 }
@@ -100,6 +108,7 @@ export function SettingsScreen({
   countries,
   minimumWage,
   nationalInsurance,
+  nationalInsuranceOnWhatWasPaid,
   invitations,
 }: SettingsScreenProps) {
   const words = he.settings;
@@ -280,6 +289,10 @@ export function SettingsScreen({
             source={nationalInsurance?.source}
             rowKey="national-insurance"
             derived
+          />
+          <NationalInsuranceBaseControl
+            onWhatWasPaid={nationalInsuranceOnWhatWasPaid}
+            onSubmit={handleAction}
           />
           <InsurerControl
             workerId={profile.id}
@@ -581,6 +594,72 @@ function Group({
 
 /** A row the user reads and does not change here: a term with no control yet,
  * or a figure the law settles, which carries the artboard's badge. */
+/**
+ * Which wage the national-insurance estimate is reckoned on (specs.md item 19).
+ *
+ * **Drawn in the rates fold, under the percentage whose use it changes.** The
+ * source for the 3.6% stands in that row, so this one does not repeat it: a
+ * second copy of the link is a second thing to keep in step.
+ *
+ * **It saves on the tick, with no button to press after.** There is nothing
+ * typed here to get wrong, and the figure it moves is drawn on the screens the
+ * action's revalidation refreshes — a tick waiting for a press would leave the
+ * screen saying one base while the months were still valued on the other.
+ *
+ * **One value for the household, on whichever worker the switcher shows**, like
+ * the percentage above it: a tick that read differently per worker would be
+ * saying the household files two returns.
+ */
+function NationalInsuranceBaseControl({
+  onWhatWasPaid,
+  onSubmit,
+}: {
+  onWhatWasPaid: boolean;
+  onSubmit: Submit;
+}) {
+  const words = he.settings.rates.base;
+  // The tick as it stands, so the box moves under the finger rather than at the
+  // end of the round trip; the store is what the next render reads, and a
+  // refusal or a fault puts it back.
+  const [ticked, setTicked] = useState(onWhatWasPaid);
+  const { refusal, fault, run, saving } = useAction(onSubmit);
+
+  return (
+    <TermRow label={words.label} hint={words.hint}>
+      {(labelId) => (
+        <div
+          data-setting="national-insurance-base"
+          className="flex flex-col gap-2"
+        >
+          {/* No text beside the box: the heading above is this row's label, as
+              it is for every other row in the fold, and a second copy of the
+              sentence would be a second thing to keep in step. The label widens
+              the target to a finger's worth without adding words. */}
+          <label className="flex min-h-11 w-fit cursor-pointer items-center">
+            <input
+              type="checkbox"
+              checked={ticked}
+              disabled={saving}
+              aria-labelledby={labelId}
+              onChange={(event) => {
+                const next = event.target.checked;
+                setTicked(next);
+                run(() => setNationalInsuranceBase(next));
+              }}
+              className="size-4.5 flex-none accent-forest"
+            />
+          </label>
+          {refusal ? (
+            <Refusal reason={refusal} />
+          ) : fault ? (
+            <FaultLine />
+          ) : null}
+        </div>
+      )}
+    </TermRow>
+  );
+}
+
 function ValueRow({
   label,
   hint,

@@ -488,6 +488,19 @@ folded sheet.
   it has to land on the group that draws it. The household's figure sitting
   inside a per-worker group is no departure of its own: the card is drawn per
   worker and the wage is the same on both.
+- **The `ביטוחים` group carries a tick the canvas does not draw**, directly under
+  `ביטוח לאומי`: which of `specs.md` item 19's two wages the contribution is
+  reckoned on. It sits under the percentage whose use it changes rather than in a
+  group of its own, and it does **not** repeat that row's `נקרא מ־` link — the
+  source for the 3.6% is one row above, and a second copy of it is a second thing
+  to keep in step. **The box carries no words beside it**, because the row's
+  heading is its label, which is the shape every other row in the fold already
+  has: a heading naming the row and the control below being it. **It saves on the
+  tick with no button after**, since nothing is typed here to get wrong and the
+  figure it moves is redrawn by the same press. Like the minimum wage above it,
+  it is the household's figure inside a per-worker card and that is no departure
+  of its own — it reads the same on both workers because one family files one
+  return.
 - **A rate row carries where its figure was read from**, which the canvas does
   not draw: `נקרא מ־` and the link `המקור` where the source is an address, and
   otherwise **a sentence of the screen's own** — `נקרא מהגיליון של המשפחה`, or

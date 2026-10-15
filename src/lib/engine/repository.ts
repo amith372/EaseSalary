@@ -288,6 +288,17 @@ export interface SalaryRepository {
   /** The warning kinds the household switched off (specs.md item 27). */
   listSwitchedOffWarnings(): Promise<WarningKind[]>;
   saveSwitchedOffWarnings(kinds: WarningKind[]): Promise<void>;
+  /**
+   * Whether the household has the national-insurance estimate follow what each
+   * month actually paid the worker, rather than the wage the contribution is
+   * taken on (specs.md item 19).
+   *
+   * **`false` is the law's base**, and it is what a household that has said
+   * nothing is valued on. It belongs to the household and not to a worker,
+   * like the rates and the bracket tables: one family files one return.
+   */
+  nationalInsuranceOnWhatWasPaid(): Promise<boolean>;
+  saveNationalInsuranceOnWhatWasPaid(onWhatWasPaid: boolean): Promise<void>;
   /** The warnings put off with 'not now', across the household's workers. */
   listDeferrals(): Promise<Deferral[]>;
   /** Records the deferral, replacing one held for the same worker and entry. */
@@ -593,6 +604,10 @@ export function createInMemoryRepository(
   let bracketsFetchedAt: string | null = null;
   const cachedPages = new Map<string, CachedPage>();
   let switchedOff: WarningKind[] = [];
+  // The law's base, which is what a seeded household is valued on: a seed that
+  // started anywhere else would be a fixture disagreeing with the migration's
+  // own default, and the browser suite would be checking the wrong rule.
+  let nationalInsuranceOnWhatWasPaid = false;
   let deferrals: Deferral[] = [];
   let tutorialPending = seed.tutorialPending ?? false;
 
@@ -766,6 +781,14 @@ export function createInMemoryRepository(
 
     async saveSwitchedOffWarnings(kinds) {
       switchedOff = [...kinds];
+    },
+
+    async nationalInsuranceOnWhatWasPaid() {
+      return nationalInsuranceOnWhatWasPaid;
+    },
+
+    async saveNationalInsuranceOnWhatWasPaid(onWhatWasPaid) {
+      nationalInsuranceOnWhatWasPaid = onWhatWasPaid;
     },
 
     async listDeferrals() {

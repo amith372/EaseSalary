@@ -56,6 +56,12 @@ export default async function BeforeExportPage({
   // staleness is measured against the instant of the last fetch (`/`).
   const { taxBrackets } = await refreshIncomeTaxIfStale(repository, new Date());
   const { rates, failure } = await refreshMinimumWage(repository);
+  // The household's own base, read here for the same reason the walk below is
+  // made here rather than taken from `householdSeries`: the figure this screen
+  // confirms is the figure the file carries, and the two must come from one
+  // engine result (specs.md item 19, `CLAUDE.md` rule 12).
+  const nationalInsuranceOnWhatWasPaid =
+    await repository.nationalInsuranceOnWhatWasPaid();
 
   const household: WorkerBeforeExport[] = await Promise.all(
     workers.map(async (profile) => {
@@ -71,7 +77,9 @@ export default async function BeforeExportPage({
       // to confirm the minimum wage could show the figure from before the
       // fetch. The walk is cheap; the race is not visible when it goes wrong.
       const stored = await repository.listMonths(profile.id);
-      const series = calculateSeries(stored, profile, today, rates, taxBrackets);
+      const series = calculateSeries(stored, profile, today, rates, taxBrackets, {
+        nationalInsuranceOnWhatWasPaid,
+      });
       return {
         worker: {
           id: profile.id,

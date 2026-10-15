@@ -86,6 +86,12 @@ export function taxToConfirm(
   taxBrackets: TaxYearBrackets[],
   month: YearMonth,
 ): TaxToConfirm | null {
+  // **The household's national-insurance base is deliberately not passed**
+  // (specs.md item 19). It moves that estimate and nothing else, and what is
+  // read out of this walk is the income-tax row and the month's warnings — the
+  // tax is computed from the wage either way, because a deduction to the state
+  // does not reduce the wage another is taken on. Anything added below that
+  // reads `nationalInsuranceEstimate` needs the setting handed in with it.
   const entry = calculateSeries(
     months.map((facts) =>
       sameMonth(facts.month, month) ? withTaxSetAside(facts) : facts,

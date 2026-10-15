@@ -987,6 +987,30 @@ export function createPostgresRepository(
       raise(error, "could not save the switched-off warnings");
     },
 
+    async nationalInsuranceOnWhatWasPaid() {
+      const { data, error } = await client
+        .from("households")
+        .select("national_insurance_on_what_was_paid")
+        .eq("id", householdId)
+        .maybeSingle();
+      raise(error, "could not read which wage the contribution is reckoned on");
+      // The law's base where the row says nothing, which is the column's own
+      // default: a household the read could not find is valued the way the
+      // application ships rather than on a figure nobody chose (item 19).
+      return (
+        (data?.national_insurance_on_what_was_paid as boolean | undefined) ??
+        false
+      );
+    },
+
+    async saveNationalInsuranceOnWhatWasPaid(onWhatWasPaid) {
+      const { error } = await client
+        .from("households")
+        .update({ national_insurance_on_what_was_paid: onWhatWasPaid })
+        .eq("id", householdId);
+      raise(error, "could not save which wage the contribution is reckoned on");
+    },
+
     async listDeferrals() {
       const { data, error } = await client
         .from("warning_deferrals")

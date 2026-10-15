@@ -2723,6 +2723,21 @@ export const he = {
         label: "ביטוח לאומי",
         hint: "אחוז שנקבע בחוק ומשתנה בתאריך. משולם פעם ברבעון, בדיעבד",
       },
+      /**
+       * Which of item 19's two wages the estimate is reckoned on — one tick for
+       * the whole household, because one family files one return.
+       *
+       * **`hint` is the user's own wording and makes no legal claim about the
+       * advances.** No source was found for the law requiring them to be
+       * counted, and the Kol Zchut page the 3.6% itself comes from is titled
+       * `3.6% משכרו` — of his wage. So the sentence says what the default
+       * is and what the alternative does, and the source for the rate stands in
+       * the row directly above this one, where the figure it belongs to is.
+       */
+      base: {
+        label: "לחשב את האומדן לפי מה ששולם בפועל לעובדת",
+        hint: "כברירת מחדל האומדן מחושב מהשכר עצמו, כפי שהחוק קובע. אפשר לחשב אותו לפי מה ששולם בפועל לעובדת — כולל מקדמות שניתנו וקיזוזים שנפרעו — וזה משנה את האומדן בכל החודשים.",
+      },
     },
     documents: {
       title: "המסמכים של העובד/ת",
