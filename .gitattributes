@@ -1,2 +1,8 @@
-# The hook is run by sh. Checked out with CRLF it fails as a bad interpreter.
+# Git writes LF on checkout whatever the clone's core.autocrlf says. A clone that
+# writes CRLF reads every file as changed, and stages a whole-file rewrite of the
+# repository in place of the work.
+* text=auto eol=lf
+
+# Below the line above, because a later line overrides an earlier one. The hook is
+# run by sh. Checked out with CRLF it fails as a bad interpreter.
 hooks/** text eol=lf
